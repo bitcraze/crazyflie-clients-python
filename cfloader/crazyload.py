@@ -24,9 +24,10 @@ from cflib.bootloader.cloader import Cloader
 
 #Initialise the CRTP link driver
 link = None
+cload = None
 try:
-    CRTP.initDrivers()
-    link = CRTP.getDriver("radio://0")
+    cflib.crtp.initDrivers()
+    link = cflib.crtp.getDriver("radio://0")
 except(Exception):
     print "=============================="
     print " CrazyLoader Flash Utility"
@@ -98,8 +99,8 @@ else:
     sys.exit(-1)
 
 try:
-    #Initialise the cloader lib
-    cload = cloader.Cloader(link, clink)
+    #Initialise the cflib
+    cload = Cloader(link, clink)
 
     #########################################
     # Get the connection with the bootloader
@@ -195,4 +196,5 @@ finally:
     #########################
     # Closing the connection
     #########################
-    cload.close()
+    if (cload != None):
+        cload.close()

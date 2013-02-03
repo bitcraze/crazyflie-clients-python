@@ -39,6 +39,8 @@ from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
 from ui.tab import Tab
 
+import cflib.crtp
+
 from cflib.bootloader.cloader import Cloader
 
 service_tab_class = uic.loadUiType("ui/tabs/serviceTab.ui")[0]
@@ -229,7 +231,7 @@ class CrazyloadThread(QThread):
 
     def initiateColdBoot(self, linkURI):
         self.connectingSignal.emit()
-        self.link = CRTP.getDriver("radio://0/110")
+        self.link = cflib.crtp.getDriver("radio://0/110")
         self.loader = Cloader(self.link, "radio://0/110")
         #self.link = CRTP.getDriver("debug://0/110")
         #self.loader = Cloader(self.link, "debug://0/110")

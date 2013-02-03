@@ -38,8 +38,8 @@ The two main uses-cases are scanning for Crazyflies available on a communication
 and opening a communication link to a Crazyflie.
 
 Example of scanning for available Crazyflies on all communication links:
-CRTP.initDrivers()
-available = CRTP.scanInterfaces()
+cflib.crtp.initDrivers()
+available = cflib.crtp.scanInterfaces()
 for i in available:
     print "Found Crazyflie on URI [%s] with comment [%s]" % (available[0], available[1])
 

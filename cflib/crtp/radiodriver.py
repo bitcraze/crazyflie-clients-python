@@ -68,8 +68,6 @@ class RadioDriver (CRTPDriver):
         an error message.
         """
 
-        print "Opening"
-
         #check if the URI is a radio URI
         if not re.search("^radio://", uri):
             raise WrongUriType("Not a radio URI")
@@ -121,7 +119,6 @@ class RadioDriver (CRTPDriver):
         self.thread.start()
 
         self.linkErrorCallback = linkErrorCallback
-        print "done"
 
     def receivePacket(self, time=0):
         """

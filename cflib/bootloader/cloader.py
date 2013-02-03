@@ -34,6 +34,8 @@ __all__ = ['Cloader']
 
 import cflib.crtp
 
+from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
+
 import sys
 import time
 import struct
@@ -70,8 +72,8 @@ class Cloader:
         #Send an echo request and wait for the answer
         #Mainly aim to bypass a bug of the crazyflie firmware that prevent reset
         #before normal CRTP communication
-        pk = CRTP.CRTPStack.CRTPPacket()
-        pk.setPort(CRTP.CRTPStack.CRTPPort.LINKCTRL)
+        pk = CRTPPacket()
+        pk.setPort(CRTPPort.LINKCTRL)
         pk.data = (1, 2, 3)+cpu_id
         self.link.sendPacket(pk)
 
@@ -81,11 +83,11 @@ class Cloader:
             if not pk:
                 return False
 
-            if pk.getPort()==CRTP.CRTPStack.CRTPPort.LINKCTRL:
+            if pk.getPort()==CRTPPort.LINKCTRL:
                 break;
 
         #Send the reset to bootloader request
-        pk = CRTP.CRTPStack.CRTPPacket()
+        pk = CRTPPacket()
         pk.setHeader(0xFF, 0xFF)
         pk.data = (0xFF, 0xFE)+cpu_id
         self.link.sendPacket(pk)
@@ -104,7 +106,7 @@ class Cloader:
 
         time.sleep(0.1)
         self.link.close()
-        self.link = CRTP.getDriver(self.clink_address)
+        self.link = cflib.crtp.getDriver(self.clink_address)
         #time.sleep(0.1)
 
         return self.updateInfo()
@@ -116,7 +118,7 @@ class Cloader:
         Return true if the reset has been done
         """
         #Send the reset to bootloader request
-        pk = CRTP.CRTPStack.CRTPPacket()
+        pk = CRTPPacket()
         pk.setHeader(0xFF, 0xFF)
         pk.data = (0xFF, 0xFF)+cpu_id
         self.link.sendPacket(pk)
@@ -140,7 +142,7 @@ class Cloader:
         This let rougly 10 seconds to boot the copter ..."""
         for i in range(0,5):
             self.link.close()
-            self.link = CRTP.getDriver(self.clink_address)
+            self.link = cflib.crtp.getDriver(self.clink_address)
             if self.updateInfo():
                 return True
 
@@ -152,7 +154,7 @@ class Cloader:
         """
 
         #Call getInfo ...
-        pk = CRTP.CRTPStack.CRTPPacket()
+        pk = CRTPPacket()
         pk.setHeader(0xFF, 0xFF)
         pk.data = (0xFF, 0x10)
         self.link.sendPacket(pk);
@@ -179,7 +181,7 @@ class Cloader:
         """Upload data into a buffer on the Crazyflie"""
         #print len(buff)
         count=0
-        pk = CRTP.CRTPStack.CRTPPacket()
+        pk = CRTPPacket()
         pk.setHeader(0xFF, 0xFF)
         pk.data = struct.pack("=BBHH", 0xFF, 0x14, page, address)
 
@@ -192,7 +194,7 @@ class Cloader:
             if count>24:
                 self.link.sendPacket(pk)
                 count = 0
-                pk = CRTP.CRTPStack.CRTPPacket()
+                pk = CRTPPacket()
                 pk.setHeader(0xFF, 0xFF)
                 pk.data = struct.pack("=BBHH", 0xFF, 0x14, page, i+address+1)
 
@@ -206,7 +208,7 @@ class Cloader:
         buff = ""
 
         for i in range(0, int(math.ceil(self.pageSize/25.0))):
-            pk = CRTP.CRTPStack.CRTPPacket()
+            pk = CRTPPacket()
             pk.setHeader(0xFF, 0xFF)
             pk.data = struct.pack("<BBHH", 0xFF, 0x1C, page, (i*25))
             self.link.sendPacket(pk);
@@ -221,7 +223,7 @@ class Cloader:
         #print "Write page", flashPage
         #print "Writing page [%d] and [%d] forward" % (flashPage, nPage)
 
-        pk = CRTP.CRTPStack.CRTPPacket()
+        pk = CRTPPacket()
         pk.setHeader(0xFF, 0xFF)
         pk.data = struct.pack("<BBHHH", 0xFF, 0x18, bufferPage, flashPage, nPage);
         self.link.sendPacket(pk);
