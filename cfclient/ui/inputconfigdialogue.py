@@ -131,7 +131,6 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.box.show()
 
     def startConfigOfInputDevice(self):
-        self.joystickReader.stopSearchSignal.emit()
         self.joystickReader.enableRawReading(self.inputDeviceSelector.currentIndex())
         self.rawinputreader.startReading()
         self.populateDropDown()
@@ -288,7 +287,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         inputConfig['inputdevice']['updateperiod'] = 10
         saveConfig['inputconfig'] = inputConfig
 
-        filename = "ui/inputconfig/%s.json" % self.profileCombo.currentText()
+        filename = "configs/input/%s.json" % self.profileCombo.currentText()
         json_data=open(filename, 'w')
         json_data.write(json.dumps(saveConfig))
         json_data.close()
