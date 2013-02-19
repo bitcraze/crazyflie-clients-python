@@ -174,9 +174,20 @@ class Crazyradio:
         sendVendorSetup(self.handle, SET_RADIO_ARC, arc, 0, ())
         self.arc = arc
     
-    def setArdTime(self, ns):
+    def setArdTime(self, us):
         """ Set the ACK retry delay for radio communication """
-        sendVendorSetup(self.handle, SET_RADIO_ARD, int((us/250)+1), 0, ())
+        # Auto Retransmit Delay: 
+        # ‘0000’ – Wait 250μS 
+        # ‘0001’ – Wait 500μS 
+        # ‘0010’ – Wait 750μS 
+        # ........
+        # ‘1111’ – Wait 4000μS
+        t = int((us/250)-1); # round down, to value representing a multiple of 250μS
+        if (t < 0):
+            t = 0;
+        if (t > 0xF):
+            t = 0xF;
+        sendVendorSetup(self.handle, SET_RADIO_ARD, t, 0, ())
     
     def setArdBytes(self, nbytes):
         sendVendorSetup(self.handle, SET_RADIO_ARD, 0x80 | nbytes, 0, ())
