@@ -177,12 +177,12 @@ class Crazyradio:
     def setArdTime(self, us):
         """ Set the ACK retry delay for radio communication """
         # Auto Retransmit Delay: 
-        # ‘0000’ – Wait 250μS 
-        # ‘0001’ – Wait 500μS 
-        # ‘0010’ – Wait 750μS 
+        # 0000 - Wait 250uS
+        # 0001 - Wait 500uS 
+        # 0010 - Wait 750uS 
         # ........
-        # ‘1111’ – Wait 4000μS
-        t = int((us/250)-1); # round down, to value representing a multiple of 250μS
+        # 1111 - Wait 4000uS
+        t = int((us/250)-1); # round down, to value representing a multiple of 250uS
         if (t < 0):
             t = 0;
         if (t > 0xF):
