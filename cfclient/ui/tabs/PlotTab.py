@@ -71,8 +71,6 @@ class PlotTab(Tab, plot_tab_class):
         self.dsList = helper.logConfigReader.getLogConfigs()
         self.plot = PlotWidget(fps=50)
 
-        for d in self.dsList:
-            self.dataSelector.addItem(d.getName())
         self.dataSelector.currentIndexChanged.connect(self.newLogSetupSelected)
 
         self.logDataSignal.connect(self.logDataReceived)
@@ -145,6 +143,7 @@ class PlotTab(Tab, plot_tab_class):
         for d in self.dsList:
             logEntry = self.helper.cf.log.newLogPacket(d)
             if (logEntry != None):
+                self.dataSelector.addItem(d.getName())
                 self.logEntrys.append(logEntry)
                 logEntry.dataReceived.addCallback(self.logDataSignal.emit)
                 logEntry.error.addCallback(self.loggingError)

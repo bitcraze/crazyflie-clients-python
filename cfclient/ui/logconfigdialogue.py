@@ -240,7 +240,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         directory = os.path.dirname(__file__)+"/logconfig/"
         nameFilter = "*.json"
         fileName = QFileDialog.getSaveFileName(self, "Save File", directory, nameFilter, nameFilter);
-        if (len(filename) > 0):
+        if (len(fileName) > 0):
             self.helper.logConfigReader.saveLogConfigFile(updatedConfig, fileName)
            
     def createConfigFromSelection(self):
@@ -249,15 +249,10 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
             parentName = node.text(NAME_FIELD)
             for leaf in self.getNodeChildren(node):
                 varName = leaf.text(NAME_FIELD)
-                varType = str(leaf.text(CTYPE_FIELD)).upper()
+                varType = str(leaf.text(CTYPE_FIELD))
                 completeName = "%s.%s" % (parentName, varName)
-                if ("INT" in varType):
-                    completeVarSize = "Log.%s" % varType[:-2]
-                else:
-                    completeVarSize = "Log.%s" % varType
-                newVar = LogVariable(completeName, eval(completeVarSize))
-                print "Setting: %s" % completeVarSize
-                newVar.setFetchAndStorageString(completeVarSize)
+                newVar = LogVariable(completeName, fetchAs=varType, storedAs=varType)
+                print "Setting: %s" % varType              
                 logconfig.addVariable(newVar)
         return logconfig
 

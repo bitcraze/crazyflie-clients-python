@@ -98,7 +98,7 @@ class LogVariable():
             self.storedAs = LogTocElement.getIdFromCString(storedAs)
         self.address = address
         self.varType = varType
-        self.fetchAndStoreageString = ""
+        self.fetchAndStoreageString = fetchAs
         self.storedAsString = storedAs
         self.fetchAsString = fetchAs
 
@@ -202,8 +202,9 @@ class LogConfigReader():
         logconf = {'logblock': {'variables':[]}}
         logconf['logblock']['name'] = logconfig.getName()
         logconf['logblock']['period'] = logconfig.getPeriod()
-        logconf['logblock']['min'] = 0
-        logconf['logblock']['max'] = 0
+		# Temporary until plot is fixed
+        logconf['logblock']['min'] = -180
+        logconf['logblock']['max'] = 180
 
         for v in logconfig.getVariables():
             newC = {}
