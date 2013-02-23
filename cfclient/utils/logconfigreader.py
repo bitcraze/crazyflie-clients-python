@@ -39,6 +39,10 @@ __all__ = ['LogVariable', 'LogConfigReader', 'LogConfig']
 
 import sys
 import json, glob, os
+import logging
+
+logger = logging.getLogger(__name__)
+
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import pyqtSlot, pyqtSignal
 from pprint import pprint
@@ -164,12 +168,11 @@ class LogConfigReader():
 
     def readConfigFiles(self):
         """Read and parse log configurations"""
-        print "LogConfigReader: Parsing config files:",
         configsfound = [ os.path.basename(f) for f in glob.glob("configs/log/[A-Za-z_-]*.json")]
 
         for conf in configsfound:            
             try:
-                print "%s" % (conf),
+                logger.info("Parsing [%s]", conf)
                 json_data = open (os.getcwd()+"/configs/log/%s"%conf)                
                 self.data = json.load(json_data)
                 infoNode = self.data["logconfig"]["logblock"]
@@ -185,9 +188,7 @@ class LogConfigReader():
                 self.dsList.append(logConf)
                 json_data.close()
             except Exception as e:
-                print "LogConfigReader: Exception while parsing logconfig file (%s): %s" % (conf,e)
-                print traceback.format_exc()
-        print ""
+                logger.warning("Exception while parsing logconfig file: %s", e)
 
     def getLogConfigs(self):
         """Return the log configurations"""
@@ -195,7 +196,7 @@ class LogConfigReader():
 
     def saveLogConfigFile(self, logconfig, filename):
         """Save a log configuration to file"""
-        print "Saving config for [%s] to file [%s]" % (logconfig.getName(), filename)
+        logger.info("Saving config for [%s] to file [%s]", logconfig.getName(), filename)
         
         # Build tree for JSON
         tree = {}

@@ -41,6 +41,10 @@ from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, QLine, QPoint, QPoin
 from time import time
 import math
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 import sys
 
 from PyQt4 import Qt, QtCore, QtGui, uic
@@ -132,13 +136,13 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         newLayout.addWidget(dsEnabled)
         self.legend.addLayout(newLayout, self.hcount, self.vcount)
         self.hcount = self.hcount + 1
-        print "Creating new layout for [%s] at %d,%d" % (dataset.title, self.hcount, self.vcount)
+        logger.debug("Creating new layout for [%s] at %d,%d", dataset.title, self.hcount, self.vcount)
         if (self.hcount == 2):
             self.vcount = self.vcount + 1
             self.hcount = 0
         
     def removeDataset(self, dataset):
-        print "removeDataset() not implemented"
+        logger.warning("removeDataset() not implemented")
 
     def removeAllDatasets(self):
         self.fpw.datasets = []

@@ -34,6 +34,9 @@ __all__ = ['ConsoleTab']
 
 import sys, time
 
+import logging
+logger = logging.getLogger(__name__)
+
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import pyqtSlot, pyqtSignal
 
@@ -55,7 +58,12 @@ class ConsoleTab(Tab, console_tab_class):
         self.tabWidget = tabWidget
         self.helper = helper
         
-        self.update.connect(self.console.insertPlainText)
+        self.update.connect(self.printText)
         
         self.helper.cf.console.receivedChar.addCallback(self.update.emit)
+
+    def printText(self, text):
+        # Make sure we get printouts from the Crazyflie into the log (such as build version and test ok/fail)
+        logger.debug("[%s]", text)
+        self.console.insertPlainText(text)
 

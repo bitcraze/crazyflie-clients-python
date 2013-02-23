@@ -74,7 +74,6 @@ class PyGameReader():
                         self.data["exit"] = True
                     else: # Generic cal for pitch/roll
                         self.data[key] = self.data[key] + self.inputMap[e.button]["scale"]
-                    print self.data["estop"]
             except Exception:
                 # Button not mapped, ignore..
                 pass

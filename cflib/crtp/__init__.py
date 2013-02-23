@@ -35,6 +35,8 @@ __all__ = []
 
 import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 from .radiodriver import RadioDriver
 from .udpdriver import UdpDriver
@@ -58,7 +60,7 @@ def scanInterfaces():
     available = []
     found = []
     for d in instances:
-        print "Scanning: %s" % d
+        logger.debug("Scanning: %s", d)
         try:
             found = d.scanInterface()
             available += found

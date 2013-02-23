@@ -34,6 +34,10 @@ __all__ = ['PlotTab']
 
 import sys
 import json, glob, os
+import logging
+
+logger = logging.getLogger(__name__)
+
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread
 from pprint import pprint
@@ -93,8 +97,8 @@ class PlotTab(Tab, plot_tab_class):
         self.saveFile = None
 
     def saveToFile(self):
-        print "Should save to file"
         filename = "%s-%s" % (datetime.datetime.now(), self.dataSelector.currentText())
+        logger.info("Saving logdata to [%s]", filename)
         self.saveFile = open(filename, 'w')
         s = ""
         for v in self.dsList[self.dataSelector.currentIndex()].getVariables():
@@ -104,8 +108,8 @@ class PlotTab(Tab, plot_tab_class):
         self.plot.isSavingToFile()
 
     def savingStopped(self):
-        print "Saving stopped"
         self.saveFile.close()
+        logger.ionfo("Stopped saving logdata")
         self.saveFile = None
     
 
@@ -137,7 +141,7 @@ class PlotTab(Tab, plot_tab_class):
             self.plot.stopSaving()
             
     def loggingError(self, err):
-        print "PlotTab: Logging error %d" % err
+        logger.warning("logging error: %s", err)
 
     def connected(self, link):
         self.logEntrys = []
@@ -149,7 +153,7 @@ class PlotTab(Tab, plot_tab_class):
                 logEntry.dataReceived.addCallback(self.logDataSignal.emit)
                 logEntry.error.addCallback(self.loggingError)
             else:
-                print "PlotTab: Could not setup log configuration!"
+                logger.warning("Could not setup log configuration!")
 
         # TODO: Make this pretty ?
         if (len(self.logEntrys) > 0):
@@ -170,7 +174,5 @@ class PlotTab(Tab, plot_tab_class):
         except Exception as e:
             # When switching what to log we might still get logging packets... and
             # that will not be pretty so let's just ignore the probolem ;-)
-            print e
-            #raise e
-            #pass
+            logger.warning("Exception for plot data: ", e)            
 

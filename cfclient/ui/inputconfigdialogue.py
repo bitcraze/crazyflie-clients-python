@@ -35,6 +35,9 @@ __all__ = ['InputConfigDialogue']
 
 import sys
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from cflib.crtp.exceptions import CommunicationException
 from pygame.locals import *
@@ -193,6 +196,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             self.loadButton.setEnabled(True)
         for c in configsfound:
             self.profileCombo.addItem(c)
+            logger.info("Found inputdevice [%s]", c)
 
     def doAxisDetect(self, varname, caption, message):
         self.axisDetect = varname
@@ -222,7 +226,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         if (len(newKey) > 0):
             self.buttonmapping[newKey]['id'] = btnId
         else:
-            print "Could not find new key for [%s]" % key
+            logger.warning("Could not find new key for [%s]", key)
 
     def parseAxisConfig(self, key, axisId, scale):
         self.axismapping[key]['id'] = axisId
@@ -237,11 +241,12 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                 elif (conf[c]['type'] == "Input.AXIS"):
                     self.parseAxisConfig(conf[c]['key'], c, conf[c]['scale'])
         else:
+            logger.warning("Could not load configfile [%s]", self.profileCombo.currentText())
             self.showError("Could not load config", "Could not load config [%s]" % self.profileCombo.currentText())
         self.checkAndEnableSave()
 
     def deleteConfig(self):
-        print "Not implemented: Delete config"
+        logger.warning("deleteConfig not implemented")
 
     def saveConfig(self):
         configName = str(self.profileCombo.currentText())
@@ -289,6 +294,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         saveConfig['inputconfig'] = inputConfig
 
         filename = "configs/input/%s.json" % self.profileCombo.currentText()
+        logger.info("Saving config to [%s]", filename)
         json_data=open(filename, 'w')
         json_data.write(json.dumps(saveConfig))
         json_data.close()
@@ -302,7 +308,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
     def closeEvent(self, event):
         self.rawinputreader.stopReading()
         # TODO: After closing this we need to restart the input reading from a valid config
-        print "TODO: Need to restart input reading!!"
+        logger.error("Need to restart input reading!!")
 
 class RawJoystickReader(QThread):
 

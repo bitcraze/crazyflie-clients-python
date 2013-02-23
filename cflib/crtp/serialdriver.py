@@ -54,10 +54,6 @@ class SerialDriver (CRTPDriver):
         if not uriRe:
             raise Exception("Invalid serial URI")
         
-        
-        #Decode URI (print for debug ...)
-        print "port:", uriRe.group(1), "Speed:", uriRe.group(2)
-        
         port = uriRe.group(1)
         baudRate = 115200
         if uriRe.group(2):

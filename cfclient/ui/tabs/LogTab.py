@@ -92,5 +92,5 @@ class LogTab(Tab, param_tab_class):
                 
             self.logTree.addTopLevelItem(groupItem)
             self.logTree.expandItem(groupItem)
-   
+  
 

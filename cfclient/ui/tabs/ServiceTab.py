@@ -35,6 +35,9 @@ __all__ = ['ServiceTab']
 
 import sys, time, struct
 
+import logging
+logger = logging.getLogger(__name__)
+
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
@@ -171,6 +174,7 @@ class ServiceTab(Tab, service_tab_class):
     
     @pyqtSlot(str, int)
     def statusUpdate(self, status, progress):
+        logger.debug("Status: [%s] | %d", status, progress)
         self.statusLabel.setText('Status: <b>' + status + '</b>')
         if progress>0:
             self.progressBar.setTextVisible(True)
@@ -238,22 +242,20 @@ class CrazyloadThread(QThread):
         #self.loader = Cloader(self.link, "debug://0/110")
 
         if self.loader.coldBoot():
-            print "Connected in cold boot mode"
-            print "Flash pages: %d | Page size: %d | Buffer pages: %d | Start page: %d" % (self.loader.flashPages, self.loader.pageSize, self.loader.bufferPages, self.loader.startPage)
-            print "%d KBytes of flash avaliable for firmware image." % ((self.loader.flashPages-self.loader.startPage)*self.loader.pageSize/1024)
+            logger.info("Connected in coldboot mode ok")
             self.updateCpuIdSignal.emit(self.loader.cpuid)
             self.readConfigAction()
             self.connectedSignal.emit()
         else:
             self.connectionFailedSignal.emit()
-            print "No connection"
+            logger.info("Connected in coldboot mode failed")
             self.link.close()
 
     def programAction(self, filename, verify):
-        print "Flashing file [%s]" % filename
+        logger.info("Flashing file [%s]", filename)
         f=open(filename, "rb")
         if not f:
-            print "Cannot open image file", filename
+            logger.warning("Cannot open file [%s]", filename)
             self.link.close()
             return
         image = f.read()
@@ -302,7 +304,6 @@ class CrazyloadThread(QThread):
 
             #Flash when the complete buffers are full
             if ctr>=self.loader.bufferPages:
-                sys.stdout.flush()
                 self.statusChanged.emit("Writing buffer...", int(progress))
                 firstFlashPage = self.loader.startPage+startpage+i-(ctr-1)
                 if not self.loader.flash(0, firstFlashPage, ctr):
@@ -324,8 +325,6 @@ class CrazyloadThread(QThread):
                 ctr = 0
 
         if ctr>0:
-            sys.stdout.write("%d" % ctr)
-            sys.stdout.flush()
             self.statusChanged.emit("Writing buffer...", int(progress))
             firstFlashPage = self.loader.startPage+startpage+(int((len(image)-1)/self.loader.pageSize))-(ctr-1)
             if not self.loader.flash(0, firstFlashPage, ctr):

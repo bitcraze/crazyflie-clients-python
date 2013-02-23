@@ -108,7 +108,6 @@ class ParamTab(Tab, param_tab_class):
             self.paramTree.expandItem(groupItem)
 
     def paramUpdated(self, completeName, value):
-        print "ParamTab: Updated %s=%s" % (completeName, value)
         self.editItems[str(completeName)].setData(3, Qt.EditRole, value)    
 
     def sendAllValues(self):

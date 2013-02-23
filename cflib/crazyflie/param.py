@@ -46,6 +46,9 @@ from threading import Thread
 
 from Queue import Queue
 
+import logging
+logger = logging.getLogger(__name__)
+
 #Possible states
 IDLE       = 0
 WAIT_TOC   = 1
@@ -160,7 +163,7 @@ class Param():
             pk.data += struct.pack(element.pytype, eval(value))
             self.cf.sendLinkPacket(pk, expectAnswer = True)
         else:
-            print "Param: Cannot set value for [%s], it's not in the TOC!" % completeName
+            logger.warning("Cannot set value for [%s], it's not in the TOC!", completeName)
 
 class ParamUpdater(Thread):
     def __init__(self, cf, updatedCallback):
@@ -178,11 +181,10 @@ class ParamUpdater(Thread):
             self.incommingQueue.put(0) # Don't care what we put, used to sync
 
     def addUpdateRequest(self, varid):
-        #print "PARAM: Adding update request to queue %d" % varid
         self.requestQueue.put(varid)
     
     def requestParamUpdate(self, varid):
-        #print "PARAM: Requesting update for varid %d" % varid
+        logger.debug("Requesting update for varid %d", varid)
         pk = CRTPPacket()
         pk.setHeader(CRTPPort.PARAM, READ_CHANNEL);
         pk.data = struct.pack('<B',varid)

@@ -36,6 +36,9 @@ __all__ = ['TocElement', 'Toc', 'TocFetcher']
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 import struct
 
+import logging
+logger = logging.getLogger(__name__)
+
 TOC_CHANNEL = 0
 
 # Commands used when accessing the Table of Contents
@@ -92,7 +95,7 @@ class Toc:
         if element:
             return element.ident
         else:
-            print "TOC: Unable to find variable '{}'".format(completeName)
+            logger.warning("Unable to find variable [%s]", completeName)
             return None
 
     def getAllCompleteNames(self):
@@ -130,7 +133,7 @@ class TocFetcher:
 
     def getToc(self):
         """Initiate fetching of the TOC."""
-        print "TOC[%d]: Start fetching..." % self.port
+        logger.debug("[%d]: Start fetching...", self.port)
         # Register callback in this class for the port
         self.cf.incomming.addPortCallback(self.port, self.incomming)
 
@@ -143,22 +146,22 @@ class TocFetcher:
 
     def tocFetchFinished(self):
         self.cf.incomming.removePortCallback(self.port, self.incomming)
-        print "TOC[%d]: Done!" % self.port
+        logger.debug("[%d]: Done!", self.port)
         self.finishedCallback()
 
     def incomming(self, packet):
         chan = packet.getChannel()
         if (chan != 0):
-            print "----------------------------------------"
+            logger.error("Got packet that was not on TOC channel, TOC fetch will probably not succeed")
             return
         cmd = packet.datal[0]
         payload = struct.pack("B"*(len(packet.datal)-1), *packet.datal[1:])
     
-        print packet
+        #logger.debug("%s", packet)
 
         if (self.state == GET_TOC_INFO):
             [self.nbrOfItems, crc] = struct.unpack("<BI", payload[:5])
-            print "TOC[%d]: Got TOC CRC, %d items and crc=0x%08X" % (self.port, self.nbrOfItems, crc)
+            logger.debug("[%d]: Got TOC CRC, %d items and crc=0x%08X", self.port, self.nbrOfItems, crc)
             if (crc != 0x5555):
                 self.state = GET_TOC_ELEMENT
                 self.requestedIndex = 0
@@ -169,12 +172,12 @@ class TocFetcher:
                 # TODO: There might be a timing issue here with resending old packets while loosing new ones
                 #       Then if 7 is requested but 6 is send back due to timing issues with the resend
                 #       while 7 is lost then we will never resend for 7. This is pretty hard to reproduce but happens...
-                print "TOC[%d]: Was expecting %d but got %d" % (self.port, self.requestedIndex, ord(payload[0]))
+                log.warning("[%d]: Was expecting %d but got %d", self.port, self.requestedIndex, ord(payload[0]))
                 return
             self.toc.addElement(self.elementClass(payload))
-            print "Added element {}".format(self.elementClass(payload).ident)
+            logger.debug("Added element [%s]", self.elementClass(payload).ident)
             if (self.requestedIndex < (self.nbrOfItems-1)):
-                print "TOC[%d]: More variables, requesting index %d" % (self.port, self.requestedIndex+1)
+                logger.debug("[%d]: More variables, requesting index %d", self.port, self.requestedIndex+1)
                 self.requestedIndex = self.requestedIndex+1
                 self.requestTocElement(self.requestedIndex)                    
             else: # No more variables in TOC
@@ -183,7 +186,7 @@ class TocFetcher:
                 self.tocFetchFinished()
 
     def requestTocElement(self, index):
-        print "TOC: Requesting index %d on port %d" % (index, self.port)
+        logger.debug("Requesting index %d on port %d", index, self.port)
         pk = CRTPPacket()
         pk.setHeader(self.port, TOC_CHANNEL);
         pk.data = (CMD_TOC_ELEMENT, index)
