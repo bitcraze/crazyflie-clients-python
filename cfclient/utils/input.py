@@ -138,8 +138,9 @@ class JoystickReader(QThread):
                     axis["scale"] = a["scale"]
                     axis["type"] = a["type"]
                     axis["key"] = a["key"]
-                    axis["name"] = ["name"]
-                    newInputDevice[int(a["id"])] = axis
+                    axis["name"] = a["name"]
+                    index = "%s-%d" % (a["type"], a["id"]) # 'type'-'id' defines unique index for axis
+                    newInputDevice[index] = axis
                 self.inputConfig.append(newInputDevice)
                 json_data.close()
                 self.listOfConfigs.append(conf[:-5])

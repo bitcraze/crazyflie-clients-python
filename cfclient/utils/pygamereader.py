@@ -51,12 +51,13 @@ class PyGameReader():
         for e in pygame.event.get():
 
           if e.type == pygame.locals.JOYAXISMOTION:
+            index = "Input.AXIS-%d" % e.axis 
             try:
-                if (self.inputMap[e.axis]["type"] == "Input.AXIS"):
-                    key = self.inputMap[e.axis]["key"]
+                if (self.inputMap[index]["type"] == "Input.AXIS"):
+                    key = self.inputMap[index]["key"]
                     axisvalue = self.j.get_axis(e.axis)
                     # All axis are in the range [-a,+a]
-                    axisvalue = axisvalue * self.inputMap[e.axis]["scale"]
+                    axisvalue = axisvalue * self.inputMap[index]["scale"]
                     # The value is now in the correct direction and in the range [-1,1]
                     self.data[key] = axisvalue
             except Exception:
@@ -64,15 +65,16 @@ class PyGameReader():
                 pass          
 
           if e.type == pygame.locals.JOYBUTTONDOWN:
+            index = "Input.BUTTON-%d" % e.button 
             try:
-                if (self.inputMap[e.button]["type"] == "Input.BUTTON"):
-                    key = self.inputMap[e.button]["key"]
+                if (self.inputMap[index]["type"] == "Input.BUTTON"):
+                    key = self.inputMap[index]["key"]
                     if (key == "estop"):
                         self.data["estop"] = not self.data["estop"]
                     elif (key == "exit"):
                         self.data["exit"] = True
                     else: # Generic cal for pitch/roll
-                        self.data[key] = self.data[key] + self.inputMap[e.button]["scale"]
+                        self.data[key] = self.data[key] + self.inputMap[index]["scale"]
                     print self.data["estop"]
             except Exception:
                 # Button not mapped, ignore..
