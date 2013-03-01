@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -38,6 +39,8 @@ __all__ = ['Crazyflie']
 
 
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
+import logging
+logger = logging.getLogger(__name__)
 
 from threading import Thread
 import time
@@ -95,30 +98,37 @@ class Crazyflie():
         self.receivedPacket.addCallback(self.checkIncommingAnswers)
         self.answerTimers = {}
 
+        # Connect callbacks to logger
+        self.disconnected.addCallback(lambda uri: logger.info("Callback->Disconnected from [%s]", uri))
+        self.connected.addCallback(lambda uri: logger.info("Callback->Connected to [%s]", uri))
+        self.connectionLost.addCallback(lambda uri, errmsg: logger.info("Callback->Connection lost to [%s]: %s", uri, errmsg))
+        self.connectionFailed.addCallback(lambda uri, errmsg: logger.info("Callback->Connected failed to [%s]: %s", uri, errmsg))
+        self.connectionInitiated.addCallback(lambda uri: logger.info("Callback-> Connection initiated to [%s]", uri))
+        self.connectSetupFinished.addCallback(lambda uri: logger.info("Callback->Connection setup finished [%s]", uri))
         
     def doConnectionSetup(self, link):
-        print "Crazyflie: We are connected[%s], request connection setup" % link
+        logger.info("We are connected[%s], request connection setup", link)
         self.linkString = link
         
         self.log.refreshTOC(self.logTOCUpdated)
 
     def paramTOCUpdated(self):
-        print "Crazyflie: Param TOC finished updating"
+        logger.info("Param TOC finished updating")
         self.paramTocUpdated = True
         if (self.logTocUpdated == True and self.paramTocUpdated == True):
             self.connectSetupFinished.call(self.linkString)
 
     def logTOCUpdated(self):
-        print "Crazyflie: Log TOC finished updating"
+        logger.info("Log TOC finished updating")
         self.logTocUpdated = True
         self.param.refreshTOC(self.paramTOCUpdated)
 
         if (self.logTocUpdated == True and self.paramTocUpdated == True):
-            print "Crazyflie: All TOCs finished updating"
+            logger.info("All TOCs finished updating")
             self.connectSetupFinished.call(self.linkString)
         
     def linkErrorCallback(self, errmsg):
-        print "Got linkErrorCallback"
+        logger.warning("Got linkErrorCallback [%s] in state [%s]", errmsg, self.state)
         if (self.link != None):
             self.link.close()
         self.link = None
@@ -156,6 +166,7 @@ class Crazyflie():
             self.doConnectionSetup(linkString)    
         except Exception as e:
             import traceback
+            logger.error("Couldn't load link driver: %s\n\n%s", e, traceback.format_exc())
             exceptionText = "Couldn't load link driver: %s\n\n%s" % (e, traceback.format_exc())
             if self.link:
                 self.link.close()
@@ -168,7 +179,7 @@ class Crazyflie():
 
     def closeLink(self):
         """ Close the communication link. """
-        print "CF: Closing link"
+        logger.info("Closing link")
         if (self.isLinkUp()):
             self.commander.sendControlSetpoint(0,0,0,0)
         if (self.link != None):
@@ -183,20 +194,20 @@ class Crazyflie():
         self.incomming.removePortCallback(port, cb)
 
     def noAnswerDoRetry(self, pk):
-        print "ExpectAnswer: No answer on [%d], do retry" % pk.getPort()
+        logger.debug("ExpectAnswer: No answer on [%d], do retry", pk.getPort())
         # Cancel timer before calling for retry to help bug hunting
         oldTimer = self.answerTimers[pk.getPort()]
         if (oldTimer != None):
             oldTimer.cancel()
             self.sendLinkPacket(pk, True)
         else:
-            print "ExpectAnswer: ERROR! Was doing retry but timer was None"
+            logger.warning("ExpectAnswer: ERROR! Was doing retry but timer was None")
 
     def checkIncommingAnswers(self, pk):
         try:
             timer = self.answerTimers[pk.getPort()]
             if (timer != None):
-                print "ExpectAnswer: Got answer back on port [%d], cancelling timer" % pk.getPort()
+                logger.debug("ExpectAnswer: Got answer back on port [%d], cancelling timer", pk.getPort())
                 timer.cancel()
                 self.answerTimers[pk.getPort()] = None
         except Exception as e:
@@ -208,7 +219,7 @@ class Crazyflie():
         if (self.link != None):
             self.link.sendPacket(pk)
             if (expectAnswer == True):
-                print "ExpectAnswer: Will expect answer on port [%d]" % pk.getPort()
+                logger.debug("ExpectAnswer: Will expect answer on port [%d]", pk.getPort())
                 newTimer = Timer(1, lambda : self.noAnswerDoRetry(pk))
                 try:
                     oldTimer = self.answerTimers[pk.getPort()]
@@ -216,7 +227,7 @@ class Crazyflie():
                         oldTimer.cancel()
                         # If we get here a second call has been made to send packet on this port before
                         # we have gotten the first one back. This is an error and might cause loss of packets!!
-                        print "ExpectAnswer: ERROR! Older timer whas running while scheduling new one on [%d]" % pk.getPort()
+                        logger.warning("ExpectAnswer: ERROR! Older timer whas running while scheduling new one on [%d]", pk.getPort())
                 except Exception:
                     pass
                 self.answerTimers[pk.getPort()] = newTimer
@@ -230,11 +241,11 @@ class CrazyflieIncomming(Thread):
         self.cb = []
 
     def addPortCallback(self, port, cb):
-        print "CF: Adding callback on port [%d] to [%s]" % (port, cb)
+        logger.debug("Adding callback on port [%d] to [%s]", port, cb)
         self.addHeaderCallback(cb, port, 0, 0xff, 0x0);
 
     def removePortCallback(self, port, cb):
-        print "CF: Removing callback on port [%d] to [%s]" % (port, cb)
+        logger.debug("Removing callback on port [%d] to [%s]", port, cb)
         for p in self.cb:
             if (p[0] == port and p[4] == cb):
                 self.cb.remove(p)
@@ -264,13 +275,13 @@ class CrazyflieIncomming(Thread):
                         cb[4](pk)
                     except Exception as e:
                         import traceback
-                        print "CF: Exception while doing callback on port [%d]\n\n%s" % (pk.getPort(), traceback.format_exc())
+                        logger.warning("Exception while doing callback on port [%d]\n\n%s", pk.getPort(), traceback.format_exc())
                     if (cb[0] != 0xFF):
                         found = True
 
             if not found:
-                print "CF: Got packet on header (%d,%d) but no callback to handle it" % (pk.getPort(), pk.getChannel())
-                print "Data: {}".format(pk.data)
+                logger.warning("Got packet on header (%d,%d) but no callback to handle it", pk.getPort(), pk.getChannel())
+                #print "Data: {}".format(pk.data)
 
 
 from Queue import Queue

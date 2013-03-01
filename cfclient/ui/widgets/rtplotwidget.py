@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -35,6 +36,10 @@ from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, QLine, QPoint, QPoin
 
 from time import time
 import math
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 class PlotAxis:
     def __init__(self, x, color = QtCore.Qt.black):
@@ -228,7 +233,7 @@ class FastPlotWidget(QtGui.QWidget):
         #self.updateAxisCalculations()
         
     def removeDataset(self, dataset):
-        print "Not supported"
+        logger.warning("removeDataset not supported")
 
     def removeAllDatasets(self):
         self.datasets = []
@@ -263,7 +268,7 @@ class FastPlotWidget(QtGui.QWidget):
     
     def mousePressEvent(self, event):
         #Use to show data
-        print "x=%i,y=%i" % (event.x(), event.y())
+        logger.debug("x=%i,y=%i", event.x(), event.y())
         #print "FastPlotWidget: Size (%i,%i)" % (self.width(), self.height())
         
     def resizeEvent(self, event):

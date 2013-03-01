@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -91,7 +92,6 @@ class RegulationTab(Tab, regulation_tab_class):
         self.sendPID.setEnabled(False)
 
     def paramUpdated(self, paramname, value):
-        print "RegTab: Got updated param [%s]=[%s]" % (paramname, value)
         for p in self.paramList:
             if (p["paramname"] == paramname):
                 p["spinner"].setValue(float(value))

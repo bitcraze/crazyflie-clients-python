@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -31,6 +32,9 @@ Superclass for all tabs that implements common functions.
 __author__ = 'Bitcraze AB'
 __all__ = ['Tab']
 
+import logging
+logger = logging.getLogger(__name__)
+
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
@@ -60,7 +64,7 @@ class Tab(QtGui.QWidget):
                 if (len(s) > 0):
                     s += ","
             except Exception as e:
-                print e
+                logger.warning("Exception while adding tab to config and reading tab config")
             # Check this since tabs in config are opened when app is started
             if (self.tabName not in s):
                 s += "%s" % self.tabName
@@ -70,9 +74,8 @@ class Tab(QtGui.QWidget):
             self.tabWidget.removeTab(self.tabWidget.indexOf(self))
             try:
                 parts = Config().getParam(ConfigParams.OPEN_TABS).split(",")
-                print parts
             except Exception as e:
-                print e
+                logger.warning("Exception while removing tab from config and reading tab config")
                 parts = []
             s = ""
             for p in parts:

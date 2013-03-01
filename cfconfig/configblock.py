@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Configuration block compiler/decompiler
 # Fully static version (to be considered as a prototype...)!
 from ConfigParser import ConfigParser

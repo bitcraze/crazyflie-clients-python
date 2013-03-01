@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -52,10 +53,6 @@ class SerialDriver (CRTPDriver):
         uriRe = re.search("^serial://([a-z A-Z 0-9]+)/?([0-9]+)?$", uri);
         if not uriRe:
             raise Exception("Invalid serial URI")
-        
-        
-        #Decode URI (print for debug ...)
-        print "port:", uriRe.group(1), "Speed:", uriRe.group(2)
         
         port = uriRe.group(1)
         baudRate = 115200

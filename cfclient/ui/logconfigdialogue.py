@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -33,7 +34,11 @@ views in the UI.
 __author__ = 'Bitcraze AB'
 __all__ = ['LogConfigDialogue']
 
-import sys, os
+import sys
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 from PyQt4 import Qt, QtCore, QtGui, uic
 from PyQt4.QtCore import *
@@ -220,7 +225,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
             if (d.getName() == cText):
                 config = d
         if (config == None):
-            print "Error: Could not load config"
+            logger.warning("Could not load config")
         else:
             self.resetTrees()
             self.loggingPeriod.setText("%d" % config.getPeriod())
@@ -231,16 +236,17 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
                     varParent = parts[0]
                     varName = parts[1]
                     if (self.moveNodeByName(self.logTree, self.varTree, varParent, varName) == False):
-                        print "Could not find node!!"
+                        logger.warning("Could not find node!!")
                 elif (v.getVarType() == LogVariable.MEM_TYPE):
-                    print "Error: Mem vars not supported!"
+                    logger.warning("Error: Mem vars not supported!")
 
     def saveConfig(self):
         updatedConfig = self.createConfigFromSelection()
         directory = os.path.dirname(__file__)+"/logconfig/"
         nameFilter = "*.json"
         fileName = QFileDialog.getSaveFileName(self, "Save File", directory, nameFilter, nameFilter);
-        if (len(filename) > 0):
+        logger.info("Saving config to [%s]", fileName)
+        if (len(fileName) > 0):
             self.helper.logConfigReader.saveLogConfigFile(updatedConfig, fileName)
            
     def createConfigFromSelection(self):
@@ -249,15 +255,9 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
             parentName = node.text(NAME_FIELD)
             for leaf in self.getNodeChildren(node):
                 varName = leaf.text(NAME_FIELD)
-                varType = str(leaf.text(CTYPE_FIELD)).upper()
+                varType = str(leaf.text(CTYPE_FIELD))
                 completeName = "%s.%s" % (parentName, varName)
-                if ("INT" in varType):
-                    completeVarSize = "Log.%s" % varType[:-2]
-                else:
-                    completeVarSize = "Log.%s" % varType
-                newVar = LogVariable(completeName, eval(completeVarSize))
-                print "Setting: %s" % completeVarSize
-                newVar.setFetchAndStorageString(completeVarSize)
+                newVar = LogVariable(completeName, fetchAs=varType, storedAs=varType)
                 logconfig.addVariable(newVar)
         return logconfig
 

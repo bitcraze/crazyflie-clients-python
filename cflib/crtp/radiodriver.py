@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -33,7 +34,8 @@ This driver is used to communicate with the Crazyflie using the Crazyradio USB d
 __author__ = 'Bitcraze AB'
 __all__ = ['RadioDriver']
 
-
+import logging
+logger = logging.getLogger(__name__)
 
 from crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket
@@ -104,7 +106,7 @@ class RadioDriver (CRTPDriver):
         if self.cradio.version >= 0.4:
             self.cradio.setArc(10)
         else:
-            print "Warning: Radio version <0.4 will be obsoleted soon!"
+            logger.warning("Radio version <0.4 will be obsoleted soon!")
 
         self.cradio.setChannel(channel)
 
@@ -187,7 +189,7 @@ class RadioDriver (CRTPDriver):
         #FIXME: implements serial number in the Crazyradio driver!
         serial = "N/A"
 
-        print "v%s dongle with serial %s found" % (self.cradio.version, serial)
+        logger.info("v%s dongle with serial %s found", self.cradio.version, serial)
         found = []
 
         self.cradio.setArc(1)
@@ -262,7 +264,6 @@ class RadioDriverThread (threading.Thread):
                 #print "No ACK, still doing %d retries" % self.retryBeforeDisconnect
                 self.retryBeforeDisconnect = self.retryBeforeDisconnect - 1
                 if (self.retryBeforeDisconnect == 0 and self.linkErrorCallback != None):
-                    print "Bad reception, radio disconnected"
                     self.linkErrorCallback("Too many packets lost")
                 continue
             self.retryBeforeDisconnect = self.RETRYCOUNT_BEFORE_DISCONNECT

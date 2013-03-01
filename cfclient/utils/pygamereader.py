@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -75,7 +76,6 @@ class PyGameReader():
                         self.data["exit"] = True
                     else: # Generic cal for pitch/roll
                         self.data[key] = self.data[key] + self.inputMap[index]["scale"]
-                    print self.data["estop"]
             except Exception:
                 # Button not mapped, ignore..
                 pass

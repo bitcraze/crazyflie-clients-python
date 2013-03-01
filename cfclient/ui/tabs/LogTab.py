@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -91,5 +92,5 @@ class LogTab(Tab, param_tab_class):
                 
             self.logTree.addTopLevelItem(groupItem)
             self.logTree.expandItem(groupItem)
-   
+  
 

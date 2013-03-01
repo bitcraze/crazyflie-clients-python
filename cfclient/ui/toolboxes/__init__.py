@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -36,8 +37,13 @@ __all__ = []
 
 import os
 import glob
+import logging
+
+logger = logging.getLogger(__name__)
 
 foundToolboxes = [ os.path.basename(f)[:-3] for f in glob.glob(os.path.dirname(__file__)+"/[A-Za-z]*Toolbox.py")]
+
+logger.debug("Found toolboxes: %s", foundToolboxes)
 
 toolboxes = []
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -34,6 +35,8 @@ __all__ = ['Crazyradio']
 
 import os
 import usb
+import logging
+logger = logging.getLogger(__name__)
 
 #USB parameters
 CRADIO_VID = 0x1915
@@ -122,7 +125,7 @@ class Crazyradio:
             raise "This driver requires Crazyradio firmware V0.3+"
         
         if self.version < 0.4:
-            print "Warning: you should update to Crazyradio firmware V0.4+"
+            logger.warning("You should update to Crazyradio firmware V0.4+")
         
         #Reset the dongle to power up settings
         self.setDatarate(self.DR_2MPS)

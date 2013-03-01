@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -92,9 +93,5 @@ class Config():
             self.data = json.load(json_data)
             json_data.close()        
         except:
-            print "No configfile found, it will be created as changes are made.."
-
-    def __del__(self):
-        print "Should close file"
-
+            pass
 

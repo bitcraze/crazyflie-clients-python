@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -32,6 +33,9 @@ __author__ = 'Bitcraze AB'
 __all__ = ['FlightTab']
 
 import sys
+
+import logging
+logger = logging.getLogger(__name__)
 
 from time import time
 
@@ -135,7 +139,7 @@ class FlightTab(Tab, flight_tab_class):
             self.flightModeCombo.setCurrentIndex(1)
 
     def loggingError(self):
-        print "FlighTab: Callback of error in LogEntry :("
+        logger.warning("Callback of error in LogEntry :(")
 
     def logDataReceived(self, data):
         #print "FlighTab: Got callback for new data of length %d" % len(data)
@@ -159,17 +163,13 @@ class FlightTab(Tab, flight_tab_class):
             self.log.error.addCallback(self.loggingError)
             self.log.startLogging()
         else:
-            print "FlightTab: Could not setup logconfiguration!"
+            logger.warning("Could not setup logconfiguration after connection!")
     
     def disconnected(self, linkURI):
         self.ai.setRollPitch(0, 0)
         self.actualRoll.setText("")
         self.actualPitch.setText("")
         self.actualYaw.setText("")
-
-    def controllerModeChange(self, newIndex):
-        self.helper.inputDeviceReader.setControllerModeSignal.emit(newIndex + 1)
-        Config().setParam(ConfigParams.CONTROLLER_MODE, newIndex + 1)
 
     def updateIMUData(self, roll, pitch, yaw):
         self.actualRoll.setText(("%.2f" % roll));
@@ -202,22 +202,26 @@ class FlightTab(Tab, flight_tab_class):
                                             self.percentageToThrust(self.thrustLoweringSlewRateLimit.value()))
 
     def maxYawRateChanged(self):
+        logger.debug("MaxYawrate changed to %d", self.maxYawRate.value())
         self.helper.inputDeviceReader.updateMaxYawRateSignal.emit(self.maxYawRate.value())
         if (self.isInCrazyFlightmode == True):
             Config().setParam(ConfigParams.CRAZY_MAX_YAWRATE, self.maxYawRate.value())
 
     def maxAngleChanged(self):
+        logger.debug("MaxAngle changed to %d", self.maxAngle.value())
         self.helper.inputDeviceReader.updateMaxRPAngleSignal.emit(self.maxAngle.value())
         if (self.isInCrazyFlightmode == True):
             Config().setParam(ConfigParams.CRAZY_MAX_RP_ANGLE, self.maxAngle.value())
 
     def calValueChanged(self):
+        logger.debug("Trim changed in UI: roll=%.2f, pitch=%.2f", self.targetCalRoll.value(), self.targetCalPitch.value())
         self.helper.inputDeviceReader.updateRPCalSignal.emit(self.targetCalRoll.value(), self.targetCalPitch.value())
         if (self.isInCrazyFlightmode == True):
             Config().setParam(ConfigParams.CAL_ROLL, self.targetCalRoll.value())
             Config().setParam(ConfigParams.CAL_PITCH, self.targetCalPitch.value())
 
     def calUpdateFromInput(self, rollCal, pitchCal):
+        logger.debug("Trim changed on joystick: roll=%.2f, pitch=%.2f", rollCal, pitchCal)
         self.targetCalRoll.setValue(rollCal)
         self.targetCalPitch.setValue(pitchCal)
         if (self.isInCrazyFlightmode == True):
@@ -236,7 +240,7 @@ class FlightTab(Tab, flight_tab_class):
 
     def flightmodeChange(self, item):
         Config().setParam(ConfigParams.FLIGHT_MODE, self.flightModeCombo.itemText(item))
-        #print "Changed flightmode to %i %s" % (item, self.flightModeCombo.itemText(item))
+        logger.info("Changed flightmode to %s", self.flightModeCombo.itemText(item))
         self.isInCrazyFlightmode = False
         if (item == 2): # Normal
             self.maxAngle.setValue(15)
@@ -284,5 +288,5 @@ class FlightTab(Tab, flight_tab_class):
     @pyqtSlot(bool)
     def changeXmode(self, checked):
         self.helper.cf.commander.setClientSideXModeEnabled(checked)
-        pass
+        logger.debug("Clientside X-mode enabled: %s", checked)
 

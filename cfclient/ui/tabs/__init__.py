@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -36,11 +37,15 @@ __all__ = []
 
 import os
 import glob
+import logging
+
+logger = logging.getLogger(__name__)
 
 foundTabs = [ os.path.basename(f)[:-3] for f in glob.glob(os.path.dirname(__file__)+"/[A-Za-z]*Tab.py")]
 
-available = []
+logger.debug("Found tabs: %s", foundTabs)
 
+available = []
 
 for tab in foundTabs:
     tabModule = __import__(tab, globals(), locals(), [tab], -1)

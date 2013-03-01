@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -46,6 +47,9 @@ import json
 import os
 import glob
 import traceback
+import logging
+
+logger = logging.getLogger(__name__)
 
 from pygamereader import PyGameReader
 
@@ -127,9 +131,8 @@ class JoystickReader(QThread):
         try:
             configsfound = [ os.path.basename(f) for f in glob.glob("configs/input/[A-Za-z]*.json")]
             self.inputConfig = []
-            print "Input: Reading configfiles:",
             for conf in configsfound:            
-                print "%s" % (conf),
+                logger.info("Parsing [%s]", conf)
                 json_data = open (os.getcwd()+"/configs/input/%s"%conf)                
                 self.data = json.load(json_data)
                 newInputDevice = {}
@@ -145,8 +148,7 @@ class JoystickReader(QThread):
                 json_data.close()
                 self.listOfConfigs.append(conf[:-5])
         except Exception as e:
-            print "Input: Exception while parsing inputconfig file: %s " %e
-        print ""
+            logger.warning("Exception while parsing inputconfig file: %s ", e)
 
     def getAvailableDevices(self):
         """List all available input devices."""
@@ -277,6 +279,7 @@ class JoystickReader(QThread):
             self.calUpdateSignal.emit(rollcal, pitchcal)
             self.sendControlSetpointSignal.emit(roll + rollcal, pitch + pitchcal, yaw, thrust)
         except Exception:
+            logger.warning("Exception while reading inputdevice: %s", traceback.format_exc())
             self.inputDeviceErrorSignal.emit("Error reading from input device\n\n%s"%traceback.format_exc())
             self.readTimer.stop()
 

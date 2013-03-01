@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __                           
 #  +------+      / __ )(_) /_______________ _____  ___ 
@@ -31,7 +32,11 @@ The main file for the Crazyflie control application.
 __author__ = 'Bitcraze AB'
 __all__ = ['MainUI']
 
-import sys, os
+import sys
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 from PyQt4 import Qt, QtCore, QtGui, uic
 from PyQt4.QtCore import *
@@ -191,7 +196,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                 if (t != None):
                     t.toggle() # Toggle though menu so it's also marked as open there
         except Exception as e:
-            print e
+            logger.warning("Exception while opening tabs [%s]", e)
 
         # Populate combo box with available input device configurations
         for c in self.joystickReader.getListOfConfigs():
@@ -207,8 +212,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                     # If we can't find it in the list save a new config using the current item
                     Config().setParam(ConfigParams.INPUT_SELECT, self.inputDeviceSelector.currentText())
             except Exception as e:
-                print e
-                pass # Do nothing, just use the default if we run into problems
+                logger.warning("Exception while setting input config")
             self.inputDeviceSelector.setEnabled(True)
 
     def setUIState(self, newState, linkURI=""):
@@ -284,11 +288,10 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.log.error.addCallback(self.loggingError)
             self.log.startLogging()
         else:
-            print "MainUI: Could not setup loggingblock!"
+            logger.warning("Could not setup loggingblock!")
 
     def loggingError(self, error):
-        # Not handled..
-        return
+        logger.warn("logging error %s", error)
 
     def connectionLost(self, linkURI, msg):
         if (self.isActiveWindow()):
