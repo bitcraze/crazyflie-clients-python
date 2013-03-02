@@ -1,6 +1,5 @@
 {
   "logconfig": {
-    "hash": "BABEBABE",
     "logblock": 
     {"name": "IMU Gyro", "period":20, "min":-10000, "max":10000,
      "variables": [

@@ -1,6 +1,5 @@
 {
   "logconfig": {
-    "hash": "BABEBABE",
     "logblock":
     {"name": "IMU Acc", "period":20, "min":-1000, "max":1000,
      "variables": [

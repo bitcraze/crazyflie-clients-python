@@ -1,6 +1,5 @@
 {
   "logconfig": {
-    "hash": "BABEBABE",
     "logblock": 
     {"name": "Battery", "period":1000, "min":3, "max":5,
      "variables": [

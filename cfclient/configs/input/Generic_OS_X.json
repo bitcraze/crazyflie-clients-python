@@ -1,6 +1,5 @@
 {
   "inputconfig": {
-    "hash": "BABEBABE",
     "inputdevice":
     {"name": "Generic 2-axis gamepad on OS X", "updateperiod":10,
      "axis": [

@@ -1,6 +1,5 @@
 {
   "logconfig": {
-    "hash": "BABEBABE",
     "logblock":
     {"name": "Stabalizer", "period":20, "min":-180, "max":180,
      "variables": [
