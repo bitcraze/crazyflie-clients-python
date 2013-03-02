@@ -219,6 +219,6 @@ class LogConfigReader():
         saveConfig['logconfig'] = logconf
 
         json_data=open(filename, 'w')
-        json_data.write(json.dumps(saveConfig))
+        json_data.write(json.dumps(saveConfig, indent=2))
         json_data.close()
 

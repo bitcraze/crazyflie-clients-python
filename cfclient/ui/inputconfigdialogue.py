@@ -296,7 +296,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         filename = "configs/input/%s.json" % self.profileCombo.currentText()
         logger.info("Saving config to [%s]", filename)
         json_data=open(filename, 'w')
-        json_data.write(json.dumps(saveConfig))
+        json_data.write(json.dumps(saveConfig, indent=2))
         json_data.close()
 
         self.rawinputreader.stopReading()
