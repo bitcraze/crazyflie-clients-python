@@ -190,6 +190,15 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         except:
             self.period = 0
 
+    def showErrorPopup(self, caption, message):
+        self.box = QMessageBox()
+        self.box.setWindowTitle(caption)
+        self.box.setText(message)
+        #self.box.setButtonText(1, "Ok")
+        self.box.setWindowFlags(Qt.Dialog|Qt.MSWindowsFixedSizeDialogHint)
+        self.box.setWindowModality(Qt.ApplicationModal)
+        self.box.show()
+
     def updateToc(self):
         self.logTree.clear()
         
@@ -246,8 +255,12 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         nameFilter = "*.json"
         fileName = QFileDialog.getSaveFileName(self, "Save File", directory, nameFilter, nameFilter);
         logger.info("Saving config to [%s]", fileName)
-        if (len(fileName) > 0):
-            self.helper.logConfigReader.saveLogConfigFile(updatedConfig, fileName)
+        try:
+           self.helper.logConfigReader.saveLogConfigFile(updatedConfig, fileName)
+           self.close()
+        except Exception as e:
+            self.showErrorPopup("Error when saving file", "Error: %s" % e)
+
            
     def createConfigFromSelection(self):
         logconfig = LogConfig(str(self.configNameCombo.currentText()), self.period)
