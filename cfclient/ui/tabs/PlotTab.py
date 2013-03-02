@@ -174,5 +174,5 @@ class PlotTab(Tab, plot_tab_class):
         except Exception as e:
             # When switching what to log we might still get logging packets... and
             # that will not be pretty so let's just ignore the probolem ;-)
-            logger.warning("Exception for plot data: ", e)            
+            logger.warning("Exception for plot data: %s", e)            
 
