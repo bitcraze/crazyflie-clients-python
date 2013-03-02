@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -23,17 +23,18 @@
 
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA  02110-1301, USA.
 
 """
-A generic TableOfContents module that is used to fetch, store and minipulate a TOC for 
-logging or parameters.
+A generic TableOfContents module that is used to fetch, store and minipulate
+a TOC for logging or parameters.
 """
 
 __author__ = 'Bitcraze AB'
 __all__ = ['TocElement', 'Toc', 'TocFetcher']
 
-from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
+from cflib.crtp.crtpstack import CRTPPacket
 import struct
 
 import logging
@@ -46,9 +47,10 @@ CMD_TOC_ELEMENT = 0
 CMD_TOC_INFO = 1
 
 # Possible states when receiving TOC
-IDLE            = "IDLE"
-GET_TOC_INFO     = "GET_TOC_INFO"
+IDLE = "IDLE"
+GET_TOC_INFO = "GET_TOC_INFO"
 GET_TOC_ELEMENT = "GET_TOC_ELEMENT"
+
 
 class TocElement:
     """An element in the TOC."""
@@ -62,16 +64,17 @@ class TocElement:
     pytype = ""
     access = RO_ACCESS
 
+
 class Toc:
     """Container for TocElements."""
 
     def __init__(self):
         self.toc = {}
-    
+
     def clear(self):
         """Clear the TOC"""
         self.toc = {}
-    
+
     def addElement(self, element):
         """Add a new TocElement to the TOC container."""
         try:
@@ -81,7 +84,8 @@ class Toc:
             self.toc[element.group][element.name] = element
 
     def getByCompleteName(self, completeName):
-        """Get a TocElement element identified by complete name from the container."""
+        """Get a TocElement element identified by complete name from the
+        container."""
         try:
             return self.getByIdent(self.getElementId(completeName))
         except:
@@ -89,7 +93,8 @@ class Toc:
             return None
 
     def getElementId(self, completeName):
-        """Get the TocElement element id-number of the element with the supplied name."""
+        """Get the TocElement element id-number of the element with the
+        supplied name."""
         [group, name] = completeName.split(".")
         element = self.getElement(group, name)
         if element:
@@ -104,26 +109,30 @@ class Toc:
         for group in self.toc.keys():
             for name in self.toc[group].keys():
                 completeNames.append("%s.%s" % (group, name))
-        return completeNames    
+        return completeNames
 
     def getElement(self, group, name):
-        """Get a TocElement element identified by name and group from the container."""
+        """Get a TocElement element identified by name and group from the
+        container."""
         try:
             return self.toc[group][name]
         except Exception:
             return None
-    
+
     def getByIdent(self, ident):
-        """Get a TocElement element identified by index number from the container."""
+        """Get a TocElement element identified by index number from the
+        container."""
         for group in self.toc.keys():
             for name in self.toc[group].keys():
                 if self.toc[group][name].ident == ident:
                     return self.toc[group][name]
         return None
 
+
 class TocFetcher:
     """Fetches TOC entries from the Crazyflie"""
-    def __init__(self, crazyflie, elementClass, port, tocHolder, finishedCallback):
+    def __init__(self, crazyflie, elementClass, port, tocHolder,
+                 finishedCallback):
         self.cf = crazyflie
         self.port = port
         self.toc = tocHolder
@@ -140,9 +149,9 @@ class TocFetcher:
         # Request the TOC CRC
         self.state = GET_TOC_INFO
         pk = CRTPPacket()
-        pk.setHeader(self.port, TOC_CHANNEL);
+        pk.setHeader(self.port, TOC_CHANNEL)
         pk.data = (CMD_TOC_INFO, )
-        self.cf.sendLinkPacket(pk, expectAnswer=True)        
+        self.cf.sendLinkPacket(pk, expectAnswer=True)
 
     def tocFetchFinished(self):
         self.cf.incomming.removePortCallback(self.port, self.incomming)
@@ -152,35 +161,43 @@ class TocFetcher:
     def incomming(self, packet):
         chan = packet.getChannel()
         if (chan != 0):
-            logger.error("Got packet that was not on TOC channel, TOC fetch will probably not succeed")
+            logger.error("Got packet that was not on TOC channel, TOC fetch"
+                         " will probably not succeed")
             return
-        cmd = packet.datal[0]
         payload = struct.pack("B"*(len(packet.datal)-1), *packet.datal[1:])
-    
+
         #logger.debug("%s", packet)
 
         if (self.state == GET_TOC_INFO):
             [self.nbrOfItems, crc] = struct.unpack("<BI", payload[:5])
-            logger.debug("[%d]: Got TOC CRC, %d items and crc=0x%08X", self.port, self.nbrOfItems, crc)
+            logger.debug("[%d]: Got TOC CRC, %d items and crc=0x%08X",
+                         self.port, self.nbrOfItems, crc)
             if (crc != 0x5555):
                 self.state = GET_TOC_ELEMENT
                 self.requestedIndex = 0
                 self.requestTocElement(self.requestedIndex)
         elif (self.state == GET_TOC_ELEMENT):
-            # Always add new element, but only request new if it's not the last one.
+            # Always add new element, but only request new if it's not the
+            # last one.
             if self.requestedIndex != ord(payload[0]):
-                # TODO: There might be a timing issue here with resending old packets while loosing new ones
-                #       Then if 7 is requested but 6 is send back due to timing issues with the resend
-                #       while 7 is lost then we will never resend for 7. This is pretty hard to reproduce but happens...
-                log.warning("[%d]: Was expecting %d but got %d", self.port, self.requestedIndex, ord(payload[0]))
+                # TODO: There might be a timing issue here with resending old
+                #       packets while loosing new ones. Then if 7 is requested
+                #       but 6 is send back due to timing issues with the resend
+                #       while 7 is lost then we will never resend for 7.
+                #       This is pretty hard to reproduce but happens...
+                logging.warning("[%d]: Was expecting %d but got %d",
+                                self.port, self.requestedIndex,
+                                ord(payload[0]))
                 return
             self.toc.addElement(self.elementClass(payload))
-            logger.debug("Added element [%s]", self.elementClass(payload).ident)
+            logger.debug("Added element [%s]",
+                         self.elementClass(payload).ident)
             if (self.requestedIndex < (self.nbrOfItems-1)):
-                logger.debug("[%d]: More variables, requesting index %d", self.port, self.requestedIndex+1)
+                logger.debug("[%d]: More variables, requesting index %d",
+                             self.port, self.requestedIndex+1)
                 self.requestedIndex = self.requestedIndex+1
-                self.requestTocElement(self.requestedIndex)                    
-            else: # No more variables in TOC
+                self.requestTocElement(self.requestedIndex)
+            else:  # No more variables in TOC
                 # TODO: Calc CRC
                 # TODO: Save TOC
                 self.tocFetchFinished()
@@ -188,8 +205,6 @@ class TocFetcher:
     def requestTocElement(self, index):
         logger.debug("Requesting index %d on port %d", index, self.port)
         pk = CRTPPacket()
-        pk.setHeader(self.port, TOC_CHANNEL);
+        pk.setHeader(self.port, TOC_CHANNEL)
         pk.data = (CMD_TOC_ELEMENT, index)
         self.cf.sendLinkPacket(pk, expectAnswer=True)
-
-

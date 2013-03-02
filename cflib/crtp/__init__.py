@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -23,7 +23,8 @@
 
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA  02110-1301, USA.
 
 """
 Scans and creates communication interfaces.
@@ -33,8 +34,6 @@ __author__ = 'Bitcraze AB'
 __all__ = []
 
 
-import sys
-import os
 import logging
 logger = logging.getLogger(__name__)
 
@@ -47,6 +46,7 @@ from .exceptions import WrongUriType
 drivers = [RadioDriver, SerialDriver, UdpDriver, DebugDriver]
 instances = []
 
+
 def initDrivers():
     """ Initialize all the drivers. """
     for d in drivers:
@@ -54,6 +54,7 @@ def initDrivers():
             instances.append(d())
         except Exception:
             continue
+
 
 def scanInterfaces():
     """ Scan all the interfaces for available Crazyflies """
@@ -69,6 +70,7 @@ def scanInterfaces():
             continue
     return available
 
+
 def getDriver(uri, linkQualityCallback=None, linkErrorCallback=None):
     """ Return the link driver for the given URI """
     for d in instances:
@@ -77,4 +79,3 @@ def getDriver(uri, linkQualityCallback=None, linkErrorCallback=None):
             return d
         except WrongUriType:
             continue
-

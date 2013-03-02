@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -23,65 +23,68 @@
 
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA  02110-1301, USA.
 
 """
 CRTP Driver main class.
 """
 
 __author__ = 'Bitcraze AB'
-__all__ = ['CRTPDruiver']
+__all__ = ['CRTPDriver']
 
 
 class CRTPDriver:
     """ CTRP Driver main class
-    
+
     This class in inherited by all the CRTP link drivers.
     """
-    
+
     def __init__(self):
-        """Driver constructor. Throw an exception if the driver is unable to open
-        the URI
+        """Driver constructor. Throw an exception if the driver is unable to
+        open the URI
         """
-        
+
     def connect(self, uri, linkQualityCallback, linkErrorCallback):
         """Connect the driver to a specified URI
-        
+
         @param uri Uri of the link to open
         @param linkQualityCallback Callback to report link quality in percent
-        @param linkErrorCallback Callback to report errors (will result in disconnection)
+        @param linkErrorCallback Callback to report errors (will result in
+               disconnection)
         """
-    
+
     def sendPacket(self, pk):
         """Send a CRTP packet"""
         None
-    
+
     def receivePacket(self, wait=0):
         """Receive a CRTP packet.
-        
+
         @param wait The time to wait for a packet in second. -1 means forever
-        
+
         @return One CRTP packet or None if no packet has been received.
         """
-        return None;
+        return None
 
     def scanInterface(self):
         """
-        Scan interface for available Crazyflie quadcopters and return a list witha them.
+        Scan interface for available Crazyflie quadcopters and return a list
+        witha them.
         """
-        return [];
+        return []
 
     def enum(self):
-        """Enumerate, and return a list, of the available link URI on this 
+        """Enumerate, and return a list, of the available link URI on this
         system
         """
-        return ();
-    
+        return ()
+
     def getHelp(self):
         """return the help message on how to form the URI for this driver
         None means no help
         """
         return None
-    
+
     def close(self):
-        None;
+        None

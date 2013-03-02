@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -23,7 +23,8 @@
 
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA  02110-1301, USA.
 
 """ CRTP UDP Driver. Work either with the UDP server or with an UDP device
 See udpserver.py for the protocol"""
@@ -35,78 +36,64 @@ __all__ = ['UdpDriver']
 from .crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket
 from .exceptions import WrongUriType
-import sys
-from socket import *
-import threading
 import Queue
 import re
-import time
 import struct
+from socket import socket
+
 
 class UdpDriver (CRTPDriver):
     def __init__(self):
         None
-        
+
     def connect(self, uri, linkQualityCallback, linkErrorCallback):
         #check if the URI is a radio URI
         if not re.search("^udp://", uri):
             raise WrongUriType("Not an UDP URI")
-        
-        self.queue = Queue.Queue();
-        self.socket = socket(AF_INET,SOCK_DGRAM)
+
+        self.queue = Queue.Queue()
+        self.socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.addr = ("localhost", 7777)
         self.socket.connect(self.addr)
-        
+
         #Add this to the server clients list
-        self.socket.sendto("\xFF\x01\x01\x01",self.addr)
-    
+        self.socket.sendto("\xFF\x01\x01\x01", self.addr)
+
     def receivePacket(self, time=0):
         data, addr = self.socket.recvfrom(1024)
-        
+
         if data:
             data = struct.unpack('b'*(len(data)-1), data[0:len(data)-1])
             pk = CRTPPacket()
             pk.port = data[0]
             pk.data = data[1:]
             return pk
-        
 
-        try:        
-            if time==0:
+        try:
+            if time == 0:
                 return self.rxqueue.get(False)
-            elif time<0:
+            elif time < 0:
                 while True:
-                    return self.rxqueue.get(True, 10);
+                    return self.rxqueue.get(True, 10)
             else:
-                return self.rxqueue.get(True, time);
+                return self.rxqueue.get(True, time)
         except Queue.Empty:
             return None
-    
+
     def sendPacket(self, pk):
-        #self.queue.put(pk);
-        if type(pk.data)==type(''):
-            raw = (pk.port, )+struct.unpack("B"*len(pk.data), pk.data)
-        else:
-            raw = (pk.port, )
-            for i in tuple(pk.data):
-                if type(i)==type(''):
-                    i = struct.unpack('B', i)[0]
-                raw += (i, )
+        raw = (pk.port, )+struct.unpack("B"*len(pk.data), pk.data)
 
         cksum = 0
         for i in raw:
             cksum += i
-        
+
         cksum %= 256
-        
+
         data = ''.join(chr(v) for v in (raw + (cksum,)))
-        
+
         #print tuple(data)
-        self.socket.sendto(data,self.addr)
-    
+        self.socket.sendto(data, self.addr)
+
     def close(self):
         #Remove this to the server clients list
-        self.socket.sendto("\xFF\x01\x02\x02",self.addr)
-
-
-
+        self.socket.sendto("\xFF\x01\x02\x02", self.addr)
