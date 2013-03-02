@@ -1,0 +1,19 @@
+{
+  "inputconfig": {
+    "hash": "BABEBABE",
+    "inputdevice":
+    {"name": "Generic 2-axis gamepad on OS X", "updateperiod":10,
+     "axis": [
+          {"name":"Roll", "type":"Input.AXIS", "id":3, "scale":1.0, "key":"roll"},
+          {"name":"Pitch", "type":"Input.AXIS", "id":4, "scale":-1.0, "key":"pitch"},
+          {"name":"Yaw", "type":"Input.AXIS", "id":0, "scale":1.0, "key":"yaw"},
+          {"name":"Thrust", "type":"Input.AXIS", "id":1, "scale":-1.0, "key":"thrust"},
+          {"name":"Pitch Cal+", "type":"Input.BUTTON", "id":6, "scale":-1.0, "key":"pitchcal"},
+          {"name":"Pitch Cal-", "type":"Input.BUTTON", "id":4, "scale":1.0, "key":"pitchcal"},
+          {"name":"Roll Cal +", "type":"Input.BUTTON", "id":5, "scale":1.0, "key":"rollcal"},
+          {"name":"Roll Cal -", "type":"Input.BUTTON", "id":7, "scale":-1.0, "key":"rollcal"},
+          {"name":"Killswtich", "type":"Input.BUTTON", "id":14, "scale":1.0, "key":"estop"},
+          {"name":"Exit", "type":"Input.BUTTON", "id":12, "scale":1.0, "key":"exit"}
+     ]}
+  }
+}

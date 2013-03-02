@@ -183,6 +183,9 @@
    <property name="text">
     <string>Exit</string>
    </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>      
   </action>
   <action name="menuItemRegulation">
    <property name="checkable">
@@ -220,6 +223,9 @@
    <property name="text">
     <string>About</string>
    </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>   
   </action>
   <action name="menuItemQuickConnect">
    <property name="text">
@@ -230,6 +236,9 @@
    <property name="text">
     <string>Configure Input device</string>
    </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>   
   </action>
   <action name="actionSelect_input_device">
    <property name="text">
@@ -255,11 +264,17 @@
    <property name="text">
     <string>Logging configurations</string>
    </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>      
   </action>
   <action name="actionOptions">
    <property name="text">
     <string>Options</string>
    </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>      
   </action>
  </widget>
  <resources/>
