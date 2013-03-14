@@ -51,7 +51,7 @@ class Console:
         Initialize the console and register it to receive data from the copter.
         """
         self.cf = crazyflie
-        self.cf.incomming.addPortCallback(CRTPPort.CONSOLE, self.incoming)
+        self.cf.add_port_callback(CRTPPort.CONSOLE, self.incoming)
 
     def incoming(self, packet):
         """

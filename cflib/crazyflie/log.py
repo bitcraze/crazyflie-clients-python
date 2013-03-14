@@ -88,7 +88,7 @@ class LogEntry:
         self.period = logconf.getPeriod()/10
         self.blockCreated = False
 
-    def setPeriod(self, period):
+    def set_period(self, period):
         real_period = period/10  # Period set in 10th of ms
         if (real_period > 0 and real_period < 256):
             self.period = period
@@ -96,13 +96,13 @@ class LogEntry:
             logger.warning("LogEntry: Warning, period %d=>%d is not"
                            " accepted!", period, real_period)
 
-    def startLogging(self):
+    def start(self):
         if (self.cf.link is not None):
             if (self.blockCreated is False):
                 logger.debug("First time block is started, add block")
                 self.blockCreated = True
                 pk = CRTPPacket()
-                pk.setHeader(5, CHAN_SETTINGS)
+                pk.set_header(5, CHAN_SETTINGS)
                 # TODO: Fix the period!
                 pk.data = (CMD_CREATE_BLOCK, self.blockId)
                 for v in self.logconf.getVariables():
@@ -114,31 +114,31 @@ class LogEntry:
                     else:  # Item in TOC
                         logger.debug("Adding %s with id=%d and type=0x%02X",
                                      v.getName(),
-                                     self.cf.log.getTOC().getElementId(
+                                     self.cf.log.toc.get_element_id(
                                      v.getName()), v.getStoredFetchAs())
                         pk.data += struct.pack('<B', v.getStoredFetchAs())
-                        pk.data += struct.pack('<B', self.cf.log.getTOC().
-                                               getElementId(v.getName()))
-                self.cf.sendLinkPacket(pk)
+                        pk.data += struct.pack('<B', self.cf.log.toc.
+                                               get_element_id(v.getName()))
+                self.cf.send_packet(pk)
 
             else:
                 logger.debug("Block already registered, starting logging"
                              " for %d", self.blockId)
                 pk = CRTPPacket()
-                pk.setHeader(5, CHAN_SETTINGS)
+                pk.set_header(5, CHAN_SETTINGS)
                 pk.data = (CMD_START_LOGGING, self.blockId, self.period)
-                self.cf.sendLinkPacket(pk)
+                self.cf.send_packet(pk)
 
-    def stopLogging(self):
+    def stop(self):
         if (self.cf.link is not None):
             if (self.blockId is None):
                 logger.warning("Stopping block, but no block registered")
             else:
                 logger.debug("Sending stop logging for block %d", self.blockId)
                 pk = CRTPPacket()
-                pk.setHeader(5, CHAN_SETTINGS)
+                pk.set_header(5, CHAN_SETTINGS)
                 pk.data = (CMD_STOP_LOGGING, self.blockId)
-                self.cf.sendLinkPacket(pk)
+                self.cf.send_packet(pk)
 
     def close(self):
         if (self.cf.link is not None):
@@ -148,19 +148,19 @@ class LogEntry:
                 logger.debug("LogEntry: Sending delete logging for block %d"
                              % self.blockId)
                 pk = CRTPPacket()
-                pk.setHeader(5, CHAN_SETTINGS)
+                pk.set_header(5, CHAN_SETTINGS)
                 pk.data = (CMD_DELETE_BLOCK, self.blockId)
-                self.cf.sendLinkPacket(pk)
+                self.cf.send_packet(pk)
                 self.blockId = None  # Wait until we get confirmation of delete
 
-    def unpackLogData(self, logData):
+    def unpack_log_data(self, logData):
         retData = {}
         dataIndex = 0
         #print len(logData)
         for v in self.logconf.getVariables():
-            size = LogTocElement.getSizeFromId(v.getFetchAs())
+            size = LogTocElement.get_size_from_id(v.getFetchAs())
             name = v.getName()
-            unpackstring = LogTocElement.getUnpackFromId(v.getFetchAs())
+            unpackstring = LogTocElement.get_unpack_string_from_id(v.getFetchAs())
             value = struct.unpack(unpackstring,
                                   logData[dataIndex:dataIndex+size])[0]
             dataIndex += size
@@ -182,7 +182,7 @@ class LogTocElement:
              0x09: ("uint64_t", '<Q', 8)}
 
     @staticmethod
-    def getIdFromCString(s):
+    def get_id_from_cstring(s):
         """Return variable type id given the C-storage name"""
         for t in LogTocElement.types.keys():
             if (LogTocElement.types[t][0] == s):
@@ -190,7 +190,7 @@ class LogTocElement:
         raise KeyError("Type [%s] not found in LogTocElement.types!" % s)
 
     @staticmethod
-    def getCStringFromId(ident):
+    def get_cstring_from_id(ident):
         """Return the C-storage name given the variable type id"""
         try:
             return LogTocElement.types[ident][0]
@@ -199,7 +199,7 @@ class LogTocElement:
                            "!" % ident)
 
     @staticmethod
-    def getSizeFromId(ident):
+    def get_size_from_id(ident):
         """Return the size in bytes given the variable type id"""
         try:
             return LogTocElement.types[ident][2]
@@ -208,7 +208,7 @@ class LogTocElement:
                            "!" % ident)
 
     @staticmethod
-    def getUnpackFromId(ident):
+    def get_unpack_string_from_id(ident):
         """Return the Python unpack string given the variable type id"""
         try:
             return LogTocElement.types[ident][1]
@@ -226,8 +226,8 @@ class LogTocElement:
 
         self.ident = ord(data[0])
 
-        self.ctype = LogTocElement.getCStringFromId(ord(data[1]))
-        self.pytype = LogTocElement.getUnpackFromId(ord(data[1]))
+        self.ctype = LogTocElement.get_cstring_from_id(ord(data[1]))
+        self.pytype = LogTocElement.get_unpack_string_from_id(ord(data[1]))
 
         self.access = ord(data[1]) & 0x10
 
@@ -240,22 +240,22 @@ class Log():
 
         self.cf = crazyflie
 
-        self.cf.incomming.addPortCallback(CRTPPort.LOGGING, self.incoming)
+        self.cf.add_port_callback(CRTPPort.LOGGING, self._new_packet_cb)
 
         self.tocUpdated = Caller()
         self.state = IDLE
         self.fakeTOCCRC = 0xBABEBABA
 
-    def newLogPacket(self, logconf):
+    def create_log_packet(self, logconf):
         """Create a new log configuration"""
         size = 0
         period = logconf.getPeriod() / 10
         for v in logconf.getVariables():
-            size += LogTocElement.getSizeFromId(v.getFetchAs())
+            size += LogTocElement.get_size_from_id(v.getFetchAs())
             # Check that we are able to find the variable in the TOC so
             # we can return error already now and not when the config is sent
             if (v.isTocVariable()):
-                if (self.toc.getByCompleteName(v.getName()) is None):
+                if (self.toc.get_element_by_complete_name(v.getName()) is None):
                     logger.warning("Log: %s not in TOC, this block cannot be"
                                    " used!", v.getName())
                     return None
@@ -266,22 +266,19 @@ class Log():
         else:
             return None
 
-    def getTOC(self):
-        return self.toc
-
-    def refreshTOC(self, refreshDoneCallback):
+    def refresh_toc(self, refreshDoneCallback):
         pk = CRTPPacket()
-        pk.setHeader(CRTPPort.LOGGING, 0)
+        pk.set_header(CRTPPort.LOGGING, 0)
         pk.data = (CMD_RESET_LOGGING, )
-        self.cf.sendLinkPacket(pk)
+        self.cf.send_packet(pk)
 
         self.toc = Toc()
         tocFetcher = TocFetcher(self.cf, LogTocElement, CRTPPort.LOGGING,
                                 self.toc, refreshDoneCallback)
-        tocFetcher.getToc()
+        tocFetcher.start()
 
-    def incoming(self, packet):
-        chan = packet.getChannel()
+    def _new_packet_cb(self, packet):
+        chan = packet.channel
         cmd = packet.datal[0]
         payload = struct.pack("B"*(len(packet.datal)-1), *packet.datal[1:])
 
@@ -299,9 +296,9 @@ class Log():
                                      newBlockId)
 
                         pk = CRTPPacket()
-                        pk.setHeader(5, CHAN_SETTINGS)
+                        pk.set_header(5, CHAN_SETTINGS)
                         pk.data = (CMD_START_LOGGING, newBlockId, 10)
-                        self.cf.sendLinkPacket(pk)
+                        self.cf.send_packet(pk)
                     else:
                         logger.warning("Error when adding blockId=%d, should"
                                        " tell listenders...", newBlockId)
@@ -316,7 +313,7 @@ class Log():
                     logger.warning("Error=%d when starting logging for "
                                    "block=%d", errorStatus, newBlockId)
         if (chan == CHAN_LOGDATA):
-            chan = packet.getChannel()
+            chan = packet.channel
             blockId = ord(packet.data[0])
             # timestamp = packet.data[0:4] # Not currently used
             logdata = packet.data[4:]
@@ -325,6 +322,6 @@ class Log():
                 if (b.blockId == blockId):
                     block = b
             if (block is not None):
-                block.unpackLogData(logdata)
+                block.unpack_log_data(logdata)
             else:
                 logger.warning("Error no LogEntry to handle block=%d", blockId)

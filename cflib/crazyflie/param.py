@@ -109,19 +109,19 @@ class Param():
     def __init__(self, crazyflie):
         self.cf = crazyflie
         self.paramUpdateCallbacks = {}
-        self.paramUpdater = ParamUpdater(self.cf, self.paramUpdated)
+        self.paramUpdater = _ParamUpdater(self.cf, self._param_updated)
         self.paramUpdater.start()
 
-    def paramUpdated(self, pk):
+    def _param_updated(self, pk):
         varId = pk.datal[0]
-        element = self.toc.getByIdent(varId)
+        element = self.toc.get_element_by_id(varId)
         s = struct.unpack(element.pytype, pk.data[1:])[0]
         s = s.__str__()
         completeName = "%s.%s" % (element.group, element.name)
         cb = self.paramUpdateCallbacks[completeName]
         cb.call(completeName, s)
 
-    def addParamUpdateCallback(self, paramname, cb):
+    def add_update_callback(self, paramname, cb):
         """
         Add a callback for a specific parameter name. This callback will be
         executed when a new value is read from the Crazyflie.
@@ -129,42 +129,42 @@ class Param():
         if ((paramname in self.paramUpdateCallbacks) is False):
             self.paramUpdateCallbacks[paramname] = Caller()
 
-        self.paramUpdateCallbacks[paramname].addCallback(cb)
+        self.paramUpdateCallbacks[paramname].add_callback(cb)
 
-    def refreshTOC(self, refreshDoneCallback):
+    def refresh_toc(self, refreshDoneCallback):
         """
         Initiate a refresh of the parameter TOC.
         """
         self.toc = Toc()
         tocFetcher = TocFetcher(self.cf, ParamTocElement,
                                 CRTPPort.PARAM, self.toc, refreshDoneCallback)
-        tocFetcher.getToc()
+        tocFetcher.start()
 
-    def requestParamUpdate(self, completeName):
+    def request_param_update(self, completeName):
         """
         Request an update of the value for the supplied parameter.
         """
-        self.paramUpdater.requestParamUpdate(
-            self.toc.getElementId(completeName))
+        self.paramUpdater.request_param_update(
+            self.toc.get_element_id(completeName))
 
-    def setParamValue(self, completeName, value):
+    def set_value(self, completeName, value):
         """
         Set the value for the supplied parameter.
         """
-        element = self.toc.getByCompleteName(completeName)
+        element = self.toc.get_element_by_complete_name(completeName)
         if (element is not None):
             varid = element.ident
             pk = CRTPPacket()
-            pk.setHeader(CRTPPort.PARAM, WRITE_CHANNEL)
+            pk.set_header(CRTPPort.PARAM, WRITE_CHANNEL)
             pk.data = struct.pack('<B', varid)
             pk.data += struct.pack(element.pytype, eval(value))
-            self.cf.sendLinkPacket(pk, expectAnswer=True)
+            self.cf.send_packet(pk, expectAnswer=True)
         else:
             logger.warning("Cannot set value for [%s], it's not in the TOC!",
                            completeName)
 
 
-class ParamUpdater(Thread):
+class _ParamUpdater(Thread):
     def __init__(self, cf, updatedCallback):
         Thread.__init__(self)
         self.setDaemon(True)
@@ -172,25 +172,22 @@ class ParamUpdater(Thread):
         self.updatedCallback = updatedCallback
         self.requestQueue = Queue()
         self.incommingQueue = Queue()
-        self.cf.incomming.addPortCallback(CRTPPort.PARAM, self.incomming)
+        self.cf.add_port_callback(CRTPPort.PARAM, self._new_packet_cb)
 
-    def incomming(self, pk):
-        if (pk.getChannel() != TOC_CHANNEL):
+    def _new_packet_cb(self, pk):
+        if (pk.channel != TOC_CHANNEL):
             self.updatedCallback(pk)
             self.incommingQueue.put(0)  # Don't care what we put, used to sync
 
-    def addUpdateRequest(self, varid):
-        self.requestQueue.put(varid)
-
-    def requestParamUpdate(self, varid):
+    def request_param_update(self, varid):
         logger.debug("Requesting update for varid %d", varid)
         pk = CRTPPacket()
-        pk.setHeader(CRTPPort.PARAM, READ_CHANNEL)
+        pk.set_header(CRTPPort.PARAM, READ_CHANNEL)
         pk.data = struct.pack('<B', varid)
-        self.cf.sendLinkPacket(pk, expectAnswer=True)
+        self.cf.send_packet(pk, expectAnswer=True)
 
     def run(self):
         while(True):
             varid = self.requestQueue.get()  # Wait for request update
-            self.requestParamUpdate(varid)  # Send request for update
+            self.request_param_update(varid)  # Send request for update
             self.incommingQueue.get()  # Blocking until reply arrives

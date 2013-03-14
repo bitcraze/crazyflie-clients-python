@@ -96,11 +96,11 @@ class LogVariable():
 
     def __init__(self, name = "", fetchAs = "uint8_t", varType = 0, storedAs = "", address = 0):
         self.name = name
-        self.fetchAs = LogTocElement.getIdFromCString(fetchAs)
+        self.fetchAs = LogTocElement.get_id_from_cstring(fetchAs)
         if (len(storedAs) == 0):
             self.storedAs = self.fetchAs
         else:
-            self.storedAs = LogTocElement.getIdFromCString(storedAs)
+            self.storedAs = LogTocElement.get_id_from_cstring(storedAs)
         self.address = address
         self.varType = varType
         self.fetchAndStoreageString = fetchAs
@@ -157,8 +157,8 @@ class LogVariable():
         return self.fetchAndStoreageString
 
     def __str__(self):
-        return "LogVariable: name=%s, store=%s, fetch=%s" % (self.name, LogTocElement.getCStringFromId(self.storedAs),
-                                                             LogTocElement.getCStringFromId(self.fetchAs))
+        return "LogVariable: name=%s, store=%s, fetch=%s" % (self.name, LogTocElement.get_cstring_from_id(self.storedAs),
+                                                             LogTocElement.get_cstring_from_id(self.fetchAs))
 
 class LogConfigReader():
     """Reads logging configurations from file"""

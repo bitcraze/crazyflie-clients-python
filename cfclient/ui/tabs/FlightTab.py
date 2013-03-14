@@ -89,8 +89,8 @@ class FlightTab(Tab, flight_tab_class):
         self.disconnectedSignal.connect(self.disconnected)
         self.connectionFinishedSignal.connect(self.connected)
         # Incomming signals
-        self.helper.cf.connectSetupFinished.addCallback(self.connectionFinishedSignal.emit)
-        self.helper.cf.disconnected.addCallback(self.disconnectedSignal.emit)
+        self.helper.cf.connectSetupFinished.add_callback(self.connectionFinishedSignal.emit)
+        self.helper.cf.disconnected.add_callback(self.disconnectedSignal.emit)
         self.helper.inputDeviceReader.inputUpdateSignal.connect(self.updateInputControl)
         self.helper.inputDeviceReader.calUpdateSignal.connect(self.calUpdateFromInput) 
 
@@ -112,14 +112,14 @@ class FlightTab(Tab, flight_tab_class):
         self.uiSetupReady()
         
         self.crazyflieXModeCheckbox.clicked.connect(
-                    lambda enabled: self.helper.cf.param.setParamValue("flightctrl.xmode", str(enabled)))
-        self.helper.cf.param.addParamUpdateCallback("flightctrl.xmode", 
+                    lambda enabled: self.helper.cf.param.set_value("flightctrl.xmode", str(enabled)))
+        self.helper.cf.param.add_update_callback("flightctrl.xmode", 
                     lambda name, checked: self.crazyflieXModeCheckbox.setChecked(eval(checked)))
         self.ratePidRadioButton.clicked.connect(
-                    lambda enabled: self.helper.cf.param.setParamValue("flightctrl.ratepid", str(enabled)))
+                    lambda enabled: self.helper.cf.param.set_value("flightctrl.ratepid", str(enabled)))
         self.angularPidRadioButton.clicked.connect(
-                    lambda enabled: self.helper.cf.param.setParamValue("flightctrl.ratepid", str(not enabled)))
-        self.helper.cf.param.addParamUpdateCallback("flightctrl.ratepid", 
+                    lambda enabled: self.helper.cf.param.set_value("flightctrl.ratepid", str(not enabled)))
+        self.helper.cf.param.add_update_callback("flightctrl.ratepid", 
                     lambda name, checked: self.ratePidRadioButton.setChecked(eval(checked)))
 
 
@@ -157,11 +157,11 @@ class FlightTab(Tab, flight_tab_class):
         #lg.addVariable(LogVariable("motor.m3", Log.UINT8))
         #lg.addVariable(LogVariable("motor.m4", Log.UINT8))
 
-        self.log = self.helper.cf.log.newLogPacket(lg)
+        self.log = self.helper.cf.log.create_log_packet(lg)
         if (self.log != None):
-            self.log.dataReceived.addCallback(self.logDataSignal.emit)
-            self.log.error.addCallback(self.loggingError)
-            self.log.startLogging()
+            self.log.dataReceived.add_callback(self.logDataSignal.emit)
+            self.log.error.add_callback(self.loggingError)
+            self.log.start()
         else:
             logger.warning("Could not setup logconfiguration after connection!")
     
@@ -287,6 +287,6 @@ class FlightTab(Tab, flight_tab_class):
 
     @pyqtSlot(bool)
     def changeXmode(self, checked):
-        self.helper.cf.commander.setClientSideXModeEnabled(checked)
+        self.helper.cf.commander.set_client_xmode(checked)
         logger.debug("Clientside X-mode enabled: %s", checked)
 

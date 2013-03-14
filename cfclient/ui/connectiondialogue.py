@@ -113,6 +113,6 @@ class ScannerThread(QThread):
 
     @pyqtSlot()
     def scan(self):
-        self.interfaceFoundSignal.emit(cflib.crtp.scanInterfaces())
+        self.interfaceFoundSignal.emit(cflib.crtp.scan_interfaces())
 
         

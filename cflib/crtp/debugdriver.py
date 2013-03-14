@@ -170,7 +170,7 @@ class DebugDriver (CRTPDriver):
 
         self.fakeflash = {}
 
-    def scanInterface(self):
+    def scan_interface(self):
         return [["debug://0/0", "Normal connect"],
                 ["debug://0/1", "Don't send anything back"],
                 ["debug://0/2", "Incomplete Log TOC"]]
@@ -207,7 +207,7 @@ class DebugDriver (CRTPDriver):
 
         self.nowAnswerCounter = 4
 
-    def receivePacket(self, time=0):
+    def receive_packet(self, time=0):
         if time == 0:
             try:
                 return self.queue.get(False)
@@ -224,7 +224,7 @@ class DebugDriver (CRTPDriver):
             except Queue.Empty:
                 return None
 
-    def sendPacket(self, pk):
+    def send_packet(self, pk):
         if (self.inhibitAnswers):
             self.nowAnswerCounter = self.nowAnswerCounter - 1
             logger.debug("Not answering with any data, will send link errori"
@@ -234,25 +234,25 @@ class DebugDriver (CRTPDriver):
                                        " shouldn't")
             return
 
-        if (pk.getPort() == 0xFF):
-            self.handleBootloader(pk)
-        elif (pk.getPort() == CRTPPort.DEBUGDRIVER):
-            self.handleDebugMessage(pk)
-        elif (pk.getPort() == CRTPPort.COMMANDER):
+        if (pk.port == 0xFF):
+            self._handle_bootloader(pk)
+        elif (pk.port == CRTPPort.DEBUGDRIVER):
+            self._handle_debugmessage(pk)
+        elif (pk.port == CRTPPort.COMMANDER):
             pass
-        elif (pk.getPort() == CRTPPort.LOGGING):
-            self.handleLogging(pk)
-        elif (pk.getPort() == CRTPPort.PARAM):
+        elif (pk.port == CRTPPort.LOGGING):
+            self._handle_logging(pk)
+        elif (pk.port == CRTPPort.PARAM):
             self.handleParam(pk)
         else:
             logger.warning("Not handling incomming packets on port [%d]",
-                           pk.getPort())
+                           pk.port)
 
-    def handleBootloader(self, pk):
+    def _handle_bootloader(self, pk):
         cmd = pk.datal[1]
         if (cmd == 0x10):  # Request info about copter
             p = CRTPPacket()
-            p.setHeader(0xFF, 0xFF)
+            p.set_header(0xFF, 0xFF)
             pageSize = 1024
             buffPages = 10
             flashPages = 100
@@ -266,7 +266,7 @@ class DebugDriver (CRTPDriver):
             [page, addr] = struct.unpack('<HH', p.data[0:4])
         elif (cmd == 0x18):  # Flash page
             p = CRTPPacket()
-            p.setHeader(0xFF, 0xFF)
+            p.set_header(0xFF, 0xFF)
             p.data = struct.pack('<BBH', 0xFF, 0x18, 1)
             self.queue.put(p)
         elif (cmd == 0xFF):  # Reset to firmware
@@ -274,8 +274,8 @@ class DebugDriver (CRTPDriver):
         else:
             logger.warning("Bootloader: Unknown command 0x%02X", cmd)
 
-    def handleDebugMessage(self, pk):
-        if (pk.getChannel() == 0):
+    def _handle_debugmessage(self, pk):
+        if (pk.channel == 0):
             cmd = struct.unpack("B", pk.data[0])[0]
             if (cmd == 0):  # Fake link quality
                 newLinkQuality = struct.unpack("B", pk.data[1])[0]
@@ -287,33 +287,33 @@ class DebugDriver (CRTPDriver):
                                cmd)
         else:
             logger.warning("Debug port: Not handling channel=%d",
-                           pk.getChannel())
+                           pk.channel)
 
-    def handleTocAccess(self, pk):
-        chan = pk.getChannel()
+    def _handle_toc_access(self, pk):
+        chan = pk.channel
         cmd = struct.unpack("B", pk.data[0])[0]
-        logger.info("TOC access on port %d", pk.getPort())
+        logger.info("TOC access on port %d", pk.port)
         if (chan == 0):  # TOC Access
             cmd = struct.unpack("B", pk.data[0])[0]
             if (cmd == 0):  # Reqest variable info
                 p = CRTPPacket()
-                p.setHeader(pk.getPort(), 0)
+                p.set_header(pk.port, 0)
                 varIndex = 0
                 if (len(pk.data) > 1):
                     varIndex = struct.unpack("B", pk.data[1])[0]
-                    logger.debug("TOC[%d]: Requesting ID=%d", pk.getPort(),
+                    logger.debug("TOC[%d]: Requesting ID=%d", pk.port,
                                  varIndex)
                 else:
                     logger.debug("TOC[%d]: Requesting first index..surprise,"
-                                 " it 0 !", pk.getPort())
+                                 " it 0 !", pk.port)
 
-                if (pk.getPort() == CRTPPort.LOGGING):
+                if (pk.port == CRTPPort.LOGGING):
                     l = self.fakeLogToc[varIndex]
-                if (pk.getPort() == CRTPPort.PARAM):
+                if (pk.port == CRTPPort.PARAM):
                     l = self.fakeParamToc[varIndex]
 
                 vartype = l["vartype"]
-                if (pk.getPort() == CRTPPort.PARAM and l["writable"] is True):
+                if (pk.port == CRTPPort.PARAM and l["writable"] is True):
                     vartype = vartype | (0x10)
 
                 p.data = struct.pack("<BBB", cmd, l["varid"], vartype)
@@ -332,24 +332,24 @@ class DebugDriver (CRTPDriver):
                                 " varIndex => 5")
 
             if (cmd == 1):  # TOC CRC32 request
-                if (pk.getPort() == CRTPPort.LOGGING):
+                if (pk.port == CRTPPort.LOGGING):
                     tocLen = len(self.fakeLogToc)
-                if (pk.getPort() == CRTPPort.PARAM):
+                if (pk.port == CRTPPort.PARAM):
                     tocLen = len(self.fakeParamToc)
                 logger.info("TOC[%d]: Requesting TOC CRC, sending back fake"
-                            " stuff: %d", pk.getPort(), len(self.fakeLogToc))
+                            " stuff: %d", pk.port, len(self.fakeLogToc))
                 p = CRTPPacket()
-                p.setHeader(pk.getPort(), 0)
+                p.set_header(pk.port, 0)
                 p.data = struct.pack('<BBIBB', 1, tocLen, 0xBCCFBCCF, 16, 24)
                 self.queue.put(p)
 
     def handleParam(self, pk):
-        chan = pk.getChannel()
+        chan = pk.channel
         cmd = struct.unpack("B", pk.data[0])[0]
-        logger.debug("PARAM: Port=%d, Chan=%d, cmd=%d", pk.getPort(),
+        logger.debug("PARAM: Port=%d, Chan=%d, cmd=%d", pk.port,
                      chan, cmd)
         if (chan == 0):  # TOC Access
-            self.handleTocAccess(pk)
+            self._handle_toc_access(pk)
         elif (chan == 2):  # Settings access
             varId = pk.datal[0]
             formatStr = ParamTocElement.types[self.fakeParamToc
@@ -360,13 +360,13 @@ class DebugDriver (CRTPDriver):
                         varId)
             # Send back the new value
             p = CRTPPacket()
-            p.setHeader(pk.getPort(), 2)
+            p.set_header(pk.port, 2)
             p.data += struct.pack("<B", varId)
             p.data += struct.pack(formatStr, self.fakeParamToc[varId]["value"])
             self.queue.put(p)
         elif (chan == 1):
             p = CRTPPacket()
-            p.setHeader(pk.getPort(), 2)
+            p.set_header(pk.port, 2)
             varId = cmd
             p.data += struct.pack("<B", varId)
             formatStr = ParamTocElement.types[self.fakeParamToc
@@ -375,12 +375,12 @@ class DebugDriver (CRTPDriver):
             logger.info("PARAM: Getting value for %d", varId)
             self.queue.put(p)
 
-    def handleLogging(self, pk):
-        chan = pk.getChannel()
+    def _handle_logging(self, pk):
+        chan = pk.channel
         cmd = struct.unpack("B", pk.data[0])[0]
         logger.debug("LOG: Chan=%d, cmd=%d", chan, cmd)
         if (chan == 0):  # TOC Access
-            self.handleTocAccess(pk)
+            self._handle_toc_access(pk)
         elif (chan == 1):  # Settings access
             if (cmd == 0):
                 blockId = ord(pk.data[1])
@@ -389,14 +389,14 @@ class DebugDriver (CRTPDriver):
                             blockId, period)
                 listofvars = pk.data[3:]
 
-                fakeThread = FakeLoggingDataThread(self.queue, blockId,
+                fakeThread = _FakeLoggingDataThread(self.queue, blockId,
                                                    period, listofvars,
                                                    self.fakeLogToc)
                 self.fakeLoggingThreads.append(fakeThread)
                 fakeThread.start()
                 # Anser that everything is ok
                 p = CRTPPacket()
-                p.setHeader(5, 1)
+                p.set_header(5, 1)
                 p.data = struct.pack('<BBB', 0, blockId, 0x00)
                 self.queue.put(p)
             if (cmd == 1):
@@ -406,11 +406,11 @@ class DebugDriver (CRTPDriver):
                 success = False
                 for fb in self.fakeLoggingThreads:
                     if (fb.blockId == blockId):
-                        fb.disableLogging()
+                        fb._disable_logging()
                         fb.quit()
 
                         p = CRTPPacket()
-                        p.setHeader(5, 1)
+                        p.set_header(5, 1)
                         p.data = struct.pack('<BBB', cmd, blockId, 0x00)
                         self.queue.put(p)
                         logger.info("LOG: Deleted block=%d", blockId)
@@ -426,9 +426,9 @@ class DebugDriver (CRTPDriver):
                 success = False
                 for fb in self.fakeLoggingThreads:
                     if (fb.blockId == blockId):
-                        fb.enableLogging()
+                        fb._enable_logging()
                         p = CRTPPacket()
-                        p.setHeader(5, 1)
+                        p.set_header(5, 1)
                         p.data = struct.pack('<BBB', cmd, blockId, 0x00)
                         self.queue.put(p)
                         logger.info("LOG:Started block=%d", blockId)
@@ -443,9 +443,9 @@ class DebugDriver (CRTPDriver):
                 success = False
                 for fb in self.fakeLoggingThreads:
                     if (fb.blockId == blockId):
-                        fb.disableLogging()
+                        fb._disable_logging()
                         p = CRTPPacket()
-                        p.setHeader(5, 1)
+                        p.set_header(5, 1)
                         p.data = struct.pack('<BBB', cmd, blockId, 0x00)
                         self.queue.put(p)
                         logger.info("LOG:Pause block=%d", blockId)
@@ -459,7 +459,7 @@ class DebugDriver (CRTPDriver):
                            " supported!")
 
 
-class FakeLoggingDataThread (Thread):
+class _FakeLoggingDataThread (Thread):
     """Thread that will send back fake logging data via CRTP"""
 
     def __init__(self, outQueue, blockId, period, listofvars, fakeLogToc):
@@ -501,14 +501,14 @@ class FakeLoggingDataThread (Thread):
                         self.fakeLoggingData.append([t, t["min"], 1])
                 i = i + 2
 
-    def enableLogging(self):
+    def _enable_logging(self):
         self.shouldLog = True
-        logging.info("FakeLoggingDataThread: Enable thread [%s]",
+        logging.info("_FakeLoggingDataThread: Enable thread [%s]",
                      self.getName())
 
-    def disableLogging(self):
+    def _disable_logging(self):
         self.shouldLog = False
-        logging.info("FakeLoggingDataThread: Disable thread [%s]",
+        logging.info("_FakeLoggingDataThread: Disable thread [%s]",
                      self.getName())
 
     def quit(self):
@@ -519,7 +519,7 @@ class FakeLoggingDataThread (Thread):
             if (self.shouldLog is True):
 
                 p = CRTPPacket()
-                p.setHeader(5, 2)
+                p.set_header(5, 2)
                 p.data = struct.pack('<B',  self.blockId)
                 p.data += struct.pack('BBB', 0, 0, 0)  # Timestamp
 
@@ -550,7 +550,7 @@ class FakeConsoleThread (Thread):
     def run(self):
         while(True):
             p = CRTPPacket()
-            p.setHeader(0, 0)
+            p.set_header(0, 0)
 
             message = "Time is now %s\n" % datetime.now()
 

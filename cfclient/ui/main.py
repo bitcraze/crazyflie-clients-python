@@ -92,7 +92,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.cfg = Config()
         self.cf = Crazyflie()
 
-        cflib.crtp.initDrivers()
+        cflib.crtp.init_drivers()
 
         # Create the connection dialogue
         self.connectDialogue = ConnectDialogue()
@@ -102,10 +102,10 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.joystickReader.start()
         
         # Connections for the Connect Dialogue
-        self.connectDialogue.requestConnectionSignal.connect(self.cf.openLink)
+        self.connectDialogue.requestConnectionSignal.connect(self.cf.open_link)
 
         self.connectionDoneSignal.connect(self.connectionDone)
-        self.cf.connectionFailed.addCallback(self.connectionFailedSignal.emit)
+        self.cf.connectionFailed.add_callback(self.connectionFailedSignal.emit)
         self.connectionFailedSignal.connect(self.connectionFailed)
         self.joystickReader.inputDeviceErrorSignal.connect(self.inputDeviceError)
         
@@ -120,20 +120,20 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.batteryUpdatedSignal.connect(self.updateBatteryVoltage)                    
         
         # Do not queue data from the controller output to the Crazyflie wrapper to avoid latency
-        self.joystickReader.sendControlSetpointSignal.connect(self.cf.commander.sendControlSetpoint, Qt.DirectConnection)
+        self.joystickReader.sendControlSetpointSignal.connect(self.cf.commander.send_setpoint, Qt.DirectConnection)
 
         # Connection callbacks and signal wrappers for UI protection
-        self.cf.connectSetupFinished.addCallback(self.connectionDoneSignal.emit)
+        self.cf.connectSetupFinished.add_callback(self.connectionDoneSignal.emit)
         self.connectionDoneSignal.connect(self.connectionDone)
-        self.cf.disconnected.addCallback(self.disconnectedSignal.emit)
+        self.cf.disconnected.add_callback(self.disconnectedSignal.emit)
         self.disconnectedSignal.connect(lambda linkURI: self.setUIState(UIState.DISCONNECTED, linkURI))
-        self.cf.connectionLost.addCallback(self.connectionLostSignal.emit)
+        self.cf.connectionLost.add_callback(self.connectionLostSignal.emit)
         self.connectionLostSignal.connect(self.connectionLost)
-        self.cf.connectionInitiated.addCallback(self.connectionInitiatedSignal.emit)
+        self.cf.connectionInitiated.add_callback(self.connectionInitiatedSignal.emit)
         self.connectionInitiatedSignal.connect(lambda linkURI: self.setUIState(UIState.CONNECTING, linkURI))
 
         # Connect link quality feedback
-        self.cf.linkQuality.addCallback(self.linkQualitySignal.emit)
+        self.cf.linkQuality.add_callback(self.linkQualitySignal.emit)
         self.linkQualitySignal.connect(lambda percentage: self.linkQualityBar.setValue(percentage))
 
         # Set UI state in disconnected buy default
@@ -282,11 +282,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         lg = LogConfig ("Battery", 1000)
         lg.addVariable(LogVariable("sys.battery", "uint16_t"))
-        self.log = self.cf.log.newLogPacket(lg)
+        self.log = self.cf.log.create_log_packet(lg)
         if (self.log != None):
-            self.log.dataReceived.addCallback(self.batteryUpdatedSignal.emit)
-            self.log.error.addCallback(self.loggingError)
-            self.log.startLogging()
+            self.log.dataReceived.add_callback(self.batteryUpdatedSignal.emit)
+            self.log.error.add_callback(self.loggingError)
+            self.log.start()
         else:
             logger.warning("Could not setup loggingblock!")
 
@@ -308,27 +308,27 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
     def closeEvent(self, event):
         self.hide()
-        self.cf.closeLink()
+        self.cf.close_link()
         Config().saveFile()
 
     def connectButtonClicked(self):
         if (self.uiState == UIState.CONNECTED):
-            self.cf.closeLink()
+            self.cf.close_link()
         elif (self.uiState == UIState.CONNECTING):
-            self.cf.closeLink()
+            self.cf.close_link()
             self.setUIState(UIState.DISCONNECTED)
         else:
             self.connectDialogue.show()
 
     def inputDeviceError(self, error):
-        self.cf.closeLink()
+        self.cf.close_link()
         QMessageBox.critical(self,"Input device error", error)      
 
     def quickConnect(self):
         try:
-            self.cf.openLink(Config().getParam(ConfigParams.LAST_CONNECT_URI))
+            self.cf.open_link(Config().getParam(ConfigParams.LAST_CONNECT_URI))
         except KeyError:
-            self.cf.openLink("")    
+            self.cf.open_link("")    
 
     def closeAppRequest(self):
         self.close()

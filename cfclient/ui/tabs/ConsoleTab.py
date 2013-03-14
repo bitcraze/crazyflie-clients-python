@@ -60,7 +60,7 @@ class ConsoleTab(Tab, console_tab_class):
         
         self.update.connect(self.printText)
         
-        self.helper.cf.console.receivedChar.addCallback(self.update.emit)
+        self.helper.cf.console.receivedChar.add_callback(self.update.emit)
 
     def printText(self, text):
         # Make sure we get printouts from the Crazyflie into the log (such as build version and test ok/fail)

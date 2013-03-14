@@ -54,11 +54,11 @@ class CRTPDriver:
                disconnection)
         """
 
-    def sendPacket(self, pk):
+    def send_packet(self, pk):
         """Send a CRTP packet"""
         None
 
-    def receivePacket(self, wait=0):
+    def receive_packet(self, wait=0):
         """Receive a CRTP packet.
 
         @param wait The time to wait for a packet in second. -1 means forever
@@ -67,7 +67,7 @@ class CRTPDriver:
         """
         return None
 
-    def scanInterface(self):
+    def scan_interface(self):
         """
         Scan interface for available Crazyflie quadcopters and return a list
         witha them.
@@ -80,7 +80,7 @@ class CRTPDriver:
         """
         return ()
 
-    def getHelp(self):
+    def get_help(self):
         """return the help message on how to form the URI for this driver
         None means no help
         """

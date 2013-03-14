@@ -59,7 +59,7 @@ class UdpDriver (CRTPDriver):
         #Add this to the server clients list
         self.socket.sendto("\xFF\x01\x01\x01", self.addr)
 
-    def receivePacket(self, time=0):
+    def receive_packet(self, time=0):
         data, addr = self.socket.recvfrom(1024)
 
         if data:
@@ -80,7 +80,7 @@ class UdpDriver (CRTPDriver):
         except Queue.Empty:
             return None
 
-    def sendPacket(self, pk):
+    def send_packet(self, pk):
         raw = (pk.port, )+struct.unpack("B"*len(pk.data), pk.data)
 
         cksum = 0

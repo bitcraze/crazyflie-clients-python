@@ -40,8 +40,8 @@ from cflib.bootloader.cloader import Cloader
 link = None
 cload = None
 try:
-    cflib.crtp.initDrivers()
-    link = cflib.crtp.getDriver("radio://0")
+    cflib.crtp.init_drivers()
+    link = cflib.crtp.get_link_driver("radio://0")
 except(Exception):
     print "=============================="
     print " CrazyLoader Flash Utility"
@@ -119,7 +119,7 @@ try:
     if boot == "reset":
         sys.stdout.write("Reset to bootloader mode ...")
         sys.stdout.flush()
-        if cload.resetBootloader(cload.decodeCpuId(cpu_id)):
+        if cload.reset_to_bootloader(cload.decode_cpu_id(cpu_id)):
             print " Done."
         else:
             print "\nFailed!\nThe loader with the ID",
@@ -130,7 +130,7 @@ try:
         print "Restart the CrazyFlie you want to bootload in the next",
         print " 10 seconds ..."
 
-        if cload.coldBoot():
+        if cload.coldboot():
             print "Connection established!"
         else:
             print "Cannot connect the bootloader!"
@@ -141,17 +141,17 @@ try:
     # Doing something (hopefully) usefull
     ######################################
     print "Flash pages: %d | Page size: %d | Buffer pages: %d |"\
-          " Start page: %d" % (cload.flashPages, cload.pageSize,
-                               cload.bufferPages, cload.startPage)
+          " Start page: %d" % (cload.flash_pages, cload.page_size,
+                               cload.buffer_pages, cload.start_page)
     print "%d KBytes of flash avaliable for firmware image." % (
-          (cload.flashPages-cload.startPage)*cload.pageSize/1024)
+          (cload.flash_pages-cload.start_page)*cload.page_size/1024)
 
     if action == "info":
         None  # Already done ...
     elif action == "reset":
         print
         print "Reset in firmware mode ..."
-        cload.resetFirmware(cload.decodeCpuId(cpu_id))
+        cload.reset_to_firmware(cload.decode_cpu_id(cpu_id))
         print "Done!"
     elif action == "flash":
         print
@@ -162,23 +162,23 @@ try:
         image = f.read()
         f.close()
 
-        if len(image) > ((cload.flashPages-cload.startPage)*cload.pageSize):
+        if len(image) > ((cload.flash_pages-cload.start_page)*cload.page_size):
             print "Error: Not enough space to flash the image file."
             raise Exception()
 
         sys.stdout.write(("Flashing %d bytes (%d pages) " % ((len(image)-1),
-                         int(len(image)/cload.pageSize)+1)))
+                         int(len(image)/cload.page_size)+1)))
         sys.stdout.flush()
 
         #For each page
         ctr = 0  # Buffer counter
-        for i in range(0, int((len(image)-1)/cload.pageSize)+1):
+        for i in range(0, int((len(image)-1)/cload.page_size)+1):
             #Load the buffer
-            if ((i+1)*cload.pageSize) > len(image):
-                cload.loadBuffer(ctr, 0, image[i*cload.pageSize:])
+            if ((i+1)*cload.page_size) > len(image):
+                cload.upload_buffer(ctr, 0, image[i*cload.page_size:])
             else:
-                cload.loadBuffer(ctr, 0, image[i*cload.pageSize:
-                                               (i+1)*cload.pageSize])
+                cload.upload_buffer(ctr, 0, image[i*cload.page_size:
+                                                  (i+1)*cload.page_size])
 
             ctr += 1
 
@@ -186,12 +186,12 @@ try:
             sys.stdout.flush()
 
             #Flash when the complete buffers are full
-            if ctr >= cload.bufferPages:
+            if ctr >= cload.buffer_pages:
                 sys.stdout.write("%d" % ctr)
                 sys.stdout.flush()
-                if not cload.flash(0, cload.startPage+i-(ctr-1), ctr):
+                if not cload.write_flash(0, cload.start_page+i-(ctr-1), ctr):
                     print "\nError during flash operation (code %d). Maybe"\
-                          " wrong radio link?" % cload.getErrorCode()
+                          " wrong radio link?" % cload.error_code
                     raise Exception()
 
                 ctr = 0
@@ -199,15 +199,15 @@ try:
         if ctr > 0:
             sys.stdout.write("%d" % ctr)
             sys.stdout.flush()
-            if not cload.flash(0, cload.startPage+(int(
-                    (len(image)-1) / cload.pageSize))-(ctr-1), ctr):
+            if not cload.write_flash(0, cload.start_page+(int(
+                    (len(image)-1) / cload.page_size))-(ctr-1), ctr):
                 print "\nError during flash operation (code %d). Maybe wrong"\
-                      "radio link?" % cload.getErrorCode()
+                      "radio link?" % cload.error_code
                 raise Exception()
         print
 
         print "Reset in firmware mode ..."
-        cload.resetFirmware(cload.decodeCpuId(cpu_id))
+        cload.reset_to_firmware(cload.decode_cpu_id(cpu_id))
         print "Done!"
     else:
         None

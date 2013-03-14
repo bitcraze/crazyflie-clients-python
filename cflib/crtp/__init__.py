@@ -47,7 +47,7 @@ drivers = [RadioDriver, SerialDriver, UdpDriver, DebugDriver]
 instances = []
 
 
-def initDrivers():
+def init_drivers():
     """ Initialize all the drivers. """
     for d in drivers:
         try:
@@ -56,14 +56,14 @@ def initDrivers():
             continue
 
 
-def scanInterfaces():
+def scan_interfaces():
     """ Scan all the interfaces for available Crazyflies """
     available = []
     found = []
     for d in instances:
         logger.debug("Scanning: %s", d)
         try:
-            found = d.scanInterface()
+            found = d.scan_interface()
             available += found
         except Exception:
             raise
@@ -71,7 +71,7 @@ def scanInterfaces():
     return available
 
 
-def getDriver(uri, linkQualityCallback=None, linkErrorCallback=None):
+def get_link_driver(uri, linkQualityCallback=None, linkErrorCallback=None):
     """ Return the link driver for the given URI """
     for d in instances:
         try:

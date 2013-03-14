@@ -62,60 +62,47 @@ class CRTPPacket(object):
         self.size = 0
         self._data = ""
         self.header = header
-        self.port2 = (header & 0xF0) >> 4
-        self.channel = header & 0x03
+        self._port = (header & 0xF0) >> 4
+        self._channel = header & 0x03
         if dt:
-            self.setData(dt)
+            self._set_data(dt)
 
-    def getChannel(self):
-        """
-        Return the channel for this packet.
-        """
-        return self.channel
+    def _get_channel(self):
+        return self._channel
 
-    def getPort(self):
-        """
-        Return the port for this packet.
-        """
-        return self.port2
+    def _set_channel(self, channel):
+        self._channel = channel
+        self._update_header()
 
-    def getHeader(self):
-        """
-        Return the complete header for this packet.
-        """
+    def _get_port(self):
+        return self._port
+
+    def _set_port(self, port):
+        self._port = port
+        self._update_header()
+
+    def get_header(self):
+        """Get the header"""
+        self._update_header()
         return self.header
 
-    def setPort(self, port):
-        """
-        Set the port for this packet.
-        """
-        self.port2 = port
-        self.updateHeader()
-
-    def setChannel(self, channel):
-        """
-        Set the channel for this packet.
-        """
-        self.channel = channel
-        self.updateHeader()
-
-    def setHeader(self, port, channel):
+    def set_header(self, port, channel):
         """
         Set the port and channel for this packet.
         """
-        self.port2 = port
+        self._port = port
         self.channel = channel
-        self.updateHeader()
+        self._update_header()
 
-    def updateHeader(self):
-        self.header = ((self.port2 & 0x0f) << 4 | 0x3 << 2 |
+    def _update_header(self):
+        self.header = ((self._port & 0x0f) << 4 | 0x3 << 2 |
                        (self.channel & 0x03))
 
     #Some python madness to access different format of the data
-    def getdata(self):
+    def _get_data(self):
         return self._data
 
-    def setData(self, data):
+    def _set_data(self, data):
         if type(data) == str:
             self._data = data
         elif type(data) == list or type(data) == tuple:
@@ -128,16 +115,18 @@ class CRTPPacket(object):
         else:
             raise Exception("Data shall be of str, tupple or list type")
 
-    def getdatal(self):
-        return list(self.getdatat())
+    def _get_data_l(self):
+        return list(self._get_data_t())
 
-    def getdatat(self):
+    def _get_data_t(self):
         return struct.unpack("B"*len(self._data), self._data)
 
     def __str__(self):
-        return "{}:{} {}".format(self.port2, self.channel, self.datat)
+        return "{}:{} {}".format(self._port, self.channel, self.datat)
 
-    data = property(getdata, setData)
-    datal = property(getdatal, setData)
-    datat = property(getdatat, setData)
-    datas = property(getdata, setData)
+    data = property(_get_data, _set_data)
+    datal = property(_get_data_l, _set_data)
+    datat = property(_get_data_t, _set_data)
+    datas = property(_get_data, _set_data)
+    port = property(_get_port, _set_port)
+    channel = property(_get_channel, _set_channel)

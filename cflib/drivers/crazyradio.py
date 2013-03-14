@@ -63,7 +63,7 @@ except:
     pyusb1 = False
 
 
-def findDevices():
+def _find_devices():
     """
     Returns a list of CrazyRadio devices currently connected to the computer
     """
@@ -85,7 +85,7 @@ def findDevices():
     return ret
 
 
-class radioAck:
+class _radio_ack:
     ack = False
     powerDet = False
     retry = 0
@@ -108,7 +108,7 @@ class Crazyradio:
         """ Create object and scan for USB dongle if no device is supplied """
         if device is None:
             try:
-                device = findDevices()[0]
+                device = _find_devices()[0]
             except Exception:
                 raise Exception("Cannot find a Crazyradio Dongle")
 
@@ -132,15 +132,15 @@ class Crazyradio:
             logger.warning("You should update to Crazyradio firmware V0.4+")
 
         #Reset the dongle to power up settings
-        self.setDatarate(self.DR_2MPS)
-        self.setChannel(2)
+        self.set_data_rate(self.DR_2MPS)
+        self.set_channel(2)
         self.arc = -1
         if self.version >= 0.4:
-            self.setContCarrier(False)
-            self.setAddress((0xE7,)*5)
-            self.setPower(self.P_0DBM)
-            self.setArc(3)
-            self.setArdBytes(32)
+            self.set_cont_carrier(False)
+            self.set_address((0xE7,)*5)
+            self.set_power(self.P_0DBM)
+            self.set_arc(3)
+            self.set_ard_bytes(32)
 
     def close(self):
         if (pyusb1 is False):
@@ -156,32 +156,32 @@ class Crazyradio:
         self.dev = None
 
     ### Dongle configuration ###
-    def setChannel(self, channel):
+    def set_channel(self, channel):
         """ Set the radio channel to be used """
-        sendVendorSetup(self.handle, SET_RADIO_CHANNEL, channel, 0, ())
+        _send_vendor_setup(self.handle, SET_RADIO_CHANNEL, channel, 0, ())
 
-    def setAddress(self, address):
+    def set_address(self, address):
         """ Set the radio address to be used"""
         if len(address) != 5:
             raise Exception("Crazyradio: the radio address shall be 5"
                             " bytes long")
 
-        sendVendorSetup(self.handle, SET_RADIO_ADDRESS, 0, 0, address)
+        _send_vendor_setup(self.handle, SET_RADIO_ADDRESS, 0, 0, address)
 
-    def setDatarate(self, datarate):
+    def set_data_rate(self, datarate):
         """ Set the radio datarate to be used """
-        sendVendorSetup(self.handle, SET_DATA_RATE, datarate, 0, ())
+        _send_vendor_setup(self.handle, SET_DATA_RATE, datarate, 0, ())
 
-    def setPower(self, power):
+    def set_power(self, power):
         """ Set the radio power to be used """
-        sendVendorSetup(self.handle, SET_RADIO_POWER, power, 0, ())
+        _send_vendor_setup(self.handle, SET_RADIO_POWER, power, 0, ())
 
-    def setArc(self, arc):
+    def set_arc(self, arc):
         """ Set the ACK retry count for radio communication """
-        sendVendorSetup(self.handle, SET_RADIO_ARC, arc, 0, ())
+        _send_vendor_setup(self.handle, SET_RADIO_ARC, arc, 0, ())
         self.arc = arc
 
-    def setArdTime(self, us):
+    def set_ard_time(self, us):
         """ Set the ACK retry delay for radio communication """
         # Auto Retransmit Delay:
         # 0000 - Wait 250uS
@@ -196,35 +196,37 @@ class Crazyradio:
             t = 0
         if (t > 0xF):
             t = 0xF
-        sendVendorSetup(self.handle, SET_RADIO_ARD, t, 0, ())
+        _send_vendor_setup(self.handle, SET_RADIO_ARD, t, 0, ())
 
-    def setArdBytes(self, nbytes):
-        sendVendorSetup(self.handle, SET_RADIO_ARD, 0x80 | nbytes, 0, ())
+    def set_ard_bytes(self, nbytes):
+        _send_vendor_setup(self.handle, SET_RADIO_ARD, 0x80 | nbytes, 0, ())
 
-    def setContCarrier(self, active):
+    def set_cont_carrier(self, active):
         if active:
-            sendVendorSetup(self.handle, SET_CONT_CARRIER, 1, 0, ())
+            _send_vendor_setup(self.handle, SET_CONT_CARRIER, 1, 0, ())
         else:
-            sendVendorSetup(self.handle, SET_CONT_CARRIER, 0, 0, ())
+            _send_vendor_setup(self.handle, SET_CONT_CARRIER, 0, 0, ())
 
-    def hasFwScann(self):
+    def _has_fw_scan(self):
         return self.version >= 0.5
 
-    def scannChannels(self, start, stop, packet):
-        if self.hasFwScann():  # Fast firmware-driven scann
-            sendVendorSetup(self.handle, SCANN_CHANNELS, start, stop, packet)
-            return tuple(getVendorSetup(self.handle, SCANN_CHANNELS, 0, 0, 64))
+    def scan_channels(self, start, stop, packet):
+        if self._has_fw_scan():  # Fast firmware-driven scann
+            _send_vendor_setup(self.handle, SCANN_CHANNELS, start, stop,
+                               packet)
+            return tuple(_get_vendor_setup(self.handle, SCANN_CHANNELS,
+                                           0, 0, 64))
         else:  # Slow PC-driven scann
             result = tuple()
             for i in range(start, stop+1):
-                self.setChannel(i)
-                status = self.sendPacket(packet)
+                self.set_channel(i)
+                status = self.send_packet(packet)
                 if status and status.ack:
                     result = result + (i,)
             return result
 
     ### Data transferts ###
-    def sendPacket(self, dataOut):
+    def send_packet(self, dataOut):
         """ Send a packet and receive the ack from the radio dongle
             The ack contains information about the packet transmition
             and a data payload if the ack packet contained any """
@@ -241,7 +243,7 @@ class Crazyradio:
             pass
 
         if data is not None:
-            ackIn = radioAck()
+            ackIn = _radio_ack()
             if data[0] != 0:
                 ackIn.ack = (data[0] & 0x01) != 0
                 ackIn.powerDet = (data[0] & 0x02) != 0
@@ -254,7 +256,7 @@ class Crazyradio:
 
 
 #Private utility functions
-def sendVendorSetup(handle, request, value, index, data):
+def _send_vendor_setup(handle, request, value, index, data):
     if pyusb1:
         handle.ctrl_transfer(usb.TYPE_VENDOR, request, wValue=value,
                              wIndex=index, timeout=1000, data_or_wLength=data)
@@ -263,7 +265,7 @@ def sendVendorSetup(handle, request, value, index, data):
                           index=index, timeout=1000)
 
 
-def getVendorSetup(handle, request, value, index, length):
+def _get_vendor_setup(handle, request, value, index, length):
     if pyusb1:
         return handle.ctrl_transfer(usb.TYPE_VENDOR | 0x80, request,
                                     wValue=value, wIndex=index, timeout=1000,

@@ -55,9 +55,9 @@ class DebugDriverToolbox(QtGui.QWidget, debugdriver_tab_class):
         self.helper = helper
 
         # Connected / disconnected signals
-        self.helper.cf.connectSetupFinished.addCallback(self.connectionDoneSignal.emit)
+        self.helper.cf.connectSetupFinished.add_callback(self.connectionDoneSignal.emit)
         self.connectionDoneSignal.connect(self.connectionDone)
-        self.helper.cf.disconnected.addCallback(self.disconnectedSignal.emit)
+        self.helper.cf.disconnected.add_callback(self.disconnectedSignal.emit)
         self.disconnectedSignal.connect(self.disconnected)
 
         self.linkQuality.valueChanged.connect(self.linkQualityChanged)
@@ -66,16 +66,16 @@ class DebugDriverToolbox(QtGui.QWidget, debugdriver_tab_class):
     def forceDisconnecPressed(self):
         if (self.helper.cf.link != None):
             p = CRTPPacket()
-            p.setHeader(CRTPPort.DEBUGDRIVER,0);
+            p.set_header(CRTPPort.DEBUGDRIVER,0);
             p.data = struct.pack('<B', 1) # Force disconnect
-            self.helper.cf.sendLinkPacket(p)
+            self.helper.cf.send_packet(p)
 
     def linkQualityChanged(self, value):
         if (self.helper.cf.link != None):
             p = CRTPPacket()
-            p.setHeader(CRTPPort.DEBUGDRIVER,0);
+            p.set_header(CRTPPort.DEBUGDRIVER,0);
             p.data = struct.pack('<BB', 0, value) # Set link quality
-            self.helper.cf.sendLinkPacket(p)
+            self.helper.cf.send_packet(p)
  
     def disconnected(self, linkURI):
         if ("debug" in linkURI):

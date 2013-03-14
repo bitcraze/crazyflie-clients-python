@@ -62,11 +62,11 @@ class LogTab(Tab, param_tab_class):
         #Init the tree widget
         self.logTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage'])
 
-        self.cf.connectSetupFinished.addCallback(self.connectedSignal.emit)
+        self.cf.connectSetupFinished.add_callback(self.connectedSignal.emit)
         self.connectedSignal.connect(self.connected)
 
         # Clear the log TOC list when the Crazyflie is disconnected
-        self.cf.disconnected.addCallback(self.disconnectedSignal.emit)
+        self.cf.disconnected.add_callback(self.disconnectedSignal.emit)
         self.disconnectedSignal.connect(self.disconnected)
 
     @pyqtSlot('QString')
@@ -77,7 +77,7 @@ class LogTab(Tab, param_tab_class):
     def connected(self, linkURI):
         self.logTree.clear()
         
-        toc = self.cf.log.getTOC()
+        toc = self.cf.log.toc
         
         for group in toc.toc.keys():
             groupItem = QtGui.QTreeWidgetItem()  

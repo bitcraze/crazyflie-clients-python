@@ -47,28 +47,28 @@ class Commander():
         Initialize the commander object. By default the commander is in
         +-mode (not x-mode).
         """
-        self.cf = crazyflie
-        self.xMode = False
+        self._cf = crazyflie
+        self._x_mode = False
 
+    def set_client_xmode(self, enabled):
         """
         Enable/disable the client side X-mode. When enabled this recalculates
         the setpoints before sending them to the Crazyflie.
         """
-    def setClientSideXModeEnabled(self, enabled):
-        self.xMode = enabled
+        self._x_mode = enabled
 
-    def sendControlSetpoint(self, roll, pitch, yaw, thrust):
+    def send_setpoint(self, roll, pitch, yaw, thrust):
         """
         Send a new control setpoint for roll/pitch/yaw/thust to the copter
 
         The arguments roll/pitch/yaw/trust is the new setpoints that should
         be sent to the copter
         """
-        if self.xMode:
+        if self._x_mode:
             roll = 0.707*(roll-pitch)
             pitch = 0.707*(roll+pitch)
 
-        p = CRTPPacket()
-        p.setPort(CRTPPort.COMMANDER)
-        p.data = struct.pack('<fffH', -pitch, roll, yaw, thrust)
-        self.cf.sendLinkPacket(p)
+        pk = CRTPPacket()
+        pk.port = CRTPPort.COMMANDER
+        pk.data = struct.pack('<fffH', -pitch, roll, yaw, thrust)
+        self._cf.send_packet(pk)

@@ -86,7 +86,7 @@ class PlotTab(Tab, plot_tab_class):
         self.plotLayout.addWidget(self.plot)
 
         # Connect external signals
-        self.helper.cf.connectSetupFinished.addCallback(self.connectedSignal.emit)
+        self.helper.cf.connectSetupFinished.add_callback(self.connectedSignal.emit)
         self.connectedSignal.connect(self.connected)
 
         self.datasets = []
@@ -118,8 +118,8 @@ class PlotTab(Tab, plot_tab_class):
         if (len(self.logEntrys) > 0):
             log = self.logEntrys[item]
             if (self.previousLog != None):
-                self.previousLog.stopLogging()
-            log.startLogging()
+                self.previousLog.stop()
+            log.start()
             self.previousLog = log
            
             # Setup the plot
@@ -146,12 +146,12 @@ class PlotTab(Tab, plot_tab_class):
     def connected(self, link):
         self.logEntrys = []
         for d in self.dsList:
-            logEntry = self.helper.cf.log.newLogPacket(d)
+            logEntry = self.helper.cf.log.create_log_packet(d)
             if (logEntry != None):
                 self.dataSelector.addItem(d.getName())
                 self.logEntrys.append(logEntry)
-                logEntry.dataReceived.addCallback(self.logDataSignal.emit)
-                logEntry.error.addCallback(self.loggingError)
+                logEntry.dataReceived.add_callback(self.logDataSignal.emit)
+                logEntry.error.add_callback(self.loggingError)
             else:
                 logger.warning("Could not setup log configuration!")
 

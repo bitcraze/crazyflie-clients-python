@@ -76,10 +76,10 @@ class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
         return 'Crtp sniffer'
     
     def enable(self):
-        self.helper.cf.receivedPacket.addCallback(self.packetIncoming)
+        self.helper.cf.receivedPacket.add_callback(self.packetIncoming)
     
     def disable(self):
-        self.helper.cf.receivedPacket.removeCallback(self.packetIncoming)
+        self.helper.cf.receivedPacket.remove_callback(self.packetIncoming)
     
     def preferedDockArea(self):
         return Qt.RightDockWidgetArea

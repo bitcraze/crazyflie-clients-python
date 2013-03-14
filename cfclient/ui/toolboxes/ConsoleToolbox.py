@@ -55,10 +55,10 @@ class ConsoleToolbox(QtGui.QWidget, console_class):
         return 'Console'
     
     def enable(self):
-        self.helper.cf.console.receivedChar.addCallback(self.update.emit)
+        self.helper.cf.console.receivedChar.add_callback(self.update.emit)
     
     def disable(self):
-        self.helper.cf.console.receivedChar.removeCallback(self.update.emit)
+        self.helper.cf.console.receivedChar.remove_callback(self.update.emit)
     
     def preferedDockArea(self):
         return Qt.BottomDockWidgetArea

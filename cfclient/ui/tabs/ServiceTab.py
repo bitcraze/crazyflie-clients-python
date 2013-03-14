@@ -236,12 +236,12 @@ class CrazyloadThread(QThread):
 
     def initiateColdBoot(self, linkURI):
         self.connectingSignal.emit()
-        self.link = cflib.crtp.getDriver("radio://0/110")
+        self.link = cflib.crtp.get_link_driver("radio://0/110")
         self.loader = Cloader(self.link, "radio://0/110")
-        #self.link = CRTP.getDriver("debug://0/110")
+        #self.link = CRTP.get_link_driver("debug://0/110")
         #self.loader = Cloader(self.link, "debug://0/110")
 
-        if self.loader.coldBoot():
+        if self.loader.coldboot():
             logger.info("Connected in coldboot mode ok")
             self.updateCpuIdSignal.emit(self.loader.cpuid)
             self.readConfigAction()
@@ -277,25 +277,25 @@ class CrazyloadThread(QThread):
 
     def readConfigAction(self):
         self.statusChanged.emit("Reading config block...", 0)
-        data = self.loader.readFlashPage(self.loader.startPage + 117)
+        data = self.loader.read_flash(self.loader.start_page + 117)
         self.statusChanged.emit("Reading config block...done!", 100)
         [channel, speed, pitchTrim, rollTrim] = struct.unpack("<BBff", data[5:15]) # Skip 0xBC and version at the beginning
         self.updateConfigSignal.emit(str(channel), str(speed), str(pitchTrim), str(rollTrim))
 
     def loadAndFlash(self, image, verify = False, startpage = 0):
 
-        factor = ((100.0*self.loader.pageSize)/len(image))
+        factor = ((100.0*self.loader.page_size)/len(image))
         if (verify == True):
             factor /= 2
         progress = 0
         #For each page
         ctr=0  #Buffer counter
-        for i in range(0, int((len(image)-1)/self.loader.pageSize)+1):
+        for i in range(0, int((len(image)-1)/self.loader.page_size)+1):
             #Load the buffer
-            if ((i+1)*self.loader.pageSize)>len(image):
-                self.loader.loadBuffer(ctr, 0, image[i*self.loader.pageSize:])
+            if ((i+1)*self.loader.page_size)>len(image):
+                self.loader.upload_buffer(ctr, 0, image[i*self.loader.page_size:])
             else:
-                self.loader.loadBuffer(ctr, 0, image[i*self.loader.pageSize:(i+1)*self.loader.pageSize])
+                self.loader.upload_buffer(ctr, 0, image[i*self.loader.page_size:(i+1)*self.loader.page_size])
 
             ctr += 1
 
@@ -303,19 +303,19 @@ class CrazyloadThread(QThread):
             self.statusChanged.emit("Uploading buffer...", int(progress))
 
             #Flash when the complete buffers are full
-            if ctr>=self.loader.bufferPages:
+            if ctr>=self.loader.buffer_pages:
                 self.statusChanged.emit("Writing buffer...", int(progress))
-                firstFlashPage = self.loader.startPage+startpage+i-(ctr-1)
-                if not self.loader.flash(0, firstFlashPage, ctr):
+                firstFlashPage = self.loader.start_page+startpage+i-(ctr-1)
+                if not self.loader.write_flash(0, firstFlashPage, ctr):
                     self.disconnectedSignal.emit()
-                    self.statusChanged.emit("Error during flash operation (err code %d)" % self.loader.getErrorCode(), int(progress)) 
+                    self.statusChanged.emit("Error during flash operation (err code %d)" % self.loader.error_code, int(progress)) 
                     self.link.close()
                     return
                 if (verify == True):
                     for p in range(firstFlashPage, firstFlashPage+ctr):
-                        test = self.loader.readFlashPage(p)
-                        buffStart = ((p-self.loader.startPage)*self.loader.pageSize)
-                        ver = image[buffStart:buffStart+self.loader.pageSize]
+                        test = self.loader.read_flash(p)
+                        buffStart = ((p-self.loader.start_page)*self.loader.page_size)
+                        ver = image[buffStart:buffStart+self.loader.page_size]
                         if (test != ver):
                             self.statusChanged.emit("Verification failed!", int(progress))
                             return
@@ -326,17 +326,17 @@ class CrazyloadThread(QThread):
 
         if ctr>0:
             self.statusChanged.emit("Writing buffer...", int(progress))
-            firstFlashPage = self.loader.startPage+startpage+(int((len(image)-1)/self.loader.pageSize))-(ctr-1)
-            if not self.loader.flash(0, firstFlashPage, ctr):
-                self.statusChanged.emit("Error during flash operation (err code %d)" % self.loader.getErrorCode(), int(progress)) 
+            firstFlashPage = self.loader.start_page+startpage+(int((len(image)-1)/self.loader.page_size))-(ctr-1)
+            if not self.loader.write_flash(0, firstFlashPage, ctr):
+                self.statusChanged.emit("Error during flash operation (err code %d)" % self.loader.error_code, int(progress)) 
                 self.disconnectedSignal.emit() 
                 self.link.close()
                 return
             if (verify == True):
                 for p in range(firstFlashPage, firstFlashPage+ctr):
-                    buffStart = ((p-self.loader.startPage)*self.loader.pageSize)
-                    ver = image[buffStart:buffStart+self.loader.pageSize]
-                    test = self.loader.readFlashPage(p)[0:len(ver)] # We read back more than we should compare..
+                    buffStart = ((p-self.loader.start_page)*self.loader.page_size)
+                    ver = image[buffStart:buffStart+self.loader.page_size]
+                    test = self.loader.read_flash(p)[0:len(ver)] # We read back more than we should compare..
                     if (test != ver):
                         self.statusChanged.emit("Verification failed!", int(progress))
                         return
@@ -347,6 +347,6 @@ class CrazyloadThread(QThread):
 
     def resetCopter(self):
         self.disconnectedSignal.emit() 
-        self.loader.resetFirmware(self.loader.decodeCpuId("32:00:6e:06:58:37:35:32:60:58:01:43"))
+        self.loader.reset_to_firmware(self.loader.decode_cpu_id("32:00:6e:06:58:37:35:32:60:58:01:43"))
         self.link.close()
 

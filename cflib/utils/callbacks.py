@@ -41,12 +41,12 @@ class Caller():
         """ Create the object """
         self.callbacks = []
 
-    def addCallback(self, cb):
+    def add_callback(self, cb):
         """ Register cb as a new callback. Will not register duplicates. """
         if ((cb in self.callbacks) is False):
             self.callbacks.append(cb)
 
-    def removeCallback(self, cb):
+    def remove_callback(self, cb):
         """ Un-register cb from the callbacks """
         self.callbacks.remove(cb)
 

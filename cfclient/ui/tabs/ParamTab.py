@@ -60,11 +60,11 @@ class ParamTab(Tab, param_tab_class):
 
         self.cf = helper.cf
 
-        self.cf.connectSetupFinished.addCallback(self.connectionDoneSignal.emit)
+        self.cf.connectSetupFinished.add_callback(self.connectionDoneSignal.emit)
         self.connectionDoneSignal.connect(self.connectionDone)
 
         # Clear the log TOC list when the Crazyflie is disconnected
-        self.cf.disconnected.addCallback(self.disconnectedSignal.emit)
+        self.cf.disconnected.add_callback(self.disconnectedSignal.emit)
         self.disconnectedSignal.connect(self.disconnected)
 
         self.paramUpdatedSignal.connect(self.paramUpdated)
@@ -101,8 +101,8 @@ class ParamTab(Tab, param_tab_class):
                 self.editItems[completeName] = item
                 groupItem.addChild(item);
                 # Request update for this parameter value
-                self.cf.param.addParamUpdateCallback(completeName, self.paramUpdatedWrapper)
-                self.cf.param.requestParamUpdate(completeName)               
+                self.cf.param.add_update_callback(completeName, self.paramUpdatedWrapper)
+                self.cf.param.request_param_update(completeName)               
 
             self.paramTree.addTopLevelItem(groupItem)
             self.paramTree.expandItem(groupItem)
@@ -115,7 +115,7 @@ class ParamTab(Tab, param_tab_class):
         # an update through a callback if the calue is updated and we connect to dataChanged signal on tree
         for key in self.editItems.keys():
             item = self.editItems[key]
-            self.helper.cf.param.setParamValue(key, str(item.text(3)))
+            self.helper.cf.param.set_value(key, str(item.text(3)))
 
     @pyqtSlot(str)
     def disconnected(self, linkname):

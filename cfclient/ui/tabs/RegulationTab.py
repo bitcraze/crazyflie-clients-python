@@ -61,9 +61,9 @@ class RegulationTab(Tab, regulation_tab_class):
 
         self.paramUpdatedSignal.connect(self.paramUpdated)
 
-        self.helper.cf.connectSetupFinished.addCallback(self.connectionDoneSignal.emit)
+        self.helper.cf.connectSetupFinished.add_callback(self.connectionDoneSignal.emit)
         self.connectionDoneSignal.connect(self.connectionDone)
-        self.helper.cf.disconnected.addCallback(self.disconnectedSignal.emit)
+        self.helper.cf.disconnected.add_callback(self.disconnectedSignal.emit)
         self.disconnectedSignal.connect(self.disconnected)
         
         self.paramList = []
@@ -83,7 +83,7 @@ class RegulationTab(Tab, regulation_tab_class):
 
         # Add callbacks for all the parameters. No need to request fetch, will be done by ParamTocTab
         for p in self.paramList:
-            self.helper.cf.param.addParamUpdateCallback(p["paramname"], self.paramUpdatedSignal.emit)
+            self.helper.cf.param.add_update_callback(p["paramname"], self.paramUpdatedSignal.emit)
 
     def connectionDone(self):
         self.sendPID.setEnabled(True)
@@ -99,6 +99,6 @@ class RegulationTab(Tab, regulation_tab_class):
     def sendPIDValues(self):
         # TODO: Handle exception for non-existant param toc entry        
         for p in self.paramList:
-            self.helper.cf.param.setParamValue(p["paramname"], str(p["spinner"].value()))
+            self.helper.cf.param.set_value(p["paramname"], str(p["spinner"].value()))
        
 
