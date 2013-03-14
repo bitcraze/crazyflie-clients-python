@@ -28,11 +28,10 @@ Multiplatform python joystick driver
 Back-end currently implemented for linux_udev and pygame
 """
 
-from __future__ import absolute_import
 from .constants import TYPE_BUTTON, TYPE_AXIS
 
 try:
-    import joystick.linuxjsdev
+    import linuxjsdev
 
     if not locals().has_key('Joystick'):
         from .linuxjsdev import Joystick
@@ -40,7 +39,7 @@ except ImportError:
     pass
 
 try:
-    import joystick.pygamejoystick
+    import pygamejoystick
 
     if not locals().has_key('Joystick'):
         from .pygamejoystick import Joystick

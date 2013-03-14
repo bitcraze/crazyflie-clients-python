@@ -28,13 +28,14 @@ Simple event class implementation that fancify a be the event usage.
 """
 
 class JEvent(object):
-    def __init__(self, type, number, value):
-        self.type = type
+    """
+    Joystick event class. Encapsulate single joystick event.
+    """
+    def __init__(self, evt_type, number, value):
+        self.type = evt_type
         self.number = number
         self.value = value
     
-    def __getitem__(self, key):
-        return getattr(self, key)
-    
     def __repr__(self):
-        return "JEvent(type={}, number={}, value={})".format(self.type, self.number, self.value)
+        return "JEvent(type={}, number={}, value={})".format(self.type, 
+                   self.number, self.value)

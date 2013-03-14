@@ -23,8 +23,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Linux joystick driver for the Bitcraze Crazyflie PC client.
-
 """
 Linux joystick driver using the Linux input_joystick subsystem. Requires sysfs
 to be mounted on /sys and /dev/input/js* to be readable.
