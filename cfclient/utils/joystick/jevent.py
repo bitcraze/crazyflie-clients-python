@@ -24,30 +24,17 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-Multiplatform python joystick driver
-Back-end currently implemented for linux_udev and pygame
+Simple event class implementation that fancify a be the event usage.
 """
 
-from __future__ import absolute_import
-from .constants import TYPE_BUTTON, TYPE_AXIS
-
-try:
-    import joystick.linuxjsdev
-
-    if not locals().has_key('Joystick'):
-        from .linuxjsdev import Joystick
-except ImportError:
-    pass
-
-try:
-    import joystick.pygamejoystick
-
-    if not locals().has_key('Joystick'):
-        from .pygamejoystick import Joystick
-except ImportError:
-    pass
-
-if not locals().has_key('Joystick'):
-    raise Exception("No suitable Joystick driver. " +
-                    "Driver supported: Linux, pygame.")
-
+class JEvent(object):
+    def __init__(self, type, number, value):
+        self.type = type
+        self.number = number
+        self.value = value
+    
+    def __getitem__(self, key):
+        return getattr(self, key)
+    
+    def __repr__(self):
+        return "JEvent(type={}, number={}, value={})".format(self.type, self.number, self.value)
