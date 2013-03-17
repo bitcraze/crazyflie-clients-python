@@ -44,6 +44,8 @@ from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from cflib.utils.callbacks import Caller
 from .toc import Toc, TocFetcher
 
+import os
+
 # Channels used for the logging port
 CHAN_TOC = 0
 CHAN_SETTINGS = 1
@@ -119,6 +121,8 @@ class LogEntry:
                         pk.data += struct.pack('<B', v.getStoredFetchAs())
                         pk.data += struct.pack('<B', self.cf.log.getTOC().
                                                getElementId(v.getName()))
+                
+                logger.debug("Adding log block id {}".format(self.blockId))
                 self.cf.sendLinkPacket(pk)
 
             else:
@@ -244,7 +248,6 @@ class Log():
 
         self.tocUpdated = Caller()
         self.state = IDLE
-        self.fakeTOCCRC = 0xBABEBABA
 
     def newLogPacket(self, logconf):
         """Create a new log configuration"""
@@ -303,8 +306,10 @@ class Log():
                         pk.data = (CMD_START_LOGGING, newBlockId, 10)
                         self.cf.sendLinkPacket(pk)
                     else:
-                        logger.warning("Error when adding blockId=%d, should"
-                                       " tell listenders...", newBlockId)
+                        # FIXME: Should tell listener!
+                        logger.warning("Error=%d when adding blockId=%d, %s",
+                                       errorStatus, newBlockId,
+                                       _get_strerror(errorStatus))
 
                 else:
                     logger.warning("No LogEntry to assign block to !!!")
@@ -314,7 +319,8 @@ class Log():
                                 newBlockId)
                 else:
                     logger.warning("Error=%d when starting logging for "
-                                   "block=%d", errorStatus, newBlockId)
+                                   "block=%d, %s", errorStatus, newBlockId,
+                                   _get_strerror(errorStatus))
         if (chan == CHAN_LOGDATA):
             chan = packet.getChannel()
             blockId = ord(packet.data[0])
@@ -328,3 +334,11 @@ class Log():
                 block.unpackLogData(logdata)
             else:
                 logger.warning("Error no LogEntry to handle block=%d", blockId)
+
+def _get_strerror(code):
+    "Returns strerror for the error code if is is implemented by the OS."
+    try:
+        return os.strerror(code)
+    except Exception:
+        return "Unknown error {}".format(code)
+

@@ -172,10 +172,11 @@ class TocFetcher:
             [self.nbrOfItems, crc] = struct.unpack("<BI", payload[:5])
             logger.debug("[%d]: Got TOC CRC, %d items and crc=0x%08X",
                          self.port, self.nbrOfItems, crc)
-            if (crc != 0x5555):
-                self.state = GET_TOC_ELEMENT
-                self.requestedIndex = 0
-                self.requestTocElement(self.requestedIndex)
+            
+            # TODO: Implement TOC cache using the CRC as a key
+            self.state = GET_TOC_ELEMENT
+            self.requestedIndex = 0
+            self.requestTocElement(self.requestedIndex)
         elif (self.state == GET_TOC_ELEMENT):
             # Always add new element, but only request new if it's not the
             # last one.
@@ -198,8 +199,8 @@ class TocFetcher:
                 self.requestedIndex = self.requestedIndex+1
                 self.requestTocElement(self.requestedIndex)
             else:  # No more variables in TOC
-                # TODO: Calc CRC
-                # TODO: Save TOC
+                # TODO: Save TOC in a cache with CRC as a key so that it can
+                #       be loaded from cache the next time.
                 self.tocFetchFinished()
 
     def requestTocElement(self, index):
