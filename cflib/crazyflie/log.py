@@ -119,6 +119,7 @@ class LogEntry:
                         pk.data += struct.pack('<B', v.getStoredFetchAs())
                         pk.data += struct.pack('<B', self.cf.log.toc.
                                                get_element_id(v.getName()))
+                logger.debug("Adding log block id {}".format(self.blockId))
                 self.cf.send_packet(pk)
 
             else:
@@ -270,7 +271,7 @@ class Log():
 
     def refresh_toc(self, refreshDoneCallback):
         pk = CRTPPacket()
-        pk.set_header(CRTPPort.LOGGING, 0)
+        pk.set_header(CRTPPort.LOGGING, CHAN_SETTINGS)
         pk.data = (CMD_RESET_LOGGING, )
         self.cf.send_packet(pk)
 

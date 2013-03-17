@@ -23,8 +23,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Linux joystick driver for the Bitcraze Crazyflie PC client.
-
 """
 Linux joystick driver using the Linux input_joystick subsystem. Requires sysfs
 to be mounted on /sys and /dev/input/js* to be readable.
@@ -40,6 +38,7 @@ import ctypes
 import fcntl
 
 from .constants import TYPE_BUTTON, TYPE_AXIS
+from .jevent import JEvent
 
 if platform.system() != 'Linux':
     raise ImportError("This driver works on Linux only")
@@ -143,15 +142,15 @@ class Joystick():
         """ Decode a jsdev event into a dict """
         #TODO: Add timestamp?
         if jsdata[JE_TYPE]&JS_EVENT_AXIS != 0:
-            return {'type'  : TYPE_AXIS, 
-                    'number': jsdata[JE_NUMBER], 
-                    'value' : jsdata[JE_VALUE]/32768.0,
-                   }
+            return JEvent (type = TYPE_AXIS, 
+                           number = jsdata[JE_NUMBER], 
+                           value  = jsdata[JE_VALUE]/32768.0,
+                           )
         if jsdata[JE_TYPE]&JS_EVENT_BUTTON != 0:
-            return {'type'  : TYPE_BUTTON, 
-                    'number': jsdata[JE_NUMBER], 
-                    'value' : jsdata[JE_VALUE],
-                   }
+            return JEvent (type = TYPE_BUTTON, 
+                           number = jsdata[JE_NUMBER], 
+                           value  = jsdata[JE_VALUE]/32768.0,
+                           )
 
     def get_events(self):
         """ Returns a list of all joystick event since the last call """
