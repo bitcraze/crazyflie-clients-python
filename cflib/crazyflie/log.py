@@ -274,7 +274,7 @@ class Log():
 
     def refreshTOC(self, refreshDoneCallback):
         pk = CRTPPacket()
-        pk.setHeader(CRTPPort.LOGGING, 0)
+        pk.setHeader(CRTPPort.LOGGING, CHAN_SETTINGS)
         pk.data = (CMD_RESET_LOGGING, )
         self.cf.sendLinkPacket(pk)
 
