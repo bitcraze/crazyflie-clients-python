@@ -192,7 +192,7 @@ class TocFetcher:
             else:  # No more variables in TOC
                 # TODO: Save TOC in a cache with CRC as a key so that it can
                 #       be loaded from cache the next time.
-                self.tocFetchFinished()
+                self._toc_fetch_finished()
 
     def _request_toc_element(self, index):
         logger.debug("Requesting index %d on port %d", index, self.port)
