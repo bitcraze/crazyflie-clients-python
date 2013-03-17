@@ -39,7 +39,7 @@ __all__ = ['RadioDriver']
 import logging
 logger = logging.getLogger(__name__)
 
-from crtpdriver import CRTPDriver
+from cflib.crtp.crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket
 from .exceptions import WrongUriType
 import threading
@@ -54,11 +54,16 @@ class RadioDriver (CRTPDriver):
     """ Crazyradio link driver """
     def __init__(self):
         """ Create the link driver """
+        CRTPDriver.__init__(self)
         self.cradio = None
-        self.linkErrorCallback = None
-        self.linkQualityCallback = None
+        self.uri = ""
+        self.link_error_callback = None
+        self.link_quality_callback = None
+        self.in_queue = None
+        self.out_queue = None
+        self._thread = None
 
-    def connect(self, uri, linkQualityCallback, linkErrorCallback):
+    def connect(self, uri, link_quality_callback, link_error_callback):
         """
         Connect the link driver to a specified URI of the format:
         radio://<dongle nbr>/<radio channel>/[250K,1M,2M]
@@ -76,23 +81,24 @@ class RadioDriver (CRTPDriver):
         #Open the USB dongle
         if not re.search("^radio://([0-9]+)((/([0-9]+))(/(250K|1M|2M))?)?$",
                          uri):
-            raise Exception('Wrong radio URI format!')
+            raise WrongUriType('Wrong radio URI format!')
 
-        uriData = re.search("^radio://([0-9]+)((/([0-9]+))(/(250K|1M|2M))?)?$",
-                            uri)
+        uri_data = re.search("^radio://([0-9]+)((/([0-9]+))"
+                             "(/(250K|1M|2M))?)?$",
+                             uri)
 
         self.uri = uri
 
         channel = 2
-        if uriData.group(4):
-            channel = int(uriData.group(4))
+        if uri_data.group(4):
+            channel = int(uri_data.group(4))
 
         datarate = Crazyradio.DR_2MPS
-        if uriData.group(6) == "250K":
+        if uri_data.group(6) == "250K":
             datarate = Crazyradio.DR_250KPS
-        if uriData.group(6) == "1M":
+        if uri_data.group(6) == "1M":
             datarate = Crazyradio.DR_1MPS
-        if uriData.group(6) == "2M":
+        if uri_data.group(6) == "2M":
             datarate = Crazyradio.DR_2MPS
 
         #FIXME: Still required to open more than one dongle?
@@ -111,17 +117,18 @@ class RadioDriver (CRTPDriver):
         self.cradio.set_data_rate(datarate)
 
         #Prepare the inter-thread communication queue
-        self.inQueue = Queue.Queue()
-        self.outQueue = Queue.Queue(50)  # Limited size out queue to avoid
+        self.in_queue = Queue.Queue()
+        self.out_queue = Queue.Queue(50)  # Limited size out queue to avoid
                                          # "ReadBack" effect
 
         #Launch the comm thread
-        self.thread = _RadioDriverThread(self.cradio, self.inQueue,
-                                        self.outQueue, linkQualityCallback,
-                                        linkErrorCallback)
-        self.thread.start()
+        self._thread = _RadioDriverThread(self.cradio, self.in_queue,
+                                          self.out_queue,
+                                          link_quality_callback,
+                                          link_error_callback)
+        self._thread.start()
 
-        self.linkErrorCallback = linkErrorCallback
+        self.link_error_callback = link_error_callback
 
     def receive_packet(self, time=0):
         """
@@ -130,38 +137,38 @@ class RadioDriver (CRTPDriver):
         """
         if time == 0:
             try:
-                return self.inQueue.get(False)
+                return self.in_queue.get(False)
             except Queue.Empty:
                 return None
         elif time < 0:
             try:
-                return self.inQueue.get(True)
+                return self.in_queue.get(True)
             except Queue.Empty:
                 return None
         else:
             try:
-                return self.inQueue.get(True, time)
+                return self.in_queue.get(True, time)
             except Queue.Empty:
                 return None
 
     def send_packet(self, pk):
         """ Send the packet pk though the link """
-        #if self.outQueue.full():
-        #    self.outQueue.get()
+        #if self.out_queue.full():
+        #    self.out_queue.get()
         if (self.cradio is None):
             return
 
         try:
-            self.outQueue.put(pk, True, 2)
+            self.out_queue.put(pk, True, 2)
         except Queue.Full:
-            if self.linkErrorCallback:
-                self.linkErrorCallback("RadioDriver: Could not send packet to"
-                                       " copter")
+            if self.link_error_callback:
+                self.link_error_callback("RadioDriver: Could not send packet"
+                                         " to copter")
 
     def close(self):
         """ Close the link. """
         #Stop the comm thread
-        self.thread.stop()
+        self._thread.stop()
 
         #Close the USB dongle
         try:
@@ -219,16 +226,16 @@ class _RadioDriverThread (threading.Thread):
 
     RETRYCOUNT_BEFORE_DISCONNECT = 10
 
-    def __init__(self, cradio, inQueue, outQueue, linkQualityCallback,
-                 linkErrorCallback):
+    def __init__(self, cradio, inQueue, outQueue, link_quality_callback,
+                 link_error_callback):
         """ Create the object """
         threading.Thread.__init__(self)
         self.cradio = cradio
-        self.inQueue = inQueue
-        self.outQueue = outQueue
+        self.in_queue = inQueue
+        self.out_queue = outQueue
         self.sp = False
-        self.linkErrorCallback = linkErrorCallback
-        self.linkQualityCallback = linkQualityCallback
+        self.link_error_callback = link_error_callback
+        self.link_quality_callback = link_quality_callback
         self.retryBeforeDisconnect = self.RETRYCOUNT_BEFORE_DISCONNECT
 
     def stop(self):
@@ -253,27 +260,27 @@ class _RadioDriverThread (threading.Thread):
                 ackStatus = self.cradio.send_packet(dataOut)
             except Exception as e:
                 import traceback
-                self.linkErrorCallback("Error communicating with crazy radio,"
-                                       " it has probably been unplugged!\n"
-                                       "Exception:%s\n\n%s" % (e,
-                                       traceback.format_exc()))
+                self.link_error_callback("Error communicating with crazy radio"
+                                         " ,it has probably been unplugged!\n"
+                                         "Exception:%s\n\n%s" % (e,
+                                         traceback.format_exc()))
 
             #Analise the in data packet ...
             if ackStatus is None:
-                if (self.linkErrorCallback is not None):
-                        self.linkErrorCallback("Dongle communication error"
-                                               " (ackStatus==None)")
+                if (self.link_error_callback is not None):
+                    self.link_error_callback("Dongle communication error"
+                                             " (ackStatus==None)")
                 continue
 
-            if (self.linkQualityCallback is not None):
-                self.linkQualityCallback((10-ackStatus.retry)*10)
+            if (self.link_quality_callback is not None):
+                self.link_quality_callback((10-ackStatus.retry)*10)
 
             #If no copter, retry
             if ackStatus.ack is False:
                 self.retryBeforeDisconnect = self.retryBeforeDisconnect - 1
                 if (self.retryBeforeDisconnect == 0 and
-                        self.linkErrorCallback is not None):
-                    self.linkErrorCallback("Too many packets lost")
+                        self.link_error_callback is not None):
+                    self.link_error_callback("Too many packets lost")
                 continue
             self.retryBeforeDisconnect = self.RETRYCOUNT_BEFORE_DISCONNECT
 
@@ -284,7 +291,7 @@ class _RadioDriverThread (threading.Thread):
             if (len(data) > 0):
                 inPacket = CRTPPacket(data[0], list(data[1:]))
                 #print "<- " + inPacket.__str__()
-                self.inQueue.put(inPacket)
+                self.in_queue.put(inPacket)
                 waitTime = 0
                 emptyCtr = 0
             else:
@@ -299,7 +306,7 @@ class _RadioDriverThread (threading.Thread):
             #get the next packet to send of relaxation (wait 10ms)
             outPacket = None
             try:
-                outPacket = self.outQueue.get(True, waitTime)
+                outPacket = self.out_queue.get(True, waitTime)
             except Queue.Empty:
                 outPacket = None
 

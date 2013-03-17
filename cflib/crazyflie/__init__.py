@@ -40,9 +40,8 @@ __all__ = ['Crazyflie']
 
 import logging
 logger = logging.getLogger(__name__)
-
-from threading import Thread
 import time
+from threading import Thread
 
 from threading import Timer
 
@@ -83,7 +82,7 @@ class Crazyflie():
         """ Create the objects from this module and register callbacks. """
         self.link = link
 
-        self.incomming = CrazyflieIncomming(self)
+        self.incomming = _IncomingPacketHandler(self)
         self.incomming.setDaemon(True)
         self.incomming.start()
 
@@ -92,12 +91,14 @@ class Crazyflie():
         self.console = Console(self)
         self.param = Param(self)
 
-        self.linkURI = ""
-        self._link_string = ""
+        self._log_toc_updated = False
+        self._param_toc_updated = False
+
+        self.link_uri = ""
 
         # Used for retry when no reply was sent back
         self.receivedPacket.add_callback(self._check_for_initial_packet_cb)
-        self.answerTimers = {}
+        self.answer_timers = {}
 
         # Connect callbacks to logger
         self.disconnected.add_callback(
@@ -117,61 +118,70 @@ class Crazyflie():
             lambda uri: logger.info("Callback->Connection setup finished [%s]",
                                     uri))
 
-    def _start_connection_setup(self, link):
-        logger.info("We are connected[%s], request connection setup", link)
-        self._link_string = link
-
+    def _start_connection_setup(self):
+        """Start the connection setup by refreshing the TOCs"""
+        logger.info("We are connected[%s], request connection setup",
+                    self.link_uri)
         self.log.refresh_toc(self._log_toc_updated_cb)
 
     def _param_toc_updated_cb(self):
+        """Called when the param TOC has been fully updated"""
         logger.info("Param TOC finished updating")
-        self.paramTocUpdated = True
-        if (self.logTocUpdated is True and self.paramTocUpdated is True):
-            self.connectSetupFinished.call(self._link_string)
+        self._param_toc_updated = True
+        if (self._log_toc_updated is True and self._param_toc_updated is True):
+            self.connectSetupFinished.call(self.link_uri)
 
     def _log_toc_updated_cb(self):
+        """Called when the log TOC has been fully updated"""
         logger.info("Log TOC finished updating")
-        self.logTocUpdated = True
+        self._log_toc_updated = True
         self.param.refresh_toc(self._param_toc_updated_cb)
 
-        if (self.logTocUpdated and self.paramTocUpdated):
+        if (self._log_toc_updated and self._param_toc_updated):
             logger.info("All TOCs finished updating")
-            self.connectSetupFinished.call(self._link_string)
+            self.connectSetupFinished.call(self.link_uri)
 
     def _link_error_cb(self, errmsg):
+        """Called from the link driver when there's an error"""
         logger.warning("Got link error callback [%s] in state [%s]",
                        errmsg, self.state)
         if (self.link is not None):
             self.link.close()
         self.link = None
         if (self.state == State.INITIALIZED):
-            self.connectionFailed.call(self.linkURI, errmsg)
+            self.connectionFailed.call(self.link_uri, errmsg)
         if (self.state == State.CONNECTED or
                 self.state == State.SETUP_FINISHED):
-            self.disconnected.call(self.linkURI)
-            self.connectionLost.call(self.linkURI, errmsg)
+            self.disconnected.call(self.link_uri)
+            self.connectionLost.call(self.link_uri, errmsg)
         self.state = State.DISCONNECTED
 
     def _link_quality_cb(self, percentage):
+        """Called from link driver to report link quality"""
         self.linkQuality.call(percentage)
 
     def _check_for_initial_packet_cb(self, data):
+        """Called when first packet arrives from Crazyflie.
+
+        This is used to determine if we are connected to something that is
+        answering.
+        """
         self.state = State.CONNECTED
-        self.connected.call(self.linkURI)
+        self.connected.call(self.link_uri)
         self.receivedPacket.remove_callback(self._check_for_initial_packet_cb)
 
-    def open_link(self, linkString):
+    def open_link(self, link_uri):
         """
         Open the communication link to a copter at the given URI and setup the
         connection (download log/parameter TOC).
         """
-        self.connectionInitiated.call(linkString)
+        self.connectionInitiated.call(link_uri)
         self.state = State.INITIALIZED
-        self.linkURI = linkString
-        self.logTocUpdated = False
-        self.paramTocUpdated = False
+        self.link_uri = link_uri
+        self._log_toc_updated = False
+        self._param_toc_updated = False
         try:
-            self.link = cflib.crtp.get_link_driver(linkString,
+            self.link = cflib.crtp.get_link_driver(link_uri,
                                                    self._link_quality_cb,
                                                    self._link_error_cb)
 
@@ -179,7 +189,7 @@ class Crazyflie():
             # back from the copter
             self.receivedPacket.add_callback(self._check_for_initial_packet_cb)
 
-            self._start_connection_setup(linkString)
+            self._start_connection_setup()
         except Exception as e:
             import traceback
             logger.error("Couldn't load link driver: %s\n\n%s",
@@ -188,7 +198,7 @@ class Crazyflie():
                             e, traceback.format_exc())
             if self.link:
                 self.link.close()
-            self.connectionFailed.call(linkString, exceptionText)
+            self.connectionFailed.call(link_uri, exceptionText)
 
     def close_link(self):
         """ Close the communication link. """
@@ -198,18 +208,18 @@ class Crazyflie():
         if (self.link is not None):
             self.link.close()
         #self.link = None
-        self.disconnected.call(self.linkURI)
+        self.disconnected.call(self.link_uri)
 
     def add_port_callback(self, port, cb):
-        self.incomming.addPortCallback(port, cb)
+        self.incomming.add_port_callback(port, cb)
 
     def remove_port_callback(self, port, cb):
-        self.incomming.removePortCallback(port, cb)
+        self.incomming.remove_port_callback(port, cb)
 
     def _no_answer_do_retry(self, pk):
         logger.debug("ExpectAnswer: No answer on [%d], do retry", pk.port)
         # Cancel timer before calling for retry to help bug hunting
-        oldTimer = self.answerTimers[pk.port]
+        oldTimer = self.answer_timers[pk.port]
         if (oldTimer is not None):
             oldTimer.cancel()
             self.send_packet(pk, True)
@@ -217,17 +227,24 @@ class Crazyflie():
             logger.warning("ExpectAnswer: ERROR! Was doing retry but"
                            "timer was None")
 
-    def send_packet(self, pk, expectAnswer=False):
+    def send_packet(self, pk, expect_answer=False):
+        """Send a packet through the link interface.
+
+        pk -- Packet to send
+        expect_answer -- True if a packet from the Crazyflie is expected to
+                         be sent back, otherwise false
+
+        """
         if (self.link is not None):
             self.link.send_packet(pk)
-            if (expectAnswer is True):
+            if (expect_answer):
                 logger.debug("ExpectAnswer: Will expect answer on port [%d]",
                              pk.port)
-                newTimer = Timer(1, lambda: self._no_answer_do_retry(pk))
+                new_timer = Timer(1, lambda: self._no_answer_do_retry(pk))
                 try:
-                    oldTimer = self.answerTimers[pk.port]
-                    if (oldTimer is not None):
-                        oldTimer.cancel()
+                    old_timer = self.answer_timers[pk.port]
+                    if (old_timer is not None):
+                        old_timer.cancel()
                         # If we get here a second call has been made to send
                         # packet on this port before we have gotten the first
                         # one back. This is an error and might cause loss of
@@ -235,40 +252,46 @@ class Crazyflie():
                         logger.warning("ExpectAnswer: ERROR! Older timer whas"
                                        " running while scheduling new one on "
                                        "[%d]", pk.port)
-                except Exception:
+                except KeyError:
                     pass
-                self.answerTimers[pk.port] = newTimer
-                newTimer.start()
+                self.answer_timers[pk.port] = new_timer
+                new_timer.start()
 
 
-class CrazyflieIncomming(Thread):
+class _IncomingPacketHandler(Thread):
+    """Handles incoming packets and sends the data to the correct receivers"""
     def __init__(self, cf):
         Thread.__init__(self)
         self.cf = cf
         self.cb = []
 
-    def addPortCallback(self, port, cb):
+    def add_port_callback(self, port, cb):
+        """Add a callback for data that comes on a specific port"""
         logger.debug("Adding callback on port [%d] to [%s]", port, cb)
-        self.addHeaderCallback(cb, port, 0, 0xff, 0x0)
+        self.add_header_callback(cb, port, 0, 0xff, 0x0)
 
-    def removePortCallback(self, port, cb):
+    def remove_port_callback(self, port, cb):
+        """Remove a callback for data that comes on a specific port"""
         logger.debug("Removing callback on port [%d] to [%s]", port, cb)
-        for p in self.cb:
-            if (p[0] == port and p[4] == cb):
-                self.cb.remove(p)
+        for port_callback in self.cb:
+            if (port_callback[0] == port and port_callback[4] == cb):
+                self.cb.remove(port_callback)
 
-    def addHeaderCallback(self, cb, port, channel, portMask=0xFF,
-                          channelMask=0xFF):
-        self.cb.append([port, portMask, channel, channelMask, cb])
+    def add_header_callback(self, cb, port, channel, port_mask=0xFF,
+                            channel_mask=0xFF):
+        """
+        Add a callback for a specific port/header callback with the
+        possibility to add a mask for channel and port for multiple
+        hits for same callback.
+        """
+        self.cb.append([port, port_mask, channel, channel_mask, cb])
 
     def run(self):
         while(True):
-            pk = None
-            try:
-                pk = self.cf.link.receive_packet(1)
-            except Exception:
-                #print e
+            if self.cf.link is None:
                 time.sleep(1)
+                continue
+            pk = self.cf.link.receive_packet(1)
 
             if pk is None:
                 continue
@@ -282,7 +305,10 @@ class CrazyflieIncomming(Thread):
                         cb[2] == pk.channel & cb[3]):
                     try:
                         cb[4](pk)
-                    except Exception:
+                    except Exception:  # pylint: disable=W0703
+                        # Disregard pylint warning since we want to catch all
+                        # exceptions and we can't know what will happen in
+                        # the callbacks.
                         import traceback
                         logger.warning("Exception while doing callback on port"
                                        " [%d]\n\n%s", pk.port,
@@ -293,4 +319,3 @@ class CrazyflieIncomming(Thread):
             if not found:
                 logger.warning("Got packet on header (%d,%d) but no callback "
                                "to handle it", pk.port, pk.channel)
-                #print "Data: {}".format(pk.data)

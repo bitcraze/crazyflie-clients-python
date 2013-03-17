@@ -256,4 +256,3 @@ class Cloader:
             ret += (eval("0x" + i), )
 
         return ret
-
