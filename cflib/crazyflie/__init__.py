@@ -190,15 +190,17 @@ class Crazyflie():
             self.receivedPacket.add_callback(self._check_for_initial_packet_cb)
 
             self._start_connection_setup()
-        except Exception as e:
+        except Exception as ex:  # pylint: disable=W0703
+            # We want to catch every possible exception here and show
+            # it in the user interface
             import traceback
             logger.error("Couldn't load link driver: %s\n\n%s",
-                         e, traceback.format_exc())
-            exceptionText = "Couldn't load link driver: %s\n\n%s" % (
-                            e, traceback.format_exc())
+                         ex, traceback.format_exc())
+            exception_text = "Couldn't load link driver: %s\n\n%s" % (
+                             ex, traceback.format_exc())
             if self.link:
                 self.link.close()
-            self.connectionFailed.call(link_uri, exceptionText)
+            self.connectionFailed.call(link_uri, exception_text)
 
     def close_link(self):
         """ Close the communication link. """

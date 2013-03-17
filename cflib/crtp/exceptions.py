@@ -39,9 +39,9 @@ __all__ = ['WrongUriType', 'CommunicationException']
 
 class WrongUriType (Exception):
     """ Wrong type of URI for this interface """
-    None
+    pass
 
 
 class CommunicationException (Exception):
     """ Communication problem when communicating with a Crazyflie """
-    None
+    pass

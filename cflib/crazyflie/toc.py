@@ -143,7 +143,7 @@ class TocFetcher:
         pk = CRTPPacket()
         pk.set_header(self.port, TOC_CHANNEL)
         pk.data = (CMD_TOC_INFO, )
-        self.cf.send_packet(pk, expectAnswer=True)
+        self.cf.send_packet(pk, expect_answer=True)
 
     def _toc_fetch_finished(self):
         self.cf.remove_port_callback(self.port, self._new_packet_cb)
@@ -199,4 +199,4 @@ class TocFetcher:
         pk = CRTPPacket()
         pk.set_header(self.port, TOC_CHANNEL)
         pk.data = (CMD_TOC_ELEMENT, index)
-        self.cf.send_packet(pk, expectAnswer=True)
+        self.cf.send_packet(pk, expect_answer=True)

@@ -158,7 +158,7 @@ class Param():
             pk.set_header(CRTPPort.PARAM, WRITE_CHANNEL)
             pk.data = struct.pack('<B', varid)
             pk.data += struct.pack(element.pytype, eval(value))
-            self.cf.send_packet(pk, expectAnswer=True)
+            self.cf.send_packet(pk, expect_answer=True)
         else:
             logger.warning("Cannot set value for [%s], it's not in the TOC!",
                            completeName)
@@ -184,7 +184,7 @@ class _ParamUpdater(Thread):
         pk = CRTPPacket()
         pk.set_header(CRTPPort.PARAM, READ_CHANNEL)
         pk.data = struct.pack('<B', varid)
-        self.cf.send_packet(pk, expectAnswer=True)
+        self.cf.send_packet(pk, expect_answer=True)
 
     def run(self):
         while(True):
