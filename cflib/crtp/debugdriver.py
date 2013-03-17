@@ -390,8 +390,8 @@ class DebugDriver (CRTPDriver):
                 listofvars = pk.data[3:]
 
                 fakeThread = _FakeLoggingDataThread(self.queue, blockId,
-                                                   period, listofvars,
-                                                   self.fakeLogToc)
+                                                    period, listofvars,
+                                                    self.fakeLogToc)
                 self.fakeLoggingThreads.append(fakeThread)
                 fakeThread.start()
                 # Anser that everything is ok

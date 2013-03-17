@@ -160,7 +160,8 @@ class LogEntry:
         for v in self.logconf.getVariables():
             size = LogTocElement.get_size_from_id(v.getFetchAs())
             name = v.getName()
-            unpackstring = LogTocElement.get_unpack_string_from_id(v.getFetchAs())
+            unpackstring = LogTocElement.get_unpack_string_from_id(
+                v.getFetchAs())
             value = struct.unpack(unpackstring,
                                   logData[dataIndex:dataIndex+size])[0]
             dataIndex += size
@@ -255,7 +256,8 @@ class Log():
             # Check that we are able to find the variable in the TOC so
             # we can return error already now and not when the config is sent
             if (v.isTocVariable()):
-                if (self.toc.get_element_by_complete_name(v.getName()) is None):
+                if (self.toc.get_element_by_complete_name(
+                        v.getName()) is None):
                     logger.warning("Log: %s not in TOC, this block cannot be"
                                    " used!", v.getName())
                     return None
