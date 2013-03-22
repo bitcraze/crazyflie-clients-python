@@ -176,7 +176,7 @@ class ServiceTab(Tab, service_tab_class):
     def statusUpdate(self, status, progress):
         logger.debug("Status: [%s] | %d", status, progress)
         self.statusLabel.setText('Status: <b>' + status + '</b>')
-        if progress>0:
+        if progress>=0:
             self.progressBar.setTextVisible(True)
             self.progressBar.setValue(progress)        
         else:
@@ -278,9 +278,12 @@ class CrazyloadThread(QThread):
     def readConfigAction(self):
         self.statusChanged.emit("Reading config block...", 0)
         data = self.loader.read_flash(self.loader.start_page + 117)
-        self.statusChanged.emit("Reading config block...done!", 100)
-        [channel, speed, pitchTrim, rollTrim] = struct.unpack("<BBff", data[5:15]) # Skip 0xBC and version at the beginning
-        self.updateConfigSignal.emit(str(channel), str(speed), str(pitchTrim), str(rollTrim))
+        if (data is not None):
+            self.statusChanged.emit("Reading config block...done!", 100)
+            [channel, speed, pitchTrim, rollTrim] = struct.unpack("<BBff", data[5:15]) # Skip 0xBC and version at the beginning
+            self.updateConfigSignal.emit(str(channel), str(speed), str(pitchTrim), str(rollTrim))
+        else:
+            self.statusChanged.emit("Reading config block failed!", 0)
 
     def loadAndFlash(self, image, verify = False, startpage = 0):
 

@@ -215,13 +215,22 @@ class Cloader:
         buff = ""
 
         for i in range(0, int(math.ceil(self.page_size / 25.0))):
-            pk = CRTPPacket()
-            pk.set_header(0xFF, 0xFF)
-            pk.data = struct.pack("<BBHH", 0xFF, 0x1C, page, (i * 25))
-            self.link.send_packet(pk)
+            pk = None
+            retry_counter = 5
+            while ((not pk or pk.header != 0xFF or
+                    struct.unpack("<BB", pk.data[0:2]) != (0xFF, 0x1C))
+                    and retry_counter >= 0):
+                pk = CRTPPacket()
+                pk.set_header(0xFF, 0xFF)
+                pk.data = struct.pack("<BBHH", 0xFF, 0x1C, page, (i * 25))
+                self.link.send_packet(pk)
 
-            pk = self.link.receive_packet(1)
-            buff += pk.data[6:]
+                pk = self.link.receive_packet(1)
+                retry_counter -= 1
+            if (retry_counter < 0):
+                return None
+            else:
+                buff += pk.data[6:]
 
         return buff[0:1024]  # For some reason we get one byte extra here...
 
@@ -229,19 +238,20 @@ class Cloader:
         """Initate flashing of data in the buffer to flash."""
         #print "Write page", flashPage
         #print "Writing page [%d] and [%d] forward" % (flashPage, nPage)
-
-        pk = CRTPPacket()
-        pk.set_header(0xFF, 0xFF)
-        pk.data = struct.pack("<BBHHH", 0xFF, 0x18, page_buffer,
-                              target_page, page_count)
-        self.link.send_packet(pk)
-
-        pk = self.link.receive_packet(1)
-        while (not pk or pk.header != 0xFF or
-                struct.unpack("<BB", pk.data[0:2]) != (0xFF, 0x18)):
+        pk = None
+        retry_counter = 5
+        while ((not pk or pk.header != 0xFF or
+                struct.unpack("<BB", pk.data[0:2]) != (0xFF, 0x18))
+                and retry_counter >= 0):
+            pk = CRTPPacket()
+            pk.set_header(0xFF, 0xFF)
+            pk.data = struct.pack("<BBHHH", 0xFF, 0x18, page_buffer,
+                                  target_page, page_count)
+            self.link.send_packet(pk)
             pk = self.link.receive_packet(1)
+            retry_counter -= 1
 
-        if not pk:
+        if retry_counter < 0:
             self.error_code = -1
             return False
 
