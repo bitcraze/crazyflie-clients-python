@@ -269,11 +269,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.logConfigDialogue.show()
 
     def updateBatteryVoltage(self, data):
-        battMin = 3000.0
-        battMax = 4000.0
-        diff = battMax - battMin
-        val = (data["sys.battery"] - battMin) / diff
-        self.batteryBar.setValue(val*100)
+        self.batteryBar.setValue(int(data["pm.vbat"] * 1000))
 
     def connectionDone(self, linkURI):
         self.setUIState(UIState.CONNECTED, linkURI)
@@ -281,7 +277,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         Config().setParam(ConfigParams.LAST_CONNECT_URI, linkURI)
 
         lg = LogConfig ("Battery", 1000)
-        lg.addVariable(LogVariable("sys.battery", "uint16_t"))
+        lg.addVariable(LogVariable("pm.vbat", "float"))
         self.log = self.cf.log.create_log_packet(lg)
         if (self.log != None):
             self.log.dataReceived.add_callback(self.batteryUpdatedSignal.emit)

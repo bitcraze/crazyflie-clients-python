@@ -495,7 +495,7 @@ p, li { white-space: pre-wrap; }
           <item row="0" column="3">
            <widget class="QProgressBar" name="actualM3">
             <property name="maximum">
-             <number>255</number>
+             <number>65535</number>
             </property>
             <property name="value">
              <number>0</number>
@@ -508,7 +508,7 @@ p, li { white-space: pre-wrap; }
           <item row="0" column="1">
            <widget class="QProgressBar" name="actualM1">
             <property name="maximum">
-             <number>255</number>
+             <number>65535</number>
             </property>
             <property name="value">
              <number>0</number>
@@ -521,7 +521,7 @@ p, li { white-space: pre-wrap; }
           <item row="0" column="4">
            <widget class="QProgressBar" name="actualM4">
             <property name="maximum">
-             <number>255</number>
+             <number>65535</number>
             </property>
             <property name="value">
              <number>0</number>
@@ -534,7 +534,7 @@ p, li { white-space: pre-wrap; }
           <item row="0" column="2">
            <widget class="QProgressBar" name="actualM2">
             <property name="maximum">
-             <number>255</number>
+             <number>65535</number>
             </property>
             <property name="value">
              <number>0</number>
