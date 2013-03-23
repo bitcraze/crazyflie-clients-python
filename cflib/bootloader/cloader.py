@@ -33,6 +33,9 @@ Crazyflie radio bootloader for flashing firmware.
 __author__ = 'Bitcraze AB'
 __all__ = ['Cloader']
 
+import logging
+logger = logging.getLogger(__name__)
+
 import time
 import struct
 import math
@@ -164,17 +167,27 @@ class Cloader:
             This function workd only with crazyradio crtp link.
         """
 
+        logging.debug("Setting bootloader radio address to"
+                      " {}".format(newAddress))
+
         if len(newAddress) != 5:
             raise Exception("Radio address should be 5 bytes long")
 
-       	for _ in range(5):
+        self.link.pause()
+
+       	for _ in range(10):
+            logging.debug("Trying to set new radio address")
             self.link.cradio.set_address((0xE7,)*5)
             pkdata = (0xFF, 0xFF, 0x11) + tuple(newAddress)
             self.link.cradio.send_packet(pkdata)
             self.link.cradio.set_address(tuple(newAddress))
-            if self._update_info():
+            if self.link.cradio.send_packet((0xff,)).ack:
+                logging.info("Bootloader set to radio address"
+                             " {}".format(newAddress))
+                self.link.restart()
                 return True
 
+        self.link.restart()
         return False
 
     def _update_info(self):
