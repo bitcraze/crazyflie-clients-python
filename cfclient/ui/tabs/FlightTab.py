@@ -129,8 +129,10 @@ class FlightTab(Tab, flight_tab_class):
     def uiSetupReady(self):
         try:        
             self.flightModeCombo.setCurrentIndex(self.flightModeCombo.findText(Config().getParam(ConfigParams.FLIGHT_MODE), Qt.MatchFixedString))
+            self.flightModeCombo.currentIndexChanged.emit(self.flightModeCombo.findText(Config().getParam(ConfigParams.FLIGHT_MODE), Qt.MatchFixedString))
         except:
             self.flightModeCombo.setCurrentIndex(1)
+            self.flightModeCombo.currentIndexChanged.emit(0)
 
     def loggingError(self):
         logger.warning("Callback of error in LogEntry :(")
@@ -240,21 +242,14 @@ class FlightTab(Tab, flight_tab_class):
         Config().setParam(ConfigParams.FLIGHT_MODE, self.flightModeCombo.itemText(item))
         logger.info("Changed flightmode to %s", self.flightModeCombo.itemText(item))
         self.isInCrazyFlightmode = False
-        if (item == 2): # Normal
+        if (item == 0): # Normal
             self.maxAngle.setValue(15)
             self.maxThrust.setValue(self.thrustToPercentage(50000))
             self.minThrust.setValue(self.thrustToPercentage(20000))
             self.slewEnableLimit.setValue(self.thrustToPercentage(30000))
             self.thrustLoweringSlewRateLimit.setValue(self.thrustToPercentage(20000))
-            self.maxYawRate.setValue(200)
-        if (item == 1): # Safe
-            self.maxAngle.setValue(10)
-            self.maxThrust.setValue(self.thrustToPercentage(50000))
-            self.minThrust.setValue(self.thrustToPercentage(20000))
-            self.slewEnableLimit.setValue(self.thrustToPercentage(30000))
-            self.thrustLoweringSlewRateLimit.setValue(self.thrustToPercentage(20000))
-            self.maxYawRate.setValue(50)
-        if (item == 0): # Crazy
+            self.maxYawRate.setValue(300)
+        if (item == 1): # Advanced
             try:
                 self.maxAngle.setValue(int(Config().getParam(ConfigParams.CRAZY_MAX_RP_ANGLE)))
                 self.maxThrust.setValue(self.thrustToPercentage(int(Config().getParam(ConfigParams.CRAZY_MAX_THRUST))))
@@ -264,7 +259,7 @@ class FlightTab(Tab, flight_tab_class):
                 self.maxYawRate.setValue(int(Config().getParam(ConfigParams.CRAZY_MAX_YAWRATE)))
             except KeyError:
                 self.isInCrazyFlightmode = True
-                self.maxAngle.setValue(20)
+                self.maxAngle.setValue(25)
                 self.maxThrust.setValue(self.thrustToPercentage(55000))
                 self.minThrust.setValue(self.thrustToPercentage(20000))
                 self.slewEnableLimit.setValue(self.thrustToPercentage(30000))
@@ -272,7 +267,7 @@ class FlightTab(Tab, flight_tab_class):
                 self.maxYawRate.setValue(400)
             self.isInCrazyFlightmode = True
 
-        if (item == 1 or item == 2):
+        if (item == 0):
             newState = False
         else:
             newState = True
