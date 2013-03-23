@@ -45,21 +45,16 @@
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>-1</number>
+             <number>0</number>
             </property>
             <item>
              <property name="text">
-              <string>Crazy :)</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Safe and Easy</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
               <string>Normal</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Advanced</string>
              </property>
             </item>
            </widget>
@@ -176,8 +171,11 @@
           </item>
           <item row="6" column="0">
            <widget class="QRadioButton" name="angularPidRadioButton">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
-             <string>Angular PID</string>
+             <string>Attitide control</string>
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -186,8 +184,11 @@
           </item>
           <item row="6" column="1">
            <widget class="QRadioButton" name="ratePidRadioButton">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
-             <string>Rate PID</string>
+             <string>Rate control</string>
             </property>
            </widget>
           </item>
