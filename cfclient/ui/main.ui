@@ -46,7 +46,7 @@
          <widget class="QProgressBar" name="linkQualityBar">
           <property name="minimumSize">
            <size>
-            <width>20</width>
+            <width>150</width>
             <height>0</height>
            </size>
           </property>
@@ -56,24 +56,42 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="maximum">
+           <number>100</number>
+          </property>
           <property name="value">
            <number>0</number>
           </property>
           <property name="textVisible">
            <bool>true</bool>
           </property>
+          <property name="format">
+           <string>Link quality %p%</string>
+          </property>
          </widget>
         </item>
         <item row="0" column="4">
          <widget class="QProgressBar" name="batteryBar">
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>0</height>
+           </size>
+          </property>
           <property name="maximumSize">
            <size>
-            <width>100</width>
+            <width>150</width>
             <height>16777215</height>
            </size>
           </property>
+          <property name="minimum">
+           <number>3000</number>
+          </property>
+          <property name="maximum">
+           <number>4000</number>
+          </property>
           <property name="value">
-           <number>0</number>
+           <number>3000</number>
           </property>
           <property name="textVisible">
            <bool>true</bool>
@@ -83,6 +101,9 @@
           </property>
           <property name="textDirection">
            <enum>QProgressBar::TopToBottom</enum>
+          </property>
+          <property name="format">
+           <string>Battery %v mV</string>
           </property>
          </widget>
         </item>
@@ -185,7 +206,7 @@
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>
-   </property>      
+   </property>
   </action>
   <action name="menuItemRegulation">
    <property name="checkable">
@@ -225,7 +246,7 @@
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>
-   </property>   
+   </property>
   </action>
   <action name="menuItemQuickConnect">
    <property name="text">
@@ -238,7 +259,7 @@
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>
-   </property>   
+   </property>
   </action>
   <action name="actionSelect_input_device">
    <property name="text">
@@ -266,7 +287,7 @@
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>
-   </property>      
+   </property>
   </action>
   <action name="actionOptions">
    <property name="text">
@@ -274,7 +295,7 @@
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>
-   </property>      
+   </property>
   </action>
  </widget>
  <resources/>

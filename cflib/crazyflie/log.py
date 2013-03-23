@@ -179,9 +179,7 @@ class LogTocElement:
              0x05: ("int16_t",  '<h', 2),
              0x06: ("int32_t",  '<i', 4),
              0x08: ("FP16",     '<h', 2),
-             0x07: ("float",    '<f', 4),
-             0x08: ("int64_t",  '<L', 8),
-             0x09: ("uint64_t", '<Q', 8)}
+             0x07: ("float",    '<f', 4)}
 
     @staticmethod
     def get_id_from_cstring(s):

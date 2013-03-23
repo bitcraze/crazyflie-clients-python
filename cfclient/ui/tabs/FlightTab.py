@@ -61,13 +61,10 @@ class FlightTab(Tab, flight_tab_class):
 
     uiSetupReadySignal = pyqtSignal()
     
-    logDataSignal = pyqtSignal(object)
-    
-    UI_DATA_UPDATE_FPS = 10
+    _motor_data_signal = pyqtSignal(object)
+    _imu_data_signal = pyqtSignal(object)
 
-    batteryUpdateSignal = pyqtSignal(int)
-    imuUpdateSignal = pyqtSignal(float, float, float)
-    motorUpdateSignal = pyqtSignal(int, int, int, int)
+    UI_DATA_UPDATE_FPS = 10
 
     connectionFinishedSignal = pyqtSignal(str)
     disconnectedSignal = pyqtSignal(str)
@@ -82,10 +79,6 @@ class FlightTab(Tab, flight_tab_class):
         self.tabWidget = tabWidget
         self.helper = helper
 
-        self.batteryUpdateSignal.connect(self.updateBattData)
-        self.imuUpdateSignal.connect(self.updateIMUData)
-        self.motorUpdateSignal.connect(self.updateMotorData)
-
         self.disconnectedSignal.connect(self.disconnected)
         self.connectionFinishedSignal.connect(self.connected)
         # Incomming signals
@@ -94,7 +87,8 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.inputDeviceReader.inputUpdateSignal.connect(self.updateInputControl)
         self.helper.inputDeviceReader.calUpdateSignal.connect(self.calUpdateFromInput) 
 
-        self.logDataSignal.connect(self.logDataReceived)
+        self._imu_data_signal.connect(self._imu_data_received)
+        self._motor_data_signal.connect(self._motor_data_received)
 
         # Connect UI signals that are in this tab
         self.flightModeCombo.currentIndexChanged.connect(self.flightmodeChange)
@@ -141,48 +135,55 @@ class FlightTab(Tab, flight_tab_class):
     def loggingError(self):
         logger.warning("Callback of error in LogEntry :(")
 
-    def logDataReceived(self, data):
-        #print "FlighTab: Got callback for new data of length %d" % len(data)
-        self.updateIMUData(data["stabalizer.roll"], data["stabalizer.pitch"], data["stabalizer.yaw"])
-        #self.updateMotorData(data["motor.1"], data["motor.2"], data["motor.3"], data["motor.4"])
-        #print data
+    def _motor_data_received(self, data):
+        self.actualM1.setValue(data["motor.m1"])
+        self.actualM2.setValue(data["motor.m2"])
+        self.actualM3.setValue(data["motor.m3"])
+        self.actualM4.setValue(data["motor.m4"])
+
+    def _imu_data_received(self, data):
+        self.actualRoll.setText(("%.2f" % data["stabilizer.roll"]));
+        self.actualPitch.setText(("%.2f" % data["stabilizer.pitch"]));
+        self.actualYaw.setText(("%.2f" % data["stabilizer.yaw"]));
+        self.actualThrust.setText("%.2f%%" % self.thrustToPercentage(data["stabilizer.thrust"]))
+
+        self.ai.setRollPitch(-data["stabilizer.roll"], data["stabilizer.pitch"])
 
     def connected(self, linkURI):
-        lg = LogConfig("FlightTab", 100)
-        lg.addVariable(LogVariable("stabalizer.roll", "float"))
-        lg.addVariable(LogVariable("stabalizer.pitch", "float"))
-        lg.addVariable(LogVariable("stabalizer.yaw", "float"))
-        #lg.addVariable(LogVariable("motor.m1", Log.UINT8))
-        #lg.addVariable(LogVariable("motor.m2", Log.UINT8))
-        #lg.addVariable(LogVariable("motor.m3", Log.UINT8))
-        #lg.addVariable(LogVariable("motor.m4", Log.UINT8))
+        lg = LogConfig("Stabalizer", 100)
+        lg.addVariable(LogVariable("stabilizer.roll", "float"))
+        lg.addVariable(LogVariable("stabilizer.pitch", "float"))
+        lg.addVariable(LogVariable("stabilizer.yaw", "float"))
+        lg.addVariable(LogVariable("stabilizer.thrust", "uint16_t"))
 
         self.log = self.helper.cf.log.create_log_packet(lg)
-        if (self.log != None):
-            self.log.dataReceived.add_callback(self.logDataSignal.emit)
+        if (self.log is not None):
+            self.log.dataReceived.add_callback(self._imu_data_signal.emit)
             self.log.error.add_callback(self.loggingError)
             self.log.start()
         else:
             logger.warning("Could not setup logconfiguration after connection!")
-    
+
+        lg = LogConfig("Motors", 100)
+        lg.addVariable(LogVariable("motor.m1", "uint32_t")) 
+        lg.addVariable(LogVariable("motor.m2", "uint32_t"))
+        lg.addVariable(LogVariable("motor.m3", "uint32_t"))
+        lg.addVariable(LogVariable("motor.m4", "uint32_t"))        
+
+        self.log = self.helper.cf.log.create_log_packet(lg)
+        if (self.log is not None):
+            self.log.dataReceived.add_callback(self._motor_data_signal.emit)
+            self.log.error.add_callback(self.loggingError)
+            self.log.start()
+        else:
+            logger.warning("Could not setup logconfiguration after connection!")
+  
     def disconnected(self, linkURI):
         self.ai.setRollPitch(0, 0)
         self.actualRoll.setText("")
         self.actualPitch.setText("")
         self.actualYaw.setText("")
-
-    def updateIMUData(self, roll, pitch, yaw):
-        self.actualRoll.setText(("%.2f" % roll));
-        self.actualPitch.setText(("%.2f" % pitch));
-        self.actualYaw.setText(("%.2f" % yaw));
-
-        self.ai.setRollPitch(-roll, pitch)
-
-    def updateMotorData(self, m1, m2, m3, m4):
-        self.actualM1.setValue(m1)
-        self.actualM2.setValue(m2)
-        self.actualM3.setValue(m3)
-        self.actualM4.setValue(m4)
+        self.actualThrust.setText("")
 
     def minMaxThrustChanged(self):
         self.helper.inputDeviceReader.updateMinMaxThrustSignal.emit(self.percentageToThrust(self.minThrust.value()), 
@@ -227,9 +228,6 @@ class FlightTab(Tab, flight_tab_class):
         if (self.isInCrazyFlightmode == True):
             Config().setParam(ConfigParams.CAL_ROLL, rollCal)
             Config().setParam(ConfigParams.CAL_PITCH, pitchCal)
-
-    def updateBattData(self, voltage):
-        self.actualBattVoltage.setText(str(voltage/1000.0))
 
     def updateInputControl(self, roll, pitch, yaw, thrust):
         self.targetRoll.setText(("%0.2f" % roll));
