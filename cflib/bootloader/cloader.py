@@ -36,6 +36,7 @@ __all__ = ['Cloader']
 import time
 import struct
 import math
+import random
 
 import cflib.crtp
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
@@ -60,6 +61,7 @@ class Cloader:
         self.start_page = 0
         self.cpuid = "N/A"
         self.error_code = 0
+        self.protocol_version = 0
 
     def close(self):
         """ Close the link """
@@ -145,9 +147,31 @@ class Cloader:
     def coldboot(self):
         """Try to get a connection with the bootloader by requesting info
         5 times. This let rougly 10 seconds to boot the copter ..."""
-        for i in range(0, 5):  # pylint: disable=W0612
+        for _ in range(0, 5):
             self.link.close()
             self.link = cflib.crtp.get_link_driver(self.clink_address)
+            if self._update_info():
+                if self.protocol_version == 0:
+                    return True
+                # Set radio link to a random address
+                addr = [0xbc] + map(lambda x: random.randint(0,255), range(4))
+                return self._set_address(addr)
+
+        return False
+
+    def _set_address(self, newAddress):
+        """ Change copter radio address.
+            This function workd only with crazyradio crtp link.
+        """
+
+        if len(newAddress) != 5:
+            raise Exception("Radio address should be 5 bytes long")
+
+       	for _ in range(5):
+            self.link.cradio.set_address((0xE7,)*5)
+            pkdata = (0xFF, 0xFF, 0x11) + tuple(newAddress)
+            self.link.cradio.send_packet(pkdata)
+            self.link.cradio.set_address(tuple(newAddress))
             if self._update_info():
                 return True
 
@@ -171,6 +195,8 @@ class Cloader:
                 struct.unpack("<BB", pk.data[0:2]) == (0xFF, 0x10)):
             tab = struct.unpack("BBHHHH", pk.data[0:10])
             cpuid = struct.unpack("B"*12, pk.data[10:22])
+            if len(pk.data)>22:
+                self.protocol_version = pk.data[22]
             self.page_size = tab[2]
             self.buffer_pages = tab[3]
             self.flash_pages = tab[4]
