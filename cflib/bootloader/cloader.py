@@ -170,7 +170,7 @@ class Cloader:
         if (pk and pk.header == 0xFF and
                 struct.unpack("<BB", pk.data[0:2]) == (0xFF, 0x10)):
             tab = struct.unpack("BBHHHH", pk.data[0:10])
-            cpuid = struct.unpack("B"*12, pk.data[10:])
+            cpuid = struct.unpack("B"*12, pk.data[10:22])
             self.page_size = tab[2]
             self.buffer_pages = tab[3]
             self.flash_pages = tab[4]
