@@ -98,6 +98,7 @@ class Crazyflie():
 
         # Used for retry when no reply was sent back
         self.receivedPacket.add_callback(self._check_for_initial_packet_cb)
+        self.receivedPacket.add_callback(self._check_for_answers)
         self.answer_timers = {}
 
         # Connect callbacks to logger
@@ -228,6 +229,18 @@ class Crazyflie():
         else:
             logger.warning("ExpectAnswer: ERROR! Was doing retry but"
                            "timer was None")
+
+    def _check_for_answers(self, pk):
+        try:
+            timer = self.answer_timers[pk.port]
+            if (timer is not None):
+                logger.debug("ExpectAnswer: Got answer back on port [%d]"
+                             ", cancelling timer", pk.port)
+                timer.cancel()
+                self.answer_timers[pk.port] = None
+        except KeyError:
+            # We are not waiting for any answer on this port, ignore..
+            pass
 
     def send_packet(self, pk, expect_answer=False):
         """Send a packet through the link interface.
