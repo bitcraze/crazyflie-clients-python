@@ -48,7 +48,7 @@ import Queue
 import re
 import time
 import struct
-import datetime
+from datetime import datetime
 from cflib.crazyflie.log import LogTocElement
 from cflib.crazyflie.param import ParamTocElement
 
@@ -91,29 +91,32 @@ class DebugDriver (CRTPDriver):
                                 "varname": "acc_z", "min": -1000,
                                 "max": 1000, "mod": 20})
         self.fakeLogToc.append({"varid": 6, "vartype": 7,
-                                "vargroup": "stabalizer", "varname": "roll",
+                                "vargroup": "stabilizer", "varname": "roll",
                                 "min": -90, "max": 90, "mod": 2})
         self.fakeLogToc.append({"varid": 7, "vartype": 7,
-                                "vargroup": "stabalizer", "varname": "pitch",
+                                "vargroup": "stabilizer", "varname": "pitch",
                                 "min": -90, "max": 90, "mod": 1.5})
         self.fakeLogToc.append({"varid": 8, "vartype": 7,
-                                "vargroup": "stabalizer", "varname": "yaw",
+                                "vargroup": "stabilizer", "varname": "yaw",
                                 "min": -90, "max": 90, "mod": 2.5})
-        self.fakeLogToc.append({"varid": 9, "vartype": 2, "vargroup": "sys",
-                                "varname": "battery", "min": 3000,
-                                "max": 4000, "mod": 100})
-        self.fakeLogToc.append({"varid": 10, "vartype": 1, "vargroup": "motor",
-                                "varname": "m1", "min": 0, "max": 255,
-                                "mod": 1})
-        self.fakeLogToc.append({"varid": 11, "vartype": 1, "vargroup": "motor",
-                                "varname": "m2", "min": 0, "max": 255,
-                                "mod": 1})
-        self.fakeLogToc.append({"varid": 12, "vartype": 1, "vargroup": "motor",
-                                "varname": "m3", "min": 0, "max": 255,
-                                "mod": 1})
-        self.fakeLogToc.append({"varid": 13, "vartype": 1, "vargroup": "motor",
-                                "varname": "m4", "min": 0, "max": 255,
-                                "mod": 1})
+        self.fakeLogToc.append({"varid": 9, "vartype": 7, "vargroup": "pm",
+                                "varname": "vbat", "min": 3.0,
+                                "max": 4.0, "mod": 0.1})
+        self.fakeLogToc.append({"varid": 10, "vartype": 6, "vargroup": "motor",
+                                "varname": "m1", "min": 0, "max": 65000,
+                                "mod": 1000})
+        self.fakeLogToc.append({"varid": 11, "vartype": 6, "vargroup": "motor",
+                                "varname": "m2", "min": 0, "max": 65000,
+                                "mod": 1000})
+        self.fakeLogToc.append({"varid": 12, "vartype": 6, "vargroup": "motor",
+                                "varname": "m3", "min": 0, "max": 65000,
+                                "mod": 1000})
+        self.fakeLogToc.append({"varid": 13, "vartype": 6, "vargroup": "motor",
+                                "varname": "m4", "min": 0, "max": 65000,
+                                "mod": 1000})
+        self.fakeLogToc.append({"varid": 14, "vartype": 2,
+                                "vargroup": "stabilizer", "varname": "thrust",
+                                "min": 0, "max": 65000, "mod": 1000})
 
         # Fill up the fake logging TOC with values and data
         self.fakeParamToc = []

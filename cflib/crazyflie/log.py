@@ -157,7 +157,6 @@ class LogEntry:
     def unpack_log_data(self, logData):
         retData = {}
         dataIndex = 0
-        #print len(logData)
         for v in self.logconf.getVariables():
             size = LogTocElement.get_size_from_id(v.getFetchAs())
             name = v.getName()
