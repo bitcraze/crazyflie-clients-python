@@ -214,23 +214,31 @@ class Crazyflie():
         self.disconnected.call(self.link_uri)
 
     def add_port_callback(self, port, cb):
+        """Add a callback to cb on port"""
         self.incomming.add_port_callback(port, cb)
 
     def remove_port_callback(self, port, cb):
+        """Remove the callback cb on port"""
         self.incomming.remove_port_callback(port, cb)
 
     def _no_answer_do_retry(self, pk):
+        """Resend packets that we have not gotten answers to"""
         logger.debug("ExpectAnswer: No answer on [%d], do retry", pk.port)
         # Cancel timer before calling for retry to help bug hunting
-        oldTimer = self.answer_timers[pk.port]
-        if (oldTimer is not None):
-            oldTimer.cancel()
+        old_timer = self.answer_timers[pk.port]
+        if (old_timer is not None):
+            old_timer.cancel()
             self.send_packet(pk, True)
         else:
             logger.warning("ExpectAnswer: ERROR! Was doing retry but"
                            "timer was None")
 
     def _check_for_answers(self, pk):
+        """
+        Callback called for every packet received to check if we are
+        waiting for an answer on this port. If so, then cancel the retry
+        timer.
+        """
         try:
             timer = self.answer_timers[pk.port]
             if (timer is not None):
