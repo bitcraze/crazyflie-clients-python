@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+
+from __future__ import absolute_import
+
+
+def init_paths():
+	"""Make the app work in the source tree."""
+	import sys
+	import os.path as _path
+
+	prefix = _path.normpath(_path.join(_path.realpath(sys.path[0]), '..'))
+	src_lib = _path.join(prefix, 'lib')
+	share_lib = _path.join(prefix, 'lib')
+	for location in sys.path + [src_lib, share_lib]:
+		print location
+		init_py = _path.join(location, 'cfclient', '__init__.py')
+		if _path.exists(init_py):
+			print location
+			sys.path[0] = location
+			break
+
+
+if __name__ == '__main__':
+	init_paths()
+	import sys
+	print sys.path
+	import cfclient
+	cfclient.main()
