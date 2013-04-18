@@ -69,6 +69,7 @@ class ParamTab(Tab, param_tab_class):
 
         self.paramUpdatedSignal.connect(self.paramUpdated)
         self.paramTree.setHeaderLabels(['Name', 'Type', 'Access', 'Value'])
+        self.paramTree.sortItems(0, QtCore.Qt.AscendingOrder)
 
         self.sendUpdatedValues.clicked.connect(self.sendAllValues)
 
