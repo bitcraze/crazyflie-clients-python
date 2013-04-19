@@ -40,6 +40,9 @@ import struct
 import math
 from pprint import pprint
 
+import logging
+logger = logging.getLogger(__name__)
+
 def Singleton(cls):
     instances = {}
     def getinstance():
@@ -80,7 +83,13 @@ class Config():
         self.data[key] = str(value)
 
     def getParam(self, key):
-        return self.data[key]
+        try:
+            value = self.data[key]
+        except KeyError:
+            value = ""
+            logger.warning("Could not find key [%s], returning default value",
+                           key)
+        return value
 
     def saveFile(self):
         json_data=open(sys.path[0] + '/cfclient/configs/config.json', 'w')

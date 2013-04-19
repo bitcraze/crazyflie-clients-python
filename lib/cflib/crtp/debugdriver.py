@@ -73,7 +73,7 @@ class DebugDriver (CRTPDriver):
         # Fill up the fake logging TOC with values and data
         self.fakeLogToc = []
         self.fakeLogToc.append({"varid": 0, "vartype": 5, "vargroup": "imu",
-                                "varname": "gyro_x", " min": -10000,
+                                "varname": "gyro_x", "min": -10000,
                                 "max": 10000, "mod": 1000})
         self.fakeLogToc.append({"varid": 1, "vartype": 5, "vargroup": "imu",
                                 "varname": "gyro_y", "min": -10000,
