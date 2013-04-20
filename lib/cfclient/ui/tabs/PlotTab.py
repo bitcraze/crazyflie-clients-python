@@ -146,6 +146,7 @@ class PlotTab(Tab, plot_tab_class):
 
     def connected(self, link):
         self.logEntrys = []
+        self.dataSelector.clear()
         for d in self.dsList:
             logEntry = self.helper.cf.log.create_log_packet(d)
             if (logEntry != None):
@@ -169,7 +170,6 @@ class PlotTab(Tab, plot_tab_class):
                 self.datasets[dataIndex].addData(data[d])
                 s += str(data[d]) + ","
                 dataIndex += 1
-                logger.warning(s)
             s += '\n'
             if (self.saveFile != None):
                 self.saveFile.write(s)
