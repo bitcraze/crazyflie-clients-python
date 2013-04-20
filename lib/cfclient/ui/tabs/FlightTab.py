@@ -127,12 +127,13 @@ class FlightTab(Tab, flight_tab_class):
         return int(MAX_THRUST*(percentage/100.0))
 
     def uiSetupReady(self):
-        try:        
-            self.flightModeCombo.setCurrentIndex(self.flightModeCombo.findText(Config().getParam(ConfigParams.FLIGHT_MODE), Qt.MatchFixedString))
-            self.flightModeCombo.currentIndexChanged.emit(self.flightModeCombo.findText(Config().getParam(ConfigParams.FLIGHT_MODE), Qt.MatchFixedString))
-        except:
-            self.flightModeCombo.setCurrentIndex(1)
+        flightComboIndex = self.flightModeCombo.findText(Config().getParam(ConfigParams.FLIGHT_MODE), Qt.MatchFixedString) 
+        if (flightComboIndex < 0):
+            self.flightModeCombo.setCurrentIndex(0)
             self.flightModeCombo.currentIndexChanged.emit(0)
+        else:
+            self.flightModeCombo.setCurrentIndex(flightComboIndex)
+            self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)
 
     def loggingError(self):
         logger.warning("Callback of error in LogEntry :(")
