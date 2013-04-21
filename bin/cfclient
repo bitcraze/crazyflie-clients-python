@@ -10,13 +10,13 @@ def init_paths():
 
 	prefix = _path.normpath(_path.join(_path.realpath(sys.path[0]), '..'))
 	src_lib = _path.join(prefix, 'lib')
-	share_lib = _path.join(prefix, 'lib')
+	share_lib = prefix
 	for location in sys.path + [src_lib, share_lib]:
 		print location
-		init_py = _path.join(location, 'cfclient', '__init__.py')
-		if _path.exists(init_py):
+		main_ui = _path.join(location, 'cfclient', 'ui','main.ui')
+		if _path.exists(main_ui):
 			print location
-			sys.path[0] = location
+			sys.path = [location]+sys.path
 			break
 
 
