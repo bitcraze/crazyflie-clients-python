@@ -53,12 +53,15 @@ from cfclient.utils.config import Config, ConfigParams
 from cflib.crazyflie.log import Log
 from cfclient.utils.logconfigreader import LogConfigReader, LogVariable, LogConfig
 
+import cfclient.ui.dialogs
 import cfclient.ui.toolboxes
 import cfclient.ui.tabs
 import cfclient.ui
 import cflib.crtp
 
-main_window_class, main_windows_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui//main.ui')
+from cfclient.ui.dialogs.bootloader import BootloaderDialog
+
+main_window_class, main_windows_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/main.ui')
 
 class MyDockWidget(QtGui.QDockWidget):
     closed = pyqtSignal()
@@ -112,6 +115,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         # Connect UI signals
         self.menuItemConnect.triggered.connect(self.connectButtonClicked)
         self.logConfigAction.triggered.connect(self.doLogConfigDialogue)
+        self.menuItemBootloader.triggered.connect(self._show_bootloader_dialog)
         self.connectButton.clicked.connect(self.connectButtonClicked)
         self.quickConnectButton.clicked.connect(self.quickConnect)
         self.menuItemQuickConnect.triggered.connect(self.quickConnect)
@@ -151,7 +155,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         cfclient.ui.pluginhelper.logConfigReader = self.logConfigReader
         
         self.logConfigDialogue = LogConfigDialogue(cfclient.ui.pluginhelper)
-
+        self._bootloader_dialog = BootloaderDialog(cfclient.ui.pluginhelper)
         #Loading toolboxes (A bit of magic for a lot of automatic)
         self.toolboxes = []
         self.toolboxesMenuItem.setMenu(QtGui.QMenu())
@@ -264,6 +268,10 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         # To avoid saving settings while populating the combo box
         if (self.inputDeviceSelector.isEnabled()):
             Config().setParam(ConfigParams.INPUT_SELECT, self.inputDeviceSelector.itemText(index))
+
+    def _show_bootloader_dialog(self):
+        self._bootloader_dialog.setWindowModality(Qt.WindowModal)
+        self._bootloader_dialog.show()
 
     def doLogConfigDialogue(self):
         self.logConfigDialogue.show()

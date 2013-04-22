@@ -162,9 +162,6 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="menuItemConnect"/>
-    <addaction name="actionSelect_input_device"/>
-    <addaction name="menuItemQuickConnect"/>
     <addaction name="separator"/>
     <addaction name="menuItemExit"/>
    </widget>
@@ -187,9 +184,19 @@
     </property>
     <addaction name="menuItemConfInputDevice"/>
     <addaction name="logConfigAction"/>
+    <addaction name="actionSelect_input_device"/>
     <addaction name="actionOptions"/>
    </widget>
+   <widget class="QMenu" name="menuCrazyflie">
+    <property name="title">
+     <string>Crazyflie</string>
+    </property>
+    <addaction name="menuItemConnect"/>
+    <addaction name="menuItemQuickConnect"/>
+    <addaction name="menuItemBootloader"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuCrazyflie"/>
    <addaction name="menuSettings"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
@@ -197,7 +204,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="menuItemConnect">
    <property name="text">
-    <string>Connect to Crazyflie</string>
+    <string>Connect</string>
    </property>
   </action>
   <action name="menuItemExit">
@@ -295,6 +302,11 @@
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="menuItemBootloader">
+   <property name="text">
+    <string>Bootloader</string>
    </property>
   </action>
  </widget>
