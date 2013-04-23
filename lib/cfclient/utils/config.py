@@ -23,84 +23,94 @@
 
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA  02110-1301, USA.
 
 """
-Handle the main configuration file for the Crazyflie control client.
+Gives access for reading and writing application configuration parameters
 """
 
 __author__ = 'Bitcraze AB'
-__all__ = ['ConfigParams','Config']
+__all__ = ['Config']
 
-import sys, time
-import pygame
-
+import sys
 import json
-import struct
-import math
-from pprint import pprint
-
 import logging
+
+from PyQt4.QtCore import QString
+
 logger = logging.getLogger(__name__)
 
 def Singleton(cls):
+    """ Class for creating singletons """
     instances = {}
     def getinstance():
+        """ Get the singleton instance or create it """
         if cls not in instances:
             instances[cls] = cls()
         return instances[cls]
     return getinstance
 
-class ConfigParams():
-    LAST_CONNECT_URI = "last_connect_uri"
-
-    FLIGHT_MODE = "flightmode"
-    THRUST_MODE = "thrustmode"
-    CONTROLLER_MODE = "controllermode"
-
-    CRAZY_MAX_RP_ANGLE = "crazy_max_rp_angle"
-    CRAZY_MAX_YAWRATE = "crazy_max_yawrate"
-    CRAZY_MAX_THRUST = "crazy_max_thrust"
-    CRAZY_MIN_THRUST = "crazy_min_thrust"
-    CRAZY_IMU_TYPE = "crazy_imu_type"
-    CRAZY_SLEW_LIMIT = "crazy_slew_limit"
-    CRAZY_SLEW_RATE = "crazy_slew_rate"
-
-    CAL_ROLL = "cal_roll"
-    CAL_PITCH = "cal_pitch"
-
-    INPUT_SELECT = "selected_input_name"
-    OPEN_TABS = "open_tabs"
-
 @Singleton
 class Config():
+    """ Singleton class for accessing application configuration """
+    def __init__(self):
+        """ Initializes the singleton and reads the config files """
+        self._dist_config = sys.path[1] + "/config.dist"
+        self._config = sys.path[1] + "/config.json"
 
-    def __init__( self ):
-        self.data = dict()
-        self.readFile()
+        [self._readonly, writable] = self._read_distfile()
 
-    def setParam(self, key, value):
-        self.data[key] = str(value)
+        self._data = self._read_config()
+        if (self._data is None):
+            self._data = writable
 
-    def getParam(self, key):
+    def _read_distfile(self):
+        """ Read the distribution config file containing the defaults """
+        f = open(self._dist_config, 'r')
+        data = json.load(f)
+        f.close()
+        logger.info("Dist config read from %s" % self._dist_config)
+
+        return [data["read-only"], data["writable"]]
+
+    def set(self, key, value):
+        """ Set the value of a config parameter """
         try:
-            value = self.data[key]
+            if (isinstance(value, QString)):
+                self._data[key] = str(value)
+            else:
+                 self._data[key] = value
         except KeyError:
-            value = ""
-            logger.warning("Could not find key [%s], returning default value",
-                           key)
+            raise KeyError("Could not set the parameter [%s]" % key)
+
+    def get(self, key):
+        """ Get the value of a config parameter """
+        value = None
+        if (key in self._data):
+            value = self._data[key]
+        elif (key in self._readonly):
+            value = self._readonly[key]
+        else:
+            raise KeyError("Could not get the paramter [%s]" % key)
+        
         return value
 
-    def saveFile(self):
-        json_data=open(sys.path[0] + '/cfclient/configs/config.json', 'w')
-        json_data.write(json.dumps(self.data, indent=2))
+    def save_file(self):
+        """ Save the user config to file """
+        json_data=open(self._config, 'w')
+        json_data.write(json.dumps(self._data, indent=2))
         json_data.close()
+        logger.info("Config file saved to [%s]" % self._config)
 
-    def readFile(self):
+    def _read_config(self):
+        """ Read the user config from file """
         try:
-            json_data=open(sys.path[0] + '/cfclient/configs/config.json')
-            self.data = json.load(json_data)
-            json_data.close()        
-        except:
-            pass
-
+            json_data = open(self._config)
+            data = json.load(json_data)
+            json_data.close()
+            logger.info("Config file read from [%s]" % self._config)
+        except Exception:
+            return None
+        
+        return data

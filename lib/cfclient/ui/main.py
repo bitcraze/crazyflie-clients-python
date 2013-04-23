@@ -49,7 +49,7 @@ from cflib.crazyflie import Crazyflie
 from logconfigdialogue import LogConfigDialogue
 
 from cfclient.utils.input import JoystickReader
-from cfclient.utils.config import Config, ConfigParams
+from cfclient.utils.config import Config
 from cflib.crazyflie.log import Log
 from cfclient.utils.logconfigreader import LogConfigReader, LogVariable, LogConfig
 
@@ -195,7 +195,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             t.fakeIt()
         # First instantiate all the tabs and then open them in the correct order
         try:
-            for tName in Config().getParam(ConfigParams.OPEN_TABS).split(","):
+            for tName in Config().get("open_tabs").split(","):
                 t = tmpTabList[tName]
                 if (t != None):
                     t.toggle() # Toggle though menu so it's also marked as open there
@@ -209,12 +209,12 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         # Select saved input device configuration and enable combo box if any input device connected
         if (len(self.joystickReader.getAvailableDevices()) > 0):
             try:
-                inputIndex = self.inputDeviceSelector.findText(Config().getParam(ConfigParams.INPUT_SELECT))
+                inputIndex = self.inputDeviceSelector.findText(Config().get("inputconfig"))
                 if (inputIndex != -1):
                     self.inputDeviceSelector.setCurrentIndex(inputIndex)
                 else:
                     # If we can't find it in the list save a new config using the current item
-                    Config().setParam(ConfigParams.INPUT_SELECT, self.inputDeviceSelector.currentText())
+                    Config().set("inputconfig", self.inputDeviceSelector.currentText())
             except Exception as e:
                 logger.warning("Exception while setting input config")
             self.inputDeviceSelector.setEnabled(True)
@@ -267,7 +267,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.joystickReader.startInputSignal.emit(0, self.inputDeviceSelector.itemText(index))
         # To avoid saving settings while populating the combo box
         if (self.inputDeviceSelector.isEnabled()):
-            Config().setParam(ConfigParams.INPUT_SELECT, self.inputDeviceSelector.itemText(index))
+            Config().set("inputconfig", self.inputDeviceSelector.itemText(index))
 
     def _show_bootloader_dialog(self):
         self._bootloader_dialog.setWindowModality(Qt.WindowModal)
@@ -282,7 +282,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def connectionDone(self, linkURI):
         self.setUIState(UIState.CONNECTED, linkURI)
 
-        Config().setParam(ConfigParams.LAST_CONNECT_URI, linkURI)
+        Config().set("link_uri", linkURI)
 
         lg = LogConfig ("Battery", 1000)
         lg.addVariable(LogVariable("pm.vbat", "float"))
@@ -313,7 +313,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def closeEvent(self, event):
         self.hide()
         self.cf.close_link()
-        Config().saveFile()
+        Config().save_file()
 
     def connectButtonClicked(self):
         if (self.uiState == UIState.CONNECTED):
@@ -330,7 +330,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
     def quickConnect(self):
         try:
-            self.cf.open_link(Config().getParam(ConfigParams.LAST_CONNECT_URI))
+            self.cf.open_link(Config().get("link_uri"))
         except KeyError:
             self.cf.open_link("")    
 

@@ -1,0 +1,24 @@
+{
+  "writable" : {
+    "inputconfig": "", 
+    "link_uri": "", 
+    "flightmode": "Normal", 
+    "open_tabs": "", 
+    "trim_pitch": 0.0, 
+    "slew_limit": 45, 
+    "slew_rate": 30, 
+    "trim_roll": 0.0, 
+    "max_thrust": 80, 
+    "min_thrust": 25, 
+    "max_yaw": 200, 
+    "max_rp": 30
+  },
+  "read-only" : {
+    "normal_slew_limit": 45, 
+    "normal_slew_rate": 30, 
+    "normal_max_thrust": 80, 
+    "normal_min_thrust": 25, 
+    "normal_max_yaw": 200, 
+    "normal_max_rp": 30
+  }
+}

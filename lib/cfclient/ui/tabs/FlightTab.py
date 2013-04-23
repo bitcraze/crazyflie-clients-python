@@ -46,7 +46,7 @@ from cflib.crazyflie import Crazyflie
 
 from cfclient.ui.widgets.ai import AttitudeIndicator
 
-from cfclient.utils.config import Config, ConfigParams
+from cfclient.utils.config import Config
 from cflib.crazyflie.log import Log
 
 from cfclient.ui.tab import Tab
@@ -127,7 +127,7 @@ class FlightTab(Tab, flight_tab_class):
         return int(MAX_THRUST*(percentage/100.0))
 
     def uiSetupReady(self):
-        flightComboIndex = self.flightModeCombo.findText(Config().getParam(ConfigParams.FLIGHT_MODE), Qt.MatchFixedString) 
+        flightComboIndex = self.flightModeCombo.findText(Config().get("flightmode"), Qt.MatchFixedString) 
         if (flightComboIndex < 0):
             self.flightModeCombo.setCurrentIndex(0)
             self.flightModeCombo.currentIndexChanged.emit(0)
@@ -192,45 +192,43 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.inputDeviceReader.updateMinMaxThrustSignal.emit(self.percentageToThrust(self.minThrust.value()), 
                                                                     self.percentageToThrust(self.maxThrust.value()))
         if (self.isInCrazyFlightmode == True):
-            Config().setParam(ConfigParams.CRAZY_MIN_THRUST, self.percentageToThrust(self.minThrust.value()))
-            Config().setParam(ConfigParams.CRAZY_MAX_THRUST, self.percentageToThrust(self.maxThrust.value()))
+            Config().set("min_thrust", self.minThrust.value())
+            Config().set("max_thrust", self.maxThrust.value())
 
     def thrustLoweringSlewRateLimitChanged(self):
         self.helper.inputDeviceReader.updateThrustLoweringSlewrateSignal.emit(
                                             self.percentageToThrust(self.thrustLoweringSlewRateLimit.value()),
                                             self.percentageToThrust(self.slewEnableLimit.value()))
         if (self.isInCrazyFlightmode == True):
-            Config().setParam(ConfigParams.CRAZY_SLEW_LIMIT,
-                                            self.percentageToThrust(self.slewEnableLimit.value()))
-            Config().setParam(ConfigParams.CRAZY_SLEW_RATE,
-                                            self.percentageToThrust(self.thrustLoweringSlewRateLimit.value()))
+            Config().set("slew_limit", self.slewEnableLimit.value())
+            Config().set("slew_rate", self.thrustLoweringSlewRateLimit.value())
 
     def maxYawRateChanged(self):
         logger.debug("MaxYawrate changed to %d", self.maxYawRate.value())
         self.helper.inputDeviceReader.updateMaxYawRateSignal.emit(self.maxYawRate.value())
         if (self.isInCrazyFlightmode == True):
-            Config().setParam(ConfigParams.CRAZY_MAX_YAWRATE, self.maxYawRate.value())
+            Config().set("max_yaw", self.maxYawRate.value())
 
     def maxAngleChanged(self):
         logger.debug("MaxAngle changed to %d", self.maxAngle.value())
         self.helper.inputDeviceReader.updateMaxRPAngleSignal.emit(self.maxAngle.value())
         if (self.isInCrazyFlightmode == True):
-            Config().setParam(ConfigParams.CRAZY_MAX_RP_ANGLE, self.maxAngle.value())
+            Config().set("max_rp", self.maxAngle.value())
 
     def calValueChanged(self):
         logger.debug("Trim changed in UI: roll=%.2f, pitch=%.2f", self.targetCalRoll.value(), self.targetCalPitch.value())
         self.helper.inputDeviceReader.updateRPCalSignal.emit(self.targetCalRoll.value(), self.targetCalPitch.value())
         if (self.isInCrazyFlightmode == True):
-            Config().setParam(ConfigParams.CAL_ROLL, self.targetCalRoll.value())
-            Config().setParam(ConfigParams.CAL_PITCH, self.targetCalPitch.value())
+            Config().set("trim_roll", self.targetCalRoll.value())
+            Config().set("trim_pitch", self.targetCalPitch.value())
 
     def calUpdateFromInput(self, rollCal, pitchCal):
         logger.debug("Trim changed on joystick: roll=%.2f, pitch=%.2f", rollCal, pitchCal)
         self.targetCalRoll.setValue(rollCal)
         self.targetCalPitch.setValue(pitchCal)
         if (self.isInCrazyFlightmode == True):
-            Config().setParam(ConfigParams.CAL_ROLL, rollCal)
-            Config().setParam(ConfigParams.CAL_PITCH, pitchCal)
+            Config().set("trim_roll", rollCal)
+            Config().set("trim_pith", pitchCal)
 
     def updateInputControl(self, roll, pitch, yaw, thrust):
         self.targetRoll.setText(("%0.2f" % roll));
@@ -240,32 +238,23 @@ class FlightTab(Tab, flight_tab_class):
         self.thrustProgress.setValue(thrust)
 
     def flightmodeChange(self, item):
-        Config().setParam(ConfigParams.FLIGHT_MODE, self.flightModeCombo.itemText(item))
+        Config().set("flightmode", self.flightModeCombo.itemText(item))
         logger.info("Changed flightmode to %s", self.flightModeCombo.itemText(item))
         self.isInCrazyFlightmode = False
         if (item == 0): # Normal
-            self.maxAngle.setValue(15)
-            self.maxThrust.setValue(self.thrustToPercentage(50000))
-            self.minThrust.setValue(self.thrustToPercentage(20000))
-            self.slewEnableLimit.setValue(self.thrustToPercentage(30000))
-            self.thrustLoweringSlewRateLimit.setValue(self.thrustToPercentage(20000))
-            self.maxYawRate.setValue(300)
+            self.maxAngle.setValue(Config().get("normal_max_rp"))
+            self.maxThrust.setValue(Config().get("normal_max_thrust"))
+            self.minThrust.setValue(Config().get("normal_min_thrust"))
+            self.slewEnableLimit.setValue(Config().get("normal_slew_limit"))
+            self.thrustLoweringSlewRateLimit.setValue(Config().get("normal_slew_rate"))
+            self.maxYawRate.setValue(Config().get("normal_max_yaw"))
         if (item == 1): # Advanced
-            try:
-                self.maxAngle.setValue(int(Config().getParam(ConfigParams.CRAZY_MAX_RP_ANGLE)))
-                self.maxThrust.setValue(self.thrustToPercentage(int(Config().getParam(ConfigParams.CRAZY_MAX_THRUST))))
-                self.minThrust.setValue(self.thrustToPercentage(int(Config().getParam(ConfigParams.CRAZY_MIN_THRUST))))
-                self.slewEnableLimit.setValue(self.thrustToPercentage(int(Config().getParam(ConfigParams.CRAZY_SLEW_LIMIT))))
-                self.thrustLoweringSlewRateLimit.setValue(self.thrustToPercentage(int(Config().getParam(ConfigParams.CRAZY_SLEW_RATE))))
-                self.maxYawRate.setValue(int(Config().getParam(ConfigParams.CRAZY_MAX_YAWRATE)))
-            except KeyError:
-                self.isInCrazyFlightmode = True
-                self.maxAngle.setValue(25)
-                self.maxThrust.setValue(self.thrustToPercentage(55000))
-                self.minThrust.setValue(self.thrustToPercentage(20000))
-                self.slewEnableLimit.setValue(self.thrustToPercentage(30000))
-                self.thrustLoweringSlewRateLimit.setValue(self.thrustToPercentage(20000))
-                self.maxYawRate.setValue(400)
+            self.maxAngle.setValue(Config().get("max_rp"))
+            self.maxThrust.setValue(Config().get("max_thrust"))
+            self.minThrust.setValue(Config().get("min_thrust"))
+            self.slewEnableLimit.setValue(Config().get("slew_limit"))
+            self.thrustLoweringSlewRateLimit.setValue(Config().get("slew_rate"))
+            self.maxYawRate.setValue(Config().get("max_yaw"))
             self.isInCrazyFlightmode = True
 
         if (item == 0):
