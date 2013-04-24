@@ -47,7 +47,7 @@ from PyQt4.Qt import *
 
 from cflib.crazyflie.log import Log
 
-logconfig_widget_class, connect_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/logConfigDialogue.ui')
+logconfig_widget_class, connect_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/logconfigdialogue.ui')
 
 from cfclient.utils.logconfigreader import LogVariable, LogConfig
 

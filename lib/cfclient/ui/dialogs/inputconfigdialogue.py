@@ -49,7 +49,7 @@ from PyQt4.Qt import *
 
 from cfclient.utils.input import JoystickReader
 
-inputconfig_widget_class, connect_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/inputConfigDialogue.ui')
+inputconfig_widget_class, connect_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/inputconfigdialogue.ui')
 
 class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
 

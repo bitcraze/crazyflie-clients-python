@@ -43,10 +43,10 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
 
-from connectiondialogue import ConnectDialogue
-from inputconfigdialogue import InputConfigDialogue
+from dialogs.connectiondialogue import ConnectDialogue
+from dialogs.inputconfigdialogue import InputConfigDialogue
 from cflib.crazyflie import Crazyflie
-from logconfigdialogue import LogConfigDialogue
+from dialogs.logconfigdialogue import LogConfigDialogue
 
 from cfclient.utils.input import JoystickReader
 from cfclient.utils.config import Config

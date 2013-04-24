@@ -41,7 +41,7 @@ from PyQt4.Qt import *
 
 import cflib.crtp
 
-connect_widget_class, connect_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/connectionDialogue.ui')
+connect_widget_class, connect_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/connectiondialogue.ui')
 
 class ConnectDialogue(QtGui.QWidget, connect_widget_class):
 
