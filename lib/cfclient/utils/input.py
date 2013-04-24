@@ -47,6 +47,7 @@ import os
 import glob
 import traceback
 import logging
+import shutil
 
 logger = logging.getLogger(__name__)
 
@@ -127,12 +128,19 @@ class JoystickReader(QThread):
 
         self.listOfConfigs = []
 
+        # Check if user config exists, otherwise copy files
+        if (not os.path.isdir(sys.path[1] + "/input")):
+            logger.info("No user config found, copying dist files")
+            os.makedirs(sys.path[1] + "/input")
+            for f in glob.glob(sys.path[0] + "/cfclient/configs/input/[A-Za-z]*.json"):
+                shutil.copy2(f, sys.path[1] + "/input")
+
         try:
-            configsfound = [ os.path.basename(f) for f in glob.glob(sys.path[0] + "/cfclient/configs/input/[A-Za-z]*.json")]
+            configsfound = [ os.path.basename(f) for f in glob.glob(sys.path[1] + "/input/[A-Za-z]*.json")]
             self.inputConfig = []
             for conf in configsfound:            
                 logger.info("Parsing [%s]", conf)
-                json_data = open (sys.path[0] + "/cfclient/configs/input/%s"%conf)                
+                json_data = open (sys.path[1] + "/input/%s"%conf)                
                 self.data = json.load(json_data)
                 newInputDevice = {}
                 for a in self.data["inputconfig"]["inputdevice"]["axis"]:

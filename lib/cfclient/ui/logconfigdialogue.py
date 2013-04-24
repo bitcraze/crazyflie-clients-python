@@ -251,12 +251,8 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
 
     def saveConfig(self):
         updatedConfig = self.createConfigFromSelection()
-        directory = os.path.dirname(__file__)+"/logconfig/"
-        nameFilter = "*.json"
-        fileName = QFileDialog.getSaveFileName(self, "Save File", directory, nameFilter, nameFilter);
-        logger.info("Saving config to [%s]", fileName)
         try:
-           self.helper.logConfigReader.saveLogConfigFile(updatedConfig, fileName)
+           self.helper.logConfigReader.saveLogConfigFile(updatedConfig)
            self.close()
         except Exception as e:
             self.showErrorPopup("Error when saving file", "Error: %s" % e)
