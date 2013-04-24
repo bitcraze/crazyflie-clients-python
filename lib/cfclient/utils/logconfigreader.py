@@ -40,6 +40,7 @@ __all__ = ['LogVariable', 'LogConfigReader', 'LogConfig']
 import sys
 import json, glob, os
 import logging
+import shutil
 
 logger = logging.getLogger(__name__)
 
@@ -165,15 +166,21 @@ class LogConfigReader():
 
     def __init__(self):
         self.dsList = []
+        # Check if user config exists, otherwise copy files
+        if (not os.path.isdir(sys.path[1] + "/log")):
+            logger.info("No user config found, copying dist files")
+            os.makedirs(sys.path[1] + "/log")
+            for f in glob.glob(sys.path[0] + "/cfclient/configs/log/[A-Za-z]*.json"):
+                shutil.copy2(f, sys.path[1] + "/log")
 
     def readConfigFiles(self):
         """Read and parse log configurations"""
-        configsfound = [ os.path.basename(f) for f in glob.glob(sys.path[0] + "/cfclient/configs/log/[A-Za-z_-]*.json")]
+        configsfound = [ os.path.basename(f) for f in glob.glob(sys.path[1] + "/log/[A-Za-z_-]*.json")]
 
         for conf in configsfound:            
             try:
                 logger.info("Parsing [%s]", conf)
-                json_data = open (sys.path[0] + "/cfclient/configs/log/%s"%conf)                
+                json_data = open (sys.path[1] + "/log/%s"%conf)
                 self.data = json.load(json_data)
                 infoNode = self.data["logconfig"]["logblock"]
 
@@ -194,12 +201,12 @@ class LogConfigReader():
         """Return the log configurations"""
         return self.dsList
 
-    def saveLogConfigFile(self, logconfig, filename):
+    def saveLogConfigFile(self, logconfig):
         """Save a log configuration to file"""
-        logger.info("Saving config for [%s] to file [%s]", logconfig.getName(), filename)
-        
+        filename = sys.path[1] + "/log/" + logconfig.getName() + ".json"
+        logger.info("Saving config for [%s]", filename) 
+
         # Build tree for JSON
-        tree = {}
         saveConfig = {}
         logconf = {'logblock': {'variables':[]}}
         logconf['logblock']['name'] = logconfig.getName()

@@ -49,7 +49,7 @@ from PyQt4.Qt import *
 
 from cfclient.utils.input import JoystickReader
 
-inputconfig_widget_class, connect_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/inputConfigDialogue.ui')
+inputconfig_widget_class, connect_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/inputconfigdialogue.ui')
 
 class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
 
@@ -293,7 +293,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         inputConfig['inputdevice']['updateperiod'] = 10
         saveConfig['inputconfig'] = inputConfig
 
-        filename = sys.path[0] + "/cfclient/cfclient/configs/input/%s.json" % self.profileCombo.currentText()
+        filename = sys.path[1] + "/input/%s.json" % self.profileCombo.currentText()
         logger.info("Saving config to [%s]", filename)
         json_data=open(filename, 'w')
         json_data.write(json.dumps(saveConfig, indent=2))

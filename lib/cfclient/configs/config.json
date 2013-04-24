@@ -3,7 +3,7 @@
     "inputconfig": "", 
     "link_uri": "", 
     "flightmode": "Normal", 
-    "open_tabs": "", 
+    "open_tabs": "Flight Control", 
     "trim_pitch": 0.0, 
     "slew_limit": 45, 
     "slew_rate": 30, 

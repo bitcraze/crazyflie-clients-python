@@ -56,7 +56,7 @@ class Config():
     """ Singleton class for accessing application configuration """
     def __init__(self):
         """ Initializes the singleton and reads the config files """
-        self._dist_config = sys.path[1] + "/config.dist"
+        self._dist_config = sys.path[0] + "/cfclient/configs/config.json"
         self._config = sys.path[1] + "/config.json"
 
         [self._readonly, writable] = self._read_distfile()
@@ -94,6 +94,9 @@ class Config():
         else:
             raise KeyError("Could not get the paramter [%s]" % key)
         
+        if (isinstance(value, unicode)):
+            value = str(value)
+
         return value
 
     def save_file(self):
