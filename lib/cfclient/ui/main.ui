@@ -184,8 +184,6 @@
     </property>
     <addaction name="menuItemConfInputDevice"/>
     <addaction name="logConfigAction"/>
-    <addaction name="actionSelect_input_device"/>
-    <addaction name="actionOptions"/>
    </widget>
    <widget class="QMenu" name="menuCrazyflie">
     <property name="title">
