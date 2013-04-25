@@ -88,12 +88,17 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
         #self.clt.updateBootloaderStatusSignal.connect(self.updateBootloaderStatus)        
         self.clt.connectingSignal.connect(lambda: self.setUiState(UIState.CONNECTING))
         self.clt.connectedSignal.connect(lambda: self.setUiState(UIState.COLD_CONNECT))
-        self.clt.connectionFailedSignal.connect(lambda: self.setUiState(UIState.CONNECT_FAILED))
+        self.clt.failed_signal.connect(lambda m: self._ui_connection_fail(m))
         self.clt.disconnectedSignal.connect(lambda: self.setUiState(UIState.DISCONNECTED))
         self.clt.updateConfigSignal.connect(self.updateConfig)
         self.clt.updateCpuIdSignal.connect(lambda cpuid: self.copterId.setText(cpuid))
 
         self.clt.start()
+
+    def _ui_connection_fail(self, message):
+        self.setStatusLabel(message)
+        self.coldBootButton.setEnabled(True)
+
 
     def setUiState(self, state):
         if (state == UIState.DISCONNECTED):
@@ -220,7 +225,7 @@ class CrazyloadThread(QThread):
     statusChanged = pyqtSignal(str, int)
     connectedSignal = pyqtSignal()
     connectingSignal = pyqtSignal()
-    connectionFailedSignal = pyqtSignal()
+    failed_signal = pyqtSignal(str)
     disconnectedSignal = pyqtSignal()
     updateConfigSignal = pyqtSignal(str, str, str, str)
     updateCpuIdSignal = pyqtSignal(str)
@@ -246,20 +251,23 @@ class CrazyloadThread(QThread):
 
     def initiateColdBoot(self, linkURI):
         self.connectingSignal.emit()
-        self.link = cflib.crtp.get_link_driver("radio://0/110")
-        self.loader = Cloader(self.link, "radio://0/110")
-        #self.link = CRTP.get_link_driver("debug://0/110")
-        #self.loader = Cloader(self.link, "debug://0/110")
+        try:
+            self.link = cflib.crtp.get_link_driver("radio://0/110")
+        except Exception as e:
+            self.failed_signal.emit(str(e))
 
-        if self.loader.coldboot():
-            logger.info("Connected in coldboot mode ok")
-            self.updateCpuIdSignal.emit(self.loader.cpuid)
-            self.readConfigAction()
-            self.connectedSignal.emit()
-        else:
-            self.connectionFailedSignal.emit()
-            logger.info("Connected in coldboot mode failed")
-            self.link.close()
+        if (self.link):
+            self.loader = Cloader(self.link, "radio://0/110")
+
+            if self.loader.coldboot():
+                logger.info("Connected in coldboot mode ok")
+                self.updateCpuIdSignal.emit(self.loader.cpuid)
+                self.readConfigAction()
+                self.connectedSignal.emit()
+            else:
+                self.failed_signal.emit("Connection timeout")
+                logger.info("Connected in coldboot mode failed")
+                self.link.close()
 
     def programAction(self, filename, verify):
         logger.info("Flashing file [%s]", filename)
