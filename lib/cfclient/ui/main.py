@@ -60,6 +60,7 @@ import cfclient.ui
 import cflib.crtp
 
 from cfclient.ui.dialogs.bootloader import BootloaderDialog
+from cfclient.ui.dialogs.about import AboutDialog
 
 main_window_class, main_windows_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/main.ui')
 
@@ -156,6 +157,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         
         self.logConfigDialogue = LogConfigDialogue(cfclient.ui.pluginhelper)
         self._bootloader_dialog = BootloaderDialog(cfclient.ui.pluginhelper)
+        self._about_dialog = AboutDialog(cfclient.ui.pluginhelper)
+        self.menuItemAbout.triggered.connect(self._about_dialog.show)
         #Loading toolboxes (A bit of magic for a lot of automatic)
         self.toolboxes = []
         self.toolboxesMenuItem.setMenu(QtGui.QMenu())
