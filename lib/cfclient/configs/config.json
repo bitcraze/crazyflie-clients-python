@@ -19,6 +19,9 @@
     "normal_max_thrust": 80, 
     "normal_min_thrust": 25, 
     "normal_max_yaw": 200, 
-    "normal_max_rp": 30
+    "normal_max_rp": 30,
+    "default_cf_channel": 10,
+    "default_cf_speed": 0,
+    "default_cf_trim": 0
   }
 }

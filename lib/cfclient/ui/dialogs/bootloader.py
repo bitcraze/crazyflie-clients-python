@@ -46,6 +46,7 @@ from cfclient.ui.tab import Tab
 import cflib.crtp
 
 from cflib.bootloader.cloader import Cloader
+from cfclient.utils.config import Config
 
 service_dialog_class = uic.loadUiType(sys.path[0] + "/cfclient/ui/dialogs/bootloader.ui")[0]
 
@@ -110,6 +111,7 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
             self.progressBar.setValue(0)        
             self.statusLabel.setText('Status: <b>IDLE</b>')
             self.imagePathLine.setText("")
+            self.saveConfigblock.setEnabled(False)
         elif (state == UIState.CONNECTING):
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
@@ -120,6 +122,7 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
             self.coldBootButton.setEnabled(True)
         elif (state == UIState.COLD_CONNECT):
             self.resetButton.setEnabled(True)
+            self.saveConfigblock.setEnabled(True)
             self.programButton.setEnabled(True)
             self.setStatusLabel("Connected to bootloader")
             self.coldBootButton.setEnabled(False)        
@@ -128,6 +131,12 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
             self.coldBootButton.setEnabled(False)
+            self.rollTrim.setValue(0)
+            self.pitchTrim.setValue(0)
+            self.radioChannel.setValue(0)
+            self.radioSpeed.setCurrentIndex(0)
+            self.imagePathLine.setText("")
+            self.copterId.setText("")
 
     def setStatusLabel(self, text):
         self.connectionStatus.setText("Status: <b>%s</b>" % text)    
@@ -143,10 +152,10 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
         self.setUiState(UIState.RESET)
 
     def updateConfig(self, channel, speed, rollTrim, pitchTrim):
-        self.rollTrim.setText(rollTrim)
-        self.pitchTrim.setText(pitchTrim)
-        self.radioChannel.setValue(int(channel))
-        self.radioSpeed.setCurrentIndex(int(speed))
+        self.rollTrim.setValue(rollTrim)
+        self.pitchTrim.setValue(pitchTrim)
+        self.radioChannel.setValue(channel)
+        self.radioSpeed.setCurrentIndex(speed)
 
     def closeEvent(self, event):
         self.setUiState(UIState.RESET)
@@ -203,9 +212,9 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
         self.clt.initiateColdBootSignal.emit("radio://0/100")
 
     def writeConfig(self):
-        pitchTrim = float(self.pitchTrim.text())
-        rollTrim = float(self.rollTrim.text())
-        channel = int(self.radioChannel.value())
+        pitchTrim = self.pitchTrim.value()
+        rollTrim = self.rollTrim.value()
+        channel = self.radioChannel.value()
         speed = self.radioSpeed.currentIndex()
 
         self.clt.writeConfigSignal.emit(channel, speed, rollTrim, pitchTrim)
@@ -227,7 +236,7 @@ class CrazyloadThread(QThread):
     connectingSignal = pyqtSignal()
     failed_signal = pyqtSignal(str)
     disconnectedSignal = pyqtSignal()
-    updateConfigSignal = pyqtSignal(str, str, str, str)
+    updateConfigSignal = pyqtSignal(int, int, float, float)
     updateCpuIdSignal = pyqtSignal(str)
 
     radioSpeedPos = 2
@@ -298,8 +307,14 @@ class CrazyloadThread(QThread):
         data = self.loader.read_flash(self.loader.start_page + 117)
         if (data is not None):
             self.statusChanged.emit("Reading config block...done!", 100)
-            [channel, speed, pitchTrim, rollTrim] = struct.unpack("<BBff", data[5:15]) # Skip 0xBC and version at the beginning
-            self.updateConfigSignal.emit(str(channel), str(speed), str(pitchTrim), str(rollTrim))
+            if data[0:4] == "0xBC":
+                [channel, speed, pitchTrim, rollTrim] = struct.unpack("<BBff", data[5:15]) # Skip 0xBC and version at the beginning
+            else:
+                channel = Config().get("default_cf_channel")
+                speed = Config().get("default_cf_speed")
+                pitchTrim = Config().get("default_cf_trim")
+                rollTrim = Config().get("default_cf_trim")
+            self.updateConfigSignal.emit(channel, speed, pitchTrim, rollTrim)
         else:
             self.statusChanged.emit("Reading config block failed!", 0)
 
