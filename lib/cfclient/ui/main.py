@@ -232,6 +232,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.menuItemQuickConnect.setEnabled(True)
             self.batteryBar.setValue(0)
             self.linkQualityBar.setValue(0)
+            self.menuItemBootloader.setEnabled(True)
         if (newState == UIState.CONNECTED):
             s = "Connected on %s" % linkURI
             self.setWindowTitle(s)
@@ -243,6 +244,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.menuItemConnect.setText("Cancel")
             self.connectButton.setText("Cancel")
             self.quickConnectButton.setEnabled(False)
+            self.menuItemBootloader.setEnabled(False)
             self.menuItemQuickConnect.setEnabled(False)
     
     @pyqtSlot(bool)
