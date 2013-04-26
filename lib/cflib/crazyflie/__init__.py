@@ -201,6 +201,7 @@ class Crazyflie():
                              ex, traceback.format_exc())
             if self.link:
                 self.link.close()
+                self.link = None
             self.connectionFailed.call(link_uri, exception_text)
 
     def close_link(self):
@@ -210,7 +211,7 @@ class Crazyflie():
             self.commander.send_setpoint(0, 0, 0, 0)
         if (self.link is not None):
             self.link.close()
-        #self.link = None
+            self.link = None
         self.disconnected.call(self.link_uri)
 
     def add_port_callback(self, port, cb):
