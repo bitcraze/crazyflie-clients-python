@@ -233,11 +233,13 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.batteryBar.setValue(0)
             self.linkQualityBar.setValue(0)
             self.menuItemBootloader.setEnabled(True)
+            self.logConfigAction.setEnabled(False)
         if (newState == UIState.CONNECTED):
             s = "Connected on %s" % linkURI
             self.setWindowTitle(s)
             self.menuItemConnect.setText("Disconnect")
             self.connectButton.setText("Disconnect")
+            self.logConfigAction.setEnabled(True)
         if (newState == UIState.CONNECTING):
             s = "Connecting to %s" % linkURI
             self.setWindowTitle(s)

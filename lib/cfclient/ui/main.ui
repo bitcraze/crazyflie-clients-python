@@ -287,6 +287,9 @@
    </property>
   </action>
   <action name="logConfigAction">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Logging configurations</string>
    </property>
