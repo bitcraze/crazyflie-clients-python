@@ -183,6 +183,10 @@ class FlightTab(Tab, flight_tab_class):
   
     def disconnected(self, linkURI):
         self.ai.setRollPitch(0, 0)
+        self.actualM1.setValue(0)
+        self.actualM2.setValue(0)
+        self.actualM3.setValue(0)
+        self.actualM4.setValue(0)
         self.actualRoll.setText("")
         self.actualPitch.setText("")
         self.actualYaw.setText("")

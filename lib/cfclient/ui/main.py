@@ -230,7 +230,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.connectButton.setText("Connect")
             self.quickConnectButton.setEnabled(True)
             self.menuItemQuickConnect.setEnabled(True)
-            self.batteryBar.setValue(0)
+            self.batteryBar.setValue(3000)
             self.linkQualityBar.setValue(0)
             self.menuItemBootloader.setEnabled(True)
             self.logConfigAction.setEnabled(False)
