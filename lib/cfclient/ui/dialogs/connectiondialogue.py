@@ -62,7 +62,6 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
         self.interfaceList.itemDoubleClicked.connect(self.interfaceSelected)
         self.scanner.interfaceFoundSignal.connect(self.foundInterfaces)
         self.box = None
-        self.setWindowModality(Qt.ApplicationModal)
 
         self.availableInterfaces = []
 

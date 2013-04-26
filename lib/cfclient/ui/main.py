@@ -116,7 +116,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         # Connect UI signals
         self.menuItemConnect.triggered.connect(self.connectButtonClicked)
         self.logConfigAction.triggered.connect(self.doLogConfigDialogue)
-        self.menuItemBootloader.triggered.connect(self._show_bootloader_dialog)
         self.connectButton.clicked.connect(self.connectButtonClicked)
         self.quickConnectButton.clicked.connect(self.quickConnect)
         self.menuItemQuickConnect.triggered.connect(self.quickConnect)
@@ -157,6 +156,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         
         self.logConfigDialogue = LogConfigDialogue(cfclient.ui.pluginhelper)
         self._bootloader_dialog = BootloaderDialog(cfclient.ui.pluginhelper)
+        self.menuItemBootloader.triggered.connect(self._bootloader_dialog.show)
         self._about_dialog = AboutDialog(cfclient.ui.pluginhelper)
         self.menuItemAbout.triggered.connect(self._about_dialog.show)
         #Loading toolboxes (A bit of magic for a lot of automatic)
@@ -271,10 +271,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         # To avoid saving settings while populating the combo box
         if (self.inputDeviceSelector.isEnabled()):
             Config().set("inputconfig", self.inputDeviceSelector.itemText(index))
-
-    def _show_bootloader_dialog(self):
-        self._bootloader_dialog.setWindowModality(Qt.WindowModal)
-        self._bootloader_dialog.show()
 
     def doLogConfigDialogue(self):
         self.logConfigDialogue.show()

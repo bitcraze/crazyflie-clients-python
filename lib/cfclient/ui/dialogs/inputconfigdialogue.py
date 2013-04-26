@@ -130,7 +130,6 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.box.setText(message)
         self.box.setButtonText(1, "Cancel")
         self.box.setWindowFlags(Qt.Dialog|Qt.MSWindowsFixedSizeDialogHint)
-        self.box.setWindowModality(Qt.ApplicationModal)
         self.box.buttonClicked.connect(self.cancelConfigBox)
         self.box.show()
 

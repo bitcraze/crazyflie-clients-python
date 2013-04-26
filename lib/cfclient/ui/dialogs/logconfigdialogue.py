@@ -196,7 +196,6 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         self.box.setText(message)
         #self.box.setButtonText(1, "Ok")
         self.box.setWindowFlags(Qt.Dialog|Qt.MSWindowsFixedSizeDialogHint)
-        self.box.setWindowModality(Qt.ApplicationModal)
         self.box.show()
 
     def updateToc(self):
