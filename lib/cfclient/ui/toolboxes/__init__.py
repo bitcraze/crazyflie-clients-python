@@ -41,7 +41,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-foundToolboxes = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(os.path.dirname(__file__)+"/[A-Za-z]*Toolbox.py*")]
+foundToolboxes = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(os.path.dirname(__file__)+"/[A-Za-z]*Toolbox.py")]
+if len(foundToolboxes)==0:
+    foundToolboxes = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(os.path.dirname(__file__)+"/[A-Za-z]*Toolbox.pyc")]
+
 
 logger.debug("Found toolboxes: %s", foundToolboxes)
 

@@ -41,7 +41,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-foundTabs = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(os.path.dirname(__file__)+"/[A-Za-z]*Tab.py*")]
+foundTabs = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(os.path.dirname(__file__)+"/[A-Za-z]*Tab.py")]
+if len(foundTabs)==0:
+    foundTabs = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(os.path.dirname(__file__)+"/[A-Za-z]*Tab.pyc")]
 
 logger.debug("Found tabs: %s", foundTabs)
 
