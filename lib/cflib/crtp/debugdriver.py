@@ -182,6 +182,8 @@ class DebugDriver (CRTPDriver):
 
         if not re.search("^debug://", uri):
             raise WrongUriType("Not a debug URI")
+    
+        self.fakeLoggingThreads = []
 
         self.queue = Queue.Queue()
 
@@ -250,6 +252,12 @@ class DebugDriver (CRTPDriver):
         else:
             logger.warning("Not handling incomming packets on port [%d]",
                            pk.port)
+
+    def close(self):
+        logger.info("Closing debugdriver")
+        for f in self.fakeLoggingThreads:
+            f.stop()
+        self.fakeConsoleThread.stop()
 
     def _handle_bootloader(self, pk):
         cmd = pk.datal[1]
@@ -514,7 +522,7 @@ class _FakeLoggingDataThread (Thread):
         logging.info("_FakeLoggingDataThread: Disable thread [%s]",
                      self.getName())
 
-    def quit(self):
+    def stop(self):
         self.shouldQuit = True
 
     def run(self):
@@ -549,9 +557,13 @@ class FakeConsoleThread (Thread):
         Thread.__init__(self)
         self.outQueue = outQueue
         self.setDaemon(True)
+        self._should_run = True
+
+    def stop(self):
+        self._shoud_run = False
 
     def run(self):
-        while(True):
+        while(self._should_run):
             p = CRTPPacket()
             p.set_header(0, 0)
 
