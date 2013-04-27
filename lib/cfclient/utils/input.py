@@ -52,6 +52,7 @@ import shutil
 logger = logging.getLogger(__name__)
 
 from pygamereader import PyGameReader
+from cfclient.utils.config import Config
 
 from PyQt4 import Qt, QtCore, QtGui, uic
 from PyQt4.QtCore import *
@@ -73,7 +74,8 @@ class JoystickReader(QThread):
     # Incomming signal to set min/max thrust
     updateMinMaxThrustSignal = pyqtSignal(int, int)
     # Incomming signal to set roll/pitch calibration
-    updateRPCalSignal = pyqtSignal(float, float)
+    update_trim_roll_signal = pyqtSignal(float)
+    update_trim_pitch_signal = pyqtSignal(float)
     # Incomming signal to set max roll/pitch angle
     updateMaxRPAngleSignal = pyqtSignal(int)
     # Incomming signal to set max yaw rate
@@ -107,7 +109,8 @@ class JoystickReader(QThread):
         self.startInputSignal.connect(self.startInput)
         self.stopInputSignal.connect(self.stopInput)
         self.updateMinMaxThrustSignal.connect(self.updateMinMaxThrust)
-        self.updateRPCalSignal.connect(self.updateRPCal)
+        self.update_trim_roll_signal.connect(self._update_trim_roll)
+        self.update_trim_pitch_signal.connect(self._update_trim_pitch)
         self.updateMaxRPAngleSignal.connect(self.updateMaxRPAngle)
         self.updateThrustLoweringSlewrateSignal.connect(self.updateThrustLoweringSlewrate)
         self.updateMaxYawRateSignal.connect(self.updateMaxYawRate)
@@ -120,6 +123,9 @@ class JoystickReader(QThread):
         self.detectAxis = False
 
         self.oldThrust = 0
+
+        self._trim_roll = Config().get("trim_roll")
+        self._trim_pitch = Config().get("trim_pitch")
 
         # TODO: The polling interval should be set from config file
         self.readTimer = QTimer()
@@ -238,11 +244,15 @@ class JoystickReader(QThread):
         self.minThrust = minThrust
         self.maxThrust = maxThrust
 
-    @pyqtSlot(float, float)
-    def updateRPCal(self, calRoll, calPitch):
-        """Set a new value for the roll/pitch trim."""
-        self.rollCal = calRoll
-        self.pitchCal = calPitch
+    @pyqtSlot(float)
+    def _update_trim_roll(self, trim_roll):
+        """Set a new value for the roll trim."""
+        self._trim_roll = trim_roll
+
+    @pyqtSlot(float)
+    def _update_trim_pitch(self, trim_pitch):
+        """Set a new value for the trim trim."""
+        self._trim_pitch = trim_pitch
 
     @pyqtSlot()
     def readInput(self):
@@ -255,8 +265,8 @@ class JoystickReader(QThread):
             yaw = data["yaw"]
             raw_thrust = data["thrust"]
 
-            rollcal = data["rollcal"]
-            pitchcal = data["pitchcal"]
+            trim_roll = data["rollcal"]
+            trim_pitch = data["pitchcal"]
 
             # Thust limiting (slew, minimum and emergency stop)
             if (raw_thrust<0.05 or data["estop"] == True):
@@ -282,9 +292,16 @@ class JoystickReader(QThread):
             else:
                 self.yaw = 0
 
+            if (trim_roll != 0 or trim_pitch != 0):
+                self._trim_roll += trim_roll
+                self._trim_pitch += trim_pitch
+                self.calUpdateSignal.emit(self._trim_roll, self._trim_pitch)
+
             self.inputUpdateSignal.emit(roll, pitch, yaw, thrust)
-            self.calUpdateSignal.emit(rollcal, pitchcal)
-            self.sendControlSetpointSignal.emit(roll + rollcal, pitch + pitchcal, yaw, thrust)
+            trimmed_rol = roll + self._trim_roll
+            trimmed_pitch = pitch + self._trim_pitch
+            self.sendControlSetpointSignal.emit(trimmed_rol, trimmed_pitch,
+                                                yaw, thrust)
         except Exception:
             logger.warning("Exception while reading inputdevice: %s", traceback.format_exc())
             self.inputDeviceErrorSignal.emit("Error reading from input device\n\n%s"%traceback.format_exc())

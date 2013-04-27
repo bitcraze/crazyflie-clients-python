@@ -49,6 +49,10 @@ class PyGameReader():
 
     def readInput(self):
         """Read input from the selected device."""
+        # We only want the pitch/roll cal to be "oneshot", don't
+        # save this value.
+        self.data["pitchcal"] = 0.0
+        self.data["rollcal"] = 0.0
         for e in pygame.event.get():
 
           if e.type == pygame.locals.JOYAXISMOTION:
@@ -75,7 +79,7 @@ class PyGameReader():
                     elif (key == "exit"):
                         self.data["exit"] = True
                     else: # Generic cal for pitch/roll
-                        self.data[key] = self.data[key] + self.inputMap[index]["scale"]
+                        self.data[key] = self.inputMap[index]["scale"]
             except Exception:
                 # Button not mapped, ignore..
                 pass
