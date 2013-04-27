@@ -172,17 +172,20 @@ class JoystickReader(QThread):
             logger.warning("Exception while parsing inputconfig file: %s ", e)
 
     def _do_device_discovery(self):
-        devs = self.inputdevice.getAvailableDevices()
-        for d in devs:
-            self._available_devices[d["name"]] = d["id"]
-
+        devs = self.getAvailableDevices()
+        
         if (len(devs)):
             self.discovery_signal.emit(devs)
             self._discovery_timer.stop()
 
     def getAvailableDevices(self):
         """List all available input devices."""
-        return self.inputdevice.getAvailableDevices()
+        devs = self.inputdevice.getAvailableDevices()
+
+        for d in devs:
+            self._available_devices[d["name"]] = d["id"]
+
+        return devs 
 
     def getConfig(self, configName):
         """Get the configuratio for an input device."""
