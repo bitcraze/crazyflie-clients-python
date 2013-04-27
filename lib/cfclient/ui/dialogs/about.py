@@ -39,7 +39,12 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
 
+import cfclient
+
 about_widget_class, about_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/about.ui')
+
+debuginfo = """Cfclient version: {version}
+System: {system}"""
 
 class AboutDialog(QtGui.QWidget, about_widget_class):
 
@@ -47,7 +52,8 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         super(AboutDialog, self).__init__(*args)
         self.setupUi(self)
         self._close_button.clicked.connect(self.close)
+        self._name_label.setText(self._name_label.text().replace('#version#', cfclient.VERSION))
 
     def showEvent(self, ev):
-        s = "Debug info here"
-        self._debug_out.setText(s)
+        self._debug_out.setText(debuginfo.format(version=cfclient.VERSION, 
+                                                 system=sys.platform))

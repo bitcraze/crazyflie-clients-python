@@ -2,15 +2,21 @@
 
 from distutils.core import setup
 import glob
+import os
+
+version = '2013.3.99' # Year.Month.fix  if fix=99.99 means dev version
 
 try:
     import py2exe
 except ImportError:
     print("Warning: py2exe not usable")
 
+with open(os.path.join(os.path.dirname(__file__), "lib", "cfclient", "version.py"), "w") as versionpy:
+	versionpy.write("VERSION='{}'".format(version))
+
 setup(name='cfclient',
       description='Bitcraze Cazyflie nano quadcopter client',
-      version='2013.3.99.99', # Year.Month.fix  if fix=99.99 means dev version
+      version=version,
       author='Bitcraze team',
       author_email='contact@bitcraze.se',
       url='http://www.bitcraze.se',
@@ -24,7 +30,8 @@ setup(name='cfclient',
       
       #Py2exe specifics
       console=['bin/cfclient'],
-      data_files=[('cfclient/ui', glob.glob('lib/cfclient/ui/*.ui')),
+      data_files=[('', ['README.md', 'LICENSE.txt']),
+                  ('cfclient/ui', glob.glob('lib/cfclient/ui/*.ui')),
                   ('cfclient/ui/tabs', glob.glob('lib/cfclient/ui/tabs/*.ui')),
                   ('cfclient/ui/widgets', glob.glob('lib/cfclient/ui/widgets/*.ui')),
                   ('cfclient/ui/toolboxes', glob.glob('lib/cfclient/ui/toolboxes/*.ui')),
@@ -42,3 +49,4 @@ setup(name='cfclient',
                           }}
      )
 
+os.remove(os.path.join(os.path.dirname(__file__), "lib", "cfclient", "version.py"))
