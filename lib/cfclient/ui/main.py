@@ -102,7 +102,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.connectDialogue = ConnectDialogue()
 
         # Create and start the Input Reader
-        self.statusBar().showMessage("No inputdevice connected!") 
+        self._statusbar_label = QLabel("No inputdevice connected!")
+        self.statusBar().addWidget(self._statusbar_label)
         self.joystickReader = JoystickReader()
         self.joystickReader.start()
         self._current_input_config = ""
@@ -337,9 +338,9 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         self.joystickReader.startInput(str(sender.text()),
                                        self._current_input_config)
-        self.statusBar().showMessage("Using [%s] with config [%s]" % (
-                                     self._current_input_device,
-                                     self._current_input_config))
+        self._statusbar_label.setText("Using [%s] with config [%s]" % (
+                                      self._current_input_device,
+                                      self._current_input_config))
 
     def _inputconfig_selected(self, checked):
         if (not checked):
@@ -349,6 +350,9 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         Config().get("device_config_mapping")[str(self._current_input_device)] = str(self._current_input_config)
         self.joystickReader.startInput(str(self._current_input_device),
                                        self._current_input_config)
+        self._statusbar_label.setText("Using [%s] with config [%s]" % (
+                                      self._current_input_device,
+                                      self._current_input_config))
 
     def device_discovery(self, devs):
         self._menu_devices.clear()

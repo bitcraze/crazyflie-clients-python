@@ -264,7 +264,7 @@ class Crazyflie():
             if (expect_answer):
                 logger.debug("ExpectAnswer: Will expect answer on port [%d]",
                              pk.port)
-                new_timer = Timer(1, lambda: self._no_answer_do_retry(pk))
+                new_timer = Timer(0.2, lambda: self._no_answer_do_retry(pk))
                 try:
                     old_timer = self.answer_timers[pk.port]
                     if (old_timer is not None):
