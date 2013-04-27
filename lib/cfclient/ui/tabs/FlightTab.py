@@ -156,7 +156,7 @@ class FlightTab(Tab, flight_tab_class):
         self.ai.setRollPitch(-data["stabilizer.roll"], data["stabilizer.pitch"])
 
     def connected(self, linkURI):
-        lg = LogConfig("Stabalizer", 100)
+        lg = LogConfig("Stabalizer", 10)
         lg.addVariable(LogVariable("stabilizer.roll", "float"))
         lg.addVariable(LogVariable("stabilizer.pitch", "float"))
         lg.addVariable(LogVariable("stabilizer.yaw", "float"))

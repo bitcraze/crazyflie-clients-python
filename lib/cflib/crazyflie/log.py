@@ -88,14 +88,6 @@ class LogEntry:
         self.period = logconf.getPeriod()/10
         self.blockCreated = False
 
-    def set_period(self, period):
-        real_period = period/10  # Period set in 10th of ms
-        if (real_period > 0 and real_period < 256):
-            self.period = period
-        else:
-            logger.warning("LogEntry: Warning, period %d=>%d is not"
-                           " accepted!", period, real_period)
-
     def start(self):
         if (self.cf.link is not None):
             if (self.blockCreated is False):
@@ -103,7 +95,6 @@ class LogEntry:
                 self.blockCreated = True
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
-                # TODO: Fix the period!
                 pk.data = (CMD_CREATE_BLOCK, self.blockId)
                 for v in self.logconf.getVariables():
                     if (v.isTocVariable() is False):  # Memory location
@@ -297,7 +288,7 @@ class Log():
 
                         pk = CRTPPacket()
                         pk.set_header(5, CHAN_SETTINGS)
-                        pk.data = (CMD_START_LOGGING, newBlockId, 10)
+                        pk.data = (CMD_START_LOGGING, newBlockId, block.period)
                         self.cf.send_packet(pk)
                     else:
                         logger.warning("Error when adding blockId=%d, should"

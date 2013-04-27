@@ -395,13 +395,10 @@ class DebugDriver (CRTPDriver):
         elif (chan == 1):  # Settings access
             if (cmd == 0):
                 blockId = ord(pk.data[1])
-                period = ord(pk.data[2])*10  # Sent as multiple of 10ms
-                logger.info("LOG:Adding block id=%d, period=%d",
-                            blockId, period)
+                logger.info("LOG:Adding block id=%d", blockId)
                 listofvars = pk.data[3:]
-
                 fakeThread = _FakeLoggingDataThread(self.queue, blockId,
-                                                    period, listofvars,
+                                                    listofvars,
                                                     self.fakeLogToc)
                 self.fakeLoggingThreads.append(fakeThread)
                 fakeThread.start()
@@ -433,11 +430,13 @@ class DebugDriver (CRTPDriver):
 
             if (cmd == 3):
                 blockId = ord(pk.data[1])
+                period = ord(pk.data[2])*10  # Sent as multiple of 10 ms
                 logger.info("LOG:Starting block %d", blockId)
                 success = False
                 for fb in self.fakeLoggingThreads:
                     if (fb.blockId == blockId):
                         fb._enable_logging()
+                        fb.period = period
                         p = CRTPPacket()
                         p.set_header(5, 1)
                         p.data = struct.pack('<BBB', cmd, blockId, 0x00)
@@ -473,13 +472,13 @@ class DebugDriver (CRTPDriver):
 class _FakeLoggingDataThread (Thread):
     """Thread that will send back fake logging data via CRTP"""
 
-    def __init__(self, outQueue, blockId, period, listofvars, fakeLogToc):
+    def __init__(self, outQueue, blockId, listofvars, fakeLogToc):
         Thread.__init__(self)
         self.outQueue = outQueue
         self.setDaemon(True)
         self.mod = 0
         self.blockId = blockId
-        self.period = period
+        self.period = 0
         self.listofvars = listofvars
         self.shouldLog = False
         self.fakeLogToc = fakeLogToc
@@ -487,8 +486,8 @@ class _FakeLoggingDataThread (Thread):
         self.setName("Fakelog block=%d" % blockId)
         self.shouldQuit = False
 
-        logging.info("FakeDataLoggingThread created for blockid=%d with"
-                     " period=%d", blockId, period)
+        logging.info("FakeDataLoggingThread created for blockid=%d"
+                     , blockId)
         i = 0
         while (i < len(listofvars)):
             varType = ord(listofvars[i])
@@ -514,8 +513,8 @@ class _FakeLoggingDataThread (Thread):
 
     def _enable_logging(self):
         self.shouldLog = True
-        logging.info("_FakeLoggingDataThread: Enable thread [%s]",
-                     self.getName())
+        logging.info("_FakeLoggingDataThread: Enable thread [%s] at period %d",
+                     self.getName(), self.period)
 
     def _disable_logging(self):
         self.shouldLog = False
