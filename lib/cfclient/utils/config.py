@@ -59,11 +59,11 @@ class Config():
         self._dist_config = sys.path[0] + "/cfclient/configs/config.json"
         self._config = sys.path[1] + "/config.json"
 
-        [self._readonly, writable] = self._read_distfile()
+        [self._readonly, self._data] = self._read_distfile()
 
-        self._data = self._read_config()
-        if (self._data is None):
-            self._data = writable
+        user_config = self._read_config()
+        if (user_config):
+            self._data.update(user_config)
 
     def _read_distfile(self):
         """ Read the distribution config file containing the defaults """
