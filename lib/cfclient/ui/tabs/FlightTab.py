@@ -96,8 +96,8 @@ class FlightTab(Tab, flight_tab_class):
         self.maxThrust.valueChanged.connect(self.minMaxThrustChanged)
         self.thrustLoweringSlewRateLimit.valueChanged.connect(self.thrustLoweringSlewRateLimitChanged)
         self.slewEnableLimit.valueChanged.connect(self.thrustLoweringSlewRateLimitChanged)
-        self.targetCalRoll.valueChanged.connect(self.calValueChanged)
-        self.targetCalPitch.valueChanged.connect(self.calValueChanged)
+        self.targetCalRoll.valueChanged.connect(self._trim_roll_changed)
+        self.targetCalPitch.valueChanged.connect(self._trim_pitch_changed)
         self.maxAngle.valueChanged.connect(self.maxAngleChanged)
         self.maxYawRate.valueChanged.connect(self.maxYawRateChanged)
         self.uiSetupReadySignal.connect(self.uiSetupReady)
@@ -119,7 +119,10 @@ class FlightTab(Tab, flight_tab_class):
 
         self.ai = AttitudeIndicator()
         self.gridLayout.addWidget(self.ai, 0, 1)
-        
+
+        self.targetCalPitch.setValue(Config().get("trim_pitch"))
+        self.targetCalRoll.setValue(Config().get("trim_roll"))
+
     def thrustToPercentage(self, thrust):
         return ((thrust/MAX_THRUST)*100.0)
 
@@ -219,20 +222,21 @@ class FlightTab(Tab, flight_tab_class):
         if (self.isInCrazyFlightmode == True):
             Config().set("max_rp", self.maxAngle.value())
 
-    def calValueChanged(self):
-        logger.debug("Trim changed in UI: roll=%.2f, pitch=%.2f", self.targetCalRoll.value(), self.targetCalPitch.value())
-        self.helper.inputDeviceReader.updateRPCalSignal.emit(self.targetCalRoll.value(), self.targetCalPitch.value())
-        if (self.isInCrazyFlightmode == True):
-            Config().set("trim_roll", self.targetCalRoll.value())
-            Config().set("trim_pitch", self.targetCalPitch.value())
+    def _trim_pitch_changed(self, value):
+        logger.debug("Pitch trim updated to [%f]" % value)
+        self.helper.inputDeviceReader.update_trim_pitch_signal.emit(value)
+        Config().set("trim_pitch", value)
+
+    def _trim_roll_changed(self, value):
+        logger.debug("Roll trim updated to [%f]" % value)
+        self.helper.inputDeviceReader.update_trim_roll_signal.emit(value)
+        Config().set("trim_roll", value)
 
     def calUpdateFromInput(self, rollCal, pitchCal):
-        logger.debug("Trim changed on joystick: roll=%.2f, pitch=%.2f", rollCal, pitchCal)
+        logger.debug("Trim changed on joystick: roll=%.2f, pitch=%.2f",
+                     rollCal, pitchCal)
         self.targetCalRoll.setValue(rollCal)
         self.targetCalPitch.setValue(pitchCal)
-        if (self.isInCrazyFlightmode == True):
-            Config().set("trim_roll", rollCal)
-            Config().set("trim_pith", pitchCal)
 
     def updateInputControl(self, roll, pitch, yaw, thrust):
         self.targetRoll.setText(("%0.2f" % roll));
