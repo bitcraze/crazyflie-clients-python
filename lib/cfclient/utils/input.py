@@ -41,7 +41,7 @@ __author__ = 'Bitcraze AB'
 __all__ = ['JoystickReader']
 
 import sys
-
+import time
 import json
 import os
 import glob
@@ -68,7 +68,7 @@ class JoystickReader(QThread):
     THRUST_AXIS_ID = 3
 
     # Incomming signal to start input capture
-    startInputSignal = pyqtSignal(int, str)
+    startInputSignal = pyqtSignal(str, str)
     # Incomming signal to stop input capture
     stopInputSignal = pyqtSignal()
     # Incomming signal to set min/max thrust
@@ -96,6 +96,8 @@ class JoystickReader(QThread):
     inputDeviceErrorSignal = pyqtSignal('QString')
 
     sendControlSetpointSignal = pyqtSignal(float, float, float, int)
+
+    discovery_signal = pyqtSignal(object)
 
     inputConfig = []
     
@@ -132,7 +134,13 @@ class JoystickReader(QThread):
         self.readTimer.setInterval(10);
         self.connect(self.readTimer, SIGNAL("timeout()"), self.readInput)
 
+        self._discovery_timer = QTimer()
+        self._discovery_timer.setInterval(10);
+        self.connect(self._discovery_timer, SIGNAL("timeout()"), self._do_device_discovery)
+        self._discovery_timer.start()    
+
         self.listOfConfigs = []
+        self._available_devices = {}
 
         # Check if user config exists, otherwise copy files
         if (not os.path.isdir(sys.path[1] + "/input")):
@@ -162,6 +170,15 @@ class JoystickReader(QThread):
                 self.listOfConfigs.append(conf[:-5])
         except Exception as e:
             logger.warning("Exception while parsing inputconfig file: %s ", e)
+
+    def _do_device_discovery(self):
+        devs = self.inputdevice.getAvailableDevices()
+        for d in devs:
+            self._available_devices[d["name"]] = d["id"]
+
+        if (len(devs)):
+            self.discovery_signal.emit(devs)
+            self._discovery_timer.stop()
 
     def getAvailableDevices(self):
         """List all available input devices."""
@@ -198,15 +215,16 @@ class JoystickReader(QThread):
     def run(self):
         self.exec_()
 
-    @pyqtSlot(int, str)
-    def startInput(self, deviceId, configName):
+    @pyqtSlot(str, str)
+    def startInput(self, device_name, configName):
         """Start reading inpyt from the device with id deviceId using config configName"""
         try:
             idx = self.listOfConfigs.index(configName)
-            self.inputdevice.startInput(deviceId, self.inputConfig[idx])
+            device_id = self._available_devices[device_name]
+            self.inputdevice.startInput(device_id, self.inputConfig[idx])
             self.readTimer.start()
         except Exception:
-            self.inputDeviceErrorSignal.emit("Error while opening/initializing input device %i\n\n%s" % (deviceId, traceback.format_exc()))
+            self.inputDeviceErrorSignal.emit("Error while opening/initializing input device\n\n%s" % (traceback.format_exc()))
 
     @pyqtSlot()
     def stopInput(self):

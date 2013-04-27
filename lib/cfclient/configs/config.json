@@ -1,6 +1,6 @@
 {
   "writable" : {
-    "inputconfig": "", 
+    "input_device": "", 
     "link_uri": "", 
     "flightmode": "Normal", 
     "open_tabs": "Flight Control", 
@@ -11,7 +11,8 @@
     "max_thrust": 80, 
     "min_thrust": 25, 
     "max_yaw": 200, 
-    "max_rp": 30
+    "max_rp": 30,
+    "device_config_mapping": {}
   },
   "read-only" : {
     "normal_slew_limit": 45, 

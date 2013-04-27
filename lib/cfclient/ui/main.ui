@@ -13,12 +13,25 @@
   <property name="windowTitle">
    <string>Crazyflie Nano Quadcopter Control</string>
   </property>
+  <property name="statusTip">
+   <string/>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
        <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="1">
+         <widget class="QPushButton" name="quickConnectButton">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Quickconnect using the last connection parameters&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>Quick Connect</string>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="2">
          <spacer name="horizontalSpacer">
           <property name="orientation">
@@ -32,17 +45,7 @@
           </property>
          </spacer>
         </item>
-        <item row="0" column="0">
-         <widget class="QPushButton" name="connectButton">
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Connect to a Crazyflie&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="text">
-           <string>Connect</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="5">
+        <item row="0" column="4">
          <widget class="QProgressBar" name="linkQualityBar">
           <property name="minimumSize">
            <size>
@@ -70,7 +73,17 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="4">
+        <item row="0" column="0">
+         <widget class="QPushButton" name="connectButton">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Connect to a Crazyflie&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>Connect</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3">
          <widget class="QProgressBar" name="batteryBar">
           <property name="minimumSize">
            <size>
@@ -104,35 +117,6 @@
           </property>
           <property name="format">
            <string>Battery %v mV</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QPushButton" name="quickConnectButton">
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Quickconnect using the last connection parameters&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="text">
-           <string>Quick Connect</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="3">
-         <widget class="QComboBox" name="inputDeviceSelector">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>200</width>
-            <height>0</height>
-           </size>
           </property>
          </widget>
         </item>
@@ -182,7 +166,6 @@
     <property name="title">
      <string>Settings</string>
     </property>
-    <addaction name="menuItemConfInputDevice"/>
     <addaction name="logConfigAction"/>
    </widget>
    <widget class="QMenu" name="menuCrazyflie">
@@ -193,8 +176,28 @@
     <addaction name="menuItemQuickConnect"/>
     <addaction name="menuItemBootloader"/>
    </widget>
+   <widget class="QMenu" name="_menu_inputdevice">
+    <property name="title">
+     <string>Input device</string>
+    </property>
+    <widget class="QMenu" name="_menu_mappings">
+     <property name="title">
+      <string>Mappings</string>
+     </property>
+    </widget>
+    <widget class="QMenu" name="_menu_devices">
+     <property name="title">
+      <string>Devices</string>
+     </property>
+    </widget>
+    <addaction name="menuItemConfInputDevice"/>
+    <addaction name="_menu_devices"/>
+    <addaction name="_menu_mappings"/>
+    <addaction name="_menuitem_rescandevices"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuCrazyflie"/>
+   <addaction name="_menu_inputdevice"/>
    <addaction name="menuSettings"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
@@ -260,7 +263,7 @@
   </action>
   <action name="menuItemConfInputDevice">
    <property name="text">
-    <string>Configure Input device</string>
+    <string>Configure device mapping</string>
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>
@@ -308,6 +311,21 @@
   <action name="menuItemBootloader">
    <property name="text">
     <string>Bootloader</string>
+   </property>
+  </action>
+  <action name="actionAsdfasdf">
+   <property name="text">
+    <string>asdfasdf</string>
+   </property>
+  </action>
+  <action name="actionSdfasdf">
+   <property name="text">
+    <string>sdfasdf</string>
+   </property>
+  </action>
+  <action name="_menuitem_rescandevices">
+   <property name="text">
+    <string>Rescan devices</string>
    </property>
   </action>
  </widget>

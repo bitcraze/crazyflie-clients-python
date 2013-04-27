@@ -114,6 +114,8 @@ class PyGameReader():
     def getAvailableDevices(self):
         """List all the available devices."""
         dev = []
+        pygame.joystick.quit()
+        pygame.joystick.init()
         nbrOfInputs = pygame.joystick.get_count()
         for i in range(0,nbrOfInputs):
             j = pygame.joystick.Joystick(i)
