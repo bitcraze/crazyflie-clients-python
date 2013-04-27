@@ -1,0 +1,136 @@
+; Script based on example2.nsi, converted to MUI2
+
+;--------------------------------
+SetCompressor /SOLID /FINAL lzma
+
+!include "MUI2.nsh"
+
+; The name of the installer
+Name "Crazyflie PC client {{version}}"
+
+; The file to write
+OutFile "cfclient-win32-install-{{version}}.exe"
+
+; The default installation directory
+InstallDir "$PROGRAMFILES\Crazyflie client"
+
+; Registry key to check for directory (so if you install again, it will 
+; overwrite the old one automatically)
+InstallDirRegKey HKLM "Software\Crazyflie_client" "Install_Dir"
+
+; Request application privileges for Windows Vista
+RequestExecutionLevel admin
+
+;--------------------------------
+;Interface Settings
+
+  !define MUI_ABORTWARNING
+
+;--------------------------------
+;Pages
+
+!insertmacro MUI_PAGE_WELCOME
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW licpageshow
+!insertmacro MUI_PAGE_LICENSE "..\LICENSE.txt"
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_UNPAGE_WELCOME
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_UNPAGE_FINISH
+
+; Function to display license in monospace font
+Function licpageshow
+FindWindow $0 "#32770" "" $HWNDPARENT
+CreateFont $1 "Courier New" "$(^FontSize)"
+GetDlgItem $0 $0 1000
+SendMessage $0 ${WM_SETFONT} $1 1
+FunctionEnd
+  
+;--------------------------------
+;Languages
+ 
+  !insertmacro MUI_LANGUAGE "English"
+
+;--------------------------------
+
+; The stuff to install
+Section "Crazyflie Client" SecCfclient
+
+  SectionIn RO
+  
+  ; Set output path to the installation directory.
+  SetOutPath $INSTDIR
+  
+  ; Create folders
+  {% for dir in dirs %}
+    CreateDirectory "$INSTDIR\{{dir}}"
+  {% endfor %}
+  
+  ; Files to install
+  {% for file in files %}
+    File "/oname=$INSTDIR\{{file}}" "..\dist\{{file}}"
+  {% endfor %}
+  
+  ; Write the installation path into the registry
+  WriteRegStr HKLM SOFTWARE\Crazyflie_client "Install_Dir" "$INSTDIR"
+  
+  ;Write Start menu items
+  CreateDirectory "$SMPROGRAMS\Crazyflie client"
+  CreateShortCut "$SMPROGRAMS\Crazyflie client\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
+  CreateShortCut "$SMPROGRAMS\Crazyflie client\Crazyflie PC client.lnk" "$INSTDIR\cfclient.exe" "" "$INSTDIR\crclient.exe" 0
+  
+  ; Write the uninstall keys for Windows
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cfclient" "DisplayName" "Crazyflie Client"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cfclient" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cfclient" "NoModify" 1
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cfclient" "NoRepair" 1
+  WriteUninstaller "uninstall.exe"
+  
+SectionEnd
+
+; Optional section (can be disabled by the user)
+;Section "Desktop Shortcuts"
+;
+;SectionEnd
+
+;--------------------------------
+;Descriptions
+
+  ;Language strings
+  LangString DESC_SecCfclient ${LANG_ENGLISH} "Crazyflie PC Client"
+
+  ;Assign language strings to sections
+  !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecCfclient} $(DESC_SecCfclient)
+  !insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+;--------------------------------
+
+; Uninstaller
+
+Section "Uninstall"
+  
+  ; Remove registry keys
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cfclient"
+  DeleteRegKey HKLM SOFTWARE\Crazyflie_client
+
+  ; Remove files and uninstaller
+  {% for file in files %}
+    Delete "$INSTDIR\{{file}}"
+  {% endfor %}
+  Delete $INSTDIR\uninstall.exe
+
+  ; Remove shortcuts, if any
+  Delete "$SMPROGRAMS\Crazyflie client\*.*"
+
+  ; Remove directories used
+  RMDir "$SMPROGRAMS\Crazyflie client"
+  {% for dir in dirs|reverse %}
+    RMDir "$INSTDIR\{{dir}}"
+  {% endfor %}
+
+SectionEnd
