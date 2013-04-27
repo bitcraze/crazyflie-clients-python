@@ -308,6 +308,9 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.rawinputreader.stopReading()
         # TODO: After closing this we need to restart the input reading from a valid config
         logger.error("Need to restart input reading!!")
+        QMessageBox.about(self, "Need to restart application",
+                                "Application needs to be restarted"
+                                " for any input device to work!")
 
 class RawJoystickReader(QThread):
 
