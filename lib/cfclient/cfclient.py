@@ -78,6 +78,8 @@ def main():
   
   try:
     import pygame
+    #to make py2exe happy
+    import pygame._view
   except:
     logger.critical("No pygame installation found, exiting!")
     sys.exit(1)
