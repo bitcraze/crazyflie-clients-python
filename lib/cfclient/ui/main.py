@@ -147,7 +147,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.linkQualitySignal.connect(lambda percentage: self.linkQualityBar.setValue(percentage))
 
         # Set UI state in disconnected buy default
-        self.uiState = UIState.DISCONNECTED
+        self.setUIState(UIState.DISCONNECTED)
 
         # Parse the log configuration files
         self.logConfigReader = LogConfigReader()
@@ -223,12 +223,13 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.setWindowTitle("Not connected")
             self.menuItemConnect.setText("Connect to Crazyflie")
             self.connectButton.setText("Connect")
-            self.quickConnectButton.setEnabled(True)
             self.menuItemQuickConnect.setEnabled(True)
             self.batteryBar.setValue(3000)
             self.linkQualityBar.setValue(0)
             self.menuItemBootloader.setEnabled(True)
             self.logConfigAction.setEnabled(False)
+            if (len(Config().get("link_uri")) > 0):
+                self.quickConnectButton.setEnabled(True)
         if (newState == UIState.CONNECTED):
             s = "Connected on %s" % linkURI
             self.setWindowTitle(s)
