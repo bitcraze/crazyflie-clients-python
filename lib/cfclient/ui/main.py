@@ -94,7 +94,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.setupUi(self) 
 
         self.cfg = Config()
-        self.cf = Crazyflie()
+        self.cf = Crazyflie(ro_cache=sys.path[0]+"/cflib/cache",
+                            rw_cache=sys.path[1]+"/cache")
 
         cflib.crtp.init_drivers()
 

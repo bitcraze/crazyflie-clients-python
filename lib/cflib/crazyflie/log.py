@@ -206,20 +206,21 @@ class LogTocElement:
             raise KeyError("Type [%d] not found in LogTocElement.types"
                            "!" % ident)
 
-    def __init__(self, data):
+    def __init__(self, data=None):
         """TocElement creator. Data is the binary payload of the element."""
 
-        strs = struct.unpack("s"*len(data[2:]), data[2:])
-        strs = ("{}"*len(strs)).format(*strs).split("\0")
-        self.group = strs[0]
-        self.name = strs[1]
+        if (data):
+            strs = struct.unpack("s"*len(data[2:]), data[2:])
+            strs = ("{}"*len(strs)).format(*strs).split("\0")
+            self.group = strs[0]
+            self.name = strs[1]
 
-        self.ident = ord(data[0])
+            self.ident = ord(data[0])
 
-        self.ctype = LogTocElement.get_cstring_from_id(ord(data[1]))
-        self.pytype = LogTocElement.get_unpack_string_from_id(ord(data[1]))
+            self.ctype = LogTocElement.get_cstring_from_id(ord(data[1]))
+            self.pytype = LogTocElement.get_unpack_string_from_id(ord(data[1]))
 
-        self.access = ord(data[1]) & 0x10
+            self.access = ord(data[1]) & 0x10
 
 
 class Log():
@@ -257,7 +258,7 @@ class Log():
         else:
             return None
 
-    def refresh_toc(self, refreshDoneCallback):
+    def refresh_toc(self, refreshDoneCallback, toc_cache):
         pk = CRTPPacket()
         pk.set_header(CRTPPort.LOGGING, CHAN_SETTINGS)
         pk.data = (CMD_RESET_LOGGING, )
@@ -265,7 +266,7 @@ class Log():
 
         self.toc = Toc()
         tocFetcher = TocFetcher(self.cf, LogTocElement, CRTPPort.LOGGING,
-                                self.toc, refreshDoneCallback)
+                                self.toc, refreshDoneCallback, toc_cache)
         tocFetcher.start()
 
     def _new_packet_cb(self, packet):

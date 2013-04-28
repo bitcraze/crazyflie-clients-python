@@ -1,9 +1,0 @@
-{
-  "logconfig": {
-    "logblock":
-    {"name": "Memory log test", "period":100, "min":-10000, "max":10000,
-     "variables": [
-          {"name":"imu.acc_x", "type":"TOC", "stored_as":"int16_t", "fetch_as":"int16_t"}
-     ]}
-  }
-}

@@ -343,15 +343,18 @@ class DebugDriver (CRTPDriver):
                                 " varIndex => 5")
 
             if (cmd == 1):  # TOC CRC32 request
+                fakecrc = 0
                 if (pk.port == CRTPPort.LOGGING):
                     tocLen = len(self.fakeLogToc)
+                    fakecrc = 0xAAAAAAAA
                 if (pk.port == CRTPPort.PARAM):
                     tocLen = len(self.fakeParamToc)
+                    fakecrc = 0xBBBBBBBB
                 logger.info("TOC[%d]: Requesting TOC CRC, sending back fake"
                             " stuff: %d", pk.port, len(self.fakeLogToc))
                 p = CRTPPacket()
                 p.set_header(pk.port, 0)
-                p.data = struct.pack('<BBIBB', 1, tocLen, 0xBCCFBCCF, 16, 24)
+                p.data = struct.pack('<BBIBB', 1, tocLen, fakecrc, 16, 24)
                 self.queue.put(p)
 
     def handleParam(self, pk):

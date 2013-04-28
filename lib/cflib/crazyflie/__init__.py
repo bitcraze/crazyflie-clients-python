@@ -49,6 +49,7 @@ from .commander import Commander
 from .console import Console
 from .param import Param
 from .log import Log
+from .toccache import TocCache
 
 import cflib.crtp
 
@@ -78,9 +79,11 @@ class Crazyflie():
 
     state = State.DISCONNECTED
 
-    def __init__(self, link=None):
+    def __init__(self, link=None, ro_cache=None, rw_cache=None):
         """ Create the objects from this module and register callbacks. """
         self.link = link
+        self._toc_cache = TocCache(ro_cache=ro_cache,
+                                   rw_cache=rw_cache)
 
         self.incomming = _IncomingPacketHandler(self)
         self.incomming.setDaemon(True)
@@ -123,7 +126,7 @@ class Crazyflie():
         """Start the connection setup by refreshing the TOCs"""
         logger.info("We are connected[%s], request connection setup",
                     self.link_uri)
-        self.log.refresh_toc(self._log_toc_updated_cb)
+        self.log.refresh_toc(self._log_toc_updated_cb, self._toc_cache)
 
     def _param_toc_updated_cb(self):
         """Called when the param TOC has been fully updated"""
@@ -136,7 +139,7 @@ class Crazyflie():
         """Called when the log TOC has been fully updated"""
         logger.info("Log TOC finished updating")
         self._log_toc_updated = True
-        self.param.refresh_toc(self._param_toc_updated_cb)
+        self.param.refresh_toc(self._param_toc_updated_cb, self._toc_cache)
 
         if (self._log_toc_updated and self._param_toc_updated):
             logger.info("All TOCs finished updating")

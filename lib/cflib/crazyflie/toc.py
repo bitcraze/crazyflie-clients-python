@@ -64,7 +64,6 @@ class TocElement:
     pytype = ""
     access = RO_ACCESS
 
-
 class Toc:
     """Container for TocElements."""
 
@@ -124,13 +123,14 @@ class Toc:
 class TocFetcher:
     """Fetches TOC entries from the Crazyflie"""
     def __init__(self, crazyflie, elementClass, port, tocHolder,
-                 finishedCallback):
+                 finishedCallback, toc_cache):
         self.cf = crazyflie
         self.port = port
+        self._crc = 0
         self.toc = tocHolder
+        self._toc_cache = toc_cache
         self.finishedCallback = finishedCallback
         self.elementClass = elementClass
-        return
 
     def start(self):
         """Initiate fetching of the TOC."""
@@ -158,16 +158,21 @@ class TocFetcher:
             return
         payload = struct.pack("B"*(len(packet.datal)-1), *packet.datal[1:])
 
-        logger.debug("%s", packet)
-
         if (self.state == GET_TOC_INFO):
-            [self.nbrOfItems, crc] = struct.unpack("<BI", payload[:5])
+            [self.nbrOfItems, self._crc] = struct.unpack("<BI", payload[:5])
             logger.debug("[%d]: Got TOC CRC, %d items and crc=0x%08X",
-                         self.port, self.nbrOfItems, crc)
-            # TODO: Implement TOC cache using the CRC as a key
-            self.state = GET_TOC_ELEMENT
-            self.requestedIndex = 0
-            self._request_toc_element(self.requestedIndex)
+                         self.port, self.nbrOfItems, self._crc)
+
+            cache_data = self._toc_cache.fetch(self._crc)
+            if (cache_data):
+                self.toc.toc = cache_data
+                logger.info("TOC for port [%s] found in cache" % self.port)
+                self._toc_fetch_finished()
+            else:
+                self.state = GET_TOC_ELEMENT
+                self.requestedIndex = 0
+                self._request_toc_element(self.requestedIndex)
+                    
         elif (self.state == GET_TOC_ELEMENT):
             # Always add new element, but only request new if it's not the
             # last one.
@@ -190,8 +195,7 @@ class TocFetcher:
                 self.requestedIndex = self.requestedIndex+1
                 self._request_toc_element(self.requestedIndex)
             else:  # No more variables in TOC
-                # TODO: Save TOC in a cache with CRC as a key so that it can
-                #       be loaded from cache the next time.
+                self._toc_cache.insert(self._crc, self.toc.toc)
                 self._toc_fetch_finished()
 
     def _request_toc_element(self, index):

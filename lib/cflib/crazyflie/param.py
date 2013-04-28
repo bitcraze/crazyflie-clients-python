@@ -41,7 +41,6 @@ from cflib.utils.callbacks import Caller
 import struct
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from .toc import Toc, TocFetcher
-
 from threading import Thread
 
 from Queue import Queue
@@ -84,19 +83,20 @@ class ParamTocElement:
              0x06: ("float",    '<f'),
              0x07: ("double",   '<d')}
 
-    def __init__(self, data):
+    def __init__(self, data=None):
         """TocElement creator. Data is the binary payload of the element."""
-        strs = struct.unpack("s"*len(data[2:]), data[2:])
-        strs = ("{}"*len(strs)).format(*strs).split("\0")
-        self.group = strs[0]
-        self.name = strs[1]
+        if (data):
+            strs = struct.unpack("s"*len(data[2:]), data[2:])
+            strs = ("{}"*len(strs)).format(*strs).split("\0")
+            self.group = strs[0]
+            self.name = strs[1]
 
-        self.ident = ord(data[0])
+            self.ident = ord(data[0])
 
-        self.ctype = self.types[ord(data[1]) & 0x0F][0]
-        self.pytype = self.types[ord(data[1]) & 0x0F][1]
+            self.ctype = self.types[ord(data[1]) & 0x0F][0]
+            self.pytype = self.types[ord(data[1]) & 0x0F][1]
 
-        self.access = ord(data[1]) & 0x10
+            self.access = ord(data[1]) & 0x10
 
 
 class Param():
@@ -131,13 +131,14 @@ class Param():
 
         self.paramUpdateCallbacks[paramname].add_callback(cb)
 
-    def refresh_toc(self, refreshDoneCallback):
+    def refresh_toc(self, refreshDoneCallback, toc_cache):
         """
         Initiate a refresh of the parameter TOC.
         """
         self.toc = Toc()
         tocFetcher = TocFetcher(self.cf, ParamTocElement,
-                                CRTPPort.PARAM, self.toc, refreshDoneCallback)
+                                CRTPPort.PARAM, self.toc,
+                                refreshDoneCallback, toc_cache)
         tocFetcher.start()
 
     def request_param_update(self, completeName):

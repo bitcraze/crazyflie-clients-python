@@ -1,9 +1,0 @@
-{
-  "logconfig": {
-    "logblock": 
-    {"name": "Battery", "period":1000, "min":3, "max":5,
-     "variables": [
-          {"name":"sys.battery", "type":"TOC", "stored_as":"uint16_t", "fetch_as":"uint16_t"}
-     ]}
-  }
-}
