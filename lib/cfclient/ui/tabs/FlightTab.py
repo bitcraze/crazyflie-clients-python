@@ -101,9 +101,11 @@ class FlightTab(Tab, flight_tab_class):
         self.maxAngle.valueChanged.connect(self.maxAngleChanged)
         self.maxYawRate.valueChanged.connect(self.maxYawRateChanged)
         self.uiSetupReadySignal.connect(self.uiSetupReady)
-        self.clientXModeCheckbox.clicked.connect(self.changeXmode)
+        self.clientXModeCheckbox.toggled.connect(self.changeXmode)
         self.isInCrazyFlightmode = False
         self.uiSetupReady()
+
+        self.clientXModeCheckbox.setChecked(Config().get("client_side_xmode"))
         
         self.crazyflieXModeCheckbox.clicked.connect(
                     lambda enabled: self.helper.cf.param.set_value("flightctrl.xmode", str(enabled)))
@@ -279,5 +281,6 @@ class FlightTab(Tab, flight_tab_class):
     @pyqtSlot(bool)
     def changeXmode(self, checked):
         self.helper.cf.commander.set_client_xmode(checked)
-        logger.debug("Clientside X-mode enabled: %s", checked)
+        Config().set("client_side_xmode", checked)
+        logger.info("Clientside X-mode enabled: %s", checked)
 

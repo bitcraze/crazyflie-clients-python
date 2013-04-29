@@ -12,6 +12,7 @@
     "min_thrust": 25, 
     "max_yaw": 200, 
     "max_rp": 30,
+    "client_side_xmode": false,
     "device_config_mapping": {}
   },
   "read-only" : {
