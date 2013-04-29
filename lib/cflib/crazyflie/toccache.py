@@ -92,6 +92,7 @@ class TocCache():
                             default=self._encoder))
                 cache.close()
                 logger.info("Saved cache to [%s]", filename)
+                self._cache_files += [filename]
             except Exception as e:
                 logger.warning("Could not save cache to file [%s]: %s", 
                                filename, str(e))
