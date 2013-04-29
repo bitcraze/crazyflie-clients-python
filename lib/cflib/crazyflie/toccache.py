@@ -34,6 +34,7 @@ cache and dist cache.
 __author__ = 'Bitcraze AB'
 __all__ = ['TocCache']
 
+import os
 import json
 from glob import glob
 
@@ -54,6 +55,8 @@ class TocCache():
             self._cache_files += glob(ro_cache + "/*.json")
         if (rw_cache):
             self._cache_files += glob(rw_cache + "/*.json")
+            if not os.path.exists(rw_cache):
+                        os.makedirs(rw_cache)
 
         self._rw_cache = rw_cache
             
