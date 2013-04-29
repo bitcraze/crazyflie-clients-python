@@ -4,7 +4,7 @@ from distutils.core import setup
 import glob
 import os
 
-version = '2013.4.1' # Year.Month.fix  if fix=99 means dev version
+version = '2013.4.99' # Year.Month.fix  if fix=99 means dev version
 
 try:
     import py2exe
