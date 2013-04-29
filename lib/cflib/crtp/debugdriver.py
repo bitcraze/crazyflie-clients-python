@@ -174,9 +174,7 @@ class DebugDriver (CRTPDriver):
         self.fakeflash = {}
 
     def scan_interface(self):
-        return [["debug://0/0", "Normal connect"],
-                ["debug://0/1", "Don't send anything back"],
-                ["debug://0/2", "Incomplete Log TOC"]]
+        return [["debug://0/0", "Debugdriver for UI testing"]]
 
     def connect(self, uri, linkQualityCallback, linkErrorCallback):
 
