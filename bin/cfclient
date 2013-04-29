@@ -64,10 +64,8 @@ def init_paths():
         share_lib = prefix
         inSource = False
         for location in [src_lib, share_lib] + sys.path:
-            print location
             main_ui = _path.join(location, 'cfclient', 'ui','main.ui')
             if _path.exists(main_ui):
-                print "Using: "+location
                 sys.path[0] = location
                 if location == src_lib:
                     inSource = True
@@ -83,7 +81,5 @@ def init_paths():
 
 if __name__ == '__main__':
     init_paths()
-    import sys
-    print sys.path
     import cfclient
     cfclient.main()
