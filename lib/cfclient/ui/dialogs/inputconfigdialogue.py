@@ -183,9 +183,6 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         for m in self.axismapping:
             if (self.axismapping[m]["id"] == -1):
                 canSave = False
-        for m in self.buttonmapping:
-            if (self.buttonmapping[m]["id"] == -1):   
-                canSave = False
         if (canSave == True):
             self.saveButton.setEnabled(True)
 
