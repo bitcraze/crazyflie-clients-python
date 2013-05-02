@@ -96,6 +96,17 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.detectButtons = [self.detectPitch, self.detectRoll, self.detectYaw, self.detectThrust, self.detectPitchPos, self.detectPitchNeg,
                          self.detectRollPos, self.detectRollNeg, self.detectKillswitch, self.detectExitapp]
 
+        self._reset_mapping()
+        self.btnDetect = ""
+        self.axisDetect = ""
+
+        for d in self.joystickReader.getAvailableDevices():
+            self.inputDeviceSelector.addItem(d["name"], d["id"])
+
+        if (len(self.joystickReader.getAvailableDevices()) > 0):
+            self.configButton.setEnabled(True)
+
+    def _reset_mapping(self):
         self.buttonmapping = {
             "pitchPos": {"id":-1, "indicator":self.pitchPos},
             "pitchNeg": {"id":-1, "indicator":self.pitchNeg},
@@ -104,7 +115,6 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             "killswitch": {"id":-1, "indicator":self.killswitch},
             "exitapp": {"id":-1, "indicator":self.exitapp}
             }
-        self.btnDetect = ""
 
         self.axismapping = {
             "pitch": {"id":-1, "indicator":self.pitchAxisValue, "scale":-1.0},
@@ -112,13 +122,6 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             "yaw": {"id":-1, "indicator":self.yawAxisValue, "scale":-1.0},
             "thrust": {"id":-1, "indicator":self.thrustAxisValue, "scale":-1.0}
             }
-        self.axisDetect = ""
-
-        for d in self.joystickReader.getAvailableDevices():
-            self.inputDeviceSelector.addItem(d["name"], d["id"])
-
-        if (len(self.joystickReader.getAvailableDevices()) > 0):
-            self.configButton.setEnabled(True)
 
     def cancelConfigBox(self, button):
         self.axisDetect = ""
@@ -230,12 +233,15 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
 
     def loadConfig(self):
         conf = self.joystickReader.getConfig(self.profileCombo.currentText())
+        self._reset_mapping()
         if (conf != None):
             for c in conf:
                 if (conf[c]['type'] == "Input.BUTTON"):
-                    self.parseButtonConfig(conf[c]['key'], c, conf[c]['scale'])
+                    self.parseButtonConfig(conf[c]['key'],
+                                           conf[c]['id'], conf[c]['scale'])
                 elif (conf[c]['type'] == "Input.AXIS"):
-                    self.parseAxisConfig(conf[c]['key'], c, conf[c]['scale'])
+                    self.parseAxisConfig(conf[c]['key'],
+                                         conf[c]['id'], conf[c]['scale'])
         else:
             logger.warning("Could not load configfile [%s]", self.profileCombo.currentText())
             self.showError("Could not load config", "Could not load config [%s]" % self.profileCombo.currentText())

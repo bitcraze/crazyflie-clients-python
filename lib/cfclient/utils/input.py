@@ -161,6 +161,7 @@ class JoystickReader(QThread):
                     axis = {}
                     axis["scale"] = a["scale"]
                     axis["type"] = a["type"]
+                    axis["id"] = a["id"]
                     axis["key"] = a["key"]
                     axis["name"] = a["name"]
                     index = "%s-%d" % (a["type"], a["id"]) # 'type'-'id' defines unique index for axis
