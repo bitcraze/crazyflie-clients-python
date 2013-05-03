@@ -106,6 +106,14 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._statusbar_label = QLabel("No inputdevice connected!")
         self.statusBar().addWidget(self._statusbar_label)
         self.joystickReader = JoystickReader()
+        # Populate combo box with available input device configurations
+        group = QActionGroup(self._menu_mappings, exclusive=True)
+        for c in self.joystickReader.getListOfConfigs():
+            node = QAction(c, self._menu_mappings, checkable=True, 
+                           enabled=False)
+            node.toggled.connect(self._inputconfig_selected)
+            group.addAction(node)
+            self._menu_mappings.addAction(node)
         self.joystickReader.start()
         self._current_input_config = ""
         self._current_input_device = ""
@@ -209,14 +217,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         except Exception as e:
             logger.warning("Exception while opening tabs [%s]", e)
 
-        # Populate combo box with available input device configurations
-        group = QActionGroup(self._menu_mappings, exclusive=True)
-        for c in self.joystickReader.getListOfConfigs():
-            node = QAction(c, self._menu_mappings, checkable=True)
-            node.toggled.connect(self._inputconfig_selected)
-            group.addAction(node)
-            self._menu_mappings.addAction(node)
-
     def setUIState(self, newState, linkURI=""):
         self.uiState = newState
         if (newState == UIState.DISCONNECTED):
@@ -261,7 +261,14 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             menuItem.setChecked(False)
     
     def _rescan_devices(self):
-        self.device_discovery(self.joystickReader.getAvailableDevices())
+        self._statusbar_label.setText("No inputdevice connected!")
+        self._menu_devices.clear()
+        self._current_input_device = ""
+        for c in self._menu_mappings.actions():
+            c.setEnabled(False)
+        devs = self.joystickReader.getAvailableDevices()
+        if (len(devs) > 0):
+            self.device_discovery(devs)
 
     def configInputDevice(self):
         self.inputConfig = InputConfigDialogue(self.joystickReader)
@@ -329,9 +336,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         sender = self.sender()
         self._current_input_device = sender.text()
         device_config_mapping = Config().get("device_config_mapping")
-        self._current_input_config = device_config_mapping[
-            str(self._current_input_device)]
-        print "Saving %s" % self._current_input_device
+        if (self._current_input_device in device_config_mapping.keys()):
+            self._current_input_config = device_config_mapping[
+                str(self._current_input_device)]
+        else:
+            self._current_input_config = self._menu_mappings.actions()[0].text()
         Config().set("input_device", str(self._current_input_device))
         
         for c in self._menu_mappings.actions():
@@ -357,7 +366,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                                       self._current_input_config))
 
     def device_discovery(self, devs):
-        self._menu_devices.clear()
         group = QActionGroup(self._menu_devices, exclusive=True)
         
         for d in devs:
@@ -383,6 +391,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         # Now we know what device to use and what mapping, trigger the events to
         # change the menus and start the input
         for c in self._menu_mappings.actions():
+            c.setEnabled(True)
             if (c.text() == self._current_input_config):
                 c.setChecked(True)
         
