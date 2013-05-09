@@ -48,6 +48,7 @@ import glob
 import traceback
 import logging
 import shutil
+import copy
 
 logger = logging.getLogger(__name__)
 
@@ -161,17 +162,29 @@ class JoystickReader(QThread):
                     axis = {}
                     axis["scale"] = a["scale"]
                     axis["type"] = a["type"]
-                    axis["id"] = a["id"]
                     axis["key"] = a["key"]
                     axis["name"] = a["name"]
-                    index = "%s-%d" % (a["type"], a["id"]) # 'type'-'id' defines unique index for axis
-                    newInputDevice[index] = axis
+                    try:
+                      ids = a["ids"]
+                    except:
+                      ids = [a["id"]]
+                    for id in ids:
+                      locaxis = copy.deepcopy(axis)
+                      if "ids" in a:
+                        if id == a["ids"][0]:
+                          locaxis["scale"] = locaxis["scale"] * -1
+                      locaxis["id"] = id
+                      index = "%s-%d" % (a["type"], id) # 'type'-'id' defines unique index for axis    
+                      newInputDevice[index] = locaxis
                 self.inputConfig.append(newInputDevice)
                 json_data.close()
                 self.listOfConfigs.append(conf[:-5])
         except Exception as e:
+            raise
             logger.warning("Exception while parsing inputconfig file: %s ", e)
-
+        import pprint
+        pprint.pprint(self.inputConfig[3])
+        
     def _do_device_discovery(self):
         devs = self.getAvailableDevices()
         
