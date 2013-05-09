@@ -180,10 +180,7 @@ class JoystickReader(QThread):
                 json_data.close()
                 self.listOfConfigs.append(conf[:-5])
         except Exception as e:
-            raise
             logger.warning("Exception while parsing inputconfig file: %s ", e)
-        import pprint
-        pprint.pprint(self.inputConfig[3])
         
     def _do_device_discovery(self):
         devs = self.getAvailableDevices()
