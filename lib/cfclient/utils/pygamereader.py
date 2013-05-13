@@ -32,12 +32,14 @@ Driver for reading data from the PyGame API. Used from Inpyt.py for reading inpu
 __author__ = 'Bitcraze AB'
 __all__ = ['PyGameReader']
 import pygame
+from time import time
 
 class PyGameReader():
     """Used for reading data from input devices using the PyGame API."""
     def __init__(self):
         self.inputMap = None
         pygame.init()
+        self._ts_last_event = None
 
     def startInput(self, deviceId, inputMap):
         """Initalize the reading and open the device with deviceId and set the mapping for axis/buttons using the
@@ -46,6 +48,7 @@ class PyGameReader():
         self.inputMap = inputMap
         self.j = pygame.joystick.Joystick(deviceId)
         self.j.init()
+        self._ts_last_event = time()
 
     def readInput(self):
         """Read input from the selected device."""
@@ -53,8 +56,10 @@ class PyGameReader():
         # save this value.
         self.data["pitchcal"] = 0.0
         self.data["rollcal"] = 0.0
-        for e in pygame.event.get():
+        found_events = False
 
+        for e in pygame.event.get():
+          found_events = True 
           if e.type == pygame.locals.JOYAXISMOTION:
             index = "Input.AXIS-%d" % e.axis 
             try:
@@ -83,6 +88,15 @@ class PyGameReader():
             except Exception:
                 # Button not mapped, ignore..
                 pass
+
+        if found_events:
+            self._ts_last_event = time()
+
+        if (time() - self._ts_last_event) > 1.0:
+            self.data["roll"] = 0.0
+            self.data["pitch"] = 0.0
+            self.data["yaw"] = 0.0
+            self.data["thrust"] = 0.0
 
         return self.data
 
