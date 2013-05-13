@@ -48,11 +48,6 @@ class Tab(QtGui.QWidget):
     def __init__(self):
         super(Tab, self).__init__()
 
-    def fakeIt(self):
-        """Hack to get show/hide to work..."""
-        self.tabWidget.addTab(self, self.getTabName())
-        self.tabWidget.removeTab(self.tabWidget.indexOf(self))
-
     @pyqtSlot(bool)
     def toggleVisibility(self, checked):
         """Show or hide the tab."""

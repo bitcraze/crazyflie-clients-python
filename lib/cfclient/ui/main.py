@@ -196,22 +196,21 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         # Load and connect tabs
         self.tabsMenuItem.setMenu(QtGui.QMenu())
-        tmpTabList = {}
-        for newTab in cfclient.ui.tabs.available:
-            t = newTab(self.tabs, cfclient.ui.pluginhelper)
-            item = QtGui.QAction(t.getMenuName(), self)
+        tabItems = {}
+        self.loadedTabs = []
+        for tabClass in cfclient.ui.tabs.available:
+            tab = tabClass(self.tabs, cfclient.ui.pluginhelper)
+            item = QtGui.QAction(tab.getMenuName(), self)
             item.setCheckable(True)
-            item.toggled.connect(t.toggleVisibility)
+            item.toggled.connect(tab.toggleVisibility)
             self.tabsMenuItem.menu().addAction(item)
-            tmpTabList[t.getTabName()] = item
-            # TODO: Fix this dirty hack!
-            # Without this the signal never arrives is t.toggleVisibility when
-            # clicked in menu ?!
-            t.fakeIt()
+            tabItems[tab.getTabName()] = item
+            self.loadedTabs.append(tab)
+
         # First instantiate all the tabs and then open them in the correct order
         try:
             for tName in Config().get("open_tabs").split(","):
-                t = tmpTabList[tName]
+                t = tabItems[tName]
                 if (t != None):
                     t.toggle() # Toggle though menu so it's also marked as open there
         except Exception as e:
