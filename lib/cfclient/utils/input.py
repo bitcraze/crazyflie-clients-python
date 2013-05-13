@@ -136,7 +136,7 @@ class JoystickReader(QThread):
         self.connect(self.readTimer, SIGNAL("timeout()"), self.readInput)
 
         self._discovery_timer = QTimer()
-        self._discovery_timer.setInterval(10);
+        self._discovery_timer.setInterval(1000);
         self.connect(self._discovery_timer, SIGNAL("timeout()"), self._do_device_discovery)
         self._discovery_timer.start()    
 
