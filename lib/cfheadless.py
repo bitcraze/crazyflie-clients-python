@@ -31,6 +31,7 @@ Headless client for the Crazyflie.
 import sys
 import os
 import logging
+import signal
 
 from PyQt4.Qt import *
 from PyQt4.QtCore import QCoreApplication
@@ -40,7 +41,7 @@ import cfclient.utils
 from cfclient.utils.input import JoystickReader
 from cfclient.utils.config import Config
 
-if os.name=='posix':
+if os.name == 'posix':
     print 'Disabling standard output for libraries!'
     stdout = os.dup(1)
     os.dup2(os.open('/dev/null', os.O_WRONLY), 1)
@@ -51,15 +52,19 @@ if os.name=='posix':
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 class HeadlessClient(QCoreApplication):
-    def __init__(self, argv, link_uri, input_config, input_device=0):
+    def __init__(self, argv, link_uri, input_config, input_device=0, list_controllers=False):
         super(HeadlessClient, self).__init__(argv)
+
+        self._input_config = input_config
+        self._input_device = input_device
+        self._list_controllers = list_controllers
+
         # Init the CRTP drivers
         cflib.crtp.init_drivers()
 
         # Open up the input-device
         self._jr = JoystickReader()
         self._jr.start()
-        self._input_config = input_config
 
         # Connect the Crazyflie
         self._cf = Crazyflie(ro_cache=sys.path[0]+"/cflib/cache",
@@ -93,19 +98,43 @@ class HeadlessClient(QCoreApplication):
 
     def _print_discovery(self, devs):
         for d in devs:
-            print "Found [%s]" % d["name"]
-        print "Will use [%s] for input" % devs[0]["name"]
-        self._jr.startInput(devs[0]["name"], self._input_config)
+            print "Found controller #%i: %s" % (d["id"], d["name"])
+        if self._list_controllers:
+            self.exit(0)
+        else:
+            print "Will use [%s] for input" % devs[self._input_device]["name"]
+            self._jr.startInput(devs[self._input_device]["name"], self._input_config)
 
     def _input_dev_error(self, m):
         print m
-    
+        self.exit(-1)
+
     def _p2t(self, percentage):
-        return int(65000*(percentage/100.0))
+        return int(65000 * (percentage / 100.0))
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
-    app = HeadlessClient(sys.argv,link_uri="radio://0/120/1M",
-                         input_config="PS3_Mode_1")
-    sys.exit(app.exec_())
+    import argparse
 
+    parser = argparse.ArgumentParser(prog="cfheadless")
+    parser.add_argument("-u", "--uri", action="store", dest="uri", type=str, default="radio://0/10/250K",
+                        help="URI to use for connection to the Crazyradio dongle, defaults to radio://0/10/250K")
+    parser.add_argument("--uris", action="store_true", dest="list_uris",
+                        help="Only display available radio URIs and exit")
+    parser.add_argument("-i", "--input", action="store", dest="input", type=str, default="PS3_Mode_1",
+                        help="Input mapping to use for the controller, defaults to PS3_Mode_1")
+    parser.add_argument("-d", "--debug", action="store_true", dest="debug",
+                        help="Enable debug output")
+    parser.add_argument("-c", "--controller", action="store", type=int, dest="controller", default=0,
+                        help="Use controller with specified id, id defaults to 0")
+    (args, remaining_args) = parser.parse_known_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
+
+    app = HeadlessClient(remaining_args, link_uri=args.uri,
+                         input_config=args.input, input_device=args.controller,
+                         list_controllers=args.list_controllers)
+    sys.exit(app.exec_())
