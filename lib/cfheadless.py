@@ -118,14 +118,14 @@ def main():
     parser = argparse.ArgumentParser(prog="cfheadless")
     parser.add_argument("-u", "--uri", action="store", dest="uri", type=str, default="radio://0/10/250K",
                         help="URI to use for connection to the Crazyradio dongle, defaults to radio://0/10/250K")
-    parser.add_argument("--uris", action="store_true", dest="list_uris",
-                        help="Only display available radio URIs and exit")
     parser.add_argument("-i", "--input", action="store", dest="input", type=str, default="PS3_Mode_1",
                         help="Input mapping to use for the controller, defaults to PS3_Mode_1")
     parser.add_argument("-d", "--debug", action="store_true", dest="debug",
                         help="Enable debug output")
     parser.add_argument("-c", "--controller", action="store", type=int, dest="controller", default=0,
                         help="Use controller with specified id, id defaults to 0")
+    parser.add_argument("--controllers", action="store_true", dest="list_controllers",
+                        help="Only display available controllers and exit")
     (args, remaining_args) = parser.parse_known_args()
 
     if args.debug:
