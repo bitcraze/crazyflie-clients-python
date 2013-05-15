@@ -36,20 +36,11 @@ __all__ = ['Config']
 import sys
 import json
 import logging
+from .singleton import Singleton
 
 from PyQt4.QtCore import QString
 
 logger = logging.getLogger(__name__)
-
-def Singleton(cls):
-    """ Class for creating singletons """
-    instances = {}
-    def getinstance():
-        """ Get the singleton instance or create it """
-        if cls not in instances:
-            instances[cls] = cls()
-        return instances[cls]
-    return getinstance
 
 @Singleton
 class Config():
