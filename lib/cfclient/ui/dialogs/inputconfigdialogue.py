@@ -295,7 +295,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         inputConfig['inputdevice']['updateperiod'] = 10
         saveConfig['inputconfig'] = inputConfig
 
-        filename = sys.path[1] + "/input/%s.json" % self.profileCombo.currentText()
+        filename = InputManager().input_dir + "/%s.json" % self.profileCombo.currentText()
         logger.info("Saving config to [%s]", filename)
         json_data=open(filename, 'w')
         json_data.write(json.dumps(saveConfig, indent=2))

@@ -54,6 +54,7 @@ logger = logging.getLogger(__name__)
 
 from pygamereader import PyGameReader
 from cfclient.utils.config import Config
+from cfclient.utils.input_manager import InputManager
 
 from PyQt4 import Qt, QtCore, QtGui, uic
 from PyQt4.QtCore import *
@@ -144,18 +145,18 @@ class JoystickReader(QThread):
         self._available_devices = {}
 
         # Check if user config exists, otherwise copy files
-        if (not os.path.isdir(sys.path[1] + "/input")):
+        if not os.path.isdir(InputManager().input_dir):
             logger.info("No user config found, copying dist files")
-            os.makedirs(sys.path[1] + "/input")
+            os.makedirs(InputManager().input_dir)
             for f in glob.glob(sys.path[0] + "/cfclient/configs/input/[A-Za-z]*.json"):
-                shutil.copy2(f, sys.path[1] + "/input")
+                shutil.copy2(f, InputManager().input_dir)
 
         try:
-            configsfound = [ os.path.basename(f) for f in glob.glob(sys.path[1] + "/input/[A-Za-z]*.json")]
+            configsfound = [ os.path.basename(f) for f in glob.glob(InputManager().input_dir + "/[A-Za-z]*.json")]
             self.inputConfig = []
             for conf in configsfound:            
                 logger.info("Parsing [%s]", conf)
-                json_data = open (sys.path[1] + "/input/%s"%conf)                
+                json_data = open(InputManager().input_dir + "/%s"%conf)                
                 self.data = json.load(json_data)
                 newInputDevice = {}
                 for a in self.data["inputconfig"]["inputdevice"]["axis"]:
