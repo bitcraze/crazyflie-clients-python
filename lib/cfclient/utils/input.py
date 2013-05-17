@@ -93,6 +93,8 @@ class JoystickReader(QThread):
     inputUpdateSignal = pyqtSignal(float, float, float, float)
     # Outgoing signal for when pitch/roll calibration has been updated
     calUpdateSignal = pyqtSignal(float, float)
+    # Outgoing signal for emergency stop
+    emergencyStopSignal = pyqtSignal(bool)
 
     inputDeviceErrorSignal = pyqtSignal('QString')
 
@@ -124,6 +126,7 @@ class JoystickReader(QThread):
         self.slewEnableLimit = 0
         self.maxYawRate = 0
         self.detectAxis = False
+        self.emergencyStop = False
 
         self.oldThrust = 0
 
@@ -250,35 +253,39 @@ class JoystickReader(QThread):
             thrust = data["thrust"]
             yaw = data["yaw"]
             raw_thrust = data["thrust"]
-
+            emergency_stop = data["estop"]
             trim_roll = data["rollcal"]
             trim_pitch = data["pitchcal"]
 
+            if self.emergencyStop != emergency_stop:
+                self.emergencyStop = emergency_stop
+                self.emergencyStopSignal.emit(self.emergencyStop)
+
             # Thust limiting (slew, minimum and emergency stop)
-            if (raw_thrust<0.05 or data["estop"] == True):
+            if raw_thrust<0.05 or emergency_stop:
                 thrust=0
             else:
                 thrust = self.minThrust + thrust * (self.maxThrust - self.minThrust)
-            if (self.thrustSlewEnabled == True and self.slewEnableLimit > thrust and data["estop"] == False):
-                if (self.oldThrust > self.slewEnableLimit):
+            if self.thrustSlewEnabled == True and self.slewEnableLimit > thrust and not emergency_stop:
+                if self.oldThrust > self.slewEnableLimit:
                     self.oldThrust = self.slewEnableLimit
-                if (thrust < (self.oldThrust - (self.thrustDownSlew/100))):
+                if thrust < (self.oldThrust - (self.thrustDownSlew/100)):
                     thrust = self.oldThrust - self.thrustDownSlew/100
-                if (raw_thrust < 0 or thrust < self.minThrust):
+                if raw_thrust < 0 or thrust < self.minThrust:
                     thrust = 0
             self.oldThrust = thrust
 
             # Yaw deadband
             # TODO: Add to input device config?
-            if (yaw < -0.2 or yaw > 0.2):
-                if (yaw < 0):
+            if yaw < -0.2 or yaw > 0.2:
+                if yaw < 0:
                     yaw = (yaw + 0.2) * self.maxYawRate * 1.25
                 else:
                     yaw = (yaw - 0.2) * self.maxYawRate * 1.25
             else:
                 self.yaw = 0
 
-            if (trim_roll != 0 or trim_pitch != 0):
+            if trim_roll != 0 or trim_pitch != 0:
                 self._trim_roll += trim_roll
                 self._trim_pitch += trim_pitch
                 self.calUpdateSignal.emit(self._trim_roll, self._trim_pitch)

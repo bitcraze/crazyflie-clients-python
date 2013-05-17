@@ -86,6 +86,7 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.cf.disconnected.add_callback(self.disconnectedSignal.emit)
         self.helper.inputDeviceReader.inputUpdateSignal.connect(self.updateInputControl)
         self.helper.inputDeviceReader.calUpdateSignal.connect(self.calUpdateFromInput) 
+        self.helper.inputDeviceReader.emergencyStopSignal.connect(self.updateEmergencyStop)
 
         self._imu_data_signal.connect(self._imu_data_received)
         self._motor_data_signal.connect(self._motor_data_received)
@@ -246,6 +247,23 @@ class FlightTab(Tab, flight_tab_class):
         self.targetYaw.setText(("%0.2f" % yaw));
         self.targetThrust.setText(("%0.2f %%" % self.thrustToPercentage(thrust)));
         self.thrustProgress.setValue(thrust)
+
+    def setMotorLabelsEnabled(self, enabled):
+        self.M1label.setEnabled(enabled)
+        self.M2label.setEnabled(enabled)
+        self.M3label.setEnabled(enabled)
+        self.M4label.setEnabled(enabled)
+
+    def emergencyStopStringWithText(self, text):
+        return "<html><head/><body><p><span style='font-weight:600; color:#7b0005;'>{}</span></p></body></html>".format(text)
+
+    def updateEmergencyStop(self, emergencyStop):
+        if emergencyStop:
+            self.setMotorLabelsEnabled(False)
+            self.emergency_stop_label.setText(self.emergencyStopStringWithText("Kill switch active"))
+        else:
+            self.setMotorLabelsEnabled(True)
+            self.emergency_stop_label.setText("")
 
     def flightmodeChange(self, item):
         Config().set("flightmode", self.flightModeCombo.itemText(item))
