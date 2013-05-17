@@ -52,6 +52,7 @@ from cfclient.utils.input import JoystickReader
 from cfclient.utils.config import Config
 from cflib.crazyflie.log import Log
 from cfclient.utils.logconfigreader import LogConfigReader, LogVariable, LogConfig
+from cfclient.utils.config_manager import ConfigManager
 
 import cfclient.ui.dialogs
 import cfclient.ui.toolboxes
@@ -108,7 +109,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.joystickReader = JoystickReader()
         # Populate combo box with available input device configurations
         group = QActionGroup(self._menu_mappings, exclusive=True)
-        for c in self.joystickReader.getListOfConfigs():
+        for c in ConfigManager().getListOfConfigs():
             node = QAction(c, self._menu_mappings, checkable=True, 
                            enabled=False)
             node.toggled.connect(self._inputconfig_selected)

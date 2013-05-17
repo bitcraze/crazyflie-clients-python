@@ -42,7 +42,6 @@ __all__ = ['JoystickReader']
 
 import sys
 import time
-import json
 import os
 import glob
 import traceback
@@ -54,7 +53,7 @@ logger = logging.getLogger(__name__)
 
 from pygamereader import PyGameReader
 from cfclient.utils.config import Config
-from cfclient.utils.input_manager import InputManager
+from cfclient.utils.config_manager import ConfigManager
 
 from PyQt4 import Qt, QtCore, QtGui, uic
 from PyQt4.QtCore import *
@@ -141,52 +140,19 @@ class JoystickReader(QThread):
         self.connect(self._discovery_timer, SIGNAL("timeout()"), self._do_device_discovery)
         self._discovery_timer.start()    
 
-        self.listOfConfigs = []
         self._available_devices = {}
 
         # Check if user config exists, otherwise copy files
-        if not os.path.isdir(InputManager().input_dir):
+        if not os.path.isdir(ConfigManager().configs_dir):
             logger.info("No user config found, copying dist files")
-            os.makedirs(InputManager().input_dir)
+            os.makedirs(ConfigManager().configs_dir)
             for f in glob.glob(sys.path[0] + "/cfclient/configs/input/[A-Za-z]*.json"):
-                shutil.copy2(f, InputManager().input_dir)
+                shutil.copy2(f, ConfigManager().configs_dir)
 
-        try:
-            configsfound = [ os.path.basename(f) for f in glob.glob(InputManager().input_dir + "/[A-Za-z]*.json")]
-            self.inputConfig = []
-            for conf in configsfound:            
-                logger.info("Parsing [%s]", conf)
-                json_data = open(InputManager().input_dir + "/%s"%conf)                
-                self.data = json.load(json_data)
-                newInputDevice = {}
-                for a in self.data["inputconfig"]["inputdevice"]["axis"]:
-                    axis = {}
-                    axis["scale"] = a["scale"]
-                    axis["type"] = a["type"]
-                    axis["key"] = a["key"]
-                    axis["name"] = a["name"]
-                    try:
-                      ids = a["ids"]
-                    except:
-                      ids = [a["id"]]
-                    for id in ids:
-                      locaxis = copy.deepcopy(axis)
-                      if "ids" in a:
-                        if id == a["ids"][0]:
-                          locaxis["scale"] = locaxis["scale"] * -1
-                      locaxis["id"] = id
-                      index = "%s-%d" % (a["type"], id) # 'type'-'id' defines unique index for axis    
-                      newInputDevice[index] = locaxis
-                self.inputConfig.append(newInputDevice)
-                json_data.close()
-                self.listOfConfigs.append(conf[:-5])
-        except Exception as e:
-            logger.warning("Exception while parsing inputconfig file: %s ", e)
-        
     def _do_device_discovery(self):
         devs = self.getAvailableDevices()
         
-        if (len(devs)):
+        if len(devs):
             self.discovery_signal.emit(devs)
             self._discovery_timer.stop()
 
@@ -198,18 +164,6 @@ class JoystickReader(QThread):
             self._available_devices[d["name"]] = d["id"]
 
         return devs 
-
-    def getConfig(self, configName):
-        """Get the configuratio for an input device."""
-        try:
-            idx = self.listOfConfigs.index(configName)
-            return self.inputConfig[idx]
-        except:
-            return None
-
-    def getListOfConfigs(self):
-        """Get a list of all the input devices."""
-        return self.listOfConfigs
 
     def enableRawReading(self, deviceId):
         """Enable raw reading of the input device with id deviceId. This is used to
@@ -231,12 +185,11 @@ class JoystickReader(QThread):
         self.exec_()
 
     @pyqtSlot(str, str)
-    def startInput(self, device_name, configName):
-        """Start reading inpyt from the device with id deviceId using config configName"""
+    def startInput(self, device_name, config_name):
+        """Start reading input from the device with name device_name using config config_name"""
         try:
-            idx = self.listOfConfigs.index(configName)
             device_id = self._available_devices[device_name]
-            self.inputdevice.startInput(device_id, self.inputConfig[idx])
+            self.inputdevice.startInput(device_id, ConfigManager().getConfig(config_name))
             self.readTimer.start()
         except Exception:
             self.inputDeviceErrorSignal.emit("Error while opening/initializing input device\n\n%s" % (traceback.format_exc()))

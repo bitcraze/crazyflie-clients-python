@@ -39,6 +39,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from cfclient.utils.config_manager import ConfigManager
 from cflib.crtp.exceptions import CommunicationException
 from pygame.locals import *
 
@@ -190,10 +191,10 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             self.saveButton.setEnabled(True)
 
     def populateDropDown(self):
-        configsfound = self.joystickReader.getListOfConfigs()
-        if (len(configsfound)):
+        configs = ConfigManager().getListOfConfigs()
+        if len(configs):
             self.loadButton.setEnabled(True)
-        for c in configsfound:
+        for c in configs:
             self.profileCombo.addItem(c)
             logger.info("Found inputdevice [%s]", c)
 
@@ -232,7 +233,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.axismapping[key]['scale'] = scale
 
     def loadConfig(self):
-        conf = self.joystickReader.getConfig(self.profileCombo.currentText())
+        conf = ConfigManager().getConfig(self.profileCombo.currentText())
         self._reset_mapping()
         if (conf != None):
             for c in conf:
@@ -295,7 +296,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         inputConfig['inputdevice']['updateperiod'] = 10
         saveConfig['inputconfig'] = inputConfig
 
-        filename = InputManager().input_dir + "/%s.json" % self.profileCombo.currentText()
+        filename = ConfigManager().configs_dir + "/%s.json" % self.profileCombo.currentText()
         logger.info("Saving config to [%s]", filename)
         json_data=open(filename, 'w')
         json_data.write(json.dumps(saveConfig, indent=2))

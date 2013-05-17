@@ -59,44 +59,44 @@ class PyGameReader():
         found_events = False
 
         for e in pygame.event.get():
-          found_events = True 
-          if e.type == pygame.locals.JOYAXISMOTION:
-            index = "Input.AXIS-%d" % e.axis 
-            try:
-                if (self.inputMap[index]["type"] == "Input.AXIS"):
-                    key = self.inputMap[index]["key"]
-                    axisvalue = self.j.get_axis(e.axis)
-                    # All axis are in the range [-a,+a]
-                    axisvalue = axisvalue * self.inputMap[index]["scale"]
-                    # The value is now in the correct direction and in the range [-1,1]
-                    self.data[key] = axisvalue
-            except Exception:
-                # Axis not mapped, ignore..
-                pass          
+            found_events = True 
+            if e.type == pygame.locals.JOYAXISMOTION:
+                index = "Input.AXIS-%d" % e.axis 
+                try:
+                    if self.inputMap[index]["type"] == "Input.AXIS":
+                        key = self.inputMap[index]["key"]
+                        axisvalue = self.j.get_axis(e.axis)
+                        # All axis are in the range [-a,+a]
+                        axisvalue = axisvalue * self.inputMap[index]["scale"]
+                        # The value is now in the correct direction and in the range [-1,1]
+                        self.data[key] = axisvalue
+                except Exception:
+                    # Axis not mapped, ignore..
+                    pass          
 
-          if e.type == pygame.locals.JOYBUTTONDOWN:
-            index = "Input.BUTTON-%d" % e.button 
-            try:
-                if (self.inputMap[index]["type"] == "Input.BUTTON"):
-                    key = self.inputMap[index]["key"]
-                    if (key == "estop"):
-                        self.data["estop"] = not self.data["estop"]
-                    elif (key == "exit"):
-                        self.data["exit"] = True
-                    else: # Generic cal for pitch/roll
-                        self.data[key] = self.inputMap[index]["scale"]
-            except Exception:
-                # Button not mapped, ignore..
-                pass
+            if e.type == pygame.locals.JOYBUTTONDOWN:
+                index = "Input.BUTTON-%d" % e.button 
+                try:
+                    if self.inputMap[index]["type"] == "Input.BUTTON":
+                        key = self.inputMap[index]["key"]
+                        if key == "estop":
+                            self.data["estop"] = not self.data["estop"]
+                        elif key == "exit":
+                            self.data["exit"] = True
+                        else: # Generic cal for pitch/roll
+                            self.data[key] = self.inputMap[index]["scale"]
+                except Exception:
+                    # Button not mapped, ignore..
+                    pass
 
-        if found_events:
-            self._ts_last_event = time()
+            if found_events:
+                self._ts_last_event = time()
 
-        if (time() - self._ts_last_event) > 1.0:
-            self.data["roll"] = 0.0
-            self.data["pitch"] = 0.0
-            self.data["yaw"] = 0.0
-            self.data["thrust"] = 0.0
+            if (time() - self._ts_last_event) > 1.0:
+                self.data["roll"] = 0.0
+                self.data["pitch"] = 0.0
+                self.data["yaw"] = 0.0
+                self.data["thrust"] = 0.0
 
         return self.data
 
