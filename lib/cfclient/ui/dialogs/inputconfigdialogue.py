@@ -296,13 +296,14 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         inputConfig['inputdevice']['updateperiod'] = 10
         saveConfig['inputconfig'] = inputConfig
 
-        filename = ConfigManager().configs_dir + "/%s.json" % self.profileCombo.currentText()
+        config_name = self.profileCombo.currentText()
+        filename = ConfigManager().configs_dir + "/%s.json" % config_name
         logger.info("Saving config to [%s]", filename)
         json_data=open(filename, 'w')
         json_data.write(json.dumps(saveConfig, indent=2))
         json_data.close()
 
-        self.rawinputreader.stopReading()
+        ConfigManager().confNeedsReload.call(config_name)
         self.close()
 
     def showEvent(self, event):
@@ -310,11 +311,6 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
 
     def closeEvent(self, event):
         self.rawinputreader.stopReading()
-        # TODO: After closing this we need to restart the input reading from a valid config
-        logger.error("Need to restart input reading!!")
-        QMessageBox.about(self, "Need to restart application",
-                                "Application needs to be restarted"
-                                " for any input device to work!")
 
 class RawJoystickReader(QThread):
 

@@ -104,20 +104,14 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.connectDialogue = ConnectDialogue()
 
         # Create and start the Input Reader
-        self._statusbar_label = QLabel("No inputdevice connected!")
+        self._statusbar_label = QLabel("Loading device and config")
         self.statusBar().addWidget(self._statusbar_label)
+
         self.joystickReader = JoystickReader()
-        # Populate combo box with available input device configurations
-        group = QActionGroup(self._menu_mappings, exclusive=True)
-        for c in ConfigManager().getListOfConfigs():
-            node = QAction(c, self._menu_mappings, checkable=True, 
-                           enabled=False)
-            node.toggled.connect(self._inputconfig_selected)
-            group.addAction(node)
-            self._menu_mappings.addAction(node)
-        self.joystickReader.start()
-        self._current_input_config = ""
-        self._current_input_device = ""
+        self.configGroup = QActionGroup(self._menu_mappings, exclusive=True)
+        self.loadInputData()
+        self._update_input
+        ConfigManager().confNeedsReload.add_callback(self.reloadConfigs)
 
         # Connections for the Connect Dialogue
         self.connectDialogue.requestConnectionSignal.connect(self.cf.open_link)
@@ -263,7 +257,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def _rescan_devices(self):
         self._statusbar_label.setText("No inputdevice connected!")
         self._menu_devices.clear()
-        self._current_input_device = ""
+        self._active_device = ""
         for c in self._menu_mappings.actions():
             c.setEnabled(False)
         devs = self.joystickReader.getAvailableDevices()
@@ -329,19 +323,70 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.cf.close_link()
         QMessageBox.critical(self,"Input device error", error)      
 
+    def loadInputData(self):
+        if self.joystickReader.isRunning():
+            self.joystickReader.stopInput()
+        # Populate combo box with available input device configurations
+        for c in ConfigManager().getListOfConfigs():
+            node = QAction(c, self._menu_mappings, checkable=True, enabled=False)
+            node.toggled.connect(self._inputconfig_selected)
+            self.configGroup.addAction(node)
+            self._menu_mappings.addAction(node)
+        
+        self.joystickReader.start()
+
+    def reloadConfigs(self, newConfigName):
+        # remove the old actions from the group and the menu
+        for action in self._menu_mappings.actions():
+            self.configGroup.removeAction(action)
+        self._menu_mappings.clear()
+
+        # reload the conf files, and populate the menu
+        ConfigManager().loadInputConfigFiles()
+        self.loadInputData()
+
+        self._update_input(self._active_device, newConfigName)
+
+    def _update_input(self, device = "", config = ""):
+        self.joystickReader.stopInput()
+        self._active_config = str(config)
+        self._active_device = str(device)
+
+        Config().set("input_device", self._active_device)
+        Config().get("device_config_mapping")[self._active_device] = self._active_config
+        self.joystickReader.startInput(self._active_device, self._active_config)
+
+        # update the checked state of the menu items
+        for c in self._menu_mappings.actions():
+            c.setEnabled(True)
+            if c.text() == self._active_config:
+                c.setChecked(True)
+        for c in self._menu_devices.actions():
+            c.setEnabled(True)
+            if c.text() == self._active_device:
+                c.setChecked(True)
+
+        # update label
+        if device == "" and config == "":
+            self._statusbar_label.setText("No input device selected")
+        elif config == "":
+            self._statusbar_label.setText("Using [%s] - No input config selected" % (self._active_device))
+        else:
+            self._statusbar_label.setText("Using [%s] with config [%s]" % (self._active_device, self._active_config))
+
     def _inputdevice_selected(self, checked):
         if (not checked):
             return
         self.joystickReader.stopInput()
         sender = self.sender()
-        self._current_input_device = sender.text()
+        self._active_device = sender.text()
         device_config_mapping = Config().get("device_config_mapping")
-        if (self._current_input_device in device_config_mapping.keys()):
+        if (self._active_device in device_config_mapping.keys()):
             self._current_input_config = device_config_mapping[
-                str(self._current_input_device)]
+                str(self._active_device)]
         else:
             self._current_input_config = self._menu_mappings.actions()[0].text()
-        Config().set("input_device", str(self._current_input_device))
+        Config().set("input_device", str(self._active_device))
         
         for c in self._menu_mappings.actions():
             if (c.text() == self._current_input_config):
@@ -350,20 +395,13 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.joystickReader.startInput(str(sender.text()),
                                        self._current_input_config)
         self._statusbar_label.setText("Using [%s] with config [%s]" % (
-                                      self._current_input_device,
+                                      self._active_device,
                                       self._current_input_config))
 
     def _inputconfig_selected(self, checked):
         if (not checked):
             return
-        sender = self.sender()
-        self._current_input_config = sender.text()
-        Config().get("device_config_mapping")[str(self._current_input_device)] = str(self._current_input_config)
-        self.joystickReader.startInput(str(self._current_input_device),
-                                       self._current_input_config)
-        self._statusbar_label.setText("Using [%s] with config [%s]" % (
-                                      self._current_input_device,
-                                      self._current_input_config))
+        self._update_input(self._active_device, self.sender().text())
 
     def device_discovery(self, devs):
         group = QActionGroup(self._menu_devices, exclusive=True)
@@ -374,15 +412,15 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             group.addAction(node)
             self._menu_devices.addAction(node)
             if (d["name"] == Config().get("input_device")):
-                self._current_input_device = d["name"]
-        if (len(self._current_input_device) == 0):
-            self._current_input_device = self._menu_devices.actions()[0].text()
+                self._active_device = d["name"]
+        if (len(self._active_device) == 0):
+            self._active_device = self._menu_devices.actions()[0].text()
 
         device_config_mapping = Config().get("device_config_mapping")
         if (device_config_mapping):
-            if (self._current_input_device in device_config_mapping.keys()):
+            if (self._active_device in device_config_mapping.keys()):
                 self._current_input_config = device_config_mapping[
-                    str(self._current_input_device)]
+                    str(self._active_device)]
             else:
                 self._current_input_config = self._menu_mappings.actions()[0].text()
         else:
@@ -396,7 +434,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                 c.setChecked(True)
         
         for c in self._menu_devices.actions():
-            if (c.text() == self._current_input_device):
+            if (c.text() == self._active_device):
                 c.setChecked(True)
 
     def quickConnect(self):
