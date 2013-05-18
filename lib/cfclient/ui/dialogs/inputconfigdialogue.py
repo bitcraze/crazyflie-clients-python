@@ -191,7 +191,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             self.saveButton.setEnabled(True)
 
     def populateDropDown(self):
-        configs = ConfigManager().getListOfConfigs()
+        configs = ConfigManager().get_list_of_configs()
         if len(configs):
             self.loadButton.setEnabled(True)
         for c in configs:
@@ -233,7 +233,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.axismapping[key]['scale'] = scale
 
     def loadConfig(self):
-        conf = ConfigManager().getConfig(self.profileCombo.currentText())
+        conf = ConfigManager().get_config(self.profileCombo.currentText())
         self._reset_mapping()
         if (conf != None):
             for c in conf:
@@ -303,7 +303,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         json_data.write(json.dumps(saveConfig, indent=2))
         json_data.close()
 
-        ConfigManager().confNeedsReload.call(config_name)
+        ConfigManager().conf_needs_reload.call(config_name)
         self.close()
 
     def showEvent(self, event):

@@ -192,7 +192,7 @@ class JoystickReader(QThread):
         """Start reading input from the device with name device_name using config config_name"""
         try:
             device_id = self._available_devices[device_name]
-            self.inputdevice.startInput(device_id, ConfigManager().getConfig(config_name))
+            self.inputdevice.startInput(device_id, ConfigManager().get_config(config_name))
             self.readTimer.start()
         except Exception:
             self.inputDeviceErrorSignal.emit("Error while opening/initializing input device\n\n%s" % (traceback.format_exc()))

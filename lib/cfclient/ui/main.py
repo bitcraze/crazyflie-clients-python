@@ -108,10 +108,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.statusBar().addWidget(self._statusbar_label)
 
         self.joystickReader = JoystickReader()
+        self._active_device = ""
         self.configGroup = QActionGroup(self._menu_mappings, exclusive=True)
-        self.loadInputData()
+        self._load_input_data()
         self._update_input
-        ConfigManager().confNeedsReload.add_callback(self.reloadConfigs)
+        ConfigManager().conf_needs_reload.add_callback(self._reload_configs)
 
         # Connections for the Connect Dialogue
         self.connectDialogue.requestConnectionSignal.connect(self.cf.open_link)
@@ -323,11 +324,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.cf.close_link()
         QMessageBox.critical(self,"Input device error", error)      
 
-    def loadInputData(self):
+    def _load_input_data(self):
         if self.joystickReader.isRunning():
             self.joystickReader.stopInput()
         # Populate combo box with available input device configurations
-        for c in ConfigManager().getListOfConfigs():
+        for c in ConfigManager().get_list_of_configs():
             node = QAction(c, self._menu_mappings, checkable=True, enabled=False)
             node.toggled.connect(self._inputconfig_selected)
             self.configGroup.addAction(node)
@@ -335,15 +336,14 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         
         self.joystickReader.start()
 
-    def reloadConfigs(self, newConfigName):
+    def _reload_configs(self, newConfigName):
         # remove the old actions from the group and the menu
         for action in self._menu_mappings.actions():
             self.configGroup.removeAction(action)
         self._menu_mappings.clear()
 
         # reload the conf files, and populate the menu
-        ConfigManager().loadInputConfigFiles()
-        self.loadInputData()
+        self._load_input_data()
 
         self._update_input(self._active_device, newConfigName)
 
