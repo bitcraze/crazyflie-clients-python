@@ -48,7 +48,7 @@ import re
 import array
 
 from cflib.drivers.crazyradio import Crazyradio
-
+from usb import USBError
 
 class RadioDriver (CRTPDriver):
     """ Crazyradio link driver """
@@ -230,6 +230,21 @@ class RadioDriver (CRTPDriver):
         self.cradio = None
 
         return found
+    
+    def get_status(self):
+        if self.cradio is None:
+            try:
+                self.cradio = Crazyradio()
+            except USBError as e:
+                return "Cannot open Crazyradio. Permission problem?"\
+                       " ({})".format(str(e))
+            except Exception as e:
+                return str(e)
+
+        return "Crazyradio version {}".format(self.cradio.version)
+
+    def get_name(self):
+        return "radio"
 
 
 #Transmit/receive radio thread

@@ -176,6 +176,12 @@ class DebugDriver (CRTPDriver):
     def scan_interface(self):
         return [["debug://0/0", "Debugdriver for UI testing"]]
 
+    def get_status(self):
+        return "Ok"
+
+    def get_name(self):
+        return "debug"
+
     def connect(self, uri, linkQualityCallback, linkErrorCallback):
 
         if not re.search("^debug://", uri):

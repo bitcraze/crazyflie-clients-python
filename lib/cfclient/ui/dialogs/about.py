@@ -41,10 +41,17 @@ from PyQt4.Qt import *
 
 import cfclient
 
+import cflib.crtp
+
 about_widget_class, about_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/about.ui')
 
-debuginfo = """Cfclient version: {version}
-System: {system}"""
+debuginfo = """
+<b>Cfclient version:</b> {version}<br>
+<b>System:</b> {system}<br>
+<br>
+<b>Interface status</b><br>
+{interface_status}
+"""
 
 class AboutDialog(QtGui.QWidget, about_widget_class):
 
@@ -55,5 +62,11 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         self._name_label.setText(self._name_label.text().replace('#version#', cfclient.VERSION))
 
     def showEvent(self, ev):
-        self._debug_out.setText(debuginfo.format(version=cfclient.VERSION, 
-                                                 system=sys.platform))
+        status_text = ""
+        interface_status = cflib.crtp.get_interfaces_status()
+        for s in interface_status.keys():
+            status_text += "<b>{}</b>: {}<br>\n".format(s, interface_status[s])
+        self._debug_out.setHtml(debuginfo.format(version=cfclient.VERSION, 
+                                                 system=sys.platform,
+                                                 interface_status=status_text))
+

@@ -54,3 +54,6 @@ class SerialDriver (CRTPDriver):
         uriRe = re.search("^serial://([a-z A-Z 0-9]+)/?([0-9]+)?$", uri)
         if not uriRe:
             raise Exception("Invalid serial URI")
+    
+    def get_name(self):
+        return "serial"

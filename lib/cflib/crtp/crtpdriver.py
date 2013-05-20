@@ -67,6 +67,18 @@ class CRTPDriver:
         """
         return None
 
+    def get_status(self):
+        """
+        Return a status string from the interface.
+        """
+        return "Not implemented"
+
+    def get_name(self):
+        """
+        Return a human readable name of the interface.
+        """
+        return None
+
     def scan_interface(self):
         """
         Scan interface for available Crazyflie quadcopters and return a list
