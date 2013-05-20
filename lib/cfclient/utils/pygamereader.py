@@ -40,6 +40,9 @@ class PyGameReader():
         self.inputMap = None
         pygame.init()
         self._ts_last_event = None
+        self._first_time_opened = True
+        self._current_device_id = -1
+        self._device_count = 0
 
     def startInput(self, deviceId, inputMap):
         """Initalize the reading and open the device with deviceId and set the mapping for axis/buttons using the
@@ -48,7 +51,15 @@ class PyGameReader():
         self.inputMap = inputMap
         self.j = pygame.joystick.Joystick(deviceId)
         self.j.init()
+        self._current_device_id = deviceId
         self._ts_last_event = time()
+        self._first_time_opened = True
+
+    def _zero_output(self):
+        self.data["roll"] = 0.0
+        self.data["pitch"] = 0.0
+        self.data["yaw"] = 0.0
+        self.data["thrust"] = 0.0
 
     def readInput(self):
         """Read input from the selected device."""
@@ -59,7 +70,7 @@ class PyGameReader():
         found_events = False
 
         for e in pygame.event.get():
-            found_events = True 
+            found_events = True
             if e.type == pygame.locals.JOYAXISMOTION:
                 index = "Input.AXIS-%d" % e.axis 
                 try:
@@ -89,14 +100,27 @@ class PyGameReader():
                     # Button not mapped, ignore..
                     pass
 
-            if found_events:
-                self._ts_last_event = time()
+        if found_events:
+            self._ts_last_event = time()
 
-            if (time() - self._ts_last_event) > 1.0:
-                self.data["roll"] = 0.0
-                self.data["pitch"] = 0.0
-                self.data["yaw"] = 0.0
-                self.data["thrust"] = 0.0
+        if (time() - self._ts_last_event) > 1.0:
+            # De-initialize the joystick sub-system to read changes in
+            # what devices are connected
+            pygame.joystick.quit()
+            pygame.joystick.init()
+            if (self._device_count == pygame.joystick.get_count()):
+                self.j = pygame.joystick.Joystick(self._current_device_id)
+                self.j.init()
+                self._ts_last_event = time()
+            else:
+                self._zero_output()
+
+        # Ignore the first round of events from the device
+        # after it has been opened. This cases issues on
+        # Linux since it will max out all the axis
+        if self._first_time_opened == True:
+            self._zero_output()
+            self._first_time_opened = False
 
         return self.data
 
@@ -131,6 +155,7 @@ class PyGameReader():
         pygame.joystick.quit()
         pygame.joystick.init()
         nbrOfInputs = pygame.joystick.get_count()
+        self._device_count = nbrOfInputs
         for i in range(0,nbrOfInputs):
             j = pygame.joystick.Joystick(i)
             dev.append({"id":i, "name" : j.get_name()})
