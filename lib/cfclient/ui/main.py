@@ -259,6 +259,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._statusbar_label.setText("No inputdevice connected!")
         self._menu_devices.clear()
         self._active_device = ""
+        self.joystickReader.stopInput()
         for c in self._menu_mappings.actions():
             c.setEnabled(False)
         devs = self.joystickReader.getAvailableDevices()
