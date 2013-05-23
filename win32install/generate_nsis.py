@@ -4,36 +4,38 @@ import os
 DIST_PATH = "..\dist"
 
 # Get list of files and directory to install/uninstall
-install_files = []
-install_dirs = []
+INSTALL_FILES = []
+INSTALL_DIRS = []
 
 os.chdir(os.path.join(os.path.dirname(__file__), DIST_PATH))
 for root, dirs, files in os.walk("."):
-	for f in files:
-		install_files += [os.path.join(root[2:], f)]
-	install_dirs += [root[2:]]
+    for f in files:
+        INSTALL_FILES += [os.path.join(root[2:], f)]
+    INSTALL_DIRS += [root[2:]]
 
-print "Found {} files in {} folders to install.".format(len(install_files), len(install_dirs))
+print "Found {} files in {} folders to install.".format(len(INSTALL_FILES),
+                                                        len(INSTALL_DIRS))
 
-# Get mercurial tag or version
+# Get mercurial tag or VERSION
 with os.popen("hg id -t") as hg:
-	tag = hg.read().strip()
+    TAG = hg.read().strip()
 
-if tag != "tip":
-	version = tag
+if TAG != "tip":
+    VERSION = TAG
 else:
-	with os.popen("hg id -i") as hg:
-		version = hg.read().strip()
+    with os.popen("hg id -i") as hg:
+        VERSION = hg.read().strip()
 
-print "Cfclient vertion {}".format(version)
-		
+print "Cfclient vertion {}".format(VERSION)
+
 os.chdir(os.path.dirname(__file__))
 
 with open("cfclient.nsi.tmpl", "r") as template_file:
-	template = template_file.read()
+    TEMPLATE = template_file.read()
 
-tmpl = jinja2.Template(template)
+TMPL = jinja2.Template(TEMPLATE)
 
 with open("cfclient.nsi", "w") as out_file:
-	out_file.write(tmpl.render(files=install_files, dirs=install_dirs, version=version))
-
+    out_file.write(TMPL.render(files=INSTALL_FILES,
+                               dirs=INSTALL_DIRS,
+                               VERSION=VERSION))
