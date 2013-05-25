@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -50,7 +50,10 @@ from PyQt4.Qt import *
 
 from cfclient.utils.input import JoystickReader
 
-inputconfig_widget_class, connect_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/inputconfigdialogue.ui')
+(inputconfig_widget_class,
+connect_widget_base_class) = (uic.loadUiType(sys.path[0] +
+                             '/cfclient/ui/dialogs/inputconfigdialogue.ui'))
+
 
 class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
 
@@ -67,35 +70,58 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
 
         self.cancelButton.clicked.connect(self.close)
         self.saveButton.clicked.connect(self.saveConfig)
-        
-        self.detectPitch.clicked.connect(lambda : self.doAxisDetect("pitch", "Pitch axis",
-                                                 "Press the pitch axis to max forward pitch"))
-        self.detectRoll.clicked.connect(lambda : self.doAxisDetect("roll", "Roll axis",
-                                                 "Press the roll axis to max right roll"))
-        self.detectYaw.clicked.connect(lambda : self.doAxisDetect("yaw", "Yaw axis",
-                                                "Press the yaw axis to max rotation right"))
-        self.detectThrust.clicked.connect(lambda : self.doAxisDetect("thrust", "Thrust axis",
-                                                   "Press the thrust axis to max thrust"))
-        self.detectPitchPos.clicked.connect(lambda : self.doButtonDetect("pitchPos", "Pitch Cal Positive",
-                                                  "Press the button for Pitch postive calibration"))
-        self.detectPitchNeg.clicked.connect(lambda : self.doButtonDetect("pitchNeg", "Pitch Cal Negative",
-                                                     "Press the button for Pitch negative calibration"))
-        self.detectRollPos.clicked.connect(lambda : self.doButtonDetect("rollPos", "Roll Cal Positive",
-                                                    "Press the button for Roll positive calibration"))
-        self.detectRollNeg.clicked.connect(lambda : self.doButtonDetect("rollNeg", "Roll Cal Negative",
-                                                    "Press the button for Roll negative calibration"))
-        self.detectKillswitch.clicked.connect(lambda : self.doButtonDetect("killswitch", "Killswtich",
-                                                       "Press the button for the killswitch (will disable motors)"))
-        self.detectExitapp.clicked.connect(lambda : self.doButtonDetect("exitapp", "Exit application",
-                                                    "Press the button for the exiting the application"))
+
+        self.detectPitch.clicked.connect(lambda: self.doAxisDetect(
+                               "pitch",
+                               "Pitch axis",
+                               "Press the pitch axis to max forward pitch"))
+        self.detectRoll.clicked.connect(lambda: self.doAxisDetect(
+                                      "roll",
+                                      "Roll axis",
+                                      "Press the roll axis to max right roll"))
+        self.detectYaw.clicked.connect(lambda: self.doAxisDetect(
+                                 "yaw",
+                                 "Yaw axis",
+                                 "Press the yaw axis to max rotation right"))
+        self.detectThrust.clicked.connect(lambda: self.doAxisDetect(
+                                        "thrust",
+                                        "Thrust axis",
+                                        "Press the thrust axis to max thrust"))
+        self.detectPitchPos.clicked.connect(lambda: self.doButtonDetect(
+                            "pitchPos",
+                            "Pitch Cal "
+                            "Positive",
+                            "Press the button for Pitch postive calibration"))
+        self.detectPitchNeg.clicked.connect(lambda: self.doButtonDetect(
+                            "pitchNeg",
+                            "Pitch Cal Negative",
+                            "Press the button for Pitch negative calibration"))
+        self.detectRollPos.clicked.connect(lambda: self.doButtonDetect(
+                           "rollPos",
+                           "Roll Cal Positive",
+                           "Press the button for Roll positive calibration"))
+        self.detectRollNeg.clicked.connect(lambda: self.doButtonDetect(
+                           "rollNeg", "Roll Cal Negative",
+                           "Press the button for Roll negative calibration"))
+        self.detectKillswitch.clicked.connect(lambda: self.doButtonDetect(
+                  "killswitch",
+                  "Killswtich",
+                  "Press the button for the killswitch (will disable motors)"))
+        self.detectExitapp.clicked.connect(lambda: self.doButtonDetect(
+                           "exitapp",
+                           "Exit application",
+                           "Press the button for the exiting the application"))
 
         self.configButton.clicked.connect(self.startConfigOfInputDevice)
         self.loadButton.clicked.connect(self.loadConfig)
         self.deleteButton.clicked.connect(self.deleteConfig)
 
         self.box = None
-        self.detectButtons = [self.detectPitch, self.detectRoll, self.detectYaw, self.detectThrust, self.detectPitchPos, self.detectPitchNeg,
-                         self.detectRollPos, self.detectRollNeg, self.detectKillswitch, self.detectExitapp]
+        self.detectButtons = [self.detectPitch, self.detectRoll,
+                              self.detectYaw, self.detectThrust,
+                              self.detectPitchPos, self.detectPitchNeg,
+                              self.detectRollPos, self.detectRollNeg,
+                              self.detectKillswitch, self.detectExitapp]
 
         self._reset_mapping()
         self.btnDetect = ""
@@ -109,19 +135,27 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
 
     def _reset_mapping(self):
         self.buttonmapping = {
-            "pitchPos": {"id":-1, "indicator":self.pitchPos},
-            "pitchNeg": {"id":-1, "indicator":self.pitchNeg},
-            "rollPos": {"id":-1, "indicator":self.rollPos},
-            "rollNeg": {"id":-1, "indicator":self.rollNeg},
-            "killswitch": {"id":-1, "indicator":self.killswitch},
-            "exitapp": {"id":-1, "indicator":self.exitapp}
+            "pitchPos": {"id":-1, "indicator": self.pitchPos},
+            "pitchNeg": {"id":-1, "indicator": self.pitchNeg},
+            "rollPos": {"id":-1, "indicator": self.rollPos},
+            "rollNeg": {"id":-1, "indicator": self.rollNeg},
+            "killswitch": {"id":-1, "indicator": self.killswitch},
+            "exitapp": {"id":-1, "indicator": self.exitapp}
             }
 
         self.axismapping = {
-            "pitch": {"id":-1, "indicator":self.pitchAxisValue, "scale":-1.0},
-            "roll": {"id":-1, "indicator":self.rollAxisValue, "scale":-1.0},
-            "yaw": {"id":-1, "indicator":self.yawAxisValue, "scale":-1.0},
-            "thrust": {"id":-1, "indicator":self.thrustAxisValue, "scale":-1.0}
+            "pitch": {"id":-1,
+                      "indicator": self.pitchAxisValue,
+                      "scale":-1.0},
+            "roll": {"id":-1,
+                     "indicator": self.rollAxisValue,
+                     "scale":-1.0},
+            "yaw": {"id":-1,
+                    "indicator": self.yawAxisValue,
+                    "scale":-1.0},
+            "thrust": {"id":-1,
+                       "indicator": self.thrustAxisValue,
+                       "scale":-1.0}
             }
 
     def cancelConfigBox(self, button):
@@ -133,12 +167,13 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.box.setWindowTitle(caption)
         self.box.setText(message)
         self.box.setButtonText(1, "Cancel")
-        self.box.setWindowFlags(Qt.Dialog|Qt.MSWindowsFixedSizeDialogHint)
+        self.box.setWindowFlags(Qt.Dialog | Qt.MSWindowsFixedSizeDialogHint)
         self.box.buttonClicked.connect(self.cancelConfigBox)
         self.box.show()
 
     def startConfigOfInputDevice(self):
-        self.joystickReader.enableRawReading(self.inputDeviceSelector.currentIndex())
+        self.joystickReader.enableRawReading(
+                                     self.inputDeviceSelector.currentIndex())
         self.rawinputreader.startReading()
         self.populateDropDown()
         self.profileCombo.setEnabled(True)
@@ -148,9 +183,10 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
     def rawAxisUpdate(self, data):
         if (len(self.axisDetect) > 0):
             for a in data:
-                # TODO: Some axis on the PS3 controller are maxed out by default which causes problems...check change instead?
-                # TODO: This assumes a range [-1.0,1.0] from input device driver, but is that safe?
-                if (abs(data[a]) > 0.8 and abs(data[a]) < 1.0 and len(self.axisDetect) > 0):
+                # TODO: Some axis on the PS3 controller are maxed out by default which causes problems...check change instead? @IgnorePep8
+                # TODO: This assumes a range [-1.0,1.0] from input device driver, but is that safe? @IgnorePep8
+                if (abs(data[a]) > 0.8 and abs(data[a]) < 1.0 and
+                    len(self.axisDetect) > 0):
                     self.axismapping[self.axisDetect]["id"] = a
                     if (data[a] >= 0):
                         self.axismapping[self.axisDetect]["scale"] = 1.0
@@ -163,7 +199,8 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         for a in data:
             for m in self.axismapping:
                 if (self.axismapping[m]["id"] == a):
-                    self.axismapping[m]["indicator"].setValue(50+data[a]*50*self.axismapping[m]["scale"])
+                    self.axismapping[m]["indicator"].setValue(
+                              50 + data[a] * 50 * self.axismapping[m]["scale"])
 
     def rawButtonUpdate(self, data):
         if (len(self.btnDetect) > 0):
@@ -207,7 +244,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.showConfigBox(caption, message)
 
     def showError(self, caption, message):
-        QMessageBox.critical(self,caption, message)  
+        QMessageBox.critical(self, caption, message)
 
     def parseButtonConfig(self, key, btnId, scale):
         newKey = ""
@@ -244,8 +281,11 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                     self.parseAxisConfig(conf[c]['key'],
                                          conf[c]['id'], conf[c]['scale'])
         else:
-            logger.warning("Could not load configfile [%s]", self.profileCombo.currentText())
-            self.showError("Could not load config", "Could not load config [%s]" % self.profileCombo.currentText())
+            logger.warning("Could not load configfile [%s]",
+                           self.profileCombo.currentText())
+            self.showError("Could not load config",
+                           "Could not load config [%s]" %
+                           self.profileCombo.currentText())
         self.checkAndEnableSave()
 
     def deleteConfig(self):
@@ -255,7 +295,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         configName = str(self.profileCombo.currentText())
 
         saveConfig = {}
-        inputConfig = {'inputdevice': {'axis':[]}}
+        inputConfig = {'inputdevice': {'axis': []}}
         for a in self.axismapping:
             newC = {}
             newC['key'] = a
@@ -299,7 +339,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         config_name = self.profileCombo.currentText()
         filename = ConfigManager().configs_dir + "/%s.json" % config_name
         logger.info("Saving config to [%s]", filename)
-        json_data=open(filename, 'w')
+        json_data = open(filename, 'w')
         json_data.write(json.dumps(saveConfig, indent=2))
         json_data.close()
 
@@ -312,6 +352,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
     def closeEvent(self, event):
         self.rawinputreader.stopReading()
 
+
 class RawJoystickReader(QThread):
 
     rawAxisUpdateSignal = pyqtSignal(object)
@@ -322,7 +363,7 @@ class RawJoystickReader(QThread):
 
         self.joystickReader = joystickReader
         self.readTimer = QTimer()
-        self.readTimer.setInterval(25);
+        self.readTimer.setInterval(25)
         self.connect(self.readTimer, SIGNAL("timeout()"), self.readInput)
 
     def stopReading(self):
@@ -333,7 +374,6 @@ class RawJoystickReader(QThread):
 
     @pyqtSlot()
     def readInput(self):
-        [rawaxis,rawbuttons] = self.joystickReader.readRawValues()
+        [rawaxis, rawbuttons] = self.joystickReader.readRawValues()
         self.rawAxisUpdateSignal.emit(rawaxis)
         self.rawButtonUpdateSignal.emit(rawbuttons)
-

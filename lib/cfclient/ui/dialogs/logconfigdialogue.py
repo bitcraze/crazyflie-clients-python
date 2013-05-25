@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -47,7 +47,9 @@ from PyQt4.Qt import *
 
 from cflib.crazyflie.log import Log
 
-logconfig_widget_class, connect_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/logconfigdialogue.ui')
+(logconfig_widget_class,
+connect_widget_base_class) = (uic.loadUiType(sys.path[0] +
+                                 '/cfclient/ui/dialogs/logconfigdialogue.ui'))
 
 from cfclient.utils.logconfigreader import LogVariable, LogConfig
 
@@ -55,6 +57,7 @@ NAME_FIELD = 0
 ID_FIELD = 1
 PTYPE_FIELD = 2
 CTYPE_FIELD = 3
+
 
 class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
 
@@ -66,12 +69,14 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         self.logTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage'])
         self.varTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage'])
 
-        self.addButton.clicked.connect(lambda : self.moveNode(self.logTree, self.varTree))
-        self.removeButton.clicked.connect(lambda : self.moveNode(self.varTree, self.logTree))
+        self.addButton.clicked.connect(lambda: self.moveNode(self.logTree,
+                                                             self.varTree))
+        self.removeButton.clicked.connect(lambda: self.moveNode(self.varTree,
+                                                                self.logTree))
         self.cancelButton.clicked.connect(self.close)
         self.loadButton.clicked.connect(self.loadConfig)
         self.saveButton.clicked.connect(self.saveConfig)
-        
+
         self.loggingPeriod.textChanged.connect(self.periodChanged)
 
         self.packetSize.setMaximum(30)
@@ -94,10 +99,12 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         return size
 
     def sortTrees(self):
-        self.varTree.invisibleRootItem().sortChildren(NAME_FIELD, Qt.AscendingOrder)
+        self.varTree.invisibleRootItem().sortChildren(NAME_FIELD,
+                                                      Qt.AscendingOrder)
         for node in self.getNodeChildren(self.varTree.invisibleRootItem()):
             node.sortChildren(NAME_FIELD, Qt.AscendingOrder)
-        self.logTree.invisibleRootItem().sortChildren(NAME_FIELD, Qt.AscendingOrder)
+        self.logTree.invisibleRootItem().sortChildren(NAME_FIELD,
+                                                      Qt.AscendingOrder)
         for node in self.getNodeChildren(self.logTree.invisibleRootItem()):
             node.sortChildren(NAME_FIELD, Qt.AscendingOrder)
 
@@ -111,7 +118,8 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         self.currentSize = 0
         for node in self.getNodeChildren(self.varTree.invisibleRootItem()):
             for leaf in self.getNodeChildren(node):
-                self.currentSize = self.currentSize + self.decodeSize(leaf.text(CTYPE_FIELD))
+                self.currentSize = (self.currentSize +
+                                    self.decodeSize(leaf.text(CTYPE_FIELD)))
         self.packetSize.setValue(self.currentSize)
 
     def addNewVar(self, logTreeItem, target):
@@ -122,7 +130,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
 
         if (len(varParent) == 0):
             newParent = QtGui.QTreeWidgetItem()
-            newParent.setData(0, Qt.DisplayRole, parentName);
+            newParent.setData(0, Qt.DisplayRole, parentName)
             newParent.addChild(item)
             target.addTopLevelItem(newParent)
             target.expandItem(newParent)
@@ -135,13 +143,13 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
             children = self.getNodeChildren(item)
             for c in children:
                 self.addNewVar(c, target)
-            source.takeTopLevelItem(source.indexOfTopLevelItem(item))            
+            source.takeTopLevelItem(source.indexOfTopLevelItem(item))
         elif (item.parent().childCount() > 1):
             self.addNewVar(item, target)
             item.parent().removeChild(item)
         else:
             self.addNewVar(item, target)
-            #item.parent().removeChild(item)
+            # item.parent().removeChild(item)
             source.takeTopLevelItem(source.indexOfTopLevelItem(item.parent()))
         self.updatePacketSizeBar()
         self.sortTrees()
@@ -152,7 +160,6 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
             self.saveButton.setEnabled(True)
         else:
             self.saveButton.setEnabled(False)
-
 
     def moveNode(self, source, target):
         self.moveNodeItem(source, target, source.currentItem())
@@ -173,11 +180,11 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
     def showEvent(self, event):
         self.updateToc()
         self.populateDropDown()
-        toc = self.helper.cf.log.toc       
+        toc = self.helper.cf.log.toc
         if (len(toc.toc.keys()) > 0):
             self.configNameCombo.setEnabled(True)
         else:
-            self.configNameCombo.setEnabled(False)    
+            self.configNameCombo.setEnabled(False)
 
     def resetTrees(self):
         self.varTree.clear()
@@ -194,26 +201,29 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         self.box = QMessageBox()
         self.box.setWindowTitle(caption)
         self.box.setText(message)
-        #self.box.setButtonText(1, "Ok")
-        self.box.setWindowFlags(Qt.Dialog|Qt.MSWindowsFixedSizeDialogHint)
+        # self.box.setButtonText(1, "Ok")
+        self.box.setWindowFlags(Qt.Dialog | Qt.MSWindowsFixedSizeDialogHint)
         self.box.show()
 
     def updateToc(self):
         self.logTree.clear()
-        
+
         toc = self.helper.cf.log.toc
-        
+
         for group in toc.toc.keys():
             groupItem = QtGui.QTreeWidgetItem()
-            groupItem.setData(NAME_FIELD, Qt.DisplayRole, group);
+            groupItem.setData(NAME_FIELD, Qt.DisplayRole, group)
             for param in toc.toc[group].keys():
                 item = QtGui.QTreeWidgetItem()
                 item.setData(NAME_FIELD, Qt.DisplayRole, param)
-                item.setData(ID_FIELD, Qt.DisplayRole, toc.toc[group][param].ident)
-                item.setData(PTYPE_FIELD, Qt.DisplayRole, toc.toc[group][param].pytype)
-                item.setData(CTYPE_FIELD, Qt.DisplayRole, toc.toc[group][param].ctype)
-                groupItem.addChild(item);
-                
+                item.setData(ID_FIELD, Qt.DisplayRole,
+                             toc.toc[group][param].ident)
+                item.setData(PTYPE_FIELD, Qt.DisplayRole,
+                             toc.toc[group][param].pytype)
+                item.setData(CTYPE_FIELD, Qt.DisplayRole,
+                             toc.toc[group][param].ctype)
+                groupItem.addChild(item)
+
             self.logTree.addTopLevelItem(groupItem)
             self.logTree.expandItem(groupItem)
         self.sortTrees()
@@ -243,7 +253,10 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
                     parts = v.getName().split(".")
                     varParent = parts[0]
                     varName = parts[1]
-                    if (self.moveNodeByName(self.logTree, self.varTree, varParent, varName) == False):
+                    if self.moveNodeByName(self.logTree,
+                                            self.varTree,
+                                            varParent,
+                                            varName) == False:
                         logger.warning("Could not find node!!")
                 elif (v.getVarType() == LogVariable.MEM_TYPE):
                     logger.warning("Error: Mem vars not supported!")
@@ -251,21 +264,22 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
     def saveConfig(self):
         updatedConfig = self.createConfigFromSelection()
         try:
-           self.helper.logConfigReader.saveLogConfigFile(updatedConfig)
-           self.close()
+            self.helper.logConfigReader.saveLogConfigFile(updatedConfig)
+            self.close()
         except Exception as e:
             self.showErrorPopup("Error when saving file", "Error: %s" % e)
 
-           
     def createConfigFromSelection(self):
-        logconfig = LogConfig(str(self.configNameCombo.currentText()), self.period)
+        logconfig = LogConfig(str(self.configNameCombo.currentText()),
+                              self.period)
         for node in self.getNodeChildren(self.varTree.invisibleRootItem()):
             parentName = node.text(NAME_FIELD)
             for leaf in self.getNodeChildren(node):
                 varName = leaf.text(NAME_FIELD)
                 varType = str(leaf.text(CTYPE_FIELD))
                 completeName = "%s.%s" % (parentName, varName)
-                newVar = LogVariable(completeName, fetchAs=varType, storedAs=varType)
+                newVar = LogVariable(completeName,
+                                     fetchAs=varType,
+                                     storedAs=varType)
                 logconfig.addVariable(newVar)
         return logconfig
-
