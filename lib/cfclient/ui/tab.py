@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -40,6 +40,7 @@ from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
 from cfclient.utils.config import Config
 
+
 class Tab(QtGui.QWidget):
     """Superclass for all tabs that implements common functions."""
     tabName = "N/A"
@@ -59,7 +60,8 @@ class Tab(QtGui.QWidget):
                 if (len(s) > 0):
                     s += ","
             except Exception as e:
-                logger.warning("Exception while adding tab to config and reading tab config")
+                logger.warning("Exception while adding tab to config and "
+                               "reading tab config")
             # Check this since tabs in config are opened when app is started
             if (self.tabName not in s):
                 s += "%s" % self.tabName
@@ -70,13 +72,14 @@ class Tab(QtGui.QWidget):
             try:
                 parts = Config().get("open_tabs").split(",")
             except Exception as e:
-                logger.warning("Exception while removing tab from config and reading tab config")
+                logger.warning("Exception while removing tab from config and "
+                               "reading tab config")
                 parts = []
             s = ""
             for p in parts:
                 if (self.tabName != p):
                     s += "%s," % p
-            s = s[0:len(s)-1] # Remove last comma
+            s = s[0:len(s) - 1]  # Remove last comma
             Config().set("open_tabs", s)
 
     def getMenuName(self):
@@ -86,4 +89,3 @@ class Tab(QtGui.QWidget):
     def getTabName(self):
         """Return the name of the tab that will be shown in the tab"""
         return self.tabName
-
