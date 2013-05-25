@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -32,7 +32,8 @@ Showns the Log TOC of available variables in the Crazyflie.
 __author__ = 'Bitcraze AB'
 __all__ = ['LogTab']
 
-import sys, time
+import time
+import sys
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
@@ -41,7 +42,9 @@ from cflib.crazyflie import Crazyflie
 
 from cfclient.ui.tab import Tab
 
-param_tab_class = uic.loadUiType(sys.path[0] + "/cfclient/ui/tabs/logTab.ui")[0]
+param_tab_class = uic.loadUiType(sys.path[0] +
+                                 "/cfclient/ui/tabs/logTab.ui")[0]
+
 
 class LogTab(Tab, param_tab_class):
     connectedSignal = pyqtSignal(str)
@@ -58,8 +61,8 @@ class LogTab(Tab, param_tab_class):
         self.tabWidget = tabWidget
 
         self.cf = helper.cf
-        
-        #Init the tree widget
+
+        # Init the tree widget
         self.logTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage'])
 
         self.cf.connectSetupFinished.add_callback(self.connectedSignal.emit)
@@ -76,21 +79,19 @@ class LogTab(Tab, param_tab_class):
     @pyqtSlot(str)
     def connected(self, linkURI):
         self.logTree.clear()
-        
+
         toc = self.cf.log.toc
-        
+
         for group in toc.toc.keys():
-            groupItem = QtGui.QTreeWidgetItem()  
-            groupItem.setData(0, Qt.DisplayRole, group);
+            groupItem = QtGui.QTreeWidgetItem()
+            groupItem.setData(0, Qt.DisplayRole, group)
             for param in toc.toc[group].keys():
                 item = QtGui.QTreeWidgetItem()
                 item.setData(0, Qt.DisplayRole, param)
                 item.setData(1, Qt.DisplayRole, toc.toc[group][param].ident)
                 item.setData(2, Qt.DisplayRole, toc.toc[group][param].pytype)
                 item.setData(3, Qt.DisplayRole, toc.toc[group][param].ctype)
-                groupItem.addChild(item);
-                
+                groupItem.addChild(item)
+
             self.logTree.addTopLevelItem(groupItem)
             self.logTree.expandItem(groupItem)
-  
-
