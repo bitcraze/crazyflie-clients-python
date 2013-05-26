@@ -41,14 +41,16 @@ they might or might not affected of this.
 ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
 ```
 You also need to install Command Line Tools for Xcode or
-[[https://developer.apple.com/xcode/|Xcode]] if you don't already have them
+[Xcode](https://developer.apple.com/xcode/) if you don't already have them
 installed.
 
 2. Install hombrew's Python installation
 ```
 brew install python
 ```
-This will also pull [[http://www.pip-installer.org/en/latest/|pip]] which we will use later to install some Python modules that are not distributed through homebrew.
+This will also pull [pip](http://www.pip-installer.org/en/latest/), which we
+will use later to install some Python modules that are not distributed through
+homebrew.
 
 3. Make sure the homebrew Python version is used system-wide
 To do this we need to prepend this installation to our PYTHONPATH:
@@ -85,7 +87,6 @@ update your installation with:
 port selfupdate
 port upgrade outdated
 ```
-
 2. Install dependencies. Note that there are quite a few, so this could take a
 while:
 ```
@@ -94,16 +95,14 @@ port install py-pyusb-devel
 port install py27-pyqt4
 port install py27-pygame
 ```
-
 3. To make it easier to run MacPorts, add ```/opt/local/bin``` to your PATH variable.
 The MacPorts installer should take care of that, but take a look at
-´´´~/.profile``` to make sure. If you have any issues it could be due to the
+```~/.profile``` to make sure. If you have any issues it could be due to the
 libraries not getting picked up correctly. Fix that by setting
 ```DYLD_LIBRARY_PATH``` to ```/opt/local/lib``` in ```~/.profile```:
 ```
 export DYLD_LIBRARY_PATH=/opt/local/lib
 ```
-
 4. Now you're good to go! Run the client from the source folder with the
 following command:
 ```
