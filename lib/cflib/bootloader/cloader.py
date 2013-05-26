@@ -82,7 +82,7 @@ class Cloader:
         #reset before normal CRTP communication
         pk = CRTPPacket()
         pk.port = CRTPPort.LINKCTRL
-        pk.data = (1, 2, 3)+cpu_id
+        pk.data = (1, 2, 3) + cpu_id
         self.link.send_packet(pk)
 
         pk = None
@@ -108,7 +108,7 @@ class Cloader:
                 return False
 
             if pk.port == 0xFF and tuple(pk.data) == (0xFF, 0xFE) + cpu_id:
-                pk.data = (0xFF, 0xF0)+cpu_id
+                pk.data = (0xFF, 0xF0) + cpu_id
                 self.link.send_packet(pk)
                 break
 
@@ -128,7 +128,7 @@ class Cloader:
         #Send the reset to bootloader request
         pk = CRTPPacket()
         pk.set_header(0xFF, 0xFF)
-        pk.data = (0xFF, 0xFF)+cpu_id
+        pk.data = (0xFF, 0xFF) + cpu_id
         self.link.send_packet(pk)
 
         #Wait to ack the reset ...
@@ -139,9 +139,9 @@ class Cloader:
                 return False
 
             if (pk.header == 0xFF and
-                    struct.unpack("B"*len(pk.data), pk.data) ==
-                    (0xFF, 0xFF)+cpu_id):
-                pk.data = (0xFF, 0xF0)+cpu_id
+                struct.unpack("B" * len(pk.data),
+                              pk.data) == (0xFF, 0xFF) + cpu_id):
+                pk.data = (0xFF, 0xF0) + cpu_id
                 self.link.send_packet(pk)
                 break
 
@@ -157,7 +157,7 @@ class Cloader:
                 if self.protocol_version == 0:
                     return True
                 # Set radio link to a random address
-                addr = [0xbc] + map(lambda x: random.randint(0,255), range(4))
+                addr = [0xbc] + map(lambda x: random.randint(0, 255), range(4))
                 return self._set_address(addr)
 
         return False
@@ -175,9 +175,9 @@ class Cloader:
 
         self.link.pause()
 
-       	for _ in range(10):
+        for _ in range(10):
             logging.debug("Trying to set new radio address")
-            self.link.cradio.set_address((0xE7,)*5)
+            self.link.cradio.set_address((0xE7,) * 5)
             pkdata = (0xFF, 0xFF, 0x11) + tuple(newAddress)
             self.link.cradio.send_packet(pkdata)
             self.link.cradio.set_address(tuple(newAddress))
@@ -207,8 +207,8 @@ class Cloader:
         if (pk and pk.header == 0xFF and
                 struct.unpack("<BB", pk.data[0:2]) == (0xFF, 0x10)):
             tab = struct.unpack("BBHHHH", pk.data[0:10])
-            cpuid = struct.unpack("B"*12, pk.data[10:22])
-            if len(pk.data)>22:
+            cpuid = struct.unpack("B" * 12, pk.data[10:22])
+            if len(pk.data) > 22:
                 self.protocol_version = pk.data[22]
             self.page_size = tab[2]
             self.buffer_pages = tab[3]
