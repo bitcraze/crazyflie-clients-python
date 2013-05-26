@@ -64,6 +64,7 @@ class TocElement:
     pytype = ""
     access = RO_ACCESS
 
+
 class Toc:
     """Container for TocElements."""
 
@@ -156,7 +157,7 @@ class TocFetcher:
             logger.error("Got packet that was not on TOC channel, TOC fetch"
                          " will probably not succeed")
             return
-        payload = struct.pack("B"*(len(packet.datal)-1), *packet.datal[1:])
+        payload = struct.pack("B" * (len(packet.datal) - 1), *packet.datal[1:])
 
         if (self.state == GET_TOC_INFO):
             [self.nbrOfItems, self._crc] = struct.unpack("<BI", payload[:5])
@@ -172,7 +173,7 @@ class TocFetcher:
                 self.state = GET_TOC_ELEMENT
                 self.requestedIndex = 0
                 self._request_toc_element(self.requestedIndex)
-                    
+
         elif (self.state == GET_TOC_ELEMENT):
             # Always add new element, but only request new if it's not the
             # last one.
@@ -189,10 +190,10 @@ class TocFetcher:
             self.toc.add_element(self.elementClass(payload))
             logger.debug("Added element [%s]",
                          self.elementClass(payload).ident)
-            if (self.requestedIndex < (self.nbrOfItems-1)):
+            if (self.requestedIndex < (self.nbrOfItems - 1)):
                 logger.debug("[%d]: More variables, requesting index %d",
-                             self.port, self.requestedIndex+1)
-                self.requestedIndex = self.requestedIndex+1
+                             self.port, self.requestedIndex + 1)
+                self.requestedIndex = self.requestedIndex + 1
                 self._request_toc_element(self.requestedIndex)
             else:  # No more variables in TOC
                 self._toc_cache.insert(self._crc, self.toc.toc)
