@@ -42,7 +42,7 @@ import struct
 from socket import socket
 
 
-class UdpDriver (CRTPDriver):
+class UdpDriver(CRTPDriver):
     def __init__(self):
         None
 
@@ -63,7 +63,7 @@ class UdpDriver (CRTPDriver):
         data, addr = self.socket.recvfrom(1024)
 
         if data:
-            data = struct.unpack('b'*(len(data)-1), data[0:len(data)-1])
+            data = struct.unpack('b' * (len(data) - 1), data[0:len(data) - 1])
             pk = CRTPPacket()
             pk.port = data[0]
             pk.data = data[1:]
@@ -81,7 +81,7 @@ class UdpDriver (CRTPDriver):
             return None
 
     def send_packet(self, pk):
-        raw = (pk.port, )+struct.unpack("B"*len(pk.data), pk.data)
+        raw = (pk.port,) + struct.unpack("B"* len(pk.data), pk.data)
 
         cksum = 0
         for i in raw:
