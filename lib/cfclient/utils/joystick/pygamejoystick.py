@@ -34,6 +34,7 @@ import pygame.locals
 from .constants import TYPE_BUTTON, TYPE_AXIS
 from .jevent import JEvent
 
+
 class Joystick:
     """
     Pygame implementation of the Joystick class
@@ -45,9 +46,9 @@ class Joystick:
         self.axes = []
         self.joy = None
         self.device_id = -1
-        
+
         pygame.init()
-    
+
     def available_devices(self):
         """List all the available devices."""
         devices = {}
@@ -58,19 +59,18 @@ class Joystick:
             devices[i] = joy.get_name()
 
         return devices
-    
-    
+
     def open(self, device_id):
-        """ 
-        Open the joystick device. The device_id is given by 
+        """
+        Open the joystick device. The device_id is given by
         available_devices
         """
         if self.joy:
             raise Exception("Joystick already open")
-    
+
         self.joy = pygame.joystick.Joystick(device_id)
         self.joy.init()
-        
+
         self.axes = list(0 for i in range(self.joy.get_numaxes()))
         self.buttons = list(0 for i in range(self.joy.get_numbuttons()))
 
@@ -82,26 +82,22 @@ class Joystick:
     def get_events(self):
         """ Returns a list of all joystick event since the last call """
         events = []
-        
+
         for evt in pygame.event.get():
             if evt.type == pygame.locals.JOYBUTTONDOWN:
-                events.append(JEvent (type = TYPE_BUTTON,
-                                      number = evt.button,
-                                      value  = 1,
-                                     ))
+                events.append(JEvent(type=TYPE_BUTTON,
+                                     number=evt.button,
+                                     value=1))
                 self.buttons[evt.button] = 1
             if evt.vttype == pygame.locals.JOYBUTTONUP:
-                events.append(JEvent (type = TYPE_BUTTON,
-                                      number = evt.button,
-                                      value  = 0,
-                                     ))
+                events.append(JEvent(type=TYPE_BUTTON,
+                                     number=evt.button,
+                                     value=0))
                 self.buttons[evt.button] = 0
             if evt.type == pygame.locals.JOYAXISMOTION:
-                events.append(JEvent (type = TYPE_AXIS,
-                                      number = evt.axis,
-                                      value  = self.joy.get_axis(evt.axis),
-                                     ))
+                events.append(JEvent(type=TYPE_AXIS,
+                                     number=evt.axis,
+                                     value=self.joy.get_axis(evt.axis)))
                 self.axes[evt.axis] = self.joy.get_axis(evt.axis)
 
         return events
-    
