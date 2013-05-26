@@ -121,6 +121,7 @@ Dependencies
 ------------
 
 The Crazyflie PC client has the following dependencies:
+
 * Python 2.7
 * pyGame
 * PyUSB
@@ -149,7 +150,8 @@ The following steps make it possible to use the USB Radio without being root.
 Note: If using a fresh Debian install, you may need to install sudo first
 (executing exit command to exit from root shell first):
 
-```su -
+```
+su -
 apt-get install sudo
 ```
 
