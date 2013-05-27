@@ -27,6 +27,6 @@
 from .cfclient import main
 
 try:
-	from .version import VERSION
+    from .version import VERSION
 except:
-	VERSION="dev"
+    VERSION = "dev"

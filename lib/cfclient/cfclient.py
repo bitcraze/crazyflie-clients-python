@@ -77,19 +77,19 @@ def main():
     # Try all the imports used in the project here to control what happens....
     try:
         import usb
-    except:
+    except ImportError:
         logger.critical("No pyusb installation found, exiting!")
         sys.exit(1)
 
     try:
         import pygame
-    except:
+    except ImportError:
         logger.critical("No pygame installation found, exiting!")
         sys.exit(1)
 
     try:
         import PyQt4
-    except:
+    except ImportError:
         logger.critical("No PyQT4 installation found, exiting!")
         sys.exit(1)
 
