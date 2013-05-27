@@ -34,7 +34,7 @@ def init_config_path(isInSource):
             configPath = path.join(NSSearchPathForDirectoriesInDomains(
                              14, 1, True)[0], APPNAME)
         else:
-            #Unknown OS, I hope this is good enough
+            # Unknown OS, I hope this is good enough
             configPath = _path.join(prefix, "." + APP_NAME)
 
     if not _path.exists(configPath):
@@ -44,11 +44,13 @@ def init_config_path(isInSource):
 
 
 def init_paths():
-    """Make the app work in the source tree.
-       This puts the root module folder in path[0] and the config folder in
-       path[1]"""
+    """
+    Make the app work in the source tree.
 
-    sys.path = ["", ""] + sys.path
+    This puts the root module folder in sys.path[0] and the config folder in
+    sys.path[1]
+    """
+
     inSource = False
 
     if hasattr(sys, "frozen"):
@@ -72,7 +74,7 @@ def init_paths():
         for location in [src_lib, share_lib] + sys.path:
             main_ui = _path.join(location, 'cfclient', 'ui', 'main.ui')
             if _path.exists(main_ui):
-                sys.path[0] = location
+                sys.path.insert(0, location)
                 if location == src_lib:
                     inSource = True
                 break
@@ -80,7 +82,7 @@ def init_paths():
     if sys.path[0] == "":
         raise Exception("Cannot find cfclient install folder!")
 
-    sys.path[1] = init_config_path(inSource)
+    sys.path.insert(1, init_config_path(inSource))
     print "Info: Using config path: ", sys.path[1]
     print "Info: sys.path=", sys.path
 
