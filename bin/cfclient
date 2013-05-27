@@ -2,10 +2,11 @@
 
 from __future__ import absolute_import
 
-import sys
+import logging
 import os
 import os.path as _path
 from os.path import expanduser
+import sys
 
 APP_NAME = "cfclient"
 
@@ -83,8 +84,8 @@ def init_paths():
         raise Exception("Cannot find cfclient install folder!")
 
     sys.path.insert(1, init_config_path(inSource))
-    print "Info: Using config path: ", sys.path[1]
-    print "Info: sys.path=", sys.path
+    logging.debug("Using config path {}".format(sys.path[1]))
+    logging.debug("sys.path=".format(sys.path))
 
 
 if __name__ == '__main__':

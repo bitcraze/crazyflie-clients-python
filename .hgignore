@@ -4,3 +4,11 @@ syntax: glob
 config.json
 dist/*
 build/*
+
+# PC client settings
+conf/*
+
+# Eclipse settings
+.project
+.pydevproject
+.settings/*
