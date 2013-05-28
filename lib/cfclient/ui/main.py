@@ -21,9 +21,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc., 51
+#  Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 The main file for the Crazyflie control application.
@@ -33,15 +33,13 @@ __author__ = 'Bitcraze AB'
 __all__ = ['MainUI']
 
 import sys
-import os
 import logging
 
 logger = logging.getLogger(__name__)
 
-from PyQt4 import Qt, QtCore, QtGui, uic
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.Qt import *
+from PyQt4 import QtGui, uic
+from PyQt4.QtCore import pyqtSignal, Qt, pyqtSlot
+from PyQt4.QtGui import QLabel, QActionGroup, QMessageBox, QAction
 
 from dialogs.connectiondialogue import ConnectDialogue
 from dialogs.inputconfigdialogue import InputConfigDialogue
@@ -50,16 +48,13 @@ from dialogs.logconfigdialogue import LogConfigDialogue
 
 from cfclient.utils.input import JoystickReader
 from cfclient.utils.config import Config
-from cflib.crazyflie.log import Log
 from cfclient.utils.logconfigreader import (LogConfigReader,
                                             LogVariable,
                                             LogConfig)
 from cfclient.utils.config_manager import ConfigManager
 
-import cfclient.ui.dialogs
 import cfclient.ui.toolboxes
 import cfclient.ui.tabs
-import cfclient.ui
 import cflib.crtp
 
 from cfclient.ui.dialogs.bootloader import BootloaderDialog
