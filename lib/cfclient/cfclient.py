@@ -40,6 +40,15 @@ import logging
 
 
 def main():
+
+    """
+    Check starting conditions and start GUI.
+
+    First, check command line arguments and start loggers. Set log levels. Try
+    all imports and exit verbosely if a library is not found. Disable outputs
+    to stdout and start the GUI.
+    """
+
     # Set ERROR level for PyQt4 logger
     qtlogger = logging.getLogger('PyQt4')
     qtlogger.setLevel(logging.ERROR)
