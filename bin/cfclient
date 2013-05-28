@@ -12,6 +12,14 @@ APP_NAME = "cfclient"
 
 
 def init_config_path(isInSource):
+    """
+    Configure path for config files.
+
+    If the program is started in the source folder, use a folder "conf" in the
+    root source directory. Otherwise put it in a directory depending on system
+    architecture and configuration. If the chosen directory does not exist,
+    create it.
+    """
 
     if isInSource:
         configPath = _path.join(sys.path[0], "..", "conf")
