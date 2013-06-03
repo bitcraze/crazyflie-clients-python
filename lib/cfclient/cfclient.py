@@ -82,6 +82,9 @@ def main():
         logging.basicConfig(level=logging.INFO)
 
     logger = logging.getLogger(__name__)
+    
+    logger.debug("Using config path {}".format(sys.path[1]))
+    logger.debug("sys.path={}".format(sys.path))
 
     # Try all the imports used in the project here to control what happens....
     try:
