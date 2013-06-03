@@ -21,13 +21,12 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc., 51
+#  Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-Connection dialogue that will list available Crazyflies and the user can choose
-which to connect to.
+Dialogue that lists available Crazyflies, lets user choose which to connect to.
 """
 
 __author__ = 'Bitcraze AB'
@@ -35,10 +34,8 @@ __all__ = ['ConnectionDialogue']
 
 import sys
 
-from PyQt4 import Qt, QtCore, QtGui, uic
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.Qt import *
+from PyQt4 import QtGui, uic
+from PyQt4.QtCore import pyqtSignal, pyqtSlot, QThread
 
 import cflib.crtp
 
@@ -67,9 +64,10 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
         self.scanner.interfaceFoundSignal.connect(self.foundInterfaces)
         self.box = None
 
-        self.availableInterfaces = []
+        self.available_interfaces = []
 
     def rescan(self):
+        """Disable all buttons and scan signals from Crazyflies."""
         self.interfaceList.clear()
         self.interfaceList.addItem("Scanning...")
         self.scanButton.setEnabled(False)
@@ -78,8 +76,11 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
         self.scanner.scanSignal.emit()
 
     def foundInterfaces(self, interfaces):
+        """
+        Add found interfaces to list and enable buttons in UI.
+        """
         self.interfaceList.clear()
-        self.availableInterfaces = interfaces
+        self.available_interfaces = interfaces
         for i in interfaces:
             if (len(i[1]) > 0):
                 self.interfaceList.addItem("%s - %s" % (i[0], i[1]))
@@ -91,7 +92,7 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
 
     def interfaceSelected(self, listItem):
         self.requestConnectionSignal.emit(
-                  self.availableInterfaces[self.interfaceList.currentRow()][0])
+                self.available_interfaces[self.interfaceList.currentRow()][0])
         self.close()
 
     def openConnection(self):
