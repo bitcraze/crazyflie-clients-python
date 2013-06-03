@@ -68,9 +68,6 @@ main_windows_base_class) = (uic.loadUiType(sys.path[0] +
 class MyDockWidget(QtGui.QDockWidget):
     closed = pyqtSignal()
 
-    def __init__(self, *args):
-        super(MyDockWidget, self).__init__(*args)
-
     def closeEvent(self, event):
         super(MyDockWidget, self).closeEvent(event)
         self.closed.emit()
