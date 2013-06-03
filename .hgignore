@@ -4,3 +4,8 @@ syntax: glob
 config.json
 dist/*
 build/*
+conf/input/*
+conf/log/*
+.project
+.pydevproject
+.settings/*
