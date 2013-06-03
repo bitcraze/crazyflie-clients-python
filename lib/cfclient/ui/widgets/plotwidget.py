@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -26,8 +26,8 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-Container for the simple plot with functionality for data legend, saving data and manipulating
-the plot.
+Container for the simple plot with functionality for data legend, saving data
+and manipulating the plot.
 
 For more advanced plotting save the data and use an external application.
 """
@@ -53,7 +53,10 @@ from PyQt4.QtGui import *
 from PyQt4.Qt import *
 from rtplotwidget import FastPlotWidget, PlotDataSet
 
-plot_widget_class, connect_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/widgets/plotter.ui')
+(plot_widget_class,
+connect_widget_base_class) = (uic.loadUiType(
+                             sys.path[0] + '/cfclient/ui/widgets/plotter.ui'))
+
 
 class PlotWidget(QtGui.QWidget, plot_widget_class):
 
@@ -74,14 +77,16 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
 
     saveToFileSignal = pyqtSignal()
     stopSavingSignal = pyqtSignal()
-    #isSavingToFileSignal = pyqtSignal()
+    # isSavingToFileSignal = pyqtSignal()
 
     def __init__(self, parent=None, fps=100, title="", *args):
-        #super(FastPlotWidget, self).__init__(parent)
+        # super(FastPlotWidget, self).__init__(parent)
         super(PlotWidget, self).__init__(*args)
         self.setupUi(self)
 
-        self.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding,QtGui.QSizePolicy.MinimumExpanding))
+        self.setSizePolicy(QtGui.QSizePolicy(
+                                         QtGui.QSizePolicy.MinimumExpanding,
+                                         QtGui.QSizePolicy.MinimumExpanding))
 
         self.setMinimumSize(self.minimumSizeHint())
         self.parent = parent
@@ -114,7 +119,7 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
 
     def stopSaving(self):
         self.saveToFile.setText("Start saving to file")
-        self.saveToFile.clicked.disconnect(self.stopSaving)       
+        self.saveToFile.clicked.disconnect(self.stopSaving)
         self.saveToFile.clicked.connect(self.saveToFileSignal)
         self.stopSavingSignal.emit()
 
@@ -125,7 +130,7 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
 
     def setTitle(self, newTitle):
         self.plotCaption.setText(newTitle)
- 
+
     def addDataset(self, dataset):
         self.fpw.addDataset(dataset)
 
@@ -136,11 +141,12 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         newLayout.addWidget(dsEnabled)
         self.legend.addLayout(newLayout, self.hcount, self.vcount)
         self.hcount = self.hcount + 1
-        logger.debug("Creating new layout for [%s] at %d,%d", dataset.title, self.hcount, self.vcount)
+        logger.debug("Creating new layout for [%s] at %d,%d",
+                     dataset.title, self.hcount, self.vcount)
         if (self.hcount == 2):
             self.vcount = self.vcount + 1
             self.hcount = 0
-        
+
     def removeDataset(self, dataset):
         logger.warning("removeDataset() not implemented")
 
@@ -149,11 +155,10 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         # TODO: Fix this!
         for w in range(self.legend.count()):
             l = self.legend.itemAt(w)
-            if (l != None):            
+            if (l != None):
                 l.itemAt(0).widget().setVisible(False)
-            #self.legend.removeItem(self.legend.itemAt(w))
-            #self.legend.itemAt(w).hide()
-            #print "Taking %d" % w
+            # self.legend.removeItem(self.legend.itemAt(w))
+            # self.legend.itemAt(w).hide()
+            # print "Taking %d" % w
         self.hcount = 0
         self.vcount = 0
-

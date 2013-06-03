@@ -20,9 +20,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc., 51
+#  Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 The main file for the Crazyflie control application.
@@ -40,6 +40,15 @@ import logging
 
 
 def main():
+
+    """
+    Check starting conditions and start GUI.
+
+    First, check command line arguments and start loggers. Set log levels. Try
+    all imports and exit verbosely if a library is not found. Disable outputs
+    to stdout and start the GUI.
+    """
+
     # Set ERROR level for PyQt4 logger
     qtlogger = logging.getLogger('PyQt4')
     qtlogger.setLevel(logging.ERROR)
@@ -77,19 +86,19 @@ def main():
     # Try all the imports used in the project here to control what happens....
     try:
         import usb
-    except:
+    except ImportError:
         logger.critical("No pyusb installation found, exiting!")
         sys.exit(1)
 
     try:
         import pygame
-    except:
+    except ImportError:
         logger.critical("No pygame installation found, exiting!")
         sys.exit(1)
 
     try:
         import PyQt4
-    except:
+    except ImportError:
         logger.critical("No PyQT4 installation found, exiting!")
         sys.exit(1)
 

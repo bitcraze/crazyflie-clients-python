@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -50,7 +50,10 @@ from PyQt4.Qt import *
 
 from cfclient.utils.input import JoystickReader
 
-inputconfig_widget_class, connect_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/inputconfigdialogue.ui')
+(inputconfig_widget_class,
+connect_widget_base_class) = (uic.loadUiType(sys.path[0] +
+                             '/cfclient/ui/dialogs/inputconfigdialogue.ui'))
+
 
 class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
 
@@ -95,8 +98,11 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
 
         self.box = None
         self.combinedButton = None
-        self.detectButtons = [self.detectPitch, self.detectRoll, self.detectYaw, self.detectThrust, self.detectPitchPos, self.detectPitchNeg,
-                         self.detectRollPos, self.detectRollNeg, self.detectKillswitch, self.detectExitapp]
+        self.detectButtons = [self.detectPitch, self.detectRoll,
+                              self.detectYaw, self.detectThrust,
+                              self.detectPitchPos, self.detectPitchNeg,
+                              self.detectRollPos, self.detectRollNeg,
+                              self.detectKillswitch, self.detectExitapp]
 
         self._reset_mapping()
         self.btnDetect = ""
@@ -111,19 +117,27 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
 
     def _reset_mapping(self):
         self.buttonmapping = {
-            "pitchPos": {"id":-1, "indicator":self.pitchPos},
-            "pitchNeg": {"id":-1, "indicator":self.pitchNeg},
-            "rollPos": {"id":-1, "indicator":self.rollPos},
-            "rollNeg": {"id":-1, "indicator":self.rollNeg},
-            "killswitch": {"id":-1, "indicator":self.killswitch},
-            "exitapp": {"id":-1, "indicator":self.exitapp}
+            "pitchPos": {"id":-1, "indicator": self.pitchPos},
+            "pitchNeg": {"id":-1, "indicator": self.pitchNeg},
+            "rollPos": {"id":-1, "indicator": self.rollPos},
+            "rollNeg": {"id":-1, "indicator": self.rollNeg},
+            "killswitch": {"id":-1, "indicator": self.killswitch},
+            "exitapp": {"id":-1, "indicator": self.exitapp}
             }
 
         self.axismapping = {
-            "pitch": {"id":-1, "indicator":self.pitchAxisValue, "scale":-1.0},
-            "roll": {"id":-1, "indicator":self.rollAxisValue, "scale":-1.0},
-            "yaw": {"id":-1, "indicator":self.yawAxisValue, "scale":-1.0},
-            "thrust": {"id":-1, "indicator":self.thrustAxisValue, "scale":-1.0}
+            "pitch": {"id":-1,
+                      "indicator": self.pitchAxisValue,
+                      "scale":-1.0},
+            "roll": {"id":-1,
+                     "indicator": self.rollAxisValue,
+                     "scale":-1.0},
+            "yaw": {"id":-1,
+                    "indicator": self.yawAxisValue,
+                    "scale":-1.0},
+            "thrust": {"id":-1,
+                       "indicator": self.thrustAxisValue,
+                       "scale":-1.0}
             }
 
     def cancelConfigBox(self, button):
@@ -249,7 +263,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.showConfigBox(caption, message)
 
     def showError(self, caption, message):
-        QMessageBox.critical(self,caption, message)  
+        QMessageBox.critical(self, caption, message)
 
     def parseButtonConfig(self, key, btnId, scale):
         newKey = ""
@@ -293,8 +307,11 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                     self.parseAxisConfig(conf[c]['key'],
                                          conf[c]['id'], conf[c]['scale'])
         else:
-            logger.warning("Could not load configfile [%s]", self.profileCombo.currentText())
-            self.showError("Could not load config", "Could not load config [%s]" % self.profileCombo.currentText())
+            logger.warning("Could not load configfile [%s]",
+                           self.profileCombo.currentText())
+            self.showError("Could not load config",
+                           "Could not load config [%s]" %
+                           self.profileCombo.currentText())
         self.checkAndEnableSave()
 
     def deleteConfig(self):
@@ -304,7 +321,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         configName = str(self.profileCombo.currentText())
 
         saveConfig = {}
-        inputConfig = {'inputdevice': {'axis':[]}}
+        inputConfig = {'inputdevice': {'axis': []}}
         for a in self.axismapping:
             newC = {}
             if "id" in self.axismapping[a]:
@@ -315,7 +332,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                 raise Exception("Problem during save")
             newC['key'] = a
             newC['name'] = a
-                
+
             newC['scale'] = self.axismapping[a]['scale']
             newC['type'] = "Input.AXIS"
             inputConfig['inputdevice']['axis'].append(newC)
@@ -354,7 +371,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         config_name = self.profileCombo.currentText()
         filename = ConfigManager().configs_dir + "/%s.json" % config_name
         logger.info("Saving config to [%s]", filename)
-        json_data=open(filename, 'w')
+        json_data = open(filename, 'w')
         json_data.write(json.dumps(saveConfig, indent=2))
         json_data.close()
 
@@ -367,6 +384,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
     def closeEvent(self, event):
         self.rawinputreader.stopReading()
 
+
 class RawJoystickReader(QThread):
 
     rawAxisUpdateSignal = pyqtSignal(object)
@@ -377,7 +395,7 @@ class RawJoystickReader(QThread):
 
         self.joystickReader = joystickReader
         self.readTimer = QTimer()
-        self.readTimer.setInterval(25);
+        self.readTimer.setInterval(25)
         self.connect(self.readTimer, SIGNAL("timeout()"), self.readInput)
 
     def stopReading(self):
@@ -388,7 +406,6 @@ class RawJoystickReader(QThread):
 
     @pyqtSlot()
     def readInput(self):
-        [rawaxis,rawbuttons] = self.joystickReader.readRawValues()
+        [rawaxis, rawbuttons] = self.joystickReader.readRawValues()
         self.rawAxisUpdateSignal.emit(rawaxis)
         self.rawButtonUpdateSignal.emit(rawbuttons)
-

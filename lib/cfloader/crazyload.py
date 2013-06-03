@@ -142,7 +142,7 @@ try:
           " Start page: %d" % (cload.flash_pages, cload.page_size,
                                cload.buffer_pages, cload.start_page)
     print "%d KBytes of flash avaliable for firmware image." % (
-          (cload.flash_pages-cload.start_page)*cload.page_size/1024)
+          (cload.flash_pages - cload.start_page) * cload.page_size / 1024)
 
     if action == "info":
         None  # Already done ...
@@ -160,23 +160,24 @@ try:
         image = f.read()
         f.close()
 
-        if len(image) > ((cload.flash_pages-cload.start_page)*cload.page_size):
+        if len(image) > ((cload.flash_pages - cload.start_page) *
+                         cload.page_size):
             print "Error: Not enough space to flash the image file."
             raise Exception()
 
-        sys.stdout.write(("Flashing %d bytes (%d pages) " % ((len(image)-1),
-                         int(len(image)/cload.page_size)+1)))
+        sys.stdout.write(("Flashing %d bytes (%d pages) " % ((len(image) - 1),
+                         int(len(image) / cload.page_size) + 1)))
         sys.stdout.flush()
 
         #For each page
         ctr = 0  # Buffer counter
-        for i in range(0, int((len(image)-1)/cload.page_size)+1):
+        for i in range(0, int((len(image) - 1) / cload.page_size) + 1):
             #Load the buffer
-            if ((i+1)*cload.page_size) > len(image):
-                cload.upload_buffer(ctr, 0, image[i*cload.page_size:])
+            if ((i + 1) * cload.page_size) > len(image):
+                cload.upload_buffer(ctr, 0, image[i * cload.page_size:])
             else:
-                cload.upload_buffer(ctr, 0, image[i*cload.page_size:
-                                                  (i+1)*cload.page_size])
+                cload.upload_buffer(ctr, 0, image[i * cload.page_size:
+                                                  (i + 1) * cload.page_size])
 
             ctr += 1
 
@@ -187,7 +188,9 @@ try:
             if ctr >= cload.buffer_pages:
                 sys.stdout.write("%d" % ctr)
                 sys.stdout.flush()
-                if not cload.write_flash(0, cload.start_page+i-(ctr-1), ctr):
+                if not cload.write_flash(0,
+                                         cload.start_page + i - (ctr - 1),
+                                         ctr):
                     print "\nError during flash operation (code %d). Maybe"\
                           " wrong radio link?" % cload.error_code
                     raise Exception()
@@ -197,8 +200,12 @@ try:
         if ctr > 0:
             sys.stdout.write("%d" % ctr)
             sys.stdout.flush()
-            if not cload.write_flash(0, cload.start_page+(int(
-                    (len(image)-1) / cload.page_size))-(ctr-1), ctr):
+            if not cload.write_flash(
+                                 0,
+                                 (cload.start_page +
+                                  (int((len(image) - 1) / cload.page_size)) -
+                                  (ctr - 1)),
+                                 ctr):
                 print "\nError during flash operation (code %d). Maybe wrong"\
                       "radio link?" % cload.error_code
                 raise Exception()

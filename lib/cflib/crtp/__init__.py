@@ -70,6 +70,7 @@ def scan_interfaces():
             continue
     return available
 
+
 def get_interfaces_status():
     """Get the status of all the interfaces"""
     status = {}
@@ -79,7 +80,8 @@ def get_interfaces_status():
         except Exception:
             raise
             continue
-    return status 
+    return status
+
 
 def get_link_driver(uri, linkQualityCallback=None, linkErrorCallback=None):
     """ Return the link driver for the given URI """

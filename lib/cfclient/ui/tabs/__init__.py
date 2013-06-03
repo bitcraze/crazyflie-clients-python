@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -41,15 +41,17 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-foundTabs = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(os.path.dirname(__file__)+"/[A-Za-z]*Tab.py")]
-if len(foundTabs)==0:
-    foundTabs = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(os.path.dirname(__file__)+"/[A-Za-z]*Tab.pyc")]
+found_tabs = [os.path.splitext(os.path.basename(f))[0] for
+             f in glob.glob(os.path.dirname(__file__) + "/[A-Za-z]*Tab.py")]
+if len(found_tabs) == 0:
+    found_tabs = [os.path.splitext(os.path.basename(f))[0] for
+                 f in glob.glob(os.path.dirname(__file__) +
+                                "/[A-Za-z]*Tab.pyc")]
 
-logger.debug("Found tabs: %s", foundTabs)
+logger.debug("Found tabs: %s", found_tabs)
 
 available = []
 
-for tab in foundTabs:
+for tab in found_tabs:
     tabModule = __import__(tab, globals(), locals(), [tab], -1)
     available.append(getattr(tabModule, tab))
-

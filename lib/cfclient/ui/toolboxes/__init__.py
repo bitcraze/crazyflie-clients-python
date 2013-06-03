@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -41,9 +41,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-foundToolboxes = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(os.path.dirname(__file__)+"/[A-Za-z]*Toolbox.py")]
-if len(foundToolboxes)==0:
-    foundToolboxes = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(os.path.dirname(__file__)+"/[A-Za-z]*Toolbox.pyc")]
+foundToolboxes = [os.path.splitext(os.path.basename(f))[0] for f in
+                  glob.glob(os.path.dirname(__file__) +
+                            "/[A-Za-z]*Toolbox.py")]
+if len(foundToolboxes) == 0:
+    foundToolboxes = [os.path.splitext(os.path.basename(f))[0] for f in
+                      glob.glob(os.path.dirname(__file__) +
+                                "/[A-Za-z]*Toolbox.pyc")]
 
 
 logger.debug("Found toolboxes: %s", foundToolboxes)
@@ -53,4 +57,3 @@ toolboxes = []
 for tb in foundToolboxes:
     tbModule = __import__(tb, globals(), locals(), [tb], -1)
     toolboxes.append(getattr(tbModule, tb))
-

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -35,17 +35,17 @@ __all__ = ['AttitudeIndicator']
 import sys
 from PyQt4 import QtGui, QtCore
 
+
 class AttitudeIndicator(QtGui.QWidget):
     """Widget for showing attitude"""
     def __init__(self):
         super(AttitudeIndicator, self).__init__()
-        
+
         self.roll = 0
         self.pitch = 0
 
         self.setMinimumSize(30, 30)
-        #self.setMaximumSize(240,240)
-        
+        # self.setMaximumSize(240,240)
 
     def setRoll(self, roll):
         self.roll = roll
@@ -54,7 +54,7 @@ class AttitudeIndicator(QtGui.QWidget):
     def setPitch(self, pitch):
         self.pitch = pitch
         self.repaint()
-    
+
     def setRollPitch(self, roll, pitch):
         self.roll = roll
         self.pitch = pitch
@@ -71,61 +71,65 @@ class AttitudeIndicator(QtGui.QWidget):
         w = size.width()
         h = size.height()
 
-        qp.translate(w/2,h/2)
+        qp.translate(w / 2, h / 2)
         qp.rotate(self.roll)
-        qp.translate(0, (self.pitch*h)/50)
-        qp.translate(-w/2,-h/2)
+        qp.translate(0, (self.pitch * h) / 50)
+        qp.translate(-w / 2, -h / 2)
         qp.setRenderHint(qp.Antialiasing)
 
         font = QtGui.QFont('Serif', 7, QtGui.QFont.Light)
         qp.setFont(font)
 
-        #Draw the blue
+        # Draw the blue
         qp.setPen(QtGui.QColor(0, 61, 144))
         qp.setBrush(QtGui.QColor(0, 61, 144))
-        qp.drawRect(-w, h/2, 3*w, -3*h)
+        qp.drawRect(-w, h / 2, 3 * w, -3 * h)
 
-        #Draw the marron
+        # Draw the marron
         qp.setPen(QtGui.QColor(59, 41, 39))
         qp.setBrush(QtGui.QColor(59, 41, 39))
-        qp.drawRect(-w, h/2, 3*w, 3*h)
+        qp.drawRect(-w, h / 2, 3 * w, 3 * h)
 
         pen = QtGui.QPen(QtGui.QColor(255, 255, 255), 1.5,
             QtCore.Qt.SolidLine)
         qp.setPen(pen)
-        qp.drawLine(-w, h/2, 3*w, h/2)
-        
-        #Drawing pitch lines
+        qp.drawLine(-w, h / 2, 3 * w, h / 2)
+
+        # Drawing pitch lines
         for ofset in [-180, 0, 180]:
             for i in range(-900, 900, 25):
-                pos = ( ((i/10.0)+25+ofset)*h/50.0 )
-                if i%100 == 0:
-                    length = 0.35*w
-                    if i!=0:
-                        if ofset==0:
-                            qp.drawText((w/2)+(length/2)+(w*0.06), pos, "{}".format(-i/10))
-                            qp.drawText((w/2)-(length/2)-(w*0.08), pos, "{}".format(-i/10))
+                pos = (((i / 10.0) + 25 + ofset) * h / 50.0)
+                if i % 100 == 0:
+                    length = 0.35 * w
+                    if i != 0:
+                        if ofset == 0:
+                            qp.drawText((w / 2) + (length / 2) + (w * 0.06),
+                                        pos, "{}".format(-i / 10))
+                            qp.drawText((w / 2) - (length / 2) - (w * 0.08),
+                                        pos, "{}".format(-i / 10))
                         else:
-                            qp.drawText((w/2)+(length/2)+(w*0.06), pos, "{}".format(i/10))
-                            qp.drawText((w/2)-(length/2)-(w*0.08), pos, "{}".format(i/10))
-                elif i%50 == 0:
-                    length = 0.2*w
+                            qp.drawText((w / 2) + (length / 2) + (w * 0.06),
+                                        pos, "{}".format(i / 10))
+                            qp.drawText((w / 2) - (length / 2) - (w * 0.08),
+                                        pos, "{}".format(i / 10))
+                elif i % 50 == 0:
+                    length = 0.2 * w
                 else:
-                    length = 0.1*w
-                
-                qp.drawLine((w/2)-(length/2), pos, (w/2)+(length/2), pos)
-            
-        
+                    length = 0.1 * w
+
+                qp.drawLine((w / 2) - (length / 2), pos,
+                            (w / 2) + (length / 2), pos)
+
         qp.setWorldMatrixEnabled(False)
-        
+
         pen = QtGui.QPen(QtGui.QColor(0, 0, 0), 2,
             QtCore.Qt.SolidLine)
         qp.setBrush(QtGui.QColor(0, 0, 0))
         qp.setPen(pen)
-        qp.drawLine(0, h/2, w, h/2)
+        qp.drawLine(0, h / 2, w, h / 2)
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     class Example(QtGui.QWidget):
 
         def __init__(self):
@@ -134,10 +138,10 @@ if __name__=="__main__":
             self.initUI()
 
         def updatePitch(self, pitch):
-            self.wid.setPitch(pitch-90)
+            self.wid.setPitch(pitch - 90)
 
         def updateRoll(self, roll):
-            self.wid.setRoll((roll/10.0)-180.0)
+            self.wid.setRoll((roll / 10.0) - 180.0)
 
         def initUI(self):
 
@@ -147,7 +151,7 @@ if __name__=="__main__":
             sld.setFocusPolicy(QtCore.Qt.NoFocus)
             sld.setRange(0, 3600)
             sld.setValue(1800)
-            
+
             vbox.addWidget(sld)
 
             self.wid = AttitudeIndicator()
@@ -157,16 +161,16 @@ if __name__=="__main__":
 
             hbox = QtGui.QHBoxLayout()
             hbox.addLayout(vbox)
-            
+
             sldPitch = QtGui.QSlider(QtCore.Qt.Vertical, self)
             sldPitch.setFocusPolicy(QtCore.Qt.NoFocus)
             sldPitch.setRange(0, 180)
             sldPitch.setValue(90)
-            
+
             sldPitch.valueChanged[int].connect(self.updatePitch)
-            
+
             hbox.addWidget(sldPitch)
-            
+
             self.setLayout(hbox)
 
             self.setGeometry(300, 300, 210, 210)
