@@ -287,8 +287,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.inputConfig.show()
         
     def autoReconnectChanged(self, state):
-        self.autoReconnectEnabled = (state == Qt.Checked)
-        #QMessageBox.critical(self,"asf" ,str(self.autoReconnectEnabled) )
+        self.autoReconnectEnabled = (state == Qt.Checked)       
 
     def doLogConfigDialogue(self):
         self.logConfigDialogue.show()
