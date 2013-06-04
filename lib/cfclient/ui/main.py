@@ -103,7 +103,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.connectDialogue = ConnectDialogue()
 
         # Create and start the Input Reader
-        self._statusbar_label = QLabel("Loading device and config")
+        self._statusbar_label = QLabel("Loading device and configuration.")
         self.statusBar().addWidget(self._statusbar_label)
 
         self.joystickReader = JoystickReader()

@@ -21,20 +21,22 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc., 51
+#  Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-The input module that will read joysticks/input devices and send control set-
-points to the Crazyflie. It will also accept settings from the UI.
+Module to read input devices and send controls to the Crazyflie.
 
-This module can use different drivers for reading the input device data.
-Currently it can just use the PyGame driver but in the future there will be a
-Linux and Windows driver that can bypass PyGame.
+This module reads input from joysticks or other input devices and sends control
+set-points to the Crazyflie. It can be configured in the UI.
 
-When reading values from inputdevice a config is used to map axis and buttons
-to control functions for the Crazyflie.
+Various drivers can be used to read input device data. Currently is uses the
+PyGame driver, but in the future native support will be provided for Linux and
+Windows drivers.
+
+The input device's axes and buttons are mapped to software inputs using a
+configuration file.
 """
 
 __author__ = 'Bitcraze AB'
