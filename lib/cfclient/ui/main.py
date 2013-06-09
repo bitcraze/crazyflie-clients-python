@@ -134,8 +134,10 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.menuItemConfInputDevice.triggered.connect(self.configInputDevice)
         self.menuItemExit.triggered.connect(self.closeAppRequest)
         self.batteryUpdatedSignal.connect(self.updateBatteryVoltage)
-        self._menuitem_rescandevices.triggered.connect(self._rescan_devices)        
-        self.autoReconnectCheckBox.stateChanged.connect(self.autoReconnectChanged)
+        self._menuitem_rescandevices.triggered.connect(self._rescan_devices)     
+           
+        self.autoReconnectCheckBox.toggled.connect(self.autoReconnectChanged)
+        self.autoReconnectCheckBox.setChecked(Config().get("auto_reconnect"))
         
         # Do not queue data from the controller output to the Crazyflie wrapper
         # to avoid latency
@@ -286,8 +288,10 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.inputConfig = InputConfigDialogue(self.joystickReader)
         self.inputConfig.show()
         
-    def autoReconnectChanged(self, state):
-        self.autoReconnectEnabled = (state == Qt.Checked)       
+    def autoReconnectChanged(self, checked):
+        self.autoReconnectEnabled = checked 
+        Config().set("auto_reconnect", checked)
+        logger.info("Auto reconnect enabled: %s", checked)     
 
     def doLogConfigDialogue(self):
         self.logConfigDialogue.show()
@@ -313,7 +317,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def loggingError(self, error):
         logger.warn("logging error %s", error)
 
-    def connectionLost(self, linkURI, msg):
+    def connectionLost(self, linkURI, msg):        
         if self.autoReconnectEnabled == 0:      
             if (self.isActiveWindow()):
                 warningCaption = "Communication failure"
