@@ -208,7 +208,9 @@ class Crazyradio:
             _send_vendor_setup(self.handle, SET_CONT_CARRIER, 0, 0, ())
 
     def _has_fw_scan(self):
-        return self.version >= 0.5
+        #return self.version >= 0.5
+        # FIXME: Mitigation for Crazyradio firmware bug #9
+        return False
 
     def scan_channels(self, start, stop, packet):
         if self._has_fw_scan():  # Fast firmware-driven scann
