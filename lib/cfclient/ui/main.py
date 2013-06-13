@@ -60,6 +60,8 @@ import cflib.crtp
 from cfclient.ui.dialogs.bootloader import BootloaderDialog
 from cfclient.ui.dialogs.about import AboutDialog
 
+autoReconnectEnabled = 0
+
 (main_window_class,
 main_windows_base_class) = (uic.loadUiType(sys.path[0] +
                                            '/cfclient/ui/main.ui'))
@@ -122,6 +124,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.joystickReader.inputDeviceErrorSignal.connect(
                                                        self.inputDeviceError)
         self.joystickReader.discovery_signal.connect(self.device_discovery)
+        
         # Connect UI signals
         self.menuItemConnect.triggered.connect(self.connectButtonClicked)
         self.logConfigAction.triggered.connect(self.doLogConfigDialogue)
@@ -131,8 +134,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.menuItemConfInputDevice.triggered.connect(self.configInputDevice)
         self.menuItemExit.triggered.connect(self.closeAppRequest)
         self.batteryUpdatedSignal.connect(self.updateBatteryVoltage)
-        self._menuitem_rescandevices.triggered.connect(self._rescan_devices)
-
+        self._menuitem_rescandevices.triggered.connect(self._rescan_devices)     
+           
+        self.autoReconnectCheckBox.toggled.connect(self.autoReconnectChanged)
+        self.autoReconnectCheckBox.setChecked(Config().get("auto_reconnect"))
+        
         # Do not queue data from the controller output to the Crazyflie wrapper
         # to avoid latency
         self.joystickReader.sendControlSetpointSignal.connect(
@@ -243,7 +249,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.connectButton.setText("Disconnect")
             self.logConfigAction.setEnabled(True)
         if (newState == UIState.CONNECTING):
-            s = "Connecting to %s" % linkURI
+            s = "Connecting to %s ..." % linkURI
             self.setWindowTitle(s)
             self.menuItemConnect.setText("Cancel")
             self.connectButton.setText("Cancel")
@@ -281,6 +287,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def configInputDevice(self):
         self.inputConfig = InputConfigDialogue(self.joystickReader)
         self.inputConfig.show()
+        
+    def autoReconnectChanged(self, checked):
+        self.autoReconnectEnabled = checked 
+        Config().set("auto_reconnect", checked)
+        logger.info("Auto reconnect enabled: %s", checked)     
 
     def doLogConfigDialogue(self):
         self.logConfigDialogue.show()
@@ -306,18 +317,24 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def loggingError(self, error):
         logger.warn("logging error %s", error)
 
-    def connectionLost(self, linkURI, msg):
-        if (self.isActiveWindow()):
-            warningCaption = "Communication failure"
-            error = "Connection lost to %s: %s" % (linkURI, msg)
-            QMessageBox.critical(self, warningCaption, error)
-        self.setUIState(UIState.DISCONNECTED, linkURI)
+    def connectionLost(self, linkURI, msg):        
+        if self.autoReconnectEnabled == 0:      
+            if (self.isActiveWindow()):
+                warningCaption = "Communication failure"
+                error = "Connection lost to %s: %s" % (linkURI, msg)
+                QMessageBox.critical(self, warningCaption, error)
+                self.setUIState(UIState.DISCONNECTED, linkURI)
+        else:
+            self.quickConnect()
 
     def connectionFailed(self, linkURI, error):
-        msg = "Failed to connect on %s: %s" % (linkURI, error)
-        warningCaption = "Communication failure"
-        QMessageBox.critical(self, warningCaption, msg)
-        self.setUIState(UIState.DISCONNECTED, linkURI)
+        if self.autoReconnectEnabled == 0:
+            msg = "Failed to connect on %s: %s" % (linkURI, error)
+            warningCaption = "Communication failure"
+            QMessageBox.critical(self, warningCaption, msg)
+            self.setUIState(UIState.DISCONNECTED, linkURI)
+        else:
+            self.quickConnect()
 
     def closeEvent(self, event):
         self.hide()
