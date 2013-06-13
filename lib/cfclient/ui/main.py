@@ -60,8 +60,6 @@ import cflib.crtp
 from cfclient.ui.dialogs.bootloader import BootloaderDialog
 from cfclient.ui.dialogs.about import AboutDialog
 
-autoReconnectEnabled = 0
-
 (main_window_class,
 main_windows_base_class) = (uic.loadUiType(sys.path[0] +
                                            '/cfclient/ui/main.ui'))
@@ -134,9 +132,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.menuItemConfInputDevice.triggered.connect(self.configInputDevice)
         self.menuItemExit.triggered.connect(self.closeAppRequest)
         self.batteryUpdatedSignal.connect(self.updateBatteryVoltage)
-        self._menuitem_rescandevices.triggered.connect(self._rescan_devices)     
+        self._menuitem_rescandevices.triggered.connect(self._rescan_devices)
            
-        self.autoReconnectCheckBox.toggled.connect(self.autoReconnectChanged)
+        self._auto_reconnect_enabled = Config().get("auto_reconnect")
+        self.autoReconnectCheckBox.toggled.connect(
+                                              self._auto_reconnect_changed)
         self.autoReconnectCheckBox.setChecked(Config().get("auto_reconnect"))
         
         # Do not queue data from the controller output to the Crazyflie wrapper
@@ -288,8 +288,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.inputConfig = InputConfigDialogue(self.joystickReader)
         self.inputConfig.show()
         
-    def autoReconnectChanged(self, checked):
-        self.autoReconnectEnabled = checked 
+    def _auto_reconnect_changed(self, checked):
+        self._auto_reconnect_enabled = checked 
         Config().set("auto_reconnect", checked)
         logger.info("Auto reconnect enabled: %s", checked)     
 
@@ -317,8 +317,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def loggingError(self, error):
         logger.warn("logging error %s", error)
 
-    def connectionLost(self, linkURI, msg):        
-        if self.autoReconnectEnabled == 0:      
+    def connectionLost(self, linkURI, msg):
+        if not self._auto_reconnect_enabled:
             if (self.isActiveWindow()):
                 warningCaption = "Communication failure"
                 error = "Connection lost to %s: %s" % (linkURI, msg)
@@ -328,7 +328,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.quickConnect()
 
     def connectionFailed(self, linkURI, error):
-        if self.autoReconnectEnabled == 0:
+        if not self._auto_reconnect_enabled:
             msg = "Failed to connect on %s: %s" % (linkURI, error)
             warningCaption = "Communication failure"
             QMessageBox.critical(self, warningCaption, msg)
