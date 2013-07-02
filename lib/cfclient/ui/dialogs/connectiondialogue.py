@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,18 +15,18 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc., 51
+#  Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-Connection dialogue that will list available Crazyflies and the user can choose which to connect to.
+Dialogue that lists available Crazyflies, lets user choose which to connect to.
 """
 
 __author__ = 'Bitcraze AB'
@@ -34,14 +34,15 @@ __all__ = ['ConnectionDialogue']
 
 import sys
 
-from PyQt4 import Qt, QtCore, QtGui, uic
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.Qt import *
+from PyQt4 import QtGui, uic
+from PyQt4.QtCore import pyqtSignal, pyqtSlot, QThread
 
 import cflib.crtp
 
-connect_widget_class, connect_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/connectiondialogue.ui')
+(connect_widget_class,
+connect_widget_base_class) = (uic.loadUiType(sys.path[0] +
+                                 '/cfclient/ui/dialogs/connectiondialogue.ui'))
+
 
 class ConnectDialogue(QtGui.QWidget, connect_widget_class):
 
@@ -51,7 +52,7 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
     def __init__(self, *args):
         super(ConnectDialogue, self).__init__(*args)
         self.setupUi(self)
-        
+
         self.scanner = ScannerThread()
         self.scanner.start()
 
@@ -63,9 +64,10 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
         self.scanner.interfaceFoundSignal.connect(self.foundInterfaces)
         self.box = None
 
-        self.availableInterfaces = []
+        self.available_interfaces = []
 
     def rescan(self):
+        """Disable all buttons and scan signals from Crazyflies."""
         self.interfaceList.clear()
         self.interfaceList.addItem("Scanning...")
         self.scanButton.setEnabled(False)
@@ -74,8 +76,11 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
         self.scanner.scanSignal.emit()
 
     def foundInterfaces(self, interfaces):
+        """
+        Add found interfaces to list and enable buttons in UI.
+        """
         self.interfaceList.clear()
-        self.availableInterfaces = interfaces
+        self.available_interfaces = interfaces
         for i in interfaces:
             if (len(i[1]) > 0):
                 self.interfaceList.addItem("%s - %s" % (i[0], i[1]))
@@ -86,7 +91,8 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
         self.connectButton.setEnabled(True)
 
     def interfaceSelected(self, listItem):
-        self.requestConnectionSignal.emit(self.availableInterfaces[self.interfaceList.currentRow()][0])
+        self.requestConnectionSignal.emit(
+                self.available_interfaces[self.interfaceList.currentRow()][0])
         self.close()
 
     def openConnection(self):
@@ -97,6 +103,7 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
 
     def showEvent(self, ev):
         self.rescan()
+
 
 class ScannerThread(QThread):
 
@@ -111,5 +118,3 @@ class ScannerThread(QThread):
     @pyqtSlot()
     def scan(self):
         self.interfaceFoundSignal.emit(cflib.crtp.scan_interfaces())
-
-        

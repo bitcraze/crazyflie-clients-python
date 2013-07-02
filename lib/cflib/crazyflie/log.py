@@ -85,7 +85,7 @@ class LogEntry:
         self.blockId = LogEntry.blockIdCounter
         LogEntry.blockIdCounter += 1
         self.cf = crazyflie
-        self.period = logconf.getPeriod()/10
+        self.period = logconf.getPeriod() / 10
         self.blockCreated = False
 
     def start(self):
@@ -154,7 +154,7 @@ class LogEntry:
             unpackstring = LogTocElement.get_unpack_string_from_id(
                 v.getFetchAs())
             value = struct.unpack(unpackstring,
-                                  logData[dataIndex:dataIndex+size])[0]
+                                  logData[dataIndex:dataIndex + size])[0]
             dataIndex += size
             retData[name] = value
         self.dataReceived.call(retData)
@@ -210,8 +210,8 @@ class LogTocElement:
         """TocElement creator. Data is the binary payload of the element."""
 
         if (data):
-            strs = struct.unpack("s"*len(data[2:]), data[2:])
-            strs = ("{}"*len(strs)).format(*strs).split("\0")
+            strs = struct.unpack("s" * len(data[2:]), data[2:])
+            strs = ("{}" * len(strs)).format(*strs).split("\0")
             self.group = strs[0]
             self.name = strs[1]
 
@@ -272,7 +272,7 @@ class Log():
     def _new_packet_cb(self, packet):
         chan = packet.channel
         cmd = packet.datal[0]
-        payload = struct.pack("B"*(len(packet.datal)-1), *packet.datal[1:])
+        payload = struct.pack("B" * (len(packet.datal) - 1), *packet.datal[1:])
 
         if (chan == CHAN_SETTINGS):
             newBlockId = ord(payload[0])

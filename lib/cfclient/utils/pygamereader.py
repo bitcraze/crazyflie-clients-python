@@ -33,6 +33,7 @@ __author__ = 'Bitcraze AB'
 __all__ = ['PyGameReader']
 import pygame
 from pygame.locals import *
+import time
 
 class PyGameReader():
     """Used for reading data from input devices using the PyGame API."""

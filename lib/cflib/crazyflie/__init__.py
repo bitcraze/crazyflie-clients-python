@@ -57,7 +57,7 @@ from cflib.utils.callbacks import Caller
 
 
 class State:
-    """ Stat of the connection procedure """
+    """Stat of the connection procedure"""
     DISCONNECTED = 0
     INITIALIZED = 1
     CONNECTED = 2
@@ -65,8 +65,7 @@ class State:
 
 
 class Crazyflie():
-    """ The Crazyflie class used for access the functionality in this
-    module """
+    """The Crazyflie class"""
     # Callback callers
     disconnected = Caller()
     connectionLost = Caller()
@@ -80,14 +79,19 @@ class Crazyflie():
     state = State.DISCONNECTED
 
     def __init__(self, link=None, ro_cache=None, rw_cache=None):
-        """ Create the objects from this module and register callbacks. """
+        """
+        Create the objects from this module and register callbacks.
+
+        ro_cache -- Path to read-only cache (string)
+        rw_cache -- Path to read-write cache (string)
+        """
         self.link = link
         self._toc_cache = TocCache(ro_cache=ro_cache,
                                    rw_cache=rw_cache)
 
-        self.incomming = _IncomingPacketHandler(self)
-        self.incomming.setDaemon(True)
-        self.incomming.start()
+        self.incoming = _IncomingPacketHandler(self)
+        self.incoming.setDaemon(True)
+        self.incoming.start()
 
         self.commander = Commander(self)
         self.log = Log(self)
@@ -165,7 +169,8 @@ class Crazyflie():
         self.linkQuality.call(percentage)
 
     def _check_for_initial_packet_cb(self, data):
-        """Called when first packet arrives from Crazyflie.
+        """
+        Called when first packet arrives from Crazyflie.
 
         This is used to determine if we are connected to something that is
         answering.
@@ -208,7 +213,7 @@ class Crazyflie():
             self.connectionFailed.call(link_uri, exception_text)
 
     def close_link(self):
-        """ Close the communication link. """
+        """Close the communication link."""
         logger.info("Closing link")
         if (self.link is not None):
             self.commander.send_setpoint(0, 0, 0, 0)
@@ -219,11 +224,11 @@ class Crazyflie():
 
     def add_port_callback(self, port, cb):
         """Add a callback to cb on port"""
-        self.incomming.add_port_callback(port, cb)
+        self.incoming.add_port_callback(port, cb)
 
     def remove_port_callback(self, port, cb):
         """Remove the callback cb on port"""
-        self.incomming.remove_port_callback(port, cb)
+        self.incoming.remove_port_callback(port, cb)
 
     def _no_answer_do_retry(self, pk):
         """Resend packets that we have not gotten answers to"""
@@ -255,7 +260,8 @@ class Crazyflie():
             pass
 
     def send_packet(self, pk, expect_answer=False):
-        """Send a packet through the link interface.
+        """
+        Send a packet through the link interface.
 
         pk -- Packet to send
         expect_answer -- True if a packet from the Crazyflie is expected to

@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2013 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -23,37 +23,24 @@
 
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA  02110-1301, USA.
 
 """
-List all the available toolboxes so they can be used by the UI.
-
-Dropping a new .py file into this directory will automatically list and load
-it into the UI when it is started.
+Singleton class.
 """
 
 __author__ = 'Bitcraze AB'
-__all__ = []
-
-import os
-import glob
-import logging
-
-logger = logging.getLogger(__name__)
-
-foundToolboxes = [os.path.splitext(os.path.basename(f))[0] for f in
-                  glob.glob(os.path.dirname(__file__) +
-                            "/[A-Za-z]*Toolbox.py")]
-if len(foundToolboxes) == 0:
-    foundToolboxes = [os.path.splitext(os.path.basename(f))[0] for f in
-                      glob.glob(os.path.dirname(__file__) +
-                                "/[A-Za-z]*Toolbox.pyc")]
+__all__ = ['Singleton']
 
 
-logger.debug("Found toolboxes: %s", foundToolboxes)
+def Singleton(cls):
+    """ Class for creating singletons """
+    instances = {}
 
-toolboxes = []
-
-for tb in foundToolboxes:
-    tbModule = __import__(tb, globals(), locals(), [tb], -1)
-    toolboxes.append(getattr(tbModule, tb))
+    def getinstance():
+        """ Get the singleton instance or create it """
+        if cls not in instances:
+            instances[cls] = cls()
+        return instances[cls]
+    return getinstance

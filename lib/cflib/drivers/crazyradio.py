@@ -137,7 +137,7 @@ class Crazyradio:
         self.arc = -1
         if self.version >= 0.4:
             self.set_cont_carrier(False)
-            self.set_address((0xE7,)*5)
+            self.set_address((0xE7,) * 5)
             self.set_power(self.P_0DBM)
             self.set_arc(3)
             self.set_ard_bytes(32)
@@ -191,7 +191,7 @@ class Crazyradio:
         # 1111 - Wait 4000uS
 
         # Round down, to value representing a multiple of 250uS
-        t = int((us/250)-1)
+        t = int((us / 250) - 1)
         if (t < 0):
             t = 0
         if (t > 0xF):
@@ -208,7 +208,9 @@ class Crazyradio:
             _send_vendor_setup(self.handle, SET_CONT_CARRIER, 0, 0, ())
 
     def _has_fw_scan(self):
-        return self.version >= 0.5
+        #return self.version >= 0.5
+        # FIXME: Mitigation for Crazyradio firmware bug #9
+        return False
 
     def scan_channels(self, start, stop, packet):
         if self._has_fw_scan():  # Fast firmware-driven scann
@@ -218,7 +220,7 @@ class Crazyradio:
                                            0, 0, 64))
         else:  # Slow PC-driven scann
             result = tuple()
-            for i in range(start, stop+1):
+            for i in range(start, stop + 1):
                 self.set_channel(i)
                 status = self.send_packet(packet)
                 if status and status.ack:

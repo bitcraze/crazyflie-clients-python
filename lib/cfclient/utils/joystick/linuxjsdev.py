@@ -44,19 +44,20 @@ if platform.system() != 'Linux':
     raise ImportError("This driver works on Linux only")
 
 JS_EVENT_FMT = "@IhBB"
-JE_TIME   = 0
-JE_VALUE  = 1
-JE_TYPE   = 2
+JE_TIME = 0
+JE_VALUE = 1
+JE_TYPE = 2
 JE_NUMBER = 3
 
 
 JS_EVENT_BUTTON = 0x001
-JS_EVENT_AXIS   = 0x002
-JS_EVENT_INIT   = 0x080
+JS_EVENT_AXIS = 0x002
+JS_EVENT_INIT = 0x080
 
 #ioctls
-JSIOCGAXES    = 0x80016a11
+JSIOCGAXES = 0x80016a11
 JSIOCGBUTTONS = 0x80016a12
+
 
 class Joystick():
     """
@@ -69,11 +70,11 @@ class Joystick():
         self.axes = []
         self.jsfile = None
         self.device_id = -1
-    
+
     def available_devices(self):
         """
-        Returns a dict with device_id as key and device name as value of all the
-        detected devices.
+        Returns a dict with device_id as key and device name as value of all
+        the detected devices.
         """
         devices = {}
 
@@ -88,9 +89,8 @@ class Joystick():
         return devices
 
     def open(self, device_id):
-        """ 
-        Open the joystick device. The device_id is given by 
-        available_devices
+        """
+        Open the joystick device. The device_id is given by available_devices
         """
         if self.opened:
             raise Exception("A joystick is already opened")
@@ -99,7 +99,7 @@ class Joystick():
 
         self.jsfile = open("/dev/input/js{}".format(self.device_id), "r")
         fcntl.fcntl(self.jsfile.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
-        
+
         #Get number of axis and button
         val = ctypes.c_int()
         if fcntl.ioctl(self.jsfile.fileno(), JSIOCGAXES, val) != 0:
@@ -117,7 +117,7 @@ class Joystick():
         self.opened = True
 
     def close(self):
-        """ Open the joystick device """
+        """Open the joystick device"""
         if not self.opened:
             return
 
@@ -125,32 +125,30 @@ class Joystick():
         self.opened = False
 
     def __initvalues(self):
-        """ Read the buttons and axes initial values from the js device """
-        for _ in range(len(self.axes)+len(self.buttons)):
+        """Read the buttons and axes initial values from the js device"""
+        for _ in range(len(self.axes) + len(self.buttons)):
             data = self.jsfile.read(struct.calcsize(JS_EVENT_FMT))
             jsdata = struct.unpack(JS_EVENT_FMT, data)
             self.__updatestate(jsdata)
 
     def __updatestate(self, jsdata):
-        """ Update the internal absolute state of buttons and axes """
-        if jsdata[JE_TYPE]&JS_EVENT_AXIS != 0:
-            self.axes[jsdata[JE_NUMBER]] = jsdata[JE_VALUE]/32768.0
-        elif jsdata[JE_TYPE]&JS_EVENT_BUTTON != 0:
+        """Update the internal absolute state of buttons and axes"""
+        if jsdata[JE_TYPE] & JS_EVENT_AXIS != 0:
+            self.axes[jsdata[JE_NUMBER]] = jsdata[JE_VALUE] / 32768.0
+        elif jsdata[JE_TYPE] & JS_EVENT_BUTTON != 0:
             self.buttons[jsdata[JE_NUMBER]] = jsdata[JE_VALUE]
 
     def __decode_event(self, jsdata):
         """ Decode a jsdev event into a dict """
         #TODO: Add timestamp?
-        if jsdata[JE_TYPE]&JS_EVENT_AXIS != 0:
-            return JEvent (type = TYPE_AXIS, 
-                           number = jsdata[JE_NUMBER], 
-                           value  = jsdata[JE_VALUE]/32768.0,
-                           )
-        if jsdata[JE_TYPE]&JS_EVENT_BUTTON != 0:
-            return JEvent (type = TYPE_BUTTON, 
-                           number = jsdata[JE_NUMBER], 
-                           value  = jsdata[JE_VALUE]/32768.0,
-                           )
+        if jsdata[JE_TYPE] & JS_EVENT_AXIS != 0:
+            return JEvent(type=TYPE_AXIS,
+                          number=jsdata[JE_NUMBER],
+                          value=jsdata[JE_VALUE] / 32768.0)
+        if jsdata[JE_TYPE] & JS_EVENT_BUTTON != 0:
+            return JEvent(type=TYPE_BUTTON,
+                          number=jsdata[JE_NUMBER],
+                          value=jsdata[JE_VALUE] / 32768.0)
 
     def get_events(self):
         """ Returns a list of all joystick event since the last call """
@@ -162,7 +160,7 @@ class Joystick():
         while True:
             try:
                 data = self.jsfile.read(struct.calcsize(JS_EVENT_FMT))
-            except IOError: # Raised when there are nothing to read
+            except IOError:  # Raised when there are nothing to read
                 break
             jsdata = struct.unpack(JS_EVENT_FMT, data)
             self.__updatestate(jsdata)

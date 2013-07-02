@@ -44,8 +44,9 @@ logger = logging.getLogger(__name__)
 from .log import LogTocElement
 from .param import ParamTocElement
 
+
 class TocCache():
-    """ 
+    """
     Access to TOC cache. To turn of the cache functionality
     don't supply any directories.
     """
@@ -56,10 +57,10 @@ class TocCache():
         if (rw_cache):
             self._cache_files += glob(rw_cache + "/*.json")
             if not os.path.exists(rw_cache):
-                        os.makedirs(rw_cache)
+                os.makedirs(rw_cache)
 
         self._rw_cache = rw_cache
-            
+
     def fetch(self, crc):
         """ Try to get a hit in the cache, return None otherwise """
         cache_data = None
@@ -74,12 +75,12 @@ class TocCache():
             try:
                 cache = open(hit)
                 cache_data = json.load(cache,
-                             object_hook = self._decoder)
+                                       object_hook=self._decoder)
                 cache.close()
             except Exception as e:
-                    logger.warning("Error while parsing cache file [%s]:%s",
-                                   hit, str(e))
-        
+                logger.warning("Error while parsing cache file [%s]:%s",
+                               hit, str(e))
+
         return cache_data
 
     def insert(self, crc, toc):
@@ -88,23 +89,23 @@ class TocCache():
             try:
                 filename = "%s/%08X.json" % (self._rw_cache, crc)
                 cache = open(filename, 'w')
-                cache.write(json.dumps(toc, indent=2, 
+                cache.write(json.dumps(toc, indent=2,
                             default=self._encoder))
                 cache.close()
                 logger.info("Saved cache to [%s]", filename)
                 self._cache_files += [filename]
             except Exception as e:
-                logger.warning("Could not save cache to file [%s]: %s", 
+                logger.warning("Could not save cache to file [%s]: %s",
                                filename, str(e))
         else:
             logger.warning("Could not save cache, no writable directory")
 
     def _encoder(self, o):
         """ Encode a toc element leaf-node """
-        return {'__class__' : o.__class__.__name__,
+        return {'__class__': o.__class__.__name__,
                 'ident': o.ident,
                 'group': o.group,
-                'name' : o.name,
+                'name': o.name,
                 'ctype': o.ctype,
                 'pytype': o.pytype,
                 'access': o.access}

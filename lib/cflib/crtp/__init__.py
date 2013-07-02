@@ -26,9 +26,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA  02110-1301, USA.
 
-"""
-Scans and creates communication interfaces.
-"""
+"""Scans and creates communication interfaces."""
 
 __author__ = 'Bitcraze AB'
 __all__ = []
@@ -43,15 +41,15 @@ from .serialdriver import SerialDriver
 from .debugdriver import DebugDriver
 from .exceptions import WrongUriType
 
-drivers = [RadioDriver, SerialDriver, UdpDriver, DebugDriver]
-instances = []
+DRIVERS = [RadioDriver, SerialDriver, UdpDriver, DebugDriver]
+INSTANCES = []
 
 
 def init_drivers():
-    """ Initialize all the drivers. """
-    for d in drivers:
+    """Initialize all the drivers."""
+    for driver in DRIVERS:
         try:
-            instances.append(d())
+            INSTANCES.append(driver())
         except Exception:
             continue
 
@@ -60,22 +58,32 @@ def scan_interfaces():
     """ Scan all the interfaces for available Crazyflies """
     available = []
     found = []
-    for d in instances:
-        logger.debug("Scanning: %s", d)
+    for instance in INSTANCES:
+        logger.debug("Scanning: %s", instance)
         try:
-            found = d.scan_interface()
+            found = instance.scan_interface()
             available += found
         except Exception:
             raise
-            continue
     return available
 
 
-def get_link_driver(uri, linkQualityCallback=None, linkErrorCallback=None):
-    """ Return the link driver for the given URI """
-    for d in instances:
+def get_interfaces_status():
+    """Get the status of all the interfaces"""
+    status = {}
+    for instance in INSTANCES:
         try:
-            d.connect(uri, linkQualityCallback, linkErrorCallback)
-            return d
+            status[instance.get_name()] = instance.get_status()
+        except Exception:
+            raise
+    return status
+
+
+def get_link_driver(uri, link_quality_callback=None, link_error_callback=None):
+    """Return the link driver for the given URI"""
+    for instance in INSTANCES:
+        try:
+            instance.connect(uri, link_quality_callback, link_error_callback)
+            return instance
         except WrongUriType:
             continue

@@ -86,8 +86,8 @@ class ParamTocElement:
     def __init__(self, data=None):
         """TocElement creator. Data is the binary payload of the element."""
         if (data):
-            strs = struct.unpack("s"*len(data[2:]), data[2:])
-            strs = ("{}"*len(strs)).format(*strs).split("\0")
+            strs = struct.unpack("s" * len(data[2:]), data[2:])
+            strs = ("{}" * len(strs)).format(*strs).split("\0")
             self.group = strs[0]
             self.name = strs[1]
 

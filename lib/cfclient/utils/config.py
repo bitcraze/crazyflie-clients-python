@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -36,20 +36,12 @@ __all__ = ['Config']
 import sys
 import json
 import logging
+from .singleton import Singleton
 
 from PyQt4.QtCore import QString
 
 logger = logging.getLogger(__name__)
 
-def Singleton(cls):
-    """ Class for creating singletons """
-    instances = {}
-    def getinstance():
-        """ Get the singleton instance or create it """
-        if cls not in instances:
-            instances[cls] = cls()
-        return instances[cls]
-    return getinstance
 
 @Singleton
 class Config():
@@ -80,7 +72,7 @@ class Config():
             if (isinstance(value, QString)):
                 self._data[key] = str(value)
             else:
-                 self._data[key] = value
+                self._data[key] = value
         except KeyError:
             raise KeyError("Could not set the parameter [%s]" % key)
 
@@ -93,7 +85,7 @@ class Config():
             value = self._readonly[key]
         else:
             raise KeyError("Could not get the paramter [%s]" % key)
-        
+
         if (isinstance(value, unicode)):
             value = str(value)
 
@@ -101,7 +93,7 @@ class Config():
 
     def save_file(self):
         """ Save the user config to file """
-        json_data=open(self._config, 'w')
+        json_data = open(self._config, 'w')
         json_data.write(json.dumps(self._data, indent=2))
         json_data.close()
         logger.info("Config file saved to [%s]" % self._config)
@@ -115,5 +107,5 @@ class Config():
             logger.info("Config file read from [%s]" % self._config)
         except Exception:
             return None
-        
+
         return data

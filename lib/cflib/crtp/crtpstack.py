@@ -109,7 +109,7 @@ class CRTPPacket(object):
             if len(data) == 1:
                 self._data = struct.pack("B", data[0])
             elif len(data) > 1:
-                self._data = struct.pack("B"*len(data), *data)
+                self._data = struct.pack("B" * len(data), *data)
             else:
                 self._data = ""
         else:
@@ -119,7 +119,7 @@ class CRTPPacket(object):
         return list(self._get_data_t())
 
     def _get_data_t(self):
-        return struct.unpack("B"*len(self._data), self._data)
+        return struct.unpack("B" * len(self._data), self._data)
 
     def __str__(self):
         return "{}:{} {}".format(self._port, self.channel, self.datat)

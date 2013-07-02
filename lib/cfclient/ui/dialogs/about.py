@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -41,10 +41,20 @@ from PyQt4.Qt import *
 
 import cfclient
 
-about_widget_class, about_widget_base_class = uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/about.ui')
+import cflib.crtp
 
-debuginfo = """Cfclient version: {version}
-System: {system}"""
+(about_widget_class,
+about_widget_base_class) = (uic.loadUiType(sys.path[0] +
+                                           '/cfclient/ui/dialogs/about.ui'))
+
+debuginfo = """
+<b>Cfclient version:</b> {version}<br>
+<b>System:</b> {system}<br>
+<br>
+<b>Interface status</b><br>
+{interface_status}
+"""
+
 
 class AboutDialog(QtGui.QWidget, about_widget_class):
 
@@ -52,8 +62,15 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         super(AboutDialog, self).__init__(*args)
         self.setupUi(self)
         self._close_button.clicked.connect(self.close)
-        self._name_label.setText(self._name_label.text().replace('#version#', cfclient.VERSION))
+        self._name_label.setText(
+                             self._name_label.text().replace('#version#',
+                                                             cfclient.VERSION))
 
     def showEvent(self, ev):
-        self._debug_out.setText(debuginfo.format(version=cfclient.VERSION, 
-                                                 system=sys.platform))
+        status_text = ""
+        interface_status = cflib.crtp.get_interfaces_status()
+        for s in interface_status.keys():
+            status_text += "<b>{}</b>: {}<br>\n".format(s, interface_status[s])
+        self._debug_out.setHtml(debuginfo.format(version=cfclient.VERSION,
+                                                 system=sys.platform,
+                                                 interface_status=status_text))

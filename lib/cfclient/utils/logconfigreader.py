@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -26,21 +26,23 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-The input module that will read joysticks/input devices and send control set-points to
-the Crazyflie. It will also accept settings from the UI.
+The input module that will read joysticks/input devices and send control set-
+points to the Crazyflie. It will also accept settings from the UI.
 
-This module can use different drivers for reading the input device data. Currently it can
-just use the PyGame driver but in the future there will be a Linux and Windows driver that can
-bypass PyGame.
+This module can use different drivers for reading the input device data.
+Currently it can just use the PyGame driver but in the future there will be a
+Linux and Windows driver that can bypass PyGame.
 """
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LogVariable', 'LogConfigReader', 'LogConfig']
 
-import sys
-import json, glob, os
+import glob
+import json
 import logging
+import os
 import shutil
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -52,8 +54,9 @@ from cflib.crazyflie.log import Log, LogTocElement
 
 import traceback
 
+
 class LogConfig():
-    def __init__(self, configname, period = 0, filename = ""):
+    def __init__(self, configname, period=0, filename=""):
         self.period = period
         self.variables = []
         self.configName = configname
@@ -87,7 +90,9 @@ class LogConfig():
         return self.period
 
     def __str__(self):
-        return "LogConfig: name=%s, period=%d, variables=%d" % (self.configName, self.period, len(self.variables))
+        return ("LogConfig: name=%s, period=%d, variables=%d" %
+                (self.configName, self.period, len(self.variables)))
+
 
 class LogVariable():
     """A logging variable"""
@@ -95,7 +100,8 @@ class LogVariable():
     TOC_TYPE = 0
     MEM_TYPE = 1
 
-    def __init__(self, name = "", fetchAs = "uint8_t", varType = 0, storedAs = "", address = 0):
+    def __init__(self, name="", fetchAs="uint8_t", varType=0, storedAs="",
+                 address=0):
         self.name = name
         self.fetchAs = LogTocElement.get_id_from_cstring(fetchAs)
         if (len(storedAs) == 0):
@@ -113,12 +119,18 @@ class LogVariable():
         self.name = name
 
     def setTypes(self, storeAs, fetchAs):
-        """Set the type the variable is stored as in the Crazyflie and the type it should be fetched as."""
+        """
+        Set the type the variable is stored as in the Crazyflie and the type it
+        should be fetched as.
+        """
         self.fetchAs = fetchAs
         self.storeAs = storeAs
 
     def isTocVariable(self):
-        """Return true if the variable should be in the TOC, false if raw memory variable"""
+        """
+        Return true if the variable should be in the TOC, false if raw memory
+        variable
+        """
         return self.varType == LogVariable.TOC_TYPE
 
     def setAddress(self, addr):
@@ -158,8 +170,10 @@ class LogVariable():
         return self.fetchAndStoreageString
 
     def __str__(self):
-        return "LogVariable: name=%s, store=%s, fetch=%s" % (self.name, LogTocElement.get_cstring_from_id(self.storedAs),
-                                                             LogTocElement.get_cstring_from_id(self.fetchAs))
+        return ("LogVariable: name=%s, store=%s, fetch=%s" %
+                (self.name, LogTocElement.get_cstring_from_id(self.storedAs),
+                 LogTocElement.get_cstring_from_id(self.fetchAs)))
+
 
 class LogConfigReader():
     """Reads logging configurations from file"""
@@ -170,28 +184,38 @@ class LogConfigReader():
         if (not os.path.isdir(sys.path[1] + "/log")):
             logger.info("No user config found, copying dist files")
             os.makedirs(sys.path[1] + "/log")
-            for f in glob.glob(sys.path[0] + "/cfclient/configs/log/[A-Za-z]*.json"):
+            for f in glob.glob(sys.path[0] +
+                               "/cfclient/configs/log/[A-Za-z]*.json"):
                 shutil.copy2(f, sys.path[1] + "/log")
 
     def readConfigFiles(self):
         """Read and parse log configurations"""
-        configsfound = [ os.path.basename(f) for f in glob.glob(sys.path[1] + "/log/[A-Za-z_-]*.json")]
+        configsfound = [os.path.basename(f) for f in
+                        glob.glob(sys.path[1] + "/log/[A-Za-z_-]*.json")]
 
-        for conf in configsfound:            
+        for conf in configsfound:
             try:
                 logger.info("Parsing [%s]", conf)
-                json_data = open (sys.path[1] + "/log/%s"%conf)
+                json_data = open(sys.path[1] + "/log/%s" % conf)
                 self.data = json.load(json_data)
                 infoNode = self.data["logconfig"]["logblock"]
 
-                logConf = LogConfig(infoNode["name"], int(infoNode["period"]), conf)
-                logConf.setDataRange(int(infoNode["min"]), int(infoNode["max"]))
+                logConf = LogConfig(infoNode["name"],
+                                    int(infoNode["period"]),
+                                    conf)
+                logConf.setDataRange(int(infoNode["min"]),
+                                     int(infoNode["max"]))
                 for v in self.data["logconfig"]["logblock"]["variables"]:
-                    if (v["type"]=="TOC"):
-                        logConf.addVariable(LogVariable(str(v["name"]), v["fetch_as"], LogVariable.TOC_TYPE))
+                    if (v["type"] == "TOC"):
+                        logConf.addVariable(LogVariable(str(v["name"]),
+                                                        v["fetch_as"],
+                                                        LogVariable.TOC_TYPE))
                     else:
-                        logConf.addVariable(LogVariable("Mem", v["fetch_as"], LogVariable.MEM_TYPE, v["stored_as"],
-                                                        int(v["address"],16)))
+                        logConf.addVariable(LogVariable("Mem",
+                                                        v["fetch_as"],
+                                                        LogVariable.MEM_TYPE,
+                                                        v["stored_as"],
+                                                        int(v["address"], 16)))
                 self.dsList.append(logConf)
                 json_data.close()
             except Exception as e:
@@ -204,14 +228,14 @@ class LogConfigReader():
     def saveLogConfigFile(self, logconfig):
         """Save a log configuration to file"""
         filename = sys.path[1] + "/log/" + logconfig.getName() + ".json"
-        logger.info("Saving config for [%s]", filename) 
+        logger.info("Saving config for [%s]", filename)
 
         # Build tree for JSON
         saveConfig = {}
-        logconf = {'logblock': {'variables':[]}}
+        logconf = {'logblock': {'variables': []}}
         logconf['logblock']['name'] = logconfig.getName()
         logconf['logblock']['period'] = logconfig.getPeriod()
-		# Temporary until plot is fixed
+        # Temporary until plot is fixed
         logconf['logblock']['min'] = -180
         logconf['logblock']['max'] = 180
 
@@ -225,7 +249,6 @@ class LogConfigReader():
 
         saveConfig['logconfig'] = logconf
 
-        json_data=open(filename, 'w')
+        json_data = open(filename, 'w')
         json_data.write(json.dumps(saveConfig, indent=2))
         json_data.close()
-

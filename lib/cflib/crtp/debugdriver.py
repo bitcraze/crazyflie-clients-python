@@ -59,9 +59,9 @@ logger = logging.getLogger(__name__)
 memlogging = {0x01: {"min": 0, "max": 255, "mod": 1, "vartype": 1},
               0x02: {"min": 0, "max": 65000, "mod": 100, "vartype": 2},
               0x03: {"min": 0, "max": 100000, "mod": 1000, "vartype": 3},
-              0x04: {"min": -100, "max": 100, "mod": 1, "vartype": 4},
-              0x05: {"min": -10000, "max": 10000, "mod": 2000, "vartype": 5},
-              0x06: {"min": -50000, "max": 50000, "mod": 1000, "vartype": 6},
+              0x04: {"min":-100, "max": 100, "mod": 1, "vartype": 4},
+              0x05: {"min":-10000, "max": 10000, "mod": 2000, "vartype": 5},
+              0x06: {"min":-50000, "max": 50000, "mod": 1000, "vartype": 6},
               0x07: {"min": 0, "max": 255, "mod": 1, "vartype": 1}}
 
 
@@ -73,32 +73,32 @@ class DebugDriver (CRTPDriver):
         # Fill up the fake logging TOC with values and data
         self.fakeLogToc = []
         self.fakeLogToc.append({"varid": 0, "vartype": 5, "vargroup": "imu",
-                                "varname": "gyro_x", "min": -10000,
+                                "varname": "gyro_x", "min":-10000,
                                 "max": 10000, "mod": 1000})
         self.fakeLogToc.append({"varid": 1, "vartype": 5, "vargroup": "imu",
-                                "varname": "gyro_y", "min": -10000,
+                                "varname": "gyro_y", "min":-10000,
                                 "max": 10000, "mod": 150})
         self.fakeLogToc.append({"varid": 2, "vartype": 5, "vargroup": "imu",
-                                "varname": "gyro_z", "min": -10000,
+                                "varname": "gyro_z", "min":-10000,
                                 "max": 10000, "mod": 200})
         self.fakeLogToc.append({"varid": 3, "vartype": 5, "vargroup": "imu",
-                                "varname": "acc_x", "min": -1000,
+                                "varname": "acc_x", "min":-1000,
                                 "max": 1000, "mod": 15})
         self.fakeLogToc.append({"varid": 4, "vartype": 5, "vargroup": "imu",
-                                "varname": "acc_y", "min": -1000,
+                                "varname": "acc_y", "min":-1000,
                                 "max": 1000, "mod": 10})
         self.fakeLogToc.append({"varid": 5, "vartype": 5, "vargroup": "imu",
-                                "varname": "acc_z", "min": -1000,
+                                "varname": "acc_z", "min":-1000,
                                 "max": 1000, "mod": 20})
         self.fakeLogToc.append({"varid": 6, "vartype": 7,
                                 "vargroup": "stabilizer", "varname": "roll",
-                                "min": -90, "max": 90, "mod": 2})
+                                "min":-90, "max": 90, "mod": 2})
         self.fakeLogToc.append({"varid": 7, "vartype": 7,
                                 "vargroup": "stabilizer", "varname": "pitch",
-                                "min": -90, "max": 90, "mod": 1.5})
+                                "min":-90, "max": 90, "mod": 1.5})
         self.fakeLogToc.append({"varid": 8, "vartype": 7,
                                 "vargroup": "stabilizer", "varname": "yaw",
-                                "min": -90, "max": 90, "mod": 2.5})
+                                "min":-90, "max": 90, "mod": 2.5})
         self.fakeLogToc.append({"varid": 9, "vartype": 7, "vargroup": "pm",
                                 "varname": "vbat", "min": 3.0,
                                 "max": 4.0, "mod": 0.1})
@@ -176,11 +176,17 @@ class DebugDriver (CRTPDriver):
     def scan_interface(self):
         return [["debug://0/0", "Debugdriver for UI testing"]]
 
+    def get_status(self):
+        return "Ok"
+
+    def get_name(self):
+        return "debug"
+
     def connect(self, uri, linkQualityCallback, linkErrorCallback):
 
         if not re.search("^debug://", uri):
             raise WrongUriType("Not a debug URI")
-    
+
         self.fakeLoggingThreads = []
 
         self.queue = Queue.Queue()
@@ -268,7 +274,7 @@ class DebugDriver (CRTPDriver):
             flashStart = 1
             p.data = struct.pack('<BBHHHH', 0xFF, 0x10, pageSize, buffPages,
                                  flashPages, flashStart)
-            p.data += struct.pack('B'*12, 0xA0A1A2A3A4A5)
+            p.data += struct.pack('B' * 12, 0xA0A1A2A3A4A5)
             self.queue.put(p)
             logging.info("Bootloader: Sending info back info")
         elif (cmd == 0x14):  # Upload buffer
@@ -431,7 +437,7 @@ class DebugDriver (CRTPDriver):
 
             if (cmd == 3):
                 blockId = ord(pk.data[1])
-                period = ord(pk.data[2])*10  # Sent as multiple of 10 ms
+                period = ord(pk.data[2]) * 10  # Sent as multiple of 10 ms
                 logger.info("LOG:Starting block %d", blockId)
                 success = False
                 for fb in self.fakeLoggingThreads:
@@ -487,15 +493,14 @@ class _FakeLoggingDataThread (Thread):
         self.setName("Fakelog block=%d" % blockId)
         self.shouldQuit = False
 
-        logging.info("FakeDataLoggingThread created for blockid=%d"
-                     , blockId)
+        logging.info("FakeDataLoggingThread created for blockid=%d", blockId)
         i = 0
         while (i < len(listofvars)):
             varType = ord(listofvars[i])
             var_stored_as = (varType >> 4)
             var_fetch_as = (varType & 0xF)
             if (var_stored_as > 0):
-                addr = struct.unpack("<I", listofvars[i+1:i+5])
+                addr = struct.unpack("<I", listofvars[i + 1:i + 5])
                 logger.debug("FakeLoggingThread: We should log a memory addr"
                              " 0x%04X", addr)
                 self.fakeLoggingData.append([memlogging[var_fetch_as],
@@ -531,12 +536,12 @@ class _FakeLoggingDataThread (Thread):
 
                 p = CRTPPacket()
                 p.set_header(5, 2)
-                p.data = struct.pack('<B',  self.blockId)
+                p.data = struct.pack('<B', self.blockId)
                 p.data += struct.pack('BBB', 0, 0, 0)  # Timestamp
 
                 for d in self.fakeLoggingData:
                     # Set new value
-                    d[1] = d[1] + d[0]["mod"]*d[2]
+                    d[1] = d[1] + d[0]["mod"] * d[2]
                     # Obej the limitations
                     if (d[1] > d[0]["max"]):
                         d[1] = d[0]["max"]  # Limit value
@@ -548,7 +553,7 @@ class _FakeLoggingDataThread (Thread):
                     formatStr = LogTocElement.types[d[0]["vartype"]][1]
                     p.data += struct.pack(formatStr, d[1])
                 self.outQueue.put(p)
-            time.sleep(self.period/1000.0)  # Period in ms here
+            time.sleep(self.period / 1000.0)  # Period in ms here
 
 
 class FakeConsoleThread (Thread):
