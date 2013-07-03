@@ -41,7 +41,7 @@ class PyGameReader():
         self.inputMap = None
         pygame.init()
 
-    def startInput(self, deviceId, inputMap):
+    def start_input(self, deviceId, inputMap):
         """Initalize the reading and open the device with deviceId and set the mapping for axis/buttons using the
         inputMap"""
         self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":0.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False}
@@ -56,7 +56,6 @@ class PyGameReader():
         self.data["pitchcal"] = 0.0
         self.data["rollcal"] = 0.0
         for e in pygame.event.get():
-
           if e.type == pygame.locals.JOYAXISMOTION:
             index = "Input.AXIS-%d" % e.axis 
             try:

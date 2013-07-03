@@ -89,6 +89,9 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     disconnectedSignal = pyqtSignal(str)
     linkQualitySignal = pyqtSignal(int)
 
+    _input_device_error_signal = pyqtSignal(str)
+    _input_discovery_signal = pyqtSignal(object)
+
     def __init__(self, *args):
         super(MainUI, self).__init__(*args)
         self.setupUi(self)
@@ -119,10 +122,15 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.connectionDoneSignal.connect(self.connectionDone)
         self.cf.connectionFailed.add_callback(self.connectionFailedSignal.emit)
         self.connectionFailedSignal.connect(self.connectionFailed)
-        self.joystickReader.inputDeviceErrorSignal.connect(
-                                                       self.inputDeviceError)
-        self.joystickReader.discovery_signal.connect(self.device_discovery)
         
+        
+        self._input_device_error_signal.connect(self.inputDeviceError)
+        self.joystickReader.device_error.add_callback(
+                        self._input_device_error_signal.emit)
+        self._input_discovery_signal.connect(self.device_discovery)
+        self.joystickReader.device_discovery.add_callback(
+                        self._input_discovery_signal.emit)
+
         # Connect UI signals
         self.menuItemConnect.triggered.connect(self.connectButtonClicked)
         self.logConfigAction.triggered.connect(self.doLogConfigDialogue)
@@ -141,9 +149,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         
         # Do not queue data from the controller output to the Crazyflie wrapper
         # to avoid latency
-        self.joystickReader.sendControlSetpointSignal.connect(
-                                              self.cf.commander.send_setpoint,
-                                              Qt.DirectConnection)
+        #self.joystickReader.sendControlSetpointSignal.connect(
+        #                                      self.cf.commander.send_setpoint,
+        #                                      Qt.DirectConnection)
+        self.joystickReader.input_updated.add_callback(
+                                         self.cf.commander.send_setpoint)
 
         # Connection callbacks and signal wrappers for UI protection
         self.cf.connectSetupFinished.add_callback(
@@ -277,7 +287,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._statusbar_label.setText("No inputdevice connected!")
         self._menu_devices.clear()
         self._active_device = ""
-        self.joystickReader.stopInput()
+        self.joystickReader.stop_input()
         for c in self._menu_mappings.actions():
             c.setEnabled(False)
         devs = self.joystickReader.getAvailableDevices()
@@ -355,8 +365,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         QMessageBox.critical(self, "Input device error", error)
 
     def _load_input_data(self):
-        if self.joystickReader.isRunning():
-            self.joystickReader.stopInput()
+        self.joystickReader.stop_input()
         # Populate combo box with available input device configurations
         for c in ConfigManager().get_list_of_configs():
             node = QAction(c,
@@ -366,8 +375,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             node.toggled.connect(self._inputconfig_selected)
             self.configGroup.addAction(node)
             self._menu_mappings.addAction(node)
-
-        self.joystickReader.start()
 
     def _reload_configs(self, newConfigName):
         # remove the old actions from the group and the menu
@@ -381,7 +388,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._update_input(self._active_device, newConfigName)
 
     def _update_input(self, device="", config=""):
-        self.joystickReader.stopInput()
+        self.joystickReader.stop_input()
         self._active_config = str(config)
         self._active_device = str(device)
 
@@ -389,7 +396,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         Config().get(
                      "device_config_mapping"
                      )[self._active_device] = self._active_config
-        self.joystickReader.startInput(self._active_device,
+        self.joystickReader.start_input(self._active_device,
                                        self._active_config)
 
         # update the checked state of the menu items
@@ -417,7 +424,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def _inputdevice_selected(self, checked):
         if (not checked):
             return
-        self.joystickReader.stopInput()
+        self.joystickReader.stop_input()
         sender = self.sender()
         self._active_device = sender.text()
         device_config_mapping = Config().get("device_config_mapping")
@@ -432,8 +439,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             if (c.text() == self._current_input_config):
                 c.setChecked(True)
 
-        self.joystickReader.startInput(str(sender.text()),
-                                       self._current_input_config)
+        self.joystickReader.start_input(str(sender.text()),
+                                        self._current_input_config)
         self._statusbar_label.setText("Using [%s] with config [%s]" % (
                                       self._active_device,
                                       self._current_input_config))

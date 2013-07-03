@@ -22,7 +22,8 @@
 
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA  02110-1301, USA.
 
 """
 Headless client for the Crazyflie.
@@ -33,8 +34,6 @@ import os
 import logging
 import signal
 
-from PyQt4.Qt import *
-from PyQt4.QtCore import QCoreApplication
 import cflib.crtp
 from cflib.crazyflie import Crazyflie
 import cfclient.utils
@@ -51,90 +50,101 @@ if os.name == 'posix':
 #   so it doesn't need a windowing system.
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-class HeadlessClient(QCoreApplication):
-    def __init__(self, argv, link_uri, input_config, input_device=0, list_controllers=False):
-        super(HeadlessClient, self).__init__(argv)
+class HeadlessClient():
+    """Crazyflie headless client"""
 
-        self._input_config = input_config
-        self._input_device = input_device
-        self._list_controllers = list_controllers
-
-        # Init the CRTP drivers
+    def __init__(self):
+        """Initialize the headless client and libraries"""
         cflib.crtp.init_drivers()
 
-        # Open up the input-device
-        self._jr = JoystickReader()
-        self._jr.start()
+        self._jr = JoystickReader(do_device_discovery=False)
 
-        # Connect the Crazyflie
         self._cf = Crazyflie(ro_cache=sys.path[0]+"/cflib/cache",
                              rw_cache=sys.path[1]+"/cache")
-        self._cf.open_link(link_uri)
 
-        # For now ignore the connection procedure and
-        # all callbacks...it not needed for just sending
-        # setpoint commands.
-        
+        signal.signal(signal.SIGINT, signal.SIG_DFL) 
+
+    def setup_controller(self, input_config, input_device=0):
+        """Set up the device reader""" 
         # Set values for input from config (advanced)
-        self._jr.updateMinMaxThrustSignal.emit(
+        self._jr.set_thrust_limits(
             self._p2t(Config().get("min_thrust")),
             self._p2t(Config().get("max_thrust")))
-        self._jr.updateMaxRPAngleSignal.emit(
-            Config().get("max_rp"))
-        self._jr.updateMaxYawRateSignal.emit(
-            Config().get("max_yaw"))
-        self._jr.updateThrustLoweringSlewrateSignal.emit(
+        self._jr.set_rp_limit(Config().get("max_rp"))
+        self._jr.set_yaw_limit(Config().get("max_yaw"))
+        self._jr.set_thrust_slew_limiting(
             self._p2t(Config().get("slew_rate")),
             self._p2t(Config().get("slew_limit")))
 
         # Set up the joystick reader
-        self._jr.sendControlSetpointSignal.connect(self._cf.commander.send_setpoint, Qt.DirectConnection)
-        self._jr.inputDeviceErrorSignal.connect(self._input_dev_error)
-        #self._jr.inputUpdateSignal.connect(self._j_print)
-        self._jr.discovery_signal.connect(self._print_discovery)
+        self._jr.device_error.add_callback(self._input_dev_error)
 
-    def _j_print(self, roll, pitch, yaw, thrust):
-        print "%f,%f,%f,%f" % (roll, pitch, yaw, thrust)
+        devs = self._jr.getAvailableDevices()
+        print "Will use [%s] for input" % devs[input_device]["name"]
+        self._jr.start_input(devs[input_device]["name"],
+                             input_config)
 
-    def _print_discovery(self, devs):
-        for d in devs:
-            print "Found controller #%i: %s" % (d["id"], d["name"])
-        if self._list_controllers:
-            self.exit(0)
-        else:
-            print "Will use [%s] for input" % devs[self._input_device]["name"]
-            self._jr.startInput(devs[self._input_device]["name"], self._input_config)
+    def list_controllers(self):
+        """List the available controllers"""
+        for dev in self._jr.getAvailableDevices():
+            print "Controller #{}: {}".format(dev["id"], dev["name"])
 
-    def _input_dev_error(self, m):
-        print m
-        self.exit(-1)
+    def connect_crazyflie(self, link_uri):
+        """Connect to a Crazyflie on the given link uri"""
+        self._cf.connectionFailed.add_callback(self._connection_failed)
+        self._cf.open_link(link_uri)
+        self._jr.input_updated.add_callback(self._cf.commander.send_setpoint)
+
+    def _connection_failed(self, link, message):
+        """Callback for a failed Crazyflie connection"""
+        print "Connection failed on {}: {}".format(link, message)
+        self._jr.stop_input()
+        sys.exit(-1)
+
+    def _input_dev_error(self, message):
+        """Callback for an input device error"""
+        print "Error when reading device: {}".format(message)
+        sys.exit(-1)
 
     def _p2t(self, percentage):
+        """Convert a percentage to raw thrust"""
         return int(65000 * (percentage / 100.0))
 
 def main():
+    """Main Crazyflie headless application"""
     import argparse
 
     parser = argparse.ArgumentParser(prog="cfheadless")
-    parser.add_argument("-u", "--uri", action="store", dest="uri", type=str, default="radio://0/10/250K",
-                        help="URI to use for connection to the Crazyradio dongle, defaults to radio://0/10/250K")
-    parser.add_argument("-i", "--input", action="store", dest="input", type=str, default="PS3_Mode_1",
-                        help="Input mapping to use for the controller, defaults to PS3_Mode_1")
+    parser.add_argument("-u", "--uri", action="store", dest="uri", type=str,
+                        default="radio://0/10/250K",
+                        help="URI to use for connection to the Crazyradio"
+                             " dongle, defaults to radio://0/10/250K")
+    parser.add_argument("-i", "--input", action="store", dest="input",
+                        type=str, default="PS3_Mode_1",
+                        help="Input mapping to use for the controller,"
+                             "defaults to PS3_Mode_1")
     parser.add_argument("-d", "--debug", action="store_true", dest="debug",
                         help="Enable debug output")
-    parser.add_argument("-c", "--controller", action="store", type=int, dest="controller", default=0,
-                        help="Use controller with specified id, id defaults to 0")
-    parser.add_argument("--controllers", action="store_true", dest="list_controllers",
+    parser.add_argument("-c", "--controller", action="store", type=int,
+                        dest="controller", default=0,
+                        help="Use controller with specified id,"
+                             " id defaults to 0")
+    parser.add_argument("--controllers", action="store_true",
+                        dest="list_controllers",
                         help="Only display available controllers and exit")
-    (args, remaining_args) = parser.parse_known_args()
+    (args, unused) = parser.parse_known_args()
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
 
+    headless = HeadlessClient()
 
-    app = HeadlessClient(remaining_args, link_uri=args.uri,
-                         input_config=args.input, input_device=args.controller,
-                         list_controllers=args.list_controllers)
-    sys.exit(app.exec_())
+    if (args.list_controllers):
+        headless.list_controllers()
+    else:
+        headless.setup_controller(input_config=args.input,
+                                  input_device=args.controller)
+        headless.connect_crazyflie(link_uri=args.uri)
+

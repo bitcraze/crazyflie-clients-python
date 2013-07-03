@@ -66,6 +66,10 @@ class FlightTab(Tab, flight_tab_class):
     _motor_data_signal = pyqtSignal(object)
     _imu_data_signal = pyqtSignal(object)
 
+    _input_updated_signal = pyqtSignal(float, float, float, float)
+    _rp_trim_updated_signal = pyqtSignal(float, float)
+    _emergency_stop_updated_signal = pyqtSignal(bool)
+
     UI_DATA_UPDATE_FPS = 10
 
     connectionFinishedSignal = pyqtSignal(str)
@@ -85,14 +89,18 @@ class FlightTab(Tab, flight_tab_class):
         self.connectionFinishedSignal.connect(self.connected)
         # Incomming signals
         self.helper.cf.connectSetupFinished.add_callback(
-                                         self.connectionFinishedSignal.emit)
+                                     self.connectionFinishedSignal.emit)
         self.helper.cf.disconnected.add_callback(self.disconnectedSignal.emit)
-        self.helper.inputDeviceReader.inputUpdateSignal.connect(
-                                                    self.updateInputControl)
-        self.helper.inputDeviceReader.calUpdateSignal.connect(
-                                                      self.calUpdateFromInput)
-        self.helper.inputDeviceReader.emergencyStopSignal.connect(
-                                                      self.updateEmergencyStop)
+
+        self._input_updated_signal.connect(self.updateInputControl)
+        self.helper.inputDeviceReader.input_updated.add_callback(
+                                     self._input_updated_signal.emit)
+        self._rp_trim_updated_signal.connect(self.calUpdateFromInput)
+        self.helper.inputDeviceReader.rp_trim_updated.add_callback(
+                                     self._rp_trim_updated_signal)
+        self._emergency_stop_updated_signal.connect(self.updateEmergencyStop)
+        self.helper.inputDeviceReader.emergency_stop_updated.add_callback(
+                                     self._emergency_stop_updated_signal.emit)
 
         self._imu_data_signal.connect(self._imu_data_received)
         self._motor_data_signal.connect(self._motor_data_received)
@@ -221,7 +229,7 @@ class FlightTab(Tab, flight_tab_class):
         self.actualThrust.setText("")
 
     def minMaxThrustChanged(self):
-        self.helper.inputDeviceReader.updateMinMaxThrustSignal.emit(
+        self.helper.inputDeviceReader.set_thrust_limits(
                             self.percentageToThrust(self.minThrust.value()),
                             self.percentageToThrust(self.maxThrust.value()))
         if (self.isInCrazyFlightmode == True):
@@ -229,7 +237,7 @@ class FlightTab(Tab, flight_tab_class):
             Config().set("max_thrust", self.maxThrust.value())
 
     def thrustLoweringSlewRateLimitChanged(self):
-        self.helper.inputDeviceReader.updateThrustLoweringSlewrateSignal.emit(
+        self.helper.inputDeviceReader.set_thrust_slew_limiting(
             self.percentageToThrust(self.thrustLoweringSlewRateLimit.value()),
                                     self.percentageToThrust(
                                                 self.slewEnableLimit.value()))
@@ -239,26 +247,24 @@ class FlightTab(Tab, flight_tab_class):
 
     def maxYawRateChanged(self):
         logger.debug("MaxYawrate changed to %d", self.maxYawRate.value())
-        self.helper.inputDeviceReader.updateMaxYawRateSignal.emit(
-                                                      self.maxYawRate.value())
+        self.helper.inputDeviceReader.set_yaw_limit(self.maxYawRate.value())
         if (self.isInCrazyFlightmode == True):
             Config().set("max_yaw", self.maxYawRate.value())
 
     def maxAngleChanged(self):
         logger.debug("MaxAngle changed to %d", self.maxAngle.value())
-        self.helper.inputDeviceReader.updateMaxRPAngleSignal.emit(
-                                                      self.maxAngle.value())
+        self.helper.inputDeviceReader.set_rp_limit(self.maxAngle.value())
         if (self.isInCrazyFlightmode == True):
             Config().set("max_rp", self.maxAngle.value())
 
     def _trim_pitch_changed(self, value):
         logger.debug("Pitch trim updated to [%f]" % value)
-        self.helper.inputDeviceReader.update_trim_pitch_signal.emit(value)
+        self.helper.inputDeviceReader.set_trim_pitch(value)
         Config().set("trim_pitch", value)
 
     def _trim_roll_changed(self, value):
         logger.debug("Roll trim updated to [%f]" % value)
-        self.helper.inputDeviceReader.update_trim_roll_signal.emit(value)
+        self.helper.inputDeviceReader.set_trim_roll(value)
         Config().set("trim_roll", value)
 
     def calUpdateFromInput(self, rollCal, pitchCal):
