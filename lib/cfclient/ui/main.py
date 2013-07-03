@@ -47,7 +47,7 @@ from cflib.crazyflie import Crazyflie
 from dialogs.logconfigdialogue import LogConfigDialogue
 
 from cfclient.utils.input import JoystickReader
-from cfclient.utils.config import Config
+from cfclient.utils.guiconfig import GuiConfig
 from cfclient.utils.logconfigreader import (LogConfigReader,
                                             LogVariable,
                                             LogConfig)
@@ -96,7 +96,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         super(MainUI, self).__init__(*args)
         self.setupUi(self)
 
-        self.cfg = Config()
         self.cf = Crazyflie(ro_cache=sys.path[0] + "/cflib/cache",
                             rw_cache=sys.path[1] + "/cache")
 
@@ -142,10 +141,10 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.batteryUpdatedSignal.connect(self.updateBatteryVoltage)
         self._menuitem_rescandevices.triggered.connect(self._rescan_devices)
            
-        self._auto_reconnect_enabled = Config().get("auto_reconnect")
+        self._auto_reconnect_enabled = GuiConfig().get("auto_reconnect")
         self.autoReconnectCheckBox.toggled.connect(
                                               self._auto_reconnect_changed)
-        self.autoReconnectCheckBox.setChecked(Config().get("auto_reconnect"))
+        self.autoReconnectCheckBox.setChecked(GuiConfig().get("auto_reconnect"))
         
         # Do not queue data from the controller output to the Crazyflie wrapper
         # to avoid latency
@@ -231,7 +230,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         # First instantiate all tabs and then open them in the correct order
         try:
-            for tName in Config().get("open_tabs").split(","):
+            for tName in GuiConfig().get("open_tabs").split(","):
                 t = tabItems[tName]
                 if (t != None):
                     # Toggle though menu so it's also marked as open there
@@ -250,7 +249,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.linkQualityBar.setValue(0)
             self.menuItemBootloader.setEnabled(True)
             self.logConfigAction.setEnabled(False)
-            if (len(Config().get("link_uri")) > 0):
+            if (len(GuiConfig().get("link_uri")) > 0):
                 self.quickConnectButton.setEnabled(True)
         if (newState == UIState.CONNECTED):
             s = "Connected on %s" % linkURI
@@ -300,7 +299,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         
     def _auto_reconnect_changed(self, checked):
         self._auto_reconnect_enabled = checked 
-        Config().set("auto_reconnect", checked)
+        GuiConfig().set("auto_reconnect", checked)
         logger.info("Auto reconnect enabled: %s", checked)     
 
     def doLogConfigDialogue(self):
@@ -312,7 +311,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def connectionDone(self, linkURI):
         self.setUIState(UIState.CONNECTED, linkURI)
 
-        Config().set("link_uri", linkURI)
+        GuiConfig().set("link_uri", linkURI)
 
         lg = LogConfig("Battery", 1000)
         lg.addVariable(LogVariable("pm.vbat", "float"))
@@ -349,7 +348,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def closeEvent(self, event):
         self.hide()
         self.cf.close_link()
-        Config().save_file()
+        GuiConfig().save_file()
 
     def connectButtonClicked(self):
         if (self.uiState == UIState.CONNECTED):
@@ -392,8 +391,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._active_config = str(config)
         self._active_device = str(device)
 
-        Config().set("input_device", self._active_device)
-        Config().get(
+        GuiConfig().set("input_device", self._active_device)
+        GuiConfig().get(
                      "device_config_mapping"
                      )[self._active_device] = self._active_config
         self.joystickReader.start_input(self._active_device,
@@ -427,13 +426,13 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.joystickReader.stop_input()
         sender = self.sender()
         self._active_device = sender.text()
-        device_config_mapping = Config().get("device_config_mapping")
+        device_config_mapping = GuiConfig().get("device_config_mapping")
         if (self._active_device in device_config_mapping.keys()):
             self._current_input_config = device_config_mapping[
                 str(self._active_device)]
         else:
             self._current_input_config = self._menu_mappings.actions()[0].text()
-        Config().set("input_device", str(self._active_device))
+        GuiConfig().set("input_device", str(self._active_device))
 
         for c in self._menu_mappings.actions():
             if (c.text() == self._current_input_config):
@@ -458,12 +457,12 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             node.toggled.connect(self._inputdevice_selected)
             group.addAction(node)
             self._menu_devices.addAction(node)
-            if (d["name"] == Config().get("input_device")):
+            if (d["name"] == GuiConfig().get("input_device")):
                 self._active_device = d["name"]
         if (len(self._active_device) == 0):
             self._active_device = self._menu_devices.actions()[0].text()
 
-        device_config_mapping = Config().get("device_config_mapping")
+        device_config_mapping = GuiConfig().get("device_config_mapping")
         if (device_config_mapping):
             if (self._active_device in device_config_mapping.keys()):
                 self._current_input_config = device_config_mapping[
@@ -486,7 +485,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
     def quickConnect(self):
         try:
-            self.cf.open_link(Config().get("link_uri"))
+            self.cf.open_link(GuiConfig().get("link_uri"))
         except KeyError:
             self.cf.open_link("")
 
