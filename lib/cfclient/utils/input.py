@@ -43,88 +43,31 @@ __author__ = 'Bitcraze AB'
 __all__ = ['JoystickReader']
 
 import sys
-import time
 import os
 import glob
 import traceback
 import logging
 import shutil
-import copy
 
 logger = logging.getLogger(__name__)
 
-from pygamereader import PyGameReader
+from cfclient.utils.pygamereader import PyGameReader
 from cfclient.utils.config import Config
 from cfclient.utils.config_manager import ConfigManager
 
-from PyQt4 import Qt, QtCore, QtGui, uic
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.Qt import *
+from cfclient.utils.periodictimer import PeriodicTimer
+from cflib.utils.callbacks import Caller
 
-
-class JoystickReader(QThread):
+class JoystickReader:
     """
     Thread that will read input from devices/joysticks and send control-set
     ponts to the Crazyflie
     """
-    PITCH_AXIS_ID = 0
-    ROLL_AXIS_ID = 1
-    YAW_AXIS_ID = 2
-    THRUST_AXIS_ID = 3
-
-    # Incomming signal to start input capture
-    startInputSignal = pyqtSignal(str, str)
-    # Incomming signal to stop input capture
-    stopInputSignal = pyqtSignal()
-    # Incomming signal to set min/max thrust
-    updateMinMaxThrustSignal = pyqtSignal(int, int)
-    # Incomming signal to set roll/pitch calibration
-    update_trim_roll_signal = pyqtSignal(float)
-    update_trim_pitch_signal = pyqtSignal(float)
-    # Incomming signal to set max roll/pitch angle
-    updateMaxRPAngleSignal = pyqtSignal(int)
-    # Incomming signal to set max yaw rate
-    updateMaxYawRateSignal = pyqtSignal(int)
-    # Incomming signal to set thrust lowering slew rate limiting
-    updateThrustLoweringSlewrateSignal = pyqtSignal(int, int)
-
-    # Configure the aixs: Axis id, joystick axis id and inverse or not
-    updateAxisConfigSignal = pyqtSignal(int, int, float)
-    # Start detection of variation for joystick axis
-    detectAxisVarSignal = pyqtSignal()
-
-    # Outgoing signal for device found
-    inputUpdateSignal = pyqtSignal(float, float, float, float)
-    # Outgoing signal for when pitch/roll calibration has been updated
-    calUpdateSignal = pyqtSignal(float, float)
-    # Outgoing signal for emergency stop
-    emergencyStopSignal = pyqtSignal(bool)
-
-    inputDeviceErrorSignal = pyqtSignal('QString')
-
-    sendControlSetpointSignal = pyqtSignal(float, float, float, int)
-
-    discovery_signal = pyqtSignal(object)
-
     inputConfig = []
 
-    def __init__(self):
-        QThread.__init__(self)
-        # self.moveToThread(self)
-
+    def __init__(self, do_device_discovery=True):
         # TODO: Should be OS dependant
         self.inputdevice = PyGameReader()
-
-        self.startInputSignal.connect(self.startInput)
-        self.stopInputSignal.connect(self.stopInput)
-        self.updateMinMaxThrustSignal.connect(self.updateMinMaxThrust)
-        self.update_trim_roll_signal.connect(self._update_trim_roll)
-        self.update_trim_pitch_signal.connect(self._update_trim_pitch)
-        self.updateMaxRPAngleSignal.connect(self.updateMaxRPAngle)
-        self.updateThrustLoweringSlewrateSignal.connect(
-                                            self.updateThrustLoweringSlewrate)
-        self.updateMaxYawRateSignal.connect(self.updateMaxYawRate)
 
         self.maxRPAngle = 0
         self.thrustDownSlew = 0
@@ -140,15 +83,11 @@ class JoystickReader(QThread):
         self._trim_pitch = Config().get("trim_pitch")
 
         # TODO: The polling interval should be set from config file
-        self.readTimer = QTimer()
-        self.readTimer.setInterval(10)
-        self.connect(self.readTimer, SIGNAL("timeout()"), self.readInput)
+        self.readTimer = PeriodicTimer(0.01, self.readInput)
 
-        self._discovery_timer = QTimer()
-        self._discovery_timer.setInterval(1000)
-        self.connect(self._discovery_timer, SIGNAL("timeout()"),
-                     self._do_device_discovery)
-        self._discovery_timer.start()
+        if do_device_discovery:
+            self._discovery_timer = PeriodicTimer(1.0, self._do_device_discovery)
+            self._discovery_timer.start()
 
         self._available_devices = {}
 
@@ -160,11 +99,19 @@ class JoystickReader(QThread):
                                "/cfclient/configs/input/[A-Za-z]*.json"):
                 shutil.copy2(f, ConfigManager().configs_dir)
 
+        ConfigManager().get_list_of_configs()
+
+        self.input_updated = Caller()
+        self.rp_trim_updated = Caller()
+        self.emergency_stop_updated = Caller()
+        self.device_discovery = Caller()
+        self.device_error = Caller()
+
     def _do_device_discovery(self):
         devs = self.getAvailableDevices()
 
         if len(devs):
-            self.discovery_signal.emit(devs)
+            self.device_discovery.call(devs)
             self._discovery_timer.stop()
 
     def getAvailableDevices(self):
@@ -192,46 +139,35 @@ class JoystickReader(QThread):
         """ Read raw values from the input device."""
         return self.inputdevice.readRawValues()
 
-    # Fix for Ubuntu... doing self.moveToThread will not work without this
-    # since it seems that the default implementation of run will not call exec_
-    # to process events.
-    def run(self):
-        self.exec_()
-
-    @pyqtSlot(str, str)
-    def startInput(self, device_name, config_name):
+    def start_input(self, device_name, config_name):
         """
         Start reading input from the device with name device_name using config
         config_name
         """
         try:
             device_id = self._available_devices[device_name]
-            self.inputdevice.startInput(
+            self.inputdevice.start_input(
                                     device_id,
                                     ConfigManager().get_config(config_name))
             self.readTimer.start()
         except Exception:
-            self.inputDeviceErrorSignal.emit(
+            self.device_error.call(
                      "Error while opening/initializing  input device\n\n%s" %
                      (traceback.format_exc()))
 
-    @pyqtSlot()
-    def stopInput(self):
+    def stop_input(self):
         """Stop reading from the input device."""
         self.readTimer.stop()
 
-    @pyqtSlot(int)
-    def updateMaxYawRate(self, maxRate):
+    def set_yaw_limit(self, maxRate):
         """Set a new max yaw rate value."""
         self.maxYawRate = maxRate
 
-    @pyqtSlot(int)
-    def updateMaxRPAngle(self, maxAngle):
+    def set_rp_limit(self, maxAngle):
         """Set a new max roll/pitch value."""
         self.maxRPAngle = maxAngle
 
-    @pyqtSlot(int, int)
-    def updateThrustLoweringSlewrate(self, thrustDownSlew, slewLimit):
+    def set_thrust_slew_limiting(self, thrustDownSlew, slewLimit):
         """Set new values for limit where the slewrate control kicks in and
         for the slewrate."""
         self.thrustDownSlew = thrustDownSlew
@@ -241,27 +177,19 @@ class JoystickReader(QThread):
         else:
             self.thrustSlewEnabled = False
 
-    def setCrazyflie(self, cf):
-        """Set the referance for the Crazyflie"""
-        self.cf = cf
-
-    @pyqtSlot(int, int)
-    def updateMinMaxThrust(self, minThrust, maxThrust):
+    def set_thrust_limits(self, minThrust, maxThrust):
         """Set a new min/max thrust limit."""
         self.minThrust = minThrust
         self.maxThrust = maxThrust
 
-    @pyqtSlot(float)
     def _update_trim_roll(self, trim_roll):
         """Set a new value for the roll trim."""
         self._trim_roll = trim_roll
 
-    @pyqtSlot(float)
     def _update_trim_pitch(self, trim_pitch):
         """Set a new value for the trim trim."""
         self._trim_pitch = trim_pitch
 
-    @pyqtSlot()
     def readInput(self):
         """Read input data from the selected device"""
         try:
@@ -277,7 +205,7 @@ class JoystickReader(QThread):
 
             if self.emergencyStop != emergency_stop:
                 self.emergencyStop = emergency_stop
-                self.emergencyStopSignal.emit(self.emergencyStop)
+                self.emergency_stop_updated.call(self.emergencyStop)
 
             # Thust limiting (slew, minimum and emergency stop)
             if raw_thrust < 0.05 or emergency_stop:
@@ -309,17 +237,15 @@ class JoystickReader(QThread):
             if trim_roll != 0 or trim_pitch != 0:
                 self._trim_roll += trim_roll
                 self._trim_pitch += trim_pitch
-                self.calUpdateSignal.emit(self._trim_roll, self._trim_pitch)
+                self.rp_trim_updated.call(self._trim_roll, self._trim_pitch)
 
-            self.inputUpdateSignal.emit(roll, pitch, yaw, thrust)
-            trimmed_rol = roll + self._trim_roll
+            trimmed_roll = roll + self._trim_roll
             trimmed_pitch = pitch + self._trim_pitch
-            self.sendControlSetpointSignal.emit(trimmed_rol, trimmed_pitch,
-                                                yaw, thrust)
+            self.input_updated.call(trimmed_roll, trimmed_pitch, yaw, thrust)
         except Exception:
             logger.warning("Exception while reading inputdevice: %s",
                            traceback.format_exc())
-            self.inputDeviceErrorSignal.emit(
+            self.device_error.call(
                                      "Error reading from input device\n\n%s" %
                                      traceback.format_exc())
             self.readTimer.stop()

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __
-#  +------+      / __ )(_) /_______________ _____  ___
+#     ||          ____  _ __                           
+#  +------+      / __ )(_) /_______________ _____  ___ 
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#
+#  
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -26,46 +26,28 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-Driver for reading data from the PyGame API. Used from Inpyt.py for reading
-input data.
+Driver for reading data from the PyGame API. Used from Inpyt.py for reading input data.
 """
 
 __author__ = 'Bitcraze AB'
 __all__ = ['PyGameReader']
 import pygame
-from time import time
-
+from pygame.locals import *
+import time
 
 class PyGameReader():
     """Used for reading data from input devices using the PyGame API."""
     def __init__(self):
         self.inputMap = None
         pygame.init()
-        self._ts_last_event = None
-        self._first_time_opened = True
-        self._current_device_id = -1
-        self._device_count = 0
 
-    def startInput(self, deviceId, inputMap):
-        """
-        Initalize the reading and open the device with deviceId and set the
-        mapping for axis/buttons using the inputMap
-        """
-        self.data = {"roll": 0.0, "pitch": 0.0, "yaw": 0.0, "thrust": 0.0,
-                     "pitchcal": 0.0, "rollcal": 0.0,
-                     "estop": False, "exit": False}
+    def start_input(self, deviceId, inputMap):
+        """Initalize the reading and open the device with deviceId and set the mapping for axis/buttons using the
+        inputMap"""
+        self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":0.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False}
         self.inputMap = inputMap
         self.j = pygame.joystick.Joystick(deviceId)
         self.j.init()
-        self._current_device_id = deviceId
-        self._ts_last_event = time()
-        self._first_time_opened = True
-
-    def _zero_output(self):
-        self.data["roll"] = 0.0
-        self.data["pitch"] = 0.0
-        self.data["yaw"] = 0.0
-        self.data["thrust"] = 0.0
 
     def readInput(self):
         """Read input from the selected device."""
@@ -73,61 +55,35 @@ class PyGameReader():
         # save this value.
         self.data["pitchcal"] = 0.0
         self.data["rollcal"] = 0.0
-        found_events = False
-
         for e in pygame.event.get():
-            found_events = True
-            if e.type == pygame.locals.JOYAXISMOTION:
-                index = "Input.AXIS-%d" % e.axis
-                try:
-                    if self.inputMap[index]["type"] == "Input.AXIS":
-                        key = self.inputMap[index]["key"]
-                        axisvalue = self.j.get_axis(e.axis)
-                        # All axis are in the range [-a,+a]
-                        axisvalue = axisvalue * self.inputMap[index]["scale"]
-                        # The value is now in the correct direction and in the
-                        # range [-1,1]
-                        self.data[key] = axisvalue
-                except Exception:
-                    # Axis not mapped, ignore..
-                    pass
+          if e.type == pygame.locals.JOYAXISMOTION:
+            index = "Input.AXIS-%d" % e.axis 
+            try:
+                if (self.inputMap[index]["type"] == "Input.AXIS"):
+                    key = self.inputMap[index]["key"]
+                    axisvalue = self.j.get_axis(e.axis)
+                    # All axis are in the range [-a,+a]
+                    axisvalue = axisvalue * self.inputMap[index]["scale"]
+                    # The value is now in the correct direction and in the range [-1,1]
+                    self.data[key] = axisvalue
+            except Exception:
+                # Axis not mapped, ignore..
+                pass          
 
-            if e.type == pygame.locals.JOYBUTTONDOWN:
-                index = "Input.BUTTON-%d" % e.button
-                try:
-                    if self.inputMap[index]["type"] == "Input.BUTTON":
-                        key = self.inputMap[index]["key"]
-                        if key == "estop":
-                            self.data["estop"] = not self.data["estop"]
-                        elif key == "exit":
-                            self.data["exit"] = True
-                        else:  # Generic cal for pitch/roll
-                            self.data[key] = self.inputMap[index]["scale"]
-                except Exception:
-                    # Button not mapped, ignore..
-                    pass
-
-        if found_events:
-            self._ts_last_event = time()
-
-        if (time() - self._ts_last_event) > 1.0:
-            # De-initialize the joystick sub-system to read changes in
-            # what devices are connected
-            pygame.joystick.quit()
-            pygame.joystick.init()
-            if (self._device_count == pygame.joystick.get_count()):
-                self.j = pygame.joystick.Joystick(self._current_device_id)
-                self.j.init()
-                self._ts_last_event = time()
-            else:
-                self._zero_output()
-
-        # Ignore the first round of events from the device
-        # after it has been opened. This cases issues on
-        # Linux since it will max out all the axis
-        if self._first_time_opened == True:
-            self._zero_output()
-            self._first_time_opened = False
+          if e.type == pygame.locals.JOYBUTTONDOWN:
+            index = "Input.BUTTON-%d" % e.button 
+            try:
+                if (self.inputMap[index]["type"] == "Input.BUTTON"):
+                    key = self.inputMap[index]["key"]
+                    if (key == "estop"):
+                        self.data["estop"] = not self.data["estop"]
+                    elif (key == "exit"):
+                        self.data["exit"] = True
+                    else: # Generic cal for pitch/roll
+                        self.data[key] = self.inputMap[index]["scale"]
+            except Exception:
+                # Button not mapped, ignore..
+                pass
 
         return self.data
 
@@ -138,8 +94,7 @@ class PyGameReader():
 
     def disableRawReading(self):
         """Disable raw reading"""
-        # No need to de-init since there's no good support for multiple input
-        # devices
+        # No need to de-init since there's no good support for multiple input devices
         pass
 
     def readRawValues(self):
@@ -155,7 +110,7 @@ class PyGameReader():
             if e.type == pygame.locals.JOYAXISMOTION:
                 rawaxis[e.axis] = self.j.get_axis(e.axis)
 
-        return [rawaxis, rawbutton]
+        return [rawaxis,rawbutton]
 
     def getAvailableDevices(self):
         """List all the available devices."""
@@ -163,8 +118,8 @@ class PyGameReader():
         pygame.joystick.quit()
         pygame.joystick.init()
         nbrOfInputs = pygame.joystick.get_count()
-        self._device_count = nbrOfInputs
-        for i in range(0, nbrOfInputs):
+        for i in range(0,nbrOfInputs):
             j = pygame.joystick.Joystick(i)
-            dev.append({"id": i, "name": j.get_name()})
+            dev.append({"id":i, "name" : j.get_name()})
         return dev
+

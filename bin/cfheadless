@@ -1,0 +1,85 @@
+#!/usr/bin/env python2
+
+from __future__ import absolute_import
+
+APP_NAME = "cfclient"
+
+def init_config_path(isInSource):
+    import sys
+    import os
+    import os.path as _path
+    from os.path import expanduser
+
+    if isInSource:
+        configPath = _path.join(sys.path[0], "..", "conf")
+    else:
+        prefix = expanduser("~")
+
+        if sys.platform == "linux2":
+            if _path.exists(_path.join(prefix, ".local")):
+                configPath = _path.join(prefix, ".local", APP_NAME)
+            else:
+                configPath = _path.join(prefix, "."+APP_NAME)
+        elif sys.platform == "win32":
+            configPath = _path.join(os.environ['APPDATA'], APP_NAME)
+        elif sys.platform == "darwin":
+            from AppKit import NSSearchPathForDirectoriesInDomains
+            # FIXME: Copy-pasted from StackOverflow, not tested!
+            # http://developer.apple.com/DOCUMENTATION/Cocoa/Reference/Foundation/Miscellaneous/Foundation_Functions/Reference/reference.html#//apple_ref/c/func/NSSearchPathForDirectoriesInDomains
+            # NSApplicationSupportDirectory = 14
+            # NSUserDomainMask = 1
+            # True for expanding the tilde into a fully qualified path
+            configPath = path.join(NSSearchPathForDirectoriesInDomains(14, 1, True)[0], APPNAME)
+        else:
+            #Unknown OS, I hope this is good enough
+            configPath = _path.join(prefix, "."+APP_NAME)
+
+    if not _path.exists(configPath): os.makedirs(configPath)
+
+    return configPath
+
+def init_paths():
+    """Make the app work in the source tree.
+       This puts the root module folder in path[0] and the config folder in
+       path[1]"""
+    import sys
+    import os.path as _path
+    
+    sys.path = ["",""] + sys.path
+    inSource = False
+    
+    if hasattr(sys, "frozen"):
+        if sys.frozen in ('dll', 'console_exe', 'windows_exe'):
+            sys.path[0] = _path.normpath(_path.dirname(_path.realpath(sys.executable)))
+        elif frozen in ('macosx_app',):
+            # FIXME: Copy-pasted from StackOverflow, not tested!
+            # py2app:
+            # Notes on how to find stuff on MAC, by an expert (Bob Ippolito):
+            # http://mail.python.org/pipermail/pythonmac-sig/2004-November/012121.html
+            approot = os.environ['RESOURCEPATH']
+    else:
+        prefix = _path.normpath(_path.join(_path.dirname(_path.realpath(__file__)), '..'))
+
+        src_lib = _path.join(prefix, 'lib')
+        share_lib = prefix
+        inSource = False
+        for location in [src_lib, share_lib] + sys.path:
+            main_ui = _path.join(location, 'cfclient', 'ui','main.ui')
+            if _path.exists(main_ui):
+                sys.path[0] = location
+                if location == src_lib:
+                    inSource = True
+                break
+
+    if sys.path[0] == "":
+        raise Exception("Cannot find cfclient install folder!")
+
+    sys.path[1] = init_config_path(inSource)
+    print "Info: Using config path: ", sys.path[1]
+    print "Info: sys.path=", sys.path
+
+
+if __name__ == '__main__':
+    init_paths()
+    import cfheadless
+    cfheadless.main()

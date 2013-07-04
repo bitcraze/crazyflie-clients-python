@@ -379,7 +379,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.close()
 
     def showEvent(self, event):
-        self.joystickReader.stopInputSignal.emit()
+        self.joystickReader.stop_input()
 
     def closeEvent(self, event):
         self.rawinputreader.stopReading()

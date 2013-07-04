@@ -48,7 +48,7 @@ from cfclient.ui.tab import Tab
 import cflib.crtp
 
 from cflib.bootloader.cloader import Cloader
-from cfclient.utils.config import Config
+from cfclient.utils.guiconfig import GuiConfig
 
 service_dialog_class = uic.loadUiType(sys.path[0] +
                                       "/cfclient/ui/dialogs/bootloader.ui")[0]
@@ -327,10 +327,10 @@ class CrazyloadThread(QThread):
                  pitchTrim,
                  rollTrim] = struct.unpack("<BBff", data[5:15])
             else:
-                channel = Config().get("default_cf_channel")
-                speed = Config().get("default_cf_speed")
-                pitchTrim = Config().get("default_cf_trim")
-                rollTrim = Config().get("default_cf_trim")
+                channel = GuiConfig.get("default_cf_channel")
+                speed = GuiConfig.get("default_cf_speed")
+                pitchTrim = GuiConfig.get("default_cf_trim")
+                rollTrim = GuiConfig.get("default_cf_trim")
             self.updateConfigSignal.emit(channel, speed, pitchTrim, rollTrim)
         else:
             self.statusChanged.emit("Reading config block failed!", 0)
