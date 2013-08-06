@@ -50,10 +50,10 @@ class LeapListener(leapmotion.Leap.Listener):
         logger.info("Connected")
 
         # Enable gestures
-        controller.enable_gesture(leapmotion.Leap.Gesture.TYPE_CIRCLE);
-        controller.enable_gesture(leapmotion.Leap.Gesture.TYPE_KEY_TAP);
-        controller.enable_gesture(leapmotion.Leap.Gesture.TYPE_SCREEN_TAP);
-        controller.enable_gesture(leapmotion.Leap.Gesture.TYPE_SWIPE);
+        #controller.enable_gesture(leapmotion.Leap.Gesture.TYPE_CIRCLE);
+        #controller.enable_gesture(leapmotion.Leap.Gesture.TYPE_KEY_TAP);
+        #controller.enable_gesture(leapmotion.Leap.Gesture.TYPE_SCREEN_TAP);
+        #controller.enable_gesture(leapmotion.Leap.Gesture.TYPE_SWIPE);
 
     def on_disconnect(self, controller):
         # Note: not dispatched when running in a debugger.
@@ -72,21 +72,22 @@ class LeapListener(leapmotion.Leap.Listener):
             # Get the first hand
             hand = frame.hands[0]
 
-            # Get the hand's normal vector and direction
             normal = hand.palm_normal
             direction = hand.direction
-            # Calculate the hand's pitch, roll, and yaw angles
-            pitch = direction.pitch * leapmotion.Leap.RAD_TO_DEG / 45.0
-            roll = normal.roll * leapmotion.Leap.RAD_TO_DEG / 45.0
-            yaw = 0  #direction.yaw * leapmotion.Leap.RAD_TO_DEG / 45.0
-            thrust = (hand.palm_position[1] - 100)/200.0 # Use the elevation of the hand for thrust
+            # Pich and roll are mixed up...
+            roll = -direction.pitch * leapmotion.Leap.RAD_TO_DEG / 45.0
+            pitch = -normal.roll * leapmotion.Leap.RAD_TO_DEG / 45.0
+            yaw = direction.yaw * leapmotion.Leap.RAD_TO_DEG / 90.0
+            thrust = (hand.palm_position[1] - 50)/200.0 # Use the elevation of the hand for thrust
 
             if thrust < 0.0:
                 thrust = 0.0;
             if thrust > 1.0:
                 thrust = 1.0
 
-            if (len(hand.fingers) < 5):
+            # Protect against accidental readings. When tilting the had
+            # fingers are sometimes lost so only use 4.
+            if (len(hand.fingers) < 4):
                 self._dcb(0,0,0,0)
             else:
                 self._dcb(pitch, roll, yaw, thrust)
