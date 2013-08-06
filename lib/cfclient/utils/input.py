@@ -51,7 +51,8 @@ import shutil
 
 logger = logging.getLogger(__name__)
 
-from cfclient.utils.pygamereader import PyGameReader
+#from cfclient.utils.pygamereader import PyGameReader
+from cfclient.utils.leapreader import LeapmotionReader
 from cfclient.utils.config import Config
 from cfclient.utils.config_manager import ConfigManager
 
@@ -67,7 +68,8 @@ class JoystickReader:
 
     def __init__(self, do_device_discovery=True):
         # TODO: Should be OS dependant
-        self.inputdevice = PyGameReader()
+        #self.inputdevice = PyGameReader()
+        self.inputdevice = LeapmotionReader()
 
         self.maxRPAngle = 0
         self.thrustDownSlew = 0
