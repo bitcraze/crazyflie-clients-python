@@ -75,10 +75,10 @@ class LeapListener(leapmotion.Leap.Listener):
             normal = hand.palm_normal
             direction = hand.direction
             # Pich and roll are mixed up...
-            roll = -direction.pitch * leapmotion.Leap.RAD_TO_DEG / 45.0
-            pitch = -normal.roll * leapmotion.Leap.RAD_TO_DEG / 45.0
-            yaw = direction.yaw * leapmotion.Leap.RAD_TO_DEG / 90.0
-            thrust = (hand.palm_position[1] - 50)/200.0 # Use the elevation of the hand for thrust
+            roll = -direction.pitch * leapmotion.Leap.RAD_TO_DEG / 30.0
+            pitch = -normal.roll * leapmotion.Leap.RAD_TO_DEG / 30.0
+            yaw = direction.yaw * leapmotion.Leap.RAD_TO_DEG / 70.0
+            thrust = (hand.palm_position[1] - 80)/150.0 # Use the elevation of the hand for thrust
 
             if thrust < 0.0:
                 thrust = 0.0;
