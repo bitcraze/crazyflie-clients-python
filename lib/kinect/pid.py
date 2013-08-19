@@ -31,7 +31,7 @@ import math
 class PID:
 
     def __init__(self, P=1.0, I=0.0, D=10.0, Derivator=0, Integrator=0,
-                 Integrator_max=200, Integrator_min=-200, set_point=0.0,
+                 Integrator_max=300, Integrator_min=-200, set_point=0.0,
                  power=1.0):
 
         self.Kp=P
@@ -64,7 +64,7 @@ class PID:
         if self.error > 0.0:
             self.I_value = self.Integrator * self.Ki
         else:
-            self.I_value = (self.Integrator * self.Ki)*0.5
+            self.I_value = (self.Integrator * self.Ki)
 
 
         #self.D_value = self.Kd * ( self.error - self.Derivator)
@@ -94,7 +94,7 @@ class PID:
 class PID_RP:
 
     def __init__(self, P=1.0, I=0.0, D=10.0, Derivator=0, Integrator=0,
-                 Integrator_max=250, Integrator_min=-100, set_point=0.0,
+                 Integrator_max=20000, Integrator_min=-20000, set_point=0.0,
                  power=1.0):
 
         self.Kp=P
@@ -121,17 +121,13 @@ class PID_RP:
         self.P_value = self.Kp * self.error
         change = self.error - self.last_error
         
-        if self.error > 0.0:
-            self.I_value = self.Integrator * self.Ki
-        else:
-            self.I_value = (self.Integrator * self.Ki)*0.5
-
+        self.I_value = self.Integrator * self.Ki
 
         #self.D_value = self.Kd * ( self.error - self.Derivator)
         self.D_value = self.Kd * change
         self.Derivator = self.error
 
-        self.Integrator = self.Integrator + self.error/200.0
+        self.Integrator = self.Integrator + self.error
 
         if self.Integrator > self.Integrator_max:
             self.Integrator = self.Integrator_max

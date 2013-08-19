@@ -41,11 +41,24 @@ IMG_HEIGHT = 480
 
 class Kinect:
 
-    def __init__(self):
+    def __init__(self, controller):
         self.text = []
-        self.writer = cv.CreateVideoWriter("out.avi", cv.CV_FOURCC('F', 'L', 'V', '1'), 25, (IMG_WIDTH, IMG_HEIGHT), True)
+        self.writer = cv.CreateVideoWriter("out.avi", cv.CV_FOURCC('M', 'J', 'P', 'G'), 25, (IMG_WIDTH, IMG_HEIGHT), True)
         self.lasttime = time.time()
-        return
+        self.sp = (0,0)
+        cv.NamedWindow('RGB', cv.CV_WINDOW_AUTOSIZE)
+        cv.SetMouseCallback('RGB', self.mouse_ev)
+        self.sp_callback = controller.set_sp_callback
+        self.track = False
+
+    def mouse_ev(self, ev, x, y, flag, param):
+        if (ev == cv.CV_EVENT_LBUTTONDOWN):
+            self.track = True
+        if (ev == cv.CV_EVENT_LBUTTONUP):
+            self.track = False
+        if (self.track):
+            print "%d,%d" % (x,y)
+            self.sp_callback(x,y)
 
     def _get_pos_spatial(self, th_img):
         moments = cv.Moments(cv.GetMat(th_img))
@@ -87,14 +100,14 @@ class Kinect:
         return center_point
         
     def _get_pos(self, img, debug=False):
-        th_img = self._get_threashold_image_hsv(img)
+        th_img = self._get_threashold_image_hsv(img, debug=debug)
         #sp = self._get_pos_spatial(th_img)
         cp = self._get_pos_countour(th_img)
 
         #if sp:
         #    cv.Circle(img, (sp[0], sp[1]) , 10, cv.CV_RGB(255, 255, 255), 1)
         if cp:        
-            cv.Circle(img, (cp[0], cp[1]) , 10, cv.CV_RGB(255, 0, 0), 1)
+            cv.Circle(img, (cp[0], cp[1]) , 10, cv.CV_RGB(0, 0, 255), 1)
 
         return cp
 
@@ -106,7 +119,7 @@ class Kinect:
         img_th = cv.CreateImage(cv.GetSize(img), 8, 1);
 
         # Filter out red colors
-        cv.InRangeS(imgHSV, cv.Scalar(160, 190, 30), cv.Scalar(180, 255, 200), img_th);
+        cv.InRangeS(imgHSV, cv.Scalar(140, 150, 30), cv.Scalar(180, 255, 255), img_th);
         # Fix the image a bit by eroding and dilating
         eroded = cv.CreateImage(cv.GetSize(img), 8, 1);
         cv.Erode( img_th, eroded, None, 1)
@@ -149,7 +162,7 @@ class Kinect:
  
         position = self._get_pos(self.img)
 
-        depth = self._get_depth(depth_img, debug=True)
+        depth = self._get_depth(depth_img, debug=False)
 
         font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1, 1, 0, 1, 1) 
 
@@ -171,8 +184,10 @@ class Kinect:
             cv.PutText(self.img, t, (0,offset),font, cv.CV_RGB(255, 0, 0))
             offset += 30
 
+        cv.Circle(self.img, (self.sp[0], self.sp[1]) , 10, cv.CV_RGB(0, 255, 0), 1)
+
         cv.ShowImage('RGB', self.img)
-        #cv.SaveImage('RGB-%d.png' % (time.time()), self.img)
+        #cv.SaveImage('RGB-%d.png' % (time.time()*100), self.img)
         #cv.ShowImage('DEPTH', depth_img)
         cv.WriteFrame(self.writer, self.img)
         cv.WaitKey(5)
@@ -182,6 +197,9 @@ class Kinect:
             return (position[0], position[1], depth)
         except:
             return (None, None, None)
+
+    def show_xy_sp(self, x, y):
+        self.sp = (x,y)
 
     def show(self, texts):
         self.text = texts

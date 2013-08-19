@@ -58,14 +58,17 @@ class KinectPilot():
         self._cf = Crazyflie(ro_cache=sys.path[0]+"/cflib/cache",
                              rw_cache=sys.path[1]+"/cache")
 
-        self.kinect = Kinect()
+        self.kinect = Kinect(self)
 
         # Create PID controllers for piloting the Crazyflie
         # The Kinect camera is in the back of the Crazyflie so
         # pitch = depth, roll = x, thrust = y
-        self.r_pid = PID_RP(P=0.04, D=0.25, set_point=0.0)
-        self.p_pid = PID_RP(P=0.20, D=0.25, set_point=0.0)
-        self.t_pid = PID(P=15.0, D=1000.0, I=40.0, set_point=0.0)
+        self.r_pid = PID_RP(P=0.05, D=1.0, I=0.00025, set_point=0.0)
+        self.p_pid = PID_RP(P=0.1, D=1.0, I=0.00025, set_point=0.0)
+        self.t_pid = PID(P=30.0, D=500.0, I=40.0, set_point=0.0)
+
+        self.sp_x = 320
+        self.sp_y = 240
 
         signal.signal(signal.SIGINT, signal.SIG_DFL) 
 
@@ -83,6 +86,10 @@ class KinectPilot():
         """Convert a percentage to raw thrust"""
         return int(65000 * (percentage / 100.0))
 
+    def set_sp_callback(self, x, y):
+        self.sp_x = x
+        self.sp_y = y
+
     def control(self, dry=False):
         """Control loop for Kinect control"""
         safety = 10
@@ -90,12 +97,12 @@ class KinectPilot():
             (x,y,depth) = self.kinect.find_position()
             if x and y and depth:
                 safety = 10
-                roll = self.r_pid.update(320-x)
-                pitch = self.p_pid.update(170-depth)
-                thrust = self.t_pid.update(120-y)
+                roll = self.r_pid.update(self.sp_x-x)
+                pitch = self.p_pid.update(180-depth)
+                thrust = self.t_pid.update(self.sp_y-y)
                 roll_sp = -roll
                 pitch_sp = -pitch
-                thrust_sp = thrust+40000
+                thrust_sp = thrust+38000
                 if (roll_sp > CAP):
                     roll_sp = CAP
                 if (roll_sp < -CAP):
@@ -113,19 +120,28 @@ class KinectPilot():
 
                 print self.t_pid.error
 
-                texts = ["R=%.2f,P=%.2f,T=%.2f" % (roll_sp, pitch_sp, thrust_sp),
-                         "TH: P=%.2f" % self.t_pid.P_value,
-                         "TH: D=%.2f" % self.t_pid.D_value,
-                         "TH: I=%.2f" % self.t_pid.I_value,
-                         "TH: e=%.2f" % self.t_pid.error]
+                #texts = ["R=%.2f,P=%.2f,T=%.2f" % (roll_sp, pitch_sp, thrust_sp),
+                #         "TH: P=%.2f" % self.t_pid.P_value,
+                #         "TH: D=%.2f" % self.t_pid.D_value,
+                #         "TH: I=%.2f" % self.t_pid.I_value,
+                #         "TH: e=%.2f" % self.t_pid.error]
+                #texts = ["R=%.2f,P=%.2f,T=%.2f" % (roll_sp, pitch_sp, thrust_sp),
+                #         "R: P=%.2f" % self.r_pid.P_value,
+                #         "R: I=%.2f" % self.r_pid.I_value,
+                #         "R: D=%.2f" % self.r_pid.D_value,
+                #         "P: P=%.2f" % self.p_pid.P_value,
+                #         "P: I=%.2f" % self.p_pid.I_value,
+                #         "P: D=%.2f" % self.p_pid.D_value]
+                texts = []
                 self.kinect.show(texts)
+                self.kinect.show_xy_sp(self.sp_x, self.sp_y)
                 if not dry:
-                    self._cf.commander.send_setpoint(roll_sp, pitch_sp, 0, thrust_sp)
+                    self._cf.commander.send_setpoint(roll_sp, pitch_sp-2.0, 0, thrust_sp)
             else:
                 safety = safety - 1
             if safety < 0 and not dry:
                 self._cf.commander.send_setpoint(0, 0, 0, 0)
-                break
+                
 
 def main():
     """Main Crazyflie Kinect application"""
