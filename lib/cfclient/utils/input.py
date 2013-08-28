@@ -211,7 +211,9 @@ class JoystickReader:
 
             # Thust limiting (slew, minimum and emergency stop)
             
-            if not hover:
+            if hover:
+                thrust = int(round(deadband(thrust,0.2)*32767 + 32767)) #Convert to uint16
+            else:
                 if raw_thrust < 0.05 or emergency_stop:
                     thrust = 0
                 else:
@@ -227,8 +229,8 @@ class JoystickReader:
                     if raw_thrust < 0 or thrust < self.minThrust:
                         thrust = 0
                 self.oldThrust = thrust
-            else:
-                thrust = deadband(thrust,0.2)      
+            
+                   
 
             # Yaw deadband
             # TODO: Add to input device config?
