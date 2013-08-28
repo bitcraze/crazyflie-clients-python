@@ -66,7 +66,7 @@ class FlightTab(Tab, flight_tab_class):
     _motor_data_signal = pyqtSignal(object)
     _imu_data_signal = pyqtSignal(object)
 
-    _input_updated_signal = pyqtSignal(float, float, float, float)
+    _input_updated_signal = pyqtSignal(float, float, float, float, bool)
     _rp_trim_updated_signal = pyqtSignal(float, float)
     _emergency_stop_updated_signal = pyqtSignal(bool)
 

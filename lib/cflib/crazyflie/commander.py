@@ -57,7 +57,7 @@ class Commander():
         """
         self._x_mode = enabled
 
-    def send_setpoint(self, roll, pitch, yaw, thrust):
+    def send_setpoint(self, roll, pitch, yaw, thrust, hover):
         """
         Send a new control setpoint for roll/pitch/yaw/thust to the copter
 
@@ -70,5 +70,7 @@ class Commander():
 
         pk = CRTPPacket()
         pk.port = CRTPPort.COMMANDER
-        pk.data = struct.pack('<fffH', roll, -pitch, yaw, thrust)
+        pk.data = struct.pack('<fffH?', roll, -pitch, yaw, thrust, hover)
+        if hover:
+            print "-->",hover,thrust
         self._cf.send_packet(pk)

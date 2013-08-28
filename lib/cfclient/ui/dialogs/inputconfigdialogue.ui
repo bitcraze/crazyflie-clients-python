@@ -507,11 +507,11 @@
             <x>600</x>
             <y>200</y>
             <width>292</width>
-            <height>80</height>
+            <height>123</height>
            </rect>
           </property>
           <layout class="QGridLayout" name="gridLayout_5">
-           <item row="1" column="1">
+           <item row="3" column="1">
             <widget class="QPushButton" name="detectExitapp">
              <property name="enabled">
               <bool>false</bool>
@@ -521,7 +521,7 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
+           <item row="2" column="1">
             <widget class="QPushButton" name="detectKillswitch">
              <property name="enabled">
               <bool>false</bool>
@@ -531,7 +531,7 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="0">
+           <item row="2" column="0">
             <widget class="QCheckBox" name="killswitch">
              <property name="enabled">
               <bool>false</bool>
@@ -544,7 +544,7 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
+           <item row="3" column="0">
             <widget class="QCheckBox" name="exitapp">
              <property name="enabled">
               <bool>false</bool>
@@ -554,6 +554,29 @@
              </property>
              <property name="checkable">
               <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QCheckBox" name="hover">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Hover</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QPushButton" name="detectHover">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Detect</string>
              </property>
             </widget>
            </item>

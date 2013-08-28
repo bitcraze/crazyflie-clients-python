@@ -101,11 +101,11 @@ class JoystickReader:
 
         ConfigManager().get_list_of_configs()
 
-        self.input_updated = Caller()
-        self.rp_trim_updated = Caller()
+        self.input_updated          = Caller()
+        self.rp_trim_updated        = Caller()
         self.emergency_stop_updated = Caller()
-        self.device_discovery = Caller()
-        self.device_error = Caller()
+        self.device_discovery       = Caller()
+        self.device_error           = Caller()
 
     def _do_device_discovery(self):
         devs = self.getAvailableDevices()
@@ -193,46 +193,46 @@ class JoystickReader:
     def readInput(self):
         """Read input data from the selected device"""
         try:
-            data = self.inputdevice.readInput()
-            roll = data["roll"] * self.maxRPAngle
-            pitch = data["pitch"] * self.maxRPAngle
-            thrust = data["thrust"]
-            yaw = data["yaw"]
-            raw_thrust = data["thrust"]
+            data           = self.inputdevice.readInput()
+            roll           = data["roll"] * self.maxRPAngle
+            pitch          = data["pitch"] * self.maxRPAngle
+            thrust         = data["thrust"]
+            yaw            = data["yaw"]
+            raw_thrust     = data["thrust"]
             emergency_stop = data["estop"]
-            trim_roll = data["rollcal"]
-            trim_pitch = data["pitchcal"]
+            trim_roll      = data["rollcal"]
+            trim_pitch     = data["pitchcal"]
+            hover          = data["hover"]
+            
 
             if self.emergencyStop != emergency_stop:
                 self.emergencyStop = emergency_stop
                 self.emergency_stop_updated.call(self.emergencyStop)
 
             # Thust limiting (slew, minimum and emergency stop)
-            if raw_thrust < 0.05 or emergency_stop:
-                thrust = 0
-            else:
-                thrust = self.minThrust + thrust * (self.maxThrust -
-                                                    self.minThrust)
-            if (self.thrustSlewEnabled == True and
-                self.slewEnableLimit > thrust and not
-                emergency_stop):
-                if self.oldThrust > self.slewEnableLimit:
-                    self.oldThrust = self.slewEnableLimit
-                if thrust < (self.oldThrust - (self.thrustDownSlew / 100)):
-                    thrust = self.oldThrust - self.thrustDownSlew / 100
-                if raw_thrust < 0 or thrust < self.minThrust:
+            
+            if not hover:
+                if raw_thrust < 0.05 or emergency_stop:
                     thrust = 0
-            self.oldThrust = thrust
+                else:
+                    thrust = self.minThrust + thrust * (self.maxThrust -
+                                                        self.minThrust)
+                if (self.thrustSlewEnabled == True and
+                    self.slewEnableLimit > thrust and not
+                    emergency_stop):
+                    if self.oldThrust > self.slewEnableLimit:
+                        self.oldThrust = self.slewEnableLimit
+                    if thrust < (self.oldThrust - (self.thrustDownSlew / 100)):
+                        thrust = self.oldThrust - self.thrustDownSlew / 100
+                    if raw_thrust < 0 or thrust < self.minThrust:
+                        thrust = 0
+                self.oldThrust = thrust
+            else:
+                thrust = deadband(thrust,0.2)      
 
             # Yaw deadband
             # TODO: Add to input device config?
-            if yaw < -0.2 or yaw > 0.2:
-                if yaw < 0:
-                    yaw = (yaw + 0.2) * self.maxYawRate * 1.25
-                else:
-                    yaw = (yaw - 0.2) * self.maxYawRate * 1.25
-            else:
-                self.yaw = 0
+            yaw = deadband(yaw,0.2)*self.maxYawRate
 
             if trim_roll != 0 or trim_pitch != 0:
                 self._trim_roll += trim_roll
@@ -241,7 +241,7 @@ class JoystickReader:
 
             trimmed_roll = roll + self._trim_roll
             trimmed_pitch = pitch + self._trim_pitch
-            self.input_updated.call(trimmed_roll, trimmed_pitch, yaw, thrust)
+            self.input_updated.call(trimmed_roll, trimmed_pitch, yaw, thrust, hover)
         except Exception:
             logger.warning("Exception while reading inputdevice: %s",
                            traceback.format_exc())
@@ -249,3 +249,16 @@ class JoystickReader:
                                      "Error reading from input device\n\n%s" %
                                      traceback.format_exc())
             self.readTimer.stop()
+            
+            
+
+def deadband(value, threshold):
+    if abs(value) < threshold:
+      value = 0
+    elif value > 0:
+      value -= threshold
+    elif value < 0:
+      value += threshold
+    return value/(1-threshold)
+
+            

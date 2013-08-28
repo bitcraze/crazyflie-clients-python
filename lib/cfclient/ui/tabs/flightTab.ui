@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>787</width>
-    <height>574</height>
+    <width>1142</width>
+    <height>701</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -309,19 +309,6 @@
        </property>
       </spacer>
      </item>
-     <item>
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
     </layout>
    </item>
    <item>
@@ -337,49 +324,23 @@
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <layout class="QGridLayout" name="gridLayout">
-          <item row="0" column="3">
-           <layout class="QVBoxLayout" name="verticalLayout_4">
-            <item>
-             <widget class="QLabel" name="label_6">
-              <property name="text">
-               <string>Thrust</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QProgressBar" name="thrustProgress">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="sizeIncrement">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximum">
-               <number>65600</number>
-              </property>
-              <property name="value">
-               <number>24</number>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
           <item row="0" column="1">
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="0" column="3">
+           <layout class="QVBoxLayout" name="verticalLayout_4"/>
+          </item>
+          <item row="0" column="0">
            <widget class="QTextEdit" name="textEdit">
             <property name="documentTitle">
              <string/>
@@ -388,112 +349,39 @@
              <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Lucida Grande'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Ubuntu'; font-size:11pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
            </widget>
-          </item>
-          <item row="0" column="0">
-           <spacer name="horizontalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="0" column="2">
-           <spacer name="horizontalSpacer_3">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
          </layout>
         </item>
         <item>
          <layout class="QGridLayout" name="gridLayout_5">
-          <item row="3" column="1">
-           <widget class="QLineEdit" name="targetPitch"/>
-          </item>
-          <item row="2" column="2">
-           <widget class="QLineEdit" name="actualThrust"/>
-          </item>
-          <item row="5" column="2">
-           <widget class="QLineEdit" name="actualYaw"/>
-          </item>
-          <item row="4" column="1">
-           <widget class="QLineEdit" name="targetRoll"/>
-          </item>
-          <item row="5" column="0">
-           <widget class="QLabel" name="label_13">
-            <property name="text">
-             <string>Yaw</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="2">
-           <widget class="QLineEdit" name="actualRoll"/>
-          </item>
-          <item row="3" column="2">
-           <widget class="QLineEdit" name="actualPitch"/>
-          </item>
-          <item row="5" column="1">
-           <widget class="QLineEdit" name="targetYaw"/>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="label_14">
-            <property name="text">
-             <string>Target</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_11">
-            <property name="text">
-             <string>Pitch</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="0">
-           <widget class="QLabel" name="label_12">
-            <property name="text">
-             <string>Roll</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QLabel" name="label_15">
-            <property name="text">
-             <string>Actual</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_16">
+          <item row="0" column="6">
+           <widget class="QLabel" name="label_6">
             <property name="text">
              <string>Thrust</string>
             </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
            </widget>
           </item>
-          <item row="2" column="1">
-           <widget class="QLineEdit" name="targetThrust"/>
+          <item row="1" column="9" rowspan="5">
+           <widget class="QProgressBar" name="actualM2">
+            <property name="maximum">
+             <number>65535</number>
+            </property>
+            <property name="value">
+             <number>0</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
           </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QGridLayout" name="gridLayout_7">
-          <item row="0" column="3">
+          <item row="1" column="10" rowspan="5">
            <widget class="QProgressBar" name="actualM3">
             <property name="maximum">
              <number>65535</number>
@@ -506,7 +394,92 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
+          <item row="5" column="2">
+           <widget class="QLineEdit" name="targetASL">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_16">
+            <property name="text">
+             <string>Thrust</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLineEdit" name="targetThrust"/>
+          </item>
+          <item row="1" column="6" rowspan="5">
+           <widget class="QProgressBar" name="thrustProgress">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="sizeIncrement">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximum">
+             <number>65600</number>
+            </property>
+            <property name="value">
+             <number>24</number>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="invertedAppearance">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="9">
+           <widget class="QLabel" name="M2label">
+            <property name="text">
+             <string>M2</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="11">
+           <widget class="QLabel" name="M4label">
+            <property name="text">
+             <string>M4</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="4">
+           <widget class="QLineEdit" name="actualRoll"/>
+          </item>
+          <item row="2" column="2">
+           <widget class="QLineEdit" name="targetPitch"/>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string>ASL</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>Roll</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="4">
+           <widget class="QLineEdit" name="actualThrust"/>
+          </item>
+          <item row="1" column="8" rowspan="5">
            <widget class="QProgressBar" name="actualM1">
             <property name="maximum">
              <number>65535</number>
@@ -520,6 +493,62 @@ p, li { white-space: pre-wrap; }
            </widget>
           </item>
           <item row="0" column="4">
+           <widget class="QLabel" name="label_15">
+            <property name="text">
+             <string>Actual</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>Pitch</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="label_14">
+            <property name="text">
+             <string>Target</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="4">
+           <widget class="QLineEdit" name="actualASL">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="QLineEdit" name="targetRoll"/>
+          </item>
+          <item row="4" column="4">
+           <widget class="QLineEdit" name="actualYaw"/>
+          </item>
+          <item row="4" column="2">
+           <widget class="QLineEdit" name="targetYaw"/>
+          </item>
+          <item row="2" column="4">
+           <widget class="QLineEdit" name="actualPitch"/>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>Yaw</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="12" rowspan="6">
+           <layout class="QGridLayout" name="gridLayout_7"/>
+          </item>
+          <item row="1" column="11" rowspan="5">
            <widget class="QProgressBar" name="actualM4">
             <property name="maximum">
              <number>65535</number>
@@ -532,80 +561,22 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
-           <widget class="QProgressBar" name="actualM2">
-            <property name="maximum">
-             <number>65535</number>
-            </property>
-            <property name="value">
-             <number>0</number>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
+          <item row="0" column="8">
            <widget class="QLabel" name="M1label">
             <property name="text">
              <string>M1</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="2">
-           <widget class="QLabel" name="M2label">
-            <property name="text">
-             <string>M2</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="3">
+          <item row="0" column="10">
            <widget class="QLabel" name="M3label">
             <property name="text">
              <string>M3</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="4">
-           <widget class="QLabel" name="M4label">
-            <property name="text">
-             <string>M4</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_24">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>115</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Motor PWM</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
+          <item row="6" column="6" colspan="6">
            <widget class="QLabel" name="emergency_stop_label">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
             <property name="text">
              <string/>
             </property>
@@ -618,19 +589,6 @@ p, li { white-space: pre-wrap; }
         </item>
        </layout>
       </widget>
-     </item>
-     <item>
-      <spacer name="verticalSpacer_5">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>40</height>
-        </size>
-       </property>
-      </spacer>
      </item>
     </layout>
    </item>

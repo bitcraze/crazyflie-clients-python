@@ -216,7 +216,7 @@ class Crazyflie():
         """Close the communication link."""
         logger.info("Closing link")
         if (self.link is not None):
-            self.commander.send_setpoint(0, 0, 0, 0)
+            self.commander.send_setpoint(0, 0, 0, 0, False)
         if (self.link is not None):
             self.link.close()
             self.link = None
