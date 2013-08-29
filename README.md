@@ -23,7 +23,8 @@ continue to develop this fork (maybe some minor bug fixes and gui updates), but
 someone might find it useful.
 
 ##How to use:
-*Set up your hover button from the GUI. By default for PS3_Mode_1 its the L1 button of the PS3 controller.
+
+* Set up your hover button from the GUI. By default for PS3_Mode_1 its the L1 button of the PS3 controller.
 * When you press this button, it sets the target altitude as the current altitude. 
 * Hold the button to remain in hover mode.
 * While in hover mode, the throttle can be used to change the target altitude. Eg holding throttle up for a second raises it about a meter.
