@@ -64,7 +64,7 @@ class PlotTab(Tab, plot_tab_class):
     logDataSignal = pyqtSignal(object)
 
     colors = [QtCore.Qt.green, QtCore.Qt.blue, QtCore.Qt.magenta,
-              QtCore.Qt.red, QtCore.Qt.black]
+              QtCore.Qt.red, QtCore.Qt.black, QtCore.Qt.cyan,QtCore.Qt.yellow]
 
     dsList = []
 

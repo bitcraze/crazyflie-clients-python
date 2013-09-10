@@ -65,12 +65,14 @@ class FlightTab(Tab, flight_tab_class):
 
     _motor_data_signal = pyqtSignal(object)
     _imu_data_signal = pyqtSignal(object)
+    _hover_data_signal = pyqtSignal(object)
+    _baro_data_signal = pyqtSignal(object)
 
     _input_updated_signal = pyqtSignal(float, float, float, float, bool)
     _rp_trim_updated_signal = pyqtSignal(float, float)
     _emergency_stop_updated_signal = pyqtSignal(bool)
 
-    UI_DATA_UPDATE_FPS = 10
+    #UI_DATA_UPDATE_FPS = 10
 
     connectionFinishedSignal = pyqtSignal(str)
     disconnectedSignal = pyqtSignal(str)
@@ -103,6 +105,8 @@ class FlightTab(Tab, flight_tab_class):
                                      self._emergency_stop_updated_signal.emit)
 
         self._imu_data_signal.connect(self._imu_data_received)
+        self._baro_data_signal.connect(self._baro_data_received)
+        self._hover_data_signal.connect(self._hover_data_received)
         self._motor_data_signal.connect(self._motor_data_received)
 
         # Connect UI signals that are in this tab
@@ -145,7 +149,8 @@ class FlightTab(Tab, flight_tab_class):
                     self.ratePidRadioButton.setChecked(eval(checked)))
 
         self.ai = AttitudeIndicator()
-        self.gridLayout.addWidget(self.ai, 0, 1)
+        self.verticalLayout_4.addWidget(self.ai)
+        self.splitter.setSizes([1000,1])
 
         self.targetCalPitch.setValue(GuiConfig().get("trim_pitch"))
         self.targetCalRoll.setValue(GuiConfig().get("trim_roll"))
@@ -175,6 +180,23 @@ class FlightTab(Tab, flight_tab_class):
         self.actualM3.setValue(data["motor.m3"])
         self.actualM4.setValue(data["motor.m4"])
 
+        
+    def _baro_data_received(self, data):
+        self.actualASL.setText(("%.2f" % data["baro.aslLong"]))
+        self.ai.setBaro(data["baro.aslLong"])
+        
+    def _hover_data_received(self, data):       
+        target =   data["hover.target"]
+        if target>0:
+            if not self.targetASL.isEnabled():
+                self.targetASL.setEnabled(True) 
+            self.targetASL.setText(("%.2f" % target))
+            self.ai.setHover(target)    
+        elif self.targetASL.isEnabled():
+            self.targetASL.setEnabled(False)
+            self.targetASL.setText("Not set")   
+            self.ai.setHover(0)    
+        
     def _imu_data_received(self, data):
         self.actualRoll.setText(("%.2f" % data["stabilizer.roll"]))
         self.actualPitch.setText(("%.2f" % data["stabilizer.pitch"]))
@@ -187,7 +209,8 @@ class FlightTab(Tab, flight_tab_class):
                              data["stabilizer.pitch"])
 
     def connected(self, linkURI):
-        lg = LogConfig("Stabalizer", 100)
+        # IMU & THRUST
+        lg = LogConfig("Stabalizer", 50)
         lg.addVariable(LogVariable("stabilizer.roll", "float"))
         lg.addVariable(LogVariable("stabilizer.pitch", "float"))
         lg.addVariable(LogVariable("stabilizer.yaw", "float"))
@@ -202,7 +225,9 @@ class FlightTab(Tab, flight_tab_class):
             logger.warning("Could not setup logconfiguration after "
                            "connection!")
 
-        lg = LogConfig("Motors", 100)
+
+        # MOTOR
+        lg = LogConfig("Motors", 50)
         lg.addVariable(LogVariable("motor.m1", "uint32_t"))
         lg.addVariable(LogVariable("motor.m2", "uint32_t"))
         lg.addVariable(LogVariable("motor.m3", "uint32_t"))
@@ -216,6 +241,34 @@ class FlightTab(Tab, flight_tab_class):
         else:
             logger.warning("Could not setup logconfiguration after "
                            "connection!")
+            
+        # BARO
+        lg = LogConfig("Baro", 50)
+        lg.addVariable(LogVariable("baro.asl", "float"))
+        lg.addVariable(LogVariable("baro.aslLong", "float"))
+        lg.addVariable(LogVariable("baro.aslRaw", "float"))
+        lg.addVariable(LogVariable("baro.temp", "float"))
+
+        self.log = self.helper.cf.log.create_log_packet(lg)
+        if (self.log is not None):
+            self.log.dataReceived.add_callback(self._baro_data_signal.emit)
+            self.log.error.add_callback(self.loggingError)
+            self.log.start()
+        else:
+            logger.warning("Could not setup logconfiguration after "
+                           "connection!")            
+        # HOVER
+        lg = LogConfig("Hover", 50)
+        lg.addVariable(LogVariable("hover.target", "float"))
+
+        self.log = self.helper.cf.log.create_log_packet(lg)
+        if (self.log is not None):
+            self.log.dataReceived.add_callback(self._hover_data_signal.emit)
+            self.log.error.add_callback(self.loggingError)
+            self.log.start()
+        else:
+            logger.warning("Could not setup logconfiguration after "
+                           "connection!")                        
 
     def disconnected(self, linkURI):
         self.ai.setRollPitch(0, 0)
@@ -227,6 +280,9 @@ class FlightTab(Tab, flight_tab_class):
         self.actualPitch.setText("")
         self.actualYaw.setText("")
         self.actualThrust.setText("")
+        self.actualASL.setText("")
+        self.targetASL.setText("Not Set")
+        self.targetASL.setEnabled(False)
 
     def minMaxThrustChanged(self):
         self.helper.inputDeviceReader.set_thrust_limits(

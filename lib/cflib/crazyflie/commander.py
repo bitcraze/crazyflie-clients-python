@@ -71,6 +71,4 @@ class Commander():
         pk = CRTPPacket()
         pk.port = CRTPPort.COMMANDER
         pk.data = struct.pack('<fffH?', roll, -pitch, yaw, thrust, hover)
-        if hover:
-            print "-->",hover,thrust
         self._cf.send_packet(pk)
