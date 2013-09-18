@@ -233,14 +233,9 @@ class Crazyflie():
     def _no_answer_do_retry(self, pk):
         """Resend packets that we have not gotten answers to"""
         logger.debug("ExpectAnswer: No answer on [%d], do retry", pk.port)
-        # Cancel timer before calling for retry to help bug hunting
-        old_timer = self.answer_timers[pk.port]
-        if (old_timer is not None):
-            old_timer.cancel()
-            self.send_packet(pk, True)
-        else:
-            logger.warning("ExpectAnswer: ERROR! Was doing retry but"
-                           "timer was None")
+        # Set the timer to None before trying to send again
+        self.answer_timers[pk.port] = None
+        self.send_packet(pk, True)
 
     def _check_for_answers(self, pk):
         """

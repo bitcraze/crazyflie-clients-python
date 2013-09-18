@@ -41,7 +41,7 @@ from cflib.utils.callbacks import Caller
 import struct
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from .toc import Toc, TocFetcher
-from threading import Thread
+from threading import Thread, Lock
 
 from Queue import Queue
 
@@ -145,7 +145,7 @@ class Param():
         """
         Request an update of the value for the supplied parameter.
         """
-        self.paramUpdater.request_param_update(
+        self.paramUpdater.requestQueue.put(
             self.toc.get_element_id(completeName))
 
     def set_value(self, completeName, value):
@@ -169,18 +169,18 @@ class _ParamUpdater(Thread):
     def __init__(self, cf, updatedCallback):
         Thread.__init__(self)
         self.setDaemon(True)
+        self.wait_lock = Lock()
         self.cf = cf
         self.updatedCallback = updatedCallback
         self.requestQueue = Queue()
-        self.incommingQueue = Queue()
         self.cf.add_port_callback(CRTPPort.PARAM, self._new_packet_cb)
 
     def _new_packet_cb(self, pk):
         if (pk.channel != TOC_CHANNEL):
             self.updatedCallback(pk)
-            self.incommingQueue.put(0)  # Don't care what we put, used to sync
+            self.wait_lock.release()
 
-    def request_param_update(self, varid):
+    def _request_param_update(self, varid):
         logger.debug("Requesting update for varid %d", varid)
         pk = CRTPPacket()
         pk.set_header(CRTPPort.PARAM, READ_CHANNEL)
@@ -190,5 +190,5 @@ class _ParamUpdater(Thread):
     def run(self):
         while(True):
             varid = self.requestQueue.get()  # Wait for request update
-            self.request_param_update(varid)  # Send request for update
-            self.incommingQueue.get()  # Blocking until reply arrives
+            self.wait_lock.acquire()
+            self._request_param_update(varid)  # Send request for update
