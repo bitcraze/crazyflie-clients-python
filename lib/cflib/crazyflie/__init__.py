@@ -98,9 +98,6 @@ class Crazyflie():
         self.console = Console(self)
         self.param = Param(self)
 
-        self._log_toc_updated = False
-        self._param_toc_updated = False
-
         self.link_uri = ""
 
         # Used for retry when no reply was sent back
@@ -135,19 +132,12 @@ class Crazyflie():
     def _param_toc_updated_cb(self):
         """Called when the param TOC has been fully updated"""
         logger.info("Param TOC finished updating")
-        self._param_toc_updated = True
-        if (self._log_toc_updated is True and self._param_toc_updated is True):
-            self.connectSetupFinished.call(self.link_uri)
+        self.connectSetupFinished.call(self.link_uri)
 
     def _log_toc_updated_cb(self):
         """Called when the log TOC has been fully updated"""
         logger.info("Log TOC finished updating")
-        self._log_toc_updated = True
         self.param.refresh_toc(self._param_toc_updated_cb, self._toc_cache)
-
-        if (self._log_toc_updated and self._param_toc_updated):
-            logger.info("All TOCs finished updating")
-            self.connectSetupFinished.call(self.link_uri)
 
     def _link_error_cb(self, errmsg):
         """Called from the link driver when there's an error"""

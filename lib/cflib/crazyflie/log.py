@@ -259,11 +259,6 @@ class Log():
             return None
 
     def refresh_toc(self, refreshDoneCallback, toc_cache):
-        pk = CRTPPacket()
-        pk.set_header(CRTPPort.LOGGING, CHAN_SETTINGS)
-        pk.data = (CMD_RESET_LOGGING, )
-        self.cf.send_packet(pk)
-
         self.toc = Toc()
         tocFetcher = TocFetcher(self.cf, LogTocElement, CRTPPort.LOGGING,
                                 self.toc, refreshDoneCallback, toc_cache)
