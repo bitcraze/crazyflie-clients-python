@@ -182,11 +182,11 @@ class JoystickReader:
         self.minThrust = minThrust
         self.maxThrust = maxThrust
 
-    def _update_trim_roll(self, trim_roll):
+    def set_trim_roll(self, trim_roll):
         """Set a new value for the roll trim."""
         self._trim_roll = trim_roll
 
-    def _update_trim_pitch(self, trim_pitch):
+    def set_trim_pitch(self, trim_pitch):
         """Set a new value for the trim trim."""
         self._trim_pitch = trim_pitch
 

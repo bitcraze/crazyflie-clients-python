@@ -97,7 +97,7 @@ class FlightTab(Tab, flight_tab_class):
                                      self._input_updated_signal.emit)
         self._rp_trim_updated_signal.connect(self.calUpdateFromInput)
         self.helper.inputDeviceReader.rp_trim_updated.add_callback(
-                                     self._rp_trim_updated_signal)
+                                     self._rp_trim_updated_signal.emit)
         self._emergency_stop_updated_signal.connect(self.updateEmergencyStop)
         self.helper.inputDeviceReader.emergency_stop_updated.add_callback(
                                      self._emergency_stop_updated_signal.emit)
