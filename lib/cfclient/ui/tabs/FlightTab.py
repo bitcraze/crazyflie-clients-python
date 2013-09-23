@@ -195,7 +195,7 @@ class FlightTab(Tab, flight_tab_class):
 
         self.log = self.helper.cf.log.create_log_packet(lg)
         if (self.log is not None):
-            self.log.dataReceived.add_callback(self._imu_data_signal.emit)
+            self.log.data_received.add_callback(self._imu_data_signal.emit)
             self.log.error.add_callback(self.loggingError)
             self.log.start()
         else:
@@ -210,7 +210,7 @@ class FlightTab(Tab, flight_tab_class):
 
         self.log = self.helper.cf.log.create_log_packet(lg)
         if (self.log is not None):
-            self.log.dataReceived.add_callback(self._motor_data_signal.emit)
+            self.log.data_received.add_callback(self._motor_data_signal.emit)
             self.log.error.add_callback(self.loggingError)
             self.log.start()
         else:

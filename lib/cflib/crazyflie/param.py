@@ -108,51 +108,52 @@ class Param():
 
     def __init__(self, crazyflie):
         self.cf = crazyflie
-        self.paramUpdateCallbacks = {}
-        self.paramUpdater = _ParamUpdater(self.cf, self._param_updated)
-        self.paramUpdater.start()
+        self.param_update_callbacks = {}
+        self.param_updater = _ParamUpdater(self.cf, self._param_updated)
+        self.param_updater.start()
 
     def _param_updated(self, pk):
-        varId = pk.datal[0]
-        element = self.toc.get_element_by_id(varId)
+        """Callback with data for an updated parameter"""
+        var_id = pk.datal[0]
+        element = self.toc.get_element_by_id(var_id)
         s = struct.unpack(element.pytype, pk.data[1:])[0]
         s = s.__str__()
-        completeName = "%s.%s" % (element.group, element.name)
-        cb = self.paramUpdateCallbacks[completeName]
-        cb.call(completeName, s)
+        complete_name = "%s.%s" % (element.group, element.name)
+        cb = self.param_update_callbacks[complete_name]
+        cb.call(complete_name, s)
 
     def add_update_callback(self, paramname, cb):
         """
         Add a callback for a specific parameter name. This callback will be
         executed when a new value is read from the Crazyflie.
         """
-        if ((paramname in self.paramUpdateCallbacks) is False):
-            self.paramUpdateCallbacks[paramname] = Caller()
+        if ((paramname in self.param_update_callbacks) is False):
+            self.param_update_callbacks[paramname] = Caller()
 
-        self.paramUpdateCallbacks[paramname].add_callback(cb)
+        self.param_update_callbacks[paramname].add_callback(cb)
 
-    def refresh_toc(self, refreshDoneCallback, toc_cache):
+    def refresh_toc(self, refresh_done_callback, toc_cache):
         """
         Initiate a refresh of the parameter TOC.
         """
         self.toc = Toc()
-        tocFetcher = TocFetcher(self.cf, ParamTocElement,
+        toc_fetcher = TocFetcher(self.cf, ParamTocElement,
                                 CRTPPort.PARAM, self.toc,
-                                refreshDoneCallback, toc_cache)
-        tocFetcher.start()
+                                refresh_done_callback, toc_cache)
+        toc_fetcher.start()
 
-    def request_param_update(self, completeName):
+    def request_param_update(self, complete_name):
         """
         Request an update of the value for the supplied parameter.
         """
-        self.paramUpdater.requestQueue.put(
-            self.toc.get_element_id(completeName))
+        self.param_updater.request_queue.put(
+            self.toc.get_element_id(complete_name))
 
-    def set_value(self, completeName, value):
+    def set_value(self, complete_name, value):
         """
         Set the value for the supplied parameter.
         """
-        element = self.toc.get_element_by_complete_name(completeName)
+        element = self.toc.get_element_by_complete_name(complete_name)
         if (element is not None):
             varid = element.ident
             pk = CRTPPacket()
@@ -162,25 +163,30 @@ class Param():
             self.cf.send_packet(pk, expect_answer=True)
         else:
             logger.warning("Cannot set value for [%s], it's not in the TOC!",
-                           completeName)
+                           complete_name)
 
 
 class _ParamUpdater(Thread):
-    def __init__(self, cf, updatedCallback):
+    """This thread will update params through a queue to make sure that we
+    get back values"""
+    def __init__(self, cf, updated_callback):
+        """Initialize the thread"""
         Thread.__init__(self)
         self.setDaemon(True)
         self.wait_lock = Lock()
         self.cf = cf
-        self.updatedCallback = updatedCallback
-        self.requestQueue = Queue()
+        self.updated_callback = updated_callback
+        self.request_queue = Queue()
         self.cf.add_port_callback(CRTPPort.PARAM, self._new_packet_cb)
 
     def _new_packet_cb(self, pk):
+        """Callback for newly arrived packets"""
         if (pk.channel != TOC_CHANNEL):
-            self.updatedCallback(pk)
+            self.updated_callback(pk)
             self.wait_lock.release()
 
     def _request_param_update(self, varid):
+        """Send a request to the Crazyflie for an update of a param value"""
         logger.debug("Requesting update for varid %d", varid)
         pk = CRTPPacket()
         pk.set_header(CRTPPort.PARAM, READ_CHANNEL)
@@ -189,6 +195,6 @@ class _ParamUpdater(Thread):
 
     def run(self):
         while(True):
-            varid = self.requestQueue.get()  # Wait for request update
+            varid = self.request_queue.get()  # Wait for request update
             self.wait_lock.acquire()
             self._request_param_update(varid)  # Send request for update

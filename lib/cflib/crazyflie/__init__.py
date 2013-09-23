@@ -177,8 +177,6 @@ class Crazyflie():
         self.connectionInitiated.call(link_uri)
         self.state = State.INITIALIZED
         self.link_uri = link_uri
-        self._log_toc_updated = False
-        self._param_toc_updated = False
         try:
             self.link = cflib.crtp.get_link_driver(link_uri,
                                                    self._link_quality_cb,

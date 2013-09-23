@@ -45,18 +45,17 @@ class CRTPDriver:
         open the URI
         """
 
-    def connect(self, uri, linkQualityCallback, linkErrorCallback):
+    def connect(self, uri, link_quality_callback, link_error_callback):
         """Connect the driver to a specified URI
 
         @param uri Uri of the link to open
-        @param linkQualityCallback Callback to report link quality in percent
-        @param linkErrorCallback Callback to report errors (will result in
+        @param link_quality_callback Callback to report link quality in percent
+        @param link_error_callback Callback to report errors (will result in
                disconnection)
         """
 
     def send_packet(self, pk):
         """Send a CRTP packet"""
-        None
 
     def receive_packet(self, wait=0):
         """Receive a CRTP packet.
@@ -65,38 +64,32 @@ class CRTPDriver:
 
         @return One CRTP packet or None if no packet has been received.
         """
-        return None
 
     def get_status(self):
         """
         Return a status string from the interface.
         """
-        return "Not implemented"
 
     def get_name(self):
         """
         Return a human readable name of the interface.
         """
-        return None
 
     def scan_interface(self):
         """
         Scan interface for available Crazyflie quadcopters and return a list
         witha them.
         """
-        return []
 
     def enum(self):
         """Enumerate, and return a list, of the available link URI on this
         system
         """
-        return ()
 
     def get_help(self):
         """return the help message on how to form the URI for this driver
         None means no help
         """
-        return None
 
     def close(self):
-        None
+        """Close the link"""

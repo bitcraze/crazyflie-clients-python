@@ -57,8 +57,8 @@ class Console:
         """
         Callback for data received from the copter.
         """
-        us = "%is" % len(packet.data)
         # This might be done prettier ;-)
-        s = "%s" % struct.unpack(us, packet.data)
+        console_text = "%s" % struct.unpack("%is" % len(packet.data),
+                                            packet.data)
 
-        self.receivedChar.call(s)
+        self.receivedChar.call(console_text)

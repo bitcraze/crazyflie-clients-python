@@ -41,8 +41,9 @@ from glob import glob
 import logging
 logger = logging.getLogger(__name__)
 
-from .log import LogTocElement
-from .param import ParamTocElement
+from .log import LogTocElement  # pylint: disable=W0611
+from .param import ParamTocElement  # pylint: disable=W0611
+ 
 
 
 class TocCache():
@@ -77,9 +78,9 @@ class TocCache():
                 cache_data = json.load(cache,
                                        object_hook=self._decoder)
                 cache.close()
-            except Exception as e:
+            except Exception as exp:
                 logger.warning("Error while parsing cache file [%s]:%s",
-                               hit, str(e))
+                               hit, str(exp))
 
         return cache_data
 
@@ -94,32 +95,32 @@ class TocCache():
                 cache.close()
                 logger.info("Saved cache to [%s]", filename)
                 self._cache_files += [filename]
-            except Exception as e:
+            except Exception as exp:
                 logger.warning("Could not save cache to file [%s]: %s",
-                               filename, str(e))
+                               filename, str(exp))
         else:
             logger.warning("Could not save cache, no writable directory")
 
-    def _encoder(self, o):
+    def _encoder(self, obj):
         """ Encode a toc element leaf-node """
-        return {'__class__': o.__class__.__name__,
-                'ident': o.ident,
-                'group': o.group,
-                'name': o.name,
-                'ctype': o.ctype,
-                'pytype': o.pytype,
-                'access': o.access}
-        raise TypeError(repr(o) + ' is not JSON serializable')
+        return {'__class__': obj.__class__.__name__,
+                'ident': obj.ident,
+                'group': obj.group,
+                'name': obj.name,
+                'ctype': obj.ctype,
+                'pytype': obj.pytype,
+                'access': obj.access}
+        raise TypeError(repr(obj) + ' is not JSON serializable')
 
-    def _decoder(self, o):
+    def _decoder(self, obj):
         """ Decode a toc element leaf-node """
-        if '__class__' in o:
-            elem = eval(o['__class__'])()
-            elem.ident = o['ident']
-            elem.group = str(o['group'])
-            elem.name = str(o['name'])
-            elem.ctype = str(o['ctype'])
-            elem.pytype = str(o['pytype'])
-            elem.access = o['access']
+        if '__class__' in obj:
+            elem = eval(obj['__class__'])()
+            elem.ident = obj['ident']
+            elem.group = str(obj['group'])
+            elem.name = str(obj['name'])
+            elem.ctype = str(obj['ctype'])
+            elem.pytype = str(obj['pytype'])
+            elem.access = obj['access']
             return elem
-        return o
+        return obj

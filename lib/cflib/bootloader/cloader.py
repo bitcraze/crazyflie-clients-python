@@ -162,15 +162,15 @@ class Cloader:
 
         return False
 
-    def _set_address(self, newAddress):
+    def _set_address(self, new_address):
         """ Change copter radio address.
             This function workd only with crazyradio crtp link.
         """
 
         logging.debug("Setting bootloader radio address to"
-                      " {}".format(newAddress))
+                      " {}".format(new_address))
 
-        if len(newAddress) != 5:
+        if len(new_address) != 5:
             raise Exception("Radio address should be 5 bytes long")
 
         self.link.pause()
@@ -178,12 +178,12 @@ class Cloader:
         for _ in range(10):
             logging.debug("Trying to set new radio address")
             self.link.cradio.set_address((0xE7,) * 5)
-            pkdata = (0xFF, 0xFF, 0x11) + tuple(newAddress)
+            pkdata = (0xFF, 0xFF, 0x11) + tuple(new_address)
             self.link.cradio.send_packet(pkdata)
-            self.link.cradio.set_address(tuple(newAddress))
+            self.link.cradio.set_address(tuple(new_address))
             if self.link.cradio.send_packet((0xff,)).ack:
                 logging.info("Bootloader set to radio address"
-                             " {}".format(newAddress))
+                             " {}".format(new_address))
                 self.link.restart()
                 return True
 

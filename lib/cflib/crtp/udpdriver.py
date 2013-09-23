@@ -100,3 +100,6 @@ class UdpDriver(CRTPDriver):
 
     def get_name(self):
         return "udp"
+
+    def scan_interface(self):
+        return []

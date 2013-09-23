@@ -55,7 +55,7 @@ class CRTPPacket(object):
     A packet that can be sent via the CRTP.
     """
 
-    def __init__(self, header=0, dt=None):
+    def __init__(self, header=0, data=None):
         """
         Create an empty packet with default values.
         """
@@ -64,20 +64,24 @@ class CRTPPacket(object):
         self.header = header
         self._port = (header & 0xF0) >> 4
         self._channel = header & 0x03
-        if dt:
-            self._set_data(dt)
+        if data:
+            self._set_data(data)
 
     def _get_channel(self):
+        """Get the packet channel"""
         return self._channel
 
     def _set_channel(self, channel):
+        """Set the packet channel"""
         self._channel = channel
         self._update_header()
 
     def _get_port(self):
+        """Get the packet port"""
         return self._port
 
     def _set_port(self, port):
+        """Set the packet port"""
         self._port = port
         self._update_header()
 
@@ -95,14 +99,17 @@ class CRTPPacket(object):
         self._update_header()
 
     def _update_header(self):
+        """Update the header with the port/channel values"""
         self.header = ((self._port & 0x0f) << 4 | 0x3 << 2 |
                        (self.channel & 0x03))
 
     #Some python madness to access different format of the data
     def _get_data(self):
+        """Get the packet data"""
         return self._data
 
     def _set_data(self, data):
+        """Set the packet data"""
         if type(data) == str:
             self._data = data
         elif type(data) == list or type(data) == tuple:
@@ -116,12 +123,15 @@ class CRTPPacket(object):
             raise Exception("Data shall be of str, tupple or list type")
 
     def _get_data_l(self):
+        """Get the data in the packet as a list"""
         return list(self._get_data_t())
 
     def _get_data_t(self):
+        """Get the data in the packet as a tuple"""
         return struct.unpack("B" * len(self._data), self._data)
 
     def __str__(self):
+        """Get a string representation of the packet"""
         return "{}:{} {}".format(self._port, self.channel, self.datat)
 
     data = property(_get_data, _set_data)

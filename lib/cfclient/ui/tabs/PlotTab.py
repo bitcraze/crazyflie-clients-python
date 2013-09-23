@@ -161,7 +161,7 @@ class PlotTab(Tab, plot_tab_class):
             if (logEntry != None):
                 self.dataSelector.addItem(d.getName())
                 self.logEntrys.append(logEntry)
-                logEntry.dataReceived.add_callback(self.logDataSignal.emit)
+                logEntry.data_received.add_callback(self.logDataSignal.emit)
                 logEntry.error.add_callback(self.loggingError)
             else:
                 logger.warning("Could not setup log configuration!")

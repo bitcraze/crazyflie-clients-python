@@ -317,7 +317,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         lg.addVariable(LogVariable("pm.vbat", "float"))
         self.log = self.cf.log.create_log_packet(lg)
         if (self.log != None):
-            self.log.dataReceived.add_callback(self.batteryUpdatedSignal.emit)
+            self.log.data_received.add_callback(self.batteryUpdatedSignal.emit)
             self.log.error.add_callback(self.loggingError)
             self.log.start()
         else:

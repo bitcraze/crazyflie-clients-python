@@ -50,7 +50,7 @@ def init_drivers():
     for driver in DRIVERS:
         try:
             INSTANCES.append(driver())
-        except Exception:
+        except Exception:  # pylint: disable=W0703
             continue
 
 
