@@ -83,7 +83,7 @@ class JoystickReader:
         self._trim_pitch = Config().get("trim_pitch")
 
         # TODO: The polling interval should be set from config file
-        self.readTimer = PeriodicTimer(0.01, self.readInput)
+        self.readTimer = PeriodicTimer(0.01, self.read_input)
 
         if do_device_discovery:
             self._discovery_timer = PeriodicTimer(1.0, self._do_device_discovery)
@@ -190,10 +190,10 @@ class JoystickReader:
         """Set a new value for the trim trim."""
         self._trim_pitch = trim_pitch
 
-    def readInput(self):
+    def read_input(self):
         """Read input data from the selected device"""
         try:
-            data = self.inputdevice.readInput()
+            data = self.inputdevice.read_input()
             roll = data["roll"] * self.maxRPAngle
             pitch = data["pitch"] * self.maxRPAngle
             thrust = data["thrust"]

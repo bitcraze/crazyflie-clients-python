@@ -396,7 +396,7 @@ class RawJoystickReader(QThread):
         self.joystickReader = joystickReader
         self.readTimer = QTimer()
         self.readTimer.setInterval(25)
-        self.connect(self.readTimer, SIGNAL("timeout()"), self.readInput)
+        self.connect(self.readTimer, SIGNAL("timeout()"), self.read_input)
 
     def stopReading(self):
         self.readTimer.stop()
@@ -405,7 +405,7 @@ class RawJoystickReader(QThread):
         self.readTimer.start()
 
     @pyqtSlot()
-    def readInput(self):
+    def read_input(self):
         [rawaxis, rawbuttons] = self.joystickReader.readRawValues()
         self.rawAxisUpdateSignal.emit(rawaxis)
         self.rawButtonUpdateSignal.emit(rawbuttons)

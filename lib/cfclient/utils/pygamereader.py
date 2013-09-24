@@ -49,7 +49,7 @@ class PyGameReader():
         self.j = pygame.joystick.Joystick(deviceId)
         self.j.init()
 
-    def readInput(self):
+    def read_input(self):
         """Read input from the selected device."""
         # We only want the pitch/roll cal to be "oneshot", don't
         # save this value.
