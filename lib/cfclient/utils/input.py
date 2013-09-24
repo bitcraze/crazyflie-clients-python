@@ -44,6 +44,7 @@ __all__ = ['JoystickReader']
 
 import sys
 import os
+import re
 import glob
 import traceback
 import logging
@@ -82,6 +83,14 @@ class JoystickReader:
         self._trim_roll = Config().get("trim_roll")
         self._trim_pitch = Config().get("trim_pitch")
 
+        self._dev_blacklist = None
+        if (len(Config().get("input_device_blacklist")) > 0):
+            self._dev_blacklist = re.compile(
+                            Config().get("input_device_blacklist"))
+        logger.info("Using device blacklist [{}]".format(
+                            Config().get("input_device_blacklist")))
+
+
         # TODO: The polling interval should be set from config file
         self.readTimer = PeriodicTimer(0.01, self.read_input)
 
@@ -115,13 +124,20 @@ class JoystickReader:
             self._discovery_timer.stop()
 
     def getAvailableDevices(self):
-        """List all available input devices."""
+        """List all available and approved input devices.
+        This function will filter available devices by using the
+        blacklist configuration and only return approved devices."""
         devs = self.inputdevice.getAvailableDevices()
+        approved_devs = []
 
-        for d in devs:
-            self._available_devices[d["name"]] = d["id"]
+        for dev in devs:
+            if ((not self._dev_blacklist) or 
+                    (self._dev_blacklist and not
+                     self._dev_blacklist.match(dev["name"]))):
+                self._available_devices[dev["name"]] = dev["id"]
+                approved_devs.append(dev)
 
-        return devs
+        return approved_devs 
 
     def enableRawReading(self, deviceId):
         """

@@ -15,7 +15,8 @@
     "client_side_xmode": false,
     "auto_reconnect": false,
     "device_config_mapping": {},
-    "enable_debug_driver": false
+    "enable_debug_driver": false,
+    "input_device_blacklist": "VirtualBox"
   },
   "read-only" : {
     "normal_slew_limit": 45, 
