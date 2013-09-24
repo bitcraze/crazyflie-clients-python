@@ -86,9 +86,11 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
                 self.interfaceList.addItem("%s - %s" % (i[0], i[1]))
             else:
                 self.interfaceList.addItem(i[0])
-        self.scanButton.setEnabled(True)
+        if len(interfaces) > 0:
+            self.interfaceList.setCurrentRow(0)
+            self.connectButton.setEnabled(True)
         self.cancelButton.setEnabled(True)
-        self.connectButton.setEnabled(True)
+        self.scanButton.setEnabled(True)
 
     def interfaceSelected(self, listItem):
         self.requestConnectionSignal.emit(

@@ -99,7 +99,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.cf = Crazyflie(ro_cache=sys.path[0] + "/cflib/cache",
                             rw_cache=sys.path[1] + "/cache")
 
-        cflib.crtp.init_drivers()
+        cflib.crtp.init_drivers(enable_debug_driver=GuiConfig()
+                                                .get("enable_debug_driver"))
 
         # Create the connection dialogue
         self.connectDialogue = ConnectDialogue()

@@ -45,11 +45,12 @@ DRIVERS = [RadioDriver, SerialDriver, UdpDriver, DebugDriver]
 INSTANCES = []
 
 
-def init_drivers():
+def init_drivers(enable_debug_driver=False):
     """Initialize all the drivers."""
     for driver in DRIVERS:
         try:
-            INSTANCES.append(driver())
+            if driver != DebugDriver or enable_debug_driver:
+                INSTANCES.append(driver())
         except Exception:  # pylint: disable=W0703
             continue
 
