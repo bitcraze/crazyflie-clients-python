@@ -112,8 +112,8 @@ class ParamTab(Tab, param_tab_class):
                 self.editItems[completeName] = item
                 groupItem.addChild(item)
                 # Request update for this parameter value
-                self.cf.param.add_update_callback(completeName,
-                                                  self.paramUpdatedWrapper)
+                self.cf.param.add_update_callback(group=group, name=param,
+                                                  cb=self.paramUpdatedWrapper)
                 self.cf.param.request_param_update(completeName)
 
             self.paramTree.addTopLevelItem(groupItem)

@@ -129,9 +129,9 @@ class FlightTab(Tab, flight_tab_class):
                              self.helper.cf.param.set_value("flightctrl.xmode",
                                                             str(enabled)))
         self.helper.cf.param.add_update_callback(
-                        "flightctrl.xmode",
-                        lambda name, checked:
-                        self.crazyflieXModeCheckbox.setChecked(eval(checked)))
+                        group="flightctrl", name="xmode",
+                        cb=( lambda name, checked:
+                        self.crazyflieXModeCheckbox.setChecked(eval(checked))))
         self.ratePidRadioButton.clicked.connect(
                     lambda enabled:
                     self.helper.cf.param.set_value("flightctrl.ratepid",
@@ -140,9 +140,10 @@ class FlightTab(Tab, flight_tab_class):
                     lambda enabled:
                     self.helper.cf.param.set_value("flightctrl.ratepid",
                                                    str(not enabled)))
-        self.helper.cf.param.add_update_callback("flightctrl.ratepid",
-                    lambda name, checked:
-                    self.ratePidRadioButton.setChecked(eval(checked)))
+        self.helper.cf.param.add_update_callback(
+                    group="flightctrl", name="ratepid",
+                    cb=(lambda name, checked:
+                    self.ratePidRadioButton.setChecked(eval(checked))))
 
         self.ai = AttitudeIndicator()
         self.gridLayout.addWidget(self.ai, 0, 1)

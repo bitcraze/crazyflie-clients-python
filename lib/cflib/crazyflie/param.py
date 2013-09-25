@@ -109,6 +109,7 @@ class Param():
     def __init__(self, crazyflie):
         self.cf = crazyflie
         self.param_update_callbacks = {}
+        self.group_update_callbacks = {}
         self.param_updater = _ParamUpdater(self.cf, self._param_updated)
         self.param_updater.start()
 
@@ -119,18 +120,25 @@ class Param():
         s = struct.unpack(element.pytype, pk.data[1:])[0]
         s = s.__str__()
         complete_name = "%s.%s" % (element.group, element.name)
-        cb = self.param_update_callbacks[complete_name]
-        cb.call(complete_name, s)
+        if complete_name in self.param_update_callbacks:
+            self.param_update_callbacks[complete_name].call(complete_name, s)
+        if element.group in self.group_update_callbacks:
+            self.group_update_callbacks[element.group].call(complete_name, s)
 
-    def add_update_callback(self, paramname, cb):
+    def add_update_callback(self, group, name=None, cb=None):
         """
         Add a callback for a specific parameter name. This callback will be
         executed when a new value is read from the Crazyflie.
         """
-        if ((paramname in self.param_update_callbacks) is False):
-            self.param_update_callbacks[paramname] = Caller()
-
-        self.param_update_callbacks[paramname].add_callback(cb)
+        if not name:
+            if not group in self.group_update_callbacks:
+                self.group_update_callbacks[group] = Caller()
+            self.group_update_callbacks[group].add_callback(cb)
+        else:
+            paramname = "{}.{}".format(group, name)
+            if not paramname in self.param_update_callbacks:
+                self.param_update_callbacks[paramname] = Caller()
+            self.param_update_callbacks[paramname].add_callback(cb)
 
     def refresh_toc(self, refresh_done_callback, toc_cache):
         """
