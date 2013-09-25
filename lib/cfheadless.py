@@ -66,16 +66,6 @@ class HeadlessClient():
 
     def setup_controller(self, input_config, input_device=0):
         """Set up the device reader""" 
-        # Set values for input from config (advanced)
-        self._jr.set_thrust_limits(
-            self._p2t(Config().get("min_thrust")),
-            self._p2t(Config().get("max_thrust")))
-        self._jr.set_rp_limit(Config().get("max_rp"))
-        self._jr.set_yaw_limit(Config().get("max_yaw"))
-        self._jr.set_thrust_slew_limiting(
-            self._p2t(Config().get("slew_rate")),
-            self._p2t(Config().get("slew_limit")))
-
         # Set up the joystick reader
         self._jr.device_error.add_callback(self._input_dev_error)
 
@@ -105,10 +95,6 @@ class HeadlessClient():
         """Callback for an input device error"""
         print "Error when reading device: {}".format(message)
         sys.exit(-1)
-
-    def _p2t(self, percentage):
-        """Convert a percentage to raw thrust"""
-        return int(65000 * (percentage / 100.0))
 
 def main():
     """Main Crazyflie headless application"""

@@ -59,6 +59,8 @@ from cfclient.utils.config_manager import ConfigManager
 from cfclient.utils.periodictimer import PeriodicTimer
 from cflib.utils.callbacks import Caller
 
+MAX_THRUST = 65000
+
 class JoystickReader:
     """
     Thread that will read input from devices/joysticks and send control-set
@@ -69,19 +71,37 @@ class JoystickReader:
     def __init__(self, do_device_discovery=True):
         # TODO: Should be OS dependant
         self.inputdevice = PyGameReader()
+        
+        self._min_thrust = 0
+        self._max_thrust = 0
+        self._thrust_slew_rate = 0
+        self._thrust_slew_enabled = False
+        self._thrust_slew_limit = 0
+        self._emergency_stop = False
 
-        self.maxRPAngle = 0
-        self.thrustDownSlew = 0
-        self.thrustSlewEnabled = False
-        self.slewEnableLimit = 0
-        self.maxYawRate = 0
-        self.detectAxis = False
-        self.emergencyStop = False
-
-        self.oldThrust = 0
+        self._old_thrust = 0
 
         self._trim_roll = Config().get("trim_roll")
         self._trim_pitch = Config().get("trim_pitch")
+
+        if (Config().get("flightmode") is "Normal"):
+            self._max_yaw_rate = Config().get("normal_max_yaw")
+            self._max_rp_angle = Config().get("normal_max_rp")
+            # Values are stored at %, so use the functions to set the values
+            self.set_thrust_limits(
+                Config().get("normal_min_thrust"),
+                Config().get("normal_max_thrust"))
+            self.set_thrust_slew_limiting(
+                Config().get("normal_slew_rate"),
+                Config().get("normal_slew_limit"))
+        else:
+            self._max_yaw_rate = Config().get("max_yaw")
+            self._max_rp_angle = Config().get("max_rp")
+            # Values are stored at %, so use the functions to set the values
+            self.set_thrust_limits(
+                Config().get("min_thrust"), Config().get("max_thrust"))
+            self.set_thrust_slew_limiting(
+                Config().get("slew_rate"), Config().get("slew_limit"))
 
         self._dev_blacklist = None
         if (len(Config().get("input_device_blacklist")) > 0):
@@ -92,10 +112,11 @@ class JoystickReader:
 
 
         # TODO: The polling interval should be set from config file
-        self.readTimer = PeriodicTimer(0.01, self.read_input)
+        self._read_timer = PeriodicTimer(0.01, self.read_input)
 
         if do_device_discovery:
-            self._discovery_timer = PeriodicTimer(1.0, self._do_device_discovery)
+            self._discovery_timer = PeriodicTimer(1.0, 
+                            self._do_device_discovery)
             self._discovery_timer.start()
 
         self._available_devices = {}
@@ -165,7 +186,7 @@ class JoystickReader:
             self.inputdevice.start_input(
                                     device_id,
                                     ConfigManager().get_config(config_name))
-            self.readTimer.start()
+            self._read_timer.start()
         except Exception:
             self.device_error.call(
                      "Error while opening/initializing  input device\n\n%s" %
@@ -173,30 +194,30 @@ class JoystickReader:
 
     def stop_input(self):
         """Stop reading from the input device."""
-        self.readTimer.stop()
+        self._read_timer.stop()
 
-    def set_yaw_limit(self, maxRate):
+    def set_yaw_limit(self, max_yaw_rate):
         """Set a new max yaw rate value."""
-        self.maxYawRate = maxRate
+        self._max_yaw_rate = max_yaw_rate
 
-    def set_rp_limit(self, maxAngle):
+    def set_rp_limit(self, max_rp_angle):
         """Set a new max roll/pitch value."""
-        self.maxRPAngle = maxAngle
+        self._max_rp_angle = max_rp_angle
 
-    def set_thrust_slew_limiting(self, thrustDownSlew, slewLimit):
+    def set_thrust_slew_limiting(self, thrust_slew_rate, thrust_slew_limit):
         """Set new values for limit where the slewrate control kicks in and
         for the slewrate."""
-        self.thrustDownSlew = thrustDownSlew
-        self.slewEnableLimit = slewLimit
-        if (thrustDownSlew > 0):
-            self.thrustSlewEnabled = True
+        self._thrust_slew_rate = JoystickReader.p2t(thrust_slew_rate)
+        self._thrust_slew_limit = JoystickReader.p2t(thrust_slew_limit)
+        if (thrust_slew_rate > 0):
+            self._thrust_slew_enabled = True
         else:
-            self.thrustSlewEnabled = False
+            self._thrust_slew_enabled = False
 
-    def set_thrust_limits(self, minThrust, maxThrust):
+    def set_thrust_limits(self, min_thrust, max_thrust):
         """Set a new min/max thrust limit."""
-        self.minThrust = minThrust
-        self.maxThrust = maxThrust
+        self._min_thrust = JoystickReader.p2t(min_thrust)
+        self._max_thrust = JoystickReader.p2t(max_thrust)
 
     def set_trim_roll(self, trim_roll):
         """Set a new value for the roll trim."""
@@ -210,8 +231,8 @@ class JoystickReader:
         """Read input data from the selected device"""
         try:
             data = self.inputdevice.read_input()
-            roll = data["roll"] * self.maxRPAngle
-            pitch = data["pitch"] * self.maxRPAngle
+            roll = data["roll"] * self._max_rp_angle
+            pitch = data["pitch"] * self._max_rp_angle
             thrust = data["thrust"]
             yaw = data["yaw"]
             raw_thrust = data["thrust"]
@@ -219,34 +240,34 @@ class JoystickReader:
             trim_roll = data["rollcal"]
             trim_pitch = data["pitchcal"]
 
-            if self.emergencyStop != emergency_stop:
-                self.emergencyStop = emergency_stop
-                self.emergency_stop_updated.call(self.emergencyStop)
+            if self._emergency_stop != emergency_stop:
+                self._emergency_stop = emergency_stop
+                self.emergency_stop_updated.call(self._emergency_stop)
 
             # Thust limiting (slew, minimum and emergency stop)
             if raw_thrust < 0.05 or emergency_stop:
                 thrust = 0
             else:
-                thrust = self.minThrust + thrust * (self.maxThrust -
-                                                    self.minThrust)
-            if (self.thrustSlewEnabled == True and
-                self.slewEnableLimit > thrust and not
+                thrust = self._min_thrust + thrust * (self._max_thrust -
+                                                    self._min_thrust)
+            if (self._thrust_slew_enabled == True and
+                self._thrust_slew_limit > thrust and not
                 emergency_stop):
-                if self.oldThrust > self.slewEnableLimit:
-                    self.oldThrust = self.slewEnableLimit
-                if thrust < (self.oldThrust - (self.thrustDownSlew / 100)):
-                    thrust = self.oldThrust - self.thrustDownSlew / 100
-                if raw_thrust < 0 or thrust < self.minThrust:
+                if self._old_thrust > self._thrust_slew_limit:
+                    self._old_thrust = self._thrust_slew_limit
+                if thrust < (self._old_thrust - (self._thrust_slew_rate / 100)):
+                    thrust = self._old_thrust - self._thrust_slew_rate / 100
+                if raw_thrust < 0 or thrust < self._min_thrust:
                     thrust = 0
-            self.oldThrust = thrust
+            self._old_thrust = thrust
 
             # Yaw deadband
             # TODO: Add to input device config?
             if yaw < -0.2 or yaw > 0.2:
                 if yaw < 0:
-                    yaw = (yaw + 0.2) * self.maxYawRate * 1.25
+                    yaw = (yaw + 0.2) * self._max_yaw_rate * 1.25
                 else:
-                    yaw = (yaw - 0.2) * self.maxYawRate * 1.25
+                    yaw = (yaw - 0.2) * self._max_yaw_rate * 1.25
             else:
                 self.yaw = 0
 
@@ -264,4 +285,9 @@ class JoystickReader:
             self.device_error.call(
                                      "Error reading from input device\n\n%s" %
                                      traceback.format_exc())
-            self.readTimer.stop()
+            self._read_timer.stop()
+
+    @staticmethod
+    def p2t(percentage):
+        """Convert a percentage to raw thrust"""
+        return int(MAX_THRUST * (percentage / 100.0))

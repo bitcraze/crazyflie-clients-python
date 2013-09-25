@@ -153,9 +153,6 @@ class FlightTab(Tab, flight_tab_class):
     def thrustToPercentage(self, thrust):
         return ((thrust / MAX_THRUST) * 100.0)
 
-    def percentageToThrust(self, percentage):
-        return int(MAX_THRUST * (percentage / 100.0))
-
     def uiSetupReady(self):
         flightComboIndex = self.flightModeCombo.findText(
                              GuiConfig().get("flightmode"), Qt.MatchFixedString)
@@ -230,17 +227,15 @@ class FlightTab(Tab, flight_tab_class):
 
     def minMaxThrustChanged(self):
         self.helper.inputDeviceReader.set_thrust_limits(
-                            self.percentageToThrust(self.minThrust.value()),
-                            self.percentageToThrust(self.maxThrust.value()))
+                            self.minThrust.value(), self.maxThrust.value())
         if (self.isInCrazyFlightmode == True):
             GuiConfig().set("min_thrust", self.minThrust.value())
             GuiConfig().set("max_thrust", self.maxThrust.value())
 
     def thrustLoweringSlewRateLimitChanged(self):
         self.helper.inputDeviceReader.set_thrust_slew_limiting(
-            self.percentageToThrust(self.thrustLoweringSlewRateLimit.value()),
-                                    self.percentageToThrust(
-                                                self.slewEnableLimit.value()))
+                            self.thrustLoweringSlewRateLimit.value(),
+                            self.slewEnableLimit.value())
         if (self.isInCrazyFlightmode == True):
             GuiConfig().set("slew_limit", self.slewEnableLimit.value())
             GuiConfig().set("slew_rate", self.thrustLoweringSlewRateLimit.value())
