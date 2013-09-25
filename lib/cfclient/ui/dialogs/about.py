@@ -47,17 +47,30 @@ import cflib.crtp
 about_widget_base_class) = (uic.loadUiType(sys.path[0] +
                                            '/cfclient/ui/dialogs/about.ui'))
 
-debuginfo = """
-<b>Cfclient version:</b> {version}<br>
-<b>System:</b> {system}<br>
+DEBUG_INFO_FORMAT = """
+<b>Cfclient</b><br>
+Cfclient version: {version}<br>
+System: {system}<br>
 <br>
 <b>Interface status</b><br>
 {interface_status}
+<br>
+<b>Crazyflie</b><br>
+Connected: {uri}<br>
+Firmware: {firmware}<br>
+<b>Sensors found</b><br>
+{imu_sensors}
+<b>Sensors tests</b><br>
+{imu_sensor_tests}
 """
 
+INTERFACE_FORMAT = "{}: {}<br>"
+IMU_SENSORS_FORMAT = "{}: {}<br>"
+SENSOR_TESTS_FORMAT = "{}: {}<br>"
+FIRMWARE_FORMAT = "{:x}{:x} ({})"
 
 class AboutDialog(QtGui.QWidget, about_widget_class):
-
+    """Crazyflie client About box for debugging and information"""
     def __init__(self, helper, *args):
         super(AboutDialog, self).__init__(*args)
         self.setupUi(self)
@@ -66,11 +79,77 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
                              self._name_label.text().replace('#version#',
                                                              cfclient.VERSION))
 
-    def showEvent(self, ev):
-        status_text = ""
+        self._interface_text = ""
+        self._imu_sensors_text = ""
+        self._imu_sensor_test_text = ""
+        self._uri = None 
+        self._fw_rev0 = None
+        self._fw_rev1 = None
+        self._fw_modified = None
+
+        helper.cf.param.add_update_callback(group="imu_sensors",
+                                            cb=self._imu_sensors_update)
+        helper.cf.param.add_update_callback(group="imu_tests",
+                                            cb=self._imu_sensor_tests_update)
+        helper.cf.param.add_update_callback(group="firmware",
+                                            cb=self._firmware_update)
+        helper.cf.connectSetupFinished.add_callback(self._connected)
+        helper.cf.disconnected.add_callback(self._disconnected)
+
+    def showEvent(self, event):
+        """Event when the about box is shown"""
+        self._interface_text = ""
         interface_status = cflib.crtp.get_interfaces_status()
-        for s in interface_status.keys():
-            status_text += "<b>{}</b>: {}<br>\n".format(s, interface_status[s])
-        self._debug_out.setHtml(debuginfo.format(version=cfclient.VERSION,
-                                                 system=sys.platform,
-                                                 interface_status=status_text))
+        for key in interface_status.keys():
+            self._interface_text += INTERFACE_FORMAT.format(key,
+                                                    interface_status[key])
+        firmware = None
+        if self._uri:
+            firmware = FIRMWARE_FORMAT.format(self._fw_rev0, self._fw_rev1,
+                                "MODIFIED" if self._fw_modified else "CLEAN")
+        self._debug_out.setHtml(
+                DEBUG_INFO_FORMAT.format(version=cfclient.VERSION,
+                                         system=sys.platform,
+                                         interface_status=self._interface_text,
+                                         uri = self._uri,
+                                         firmware = firmware,
+                                         imu_sensors=self._imu_sensors_text,
+                                         imu_sensor_tests=
+                                            self._imu_sensor_test_text))
+
+    def _connected(self, uri):
+        """Callback when Crazyflie is connected"""
+        self._uri = uri
+
+    def _firmware_update(self, name, value):
+        """Callback for firmware parameters"""
+        if "revision0" in name:
+            self._fw_rev0 = eval(value)
+        if "revision1" in name:
+            self._fw_rev1 = eval(value)
+        if "modified" in name:
+            self._fw_modified = eval(value)
+
+    def _imu_sensors_update(self, name, value):
+        """Callback for sensor found paramters"""
+        param = name[name.index('.') + 1:]
+        if not param in self._imu_sensors_text:
+            self._imu_sensors_text += IMU_SENSORS_FORMAT.format(param,
+                                                                eval(value))
+
+    def _imu_sensor_tests_update(self, name, value):
+        """Callback for sensor test parameters"""
+        param = name[name.index('.') + 1:]
+        if not param in self._imu_sensor_test_text:
+            self._imu_sensor_test_text += SENSOR_TESTS_FORMAT.format(param,
+                                                                 eval(value))
+
+    def _disconnected(self, uri):
+        """Callback for Crazyflie disconnected"""
+        self._interface_text = ""
+        self._imu_sensors_text = ""
+        self._imu_sensor_test_text = ""
+        self._uri = None
+        self._fw_rev1 = None
+        self._fw_rev0 = None
+        self._fw_modified = None
