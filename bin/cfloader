@@ -30,6 +30,9 @@
 #Can reset bootload and reset back the bootloader
 
 import sys
+import os
+# Fix the path so imports works regardless from where it's run
+sys.path[0] = os.path.join(sys.path[0][:-4], "lib")
 
 import cflib.crtp
 from cflib.bootloader.cloader import Cloader
