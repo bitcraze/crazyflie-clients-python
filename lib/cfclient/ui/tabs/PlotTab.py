@@ -117,7 +117,7 @@ class PlotTab(Tab, plot_tab_class):
 
     def savingStopped(self):
         self.saveFile.close()
-        logger.ionfo("Stopped saving logdata")
+        logger.info("Stopped saving logdata")
         self.saveFile = None
 
     def newLogSetupSelected(self, item):
@@ -184,5 +184,5 @@ class PlotTab(Tab, plot_tab_class):
                 self.saveFile.write(s)
         except Exception as e:
             # When switching what to log we might still get logging packets...
-            # and that will not be pretty so let's just ignore the probolem ;-)
+            # and that will not be pretty so let's just ignore the problem ;-)
             logger.warning("Exception for plot data: %s", e)
