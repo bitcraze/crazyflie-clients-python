@@ -141,7 +141,7 @@ class PlotTab(Tab, plot_tab_class):
 
             for d in info.getVariables():
                 ds = PlotDataSet(d.getName(),
-                                 self.colors[colorSelector],
+                                 self.colors[colorSelector % len(self.colors)],
                                  [minVal, maxVal])
                 self.datasets.append(ds)
                 self.plot.addDataset(ds)
