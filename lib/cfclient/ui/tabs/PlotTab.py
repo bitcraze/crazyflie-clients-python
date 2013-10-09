@@ -106,6 +106,7 @@ class PlotTab(Tab, plot_tab_class):
     def saveToFile(self):
         filename = "%s-%s" % (datetime.datetime.now(),
                               self.dataSelector.currentText())
+        filename = filename.replace(":", ".")
         logger.info("Saving logdata to [%s]", filename)
         self.saveFile = open(filename, 'w')
         s = ""
