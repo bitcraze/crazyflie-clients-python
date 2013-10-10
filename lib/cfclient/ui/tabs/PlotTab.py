@@ -104,11 +104,12 @@ class PlotTab(Tab, plot_tab_class):
         self.saveFile = None
 
     def saveToFile(self):
-        filename = "%s-%s" % (datetime.datetime.now(),
-                              self.dataSelector.currentText())
+        filename = "%s-%s.csv" % (datetime.datetime.now(),
+                                  self.dataSelector.currentText())
         filename = filename.replace(":", ".")
-        logger.info("Saving logdata to [%s]", filename)
-        self.saveFile = open(filename, 'w')
+        savePath = os.path.join(os.path.expanduser("~"), filename)
+        logger.info("Saving logdata to [%s]", savePath)
+        self.saveFile = open(savePath, 'w')
         s = ""
         for v in self.dsList[self.dataSelector.currentIndex()].getVariables():
             s += v.getName() + ","
