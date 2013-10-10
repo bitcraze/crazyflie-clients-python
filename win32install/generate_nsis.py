@@ -26,7 +26,7 @@ else:
     with os.popen("hg id -i") as hg:
         VERSION = hg.read().strip()
 
-print "Cfclient vertion {}".format(VERSION)
+print "Cfclient version {}".format(VERSION)
 
 os.chdir(os.path.dirname(__file__))
 
@@ -38,4 +38,4 @@ TMPL = jinja2.Template(TEMPLATE)
 with open("cfclient.nsi", "w") as out_file:
     out_file.write(TMPL.render(files=INSTALL_FILES,
                                dirs=INSTALL_DIRS,
-                               VERSION=VERSION))
+                               version=VERSION))
