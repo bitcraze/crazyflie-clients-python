@@ -492,4 +492,4 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
     def closeAppRequest(self):
         self.close()
-        app.exit(0)
+        sys.exit(0)
