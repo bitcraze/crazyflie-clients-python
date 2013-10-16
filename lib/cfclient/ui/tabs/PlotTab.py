@@ -80,7 +80,7 @@ class PlotTab(Tab, plot_tab_class):
         self.previousLog = None
 
         self.dsList = helper.logConfigReader.getLogConfigs()
-        self.plot = PlotWidget(fps=50)
+        self.plot = PlotWidget(fps=30)
 
         self.dataSelector.currentIndexChanged.connect(self.newLogSetupSelected)
 

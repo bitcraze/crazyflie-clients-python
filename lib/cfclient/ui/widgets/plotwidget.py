@@ -93,7 +93,7 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
 
         self.plotCaption.setText(title)
         self.plotCaption.setFont(QtGui.QFont('SansSerif', 16))
-        self.fpw = FastPlotWidget()
+        self.fpw = FastPlotWidget(fps=fps)
 
         self.plotLayout.addWidget(self.fpw)
 
