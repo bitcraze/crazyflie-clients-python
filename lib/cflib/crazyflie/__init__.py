@@ -111,7 +111,7 @@ class Crazyflie():
         self.connected.add_callback(
             lambda uri: logger.info("Callback->Connected to [%s]", uri))
         self.connectionLost.add_callback(
-            lambda uri, errmsg: logger.info("Callback->Connectionl ost to"
+            lambda uri, errmsg: logger.info("Callback->Connection lost to"
                                             " [%s]: %s", uri, errmsg))
         self.connectionFailed.add_callback(
             lambda uri, errmsg: logger.info("Callback->Connected failed to"
