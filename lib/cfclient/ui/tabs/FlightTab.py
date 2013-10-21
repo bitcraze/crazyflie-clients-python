@@ -63,8 +63,8 @@ class FlightTab(Tab, flight_tab_class):
 
     uiSetupReadySignal = pyqtSignal()
 
-    _motor_data_signal = pyqtSignal(object)
-    _imu_data_signal = pyqtSignal(object)
+    _motor_data_signal = pyqtSignal(object, int)
+    _imu_data_signal = pyqtSignal(object, int)
 
     _input_updated_signal = pyqtSignal(float, float, float, float)
     _rp_trim_updated_signal = pyqtSignal(float, float)
@@ -167,13 +167,13 @@ class FlightTab(Tab, flight_tab_class):
     def loggingError(self):
         logger.warning("Callback of error in LogEntry :(")
 
-    def _motor_data_received(self, data):
+    def _motor_data_received(self, data, timestamp):
         self.actualM1.setValue(data["motor.m1"])
         self.actualM2.setValue(data["motor.m2"])
         self.actualM3.setValue(data["motor.m3"])
         self.actualM4.setValue(data["motor.m4"])
 
-    def _imu_data_received(self, data):
+    def _imu_data_received(self, data, timestamp):
         self.actualRoll.setText(("%.2f" % data["stabilizer.roll"]))
         self.actualPitch.setText(("%.2f" % data["stabilizer.pitch"]))
         self.actualYaw.setText(("%.2f" % data["stabilizer.yaw"]))

@@ -61,7 +61,7 @@ plot_tab_class = uic.loadUiType(sys.path[0] +
 class PlotTab(Tab, plot_tab_class):
     """Tab for plotting logging data"""
 
-    logDataSignal = pyqtSignal(object)
+    logDataSignal = pyqtSignal(object, int)
 
     colors = [QtCore.Qt.green, QtCore.Qt.blue, QtCore.Qt.magenta,
               QtCore.Qt.red, QtCore.Qt.black]
@@ -110,7 +110,7 @@ class PlotTab(Tab, plot_tab_class):
         savePath = os.path.join(os.path.expanduser("~"), filename)
         logger.info("Saving logdata to [%s]", savePath)
         self.saveFile = open(savePath, 'w')
-        s = ""
+        s = "Timestamp,"
         for v in self.dsList[self.dataSelector.currentIndex()].getVariables():
             s += v.getName() + ","
         s += '\n'
@@ -173,10 +173,10 @@ class PlotTab(Tab, plot_tab_class):
             # self.newLogSetupSelected(self.dataSelector.currentIndex())
             self.dataSelector.currentIndexChanged.emit(0)
 
-    def logDataReceived(self, data):
+    def logDataReceived(self, data, timestamp):
         try:
             dataIndex = 0
-            s = ""
+            s = "%d," % timestamp
             for d in data:
                 self.datasets[dataIndex].addData(data[d])
                 s += str(data[d]) + ","

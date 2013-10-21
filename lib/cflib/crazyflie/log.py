@@ -150,7 +150,7 @@ class LogEntry:
                 self.cf.send_packet(pk)
                 self.block_id = None  # Wait until we get confirmation of delete
 
-    def unpack_log_data(self, log_data):
+    def unpack_log_data(self, log_data, timestamp):
         """Unpack received logging data so it represent real values according
         to the configuration in the entry"""
         ret_data = {}
@@ -164,7 +164,7 @@ class LogEntry:
                                   log_data[data_index:data_index + size])[0]
             data_index += size
             ret_data[name] = value
-        self.data_received.call(ret_data)
+        self.data_received.call(ret_data, timestamp)
 
 
 class LogTocElement:
@@ -312,13 +312,15 @@ class Log():
         if (chan == CHAN_LOGDATA):
             chan = packet.channel
             block_id = ord(packet.data[0])
-            # timestamp = packet.data[0:4] # Not currently used
+            timestamps = struct.unpack("<BBB", packet.data[1:4])
+            timestamp = (timestamps[0] | timestamps[1] << 8 | timestamps[2] << 16)
+            logger.info("[%x]", timestamp)
             logdata = packet.data[4:]
             block = None
             for blocks in self.log_blocks:
                 if (blocks.block_id == block_id):
                     block = blocks
             if (block is not None):
-                block.unpack_log_data(logdata)
+                block.unpack_log_data(logdata, timestamp)
             else:
                 logger.warning("Error no LogEntry to handle block=%d", block_id)
