@@ -106,7 +106,8 @@ class ParamTab(Tab, param_tab_class):
                               Qt.ItemIsSelectable)
                 item.setData(0, Qt.DisplayRole, param)
                 item.setData(1, Qt.DisplayRole, toc[group][param].ctype)
-                item.setData(2, Qt.DisplayRole, toc[group][param].access)
+                item.setData(2, Qt.DisplayRole,
+                                toc[group][param].get_readable_access())
                 item.setData(3, Qt.EditRole, "N/A")
                 completeName = "%s.%s" % (group, param)
                 self.editItems[completeName] = item

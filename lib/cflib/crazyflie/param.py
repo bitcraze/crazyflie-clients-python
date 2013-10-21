@@ -96,7 +96,15 @@ class ParamTocElement:
             self.ctype = self.types[ord(data[1]) & 0x0F][0]
             self.pytype = self.types[ord(data[1]) & 0x0F][1]
 
-            self.access = ord(data[1]) & 0x10
+            if ((ord(data[1]) & 0x40) != 0):
+                self.access = ParamTocElement.RO_ACCESS
+            else:
+                self.access = ParamTocElement.RW_ACCESS
+
+    def get_readable_access(self):
+        if (self.access == ParamTocElement.RO_ACCESS):
+            return "RO"
+        return "RW"
 
 
 class Param():
@@ -120,6 +128,7 @@ class Param():
         s = struct.unpack(element.pytype, pk.data[1:])[0]
         s = s.__str__()
         complete_name = "%s.%s" % (element.group, element.name)
+        logger.debug("Updated parameter [%s]" % complete_name)
         if complete_name in self.param_update_callbacks:
             self.param_update_callbacks[complete_name].call(complete_name, s)
         if element.group in self.group_update_callbacks:
@@ -154,7 +163,7 @@ class Param():
         """
         Request an update of the value for the supplied parameter.
         """
-        self.param_updater.request_queue.put(
+        self.param_updater.request_param_update(
             self.toc.get_element_id(complete_name))
 
     def set_value(self, complete_name, value):
@@ -162,16 +171,19 @@ class Param():
         Set the value for the supplied parameter.
         """
         element = self.toc.get_element_by_complete_name(complete_name)
-        if (element is not None):
+
+        if not element:
+            logger.warning("Cannot set value for [%s], it's not in the TOC!",
+                           complete_name)
+        elif element.access == ParamTocElement.RO_ACCESS:
+            logger.debug("[%s] is read only, no trying to set value", complete_name)
+        else:
             varid = element.ident
             pk = CRTPPacket()
             pk.set_header(CRTPPort.PARAM, WRITE_CHANNEL)
             pk.data = struct.pack('<B', varid)
             pk.data += struct.pack(element.pytype, eval(value))
-            self.cf.send_packet(pk, expect_answer=True)
-        else:
-            logger.warning("Cannot set value for [%s], it's not in the TOC!",
-                           complete_name)
+            self.param_updater.request_param_setvalue(pk)
 
 
 class _ParamUpdater(Thread):
@@ -187,22 +199,26 @@ class _ParamUpdater(Thread):
         self.request_queue = Queue()
         self.cf.add_port_callback(CRTPPort.PARAM, self._new_packet_cb)
 
+    def request_param_setvalue(self, pk):
+        """Place a param set value request on the queue. When this is sent to
+        the Crazyflie it will answer with the update param value. """
+        self.request_queue.put(pk)
+
     def _new_packet_cb(self, pk):
         """Callback for newly arrived packets"""
         if (pk.channel != TOC_CHANNEL):
             self.updated_callback(pk)
             self.wait_lock.release()
 
-    def _request_param_update(self, varid):
-        """Send a request to the Crazyflie for an update of a param value"""
-        logger.debug("Requesting update for varid %d", varid)
+    def request_param_update(self, varid):
+        """Place a param update request on the queue"""
         pk = CRTPPacket()
         pk.set_header(CRTPPort.PARAM, READ_CHANNEL)
         pk.data = struct.pack('<B', varid)
-        self.cf.send_packet(pk, expect_answer=True)
+        self.request_queue.put(pk)
 
     def run(self):
         while(True):
-            varid = self.request_queue.get()  # Wait for request update
+            pk = self.request_queue.get()  # Wait for request update
             self.wait_lock.acquire()
-            self._request_param_update(varid)  # Send request for update
+            self.cf.send_packet(pk, expect_answer=True)
