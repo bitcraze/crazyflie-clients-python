@@ -63,8 +63,8 @@ class FlightTab(Tab, flight_tab_class):
 
     uiSetupReadySignal = pyqtSignal()
 
-    _motor_data_signal = pyqtSignal(object)
-    _imu_data_signal = pyqtSignal(object)
+    _motor_data_signal = pyqtSignal(object, int)
+    _imu_data_signal = pyqtSignal(object, int)
     _althold_data_signal = pyqtSignal(object, int)
     _baro_data_signal = pyqtSignal(object, int)
 
@@ -194,7 +194,7 @@ class FlightTab(Tab, flight_tab_class):
         self.actualM4.setValue(data["motor.m4"])
 
         
-    def _baro_data_received(self, data, timestamp:
+    def _baro_data_received(self, data, timestamp):
         self.actualASL.setText(("%.2f" % data["baro.aslLong"]))
         self.ai.setBaro(data["baro.aslLong"])
         
