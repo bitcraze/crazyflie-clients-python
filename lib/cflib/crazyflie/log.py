@@ -314,7 +314,6 @@ class Log():
             block_id = ord(packet.data[0])
             timestamps = struct.unpack("<BBB", packet.data[1:4])
             timestamp = (timestamps[0] | timestamps[1] << 8 | timestamps[2] << 16)
-            logger.info("[%x]", timestamp)
             logdata = packet.data[4:]
             block = None
             for blocks in self.log_blocks:
