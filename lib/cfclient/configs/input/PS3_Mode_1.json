@@ -12,6 +12,7 @@
           {"name":"Roll Cal +", "type":"Input.BUTTON", "id":5, "scale":1.0, "key":"rollcal"},
           {"name":"Roll Cal -", "type":"Input.BUTTON", "id":7, "scale":-1.0, "key":"rollcal"},
           {"name":"Killswtich", "type":"Input.BUTTON", "id":14, "scale":1.0, "key":"estop"},
+          {"name":"Altitude hold", "type":"Input.BUTTON", "id":10, "scale":1.0, "key":"althold"},
           {"name":"Exit", "type":"Input.BUTTON", "id":12, "scale":1.0, "key":"exit"}
      ]}
   }

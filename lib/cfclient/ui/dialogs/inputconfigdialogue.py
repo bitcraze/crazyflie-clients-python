@@ -78,7 +78,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.detectYaw.clicked.connect(lambda : self.doAxisDetect("yaw", "Yaw axis",
                                                 "Press the yaw axis to max rotation %s", ["right", "left"]))
         self.detectThrust.clicked.connect(lambda : self.doAxisDetect("thrust", "Thrust axis",
-                                                   "Press the thrust axis to max thrust"))
+                                                   "Press the thrust axis to max thrust (also used to adjust target altitude in altitude hold mode)"))
         self.detectPitchPos.clicked.connect(lambda : self.doButtonDetect("pitchPos", "Pitch Cal Positive",
                                                   "Press the button for Pitch postive calibration"))
         self.detectPitchNeg.clicked.connect(lambda : self.doButtonDetect("pitchNeg", "Pitch Cal Negative",
@@ -91,6 +91,8 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                                                        "Press the button for the killswitch (will disable motors)"))
         self.detectExitapp.clicked.connect(lambda : self.doButtonDetect("exitapp", "Exit application",
                                                     "Press the button for the exiting the application"))
+        self.detectAltHold.clicked.connect(lambda : self.doButtonDetect("althold", "Altitude hold",
+                                                    "Press the button for altitude hold mode activation (releasing returns to manual mode)"))        
 
         self.configButton.clicked.connect(self.startConfigOfInputDevice)
         self.loadButton.clicked.connect(self.loadConfig)
@@ -102,7 +104,8 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                               self.detectYaw, self.detectThrust,
                               self.detectPitchPos, self.detectPitchNeg,
                               self.detectRollPos, self.detectRollNeg,
-                              self.detectKillswitch, self.detectExitapp]
+                              self.detectKillswitch, self.detectExitapp,
+                              self.detectAltHold]
 
         self._reset_mapping()
         self.btnDetect = ""
@@ -122,7 +125,8 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             "rollPos": {"id":-1, "indicator": self.rollPos},
             "rollNeg": {"id":-1, "indicator": self.rollNeg},
             "killswitch": {"id":-1, "indicator": self.killswitch},
-            "exitapp": {"id":-1, "indicator": self.exitapp}
+            "exitapp": {"id":-1, "indicator": self.exitapp},
+            "althold": {"id":-1, "indicator": self.althold},
             }
 
         self.axismapping = {
@@ -279,6 +283,8 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             newKey = "killswitch"
         if ("exit" in key):
             newKey = "exitapp"
+        if ("althold" in key):
+            newKey = "althold"
         if (len(newKey) > 0):
             self.buttonmapping[newKey]['id'] = btnId
         else:
@@ -361,6 +367,11 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             if ("exit" in a):
                 newC['key'] = "exit"
                 newC['name'] = a
+                
+            if ("althold" in a):
+                newC['key'] = "althold"
+                newC['name'] = a               
+                
 
             inputConfig['inputdevice']['axis'].append(newC)
 

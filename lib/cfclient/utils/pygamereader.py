@@ -44,7 +44,7 @@ class PyGameReader():
     def start_input(self, deviceId, inputMap):
         """Initalize the reading and open the device with deviceId and set the mapping for axis/buttons using the
         inputMap"""
-        self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":0.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False}
+        self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":0.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False, "althold":False}
         self.inputMap = inputMap
         self.j = pygame.joystick.Joystick(deviceId)
         self.j.init()
@@ -54,7 +54,8 @@ class PyGameReader():
         # We only want the pitch/roll cal to be "oneshot", don't
         # save this value.
         self.data["pitchcal"] = 0.0
-        self.data["rollcal"] = 0.0
+        self.data["rollcal"]  = 0.0
+        
         for e in pygame.event.get():
           if e.type == pygame.locals.JOYAXISMOTION:
             index = "Input.AXIS-%d" % e.axis 
@@ -71,7 +72,7 @@ class PyGameReader():
                 pass          
 
           if e.type == pygame.locals.JOYBUTTONDOWN:
-            index = "Input.BUTTON-%d" % e.button 
+            index = "Input.BUTTON-%d" % e.button            
             try:
                 if (self.inputMap[index]["type"] == "Input.BUTTON"):
                     key = self.inputMap[index]["key"]
@@ -79,11 +80,25 @@ class PyGameReader():
                         self.data["estop"] = not self.data["estop"]
                     elif (key == "exit"):
                         self.data["exit"] = True
+                    elif (key == "althold"):
+                        self.data["althold"] = not self.data["althold"]                        
                     else: # Generic cal for pitch/roll
                         self.data[key] = self.inputMap[index]["scale"]
             except Exception:
                 # Button not mapped, ignore..
                 pass
+          
+          if e.type == pygame.locals.JOYBUTTONUP:
+            index = "Input.BUTTON-%d" % e.button            
+            try:
+                if (self.inputMap[index]["type"] == "Input.BUTTON"):
+                    key = self.inputMap[index]["key"]
+                    if (key == "althold"):
+                        self.data["althold"] = False                     
+            except Exception:
+                # Button not mapped, ignore..
+                pass            
+            
 
         return self.data
 

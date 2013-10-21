@@ -108,11 +108,11 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         self.zoomOutBtn.clicked.connect(self.zoomOut)
 
     def zoomIn(self):
-        self.zoom = self.zoom + 0.2
+        self.zoom = self.zoom * 1.2
         self.fpw.setZoom(self.zoom)
 
     def zoomOut(self):
-        self.zoom = self.zoom - 0.2
+        self.zoom = self.zoom / 1.2
         if self.zoom < 0.1:
             self.zoom = 0.1
         self.fpw.setZoom(self.zoom)

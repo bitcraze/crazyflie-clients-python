@@ -78,8 +78,10 @@ class JoystickReader:
         self._thrust_slew_enabled = False
         self._thrust_slew_limit = 0
         self._emergency_stop = False
+        self._has_pressure_sensor = False
 
         self._old_thrust = 0
+        self._old_alt_hold = False
 
         self._trim_roll = Config().get("trim_roll")
         self._trim_pitch = Config().get("trim_pitch")
@@ -136,6 +138,13 @@ class JoystickReader:
         self.emergency_stop_updated = Caller()
         self.device_discovery = Caller()
         self.device_error = Caller()
+        self.althold_updated = Caller()
+
+    def setAltHoldAvailable(self, available):
+        self._has_pressure_sensor = available
+
+    def setAltHold(self, althold):
+        self._old_alt_hold = althold
 
     def _do_device_discovery(self):
         devs = self.getAvailableDevices()
@@ -239,37 +248,39 @@ class JoystickReader:
             emergency_stop = data["estop"]
             trim_roll = data["rollcal"]
             trim_pitch = data["pitchcal"]
+            althold = data["althold"]
+
+            if (self._old_alt_hold != althold):
+                self.althold_updated.call(str(althold))
 
             if self._emergency_stop != emergency_stop:
                 self._emergency_stop = emergency_stop
                 self.emergency_stop_updated.call(self._emergency_stop)
 
             # Thust limiting (slew, minimum and emergency stop)
-            if raw_thrust < 0.05 or emergency_stop:
-                thrust = 0
+            if althold and self._has_pressure_sensor:
+                thrust = int(round(JoystickReader.deadband(thrust,0.2)*32767 + 32767)) #Convert to uint16
+            
             else:
-                thrust = self._min_thrust + thrust * (self._max_thrust -
-                                                    self._min_thrust)
-            if (self._thrust_slew_enabled == True and
-                self._thrust_slew_limit > thrust and not
-                emergency_stop):
-                if self._old_thrust > self._thrust_slew_limit:
-                    self._old_thrust = self._thrust_slew_limit
-                if thrust < (self._old_thrust - (self._thrust_slew_rate / 100)):
-                    thrust = self._old_thrust - self._thrust_slew_rate / 100
-                if raw_thrust < 0 or thrust < self._min_thrust:
+                if raw_thrust < 0.05 or emergency_stop:
                     thrust = 0
-            self._old_thrust = thrust
+                else:
+                    thrust = self._min_thrust + thrust * (self._max_thrust -
+                                                            self._min_thrust)
+                if (self._thrust_slew_enabled == True and
+                    self._thrust_slew_limit > thrust and not
+                    emergency_stop):
+                    if self._old_thrust > self._thrust_slew_limit:
+                        self._old_thrust = self._thrust_slew_limit
+                    if thrust < (self._old_thrust - (self._thrust_slew_rate / 100)):
+                        thrust = self._old_thrust - self._thrust_slew_rate / 100
+                    if raw_thrust < 0 or thrust < self._min_thrust:
+                        thrust = 0
 
+            self._old_thrust = thrust
             # Yaw deadband
             # TODO: Add to input device config?
-            if yaw < -0.2 or yaw > 0.2:
-                if yaw < 0:
-                    yaw = (yaw + 0.2) * self._max_yaw_rate * 1.25
-                else:
-                    yaw = (yaw - 0.2) * self._max_yaw_rate * 1.25
-            else:
-                self.yaw = 0
+            yaw = JoystickReader.deadband(yaw,0.2)*self._max_yaw_rate           
 
             if trim_roll != 0 or trim_pitch != 0:
                 self._trim_roll += trim_roll
@@ -282,8 +293,7 @@ class JoystickReader:
         except Exception:
             logger.warning("Exception while reading inputdevice: %s",
                            traceback.format_exc())
-            self.device_error.call(
-                                     "Error reading from input device\n\n%s" %
+            self.device_error.call("Error reading from input device\n\n%s" %
                                      traceback.format_exc())
             self._read_timer.stop()
 
@@ -291,3 +301,13 @@ class JoystickReader:
     def p2t(percentage):
         """Convert a percentage to raw thrust"""
         return int(MAX_THRUST * (percentage / 100.0))
+
+    @staticmethod
+    def deadband(value, threshold):
+        if abs(value) < threshold:
+          value = 0
+        elif value > 0:
+          value -= threshold
+        elif value < 0:
+          value += threshold
+        return value/(1-threshold)

@@ -43,6 +43,9 @@ class AttitudeIndicator(QtGui.QWidget):
 
         self.roll = 0
         self.pitch = 0
+        self.hover = False
+        self.hoverASL = 0.0
+        self.hoverTargetASL = 0.0
 
         self.setMinimumSize(30, 30)
         # self.setMaximumSize(240,240)
@@ -53,6 +56,15 @@ class AttitudeIndicator(QtGui.QWidget):
 
     def setPitch(self, pitch):
         self.pitch = pitch
+        self.repaint()
+        
+    def setHover(self, target):        
+        self.hoverTargetASL = target
+        self.hover = target>0
+        self.repaint()
+        
+    def setBaro(self, asl):
+        self.hoverASL = asl;
         self.repaint()
 
     def setRollPitch(self, roll, pitch):
@@ -127,6 +139,49 @@ class AttitudeIndicator(QtGui.QWidget):
         qp.setBrush(QtGui.QColor(0, 0, 0))
         qp.setPen(pen)
         qp.drawLine(0, h / 2, w, h / 2)
+        
+        
+        
+        # Draw Hover vs Target
+        
+        qp.setWorldMatrixEnabled(False)
+        
+        pen = QtGui.QPen(QtGui.QColor(255, 255, 255), 2,
+                         QtCore.Qt.SolidLine)
+        qp.setBrush(QtGui.QColor(255, 255, 255))
+        qp.setPen(pen)
+        fh = max(7,h/50)
+        font = QtGui.QFont('Sans', fh, QtGui.QFont.Light)
+        qp.setFont(font)
+        qp.resetTransform()
+      
+        
+
+        
+        qp.translate(0,h/2)      
+        if not self.hover:  
+            qp.drawText(w-fh*10, fh/2, str(round(self.hoverASL,2)))  # asl
+               
+        
+        if self.hover:
+            qp.drawText(w-fh*10, fh/2, str(round(self.hoverTargetASL,2)))  # target asl (center)    
+            diff = round(self.hoverASL-self.hoverTargetASL,2)
+            pos_y = -h/6*diff
+            
+            # cap to +- 2.8m
+            if diff<-2.8:
+                pos_y = -h/6*-2.8
+            elif diff>2.8:
+                pos_y= -h/6*2.8
+            else:
+                pos_y = -h/6*diff
+            qp.drawText(w-fh*3.8, pos_y+fh/2, str(diff)) # difference from target (moves up and down +- 2.8m)        
+            qp.drawLine(w-fh*4.5,0,w-fh*4.5,pos_y) # vertical line     
+            qp.drawLine(w-fh*4.7,0,w-fh*4.5,0) # left horizontal line
+            qp.drawLine(w-fh*4.2,pos_y,w-fh*4.5,pos_y) #right horizontal line
+        
+        
+        
 
 
 if __name__ == "__main__":
@@ -142,7 +197,13 @@ if __name__ == "__main__":
 
         def updateRoll(self, roll):
             self.wid.setRoll((roll / 10.0) - 180.0)
-
+        
+        def updateTarget(self, target):
+            self.wid.setHover(500+target/10.)
+        def updateBaro(self, asl):
+            self.wid.setBaro(500+asl/10.)           
+        
+        
         def initUI(self):
 
             vbox = QtGui.QVBoxLayout()
@@ -151,9 +212,9 @@ if __name__ == "__main__":
             sld.setFocusPolicy(QtCore.Qt.NoFocus)
             sld.setRange(0, 3600)
             sld.setValue(1800)
-
             vbox.addWidget(sld)
-
+            
+            
             self.wid = AttitudeIndicator()
 
             sld.valueChanged[int].connect(self.updateRoll)
@@ -166,15 +227,29 @@ if __name__ == "__main__":
             sldPitch.setFocusPolicy(QtCore.Qt.NoFocus)
             sldPitch.setRange(0, 180)
             sldPitch.setValue(90)
-
             sldPitch.valueChanged[int].connect(self.updatePitch)
-
             hbox.addWidget(sldPitch)
+            
+            sldASL = QtGui.QSlider(QtCore.Qt.Vertical, self)
+            sldASL.setFocusPolicy(QtCore.Qt.NoFocus)
+            sldASL.setRange(-200, 200)
+            sldASL.setValue(0)
+            sldASL.valueChanged[int].connect(self.updateBaro)
+            
+            sldT = QtGui.QSlider(QtCore.Qt.Vertical, self)
+            sldT.setFocusPolicy(QtCore.Qt.NoFocus)
+            sldT.setRange(-200, 200)
+            sldT.setValue(0)
+            sldT.valueChanged[int].connect(self.updateTarget)
+            
+            hbox.addWidget(sldT)  
+            hbox.addWidget(sldASL)
+                      
 
             self.setLayout(hbox)
 
-            self.setGeometry(300, 300, 210, 210)
-            self.setWindowTitle('Atitude Indicator')
+            self.setGeometry(50, 50, 510, 510)
+            self.setWindowTitle('Attitude Indicator')
             self.show()
 
         def changeValue(self, value):

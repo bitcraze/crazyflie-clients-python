@@ -65,12 +65,14 @@ class FlightTab(Tab, flight_tab_class):
 
     _motor_data_signal = pyqtSignal(object)
     _imu_data_signal = pyqtSignal(object)
+    _althold_data_signal = pyqtSignal(object)
+    _baro_data_signal = pyqtSignal(object)
 
     _input_updated_signal = pyqtSignal(float, float, float, float)
     _rp_trim_updated_signal = pyqtSignal(float, float)
     _emergency_stop_updated_signal = pyqtSignal(bool)
 
-    UI_DATA_UPDATE_FPS = 10
+    #UI_DATA_UPDATE_FPS = 10
 
     connectionFinishedSignal = pyqtSignal(str)
     disconnectedSignal = pyqtSignal(str)
@@ -101,8 +103,13 @@ class FlightTab(Tab, flight_tab_class):
         self._emergency_stop_updated_signal.connect(self.updateEmergencyStop)
         self.helper.inputDeviceReader.emergency_stop_updated.add_callback(
                                      self._emergency_stop_updated_signal.emit)
+        
+        self.helper.inputDeviceReader.althold_updated.add_callback(
+                    lambda enabled: self.helper.cf.param.set_value("flightmode.althold", enabled))
 
         self._imu_data_signal.connect(self._imu_data_received)
+        self._baro_data_signal.connect(self._baro_data_received)
+        self._althold_data_signal.connect(self._althold_data_received)
         self._motor_data_signal.connect(self._motor_data_received)
 
         # Connect UI signals that are in this tab
@@ -126,27 +133,40 @@ class FlightTab(Tab, flight_tab_class):
 
         self.crazyflieXModeCheckbox.clicked.connect(
                              lambda enabled:
-                             self.helper.cf.param.set_value("flightctrl.xmode",
+                             self.helper.cf.param.set_value("flightmode.x",
                                                             str(enabled)))
         self.helper.cf.param.add_update_callback(
-                        group="flightctrl", name="xmode",
+                        group="flightmode", name="xmode",
                         cb=( lambda name, checked:
                         self.crazyflieXModeCheckbox.setChecked(eval(checked))))
         self.ratePidRadioButton.clicked.connect(
                     lambda enabled:
-                    self.helper.cf.param.set_value("flightctrl.ratepid",
+                    self.helper.cf.param.set_value("flightmode.ratepid",
                                                    str(enabled)))
         self.angularPidRadioButton.clicked.connect(
                     lambda enabled:
-                    self.helper.cf.param.set_value("flightctrl.ratepid",
+                    self.helper.cf.param.set_value("flightmode.ratepid",
                                                    str(not enabled)))
         self.helper.cf.param.add_update_callback(
-                    group="flightctrl", name="ratepid",
+                    group="flightmode", name="ratepid",
                     cb=(lambda name, checked:
                     self.ratePidRadioButton.setChecked(eval(checked))))
+        
+        self.helper.cf.param.add_update_callback(
+                    group="flightmode", name="althold",
+                    cb=(lambda name, enabled:
+                    self.helper.inputDeviceReader.setAltHold(eval(enabled))))
+
+        self.helper.cf.param.add_update_callback(
+                        group="imu_sensors",
+                        cb=self._set_available_sensors)
+                
+        self.logBaro = None
+        self.logAltHold = None
 
         self.ai = AttitudeIndicator()
-        self.gridLayout.addWidget(self.ai, 0, 1)
+        self.verticalLayout_4.addWidget(self.ai)
+        self.splitter.setSizes([1000,1])
 
         self.targetCalPitch.setValue(GuiConfig().get("trim_pitch"))
         self.targetCalRoll.setValue(GuiConfig().get("trim_roll"))
@@ -173,6 +193,23 @@ class FlightTab(Tab, flight_tab_class):
         self.actualM3.setValue(data["motor.m3"])
         self.actualM4.setValue(data["motor.m4"])
 
+        
+    def _baro_data_received(self, data):
+        self.actualASL.setText(("%.2f" % data["baro.aslLong"]))
+        self.ai.setBaro(data["baro.aslLong"])
+        
+    def _althold_data_received(self, data):       
+        target =   data["altHold.target"]
+        if target>0:
+            if not self.targetASL.isEnabled():
+                self.targetASL.setEnabled(True) 
+            self.targetASL.setText(("%.2f" % target))
+            self.ai.setHover(target)    
+        elif self.targetASL.isEnabled():
+            self.targetASL.setEnabled(False)
+            self.targetASL.setText("Not set")   
+            self.ai.setHover(0)    
+        
     def _imu_data_received(self, data):
         self.actualRoll.setText(("%.2f" % data["stabilizer.roll"]))
         self.actualPitch.setText(("%.2f" % data["stabilizer.pitch"]))
@@ -185,7 +222,8 @@ class FlightTab(Tab, flight_tab_class):
                              data["stabilizer.pitch"])
 
     def connected(self, linkURI):
-        lg = LogConfig("Stabalizer", 100)
+        # IMU & THRUST
+        lg = LogConfig("Stabalizer", 50)
         lg.addVariable(LogVariable("stabilizer.roll", "float"))
         lg.addVariable(LogVariable("stabilizer.pitch", "float"))
         lg.addVariable(LogVariable("stabilizer.yaw", "float"))
@@ -200,7 +238,8 @@ class FlightTab(Tab, flight_tab_class):
             logger.warning("Could not setup logconfiguration after "
                            "connection!")
 
-        lg = LogConfig("Motors", 100)
+        # MOTOR
+        lg = LogConfig("Motors", 50)
         lg.addVariable(LogVariable("motor.m1", "uint32_t"))
         lg.addVariable(LogVariable("motor.m2", "uint32_t"))
         lg.addVariable(LogVariable("motor.m3", "uint32_t"))
@@ -214,6 +253,43 @@ class FlightTab(Tab, flight_tab_class):
         else:
             logger.warning("Could not setup logconfiguration after "
                            "connection!")
+            
+    def _set_available_sensors(self, name, available):
+        logger.info("[%s]: %s", name, available)
+        available = eval(available)
+        if ("HMC5883L" in name):
+            if (not available):
+                self.actualASL.setText("N/A")
+            else:
+                self.actualASL.setEnabled(True)
+                self.helper.inputDeviceReader.setAltHoldAvailable(available)
+                if (not self.logBaro and not self.logAltHold):
+                    # The sensor is available, set up the logging
+                    lg = LogConfig("Baro", 50)
+                    lg.addVariable(LogVariable("baro.asl", "float"))
+                    lg.addVariable(LogVariable("baro.aslLong", "float"))
+                    lg.addVariable(LogVariable("baro.aslRaw", "float"))
+                    lg.addVariable(LogVariable("baro.temp", "float"))
+
+                    self.logBaro = self.helper.cf.log.create_log_packet(lg)
+                    if (self.logBaro is not None):
+                        self.logBaro.data_received.add_callback(self._baro_data_signal.emit)
+                        self.logBaro.error.add_callback(self.loggingError)
+                        self.logBaro.start()
+                    else:
+                        logger.warning("Could not setup logconfiguration after "
+                                       "connection!")            
+                    lg = LogConfig("AltHold", 50)
+                    lg.addVariable(LogVariable("altHold.target", "float"))
+
+                    self.logAltHold = self.helper.cf.log.create_log_packet(lg)
+                    if (self.logAltHold is not None):
+                        self.logAltHold.data_received.add_callback(self._althold_data_signal.emit)
+                        self.logAltHold.error.add_callback(self.loggingError)
+                        self.logAltHold.start()
+                    else:
+                        logger.warning("Could not setup logconfiguration after "
+                                       "connection!")                        
 
     def disconnected(self, linkURI):
         self.ai.setRollPitch(0, 0)
@@ -225,6 +301,9 @@ class FlightTab(Tab, flight_tab_class):
         self.actualPitch.setText("")
         self.actualYaw.setText("")
         self.actualThrust.setText("")
+        self.actualASL.setText("")
+        self.targetASL.setText("Not Set")
+        self.targetASL.setEnabled(False)
 
     def minMaxThrustChanged(self):
         self.helper.inputDeviceReader.set_thrust_limits(
