@@ -101,6 +101,11 @@ class ParamTocElement:
             else:
                 self.access = ParamTocElement.RW_ACCESS
 
+    def get_readable_access(self):
+        if (self.access == ParamTocElement.RO_ACCESS):
+            return "RO"
+        return "RW"
+
 
 class Param():
     """

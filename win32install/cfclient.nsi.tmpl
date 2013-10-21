@@ -81,7 +81,7 @@ Section "Crazyflie Client" SecCfclient
   ;Write Start menu items
   CreateDirectory "$SMPROGRAMS\Crazyflie client"
   CreateShortCut "$SMPROGRAMS\Crazyflie client\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
-  CreateShortCut "$SMPROGRAMS\Crazyflie client\Crazyflie PC client.lnk" "$INSTDIR\cfclient.exe" "" "$INSTDIR\crclient.exe" 0
+  CreateShortCut "$SMPROGRAMS\Crazyflie client\Crazyflie PC client.lnk" "$INSTDIR\cfclient.exe" "" "$INSTDIR\cfclient.exe" 0
   
   ; Write the uninstall keys for Windows
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cfclient" "DisplayName" "Crazyflie Client"

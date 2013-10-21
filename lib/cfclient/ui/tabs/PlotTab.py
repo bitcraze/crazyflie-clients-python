@@ -61,7 +61,7 @@ plot_tab_class = uic.loadUiType(sys.path[0] +
 class PlotTab(Tab, plot_tab_class):
     """Tab for plotting logging data"""
 
-    logDataSignal = pyqtSignal(object)
+    logDataSignal = pyqtSignal(object, int)
 
     colors = [QtCore.Qt.green, QtCore.Qt.blue, QtCore.Qt.magenta,
               QtCore.Qt.red, QtCore.Qt.black, QtCore.Qt.cyan,QtCore.Qt.yellow]
@@ -104,11 +104,13 @@ class PlotTab(Tab, plot_tab_class):
         self.saveFile = None
 
     def saveToFile(self):
-        filename = "%s-%s" % (datetime.datetime.now(),
-                              self.dataSelector.currentText())
-        logger.info("Saving logdata to [%s]", filename)
-        self.saveFile = open(filename, 'w')
-        s = ""
+        filename = "%s-%s.csv" % (datetime.datetime.now(),
+                                  self.dataSelector.currentText())
+        filename = filename.replace(":", ".")
+        savePath = os.path.join(os.path.expanduser("~"), filename)
+        logger.info("Saving logdata to [%s]", savePath)
+        self.saveFile = open(savePath, 'w')
+        s = "Timestamp,"
         for v in self.dsList[self.dataSelector.currentIndex()].getVariables():
             s += v.getName() + ","
         s += '\n'
@@ -117,7 +119,7 @@ class PlotTab(Tab, plot_tab_class):
 
     def savingStopped(self):
         self.saveFile.close()
-        logger.ionfo("Stopped saving logdata")
+        logger.info("Stopped saving logdata")
         self.saveFile = None
 
     def newLogSetupSelected(self, item):
@@ -141,7 +143,7 @@ class PlotTab(Tab, plot_tab_class):
 
             for d in info.getVariables():
                 ds = PlotDataSet(d.getName(),
-                                 self.colors[colorSelector],
+                                 self.colors[colorSelector % len(self.colors)],
                                  [minVal, maxVal])
                 self.datasets.append(ds)
                 self.plot.addDataset(ds)
@@ -171,10 +173,10 @@ class PlotTab(Tab, plot_tab_class):
             # self.newLogSetupSelected(self.dataSelector.currentIndex())
             self.dataSelector.currentIndexChanged.emit(0)
 
-    def logDataReceived(self, data):
+    def logDataReceived(self, data, timestamp):
         try:
             dataIndex = 0
-            s = ""
+            s = "%d," % timestamp
             for d in data:
                 self.datasets[dataIndex].addData(data[d])
                 s += str(data[d]) + ","
@@ -184,5 +186,5 @@ class PlotTab(Tab, plot_tab_class):
                 self.saveFile.write(s)
         except Exception as e:
             # When switching what to log we might still get logging packets...
-            # and that will not be pretty so let's just ignore the probolem ;-)
+            # and that will not be pretty so let's just ignore the problem ;-)
             logger.warning("Exception for plot data: %s", e)
