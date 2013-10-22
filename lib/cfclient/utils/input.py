@@ -252,6 +252,7 @@ class JoystickReader:
 
             if (self._old_alt_hold != althold):
                 self.althold_updated.call(str(althold))
+                self._old_alt_hold = althold
 
             if self._emergency_stop != emergency_stop:
                 self._emergency_stop = emergency_stop
