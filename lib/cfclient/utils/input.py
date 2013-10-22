@@ -306,9 +306,9 @@ class JoystickReader:
     @staticmethod
     def deadband(value, threshold):
         if abs(value) < threshold:
-          value = 0
+            value = 0
         elif value > 0:
-          value -= threshold
+            value -= threshold
         elif value < 0:
-          value += threshold
+            value += threshold
         return value/(1-threshold)
