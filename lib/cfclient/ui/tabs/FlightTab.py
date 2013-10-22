@@ -223,7 +223,7 @@ class FlightTab(Tab, flight_tab_class):
 
     def connected(self, linkURI):
         # IMU & THRUST
-        lg = LogConfig("Stabalizer", 50)
+        lg = LogConfig("Stabalizer", 200)
         lg.addVariable(LogVariable("stabilizer.roll", "float"))
         lg.addVariable(LogVariable("stabilizer.pitch", "float"))
         lg.addVariable(LogVariable("stabilizer.yaw", "float"))
@@ -239,7 +239,7 @@ class FlightTab(Tab, flight_tab_class):
                            "connection!")
 
         # MOTOR
-        lg = LogConfig("Motors", 50)
+        lg = LogConfig("Motors", 200)
         lg.addVariable(LogVariable("motor.m1", "uint32_t"))
         lg.addVariable(LogVariable("motor.m2", "uint32_t"))
         lg.addVariable(LogVariable("motor.m3", "uint32_t"))
@@ -265,11 +265,8 @@ class FlightTab(Tab, flight_tab_class):
                 self.helper.inputDeviceReader.setAltHoldAvailable(available)
                 if (not self.logBaro and not self.logAltHold):
                     # The sensor is available, set up the logging
-                    lg = LogConfig("Baro", 50)
-                    lg.addVariable(LogVariable("baro.asl", "float"))
+                    lg = LogConfig("Baro", 200)
                     lg.addVariable(LogVariable("baro.aslLong", "float"))
-                    lg.addVariable(LogVariable("baro.aslRaw", "float"))
-                    lg.addVariable(LogVariable("baro.temp", "float"))
 
                     self.logBaro = self.helper.cf.log.create_log_packet(lg)
                     if (self.logBaro is not None):
@@ -279,7 +276,7 @@ class FlightTab(Tab, flight_tab_class):
                     else:
                         logger.warning("Could not setup logconfiguration after "
                                        "connection!")            
-                    lg = LogConfig("AltHold", 50)
+                    lg = LogConfig("AltHold", 200)
                     lg.addVariable(LogVariable("altHold.target", "float"))
 
                     self.logAltHold = self.helper.cf.log.create_log_packet(lg)
