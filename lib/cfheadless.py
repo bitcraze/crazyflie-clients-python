@@ -82,9 +82,11 @@ class HeadlessClient():
     def connect_crazyflie(self, link_uri):
         """Connect to a Crazyflie on the given link uri"""
         self._cf.connectionFailed.add_callback(self._connection_failed)
-        self._cf.param.add_update_callback(group="imu_sensors", name="HMC5883L"
+        self._cf.param.add_update_callback(group="imu_sensors", name="HMC5883L",
                 cb=(lambda name, found:
                     self._jr.setAltHoldAvailable(eval(found))))
+        self._jr.althold_updated.add_callback(
+                lambda enabled: self._cf.param.set_value("flightmode.althold", enabled))
 
         self._cf.open_link(link_uri)
         self._jr.input_updated.add_callback(self._cf.commander.send_setpoint)
