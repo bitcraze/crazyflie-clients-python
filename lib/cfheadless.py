@@ -64,10 +64,13 @@ class HeadlessClient():
 
         signal.signal(signal.SIGINT, signal.SIG_DFL) 
 
-    def setup_controller(self, input_config, input_device=0):
+    def setup_controller(self, input_config, input_device=0, xmode=False):
         """Set up the device reader""" 
         # Set up the joystick reader
         self._jr.device_error.add_callback(self._input_dev_error)
+        print "Client side X-mode: %s" % xmode
+        if (xmode):
+            self._cf.commander.set_client_xmode(xmode)
 
         devs = self._jr.getAvailableDevices()
         print "Will use [%s] for input" % devs[input_device]["name"]
@@ -124,6 +127,9 @@ def main():
     parser.add_argument("--controllers", action="store_true",
                         dest="list_controllers",
                         help="Only display available controllers and exit")
+    parser.add_argument("-x", "--x-mode", action="store_true", 
+                        dest="xmode", 
+                        help="Enable client-side X-mode") 
     (args, unused) = parser.parse_known_args()
 
     if args.debug:
@@ -137,6 +143,7 @@ def main():
         headless.list_controllers()
     else:
         headless.setup_controller(input_config=args.input,
-                                  input_device=args.controller)
+                                  input_device=args.controller,
+                                  xmode=args.xmode)
         headless.connect_crazyflie(link_uri=args.uri)
 
