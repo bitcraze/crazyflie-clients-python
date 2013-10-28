@@ -58,8 +58,7 @@ setup(name='cfclient',
                                          "cfclient.ui.toolboxes.*",
                                          "cfclient.ui.*", "cfclient.ui.tabs.*",
                                          "cfclient.ui.widgets.*",
-                                         "cfclient.ui.dialogs.*",
-                                         "pygame._view"],
+                                         "cfclient.ui.dialogs.*"],
                            "excludes": ["AppKit"],
                            "skip_archive": True}})
 
