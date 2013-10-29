@@ -4,7 +4,7 @@ from distutils.core import setup
 import glob
 import os
 
-VERSION = '2013.4.99'  # Year.Month.fix  if fix=99 means dev version
+VERSION = '2013.11.99'  # Year.Month.fix  if fix=99 means dev version
 
 try:
     import py2exe
@@ -58,8 +58,7 @@ setup(name='cfclient',
                                          "cfclient.ui.toolboxes.*",
                                          "cfclient.ui.*", "cfclient.ui.tabs.*",
                                          "cfclient.ui.widgets.*",
-                                         "cfclient.ui.dialogs.*",
-                                         "pygame._view"],
+                                         "cfclient.ui.dialogs.*"],
                            "excludes": ["AppKit"],
                            "skip_archive": True}})
 

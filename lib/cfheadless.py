@@ -64,10 +64,13 @@ class HeadlessClient():
 
         signal.signal(signal.SIGINT, signal.SIG_DFL) 
 
-    def setup_controller(self, input_config, input_device=0):
+    def setup_controller(self, input_config, input_device=0, xmode=False):
         """Set up the device reader""" 
         # Set up the joystick reader
         self._jr.device_error.add_callback(self._input_dev_error)
+        print "Client side X-mode: %s" % xmode
+        if (xmode):
+            self._cf.commander.set_client_xmode(xmode)
 
         devs = self._jr.getAvailableDevices()
         print "Will use [%s] for input" % devs[input_device]["name"]
@@ -82,9 +85,11 @@ class HeadlessClient():
     def connect_crazyflie(self, link_uri):
         """Connect to a Crazyflie on the given link uri"""
         self._cf.connectionFailed.add_callback(self._connection_failed)
-        self._cf.param.add_update_callback(group="imu_sensors", name="HMC5883L"
+        self._cf.param.add_update_callback(group="imu_sensors", name="HMC5883L",
                 cb=(lambda name, found:
                     self._jr.setAltHoldAvailable(eval(found))))
+        self._jr.althold_updated.add_callback(
+                lambda enabled: self._cf.param.set_value("flightmode.althold", enabled))
 
         self._cf.open_link(link_uri)
         self._jr.input_updated.add_callback(self._cf.commander.send_setpoint)
@@ -122,6 +127,9 @@ def main():
     parser.add_argument("--controllers", action="store_true",
                         dest="list_controllers",
                         help="Only display available controllers and exit")
+    parser.add_argument("-x", "--x-mode", action="store_true", 
+                        dest="xmode", 
+                        help="Enable client-side X-mode") 
     (args, unused) = parser.parse_known_args()
 
     if args.debug:
@@ -135,6 +143,7 @@ def main():
         headless.list_controllers()
     else:
         headless.setup_controller(input_config=args.input,
-                                  input_device=args.controller)
+                                  input_device=args.controller,
+                                  xmode=args.xmode)
         headless.connect_crazyflie(link_uri=args.uri)
 
