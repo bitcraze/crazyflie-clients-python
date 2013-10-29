@@ -265,7 +265,7 @@ class Crazyflie():
                         # packet on this port before we have gotten the first
                         # one back. This is an error and might cause loss of
                         # packets!!
-                        logger.warning("ExpectAnswer: ERROR! Older timer whas"
+                        logger.warning("ExpectAnswer: ERROR! Older timer was"
                                        " running while scheduling new one on "
                                        "[%d]", pk.port)
                 except KeyError:
