@@ -199,7 +199,7 @@ class FlightTab(Tab, flight_tab_class):
         self.ai.setBaro(data["baro.aslLong"])
         
     def _althold_data_received(self, data, timestamp):       
-        target =   data["altHold.target"]
+        target = data["altHold.target"]
         if target>0:
             if not self.targetASL.isEnabled():
                 self.targetASL.setEnabled(True) 

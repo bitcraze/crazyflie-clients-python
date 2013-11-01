@@ -101,7 +101,7 @@ class DebugDriver (CRTPDriver):
                                 "min":-90, "max": 90, "mod": 2.5})
         self.fakeLogToc.append({"varid": 9, "vartype": 7, "vargroup": "pm",
                                 "varname": "vbat", "min": 3.0,
-                                "max": 4.0, "mod": 0.1})
+                                "max": 4.2, "mod": 0.1})
         self.fakeLogToc.append({"varid": 10, "vartype": 6, "vargroup": "motor",
                                 "varname": "m1", "min": 0, "max": 65000,
                                 "mod": 1000})
@@ -117,6 +117,21 @@ class DebugDriver (CRTPDriver):
         self.fakeLogToc.append({"varid": 14, "vartype": 2,
                                 "vargroup": "stabilizer", "varname": "thrust",
                                 "min": 0, "max": 65000, "mod": 1000})
+        self.fakeLogToc.append({"varid": 15, "vartype": 7,
+                                "vargroup": "baro", "varname": "asl",
+                                "min": 540, "max": 545, "mod": 0.5})
+        self.fakeLogToc.append({"varid": 16, "vartype": 7,
+                                "vargroup": "baro", "varname": "aslRaw",
+                                "min": 540, "max": 545, "mod": 1.0})
+        self.fakeLogToc.append({"varid": 17, "vartype": 7,
+                                "vargroup": "baro", "varname": "aslLong",
+                                "min": 540, "max": 545, "mod": 0.5})
+        self.fakeLogToc.append({"varid": 18, "vartype": 7,
+                                "vargroup": "baro", "varname": "temp",
+                                "min": 26, "max": 38, "mod": 1.0})
+        self.fakeLogToc.append({"varid": 19, "vartype": 7,
+                                "vargroup": "altHold", "varname": "target",
+                                "min": 542, "max": 543, "mod": 0.1})
 
         # Fill up the fake logging TOC with values and data
         self.fakeParamToc = []
@@ -169,6 +184,14 @@ class DebugDriver (CRTPDriver):
         self.fakeParamToc.append({"varid": 15, "vartype": 0x08,
                                   "vargroup": "flightctrl",
                                   "varname": "ratepid", "writable": True,
+                                  "value": 1})
+        self.fakeParamToc.append({"varid": 16, "vartype": 0x08,
+                                  "vargroup": "imu_sensors",
+                                  "varname": "HMC5883L", "writable": False,
+                                  "value": 1})
+        self.fakeParamToc.append({"varid": 17, "vartype": 0x08,
+                                  "vargroup": "imu_sensors",
+                                  "varname": "MS5611", "writable": False,
                                   "value": 1})
 
         self.fakeflash = {}
@@ -497,8 +520,8 @@ class _FakeLoggingDataThread (Thread):
         i = 0
         while (i < len(listofvars)):
             varType = ord(listofvars[i])
-            var_stored_as = (varType >> 4)
-            var_fetch_as = (varType & 0xF)
+            var_stored_as = (varType >> 8)
+            var_fetch_as = (varType & 0xFF)
             if (var_stored_as > 0):
                 addr = struct.unpack("<I", listofvars[i + 1:i + 5])
                 logger.debug("FakeLoggingThread: We should log a memory addr"
