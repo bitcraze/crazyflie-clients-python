@@ -2,35 +2,35 @@
   "inputconfig": {
     "inputdevice": {
       "updateperiod": 10, 
-      "name": "xbox360_mode1", 
+      "name": "xbox360_mode1_linux", 
       "axis": [
         {
           "scale": -1.0, 
           "type": "Input.AXIS", 
-          "name": "thrust", 
+          "id": 4, 
           "key": "thrust", 
-          "id": 4
+          "name": "thrust"
         }, 
         {
           "scale": 1.0, 
           "type": "Input.AXIS", 
-          "name": "yaw", 
+          "id": 3, 
           "key": "yaw", 
-          "id": 3
+          "name": "yaw"
         }, 
         {
           "scale": 1.0, 
           "type": "Input.AXIS", 
-          "name": "roll", 
+          "id": 0, 
           "key": "roll", 
-          "id": 0
+          "name": "roll"
         }, 
         {
           "scale": -1.0, 
           "type": "Input.AXIS", 
-          "name": "pitch", 
+          "id": 1, 
           "key": "pitch", 
-          "id": 1
+          "name": "pitch"
         }, 
         {
           "scale": -1.0, 
@@ -66,6 +66,13 @@
           "id": -1, 
           "key": "rollcal", 
           "name": "rollPos"
+        }, 
+        {
+          "scale": 1.0, 
+          "type": "Input.BUTTON", 
+          "id": 5, 
+          "key": "althold", 
+          "name": "althold"
         }, 
         {
           "scale": 1.0, 
