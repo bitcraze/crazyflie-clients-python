@@ -102,9 +102,8 @@ class RadioDriver(CRTPDriver):
         if uri_data.group(6) == "2M":
             datarate = Crazyradio.DR_2MPS
 
-        # FIXME: Still required to open more than one dongle?
         if self.cradio is None:
-            self.cradio = Crazyradio()
+            self.cradio = Crazyradio(devid=int(uri_data.group(1)))
         else:
             raise Exception("Link already open!")
 

@@ -70,10 +70,9 @@ def _find_devices():
     ret = []
 
     if pyusb1:
-        #FIXME: pyUSB 1.x should also be able to return a list of device!
-        dev = usb.core.find(idVendor=0x1915, idProduct=0x7777)
+        dev = usb.core.find(idVendor=0x1915, idProduct=0x7777, find_all=1)
         if dev is not None:
-            ret += [dev, ]
+            ret = dev
     else:
         busses = usb.busses()
         for bus in busses:
@@ -104,11 +103,11 @@ class Crazyradio:
     P_M6DBM = 2
     P_0DBM = 3
 
-    def __init__(self, device=None):
+    def __init__(self, device=None, devid=0):
         """ Create object and scan for USB dongle if no device is supplied """
         if device is None:
             try:
-                device = _find_devices()[0]
+                device = _find_devices()[devid]
             except Exception:
                 raise Exception("Cannot find a Crazyradio Dongle")
 
