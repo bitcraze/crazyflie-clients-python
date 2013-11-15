@@ -192,7 +192,7 @@ class LogConfigReader():
         """Read and parse log configurations"""
         configsfound = [os.path.basename(f) for f in
                         glob.glob(sys.path[1] + "/log/[A-Za-z_-]*.json")]
-
+        new_dsList = []
         for conf in configsfound:
             try:
                 logger.info("Parsing [%s]", conf)
@@ -216,10 +216,11 @@ class LogConfigReader():
                                                         LogVariable.MEM_TYPE,
                                                         v["stored_as"],
                                                         int(v["address"], 16)))
-                self.dsList.append(logConf)
+                new_dsList.append(logConf)
                 json_data.close()
             except Exception as e:
                 logger.warning("Exception while parsing logconfig file: %s", e)
+        self.dsList = new_dsList
 
     def getLogConfigs(self):
         """Return the log configurations"""

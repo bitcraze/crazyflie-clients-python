@@ -69,6 +69,7 @@ class PlotTab(Tab, plot_tab_class):
     dsList = []
 
     connectedSignal = pyqtSignal(str)
+    logConfigReadSignal = pyqtSignal()
 
     def __init__(self, tabWidget, helper, *args):
         super(PlotTab, self).__init__(*args)
@@ -95,6 +96,9 @@ class PlotTab(Tab, plot_tab_class):
         self.helper.cf.connectSetupFinished.add_callback(
                                                      self.connectedSignal.emit)
         self.connectedSignal.connect(self.connected)
+
+        self.helper.cf.logConfigRead.add_callback(self.logConfigReadSignal.emit)
+        self.logConfigReadSignal.connect(self.logConfigChanged)
 
         self.datasets = []
         self.logEntrys = []
@@ -136,7 +140,7 @@ class PlotTab(Tab, plot_tab_class):
             self.datasets = []
             colorSelector = 0
 
-            info = self.dsList[self.dataSelector.currentIndex()]
+            info = self.dsList[item]
             self.plot.setTitle(info.getName())
             minVal = info.getDataRangeMin()
             maxVal = info.getDataRangeMax()
@@ -156,22 +160,32 @@ class PlotTab(Tab, plot_tab_class):
         logger.warning("logging error: %s", err)
 
     def connected(self, link):
+        self.populateLogConfigs()
+
+    def populateLogConfigs(self):
+        prevSelected = self.dataSelector.currentText()
         self.logEntrys = []
+        self.dataSelector.blockSignals(True)
         self.dataSelector.clear()
+        self.dataSelector.blockSignals(False)
         for d in self.dsList:
             logEntry = self.helper.cf.log.create_log_packet(d)
             if (logEntry != None):
+                self.dataSelector.blockSignals(True)
                 self.dataSelector.addItem(d.getName())
+                self.dataSelector.blockSignals(False)
                 self.logEntrys.append(logEntry)
                 logEntry.data_received.add_callback(self.logDataSignal.emit)
                 logEntry.error.add_callback(self.loggingError)
             else:
                 logger.warning("Could not setup log configuration!")
 
-        # TODO: Make this pretty ?
         if (len(self.logEntrys) > 0):
-            # self.newLogSetupSelected(self.dataSelector.currentIndex())
-            self.dataSelector.currentIndexChanged.emit(0)
+            prevIndex = self.dataSelector.findText(prevSelected)
+            if prevIndex >= 0:
+                self.dataSelector.setCurrentIndex(prevIndex)
+            else:
+                self.dataSelector.currentIndexChanged.emit(0)
 
     def logDataReceived(self, data, timestamp):
         try:
@@ -188,3 +202,7 @@ class PlotTab(Tab, plot_tab_class):
             # When switching what to log we might still get logging packets...
             # and that will not be pretty so let's just ignore the problem ;-)
             logger.warning("Exception for plot data: %s", e)
+
+    def logConfigChanged(self):
+        self.dsList = self.helper.logConfigReader.getLogConfigs()
+        self.populateLogConfigs()

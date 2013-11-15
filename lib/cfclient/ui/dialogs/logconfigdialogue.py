@@ -283,3 +283,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
                                      storedAs=varType)
                 logconfig.addVariable(newVar)
         return logconfig
+    
+    def closeEvent(self, event):
+        self.helper.logConfigReader.readConfigFiles()
+        self.helper.cf.logConfigRead.call()
