@@ -350,7 +350,7 @@ class FastPlotWidget(QtGui.QWidget):
                                   - self.dataStartY)
 
     def drawLegend(self, painter):
-        # These could be optomized to only the recalculated on added datasets
+        # These could be optimized to only the recalculated on added datasets
         # and resize...
         dsIndex = 0
         cols = math.ceil(len(self.datasets) / 2.0)
@@ -365,7 +365,7 @@ class FastPlotWidget(QtGui.QWidget):
             painter.setPen(ds.color)
             # r = painter.boundingRect(QRectF(), Qt.AlignLeft, ds.title)
             # print "%ix%i" % (r.width(), r.height())
-            # rint "Special %i,%i" % (math.floor(dsIndex/2), dsIndex%rows)
+            # print "Special %i,%i" % (math.floor(dsIndex/2), dsIndex%rows)
             x = (self.edgeMargin + self.legendBoxMargin +
                  math.floor(dsIndex / 2) * offsetPerCol)
             y = (self.edgeMargin + self.plotHeight + self.legendBoxMargin +
@@ -396,7 +396,7 @@ class FastPlotWidget(QtGui.QWidget):
         fpsString = "FPS: %i" % int(self.fps)
         painter.drawText(10, 10, fpsString)
 
-        # Dra axis and data
+        # Draw axis and data
         painter.setPen(QtCore.Qt.black)
         self.drawAxis(painter)
         if (len(self.datasets) > 0):
