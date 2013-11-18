@@ -86,7 +86,7 @@ class LogEntry:
 
         self.logconf = logconf
         self.block_id = LogEntry.block_idCounter
-        LogEntry.block_idCounter += 1
+        LogEntry.block_idCounter += 1 % 255
         self.cf = crazyflie
         self.period = logconf.getPeriod() / 10
         self.block_created = False
@@ -278,6 +278,13 @@ class Log():
 
     def refresh_toc(self, refresh_done_callback, toc_cache):
         """Start refreshing the table of loggale variables"""
+        pk = CRTPPacket()
+        pk.set_header(CRTPPort.LOGGING, CHAN_SETTINGS)
+        pk.data = (CMD_RESET_LOGGING, )
+        self.cf.send_packet(pk)
+
+        self.log_blocks = []
+
         self.toc = Toc()
         toc_fetcher = TocFetcher(self.cf, LogTocElement, CRTPPort.LOGGING,
                                 self.toc, refresh_done_callback, toc_cache)
