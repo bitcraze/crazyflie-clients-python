@@ -306,6 +306,8 @@ class FlightTab(Tab, flight_tab_class):
         self.actualASL.setText("")
         self.targetASL.setText("Not Set")
         self.targetASL.setEnabled(False)
+        self.logBaro = None
+        self.logAltHold = None
 
     def minMaxThrustChanged(self):
         self.helper.inputDeviceReader.set_thrust_limits(
