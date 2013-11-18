@@ -40,6 +40,7 @@ __author__ = 'Bitcraze AB'
 __all__ = ['Log', 'LogTocElement']
 
 import struct
+import errno
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from cflib.utils.callbacks import Caller
 from .toc import Toc, TocFetcher
@@ -233,6 +234,16 @@ class LogTocElement:
 class Log():
     """Create log configuration"""
 
+    # These codes can be decoded using os.stderror, but
+    # some of the text messages will look very stange
+    # in the UI, so they are redefined here
+    _err_codes = {
+            errno.ENOMEM: "No more memory available",
+            errno.ENOEXEC: "Command not found",
+            errno.ENOENT: "No such block id",
+            errno.E2BIG: "Block too large"
+            }
+
     def __init__(self, crazyflie=None):
         self.log_blocks = []
 
@@ -297,8 +308,10 @@ class Log():
                                    block.period)
                         self.cf.send_packet(pk)
                     else:
-                        logger.warning("Error when adding block_id=%d, should"
-                                       " tell listenders...", new_block_id)
+                        msg = self._err_codes[error_status]
+                        logger.warning("Error %d when adding block_id=%d (%s)"
+                                       , error_status, new_block_id, msg)
+                        block.error.call(block.logconf, msg)
 
                 else:
                     logger.warning("No LogEntry to assign block to !!!")
@@ -307,8 +320,15 @@ class Log():
                     logger.info("Have successfully logging for block=%d",
                                 new_block_id)
                 else:
-                    logger.warning("Error=%d when starting logging for "
-                                   "block=%d", error_status, new_block_id)
+                    msg = self._err_codes[error_status]
+                    logger.warning("Error %d when starting block_id=%d (%s)"
+                                   , error_status, new_block_id, msg)
+                    block = None
+                    for blocks in self.log_blocks:
+                        if (blocks.block_id == new_block_id):
+                            block = blocks
+                    block.error.call(block.logconf, msg)
+
         if (chan == CHAN_LOGDATA):
             chan = packet.channel
             block_id = ord(packet.data[0])

@@ -91,6 +91,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
     _input_device_error_signal = pyqtSignal(str)
     _input_discovery_signal = pyqtSignal(object)
+    _log_error_signal = pyqtSignal(object, str)
 
     def __init__(self, *args):
         super(MainUI, self).__init__(*args)
@@ -170,6 +171,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.connectionInitiatedSignal.connect(
                            lambda linkURI: self.setUIState(UIState.CONNECTING,
                                                            linkURI))
+        self._log_error_signal.connect(self._logging_error)
 
         # Connect link quality feedback
         self.cf.linkQuality.add_callback(self.linkQualitySignal.emit)
@@ -319,13 +321,14 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.log = self.cf.log.create_log_packet(lg)
         if (self.log != None):
             self.log.data_received.add_callback(self.batteryUpdatedSignal.emit)
-            self.log.error.add_callback(self.loggingError)
+            self.log.error.add_callback(self._log_error_signal.emit)
             self.log.start()
         else:
             logger.warning("Could not setup loggingblock!")
 
-    def loggingError(self, error):
-        logger.warn("logging error %s", error)
+    def _logging_error(self, log_conf, msg):
+        QMessageBox.about(self, "Log error", "Error when starting log config"
+                " [%s]: %s" % (log_conf.getName(), msg))
 
     def connectionLost(self, linkURI, msg):
         if not self._auto_reconnect_enabled:

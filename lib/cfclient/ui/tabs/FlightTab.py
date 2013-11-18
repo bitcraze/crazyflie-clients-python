@@ -41,6 +41,7 @@ from time import time
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
+from PyQt4.QtGui import QMessageBox
 
 from cflib.crazyflie import Crazyflie
 
@@ -71,6 +72,8 @@ class FlightTab(Tab, flight_tab_class):
     _input_updated_signal = pyqtSignal(float, float, float, float)
     _rp_trim_updated_signal = pyqtSignal(float, float)
     _emergency_stop_updated_signal = pyqtSignal(bool)
+
+    _log_error_signal = pyqtSignal(object, str)
 
     #UI_DATA_UPDATE_FPS = 10
 
@@ -111,6 +114,8 @@ class FlightTab(Tab, flight_tab_class):
         self._baro_data_signal.connect(self._baro_data_received)
         self._althold_data_signal.connect(self._althold_data_received)
         self._motor_data_signal.connect(self._motor_data_received)
+
+        self._log_error_signal.connect(self._logging_error)
 
         # Connect UI signals that are in this tab
         self.flightModeCombo.currentIndexChanged.connect(self.flightmodeChange)
@@ -184,15 +189,15 @@ class FlightTab(Tab, flight_tab_class):
             self.flightModeCombo.setCurrentIndex(flightComboIndex)
             self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)
 
-    def loggingError(self):
-        logger.warning("Callback of error in LogEntry :(")
+    def _logging_error(self, log_conf, msg):
+        QMessageBox.about(self, "Log error", "Error when starting log config"
+                " [%s]: %s" % (log_conf.getName(), msg))
 
     def _motor_data_received(self, data, timestamp):
         self.actualM1.setValue(data["motor.m1"])
         self.actualM2.setValue(data["motor.m2"])
         self.actualM3.setValue(data["motor.m3"])
         self.actualM4.setValue(data["motor.m4"])
-
         
     def _baro_data_received(self, data, timestamp):
         self.actualASL.setText(("%.2f" % data["baro.aslLong"]))
@@ -232,7 +237,7 @@ class FlightTab(Tab, flight_tab_class):
         self.log = self.helper.cf.log.create_log_packet(lg)
         if (self.log is not None):
             self.log.data_received.add_callback(self._imu_data_signal.emit)
-            self.log.error.add_callback(self.loggingError)
+            self.log.error.add_callback(self._log_error_signal.emit)
             self.log.start()
         else:
             logger.warning("Could not setup logconfiguration after "
@@ -248,7 +253,7 @@ class FlightTab(Tab, flight_tab_class):
         self.log = self.helper.cf.log.create_log_packet(lg)
         if (self.log is not None):
             self.log.data_received.add_callback(self._motor_data_signal.emit)
-            self.log.error.add_callback(self.loggingError)
+            self.log.error.add_callback(self._log_error_signal.emit)
             self.log.start()
         else:
             logger.warning("Could not setup logconfiguration after "
@@ -271,7 +276,7 @@ class FlightTab(Tab, flight_tab_class):
                     self.logBaro = self.helper.cf.log.create_log_packet(lg)
                     if (self.logBaro is not None):
                         self.logBaro.data_received.add_callback(self._baro_data_signal.emit)
-                        self.logBaro.error.add_callback(self.loggingError)
+                        self.logBaro.error.add_callback(self._log_error_signal.emit)
                         self.logBaro.start()
                     else:
                         logger.warning("Could not setup logconfiguration after "
@@ -282,7 +287,7 @@ class FlightTab(Tab, flight_tab_class):
                     self.logAltHold = self.helper.cf.log.create_log_packet(lg)
                     if (self.logAltHold is not None):
                         self.logAltHold.data_received.add_callback(self._althold_data_signal.emit)
-                        self.logAltHold.error.add_callback(self.loggingError)
+                        self.logAltHold.error.add_callback(self._log_error_signal.emit)
                         self.logAltHold.start()
                     else:
                         logger.warning("Could not setup logconfiguration after "

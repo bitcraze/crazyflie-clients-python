@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread
+from PyQt4.QtGui import QMessageBox
 from pprint import pprint
 import datetime
 
@@ -62,6 +63,7 @@ class PlotTab(Tab, plot_tab_class):
     """Tab for plotting logging data"""
 
     logDataSignal = pyqtSignal(object, int)
+    _log_error_signal = pyqtSignal(object, str)
 
     colors = [QtCore.Qt.green, QtCore.Qt.blue, QtCore.Qt.magenta,
               QtCore.Qt.red, QtCore.Qt.black, QtCore.Qt.cyan, QtCore.Qt.yellow]
@@ -79,6 +81,8 @@ class PlotTab(Tab, plot_tab_class):
         self.menuName = "Plotter"
 
         self.previousLog = None
+
+        self._log_error_signal.connect(self._logging_error)
 
         self.dsList = helper.logConfigReader.getLogConfigs()
         self.plot = PlotWidget(fps=30)
@@ -156,8 +160,9 @@ class PlotTab(Tab, plot_tab_class):
         if (self.saveFile != None):
             self.plot.stopSaving()
 
-    def loggingError(self, err):
-        logger.warning("logging error: %s", err)
+    def _logging_error(self, log_conf, msg):
+        QMessageBox.about(self, "Plot error", "Error when starting log config"
+                " [%s]: %s" % (log_conf.getName(), msg))
 
     def connected(self, link):
         self.populateLogConfigs()
@@ -176,7 +181,7 @@ class PlotTab(Tab, plot_tab_class):
                 self.dataSelector.blockSignals(False)
                 self.logEntrys.append(logEntry)
                 logEntry.data_received.add_callback(self.logDataSignal.emit)
-                logEntry.error.add_callback(self.loggingError)
+                logEntry.error.add_callback(self._log_error_signal.emit)
             else:
                 logger.warning("Could not setup log configuration!")
 
