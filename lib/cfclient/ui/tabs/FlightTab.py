@@ -265,6 +265,7 @@ class FlightTab(Tab, flight_tab_class):
         if ("HMC5883L" in name):
             if (not available):
                 self.actualASL.setText("N/A")
+                self.actualASL.setEnabled(False)
             else:
                 self.actualASL.setEnabled(True)
                 self.helper.inputDeviceReader.setAltHoldAvailable(available)
@@ -306,6 +307,7 @@ class FlightTab(Tab, flight_tab_class):
         self.actualASL.setText("")
         self.targetASL.setText("Not Set")
         self.targetASL.setEnabled(False)
+        self.actualASL.setEnabled(False)
         self.logBaro = None
         self.logAltHold = None
 
