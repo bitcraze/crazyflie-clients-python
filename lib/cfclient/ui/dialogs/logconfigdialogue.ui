@@ -140,14 +140,14 @@
          </property>
         </spacer>
        </item>
-       <item>
+       <item alignment="Qt::AlignTop">
         <widget class="QLabel" name="label_2">
          <property name="text">
           <string>Logging period</string>
          </property>
         </widget>
        </item>
-       <item>
+       <item alignment="Qt::AlignTop">
         <widget class="QLineEdit" name="loggingPeriod">
          <property name="maximumSize">
           <size>
@@ -157,12 +157,53 @@
          </property>
         </widget>
        </item>
-       <item>
+       <item alignment="Qt::AlignTop">
         <widget class="QLabel" name="label_3">
          <property name="text">
           <string>ms</string>
          </property>
         </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="min_max_layout">
+         <item>
+          <layout class="QGridLayout" name="gridLayout_3">
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="_plot_min"/>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="_plot_max"/>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>Default plot min</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Default plot max</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </item>
        <item>
         <spacer name="horizontalSpacer">

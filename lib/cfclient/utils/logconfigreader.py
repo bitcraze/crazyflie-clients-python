@@ -237,8 +237,8 @@ class LogConfigReader():
         logconf['logblock']['name'] = logconfig.getName()
         logconf['logblock']['period'] = logconfig.getPeriod()
         # Temporary until plot is fixed
-        logconf['logblock']['min'] = -180
-        logconf['logblock']['max'] = 180
+        logconf['logblock']['min'] = logconfig.getDataRangeMin()
+        logconf['logblock']['max'] = logconfig.getDataRangeMax()
 
         for v in logconfig.getVariables():
             newC = {}
