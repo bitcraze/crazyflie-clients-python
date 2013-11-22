@@ -65,8 +65,7 @@ class PlotTab(Tab, plot_tab_class):
     logDataSignal = pyqtSignal(object, int)
     _log_error_signal = pyqtSignal(object, str)
 
-    colors = [QtCore.Qt.green, QtCore.Qt.blue, QtCore.Qt.magenta,
-              QtCore.Qt.red, QtCore.Qt.black, QtCore.Qt.cyan, QtCore.Qt.yellow]
+    colors = ['g', 'b', 'm', 'r', 'y', 'c']
 
     dsList = []
 
@@ -150,14 +149,8 @@ class PlotTab(Tab, plot_tab_class):
             maxVal = info.getDataRangeMax()
 
             for d in info.getVariables():
-                ds = PlotDataSet(d.getName(),
-                                 self.colors[colorSelector % len(self.colors)],
-                                 [minVal, maxVal])
-                self.datasets.append(ds)
-                self.plot.addDataset(ds)
+                self.plot.add_curve(d.getName(), self.colors[colorSelector % len(self.colors)])
                 colorSelector += 1
-                pprint(ds)
-        if (self.saveFile != None):
             self.plot.stopSaving()
 
     def _logging_error(self, log_conf, msg):
@@ -169,7 +162,6 @@ class PlotTab(Tab, plot_tab_class):
 
     def populateLogConfigs(self):
         prevSelected = self.dataSelector.currentText()
-        self.logEntrys = []
         self.dataSelector.blockSignals(True)
         self.dataSelector.clear()
         self.dataSelector.blockSignals(False)
@@ -196,8 +188,9 @@ class PlotTab(Tab, plot_tab_class):
         try:
             dataIndex = 0
             s = "%d," % timestamp
+            self.plot.add_data(data, timestamp)
             for d in data:
-                self.datasets[dataIndex].addData(data[d])
+                #self.datasets[dataIndex].add_point(data[d])
                 s += str(data[d]) + ","
                 dataIndex += 1
             s += '\n'
@@ -207,6 +200,8 @@ class PlotTab(Tab, plot_tab_class):
             # When switching what to log we might still get logging packets...
             # and that will not be pretty so let's just ignore the problem ;-)
             logger.warning("Exception for plot data: %s", e)
+            import traceback
+            logger.info(traceback.format_exc())
 
     def logConfigChanged(self):
         self.dsList = self.helper.logConfigReader.getLogConfigs()
