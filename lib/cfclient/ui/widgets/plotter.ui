@@ -70,7 +70,7 @@
                 <string/>
                </property>
                <property name="maximum">
-                <number>3000</number>
+                <number>2000</number>
                </property>
                <property name="singleStep">
                 <number>100</number>
@@ -179,16 +179,6 @@
                </property>
               </widget>
              </item>
-             <item row="2" column="1">
-              <widget class="QLineEdit" name="_range_y_min">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>-90</string>
-               </property>
-              </widget>
-             </item>
              <item row="1" column="0">
               <widget class="QRadioButton" name="_enable_auto_y">
                <property name="text">
@@ -202,13 +192,54 @@
                </property>
               </widget>
              </item>
-             <item row="2" column="3">
-              <widget class="QLineEdit" name="_range_y_max">
+             <item row="2" column="5">
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="2" column="1">
+              <widget class="QDoubleSpinBox" name="_range_y_min">
                <property name="enabled">
                 <bool>false</bool>
                </property>
-               <property name="text">
-                <string>90</string>
+               <property name="minimum">
+                <double>-65000.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>65000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>1.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>-1.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="4">
+              <widget class="QDoubleSpinBox" name="_range_y_max">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="minimum">
+                <double>-65000.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>65000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>1.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>1.000000000000000</double>
                </property>
               </widget>
              </item>
