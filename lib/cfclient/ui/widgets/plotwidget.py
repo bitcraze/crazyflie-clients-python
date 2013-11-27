@@ -57,11 +57,16 @@ from PyQt4.Qt import *
 connect_widget_base_class) = (uic.loadUiType(
                              sys.path[0] + '/cfclient/ui/widgets/plotter.ui'))
 
-import pyqtgraph as pg
-from pyqtgraph import ViewBox
-from pyqtgraph.Qt import QtCore, QtGui
-import pyqtgraph.console
-import numpy as np
+# Try the imports for PyQtGraph to see if it is installed
+try:
+    import pyqtgraph as pg
+    from pyqtgraph import ViewBox
+    from pyqtgraph.Qt import QtCore, QtGui
+    import pyqtgraph.console
+    import numpy as np
+    _pyqtgraph_found = True
+except Exception:
+    _pyqtgraph_found = False
 
 class PlotItemWrapper:
     """Wrapper for PlotDataItem to handle what data is shown"""
@@ -94,6 +99,13 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
     def __init__(self, parent=None, fps=100, title="", *args):
         super(PlotWidget, self).__init__(*args)
         self.setupUi(self)
+
+        # Check if we could import PyQtGraph, if not then stop here
+        if not _pyqtgraph_found:
+            self.can_enable = False
+            return
+        else:
+            self.can_enable = True
 
         self._items = []
         self._last_item = 0

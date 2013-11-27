@@ -85,6 +85,9 @@ class PlotTab(Tab, plot_tab_class):
 
         self.dsList = helper.logConfigReader.getLogConfigs()
         self.plot = PlotWidget(fps=30)
+        # Check if we could find the PyQtImport. If not, then
+        # set this tab as disabled
+        self.enabled = self.plot.can_enable
 
         self.dataSelector.currentIndexChanged.connect(self.newLogSetupSelected)
 
@@ -95,13 +98,14 @@ class PlotTab(Tab, plot_tab_class):
         # self.layout().addWidget(self.dataSelector)
         self.plotLayout.addWidget(self.plot)
 
-        # Connect external signals
-        self.helper.cf.connectSetupFinished.add_callback(
-                                                     self.connectedSignal.emit)
-        self.connectedSignal.connect(self.connected)
+        # Connect external signals if we can use the tab
+        if self.enabled:
+            self.helper.cf.connectSetupFinished.add_callback(
+                                                         self.connectedSignal.emit)
+            self.connectedSignal.connect(self.connected)
 
-        self.helper.cf.logConfigRead.add_callback(self.logConfigReadSignal.emit)
-        self.logConfigReadSignal.connect(self.logConfigChanged)
+            self.helper.cf.logConfigRead.add_callback(self.logConfigReadSignal.emit)
+            self.logConfigReadSignal.connect(self.logConfigChanged)
 
         self.datasets = []
         self.logEntrys = []
