@@ -91,9 +91,6 @@ class PlotItemWrapper:
 class PlotWidget(QtGui.QWidget, plot_widget_class):
     """Wrapper widget for PyQtGraph adding some extra buttons"""
 
-    saveToFileSignal = pyqtSignal()
-    stopSavingSignal = pyqtSignal()
-
     def __init__(self, parent=None, fps=100, title="", *args):
         super(PlotWidget, self).__init__(*args)
         self.setupUi(self)
@@ -150,6 +147,16 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         self._x_btn_group.setExclusive(True)
         self._x_btn_group.buttonClicked.connect(self._x_mode_change)
 
+        self._draw_graph = True
+        self._auto_redraw.stateChanged.connect(self._auto_redraw_change)
+
+    def _auto_redraw_change(self, state):
+        """Callback from the auto redraw checkbox"""
+        if state == 0:
+            self._draw_graph = False
+        else:
+            self._draw_graph = True
+
     def _x_mode_change(self, box):
         """Callback when user changes the X-axis mode"""
         if box == self._enable_range_x:
@@ -162,10 +169,9 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
     def _y_mode_change(self, box):
         """Callback when user changes the Y-axis mode"""
         if box == self._enable_range_y:
-            logger.info("Enabling range y")
             self._range_y_min.setEnabled(True)
             self._range_y_max.setEnabled(True)
-            y_range = (float(self._range_y_min.text()), float(self._range_y_max.text()))
+            y_range = (float(self._range_y_min.value()), float(self._range_y_max.value()))
             self._plot_widget.getViewBox().setRange(yRange=y_range)
         else:
             self._range_y_min.setEnabled(False)
@@ -191,19 +197,6 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
     def _nbr_samples_changed(self, val):
         """Callback when user changes the number of samples to be shown"""
         self._nbr_samples = val
-
-    def stopSaving(self):
-        #self.saveToFile.setText("Start saving to file")
-        #self.saveToFile.clicked.disconnect(self.stopSaving)
-        #self.saveToFile.clicked.connect(self.saveToFileSignal)
-        #self.stopSavingSignal.emit()
-        return
-
-    def isSavingToFile(self):
-        #self.saveToFile.setText("Stop saving")
-        #self.saveToFile.clicked.disconnect(self.saveToFileSignal)
-        #self.saveToFile.clicked.connect(self.stopSaving)
-        return
 
     def setTitle(self, title):
         """
@@ -245,7 +238,8 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
 
         for d in data:
             self._items[di].add_point(data[d], ts)
-            [self._x_min, self._x_max] = self._items[di].show_data(x_min_limit, x_max_limit)
+            if self._draw_graph:
+                [self._x_min, self._x_max] = self._items[di].show_data(x_min_limit, x_max_limit)
             di = di + 1
         if self._enable_samples_x.isChecked() and self._dtime and self._last_item < self._nbr_samples:
             self._x_max = self._x_min + self._nbr_samples * self._dtime

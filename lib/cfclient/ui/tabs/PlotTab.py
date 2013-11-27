@@ -106,29 +106,6 @@ class PlotTab(Tab, plot_tab_class):
         self.datasets = []
         self.logEntrys = []
 
-        self.plot.saveToFileSignal.connect(self.saveToFile)
-        self.plot.stopSavingSignal.connect(self.savingStopped)
-        self.saveFile = None
-
-    def saveToFile(self):
-        filename = "%s-%s.csv" % (datetime.datetime.now(),
-                                  self.dataSelector.currentText())
-        filename = filename.replace(":", ".")
-        savePath = os.path.join(os.path.expanduser("~"), filename)
-        logger.info("Saving logdata to [%s]", savePath)
-        self.saveFile = open(savePath, 'w')
-        s = "Timestamp,"
-        for v in self.dsList[self.dataSelector.currentIndex()].getVariables():
-            s += v.getName() + ","
-        s += '\n'
-        self.saveFile.write(s)
-        self.plot.isSavingToFile()
-
-    def savingStopped(self):
-        self.saveFile.close()
-        logger.info("Stopped saving logdata")
-        self.saveFile = None
-
     def newLogSetupSelected(self, item):
 
         if (len(self.logEntrys) > 0):
@@ -151,7 +128,6 @@ class PlotTab(Tab, plot_tab_class):
             for d in info.getVariables():
                 self.plot.add_curve(d.getName(), self.colors[colorSelector % len(self.colors)])
                 colorSelector += 1
-            self.plot.stopSaving()
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Plot error", "Error when starting log config"
@@ -187,15 +163,7 @@ class PlotTab(Tab, plot_tab_class):
     def logDataReceived(self, data, timestamp):
         try:
             dataIndex = 0
-            s = "%d," % timestamp
             self.plot.add_data(data, timestamp)
-            for d in data:
-                #self.datasets[dataIndex].add_point(data[d])
-                s += str(data[d]) + ","
-                dataIndex += 1
-            s += '\n'
-            if (self.saveFile != None):
-                self.saveFile.write(s)
         except Exception as e:
             # When switching what to log we might still get logging packets...
             # and that will not be pretty so let's just ignore the problem ;-)
