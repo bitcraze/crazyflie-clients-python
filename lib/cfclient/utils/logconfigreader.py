@@ -61,18 +61,12 @@ class LogConfig():
         self.variables = []
         self.configName = configname
         self.configFileName = filename
-        self.datarangeMin = 0
-        self.datarangeMax = 0
 
     def addVariable(self, var):
         self.variables.append(var)
 
     def setPeriod(self, period):
         self.period = period
-
-    def setDataRange(self, minVal, maxVal):
-        self.datarangeMin = minVal
-        self.datarangeMax = maxVal
 
     def getVariables(self):
         return self.variables
@@ -203,8 +197,6 @@ class LogConfigReader():
                 logConf = LogConfig(infoNode["name"],
                                     int(infoNode["period"]),
                                     conf)
-                logConf.setDataRange(int(infoNode["min"]),
-                                     int(infoNode["max"]))
                 for v in self.data["logconfig"]["logblock"]["variables"]:
                     if (v["type"] == "TOC"):
                         logConf.addVariable(LogVariable(str(v["name"]),
@@ -237,8 +229,6 @@ class LogConfigReader():
         logconf['logblock']['name'] = logconfig.getName()
         logconf['logblock']['period'] = logconfig.getPeriod()
         # Temporary until plot is fixed
-        logconf['logblock']['min'] = logconfig.getDataRangeMin()
-        logconf['logblock']['max'] = logconfig.getDataRangeMax()
 
         for v in logconfig.getVariables():
             newC = {}

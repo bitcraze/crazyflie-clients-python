@@ -122,8 +122,6 @@ class PlotTab(Tab, plot_tab_class):
 
             info = self.dsList[item]
             self.plot.setTitle(info.getName())
-            minVal = info.getDataRangeMin()
-            maxVal = info.getDataRangeMax()
 
             for d in info.getVariables():
                 self.plot.add_curve(d.getName(), self.colors[colorSelector % len(self.colors)])

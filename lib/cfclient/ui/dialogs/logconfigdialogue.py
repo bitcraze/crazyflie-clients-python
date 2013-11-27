@@ -181,8 +181,6 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         self.updateToc()
         self.populateDropDown()
         toc = self.helper.cf.log.toc
-        self._plot_min.setText("-90.0")
-        self._plot_max.setText("90.0")
         if (len(toc.toc.keys()) > 0):
             self.configNameCombo.setEnabled(True)
         else:
@@ -274,7 +272,6 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
     def createConfigFromSelection(self):
         logconfig = LogConfig(str(self.configNameCombo.currentText()),
                               self.period)
-        logconfig.setDataRange(float(self._plot_min.text()), float(self._plot_max.text()))
         for node in self.getNodeChildren(self.varTree.invisibleRootItem()):
             parentName = node.text(NAME_FIELD)
             for leaf in self.getNodeChildren(node):
