@@ -347,6 +347,7 @@ class Log():
                         logger.warning("Error %d when adding block_id=%d (%s)"
                                        , error_status, block_id, msg)
                         block.err_no = error_status
+                        block.added_cb.call(False)
                         block.error.call(block.logconf, msg)
 
                 else:
@@ -364,6 +365,7 @@ class Log():
                                    , error_status, new_block_id, msg)
                     if block:
                         block.err_no = error_status
+                        block.started_cb.call(False)
                         block.error.call(block.logconf, msg)
 
         if (chan == CHAN_LOGDATA):
