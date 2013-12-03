@@ -257,8 +257,9 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
             self._items[di].add_point(data[d], ts)
             if self._draw_graph and time() > self._ts + self._delay:
                 [self._x_min, self._x_max] = self._items[di].show_data(x_min_limit, x_max_limit)
-                self._ts = time()
             di = di + 1
+        if time() > self._ts + self._delay:
+            self._ts = time()
         if self._enable_samples_x.isChecked() and self._dtime and self._last_item < self._nbr_samples:
             self._x_max = self._x_min + self._nbr_samples * self._dtime
 
