@@ -193,6 +193,30 @@ class DebugDriver (CRTPDriver):
                                   "vargroup": "imu_sensors",
                                   "varname": "MS5611", "writable": False,
                                   "value": 1})
+        self.fakeParamToc.append({"varid": 18, "vartype": 0x0A,
+                                  "vargroup": "firmware",
+                                  "varname": "revision0", "writable": False,
+                                  "value": 1})
+        self.fakeParamToc.append({"varid": 19, "vartype": 0x09,
+                                  "vargroup": "firmware",
+                                  "varname": "revision1", "writable": False,
+                                  "value": 1})
+        self.fakeParamToc.append({"varid": 20, "vartype": 0x08,
+                                  "vargroup": "firmware",
+                                  "varname": "modified", "writable": False,
+                                  "value": 1})
+        self.fakeParamToc.append({"varid": 21, "vartype": 0x08,
+                                  "vargroup": "imu_tests",
+                                  "varname": "MPU6050", "writable": False,
+                                  "value": 1})
+        self.fakeParamToc.append({"varid": 22, "vartype": 0x08,
+                                  "vargroup": "imu_tests",
+                                  "varname": "HMC5883L", "writable": False,
+                                  "value": 1})
+        self.fakeParamToc.append({"varid": 23, "vartype": 0x08,
+                                  "vargroup": "imu_tests",
+                                  "varname": "MS5611", "writable": False,
+                                  "value": 1})
 
         self.fakeflash = {}
 
