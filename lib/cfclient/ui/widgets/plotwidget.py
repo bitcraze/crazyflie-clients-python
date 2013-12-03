@@ -52,6 +52,7 @@ from PyQt4.QtGui import QButtonGroup
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
+from time import time
 
 (plot_widget_class,
 connect_widget_base_class) = (uic.loadUiType(
@@ -99,6 +100,10 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
     def __init__(self, parent=None, fps=100, title="", *args):
         super(PlotWidget, self).__init__(*args)
         self.setupUi(self)
+
+        # Limit the plot update to 10Hz
+        self._ts = time()
+        self._delay = 0.1
 
         # Check if we could import PyQtGraph, if not then stop here
         if not _pyqtgraph_found:
@@ -250,8 +255,9 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
 
         for d in data:
             self._items[di].add_point(data[d], ts)
-            if self._draw_graph:
+            if self._draw_graph and time() > self._ts + self._delay:
                 [self._x_min, self._x_max] = self._items[di].show_data(x_min_limit, x_max_limit)
+                self._ts = time()
             di = di + 1
         if self._enable_samples_x.isChecked() and self._dtime and self._last_item < self._nbr_samples:
             self._x_max = self._x_min + self._nbr_samples * self._dtime
