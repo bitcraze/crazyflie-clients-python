@@ -1,7 +1,7 @@
 {
   "logconfig": {
     "logblock":
-    {"name": "Stabilizer", "period":20, "min":-180, "max":180,
+    {"name": "Stabilizer", "period":20,
      "variables": [
           {"name":"stabilizer.roll", "type":"TOC", "stored_as":"float", "fetch_as":"float"},
           {"name":"stabilizer.pitch", "type":"TOC", "stored_as":"float", "fetch_as":"float"},

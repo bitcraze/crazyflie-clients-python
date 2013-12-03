@@ -65,8 +65,7 @@ class PlotTab(Tab, plot_tab_class):
     logDataSignal = pyqtSignal(object, int)
     _log_error_signal = pyqtSignal(object, str)
 
-    colors = [QtCore.Qt.green, QtCore.Qt.blue, QtCore.Qt.magenta,
-              QtCore.Qt.red, QtCore.Qt.black, QtCore.Qt.cyan, QtCore.Qt.yellow]
+    colors = ['g', 'b', 'm', 'r', 'y', 'c']
 
     dsList = []
 
@@ -86,6 +85,9 @@ class PlotTab(Tab, plot_tab_class):
 
         self.dsList = helper.logConfigReader.getLogConfigs()
         self.plot = PlotWidget(fps=30)
+        # Check if we could find the PyQtImport. If not, then
+        # set this tab as disabled
+        self.enabled = self.plot.can_enable
 
         self.dataSelector.currentIndexChanged.connect(self.newLogSetupSelected)
 
@@ -96,39 +98,17 @@ class PlotTab(Tab, plot_tab_class):
         # self.layout().addWidget(self.dataSelector)
         self.plotLayout.addWidget(self.plot)
 
-        # Connect external signals
-        self.helper.cf.connectSetupFinished.add_callback(
-                                                     self.connectedSignal.emit)
-        self.connectedSignal.connect(self.connected)
+        # Connect external signals if we can use the tab
+        if self.enabled:
+            self.helper.cf.connectSetupFinished.add_callback(
+                                                         self.connectedSignal.emit)
+            self.connectedSignal.connect(self.connected)
 
-        self.helper.cf.logConfigRead.add_callback(self.logConfigReadSignal.emit)
-        self.logConfigReadSignal.connect(self.logConfigChanged)
+            self.helper.cf.logConfigRead.add_callback(self.logConfigReadSignal.emit)
+            self.logConfigReadSignal.connect(self.logConfigChanged)
 
         self.datasets = []
         self.logEntrys = []
-
-        self.plot.saveToFileSignal.connect(self.saveToFile)
-        self.plot.stopSavingSignal.connect(self.savingStopped)
-        self.saveFile = None
-
-    def saveToFile(self):
-        filename = "%s-%s.csv" % (datetime.datetime.now(),
-                                  self.dataSelector.currentText())
-        filename = filename.replace(":", ".")
-        savePath = os.path.join(os.path.expanduser("~"), filename)
-        logger.info("Saving logdata to [%s]", savePath)
-        self.saveFile = open(savePath, 'w')
-        s = "Timestamp,"
-        for v in self.dsList[self.dataSelector.currentIndex()].getVariables():
-            s += v.getName() + ","
-        s += '\n'
-        self.saveFile.write(s)
-        self.plot.isSavingToFile()
-
-    def savingStopped(self):
-        self.saveFile.close()
-        logger.info("Stopped saving logdata")
-        self.saveFile = None
 
     def newLogSetupSelected(self, item):
 
@@ -146,19 +126,10 @@ class PlotTab(Tab, plot_tab_class):
 
             info = self.dsList[item]
             self.plot.setTitle(info.getName())
-            minVal = info.getDataRangeMin()
-            maxVal = info.getDataRangeMax()
 
             for d in info.getVariables():
-                ds = PlotDataSet(d.getName(),
-                                 self.colors[colorSelector % len(self.colors)],
-                                 [minVal, maxVal])
-                self.datasets.append(ds)
-                self.plot.addDataset(ds)
+                self.plot.add_curve(d.getName(), self.colors[colorSelector % len(self.colors)])
                 colorSelector += 1
-                pprint(ds)
-        if (self.saveFile != None):
-            self.plot.stopSaving()
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Plot error", "Error when starting log config"
@@ -169,7 +140,6 @@ class PlotTab(Tab, plot_tab_class):
 
     def populateLogConfigs(self):
         prevSelected = self.dataSelector.currentText()
-        self.logEntrys = []
         self.dataSelector.blockSignals(True)
         self.dataSelector.clear()
         self.dataSelector.blockSignals(False)
@@ -195,18 +165,13 @@ class PlotTab(Tab, plot_tab_class):
     def logDataReceived(self, data, timestamp):
         try:
             dataIndex = 0
-            s = "%d," % timestamp
-            for d in data:
-                self.datasets[dataIndex].addData(data[d])
-                s += str(data[d]) + ","
-                dataIndex += 1
-            s += '\n'
-            if (self.saveFile != None):
-                self.saveFile.write(s)
+            self.plot.add_data(data, timestamp)
         except Exception as e:
             # When switching what to log we might still get logging packets...
             # and that will not be pretty so let's just ignore the problem ;-)
             logger.warning("Exception for plot data: %s", e)
+            import traceback
+            logger.info(traceback.format_exc())
 
     def logConfigChanged(self):
         self.dsList = self.helper.logConfigReader.getLogConfigs()

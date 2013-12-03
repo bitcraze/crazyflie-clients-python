@@ -43,11 +43,12 @@ from cfclient.utils.guiconfig import GuiConfig
 
 class Tab(QtGui.QWidget):
     """Superclass for all tabs that implements common functions."""
-    tabName = "N/A"
-    menuName = "N/A"
 
     def __init__(self):
         super(Tab, self).__init__()
+        self.tabName = "N/A"
+        self.menuName = "N/A"
+        self.enabled = True
 
     @pyqtSlot(bool)
     def toggleVisibility(self, checked):
