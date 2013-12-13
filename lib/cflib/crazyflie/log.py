@@ -354,7 +354,7 @@ class Log():
                     logger.warning("No LogEntry to assign block to !!!")
             if (cmd == CMD_START_LOGGING):
                 if (error_status == 0x00):
-                    logger.info("Have successfully logging for block=%d",
+                    logger.info("Have successfully started logging for block=%d",
                                 block_id)
                     if block:
                         block.started = True
@@ -367,6 +367,13 @@ class Log():
                         block.err_no = error_status
                         block.started_cb.call(False)
                         block.error.call(block.logconf, msg)
+
+            if (cmd == CMD_STOP_LOGGING):
+                if (error_status == 0x00):
+                    logger.info("Have successfully stopped logging for block=%d",
+                                block_id)
+                    if block:
+                        block.started = False
 
         if (chan == CHAN_LOGDATA):
             chan = packet.channel
