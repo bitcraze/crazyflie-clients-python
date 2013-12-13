@@ -49,7 +49,6 @@ import datetime
 
 # from FastPlotWidget import FastPlotWidget, PlotDataSet
 from cfclient.ui.widgets.plotwidget import PlotWidget
-from cfclient.ui.widgets.rtplotwidget import PlotDataSet
 
 from cflib.crazyflie.log import Log
 
