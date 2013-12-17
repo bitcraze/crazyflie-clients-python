@@ -40,7 +40,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from cflib.crazyflie.log import LogEntry
+from cflib.crazyflie.log import LogConfig
 
 import traceback
 
@@ -54,7 +54,7 @@ class LogWriter():
         self._dir = directory
 
         dir = os.path.join(sys.path[1], "logdata")
-        self._filename = os.path.join(dir, logblock.logconf.getName())
+        self._filename = os.path.join(dir, logblock.name)
         if not os.path.isdir(dir):
             os.makedirs(dir)
 
@@ -65,8 +65,8 @@ class LogWriter():
         """Write the header to the file"""
         if not self._header_written:
             s = "Timestamp"
-            for v in self._block.logconf.getVariables():
-                s += "," + v.getName()
+            for v in self._block.variables:
+                s += "," + v.name
             s += '\n'
             self._file.write(s)
             self._header_written = True
@@ -92,7 +92,7 @@ class LogWriter():
             self._file = None
             self._block.data_received.remove_callback(self._new_data)
             logger.info("Stopped logging of block [%s] to file [%s]",
-                        self._block.logconf.getName(), self._filename)
+                        self._block.name, self._filename)
 
     def start(self):
         """Start the logging to file"""
@@ -101,4 +101,4 @@ class LogWriter():
             self._write_header()
             self._block.data_received.add_callback(self._new_data)
             logger.info("Started logging of block [%s] to file [%s]",
-                        self._block.logconf.getName(), self._filename)
+                        self._block.name, self._filename)

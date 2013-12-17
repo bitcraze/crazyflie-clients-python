@@ -80,7 +80,7 @@ class LogBlockItem(object):
         self._block = block
         self.parent = None
         self.children = []
-        self.name = block.logconf.getName()
+        self.name = block.name
         self.id = block.block_id
         self.period = block.period_in_ms
         self._model = model
@@ -92,9 +92,9 @@ class LogBlockItem(object):
 
         self._var_list = ""
 
-        for b in block.logconf.getVariables():
-            self.children.append(LogBlockChildItem(self, b.getName()))
-            self._var_list += "%s/" % b.getName()
+        for b in block.variables:
+            self.children.append(LogBlockChildItem(self, b.name))
+            self._var_list += "%s/" % b.name
         self._var_list = self._var_list[:-1]
 
         self._block_started = False

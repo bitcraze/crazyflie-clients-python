@@ -125,15 +125,15 @@ class PlotTab(Tab, plot_tab_class):
             colorSelector = 0
 
             info = self.dsList[item]
-            self.plot.setTitle(info.getName())
+            self.plot.setTitle(info.name)
 
-            for d in info.getVariables():
-                self.plot.add_curve(d.getName(), self.colors[colorSelector % len(self.colors)])
+            for d in info.variables:
+                self.plot.add_curve(d.name, self.colors[colorSelector % len(self.colors)])
                 colorSelector += 1
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Plot error", "Error when starting log config"
-                " [%s]: %s" % (log_conf.getName(), msg))
+                " [%s]: %s" % (log_conf.name, msg))
 
     def connected(self, link):
         self.populateLogConfigs()
@@ -144,14 +144,14 @@ class PlotTab(Tab, plot_tab_class):
         self.dataSelector.clear()
         self.dataSelector.blockSignals(False)
         for d in self.dsList:
-            logEntry = self.helper.cf.log.create_log_packet(d)
-            if (logEntry != None):
+            self.helper.cf.log.add_config(d)
+            if d.valid:
                 self.dataSelector.blockSignals(True)
-                self.dataSelector.addItem(d.getName())
+                self.dataSelector.addItem(d.name)
                 self.dataSelector.blockSignals(False)
-                self.logEntrys.append(logEntry)
-                logEntry.data_received.add_callback(self.logDataSignal.emit)
-                logEntry.error.add_callback(self._log_error_signal.emit)
+                self.logEntrys.append(d)
+                d.data_received.add_callback(self.logDataSignal.emit)
+                d.error.add_callback(self._log_error_signal.emit)
             else:
                 logger.warning("Could not setup log configuration!")
 

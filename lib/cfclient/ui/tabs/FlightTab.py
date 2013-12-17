@@ -48,11 +48,9 @@ from cflib.crazyflie import Crazyflie
 from cfclient.ui.widgets.ai import AttitudeIndicator
 
 from cfclient.utils.guiconfig import GuiConfig
-from cflib.crazyflie.log import Log
+from cflib.crazyflie.log import Log, LogVariable, LogConfig
 
 from cfclient.ui.tab import Tab
-
-from cfclient.utils.logconfigreader import LogVariable, LogConfig
 
 flight_tab_class = uic.loadUiType(sys.path[0] +
                                   "/cfclient/ui/tabs/flightTab.ui")[0]
@@ -191,7 +189,7 @@ class FlightTab(Tab, flight_tab_class):
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error", "Error when starting log config"
-                " [%s]: %s" % (log_conf.getName(), msg))
+                " [%s]: %s" % (log_conf.name, msg))
 
     def _motor_data_received(self, data, timestamp):
         self.actualM1.setValue(data["motor.m1"])
@@ -229,32 +227,32 @@ class FlightTab(Tab, flight_tab_class):
     def connected(self, linkURI):
         # IMU & THRUST
         lg = LogConfig("Stabalizer", 200)
-        lg.addVariable(LogVariable("stabilizer.roll", "float"))
-        lg.addVariable(LogVariable("stabilizer.pitch", "float"))
-        lg.addVariable(LogVariable("stabilizer.yaw", "float"))
-        lg.addVariable(LogVariable("stabilizer.thrust", "uint16_t"))
+        lg.add_variable("stabilizer.roll", "float")
+        lg.add_variable("stabilizer.pitch", "float")
+        lg.add_variable("stabilizer.yaw", "float")
+        lg.add_variable("stabilizer.thrust", "uint16_t")
 
-        self.log = self.helper.cf.log.create_log_packet(lg)
-        if (self.log is not None):
-            self.log.data_received.add_callback(self._imu_data_signal.emit)
-            self.log.error.add_callback(self._log_error_signal.emit)
-            self.log.start()
+        self.helper.cf.log.add_config(lg)
+        if (lg.valid):
+            lg.data_received.add_callback(self._imu_data_signal.emit)
+            lg.error.add_callback(self._log_error_signal.emit)
+            lg.start()
         else:
             logger.warning("Could not setup logconfiguration after "
                            "connection!")
 
         # MOTOR
         lg = LogConfig("Motors", 200)
-        lg.addVariable(LogVariable("motor.m1", "uint32_t"))
-        lg.addVariable(LogVariable("motor.m2", "uint32_t"))
-        lg.addVariable(LogVariable("motor.m3", "uint32_t"))
-        lg.addVariable(LogVariable("motor.m4", "uint32_t"))
+        lg.add_variable("motor.m1")
+        lg.add_variable("motor.m2")
+        lg.add_variable("motor.m3")
+        lg.add_variable("motor.m4")
 
-        self.log = self.helper.cf.log.create_log_packet(lg)
-        if (self.log is not None):
-            self.log.data_received.add_callback(self._motor_data_signal.emit)
-            self.log.error.add_callback(self._log_error_signal.emit)
-            self.log.start()
+        self.helper.cf.log.add_config(lg)
+        if lg.valid:
+            lg.data_received.add_callback(self._motor_data_signal.emit)
+            lg.error.add_callback(self._log_error_signal.emit)
+            lg.start()
         else:
             logger.warning("Could not setup logconfiguration after "
                            "connection!")
@@ -271,24 +269,28 @@ class FlightTab(Tab, flight_tab_class):
                 self.helper.inputDeviceReader.setAltHoldAvailable(available)
                 if (not self.logBaro and not self.logAltHold):
                     # The sensor is available, set up the logging
-                    lg = LogConfig("Baro", 200)
-                    lg.addVariable(LogVariable("baro.aslLong", "float"))
+                    self.logBaro = LogConfig("Baro", 200)
+                    self.logBaro.add_variable("baro.aslLong", "float")
 
-                    self.logBaro = self.helper.cf.log.create_log_packet(lg)
-                    if (self.logBaro is not None):
-                        self.logBaro.data_received.add_callback(self._baro_data_signal.emit)
-                        self.logBaro.error.add_callback(self._log_error_signal.emit)
+                    self.helper.cf.log.add_config(self.logBaro)
+                    if self.logBaro.valid:
+                        self.logBaro.data_received.add_callback(
+                            self._baro_data_signal.emit)
+                        self.logBaro.error.add_callback(
+                            self._log_error_signal.emit)
                         self.logBaro.start()
                     else:
                         logger.warning("Could not setup logconfiguration after "
                                        "connection!")            
-                    lg = LogConfig("AltHold", 200)
-                    lg.addVariable(LogVariable("altHold.target", "float"))
+                    self.logAltHold = LogConfig("AltHold", 200)
+                    self.logAltHold.add_variable("altHold.target", "float")
 
-                    self.logAltHold = self.helper.cf.log.create_log_packet(lg)
-                    if (self.logAltHold is not None):
-                        self.logAltHold.data_received.add_callback(self._althold_data_signal.emit)
-                        self.logAltHold.error.add_callback(self._log_error_signal.emit)
+                    self.helper.cf.log.add_config(self.logAltHold)
+                    if self.logAltHold.valid:
+                        self.logAltHold.data_received.add_callback(
+                            self._althold_data_signal.emit)
+                        self.logAltHold.error.add_callback(
+                            self._log_error_signal.emit)
                         self.logAltHold.start()
                     else:
                         logger.warning("Could not setup logconfiguration after "

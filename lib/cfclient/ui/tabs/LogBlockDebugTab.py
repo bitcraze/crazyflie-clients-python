@@ -83,16 +83,16 @@ class LogBlockDebugTab(Tab, logblock_tab_class):
             item.setFlags(Qt.ItemIsEnabled |
                           Qt.ItemIsSelectable)
             item.setData(0, Qt.DisplayRole, block.block_id)
-            item.setData(1, Qt.EditRole, block.logconf.configName)
+            item.setData(1, Qt.EditRole, block.name)
             item.setData(2, Qt.DisplayRole, (block.period_in_ms))
             item.setData(3, Qt.DisplayRole, block.added)
             item.setData(4, Qt.EditRole, block.started)
             item.setData(5, Qt.EditRole, block.err_no)
-            for var in block.logconf.getVariables():
+            for var in block.variables:
                 subItem = QtGui.QTreeWidgetItem()
                 subItem.setFlags(Qt.ItemIsEnabled |
                               Qt.ItemIsSelectable)
-                subItem.setData(6, Qt.EditRole, var.getName())
+                subItem.setData(6, Qt.EditRole, var.name)
                 item.addChild(subItem)                
 
             self._block_tree.addTopLevelItem(item)

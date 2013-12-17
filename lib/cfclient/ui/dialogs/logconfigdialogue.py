@@ -45,13 +45,11 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
 
-from cflib.crazyflie.log import Log
+from cflib.crazyflie.log import Log, LogVariable, LogConfig
 
 (logconfig_widget_class,
 connect_widget_base_class) = (uic.loadUiType(sys.path[0] +
                                  '/cfclient/ui/dialogs/logconfigdialogue.ui'))
-
-from cfclient.utils.logconfigreader import LogVariable, LogConfig
 
 NAME_FIELD = 0
 ID_FIELD = 1
@@ -232,7 +230,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         self.configNameCombo.clear()
         toc = self.helper.logConfigReader.getLogConfigs()
         for d in toc:
-            self.configNameCombo.addItem(d.getName())
+            self.configNameCombo.addItem(d.name)
         if (len(toc) > 0):
             self.loadButton.setEnabled(True)
 
@@ -240,17 +238,17 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         cText = self.configNameCombo.currentText()
         config = None
         for d in self.helper.logConfigReader.getLogConfigs():
-            if (d.getName() == cText):
+            if (d.name == cText):
                 config = d
         if (config == None):
             logger.warning("Could not load config")
         else:
             self.resetTrees()
-            self.loggingPeriod.setText("%d" % config.getPeriod())
-            self.period = config.getPeriod()
-            for v in config.getVariables():
-                if (v.getVarType() == LogVariable.TOC_TYPE):
-                    parts = v.getName().split(".")
+            self.loggingPeriod.setText("%d" % config.period_in_ms)
+            self.period = config.period_in_ms
+            for v in config.variables:
+                if (v.is_toc_variable()):
+                    parts = v.name.split(".")
                     varParent = parts[0]
                     varName = parts[1]
                     if self.moveNodeByName(self.logTree,
@@ -258,7 +256,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
                                             varParent,
                                             varName) == False:
                         logger.warning("Could not find node!!")
-                elif (v.getVarType() == LogVariable.MEM_TYPE):
+                else:
                     logger.warning("Error: Mem vars not supported!")
 
     def saveConfig(self):
@@ -278,10 +276,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
                 varName = leaf.text(NAME_FIELD)
                 varType = str(leaf.text(CTYPE_FIELD))
                 completeName = "%s.%s" % (parentName, varName)
-                newVar = LogVariable(completeName,
-                                     fetchAs=varType,
-                                     storedAs=varType)
-                logconfig.addVariable(newVar)
+                logconfig.add_variable(completeName, varType)
         return logconfig
     
     def closeEvent(self, event):
