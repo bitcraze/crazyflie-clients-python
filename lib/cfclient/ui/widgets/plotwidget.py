@@ -215,7 +215,7 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         """Callback when user changes the number of samples to be shown"""
         self._nbr_samples = val
 
-    def setTitle(self, title):
+    def set_title(self, title):
         """
         Set the title of the plot.
 
@@ -275,3 +275,5 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         self._last_item = 0
         self._last_ts = None
         self._dtime = None
+        self._plot_widget.clear()
+

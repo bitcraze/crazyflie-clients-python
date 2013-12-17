@@ -181,8 +181,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.setUIState(UIState.DISCONNECTED)
 
         # Parse the log configuration files
-        self.logConfigReader = LogConfigReader()
-        self.logConfigReader.readConfigFiles()
+        self.logConfigReader = LogConfigReader(self.cf)
 
         # Add things to helper so tabs can access it
         cfclient.ui.pluginhelper.cf = self.cf

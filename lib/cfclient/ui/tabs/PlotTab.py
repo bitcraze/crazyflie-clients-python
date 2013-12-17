@@ -44,10 +44,12 @@ logger = logging.getLogger(__name__)
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread
 from PyQt4.QtGui import QMessageBox
+from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView
+from PyQt4.QtCore import QAbstractItemModel, QModelIndex, QString, QVariant
+
 from pprint import pprint
 import datetime
 
-# from FastPlotWidget import FastPlotWidget, PlotDataSet
 from cfclient.ui.widgets.plotwidget import PlotWidget
 from cfclient.ui.widgets.rtplotwidget import PlotDataSet
 
@@ -58,19 +60,69 @@ from cfclient.ui.tab import Tab
 plot_tab_class = uic.loadUiType(sys.path[0] +
                                 "/cfclient/ui/tabs/plotTab.ui")[0]
 
+class LogConfigModel(QAbstractItemModel):
+    """Model for log configurations in the ComboBox"""
+    def __init__(self, parent=None):
+        super(LogConfigModel, self).__init__(parent)
+        self._nodes = []
+
+    def add_block(self, block):
+        self._nodes.append(block)
+        self.layoutChanged.emit()
+
+    def parent(self, index):
+        """Re-implemented method to get the parent of the given index"""
+        return QModelIndex()
+
+    def remove_block(self, block):
+        """Remove a block from the view"""
+        raise NotImplementedError()
+
+    def columnCount(self, parent):
+        """Re-implemented method to get the number of columns"""
+        return 1
+
+    def rowCount(self, parent):
+        """Re-implemented method to get the number of rows for a given index"""
+        parent_item = parent.internalPointer()
+        if parent.isValid():
+            parent_item = parent.internalPointer()
+            return 0
+        else:
+            return len(self._nodes)
+
+    def index(self, row, column, parent):
+        """Re-implemented method to get the index for a specified
+        row/column/parent combination"""
+        if not self._nodes:
+            return QModelIndex()
+        node = parent.internalPointer()
+        if not node:
+            index = self.createIndex(row, column, self._nodes[row])
+            return index
+        else:
+            return self.createIndex(row, column, node.get_child(row))
+
+    def data(self, index, role):
+        """Re-implemented method to get the data for a given index and role"""
+        node = index.internalPointer()
+        return self._nodes[index.row()].name
+
+    def reset(self):
+        """Reset the model"""
+        self._nodes = []
+        self.layoutChanged.emit()
+
+    def get_config(self, i):
+        return self._nodes[i]
 
 class PlotTab(Tab, plot_tab_class):
     """Tab for plotting logging data"""
 
-    logDataSignal = pyqtSignal(object, int)
+    _log_data_signal = pyqtSignal(object, int)
     _log_error_signal = pyqtSignal(object, str)
 
     colors = ['g', 'b', 'm', 'r', 'y', 'c']
-
-    dsList = []
-
-    connectedSignal = pyqtSignal(str)
-    logConfigReadSignal = pyqtSignal()
 
     def __init__(self, tabWidget, helper, *args):
         super(PlotTab, self).__init__(*args)
@@ -79,100 +131,114 @@ class PlotTab(Tab, plot_tab_class):
         self.tabName = "Plotter"
         self.menuName = "Plotter"
 
-        self.previousLog = None
-
         self._log_error_signal.connect(self._logging_error)
 
-        self.dsList = helper.logConfigReader.getLogConfigs()
-        self.plot = PlotWidget(fps=30)
+        self._plot = PlotWidget(fps=30)
         # Check if we could find the PyQtImport. If not, then
         # set this tab as disabled
-        self.enabled = self.plot.can_enable
+        self.enabled = self._plot.can_enable
 
-        self.dataSelector.currentIndexChanged.connect(self.newLogSetupSelected)
-
-        self.logDataSignal.connect(self.logDataReceived)
-
+        self._model = LogConfigModel()
+        self.dataSelector.setModel(self._model)
+        self._log_data_signal.connect(self._log_data_received)
         self.tabWidget = tabWidget
         self.helper = helper
-        # self.layout().addWidget(self.dataSelector)
-        self.plotLayout.addWidget(self.plot)
+        self.plotLayout.addWidget(self._plot)
 
         # Connect external signals if we can use the tab
         if self.enabled:
-            self.helper.cf.connectSetupFinished.add_callback(
-                                                         self.connectedSignal.emit)
-            self.connectedSignal.connect(self.connected)
+            self.helper.cf.disconnected.add_callback(
+                self._disconnected)
 
-            self.helper.cf.logConfigRead.add_callback(self.logConfigReadSignal.emit)
-            self.logConfigReadSignal.connect(self.logConfigChanged)
+            self.helper.cf.log.block_added_cb.add_callback(self._config_added)
+            self.dataSelector.currentIndexChanged.connect(
+                self._selection_changed)
 
-        self.datasets = []
-        self.logEntrys = []
+        self._previous_config = None
+        self._started_previous = False
 
-    def newLogSetupSelected(self, item):
+    def _disconnected(self, link_uri):
+        """Callback for when the Crazyflie has been disconnected"""
+        self._model.reset()
+        self._plot.removeAllDatasets()
+        self._plot.set_title("")
+        self.dataSelector.setCurrentIndex(-1)
+        self._previous_config = None
+        self._started_previous = False
 
-        if (len(self.logEntrys) > 0):
-            log = self.logEntrys[item]
-            if (self.previousLog != None):
-                self.previousLog.stop()
-            log.start()
-            self.previousLog = log
+    def _log_data_signal_wrapper(self, data, ts):
+        """Wrapper for signal"""
 
-            # Setup the plot
-            self.plot.removeAllDatasets()
-            self.datasets = []
-            colorSelector = 0
+        # For some reason the *.emit functions are not
+        # the same over time (?!) so they cannot be registered and then
+        # removed as callbacks.
+        self._log_data_signal.emit(data, ts)
 
-            info = self.dsList[item]
-            self.plot.setTitle(info.name)
+    def _log_error_signal_wrapper(self, config, msg):
+        """Wrapper for signal"""
 
-            for d in info.variables:
-                self.plot.add_curve(d.name, self.colors[colorSelector % len(self.colors)])
-                colorSelector += 1
+        # For some reason the *.emit functions are not
+        # the same over time (?!) so they cannot be registered and then
+        # removed as callbacks.
+        self._log_error_signal.emit(config, msg)
+
+    def _selection_changed(self, i):
+        """Callback from ComboBox when a new item has been selected"""
+
+        # Check if we have disconnected
+        if i < 0:
+            return
+        # First check if we need to stop the old block
+        if self._started_previous and self._previous_config:
+            logger.debug("Should stop config [%s], stopping!",
+                        self._previous_config.name)
+            self._previous_config.delete()
+
+        # Remove our callback for the previous config
+        if self._previous_config:
+            self._previous_config.data_received.remove_callback(
+                self._log_data_signal_wrapper)
+            self._previous_config.error.remove_callback(
+                self._log_error_signal_wrapper)
+
+        lg = self._model.get_config(i)
+        if not lg.started:
+            logger.debug("Config [%s] not started, starting!", lg.name)
+            self._started_previous = True
+            lg.start()
+        else:
+            self._started_previous = False
+        self._plot.removeAllDatasets()
+        color_selector = 0
+
+        self._plot.set_title(lg.name)
+
+        for d in lg.variables:
+            self._plot.add_curve(d.name,
+                                self.colors[color_selector % len(self.colors)])
+            color_selector += 1
+        lg.data_received.add_callback(self._log_data_signal_wrapper)
+        lg.error.add_callback(self._log_error_signal_wrapper)
+
+        self._previous_config = lg
+
+    def _config_added(self, logconfig):
+        """Callback from the log layer when a new config has been added"""
+        logger.debug("Callback for new config [%s]", logconfig.name)
+        self._model.add_block(logconfig)
 
     def _logging_error(self, log_conf, msg):
+        """Callback from the log layer when an error occurs"""
         QMessageBox.about(self, "Plot error", "Error when starting log config"
                 " [%s]: %s" % (log_conf.name, msg))
 
-    def connected(self, link):
-        self.populateLogConfigs()
-
-    def populateLogConfigs(self):
-        prevSelected = self.dataSelector.currentText()
-        self.dataSelector.blockSignals(True)
-        self.dataSelector.clear()
-        self.dataSelector.blockSignals(False)
-        for d in self.dsList:
-            self.helper.cf.log.add_config(d)
-            if d.valid:
-                self.dataSelector.blockSignals(True)
-                self.dataSelector.addItem(d.name)
-                self.dataSelector.blockSignals(False)
-                self.logEntrys.append(d)
-                d.data_received.add_callback(self.logDataSignal.emit)
-                d.error.add_callback(self._log_error_signal.emit)
-            else:
-                logger.warning("Could not setup log configuration!")
-
-        if (len(self.logEntrys) > 0):
-            prevIndex = self.dataSelector.findText(prevSelected)
-            if prevIndex >= 0:
-                self.dataSelector.setCurrentIndex(prevIndex)
-            else:
-                self.dataSelector.currentIndexChanged.emit(0)
-
-    def logDataReceived(self, data, timestamp):
+    def _log_data_received(self, data, timestamp):
+        """Callback when the log layer receives new data"""
         try:
-            dataIndex = 0
-            self.plot.add_data(data, timestamp)
+            self._plot.add_data(data, timestamp)
         except Exception as e:
             # When switching what to log we might still get logging packets...
             # and that will not be pretty so let's just ignore the problem ;-)
             logger.warning("Exception for plot data: %s", e)
             import traceback
             logger.info(traceback.format_exc())
-
-    def logConfigChanged(self):
-        self.dsList = self.helper.logConfigReader.getLogConfigs()
-        self.populateLogConfigs()

@@ -266,6 +266,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
             self.close()
         except Exception as e:
             self.showErrorPopup("Error when saving file", "Error: %s" % e)
+        self.helper.cf.log.add_config(updatedConfig)
 
     def createConfigFromSelection(self):
         logconfig = LogConfig(str(self.configNameCombo.currentText()),
@@ -278,7 +279,4 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
                 completeName = "%s.%s" % (parentName, varName)
                 logconfig.add_variable(completeName, varType)
         return logconfig
-    
-    def closeEvent(self, event):
-        self.helper.logConfigReader.readConfigFiles()
-        self.helper.cf.logConfigRead.call()
+

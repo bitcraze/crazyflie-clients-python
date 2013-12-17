@@ -75,7 +75,6 @@ class Crazyflie():
     connectionFailed = Caller()
     receivedPacket = Caller()
     linkQuality = Caller()
-    logConfigRead = Caller()
 
     state = State.DISCONNECTED
 

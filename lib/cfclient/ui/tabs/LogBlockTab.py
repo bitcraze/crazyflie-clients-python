@@ -108,7 +108,7 @@ class LogBlockItem(object):
 
     def _set_started(self, started):
         """Callback when a block has been started in the Crazyflie"""
-        logger.info("%s started: %s", self.name, started)
+        logger.debug("%s started: %s", self.name, started)
         if started:
              self._block_started = True
         else:
@@ -140,7 +140,7 @@ class LogBlockItem(object):
     def stop(self):
         """Stop the logging of this block"""
         self._doing_transaction = True
-        self._block.stop()
+        self._block.delete()
 
     def doing_transaction(self):
         """Return True if a block is being added or started, False when it's
@@ -149,7 +149,7 @@ class LogBlockItem(object):
 
     def _set_added(self, started):
         """Callback when a block has been added to the Crazyflie"""
-        logger.info("%s added: %s", self.name, started)
+        logger.debug("%s added: %s", self.name, started)
 
     def var_list(self):
         """Return a string containing all the variable names of the children"""

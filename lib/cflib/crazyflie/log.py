@@ -252,7 +252,7 @@ class LogConfig(object):
                 pk.data = (CMD_STOP_LOGGING, self.block_id)
                 self.cf.send_packet(pk)
 
-    def close(self):
+    def delete(self):
         """Delete this entry in the Crazyflie"""
         if (self.cf.link is not None):
             if (self.block_id is None):
@@ -264,7 +264,6 @@ class LogConfig(object):
                 pk.set_header(5, CHAN_SETTINGS)
                 pk.data = (CMD_DELETE_BLOCK, self.block_id)
                 self.cf.send_packet(pk)
-                self.block_id = None  # Wait until we get confirmation of delete
 
     def unpack_log_data(self, log_data, timestamp):
         """Unpack received logging data so it represent real values according
@@ -413,7 +412,7 @@ class Log():
                 if (self.toc.get_element_by_complete_name(
                         var.name) is None):
                     logger.warning("Log: %s not in TOC, this block cannot be"
-                                   " used!", var.getName())
+                                   " used!", var.name)
                     logconf.valid = False
                     return
 
@@ -474,7 +473,7 @@ class Log():
                                        , error_status, block_id, msg)
                         block.err_no = error_status
                         block.added_cb.call(False)
-                        block.error.call(block.logconf, msg)
+                        block.error.call(block, msg)
 
                 else:
                     logger.warning("No LogEntry to assign block to !!!")
@@ -488,11 +487,11 @@ class Log():
                 else:
                     msg = self._err_codes[error_status]
                     logger.warning("Error %d when starting block_id=%d (%s)"
-                                   , error_status, new_block_id, msg)
+                                   , error_status, block_id, msg)
                     if block:
                         block.err_no = error_status
                         block.started_cb.call(False)
-                        block.error.call(block.logconf, msg)
+                        block.error.call(block, msg)
 
             if (cmd == CMD_STOP_LOGGING):
                 if (error_status == 0x00):
@@ -500,6 +499,14 @@ class Log():
                                 block_id)
                     if block:
                         block.started = False
+
+            if (cmd == CMD_DELETE_BLOCK):
+                if (error_status == 0x00):
+                    logger.info("Have successfully deleted block=%d",
+                                block_id)
+                    if block:
+                        block.started = False
+                        block.added = False
 
         if (chan == CHAN_LOGDATA):
             chan = packet.channel

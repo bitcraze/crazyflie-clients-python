@@ -56,7 +56,7 @@ from cflib.crazyflie.log import LogVariable, LogConfig
 class LogConfigReader():
     """Reads logging configurations from file"""
 
-    def __init__(self):
+    def __init__(self, crazyflie):
         self.dsList = []
         # Check if user config exists, otherwise copy files
         if (not os.path.isdir(sys.path[1] + "/log")):
@@ -65,8 +65,10 @@ class LogConfigReader():
             for f in glob.glob(sys.path[0] +
                                "/cfclient/configs/log/[A-Za-z]*.json"):
                 shutil.copy2(f, sys.path[1] + "/log")
+        self._cf = crazyflie
+        self._cf.connectSetupFinished.add_callback(self._connected)
 
-    def readConfigFiles(self):
+    def _read_config_files(self):
         """Read and parse log configurations"""
         configsfound = [os.path.basename(f) for f in
                         glob.glob(sys.path[1] + "/log/[A-Za-z_-]*.json")]
@@ -92,6 +94,18 @@ class LogConfigReader():
             except Exception as e:
                 logger.warning("Exception while parsing logconfig file: %s", e)
         self.dsList = new_dsList
+
+    def _connected(self, link_uri):
+        """Callback that is called once Crazyflie is connected"""
+
+        self._read_config_files()
+        # Just add all the configurations. Via callbacks other parts of the
+        # application will pick up these configurations and use them
+        for d in self.dsList:
+            self._cf.log.add_config(d)
+            if not d.valid:
+                logger.warning("Could not add log configuration [%s]",
+                               d.name)
 
     def getLogConfigs(self):
         """Return the log configurations"""
