@@ -73,7 +73,7 @@ class LogWriter():
             self._file.write(s)
             self._header_written = True
 
-    def _new_data(self, data, timestamp):
+    def _new_data(self, timestamp, data, logconf):
         """Callback when new data arrives from the Crazyflie"""
         if self._file:
             s = "%d" % timestamp

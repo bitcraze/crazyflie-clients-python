@@ -279,7 +279,7 @@ class LogConfig(object):
                                   log_data[data_index:data_index + size])[0]
             data_index += size
             ret_data[name] = value
-        self.data_received_cb.call(ret_data, timestamp)
+        self.data_received_cb.call(timestamp, ret_data, self)
 
 
 class LogTocElement:

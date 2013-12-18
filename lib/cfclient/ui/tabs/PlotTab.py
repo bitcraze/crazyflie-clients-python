@@ -118,7 +118,7 @@ class LogConfigModel(QAbstractItemModel):
 class PlotTab(Tab, plot_tab_class):
     """Tab for plotting logging data"""
 
-    _log_data_signal = pyqtSignal(object, int)
+    _log_data_signal = pyqtSignal(int, object, object)
     _log_error_signal = pyqtSignal(object, str)
 
     colors = ['g', 'b', 'm', 'r', 'y', 'c']
@@ -165,13 +165,13 @@ class PlotTab(Tab, plot_tab_class):
         self._previous_config = None
         self._started_previous = False
 
-    def _log_data_signal_wrapper(self, data, ts):
+    def _log_data_signal_wrapper(self, ts, data, logconf):
         """Wrapper for signal"""
 
         # For some reason the *.emit functions are not
         # the same over time (?!) so they cannot be registered and then
         # removed as callbacks.
-        self._log_data_signal.emit(data, ts)
+        self._log_data_signal.emit(ts, data, logconf)
 
     def _log_error_signal_wrapper(self, config, msg):
         """Wrapper for signal"""
@@ -231,13 +231,11 @@ class PlotTab(Tab, plot_tab_class):
         QMessageBox.about(self, "Plot error", "Error when starting log config"
                 " [%s]: %s" % (log_conf.name, msg))
 
-    def _log_data_received(self, data, timestamp):
+    def _log_data_received(self, timestamp, data, logconf):
         """Callback when the log layer receives new data"""
-        try:
-            self._plot.add_data(data, timestamp)
-        except Exception as e:
-            # When switching what to log we might still get logging packets...
-            # and that will not be pretty so let's just ignore the problem ;-)
-            logger.warning("Exception for plot data: %s", e)
-            import traceback
-            logger.info(traceback.format_exc())
+
+        # Check so that the incoming data belongs to what we are currently
+        # logging
+        if self._previous_config:
+            if self._previous_config.name == logconf.name:
+                self._plot.add_data(data, timestamp)

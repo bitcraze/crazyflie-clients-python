@@ -62,10 +62,10 @@ class FlightTab(Tab, flight_tab_class):
 
     uiSetupReadySignal = pyqtSignal()
 
-    _motor_data_signal = pyqtSignal(object, int)
-    _imu_data_signal = pyqtSignal(object, int)
-    _althold_data_signal = pyqtSignal(object, int)
-    _baro_data_signal = pyqtSignal(object, int)
+    _motor_data_signal = pyqtSignal(int, object, object)
+    _imu_data_signal = pyqtSignal(int, object, object)
+    _althold_data_signal = pyqtSignal(int, object, object)
+    _baro_data_signal = pyqtSignal(int, object, object)
 
     _input_updated_signal = pyqtSignal(float, float, float, float)
     _rp_trim_updated_signal = pyqtSignal(float, float)
@@ -191,17 +191,17 @@ class FlightTab(Tab, flight_tab_class):
         QMessageBox.about(self, "Log error", "Error when starting log config"
                 " [%s]: %s" % (log_conf.name, msg))
 
-    def _motor_data_received(self, data, timestamp):
+    def _motor_data_received(self, timestamp, data, logconf):
         self.actualM1.setValue(data["motor.m1"])
         self.actualM2.setValue(data["motor.m2"])
         self.actualM3.setValue(data["motor.m3"])
         self.actualM4.setValue(data["motor.m4"])
         
-    def _baro_data_received(self, data, timestamp):
+    def _baro_data_received(self, timestamp, data, logconf):
         self.actualASL.setText(("%.2f" % data["baro.aslLong"]))
         self.ai.setBaro(data["baro.aslLong"])
         
-    def _althold_data_received(self, data, timestamp):       
+    def _althold_data_received(self, timestamp, data, logconf):
         target = data["altHold.target"]
         if target>0:
             if not self.targetASL.isEnabled():
@@ -213,7 +213,7 @@ class FlightTab(Tab, flight_tab_class):
             self.targetASL.setText("Not set")   
             self.ai.setHover(0)    
         
-    def _imu_data_received(self, data, timestamp):
+    def _imu_data_received(self, timestamp, data, logconf):
         self.actualRoll.setText(("%.2f" % data["stabilizer.roll"]))
         self.actualPitch.setText(("%.2f" % data["stabilizer.pitch"]))
         self.actualYaw.setText(("%.2f" % data["stabilizer.yaw"]))

@@ -82,7 +82,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
     connectionLostSignal = pyqtSignal(str, str)
     connectionInitiatedSignal = pyqtSignal(str)
-    batteryUpdatedSignal = pyqtSignal(object, int)
+    batteryUpdatedSignal = pyqtSignal(int, object, object)
     connectionDoneSignal = pyqtSignal(str)
     connectionFailedSignal = pyqtSignal(str, str)
     disconnectedSignal = pyqtSignal(str)
@@ -308,7 +308,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def doLogConfigDialogue(self):
         self.logConfigDialogue.show()
 
-    def updateBatteryVoltage(self, data, timestamp):
+    def updateBatteryVoltage(self, timestamp, data, logconf):
         self.batteryBar.setValue(int(data["pm.vbat"] * 1000))
 
     def connectionDone(self, linkURI):
