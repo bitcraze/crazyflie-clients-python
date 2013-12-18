@@ -112,7 +112,7 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         else:
             self.can_enable = True
 
-        self._items = []
+        self._items = {}
         self._last_item = 0
 
         self.setSizePolicy(QtGui.QSizePolicy(
@@ -215,7 +215,7 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         """Callback when user changes the number of samples to be shown"""
         self._nbr_samples = val
 
-    def setTitle(self, title):
+    def set_title(self, title):
         """
         Set the title of the plot.
 
@@ -230,7 +230,7 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         title - the name of the data
         pen - color of curve (using r for red and so on..)
         """
-        self._items.append(PlotItemWrapper(self._plot_widget.plot(name=title, pen=pen)))
+        self._items[title] = PlotItemWrapper(self._plot_widget.plot(name=title, pen=pen))
 
     def add_data(self, data, ts):
         """
@@ -245,7 +245,6 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
             self._dtime = ts - self._last_ts
             self._last_ts = ts
 
-        di = 0
         x_min_limit = 0
         x_max_limit = 0
         # We are adding new datasets, calculate what we should show.
@@ -253,11 +252,10 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
             x_min_limit = max(0, self._last_item-self._nbr_samples)
             x_max_limit = max(self._last_item, self._nbr_samples)
 
-        for d in data:
-            self._items[di].add_point(data[d], ts)
+        for name in self._items:
+            self._items[name].add_point(data[name], ts)
             if self._draw_graph and time() > self._ts + self._delay:
-                [self._x_min, self._x_max] = self._items[di].show_data(x_min_limit, x_max_limit)
-            di = di + 1
+                [self._x_min, self._x_max] = self._items[name].show_data(x_min_limit, x_max_limit)
         if time() > self._ts + self._delay:
             self._ts = time()
         if self._enable_samples_x.isChecked() and self._dtime and self._last_item < self._nbr_samples:
@@ -269,9 +267,11 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
     def removeAllDatasets(self):
         """Reset the plot by removing all the datasets"""
         for item in self._items:
-            self._plot_widget.removeItem(item)
+            self._plot_widget.removeItem(self._items[item])
         self._plot_widget.plotItem.legend.items = []
-        self._items = []
+        self._items = {}
         self._last_item = 0
         self._last_ts = None
         self._dtime = None
+        self._plot_widget.clear()
+

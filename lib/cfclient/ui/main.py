@@ -28,7 +28,6 @@
 """
 The main file for the Crazyflie control application.
 """
-
 __author__ = 'Bitcraze AB'
 __all__ = ['MainUI']
 
@@ -48,14 +47,14 @@ from dialogs.logconfigdialogue import LogConfigDialogue
 
 from cfclient.utils.input import JoystickReader
 from cfclient.utils.guiconfig import GuiConfig
-from cfclient.utils.logconfigreader import (LogConfigReader,
-                                            LogVariable,
-                                            LogConfig)
+from cfclient.utils.logconfigreader import LogConfigReader
 from cfclient.utils.config_manager import ConfigManager
 
 import cfclient.ui.toolboxes
 import cfclient.ui.tabs
 import cflib.crtp
+
+from cflib.crazyflie.log import Log, LogVariable, LogConfig
 
 from cfclient.ui.dialogs.bootloader import BootloaderDialog
 from cfclient.ui.dialogs.about import AboutDialog
@@ -83,7 +82,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
     connectionLostSignal = pyqtSignal(str, str)
     connectionInitiatedSignal = pyqtSignal(str)
-    batteryUpdatedSignal = pyqtSignal(object, int)
+    batteryUpdatedSignal = pyqtSignal(int, object, object)
     connectionDoneSignal = pyqtSignal(str)
     connectionFailedSignal = pyqtSignal(str, str)
     disconnectedSignal = pyqtSignal(str)
@@ -182,8 +181,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.setUIState(UIState.DISCONNECTED)
 
         # Parse the log configuration files
-        self.logConfigReader = LogConfigReader()
-        self.logConfigReader.readConfigFiles()
+        self.logConfigReader = LogConfigReader(self.cf)
 
         # Add things to helper so tabs can access it
         cfclient.ui.pluginhelper.cf = self.cf
@@ -310,7 +308,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def doLogConfigDialogue(self):
         self.logConfigDialogue.show()
 
-    def updateBatteryVoltage(self, data, timestamp):
+    def updateBatteryVoltage(self, timestamp, data, logconf):
         self.batteryBar.setValue(int(data["pm.vbat"] * 1000))
 
     def connectionDone(self, linkURI):
@@ -319,18 +317,18 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         GuiConfig().set("link_uri", linkURI)
 
         lg = LogConfig("Battery", 1000)
-        lg.addVariable(LogVariable("pm.vbat", "float"))
-        self.log = self.cf.log.create_log_packet(lg)
-        if (self.log != None):
-            self.log.data_received.add_callback(self.batteryUpdatedSignal.emit)
-            self.log.error.add_callback(self._log_error_signal.emit)
-            self.log.start()
+        lg.add_variable("pm.vbat", "float")
+        self.cf.log.add_config(lg)
+        if lg.valid:
+            lg.data_received_cb.add_callback(self.batteryUpdatedSignal.emit)
+            lg.error_cb.add_callback(self._log_error_signal.emit)
+            lg.start()
         else:
             logger.warning("Could not setup loggingblock!")
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error", "Error when starting log config"
-                " [%s]: %s" % (log_conf.getName(), msg))
+                " [%s]: %s" % (log_conf.name, msg))
 
     def connectionLost(self, linkURI, msg):
         if not self._auto_reconnect_enabled:

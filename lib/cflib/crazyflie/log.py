@@ -27,13 +27,40 @@
 #  MA  02110-1301, USA.
 
 """
-Enableds logging of variables from the Crazyflie.
+Enables logging of variables from the Crazyflie.
 
 When a Crazyflie is connected it's possible to download a TableOfContent of all
 the variables that can be logged. Using this it's possible to add logging
 configurations where selected variables are sent to the client at a
 specified period.
 
+Terminology:
+  Log configuration - A configuration with a period and a number of variables
+                      that are present in the TOC.
+  Stored as         - The size and type of the variable as declared in the
+                      Crazyflie firmware
+  Fetch as          - The size and type that a variable should be fetched as.
+                      This does not have to be the same as the size and type
+                      it's stored as.
+
+States of a configuration:
+  Created on host - When a configuration is created the contents is checked
+                    so that all the variables are present in the TOC. If not
+                    then the configuration cannot be created.
+  Created on CF   - When the configuration is deemed valid it is added to the
+                    Crazyflie. At this time the memory constraint is checked
+                    and the status returned.
+  Started on CF   - Any added block that is not started can be started. Once
+                    started the Crazyflie will send back logdata periodically
+                    according to the specified period when it's created.
+  Stopped on CF   - Any started configuration can be stopped. The memory taken
+                    by the configuration on the Crazyflie is NOT freed, the
+                    only effect is that the Crazyflie will stop sending
+                    logdata back to the host.
+  Deleted on CF   - Any block that is added can be deleted. When this is done
+                    the memory taken by the configuration is freed on the
+                    Crazyflie. The configuration will have to be re-added to
+                    be used again.
 """
 
 __author__ = 'Bitcraze AB'
@@ -73,28 +100,95 @@ MAX_LOG_DATA_PACKET_SIZE = 30
 import logging
 logger = logging.getLogger(__name__)
 
+class LogVariable():
+    """A logging variable"""
 
-class LogEntry(object):
+    TOC_TYPE = 0
+    MEM_TYPE = 1
+
+    def __init__(self, name="", fetchAs="uint8_t", varType=TOC_TYPE,
+                 storedAs="", address=0):
+        self.name = name
+        self.fetch_as = LogTocElement.get_id_from_cstring(fetchAs)
+        if (len(storedAs) == 0):
+            self.stored_as = self.fetch_as
+        else:
+            self.stored_as = LogTocElement.get_id_from_cstring(storedAs)
+        self.address = address
+        self.type = varType
+        self.stored_as_string = storedAs
+        self.fetch_as_string = fetchAs
+
+    def is_toc_variable(self):
+        """
+        Return true if the variable should be in the TOC, false if raw memory
+        variable
+        """
+        return self.type == LogVariable.TOC_TYPE
+
+    def get_storage_and_fetch_byte(self):
+        """Return what the variable is stored as and fetched as"""
+        return (self.fetch_as | (self.stored_as << 4))
+
+    def __str__(self):
+        return ("LogVariable: name=%s, store=%s, fetch=%s" %
+                (self.name, LogTocElement.get_cstring_from_id(self.stored_as),
+                 LogTocElement.get_cstring_from_id(self.fetch_as)))
+
+class LogConfig(object):
     """Representation of one log configuration that enables logging
     from the Crazyflie"""
-    block_idCounter = 1
+    _config_id_counter = 1
 
-    def __init__(self, crazyflie, logconf):
+    def __init__(self, name, period_in_ms):
         """Initialize the entry"""
-        self.data_received = Caller()
-        self.error = Caller()
+        self.data_received_cb = Caller()
+        self.error_cb = Caller()
         self.started_cb = Caller()
         self.added_cb = Caller()
         self.err_no = 0
 
-        self.logconf = logconf
-        self.block_id = LogEntry.block_idCounter
-        LogEntry.block_idCounter += 1 % 255
-        self.cf = crazyflie
-        self.period = logconf.getPeriod() / 10
-        self.period_in_ms = logconf.getPeriod()
+        self.id = LogConfig._config_id_counter
+        LogConfig._config_id_counter += 1 % 255
+        self.cf = None
+        self.period = period_in_ms / 10
+        self.period_in_ms = period_in_ms
         self._added = False
         self._started = False
+        self.valid = False
+        self.variables = []
+        self.default_fetch_as = []
+        self.name = name
+
+    def add_variable(self, name, fetch_as=None):
+        """Add a new variable to the configuration.
+
+        name - Complete name of the variable in the form group.name
+        fetch_as - String representation of the type the variable should be
+                   fetched as (i.e uint8_t, float, FP16, etc)
+
+        If no fetch_as type is supplied, then the stored as type will be used
+        (i.e the type of the fetched variable is the same as it's stored in the
+        Crazyflie)."""
+        if fetch_as:
+            self.variables.append(LogVariable(name, fetch_as))
+        else:
+            # We cannot determine the default type until we have connected. So
+            # save the name and we will add these once we are connected.
+            self.default_fetch_as.append(name)
+
+    def add_memory(self, name, fetch_as, stored_as, address):
+        """Add a raw memory position to log.
+
+        name - Arbitrary name of the variable
+        fetch_as - String representation of the type of the data the memory
+                   should be fetch as (i.e uint8_t, float, FP16)
+        stored_as - String representation of the type the data is stored as
+                    in the Crazyflie
+        address - The address of the data
+        """
+        self.variables.append(LogVariable(name, fetch_as, LogVariable.MEM_TYPE,
+                                          stored_as, address))
 
     def _set_added(self, added):
         self._added = added
@@ -120,73 +214,72 @@ class LogEntry(object):
                 logger.debug("First time block is started, add block")
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
-                pk.data = (CMD_CREATE_BLOCK, self.block_id)
-                for var in self.logconf.getVariables():
-                    if (var.isTocVariable() is False):  # Memory location
+                pk.data = (CMD_CREATE_BLOCK, self.id)
+                for var in self.variables:
+                    if (var.is_toc_variable() is False):  # Memory location
                         logger.debug("Logging to raw memory %d, 0x%04X",
-                                     var.getStoredFetchAs(), var.getAddress())
-                        pk.data += struct.pack('<B', var.getStoredFetchAs())
-                        pk.data += struct.pack('<I', var.getAddress())
+                                     var.get_storage_and_fetch_byte(), var.address)
+                        pk.data += struct.pack('<B', var.get_storage_and_fetch_byte())
+                        pk.data += struct.pack('<I', var.address)
                     else:  # Item in TOC
                         logger.debug("Adding %s with id=%d and type=0x%02X",
-                                     var.getName(),
+                                     var.name,
                                      self.cf.log.toc.get_element_id(
-                                     var.getName()), var.getStoredFetchAs())
-                        pk.data += struct.pack('<B', var.getStoredFetchAs())
+                                     var.name), var.get_storage_and_fetch_byte())
+                        pk.data += struct.pack('<B', var.get_storage_and_fetch_byte())
                         pk.data += struct.pack('<B', self.cf.log.toc.
-                                               get_element_id(var.getName()))
-                logger.debug("Adding log block id {}".format(self.block_id))
+                                               get_element_id(var.name))
+                logger.debug("Adding log block id {}".format(self.id))
                 self.cf.send_packet(pk)
 
             else:
                 logger.debug("Block already registered, starting logging"
-                             " for %d", self.block_id)
+                             " for %d", self.id)
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
-                pk.data = (CMD_START_LOGGING, self.block_id, self.period)
+                pk.data = (CMD_START_LOGGING, self.id, self.period)
                 self.cf.send_packet(pk)
 
     def stop(self):
         """Stop the logging for this entry"""
         if (self.cf.link is not None):
-            if (self.block_id is None):
+            if (self.id is None):
                 logger.warning("Stopping block, but no block registered")
             else:
-                logger.debug("Sending stop logging for block %d", self.block_id)
+                logger.debug("Sending stop logging for block %d", self.id)
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
-                pk.data = (CMD_STOP_LOGGING, self.block_id)
+                pk.data = (CMD_STOP_LOGGING, self.id)
                 self.cf.send_packet(pk)
 
-    def close(self):
+    def delete(self):
         """Delete this entry in the Crazyflie"""
         if (self.cf.link is not None):
-            if (self.block_id is None):
+            if (self.id is None):
                 logger.warning("Delete block, but no block registered")
             else:
                 logger.debug("LogEntry: Sending delete logging for block %d"
-                             % self.block_id)
+                             % self.id)
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
-                pk.data = (CMD_DELETE_BLOCK, self.block_id)
+                pk.data = (CMD_DELETE_BLOCK, self.id)
                 self.cf.send_packet(pk)
-                self.block_id = None  # Wait until we get confirmation of delete
 
     def unpack_log_data(self, log_data, timestamp):
         """Unpack received logging data so it represent real values according
         to the configuration in the entry"""
         ret_data = {}
         data_index = 0
-        for var in self.logconf.getVariables():
-            size = LogTocElement.get_size_from_id(var.getFetchAs())
-            name = var.getName()
+        for var in self.variables:
+            size = LogTocElement.get_size_from_id(var.fetch_as)
+            name = var.name
             unpackstring = LogTocElement.get_unpack_string_from_id(
-                var.getFetchAs())
+                var.fetch_as)
             value = struct.unpack(unpackstring,
                                   log_data[data_index:data_index + size])[0]
             data_index += size
             ret_data[name] = value
-        self.data_received.call(ret_data, timestamp)
+        self.data_received_cb.call(timestamp, ret_data, self)
 
 
 class LogTocElement:
@@ -278,27 +371,59 @@ class Log():
         self.state = IDLE
         self.fake_toc_crc = 0xDEADBEEF
 
-    def create_log_packet(self, logconf):
-        """Create a new log configuration"""
+    def add_config(self, logconf):
+        """Add a log configuration to the logging framework.
+
+        When doing this the contents of the log configuration will be validated
+        and listeners for new log configurations will be notified. When
+        validating the configuration the variables are checked against the TOC
+        to see that they actually exist. If they don't then the configuration
+        cannot be used. Since a valid TOC is required, a Crazyflie has to be
+        connected when calling this method, otherwise it will fail."""
+
+        if not self.cf.link:
+            logger.error("Cannot add configs without being connected to a "
+                         "Crazyflie!")
+            return
+
+        # If the log configuration contains variables that we added without
+        # type (i.e we want the stored as type for fetching as well) then
+        # resolve this now and add them to the block again.
+        for name in logconf.default_fetch_as:
+            var = self.toc.get_element_by_complete_name(name)
+            if not var:
+                logger.warning("%s not in TOC, this block cannot be"
+                               " used!", name)
+                logconf.valid = False
+                return
+            # Now that we know what type this variable has, add it to the log
+            # config again with the correct type
+            logconf.add_variable(name, var.ctype)
+
+        # Now check that all the added variables are in the TOC and that
+        # the total size constraint of a data packet with logging data is
+        # not
         size = 0
-        period = logconf.getPeriod() / 10
-        for var in logconf.getVariables():
-            size += LogTocElement.get_size_from_id(var.getFetchAs())
+        for var in logconf.variables:
+            size += LogTocElement.get_size_from_id(var.fetch_as)
             # Check that we are able to find the variable in the TOC so
             # we can return error already now and not when the config is sent
-            if (var.isTocVariable()):
+            if var.is_toc_variable():
                 if (self.toc.get_element_by_complete_name(
-                        var.getName()) is None):
+                        var.name) is None):
                     logger.warning("Log: %s not in TOC, this block cannot be"
-                                   " used!", var.getName())
-                    return None
-        if (size <= MAX_LOG_DATA_PACKET_SIZE and period > 0 and period < 0xFF):
-            block = LogEntry(self.cf, logconf)
-            self.log_blocks.append(block)
-            self.block_added_cb.call(block)
-            return block
+                                   " used!", var.name)
+                    logconf.valid = False
+                    return
+
+        if (size <= MAX_LOG_DATA_PACKET_SIZE and
+                (logconf.period > 0 and logconf.period < 0xFF)):
+            logconf.valid = True
+            logconf.cf = self.cf
+            self.log_blocks.append(logconf)
+            self.block_added_cb.call(logconf)
         else:
-            return None
+            logconf.valid = False
 
     def refresh_toc(self, refresh_done_callback, toc_cache):
         """Start refreshing the table of loggale variables"""
@@ -314,9 +439,9 @@ class Log():
                                 self.toc, refresh_done_callback, toc_cache)
         toc_fetcher.start()
 
-    def _find_block(self, block_id):
+    def _find_block(self, id):
         for block in self.log_blocks:
-            if block.block_id == block_id:
+            if block.id == id:
                 return block
         return None
 
@@ -327,55 +452,70 @@ class Log():
         payload = struct.pack("B" * (len(packet.datal) - 1), *packet.datal[1:])
 
         if (chan == CHAN_SETTINGS):
-            block_id = ord(payload[0])
+            id = ord(payload[0])
             error_status = ord(payload[1])
-            block = self._find_block(block_id)
+            block = self._find_block(id)
             if (cmd == CMD_CREATE_BLOCK):
                 if (block is not None):
                     if (error_status == 0):  # No error
-                        logger.debug("Have successfully added block_id=%d",
-                                     block_id)
+                        logger.debug("Have successfully added id=%d",
+                                     id)
 
                         pk = CRTPPacket()
                         pk.set_header(5, CHAN_SETTINGS)
-                        pk.data = (CMD_START_LOGGING, block_id,
+                        pk.data = (CMD_START_LOGGING, id,
                                    block.period)
                         self.cf.send_packet(pk)
                         block.added = True
                     else:
                         msg = self._err_codes[error_status]
-                        logger.warning("Error %d when adding block_id=%d (%s)"
-                                       , error_status, block_id, msg)
+                        logger.warning("Error %d when adding id=%d (%s)"
+                                       , error_status, id, msg)
                         block.err_no = error_status
                         block.added_cb.call(False)
-                        block.error.call(block.logconf, msg)
+                        block.error_cb.call(block, msg)
 
                 else:
                     logger.warning("No LogEntry to assign block to !!!")
             if (cmd == CMD_START_LOGGING):
                 if (error_status == 0x00):
-                    logger.info("Have successfully logging for block=%d",
-                                block_id)
+                    logger.info("Have successfully started logging for block=%d",
+                                id)
                     if block:
                         block.started = True
 
                 else:
                     msg = self._err_codes[error_status]
-                    logger.warning("Error %d when starting block_id=%d (%s)"
-                                   , error_status, new_block_id, msg)
+                    logger.warning("Error %d when starting id=%d (%s)"
+                                   , error_status, id, msg)
                     if block:
                         block.err_no = error_status
                         block.started_cb.call(False)
-                        block.error.call(block.logconf, msg)
+                        block.error_cb.call(block, msg)
+
+            if (cmd == CMD_STOP_LOGGING):
+                if (error_status == 0x00):
+                    logger.info("Have successfully stopped logging for block=%d",
+                                id)
+                    if block:
+                        block.started = False
+
+            if (cmd == CMD_DELETE_BLOCK):
+                if (error_status == 0x00):
+                    logger.info("Have successfully deleted block=%d",
+                                id)
+                    if block:
+                        block.started = False
+                        block.added = False
 
         if (chan == CHAN_LOGDATA):
             chan = packet.channel
-            block_id = packet.datal[0]
-            block = self._find_block(block_id)
+            id = packet.datal[0]
+            block = self._find_block(id)
             timestamps = struct.unpack("<BBB", packet.data[1:4])
             timestamp = (timestamps[0] | timestamps[1] << 8 | timestamps[2] << 16)
             logdata = packet.data[4:]
             if (block is not None):
                 block.unpack_log_data(logdata, timestamp)
             else:
-                logger.warning("Error no LogEntry to handle block=%d", block_id)
+                logger.warning("Error no LogEntry to handle id=%d", id)
