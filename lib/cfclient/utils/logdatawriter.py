@@ -54,7 +54,7 @@ class LogWriter():
         self._dir = directory
 
         dir = os.path.join(sys.path[1], "logdata")
-        self._filename = os.path.join(dir, logblock.name)
+        self._filename = os.path.join(dir, "%s.csv" % logblock.name)
         if not os.path.isdir(dir):
             os.makedirs(dir)
 
@@ -90,7 +90,7 @@ class LogWriter():
         if self._file:
             self._file.close()
             self._file = None
-            self._block.data_received.remove_callback(self._new_data)
+            self._block.data_received_cb.remove_callback(self._new_data)
             logger.info("Stopped logging of block [%s] to file [%s]",
                         self._block.name, self._filename)
 
