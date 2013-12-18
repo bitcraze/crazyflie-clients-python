@@ -60,6 +60,7 @@ class LogWriter():
 
         self._file = None
         self._header_written = False
+        self._header_values = []
 
     def _write_header(self):
         """Write the header to the file"""
@@ -67,6 +68,7 @@ class LogWriter():
             s = "Timestamp"
             for v in self._block.variables:
                 s += "," + v.name
+                self._header_values.append(v.name)
             s += '\n'
             self._file.write(s)
             self._header_written = True
@@ -75,8 +77,8 @@ class LogWriter():
         """Callback when new data arrives from the Crazyflie"""
         if self._file:
             s = "%d" % timestamp
-            for d in data:
-                s += "," + str(data[d])
+            for col in self._header_values:
+                s += "," + str(data[col])
             s += '\n'
             self._file.write(s)
 
@@ -93,6 +95,7 @@ class LogWriter():
             self._block.data_received_cb.remove_callback(self._new_data)
             logger.info("Stopped logging of block [%s] to file [%s]",
                         self._block.name, self._filename)
+            self._header_values = []
 
     def start(self):
         """Start the logging to file"""
