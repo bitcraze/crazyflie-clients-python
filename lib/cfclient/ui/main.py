@@ -320,8 +320,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         lg.add_variable("pm.vbat", "float")
         self.cf.log.add_config(lg)
         if lg.valid:
-            lg.data_received.add_callback(self.batteryUpdatedSignal.emit)
-            lg.error.add_callback(self._log_error_signal.emit)
+            lg.data_received_cb.add_callback(self.batteryUpdatedSignal.emit)
+            lg.error_cb.add_callback(self._log_error_signal.emit)
             lg.start()
         else:
             logger.warning("Could not setup loggingblock!")

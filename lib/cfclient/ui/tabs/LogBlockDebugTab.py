@@ -46,7 +46,7 @@ logblock_tab_class = uic.loadUiType(sys.path[0] +
 
 class LogBlockDebugTab(Tab, logblock_tab_class):
     """
-    Used to show debug-information about logblock status.
+    Used to show debug-information about log status.
     """
 
     _blocks_updated_signal = pyqtSignal(bool)
@@ -82,7 +82,7 @@ class LogBlockDebugTab(Tab, logblock_tab_class):
             item = QtGui.QTreeWidgetItem()
             item.setFlags(Qt.ItemIsEnabled |
                           Qt.ItemIsSelectable)
-            item.setData(0, Qt.DisplayRole, block.block_id)
+            item.setData(0, Qt.DisplayRole, block.id)
             item.setData(1, Qt.EditRole, block.name)
             item.setData(2, Qt.DisplayRole, (block.period_in_ms))
             item.setData(3, Qt.DisplayRole, block.added)

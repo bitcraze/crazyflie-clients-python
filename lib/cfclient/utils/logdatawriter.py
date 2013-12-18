@@ -99,6 +99,6 @@ class LogWriter():
         if not self._file:
             self._file = open(self._filename, 'w')
             self._write_header()
-            self._block.data_received.add_callback(self._new_data)
+            self._block.data_received_cb.add_callback(self._new_data)
             logger.info("Started logging of block [%s] to file [%s]",
                         self._block.name, self._filename)

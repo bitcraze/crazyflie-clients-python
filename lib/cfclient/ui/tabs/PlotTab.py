@@ -51,7 +51,6 @@ from pprint import pprint
 import datetime
 
 from cfclient.ui.widgets.plotwidget import PlotWidget
-from cfclient.ui.widgets.rtplotwidget import PlotDataSet
 
 from cflib.crazyflie.log import Log
 
@@ -196,9 +195,9 @@ class PlotTab(Tab, plot_tab_class):
 
         # Remove our callback for the previous config
         if self._previous_config:
-            self._previous_config.data_received.remove_callback(
+            self._previous_config.data_received_cb.remove_callback(
                 self._log_data_signal_wrapper)
-            self._previous_config.error.remove_callback(
+            self._previous_config.error_cb.remove_callback(
                 self._log_error_signal_wrapper)
 
         lg = self._model.get_config(i)
@@ -217,8 +216,8 @@ class PlotTab(Tab, plot_tab_class):
             self._plot.add_curve(d.name,
                                 self.colors[color_selector % len(self.colors)])
             color_selector += 1
-        lg.data_received.add_callback(self._log_data_signal_wrapper)
-        lg.error.add_callback(self._log_error_signal_wrapper)
+        lg.data_received_cb.add_callback(self._log_data_signal_wrapper)
+        lg.error_cb.add_callback(self._log_error_signal_wrapper)
 
         self._previous_config = lg
 

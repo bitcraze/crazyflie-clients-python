@@ -81,14 +81,14 @@ class LogBlockItem(object):
         self.parent = None
         self.children = []
         self.name = block.name
-        self.id = block.block_id
+        self.id = block.id
         self.period = block.period_in_ms
         self._model = model
         self._log_file_writer = LogWriter(block)
 
         self._block.started_cb.add_callback(self._set_started)
         self._block.added_cb.add_callback(self._set_added)
-        self._block.error.add_callback(self._log_error)
+        self._block.error_cb.add_callback(self._log_error)
 
         self._var_list = ""
 

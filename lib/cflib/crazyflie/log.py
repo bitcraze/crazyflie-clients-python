@@ -138,18 +138,18 @@ class LogVariable():
 class LogConfig(object):
     """Representation of one log configuration that enables logging
     from the Crazyflie"""
-    block_idCounter = 1
+    _config_id_counter = 1
 
     def __init__(self, name, period_in_ms):
         """Initialize the entry"""
-        self.data_received = Caller()
-        self.error = Caller()
+        self.data_received_cb = Caller()
+        self.error_cb = Caller()
         self.started_cb = Caller()
         self.added_cb = Caller()
         self.err_no = 0
 
-        self.block_id = LogConfig.block_idCounter
-        LogConfig.block_idCounter += 1 % 255
+        self.id = LogConfig._config_id_counter
+        LogConfig._config_id_counter += 1 % 255
         self.cf = None
         self.period = period_in_ms / 10
         self.period_in_ms = period_in_ms
@@ -214,7 +214,7 @@ class LogConfig(object):
                 logger.debug("First time block is started, add block")
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
-                pk.data = (CMD_CREATE_BLOCK, self.block_id)
+                pk.data = (CMD_CREATE_BLOCK, self.id)
                 for var in self.variables:
                     if (var.is_toc_variable() is False):  # Memory location
                         logger.debug("Logging to raw memory %d, 0x%04X",
@@ -229,40 +229,40 @@ class LogConfig(object):
                         pk.data += struct.pack('<B', var.get_storage_and_fetch_byte())
                         pk.data += struct.pack('<B', self.cf.log.toc.
                                                get_element_id(var.name))
-                logger.debug("Adding log block id {}".format(self.block_id))
+                logger.debug("Adding log block id {}".format(self.id))
                 self.cf.send_packet(pk)
 
             else:
                 logger.debug("Block already registered, starting logging"
-                             " for %d", self.block_id)
+                             " for %d", self.id)
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
-                pk.data = (CMD_START_LOGGING, self.block_id, self.period)
+                pk.data = (CMD_START_LOGGING, self.id, self.period)
                 self.cf.send_packet(pk)
 
     def stop(self):
         """Stop the logging for this entry"""
         if (self.cf.link is not None):
-            if (self.block_id is None):
+            if (self.id is None):
                 logger.warning("Stopping block, but no block registered")
             else:
-                logger.debug("Sending stop logging for block %d", self.block_id)
+                logger.debug("Sending stop logging for block %d", self.id)
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
-                pk.data = (CMD_STOP_LOGGING, self.block_id)
+                pk.data = (CMD_STOP_LOGGING, self.id)
                 self.cf.send_packet(pk)
 
     def delete(self):
         """Delete this entry in the Crazyflie"""
         if (self.cf.link is not None):
-            if (self.block_id is None):
+            if (self.id is None):
                 logger.warning("Delete block, but no block registered")
             else:
                 logger.debug("LogEntry: Sending delete logging for block %d"
-                             % self.block_id)
+                             % self.id)
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
-                pk.data = (CMD_DELETE_BLOCK, self.block_id)
+                pk.data = (CMD_DELETE_BLOCK, self.id)
                 self.cf.send_packet(pk)
 
     def unpack_log_data(self, log_data, timestamp):
@@ -279,7 +279,7 @@ class LogConfig(object):
                                   log_data[data_index:data_index + size])[0]
             data_index += size
             ret_data[name] = value
-        self.data_received.call(ret_data, timestamp)
+        self.data_received_cb.call(ret_data, timestamp)
 
 
 class LogTocElement:
@@ -439,9 +439,9 @@ class Log():
                                 self.toc, refresh_done_callback, toc_cache)
         toc_fetcher.start()
 
-    def _find_block(self, block_id):
+    def _find_block(self, id):
         for block in self.log_blocks:
-            if block.block_id == block_id:
+            if block.id == id:
                 return block
         return None
 
@@ -452,70 +452,70 @@ class Log():
         payload = struct.pack("B" * (len(packet.datal) - 1), *packet.datal[1:])
 
         if (chan == CHAN_SETTINGS):
-            block_id = ord(payload[0])
+            id = ord(payload[0])
             error_status = ord(payload[1])
-            block = self._find_block(block_id)
+            block = self._find_block(id)
             if (cmd == CMD_CREATE_BLOCK):
                 if (block is not None):
                     if (error_status == 0):  # No error
-                        logger.debug("Have successfully added block_id=%d",
-                                     block_id)
+                        logger.debug("Have successfully added id=%d",
+                                     id)
 
                         pk = CRTPPacket()
                         pk.set_header(5, CHAN_SETTINGS)
-                        pk.data = (CMD_START_LOGGING, block_id,
+                        pk.data = (CMD_START_LOGGING, id,
                                    block.period)
                         self.cf.send_packet(pk)
                         block.added = True
                     else:
                         msg = self._err_codes[error_status]
-                        logger.warning("Error %d when adding block_id=%d (%s)"
-                                       , error_status, block_id, msg)
+                        logger.warning("Error %d when adding id=%d (%s)"
+                                       , error_status, id, msg)
                         block.err_no = error_status
                         block.added_cb.call(False)
-                        block.error.call(block, msg)
+                        block.error_cb.call(block, msg)
 
                 else:
                     logger.warning("No LogEntry to assign block to !!!")
             if (cmd == CMD_START_LOGGING):
                 if (error_status == 0x00):
                     logger.info("Have successfully started logging for block=%d",
-                                block_id)
+                                id)
                     if block:
                         block.started = True
 
                 else:
                     msg = self._err_codes[error_status]
-                    logger.warning("Error %d when starting block_id=%d (%s)"
-                                   , error_status, block_id, msg)
+                    logger.warning("Error %d when starting id=%d (%s)"
+                                   , error_status, id, msg)
                     if block:
                         block.err_no = error_status
                         block.started_cb.call(False)
-                        block.error.call(block, msg)
+                        block.error_cb.call(block, msg)
 
             if (cmd == CMD_STOP_LOGGING):
                 if (error_status == 0x00):
                     logger.info("Have successfully stopped logging for block=%d",
-                                block_id)
+                                id)
                     if block:
                         block.started = False
 
             if (cmd == CMD_DELETE_BLOCK):
                 if (error_status == 0x00):
                     logger.info("Have successfully deleted block=%d",
-                                block_id)
+                                id)
                     if block:
                         block.started = False
                         block.added = False
 
         if (chan == CHAN_LOGDATA):
             chan = packet.channel
-            block_id = packet.datal[0]
-            block = self._find_block(block_id)
+            id = packet.datal[0]
+            block = self._find_block(id)
             timestamps = struct.unpack("<BBB", packet.data[1:4])
             timestamp = (timestamps[0] | timestamps[1] << 8 | timestamps[2] << 16)
             logdata = packet.data[4:]
             if (block is not None):
                 block.unpack_log_data(logdata, timestamp)
             else:
-                logger.warning("Error no LogEntry to handle block=%d", block_id)
+                logger.warning("Error no LogEntry to handle id=%d", id)

@@ -234,8 +234,8 @@ class FlightTab(Tab, flight_tab_class):
 
         self.helper.cf.log.add_config(lg)
         if (lg.valid):
-            lg.data_received.add_callback(self._imu_data_signal.emit)
-            lg.error.add_callback(self._log_error_signal.emit)
+            lg.data_received_cb.add_callback(self._imu_data_signal.emit)
+            lg.error_cb.add_callback(self._log_error_signal.emit)
             lg.start()
         else:
             logger.warning("Could not setup logconfiguration after "
@@ -250,8 +250,8 @@ class FlightTab(Tab, flight_tab_class):
 
         self.helper.cf.log.add_config(lg)
         if lg.valid:
-            lg.data_received.add_callback(self._motor_data_signal.emit)
-            lg.error.add_callback(self._log_error_signal.emit)
+            lg.data_received_cb.add_callback(self._motor_data_signal.emit)
+            lg.error_cb.add_callback(self._log_error_signal.emit)
             lg.start()
         else:
             logger.warning("Could not setup logconfiguration after "
@@ -274,9 +274,9 @@ class FlightTab(Tab, flight_tab_class):
 
                     self.helper.cf.log.add_config(self.logBaro)
                     if self.logBaro.valid:
-                        self.logBaro.data_received.add_callback(
+                        self.logBaro.data_received_cb.add_callback(
                             self._baro_data_signal.emit)
-                        self.logBaro.error.add_callback(
+                        self.logBaro.error_cb.add_callback(
                             self._log_error_signal.emit)
                         self.logBaro.start()
                     else:
@@ -287,9 +287,9 @@ class FlightTab(Tab, flight_tab_class):
 
                     self.helper.cf.log.add_config(self.logAltHold)
                     if self.logAltHold.valid:
-                        self.logAltHold.data_received.add_callback(
+                        self.logAltHold.data_received_cb.add_callback(
                             self._althold_data_signal.emit)
-                        self.logAltHold.error.add_callback(
+                        self.logAltHold.error_cb.add_callback(
                             self._log_error_signal.emit)
                         self.logAltHold.start()
                     else:
