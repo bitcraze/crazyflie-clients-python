@@ -11,3 +11,4 @@ conf/*
 .project
 .pydevproject
 .settings/*
+msvcp90.dll
