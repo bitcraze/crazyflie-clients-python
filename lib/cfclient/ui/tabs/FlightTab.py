@@ -192,37 +192,41 @@ class FlightTab(Tab, flight_tab_class):
                 " [%s]: %s" % (log_conf.name, msg))
 
     def _motor_data_received(self, timestamp, data, logconf):
-        self.actualM1.setValue(data["motor.m1"])
-        self.actualM2.setValue(data["motor.m2"])
-        self.actualM3.setValue(data["motor.m3"])
-        self.actualM4.setValue(data["motor.m4"])
+        if self.isVisible():
+            self.actualM1.setValue(data["motor.m1"])
+            self.actualM2.setValue(data["motor.m2"])
+            self.actualM3.setValue(data["motor.m3"])
+            self.actualM4.setValue(data["motor.m4"])
         
     def _baro_data_received(self, timestamp, data, logconf):
-        self.actualASL.setText(("%.2f" % data["baro.aslLong"]))
-        self.ai.setBaro(data["baro.aslLong"])
+        if self.isVisible():
+            self.actualASL.setText(("%.2f" % data["baro.aslLong"]))
+            self.ai.setBaro(data["baro.aslLong"])
         
     def _althold_data_received(self, timestamp, data, logconf):
-        target = data["altHold.target"]
-        if target>0:
-            if not self.targetASL.isEnabled():
-                self.targetASL.setEnabled(True) 
-            self.targetASL.setText(("%.2f" % target))
-            self.ai.setHover(target)    
-        elif self.targetASL.isEnabled():
-            self.targetASL.setEnabled(False)
-            self.targetASL.setText("Not set")   
-            self.ai.setHover(0)    
+        if self.isVisible():
+            target = data["altHold.target"]
+            if target>0:
+                if not self.targetASL.isEnabled():
+                    self.targetASL.setEnabled(True) 
+                self.targetASL.setText(("%.2f" % target))
+                self.ai.setHover(target)    
+            elif self.targetASL.isEnabled():
+                self.targetASL.setEnabled(False)
+                self.targetASL.setText("Not set")   
+                self.ai.setHover(0)    
         
     def _imu_data_received(self, timestamp, data, logconf):
-        self.actualRoll.setText(("%.2f" % data["stabilizer.roll"]))
-        self.actualPitch.setText(("%.2f" % data["stabilizer.pitch"]))
-        self.actualYaw.setText(("%.2f" % data["stabilizer.yaw"]))
-        self.actualThrust.setText("%.2f%%" %
-                                  self.thrustToPercentage(
-                                                  data["stabilizer.thrust"]))
-
-        self.ai.setRollPitch(-data["stabilizer.roll"],
-                             data["stabilizer.pitch"])
+        if self.isVisible():
+            self.actualRoll.setText(("%.2f" % data["stabilizer.roll"]))
+            self.actualPitch.setText(("%.2f" % data["stabilizer.pitch"]))
+            self.actualYaw.setText(("%.2f" % data["stabilizer.yaw"]))
+            self.actualThrust.setText("%.2f%%" %
+                                      self.thrustToPercentage(
+                                                      data["stabilizer.thrust"]))
+    
+            self.ai.setRollPitch(-data["stabilizer.roll"],
+                                 data["stabilizer.pitch"])
 
     def connected(self, linkURI):
         # IMU & THRUST
