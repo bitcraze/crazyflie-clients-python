@@ -193,6 +193,30 @@ class DebugDriver (CRTPDriver):
                                   "vargroup": "imu_sensors",
                                   "varname": "MS5611", "writable": False,
                                   "value": 1})
+        self.fakeParamToc.append({"varid": 18, "vartype": 0x0A,
+                                  "vargroup": "firmware",
+                                  "varname": "revision0", "writable": False,
+                                  "value": 1})
+        self.fakeParamToc.append({"varid": 19, "vartype": 0x09,
+                                  "vargroup": "firmware",
+                                  "varname": "revision1", "writable": False,
+                                  "value": 1})
+        self.fakeParamToc.append({"varid": 20, "vartype": 0x08,
+                                  "vargroup": "firmware",
+                                  "varname": "modified", "writable": False,
+                                  "value": 1})
+        self.fakeParamToc.append({"varid": 21, "vartype": 0x08,
+                                  "vargroup": "imu_tests",
+                                  "varname": "MPU6050", "writable": False,
+                                  "value": 1})
+        self.fakeParamToc.append({"varid": 22, "vartype": 0x08,
+                                  "vargroup": "imu_tests",
+                                  "varname": "HMC5883L", "writable": False,
+                                  "value": 1})
+        self.fakeParamToc.append({"varid": 23, "vartype": 0x08,
+                                  "vargroup": "imu_tests",
+                                  "varname": "MS5611", "writable": False,
+                                  "value": 1})
 
         self.fakeflash = {}
 
@@ -440,12 +464,13 @@ class DebugDriver (CRTPDriver):
             if (cmd == 1):
                 logger.warning("LOG: Appending block not implemented!")
             if (cmd == 2):
+                blockId = ord(pk.data[1])
                 logger.info("LOG: Should delete block %d", blockId)
                 success = False
                 for fb in self.fakeLoggingThreads:
                     if (fb.blockId == blockId):
                         fb._disable_logging()
-                        fb.quit()
+                        fb.stop()
 
                         p = CRTPPacket()
                         p.set_header(5, 1)
@@ -504,6 +529,7 @@ class _FakeLoggingDataThread (Thread):
 
     def __init__(self, outQueue, blockId, listofvars, fakeLogToc):
         Thread.__init__(self)
+        self.starttime = datetime.now()
         self.outQueue = outQueue
         self.setDaemon(True)
         self.mod = 0
@@ -560,7 +586,8 @@ class _FakeLoggingDataThread (Thread):
                 p = CRTPPacket()
                 p.set_header(5, 2)
                 p.data = struct.pack('<B', self.blockId)
-                p.data += struct.pack('BBB', 0, 0, 0)  # Timestamp
+                timestamp = int((datetime.now()-self.starttime).total_seconds()*1000)
+                p.data += struct.pack('BBB', timestamp&0xff, (timestamp>>8)&0x0ff, (timestamp>>16)&0x0ff)  # Timestamp
 
                 for d in self.fakeLoggingData:
                     # Set new value
