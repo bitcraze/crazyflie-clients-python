@@ -196,11 +196,11 @@ class DebugDriver (CRTPDriver):
         self.fakeParamToc.append({"varid": 18, "vartype": 0x0A,
                                   "vargroup": "firmware",
                                   "varname": "revision0", "writable": False,
-                                  "value": 1})
+                                  "value": 0xdeb})
         self.fakeParamToc.append({"varid": 19, "vartype": 0x09,
                                   "vargroup": "firmware",
                                   "varname": "revision1", "writable": False,
-                                  "value": 1})
+                                  "value": 0x99})
         self.fakeParamToc.append({"varid": 20, "vartype": 0x08,
                                   "vargroup": "firmware",
                                   "varname": "modified", "writable": False,
