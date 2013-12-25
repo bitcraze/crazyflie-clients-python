@@ -167,9 +167,10 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         node = None
         if (len(parents) > 0):
             parent = parents[0]
-        for n in range(parent.childCount()):
-            if (parent.child(n).text(NAME_FIELD) == itemName):
-                node = parent.child(n)
+            for n in range(parent.childCount()):
+                if (parent.child(n).text(NAME_FIELD) == itemName):
+                    node = parent.child(n)
+                    break
         if (node != None):
             self.moveNodeItem(source, target, node)
             return True
@@ -255,7 +256,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
                                             self.varTree,
                                             varParent,
                                             varName) == False:
-                        logger.warning("Could not find node!!")
+                        logger.warning("Could not find node %s.%s!!", varParent, varName)
                 else:
                     logger.warning("Error: Mem vars not supported!")
 
