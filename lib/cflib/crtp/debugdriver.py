@@ -464,12 +464,13 @@ class DebugDriver (CRTPDriver):
             if (cmd == 1):
                 logger.warning("LOG: Appending block not implemented!")
             if (cmd == 2):
+                blockId = ord(pk.data[1])
                 logger.info("LOG: Should delete block %d", blockId)
                 success = False
                 for fb in self.fakeLoggingThreads:
                     if (fb.blockId == blockId):
                         fb._disable_logging()
-                        fb.quit()
+                        fb.stop()
 
                         p = CRTPPacket()
                         p.set_header(5, 1)
@@ -528,6 +529,7 @@ class _FakeLoggingDataThread (Thread):
 
     def __init__(self, outQueue, blockId, listofvars, fakeLogToc):
         Thread.__init__(self)
+        self.starttime = datetime.now()
         self.outQueue = outQueue
         self.setDaemon(True)
         self.mod = 0
@@ -584,7 +586,8 @@ class _FakeLoggingDataThread (Thread):
                 p = CRTPPacket()
                 p.set_header(5, 2)
                 p.data = struct.pack('<B', self.blockId)
-                p.data += struct.pack('BBB', 0, 0, 0)  # Timestamp
+                timestamp = int((datetime.now()-self.starttime).total_seconds()*1000)
+                p.data += struct.pack('BBB', timestamp&0xff, (timestamp>>8)&0x0ff, (timestamp>>16)&0x0ff)  # Timestamp
 
                 for d in self.fakeLoggingData:
                     # Set new value
