@@ -70,6 +70,9 @@ SENSOR_TESTS_FORMAT = "{}: {}<br>"
 FIRMWARE_FORMAT = "{:x}{:x} ({})"
 
 class AboutDialog(QtGui.QWidget, about_widget_class):
+
+    _disconnected_signal = pyqtSignal(str)
+
     """Crazyflie client About box for debugging and information"""
     def __init__(self, helper, *args):
         super(AboutDialog, self).__init__(*args)
@@ -94,7 +97,9 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         helper.cf.param.add_update_callback(group="firmware",
                                             cb=self._firmware_update)
         helper.cf.connectSetupFinished.add_callback(self._connected)
-        helper.cf.disconnected.add_callback(self._disconnected)
+
+        self._disconnected_signal.connect(self._disconnected)
+        helper.cf.disconnected.add_callback(self._disconnected_signal.emit)
 
     def showEvent(self, event):
         """Event when the about box is shown"""

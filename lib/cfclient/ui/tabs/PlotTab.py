@@ -124,6 +124,7 @@ class PlotTab(Tab, plot_tab_class):
 
     _log_data_signal = pyqtSignal(int, object, object)
     _log_error_signal = pyqtSignal(object, str)
+    _disconnected_signal = pyqtSignal(str)
 
     colors = ['g', 'b', 'm', 'r', 'y', 'c']
 
@@ -150,8 +151,9 @@ class PlotTab(Tab, plot_tab_class):
 
         # Connect external signals if we can use the tab
         if self.enabled:
+            self._disconnected_signal.connect(self._disconnected)
             self.helper.cf.disconnected.add_callback(
-                self._disconnected)
+                self._disconnected_signal.emit)
 
             self.helper.cf.log.block_added_cb.add_callback(self._config_added)
             self.dataSelector.currentIndexChanged.connect(

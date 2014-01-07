@@ -230,6 +230,7 @@ class ParamTab(Tab, param_tab_class):
     """
     _expand_all_signal = pyqtSignal()
     _connected_signal = pyqtSignal(str)
+    _disconnected_signal = pyqtSignal(str)
 
     def __init__(self, tabWidget, helper, *args):
         """Create the parameter tab"""
@@ -245,7 +246,8 @@ class ParamTab(Tab, param_tab_class):
 
         self.cf.connectSetupFinished.add_callback(self._connected_signal.emit)
         self._connected_signal.connect(self._connected)
-        self.cf.disconnected.add_callback(self._disconnected)
+        self.cf.disconnected.add_callback(self._disconnected_signal.emit)
+        self._disconnected_signal.connect(self._disconnected)
 
         self._model = ParamBlockModel(None)
         self.paramTree.setModel(self._model)
