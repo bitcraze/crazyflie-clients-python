@@ -230,7 +230,7 @@ class LogConfig(object):
                         pk.data += struct.pack('<B', self.cf.log.toc.
                                                get_element_id(var.name))
                 logger.debug("Adding log block id {}".format(self.id))
-                self.cf.send_packet(pk)
+                self.cf.send_packet(pk, expect_answer=True)
 
             else:
                 logger.debug("Block already registered, starting logging"
@@ -238,7 +238,7 @@ class LogConfig(object):
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
                 pk.data = (CMD_START_LOGGING, self.id, self.period)
-                self.cf.send_packet(pk)
+                self.cf.send_packet(pk, expect_answer=True)
 
     def stop(self):
         """Stop the logging for this entry"""
@@ -250,7 +250,7 @@ class LogConfig(object):
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
                 pk.data = (CMD_STOP_LOGGING, self.id)
-                self.cf.send_packet(pk)
+                self.cf.send_packet(pk, expect_answer=True)
 
     def delete(self):
         """Delete this entry in the Crazyflie"""
@@ -263,7 +263,7 @@ class LogConfig(object):
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
                 pk.data = (CMD_DELETE_BLOCK, self.id)
-                self.cf.send_packet(pk)
+                self.cf.send_packet(pk, expect_answer=True)
 
     def unpack_log_data(self, log_data, timestamp):
         """Unpack received logging data so it represent real values according
@@ -430,7 +430,7 @@ class Log():
         pk = CRTPPacket()
         pk.set_header(CRTPPort.LOGGING, CHAN_SETTINGS)
         pk.data = (CMD_RESET_LOGGING, )
-        self.cf.send_packet(pk)
+        self.cf.send_packet(pk, expect_answer=True)
 
         self.log_blocks = []
 
@@ -465,7 +465,7 @@ class Log():
                         pk.set_header(5, CHAN_SETTINGS)
                         pk.data = (CMD_START_LOGGING, id,
                                    block.period)
-                        self.cf.send_packet(pk)
+                        self.cf.send_packet(pk, expect_answer=True)
                         block.added = True
                     else:
                         msg = self._err_codes[error_status]
