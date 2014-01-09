@@ -69,6 +69,47 @@ IMU_SENSORS_FORMAT = "{}: {}<br>"
 SENSOR_TESTS_FORMAT = "{}: {}<br>"
 FIRMWARE_FORMAT = "{:x}{:x} ({})"
 
+CREDITS_FORMAT = U"""
+<b>Contributions</b><br>
+{contribs}
+<br><br>
+<b>Used libraries</b><br>
+<a href="http://qt-project.org/">QT</a><br>
+<a href="http://www.riverbankcomputing.co.uk/software/pyqt/intro">PyQT</a><br>
+<a href="http://www.pygame.org/news.html">PyGame</a><br>
+<a href="http://www.pyqtgraph.org/">PyQtGraph</a><br>
+<a href="http://marble.kde.org/">KDE Marble</a><br>
+<a href="http://sourceforge.net/projects/pyusb/">PyUSB</a><br>
+<a href="http://www.python.org/">Python</a><br>
+"""
+
+# This is temporary and will be fixed during the next release. It should
+# be picked up from the CREDITS.txt file
+CREDITS_NAMES = U"""
+We are very greatful for all the contributions we have received for this project
+and below is a list of users that have contributed to the crazyflie-pc-client.
+Thanks! <br><br>
+
+Allyn Bauer <br>
+Arnaud Taffanel <br>
+Daniel Lee <br>
+danmark <br>
+David Benes <br>
+erget <br>
+Gina Häußge <br>
+Marcus Eliasson <br>
+Marlon Petry <br>
+Mike Voytovich <br>
+omwdunkley <br>
+Philipp A. Mohrenweiser <br>
+Surrender <br>
+Tobias Antonsson <br><br>
+
+This list of names have been automatically generated using the following command
+in the crazyflie-pc-client repository:<br>
+hg log --template "{author|person}\n" | sort | uniq
+"""
+
 class AboutDialog(QtGui.QWidget, about_widget_class):
 
     _disconnected_signal = pyqtSignal(str)
@@ -100,6 +141,10 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
 
         self._disconnected_signal.connect(self._disconnected)
         helper.cf.disconnected.add_callback(self._disconnected_signal.emit)
+
+        self._credits.setHtml(
+            CREDITS_FORMAT.format(contribs=CREDITS_NAMES)
+        )
 
     def showEvent(self, event):
         """Event when the about box is shown"""
