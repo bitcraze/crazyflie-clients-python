@@ -58,6 +58,10 @@ LAUNCH_BOOTLOADER = 0xFF
 
 try:
     import usb.core
+    pyusb_backend = None
+    if os.name == "nt":
+        import usb.backend.libusb0 as libusb0
+        pyusb_backend = libusb0.get_backend()
     pyusb1 = True
 except:
     pyusb1 = False
@@ -70,7 +74,7 @@ def _find_devices():
     ret = []
 
     if pyusb1:
-        dev = usb.core.find(idVendor=0x1915, idProduct=0x7777, find_all=1)
+        dev = usb.core.find(idVendor=0x1915, idProduct=0x7777, find_all=1, backend=pyusb_backend)
         if dev is not None:
             ret = dev
     else:
