@@ -37,8 +37,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 from PyQt4 import QtGui, uic
-from PyQt4.QtCore import pyqtSignal, Qt, pyqtSlot
-from PyQt4.QtGui import QLabel, QActionGroup, QMessageBox, QAction
+from PyQt4.QtCore import pyqtSignal, Qt, pyqtSlot, QDir, QUrl
+from PyQt4.QtGui import QLabel, QActionGroup, QMessageBox, QAction, QDesktopServices
 
 from dialogs.connectiondialogue import ConnectDialogue
 from dialogs.inputconfigdialogue import InputConfigDialogue
@@ -141,6 +141,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.menuItemExit.triggered.connect(self.closeAppRequest)
         self.batteryUpdatedSignal.connect(self.updateBatteryVoltage)
         self._menuitem_rescandevices.triggered.connect(self._rescan_devices)
+        self._menuItem_openconfigfolder.triggered.connect(self._open_config_folder)
            
         self._auto_reconnect_enabled = GuiConfig().get("auto_reconnect")
         self.autoReconnectCheckBox.toggled.connect(
@@ -492,6 +493,9 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.cf.open_link(GuiConfig().get("link_uri"))
         except KeyError:
             self.cf.open_link("")
+
+    def _open_config_folder(self):
+        QDesktopServices.openUrl(QUrl("file:///" + QDir.toNativeSeparators(sys.path[1])))
 
     def closeAppRequest(self):
         self.close()
