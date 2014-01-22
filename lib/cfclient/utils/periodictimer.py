@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2013 Bitcraze AB
+#  Copyright (C) 2013-2014 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -34,36 +34,49 @@ __author__ = 'Bitcraze AB'
 __all__ = ['PeriodicTimer']
 
 import logging
-from threading import Timer
+from threading import Thread
 from cflib.utils.callbacks import Caller
+import time
 
 logger = logging.getLogger(__name__)
 
+
 class PeriodicTimer:
-    """Create a periodic timer that will periodicall call a callback"""
+    """Create a periodic timer that will periodically call a callback"""
+
     def __init__(self, period, callback):
         self._callbacks = Caller()
         self._callbacks.add_callback(callback)
         self._started = False
         self._period = period
-        self._timer = Timer(period, self._expired)
-        self._timer.daemon = True
+        self._thread = None
 
     def start(self):
         """Start the timer"""
-        self._timer = Timer(self._period, self._expired)
-        self._timer.daemon = True
-        self._timer.start()
-        self._started = True
+        self._thread = _PeriodicTimerThread(self._period, self._callbacks)
+        self._thread.setDaemon(True)
+        self._thread.start()
 
     def stop(self):
         """Stop the timer"""
-        self._timer.cancel()
-        self._started = False
+        if self._thread:
+            self._thread.stop()
+            self._thread = None
 
-    def _expired(self):
-        """Callback for the expired internal timer"""
-        self._callbacks.call()
-        if self._started:
-            self.start() 
 
+class _PeriodicTimerThread(Thread):
+    def __init__(self, period, caller):
+        super(_PeriodicTimerThread, self).__init__()
+        self._period = period
+        self._callbacks = caller
+        self._stop = False
+
+    def stop(self):
+        self._stop = True
+
+    def run(self):
+        while not self._stop:
+            time.sleep(self._period)
+            if self._stop:
+                break
+            self._callbacks.call()

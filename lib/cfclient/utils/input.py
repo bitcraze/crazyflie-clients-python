@@ -113,6 +113,8 @@ class JoystickReader:
                             Config().get("input_device_blacklist")))
 
 
+        self._available_devices = {}
+
         # TODO: The polling interval should be set from config file
         self._read_timer = PeriodicTimer(0.01, self.read_input)
 
@@ -120,8 +122,6 @@ class JoystickReader:
             self._discovery_timer = PeriodicTimer(1.0, 
                             self._do_device_discovery)
             self._discovery_timer.start()
-
-        self._available_devices = {}
 
         # Check if user config exists, otherwise copy files
         if not os.path.isdir(ConfigManager().configs_dir):
