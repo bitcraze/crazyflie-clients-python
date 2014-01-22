@@ -230,7 +230,7 @@ class FlightTab(Tab, flight_tab_class):
 
     def connected(self, linkURI):
         # IMU & THRUST
-        lg = LogConfig("Stabalizer", 200)
+        lg = LogConfig("Stabalizer", GuiConfig().get("ui_update_period"))
         lg.add_variable("stabilizer.roll", "float")
         lg.add_variable("stabilizer.pitch", "float")
         lg.add_variable("stabilizer.yaw", "float")
@@ -246,7 +246,7 @@ class FlightTab(Tab, flight_tab_class):
                            "connection!")
 
         # MOTOR
-        lg = LogConfig("Motors", 200)
+        lg = LogConfig("Motors", GuiConfig().get("ui_update_period"))
         lg.add_variable("motor.m1")
         lg.add_variable("motor.m2")
         lg.add_variable("motor.m3")

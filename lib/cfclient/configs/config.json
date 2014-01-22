@@ -16,7 +16,8 @@
     "auto_reconnect": false,
     "device_config_mapping": {},
     "enable_debug_driver": false,
-    "input_device_blacklist": "(VirtualBox|VMware)"
+    "input_device_blacklist": "(VirtualBox|VMware)",
+    "ui_update_period": 100
   },
   "read-only" : {
     "normal_slew_limit": 45, 
