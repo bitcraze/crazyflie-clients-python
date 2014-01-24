@@ -15,7 +15,7 @@ except OSError:
 
 output = output.strip().split(" ")
 
-if output[1] == "tip":
+if len(output) < 2 or output[1] == "tip":
     VERSION = output[0]
 else:
     VERSION = output[1]
