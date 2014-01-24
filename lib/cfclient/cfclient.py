@@ -109,6 +109,12 @@ def main():
         os.dup2(os.open('/dev/null', os.O_WRONLY), 1)
         sys.stdout = os.fdopen(stdout, 'w')
         logger.info("Disabling STL printouts")
+    
+    if os.name == 'nt':
+        stdout = os.dup(1)
+        os.dup2(os.open('NUL', os.O_WRONLY), 1)
+        sys.stdout = os.fdopen(stdout, 'w')
+        logger.info("Disabling STL printouts")
 
     # Start up the main user-interface
     from ui.main import MainUI
