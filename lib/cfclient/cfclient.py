@@ -112,8 +112,19 @@ def main():
 
     # Start up the main user-interface
     from ui.main import MainUI
-    from PyQt4.QtGui import QApplication
+    from PyQt4.QtGui import QApplication, QIcon
     app = QApplication(sys.argv)
-    main_window = MainUI()
+	
+    app.setWindowIcon(QIcon(sys.path[0] + "/cfclient/icon-256.png"))
+    # Make sure the right icon is set in Windows 7+ taskbar
+    if os.name == 'nt':
+        import ctypes
+        try:
+            myappid = 'mycompany.myproduct.subproduct.version'
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        except Exception:
+            pass
+    
+	main_window = MainUI()
     main_window.show()
     sys.exit(app.exec_())

@@ -32,7 +32,11 @@ setup(name='cfclient',
       scripts=['bin/cfclient'],
 
       # Py2exe specifics
-      console=['bin/cfclient'],
+      console=[ { 
+                  "script" : 'bin/cfclient',
+                  "icon_resources": [(1, "bitcraze.ico")]
+                }
+              ],
       data_files=[('', ['README.md', 'LICENSE.txt']),
                   ('cfclient/ui',
                    glob.glob('lib/cfclient/ui/*.ui')),
@@ -51,7 +55,9 @@ setup(name='cfclient',
                   ('cfclient/configs/input',
                    glob.glob('lib/cfclient/configs/input/*.json')),
                   ('cfclient/configs/log',
-                   glob.glob('lib/cfclient/configs/log/*.json'))],
+                   glob.glob('lib/cfclient/configs/log/*.json')),
+                  ('cfclient',
+                   glob.glob('lib/cfclient/*.png'))],
       options={"py2exe": {"includes": ["sip", "PyQt4",
                                          "cfclient.ui.widgets",
                                          "cflib.bootloader.cloader",
