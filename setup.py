@@ -3,8 +3,22 @@
 from distutils.core import setup
 import glob
 import os
+from subprocess import Popen, PIPE
 
-VERSION = '2013.11.99'  # Year.Month.fix  if fix=99 means dev version
+#Recover version from Mercurial
+try:
+    process = Popen(["hg", "identify", "-it"], stdout=PIPE)
+    (output, err) = process.communicate()
+    exit_code = process.wait()
+except OSError:
+    raise Exception("Cannot run hg: Mercurial is required to generate packages!")
+
+output = output.strip().split(" ")
+
+if output[1] == "tip":
+    VERSION = output[0]
+else:
+    VERSION = output[1]
 
 try:
     import py2exe
