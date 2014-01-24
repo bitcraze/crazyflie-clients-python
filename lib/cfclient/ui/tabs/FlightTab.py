@@ -91,8 +91,8 @@ class FlightTab(Tab, flight_tab_class):
         self.disconnectedSignal.connect(self.disconnected)
         self.connectionFinishedSignal.connect(self.connected)
         # Incomming signals
-        self.helper.cf.connectSetupFinished.add_callback(
-                                     self.connectionFinishedSignal.emit)
+        self.helper.cf.connected.add_callback(
+            self.connectionFinishedSignal.emit)
         self.helper.cf.disconnected.add_callback(self.disconnectedSignal.emit)
 
         self._input_updated_signal.connect(self.updateInputControl)

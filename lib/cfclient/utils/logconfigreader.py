@@ -66,7 +66,7 @@ class LogConfigReader():
                                "/cfclient/configs/log/[A-Za-z]*.json"):
                 shutil.copy2(f, sys.path[1] + "/log")
         self._cf = crazyflie
-        self._cf.connectSetupFinished.add_callback(self._connected)
+        self._cf.connected.add_callback(self._connected)
 
     def _read_config_files(self):
         """Read and parse log configurations"""

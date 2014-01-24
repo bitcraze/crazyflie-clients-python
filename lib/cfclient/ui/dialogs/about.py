@@ -137,7 +137,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
                                             cb=self._imu_sensor_tests_update)
         helper.cf.param.add_update_callback(group="firmware",
                                             cb=self._firmware_update)
-        helper.cf.connectSetupFinished.add_callback(self._connected)
+        helper.cf.connected.add_callback(self._connected)
 
         self._disconnected_signal.connect(self._disconnected)
         helper.cf.disconnected.add_callback(self._disconnected_signal.emit)

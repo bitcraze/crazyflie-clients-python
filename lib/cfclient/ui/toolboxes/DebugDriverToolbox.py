@@ -59,7 +59,7 @@ class DebugDriverToolbox(QtGui.QWidget, debugdriver_tab_class):
         self.helper = helper
 
         # Connected / disconnected signals
-        self.helper.cf.connectSetupFinished.add_callback(
+        self.helper.cf.connected.add_callback(
                                              self.connectionDoneSignal.emit)
         self.connectionDoneSignal.connect(self.connectionDone)
         self.helper.cf.disconnected.add_callback(self.disconnectedSignal.emit)

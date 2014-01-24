@@ -66,15 +66,24 @@ class State:
 
 class Crazyflie():
     """The Crazyflie class"""
-    # Callback callers
+
+    # Called on disconnect, no matter the reason
     disconnected = Caller()
-    connectionLost = Caller()
+    # Called on unintentional disconnect only
+    connection_lost = Caller()
+    # Called when the first packet in a new link is received
+    link_established = Caller()
+    # Called when the user requests a connection
+    connection_requested = Caller()
+    # Called when the link is established and the TOCs (that are not cached)
+    # have been downloaded
     connected = Caller()
-    connectionInitiated = Caller()
-    connectSetupFinished = Caller()
-    connectionFailed = Caller()
-    receivedPacket = Caller()
-    linkQuality = Caller()
+    # Called if establishing of the link fails (i.e times out)
+    connection_failed = Caller()
+    # Called for every packet received
+    packet_received = Caller()
+    # Called when the link driver updates the link quality measurement
+    link_quality_updated = Caller()
 
     state = State.DISCONNECTED
 
@@ -101,25 +110,25 @@ class Crazyflie():
         self.link_uri = ""
 
         # Used for retry when no reply was sent back
-        self.receivedPacket.add_callback(self._check_for_initial_packet_cb)
-        self.receivedPacket.add_callback(self._check_for_answers)
+        self.packet_received.add_callback(self._check_for_initial_packet_cb)
+        self.packet_received.add_callback(self._check_for_answers)
         self.answer_timers = {}
 
         # Connect callbacks to logger
         self.disconnected.add_callback(
             lambda uri: logger.info("Callback->Disconnected from [%s]", uri))
-        self.connected.add_callback(
+        self.link_established.add_callback(
             lambda uri: logger.info("Callback->Connected to [%s]", uri))
-        self.connectionLost.add_callback(
+        self.connection_lost.add_callback(
             lambda uri, errmsg: logger.info("Callback->Connection lost to"
                                             " [%s]: %s", uri, errmsg))
-        self.connectionFailed.add_callback(
+        self.connection_failed.add_callback(
             lambda uri, errmsg: logger.info("Callback->Connected failed to"
                                             " [%s]: %s", uri, errmsg))
-        self.connectionInitiated.add_callback(
+        self.connection_requested.add_callback(
             lambda uri: logger.info("Callback->Connection initialized[%s]",
                                     uri))
-        self.connectSetupFinished.add_callback(
+        self.connected.add_callback(
             lambda uri: logger.info("Callback->Connection setup finished [%s]",
                                     uri))
 
@@ -132,7 +141,7 @@ class Crazyflie():
     def _param_toc_updated_cb(self):
         """Called when the param TOC has been fully updated"""
         logger.info("Param TOC finished updating")
-        self.connectSetupFinished.call(self.link_uri)
+        self.connected.call(self.link_uri)
 
     def _log_toc_updated_cb(self):
         """Called when the log TOC has been fully updated"""
@@ -147,16 +156,16 @@ class Crazyflie():
             self.link.close()
         self.link = None
         if (self.state == State.INITIALIZED):
-            self.connectionFailed.call(self.link_uri, errmsg)
+            self.connection_failed.call(self.link_uri, errmsg)
         if (self.state == State.CONNECTED or
                 self.state == State.SETUP_FINISHED):
             self.disconnected.call(self.link_uri)
-            self.connectionLost.call(self.link_uri, errmsg)
+            self.connection_lost.call(self.link_uri, errmsg)
         self.state = State.DISCONNECTED
 
     def _link_quality_cb(self, percentage):
         """Called from link driver to report link quality"""
-        self.linkQuality.call(percentage)
+        self.link_quality_updated.call(percentage)
 
     def _check_for_initial_packet_cb(self, data):
         """
@@ -166,15 +175,15 @@ class Crazyflie():
         answering.
         """
         self.state = State.CONNECTED
-        self.connected.call(self.link_uri)
-        self.receivedPacket.remove_callback(self._check_for_initial_packet_cb)
+        self.link_established.call(self.link_uri)
+        self.packet_received.remove_callback(self._check_for_initial_packet_cb)
 
     def open_link(self, link_uri):
         """
         Open the communication link to a copter at the given URI and setup the
         connection (download log/parameter TOC).
         """
-        self.connectionInitiated.call(link_uri)
+        self.connection_requested.call(link_uri)
         self.state = State.INITIALIZED
         self.link_uri = link_uri
         try:
@@ -184,7 +193,7 @@ class Crazyflie():
 
             # Add a callback so we can check that any data is comming
             # back from the copter
-            self.receivedPacket.add_callback(self._check_for_initial_packet_cb)
+            self.packet_received.add_callback(self._check_for_initial_packet_cb)
 
             self._start_connection_setup()
         except Exception as ex:  # pylint: disable=W0703
@@ -198,7 +207,7 @@ class Crazyflie():
             if self.link:
                 self.link.close()
                 self.link = None
-            self.connectionFailed.call(link_uri, exception_text)
+            self.connection_failed.call(link_uri, exception_text)
 
     def close_link(self):
         """Close the communication link."""
@@ -313,7 +322,7 @@ class _IncomingPacketHandler(Thread):
                 continue
 
             #All-packet callbacks
-            self.cf.receivedPacket.call(pk)
+            self.cf.packet_received.call(pk)
 
             found = False
             for cb in self.cb:

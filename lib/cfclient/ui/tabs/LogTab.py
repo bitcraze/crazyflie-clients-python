@@ -65,7 +65,7 @@ class LogTab(Tab, param_tab_class):
         # Init the tree widget
         self.logTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage'])
 
-        self.cf.connectSetupFinished.add_callback(self.connectedSignal.emit)
+        self.cf.connected.add_callback(self.connectedSignal.emit)
         self.connectedSignal.connect(self.connected)
 
         # Clear the log TOC list when the Crazyflie is disconnected

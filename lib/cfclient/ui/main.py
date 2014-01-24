@@ -120,7 +120,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.connectDialogue.requestConnectionSignal.connect(self.cf.open_link)
 
         self.connectionDoneSignal.connect(self.connectionDone)
-        self.cf.connectionFailed.add_callback(self.connectionFailedSignal.emit)
+        self.cf.connection_failed.add_callback(self.connectionFailedSignal.emit)
         self.connectionFailedSignal.connect(self.connectionFailed)
         
         
@@ -157,16 +157,16 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                                          self.cf.commander.send_setpoint)
 
         # Connection callbacks and signal wrappers for UI protection
-        self.cf.connectSetupFinished.add_callback(
+        self.cf.connected.add_callback(
                                               self.connectionDoneSignal.emit)
         self.connectionDoneSignal.connect(self.connectionDone)
         self.cf.disconnected.add_callback(self.disconnectedSignal.emit)
         self.disconnectedSignal.connect(
                         lambda linkURI: self.setUIState(UIState.DISCONNECTED,
                                                         linkURI))
-        self.cf.connectionLost.add_callback(self.connectionLostSignal.emit)
+        self.cf.connection_lost.add_callback(self.connectionLostSignal.emit)
         self.connectionLostSignal.connect(self.connectionLost)
-        self.cf.connectionInitiated.add_callback(
+        self.cf.connection_requested.add_callback(
                                          self.connectionInitiatedSignal.emit)
         self.connectionInitiatedSignal.connect(
                            lambda linkURI: self.setUIState(UIState.CONNECTING,
@@ -174,7 +174,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._log_error_signal.connect(self._logging_error)
 
         # Connect link quality feedback
-        self.cf.linkQuality.add_callback(self.linkQualitySignal.emit)
+        self.cf.link_quality_updated.add_callback(self.linkQualitySignal.emit)
         self.linkQualitySignal.connect(
                    lambda percentage: self.linkQualityBar.setValue(percentage))
 

@@ -244,7 +244,7 @@ class ParamTab(Tab, param_tab_class):
         self.tabWidget = tabWidget
         self.cf = helper.cf
 
-        self.cf.connectSetupFinished.add_callback(self._connected_signal.emit)
+        self.cf.connected.add_callback(self._connected_signal.emit)
         self._connected_signal.connect(self._connected)
         self.cf.disconnected.add_callback(self._disconnected_signal.emit)
         self._disconnected_signal.connect(self._disconnected)
