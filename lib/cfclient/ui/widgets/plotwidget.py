@@ -65,6 +65,12 @@ try:
     from pyqtgraph.Qt import QtCore, QtGui
     import pyqtgraph.console
     import numpy as np
+    
+    from scipy.stats import futil
+    from scipy.sparse.csgraph import _validation
+    
+    from scipy.special import _ufuncs_cxx
+    
     _pyqtgraph_found = True
 except Exception:
     _pyqtgraph_found = False
