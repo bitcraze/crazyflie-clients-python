@@ -170,6 +170,7 @@ class LogBlockModel(QAbstractItemModel):
         self._column_headers = ['Id', 'Name', 'Period (ms)', 'Start',
                                 'Write to file', 'Contents']
         self._view = view
+        self._nodes_written_to_file = []
 
     def add_block(self, block):
         self._nodes.append(LogBlockItem(block, self))
@@ -265,6 +266,10 @@ class LogBlockModel(QAbstractItemModel):
 
     def reset(self):
         """Reset the model"""
+        # Stop the logging to file
+        for node in self._nodes:
+            if node.writing_to_file():
+                node.stop_writing_to_file()
         self._nodes = []
         self.layoutChanged.emit()
 
