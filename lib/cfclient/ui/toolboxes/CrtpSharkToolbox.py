@@ -33,15 +33,20 @@ __author__ = 'Bitcraze AB'
 __all__ = ['CrtpSharkBoolbox']
 
 import sys, time
+import os
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
+from time import time
 
-param_tab_class = uic.loadUiType(sys.path[0] + "/cfclient/ui/toolboxes/crtpSharkToolbox.ui")[0]
+param_tab_class = uic.loadUiType(sys.path[0] +
+                                "/cfclient/ui/toolboxes/crtpSharkToolbox.ui")[0]
 
 class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
     """Show packets that is sent vie the communication link"""
     nameModified = pyqtSignal()
+    _incoming_packet_signal = pyqtSignal(object)
+    _outgoing_packet_signal = pyqtSignal(object)
     
     def __init__(self, helper, *args):
         super(CrtpSharkToolbox, self).__init__(*args)
@@ -50,24 +55,39 @@ class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
         self.helper = helper
         
         #Init the tree widget
-        self.logTree.setHeaderLabels(['Port', 'Data'])
+        self.logTree.setHeaderLabels(['ms', 'Direction', 'Port/Chan', 'Data'])
         
         #Connect GUI signals
         self.clearButton.clicked.connect(self.clearLog)
-        
-    def packetIncoming(self, pk):
+        self.saveButton.clicked.connect(self._save_data)
+
+        self._incoming_packet_signal.connect(lambda p: self._packet("IN", p))
+        self._outgoing_packet_signal.connect(lambda p: self._packet("OUT", p))
+        self._ms_offset = int(round(time() * 1000))
+
+        self._data = []
+
+    def _packet(self, dir, pk):
         if self.masterCheck.isChecked():
-           line = QtGui.QTreeWidgetItem()
-        
-           line.setData(0, Qt.DisplayRole, "(%d,%d,%d)" % ((pk.port>>6), pk.getTask(), pk.getNumber()))
-           line.setData(1, Qt.DisplayRole, pk.data.__str__())
-            
-           self.logTree.addTopLevelItem(line)
-           self.logTree.scrollToItem(line)
+            line = QtGui.QTreeWidgetItem()
+
+            ms_diff = int(round(time()*1000))-self._ms_offset
+            line.setData(0, Qt.DisplayRole, "%d" % ms_diff)
+            line.setData(1, Qt.DisplayRole, "%s" % dir)
+            line.setData(2, Qt.DisplayRole, "%d/%d" % (pk.port, pk.channel))
+            line.setData(3, Qt.DisplayRole, pk.datal.__str__())
+
+            s = "%d, %s, %d/%d, %s" % (ms_diff, dir, pk.port, pk.channel,
+                                      pk.datal.__str__())
+            self._data.append(s)
+
+            self.logTree.addTopLevelItem(line)
+            self.logTree.scrollToItem(line)
     
     @pyqtSlot()
     def clearLog(self):
         self.logTree.clear()
+        self._data = []
     
     def getName(self):
         return 'Crtp sniffer'
@@ -76,11 +96,31 @@ class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
         return 'Crtp sniffer'
     
     def enable(self):
-        self.helper.cf.packet_received.add_callback(self.packetIncoming)
-    
+        self.helper.cf.packet_received.add_callback(
+            self._incoming_packet_signal.emit)
+        self.helper.cf.packet_sent.add_callback(
+            self._outgoing_packet_signal.emit)
+
     def disable(self):
-        self.helper.cf.packet_received.remove_callback(self.packetIncoming)
-    
+        self.helper.cf.packet_received.remove_callback(
+            self._incoming_packet_signal.emit)
+        self.helper.cf.packet_sent.remove_callback(
+            self._outgoing_packet_signal.emit)
+
     def preferedDockArea(self):
         return Qt.RightDockWidgetArea
+
+    def _save_data(self):
+        dir = os.path.join(sys.path[1], "logdata")
+        fname = os.path.join(dir, "shark_data.csv")
+        if not os.path.isdir(dir):
+            os.makedirs(dir)
+        f = open(fname, 'w')
+        for s in self._data:
+            f.write("%s\n" % s)
+        f.close()
+
+
+
+
 

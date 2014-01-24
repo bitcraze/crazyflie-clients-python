@@ -82,6 +82,8 @@ class Crazyflie():
     connection_failed = Caller()
     # Called for every packet received
     packet_received = Caller()
+    # Called for every packet sent
+    packet_sent = Caller()
     # Called when the link driver updates the link quality measurement
     link_quality_updated = Caller()
 
@@ -262,6 +264,7 @@ class Crazyflie():
         """
         if (self.link is not None):
             self.link.send_packet(pk)
+            self.packet_sent.call(pk)
             if (expect_answer):
                 logger.debug("ExpectAnswer: Will expect answer on port [%d]",
                              pk.port)

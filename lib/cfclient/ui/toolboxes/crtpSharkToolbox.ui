@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>1187</width>
+    <height>751</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <item>
     <widget class="QTreeWidget" name="logTree">
      <property name="columnCount">
-      <number>2</number>
+      <number>4</number>
      </property>
      <attribute name="headerDefaultSectionSize">
       <number>100</number>
@@ -29,7 +29,17 @@
      </column>
      <column>
       <property name="text">
-       <string notr="true">2</string>
+       <string>2</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>3</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string notr="true">4</string>
       </property>
      </column>
     </widget>
@@ -66,7 +76,7 @@
      <item>
       <widget class="QCheckBox" name="masterCheck">
        <property name="text">
-        <string>Master control</string>
+        <string>Enable</string>
        </property>
       </widget>
      </item>
