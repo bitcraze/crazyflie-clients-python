@@ -120,7 +120,7 @@ def main():
     from ui.main import MainUI
     from PyQt4.QtGui import QApplication, QIcon
     app = QApplication(sys.argv)
-	
+
     app.setWindowIcon(QIcon(sys.path[0] + "/cfclient/icon-256.png"))
     # Make sure the right icon is set in Windows 7+ taskbar
     if os.name == 'nt':
@@ -131,6 +131,6 @@ def main():
         except Exception:
             pass
     
-	main_window = MainUI()
+    main_window = MainUI()
     main_window.show()
     sys.exit(app.exec_())
