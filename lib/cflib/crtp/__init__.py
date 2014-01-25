@@ -85,6 +85,8 @@ def get_link_driver(uri, link_quality_callback=None, link_error_callback=None):
     for instance in INSTANCES:
         try:
             instance.connect(uri, link_quality_callback, link_error_callback)
+            INSTANCES.remove(instance)
+            INSTANCES.append(instance.__class__())
             return instance
         except WrongUriType:
             continue
