@@ -57,12 +57,13 @@ class TocElement:
     RW_ACCESS = 0
     RO_ACCESS = 1
 
-    ident = 0
-    group = ""
-    name = ""
-    ctype = ""
-    pytype = ""
-    access = RO_ACCESS
+    def __init__(self):
+        self.ident = 0
+        self.group = ""
+        self.name = ""
+        self.ctype = ""
+        self.pytype = ""
+        self.access = RO_ACCESS
 
 
 class Toc:
