@@ -230,7 +230,7 @@ class _ParamUpdater(Thread):
 
     def _new_packet_cb(self, pk):
         """Callback for newly arrived packets"""
-        if pk.channel == READ_CHANNEL:
+        if pk.channel == READ_CHANNEL or pk.channel == WRITE_CHANNEL:
             var_id = pk.datal[0]
             if (pk.channel != TOC_CHANNEL and self._req_param == var_id
                 and pk is not None):
