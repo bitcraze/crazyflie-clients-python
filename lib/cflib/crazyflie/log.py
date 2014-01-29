@@ -149,7 +149,7 @@ class LogConfig(object):
         self.err_no = 0
 
         self.id = LogConfig._config_id_counter
-        LogConfig._config_id_counter += 1 % 255
+        LogConfig._config_id_counter = (LogConfig._config_id_counter + 1) % 255
         self.cf = None
         self.period = period_in_ms / 10
         self.period_in_ms = period_in_ms
@@ -224,10 +224,10 @@ class LogConfig(object):
                     else:  # Item in TOC
                         logger.debug("Adding %s with id=%d and type=0x%02X",
                                      var.name,
-                                     self.cf.log.toc.get_element_id(
+                                     self.cf.log._toc.get_element_id(
                                      var.name), var.get_storage_and_fetch_byte())
                         pk.data += struct.pack('<B', var.get_storage_and_fetch_byte())
-                        pk.data += struct.pack('<B', self.cf.log.toc.
+                        pk.data += struct.pack('<B', self.cf.log._toc.
                                                get_element_id(var.name))
                 logger.debug("Adding log block id {}".format(self.id))
                 self.cf.send_packet(pk, expect_answer=True)
@@ -355,7 +355,8 @@ class Log():
             errno.ENOMEM: "No more memory available",
             errno.ENOEXEC: "Command not found",
             errno.ENOENT: "No such block id",
-            errno.E2BIG: "Block too large"
+            errno.E2BIG: "Block too large",
+            errno.EEXIST: "Block already exists"
             }
 
     def __init__(self, crazyflie=None):
@@ -364,12 +365,15 @@ class Log():
         self.block_added_cb = Caller()
 
         self.cf = crazyflie
-        self.toc = None
+        self._toc = None
         self.cf.add_port_callback(CRTPPort.LOGGING, self._new_packet_cb)
 
         self.toc_updated = Caller()
         self.state = IDLE
         self.fake_toc_crc = 0xDEADBEEF
+
+        self._refresh_callback = None
+        self._toc_cache = None
 
     def add_config(self, logconf):
         """Add a log configuration to the logging framework.
@@ -390,7 +394,7 @@ class Log():
         # type (i.e we want the stored as type for fetching as well) then
         # resolve this now and add them to the block again.
         for name in logconf.default_fetch_as:
-            var = self.toc.get_element_by_complete_name(name)
+            var = self._toc.get_element_by_complete_name(name)
             if not var:
                 logger.warning("%s not in TOC, this block cannot be"
                                " used!", name)
@@ -409,7 +413,7 @@ class Log():
             # Check that we are able to find the variable in the TOC so
             # we can return error already now and not when the config is sent
             if var.is_toc_variable():
-                if (self.toc.get_element_by_complete_name(
+                if (self._toc.get_element_by_complete_name(
                         var.name) is None):
                     logger.warning("Log: %s not in TOC, this block cannot be"
                                    " used!", var.name)
@@ -427,17 +431,15 @@ class Log():
 
     def refresh_toc(self, refresh_done_callback, toc_cache):
         """Start refreshing the table of loggale variables"""
+
+        self._toc_cache = toc_cache
+        self._refresh_callback = refresh_done_callback
+        self._toc = None
+
         pk = CRTPPacket()
         pk.set_header(CRTPPort.LOGGING, CHAN_SETTINGS)
         pk.data = (CMD_RESET_LOGGING, )
         self.cf.send_packet(pk, expect_answer=True)
-
-        self.log_blocks = []
-
-        self.toc = Toc()
-        toc_fetcher = TocFetcher(self.cf, LogTocElement, CRTPPort.LOGGING,
-                                self.toc, refresh_done_callback, toc_cache)
-        toc_fetcher.start()
 
     def _find_block(self, id):
         for block in self.log_blocks:
@@ -457,16 +459,17 @@ class Log():
             block = self._find_block(id)
             if (cmd == CMD_CREATE_BLOCK):
                 if (block is not None):
-                    if (error_status == 0):  # No error
-                        logger.debug("Have successfully added id=%d",
-                                     id)
+                    if error_status == 0 or error_status == errno.EEXIST:
+                        if not block.added:
+                            logger.debug("Have successfully added id=%d",
+                                         id)
 
-                        pk = CRTPPacket()
-                        pk.set_header(5, CHAN_SETTINGS)
-                        pk.data = (CMD_START_LOGGING, id,
-                                   block.period)
-                        self.cf.send_packet(pk, expect_answer=True)
-                        block.added = True
+                            pk = CRTPPacket()
+                            pk.set_header(5, CHAN_SETTINGS)
+                            pk.data = (CMD_START_LOGGING, id,
+                                       block.period)
+                            self.cf.send_packet(pk, expect_answer=True)
+                            block.added = True
                     else:
                         msg = self._err_codes[error_status]
                         logger.warning("Error %d when adding id=%d (%s)"
@@ -507,6 +510,19 @@ class Log():
                     if block:
                         block.started = False
                         block.added = False
+
+            if (cmd == CMD_RESET_LOGGING):
+                logger.debug("Logging reset, continue with TOC download")
+                # Guard against multiple responses due to re-sending
+                if not self._toc:
+                    self.log_blocks = []
+
+                    self._toc = Toc()
+                    toc_fetcher = TocFetcher(self.cf, LogTocElement,
+                                             CRTPPort.LOGGING,
+                                             self._toc, self._refresh_callback,
+                                             self._toc_cache)
+                    toc_fetcher.start()
 
         if (chan == CHAN_LOGDATA):
             chan = packet.channel

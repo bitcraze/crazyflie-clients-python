@@ -118,21 +118,28 @@ class Param():
         self.cf = crazyflie
         self.param_update_callbacks = {}
         self.group_update_callbacks = {}
+        self.param_updater = None
+
         self.param_updater = _ParamUpdater(self.cf, self._param_updated)
         self.param_updater.start()
+
+        self.cf.disconnected.add_callback(self.param_updater.close)
 
     def _param_updated(self, pk):
         """Callback with data for an updated parameter"""
         var_id = pk.datal[0]
         element = self.toc.get_element_by_id(var_id)
-        s = struct.unpack(element.pytype, pk.data[1:])[0]
-        s = s.__str__()
-        complete_name = "%s.%s" % (element.group, element.name)
-        logger.debug("Updated parameter [%s]" % complete_name)
-        if complete_name in self.param_update_callbacks:
-            self.param_update_callbacks[complete_name].call(complete_name, s)
-        if element.group in self.group_update_callbacks:
-            self.group_update_callbacks[element.group].call(complete_name, s)
+        if element:
+            s = struct.unpack(element.pytype, pk.data[1:])[0]
+            s = s.__str__()
+            complete_name = "%s.%s" % (element.group, element.name)
+            logger.debug("Updated parameter [%s]" % complete_name)
+            if complete_name in self.param_update_callbacks:
+                self.param_update_callbacks[complete_name].call(complete_name, s)
+            if element.group in self.group_update_callbacks:
+                self.group_update_callbacks[element.group].call(complete_name, s)
+        else:
+            logger.debug("Variable id [%d] not found in TOC", var_id)
 
     def add_update_callback(self, group, name=None, cb=None):
         """
@@ -158,6 +165,10 @@ class Param():
                                 CRTPPort.PARAM, self.toc,
                                 refresh_done_callback, toc_cache)
         toc_fetcher.start()
+
+    def disconnected(self, uri):
+        """Disconnected callback from Crazyflie API"""
+        self.param_updater.close()
 
     def request_param_update(self, complete_name):
         """
@@ -198,6 +209,19 @@ class _ParamUpdater(Thread):
         self.updated_callback = updated_callback
         self.request_queue = Queue()
         self.cf.add_port_callback(CRTPPort.PARAM, self._new_packet_cb)
+        self._should_close = False
+        self._req_param = -1
+
+    def close(self, uri):
+        # First empty the queue from all packets
+        while not self.request_queue.empty():
+            self.request_queue.get()
+        # Then force an unlock of the mutex if we are waiting for a packet
+        # we didn't get back due to a disconnect for example.
+        try:
+            self.wait_lock.release()
+        except:
+            pass
 
     def request_param_setvalue(self, pk):
         """Place a param set value request on the queue. When this is sent to
@@ -206,19 +230,33 @@ class _ParamUpdater(Thread):
 
     def _new_packet_cb(self, pk):
         """Callback for newly arrived packets"""
-        if (pk.channel != TOC_CHANNEL):
-            self.updated_callback(pk)
-            self.wait_lock.release()
+        if pk.channel == READ_CHANNEL:
+            var_id = pk.datal[0]
+            if (pk.channel != TOC_CHANNEL and self._req_param == var_id
+                and pk is not None):
+                self.updated_callback(pk)
+                try:
+                    self.wait_lock.release()
+                except:
+                    pass
+                self._req_param = -1
+            elif self._req_param != var_id:
+                logger.debug("Param our of sync, discarding!")
 
-    def request_param_update(self, varid):
+    def request_param_update(self, var_id):
         """Place a param update request on the queue"""
         pk = CRTPPacket()
         pk.set_header(CRTPPort.PARAM, READ_CHANNEL)
-        pk.data = struct.pack('<B', varid)
+        pk.data = struct.pack('<B', var_id)
+        logger.debug("Requesting request to update param [%d]", var_id)
         self.request_queue.put(pk)
 
     def run(self):
-        while(True):
+        while not self._should_close:
             pk = self.request_queue.get()  # Wait for request update
             self.wait_lock.acquire()
-            self.cf.send_packet(pk, expect_answer=True)
+            if self.cf.link:
+                self._req_param = pk.datal[0]
+                self.cf.send_packet(pk, expect_answer=True)
+            else:
+                self.wait_lock.release()
