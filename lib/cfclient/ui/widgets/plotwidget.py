@@ -73,6 +73,9 @@ try:
     
     _pyqtgraph_found = True
 except Exception:
+    import traceback
+    logger.warning("PyQtGraph (or dependency) failed to import:\n%s",
+                   traceback.format_exc())
     _pyqtgraph_found = False
 
 class PlotItemWrapper:
