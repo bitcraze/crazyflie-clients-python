@@ -113,7 +113,7 @@ class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
     def _save_data(self):
         dir = os.path.join(sys.path[1], "logdata")
         fname = os.path.join(dir, "shark_data.csv")
-        if not os.path.isdir(dir):
+        if not os.path.exists(dir):
             os.makedirs(dir)
         f = open(fname, 'w')
         for s in self._data:
