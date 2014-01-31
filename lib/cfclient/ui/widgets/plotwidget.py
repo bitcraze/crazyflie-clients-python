@@ -66,17 +66,22 @@ try:
     import pyqtgraph.console
     import numpy as np
     
-    from scipy.stats import futil
-    from scipy.sparse.csgraph import _validation
-    
-    from scipy.special import _ufuncs_cxx
-    
     _pyqtgraph_found = True
 except Exception:
     import traceback
     logger.warning("PyQtGraph (or dependency) failed to import:\n%s",
                    traceback.format_exc())
     _pyqtgraph_found = False
+
+# This is required to force py2exe to pull in the correct dependencies on
+# Windows. But for Linux this is not required and might not be installed with
+# the PyQtGraph package.
+try:
+    from scipy.stats import futil
+    from scipy.sparse.csgraph import _validation
+    from scipy.special import _ufuncs_cxx
+except Exception:
+    pass
 
 class PlotItemWrapper:
     """Wrapper for PlotDataItem to handle what data is shown"""
