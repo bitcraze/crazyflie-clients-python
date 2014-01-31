@@ -55,11 +55,8 @@ class LogWriter():
 
         dir = os.path.join(sys.path[1], "logdata")
         self._filename = os.path.join(dir, "%s.csv" % logblock.name)
-        # Due to concurrency let's not check first, just create
-        try:
+        if not os.path.isdir(dir):
             os.makedirs(dir)
-        except OSError:
-            logger.debug("logdata directory already exists")
 
         self._file = None
         self._header_written = False

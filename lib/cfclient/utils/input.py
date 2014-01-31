@@ -124,16 +124,11 @@ class JoystickReader:
             self._discovery_timer.start()
 
         # Check if user config exists, otherwise copy files
-        if not os.path.exists(ConfigManager().configs_dir):
+        if not os.path.isdir(ConfigManager().configs_dir):
             logger.info("No user config found, copying dist files")
             os.makedirs(ConfigManager().configs_dir)
-
-        for f in glob.glob(sys.path[0] +
-                           "/cfclient/configs/input/[A-Za-z]*.json"):
-            dest = os.path.join(ConfigManager().
-                                configs_dir, os.path.basename(f))
-            if not os.path.isfile(dest):
-                logger.debug("Copying %s", f)
+            for f in glob.glob(sys.path[0] +
+                               "/cfclient/configs/input/[A-Za-z]*.json"):
                 shutil.copy2(f, ConfigManager().configs_dir)
 
         ConfigManager().get_list_of_configs()
