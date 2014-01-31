@@ -59,7 +59,7 @@ class LogConfigReader():
     def __init__(self, crazyflie):
         self.dsList = []
         # Check if user config exists, otherwise copy files
-        if (not os.path.isdir(sys.path[1] + "/log")):
+        if (not os.path.exists(sys.path[1] + "/log")):
             logger.info("No user config found, copying dist files")
             os.makedirs(sys.path[1] + "/log")
             for f in glob.glob(sys.path[0] +
