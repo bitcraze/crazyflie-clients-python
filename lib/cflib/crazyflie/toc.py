@@ -147,7 +147,7 @@ class TocFetcher:
         pk = CRTPPacket()
         pk.set_header(self.port, TOC_CHANNEL)
         pk.data = (CMD_TOC_INFO, )
-        self.cf.send_packet(pk, expect_answer=True)
+        self.cf.send_packet(pk, expected_reply=(CMD_TOC_INFO,))
 
     def _toc_fetch_finished(self):
         """Callback for when the TOC fetching is finished"""
@@ -159,8 +159,6 @@ class TocFetcher:
         """Handle a newly arrived packet"""
         chan = packet.channel
         if (chan != 0):
-            logger.error("Got packet that was not on TOC channel, TOC fetch"
-                         " will probably not succeed")
             return
         payload = struct.pack("B" * (len(packet.datal) - 1), *packet.datal[1:])
 
@@ -210,4 +208,4 @@ class TocFetcher:
         pk = CRTPPacket()
         pk.set_header(self.port, TOC_CHANNEL)
         pk.data = (CMD_TOC_ELEMENT, index)
-        self.cf.send_packet(pk, expect_answer=True)
+        self.cf.send_packet(pk, expected_reply=(CMD_TOC_ELEMENT, index))

@@ -61,7 +61,9 @@ class CRTPPacket(object):
         """
         self.size = 0
         self._data = ""
-        self.header = header
+        # The two bits in position 3 and 4 needs to be set for legacy
+        # support of the bootloader
+        self.header = header | 0x3 << 2
         self._port = (header & 0xF0) >> 4
         self._channel = header & 0x03
         if data:
@@ -100,7 +102,9 @@ class CRTPPacket(object):
 
     def _update_header(self):
         """Update the header with the port/channel values"""
-        self.header = ((self._port & 0x0f) << 4 | 0x3 << 2 |
+        # The two bits in position 3 and 4 needs to be set for legacy
+        # support of the bootloader
+        self.header = ((self._port & 0x0f) << 4 | 3 << 2 |
                        (self.channel & 0x03))
 
     #Some python madness to access different format of the data

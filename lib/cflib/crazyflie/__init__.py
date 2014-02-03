@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 import time
 from threading import Thread
 
-from threading import Timer
+from threading import Timer, Lock
 
 from .commander import Commander
 from .console import Console
@@ -114,7 +114,10 @@ class Crazyflie():
         # Used for retry when no reply was sent back
         self.packet_received.add_callback(self._check_for_initial_packet_cb)
         self.packet_received.add_callback(self._check_for_answers)
-        self.answer_timers = {}
+
+        self._answer_patterns = {}
+
+        self._send_lock = Lock()
 
         # Connect callbacks to logger
         self.disconnected.add_callback(
@@ -219,6 +222,7 @@ class Crazyflie():
         if (self.link is not None):
             self.link.close()
             self.link = None
+        self._answer_patterns = {}
         self.disconnected.call(self.link_uri)
 
     def add_port_callback(self, port, cb):
@@ -229,12 +233,11 @@ class Crazyflie():
         """Remove the callback cb on port"""
         self.incoming.remove_port_callback(port, cb)
 
-    def _no_answer_do_retry(self, pk):
+    def _no_answer_do_retry(self, pk, pattern):
         """Resend packets that we have not gotten answers to"""
-        logger.debug("ExpectAnswer: No answer on [%d], do retry", pk.port)
+        logger.debug("Resending for pattern %s", pattern)
         # Set the timer to None before trying to send again
-        self.answer_timers[pk.port] = None
-        self.send_packet(pk, True)
+        self.send_packet(pk, expected_reply=pattern, resend=True)
 
     def _check_for_answers(self, pk):
         """
@@ -242,18 +245,21 @@ class Crazyflie():
         waiting for an answer on this port. If so, then cancel the retry
         timer.
         """
-        try:
-            timer = self.answer_timers[pk.port]
-            if (timer is not None):
-                logger.debug("ExpectAnswer: Got answer back on port [%d]"
-                             ", cancelling timer", pk.port)
-                timer.cancel()
-                self.answer_timers[pk.port] = None
-        except KeyError:
-            # We are not waiting for any answer on this port, ignore..
-            pass
+        longest_match = ()
+        if len(self._answer_patterns) > 0:
+            data = (pk.header,) + pk.datat
+            for p in self._answer_patterns.keys():
+                logger.debug("Looking for pattern match on %s vs %s", p, data)
+                if len(p) <= len(data):
+                    if p == data[0:len(p)]:
+                        match = data[0:len(p)]
+                        if len(match) >= len(longest_match):
+                            logger.debug("Found new longest match %s", match)
+                            longest_match = match
+        if len(longest_match) > 0:
+            del self._answer_patterns[longest_match]
 
-    def send_packet(self, pk, expect_answer=False):
+    def send_packet(self, pk, expected_reply=(), resend=False):
         """
         Send a packet through the link interface.
 
@@ -262,29 +268,34 @@ class Crazyflie():
                          be sent back, otherwise false
 
         """
+        self._send_lock.acquire()
         if (self.link is not None):
             self.link.send_packet(pk)
             self.packet_sent.call(pk)
-            if (expect_answer):
-                logger.debug("ExpectAnswer: Will expect answer on port [%d]",
-                             pk.port)
-                new_timer = Timer(0.2, lambda: self._no_answer_do_retry(pk))
-                try:
-                    old_timer = self.answer_timers[pk.port]
-                    if (old_timer is not None):
-                        old_timer.cancel()
-                        # If we get here a second call has been made to send
-                        # packet on this port before we have gotten the first
-                        # one back. This is an error and might cause loss of
-                        # packets!!
-                        logger.warning("ExpectAnswer: ERROR! Older timer was"
-                                       " running while scheduling new one on "
-                                       "[%d]", pk.port)
-                except KeyError:
-                    pass
-                self.answer_timers[pk.port] = new_timer
+            if len(expected_reply) > 0 and not resend:
+                pattern = (pk.header,) + expected_reply
+                logger.debug("Sending packet and expecting the %s pattern back",
+                             pattern)
+                new_timer = Timer(0.2,
+                                  lambda: self._no_answer_do_retry(pk, pattern))
+                self._answer_patterns[pattern] = new_timer
                 new_timer.start()
-
+            elif resend:
+                # Check if we have gotten an answer, if not try again
+                pattern = expected_reply
+                if pattern in self._answer_patterns:
+                    logger.debug("We want to resend and the pattern is there")
+                    if self._answer_patterns[pattern]:
+                        new_timer = Timer(0.2,
+                                          lambda:
+                                          self._no_answer_do_retry(
+                                              pk, pattern))
+                        self._answer_patterns[pattern] = new_timer
+                        new_timer.start()
+                else:
+                    logger.debug("Resend requested, but no pattern found: %s",
+                                 self._answer_patterns)
+        self._send_lock.release()
 
 class _IncomingPacketHandler(Thread):
     """Handles incoming packets and sends the data to the correct receivers"""
