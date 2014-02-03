@@ -331,7 +331,7 @@ class CrazyloadThread(QThread):
                 speed = GuiConfig().get("default_cf_speed")
                 pitchTrim = GuiConfig().get("default_cf_trim")
                 rollTrim = GuiConfig().get("default_cf_trim")
-            self.updateConfigSignal.emit(channel, speed, pitchTrim, rollTrim)
+            self.updateConfigSignal.emit(channel, speed, rollTrim, pitchTrim)
         else:
             self.statusChanged.emit("Reading config block failed!", 0)
 
