@@ -267,6 +267,8 @@ class CrazyloadThread(QThread):
         self.loader = None
         self.link = None
 
+        self._config_page = None
+
     def __del__(self):
         self.quit()
         self.wait()
@@ -284,6 +286,8 @@ class CrazyloadThread(QThread):
             if self.loader.coldboot():
                 logger.info("Connected in coldboot mode ok")
                 self.updateCpuIdSignal.emit(self.loader.cpuid)
+                self._config_page = self.loader.flash_pages-self.loader.start_page-1
+                logger.debug("Config page {} pages after the bootloader".format(self._config_page))
                 self.readConfigAction()
                 self.connectedSignal.emit()
             else:
@@ -313,11 +317,11 @@ class CrazyloadThread(QThread):
         image = "0xBC" + image
         image += struct.pack("B", 256 - self.checksum256(image))
 
-        self.loadAndFlash(image, True, 117)
+        self.loadAndFlash(image, True, self._config_page)
 
     def readConfigAction(self):
         self.statusChanged.emit("Reading config block...", 0)
-        data = self.loader.read_flash(self.loader.start_page + 117)
+        data = self.loader.read_flash(self.loader.start_page + self._config_page)
         if (data is not None):
             self.statusChanged.emit("Reading config block...done!", 100)
             if data[0:4] == "0xBC":

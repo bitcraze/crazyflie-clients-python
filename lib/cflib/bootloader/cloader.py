@@ -271,7 +271,7 @@ class Cloader:
             else:
                 buff += pk.data[6:]
 
-        return buff[0:1024]  # For some reason we get one byte extra here...
+        return buff[0:self.page_size]  # For some reason we get one byte extra here...
 
     def write_flash(self, page_buffer, target_page, page_count):
         """Initate flashing of data in the buffer to flash."""
