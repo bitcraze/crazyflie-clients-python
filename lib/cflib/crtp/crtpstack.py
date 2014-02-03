@@ -100,7 +100,7 @@ class CRTPPacket(object):
 
     def _update_header(self):
         """Update the header with the port/channel values"""
-        self.header = ((self._port & 0x0f) << 4 | 0x3 << 2 |
+        self.header = ((self._port & 0x0f) << 4 |
                        (self.channel & 0x03))
 
     #Some python madness to access different format of the data

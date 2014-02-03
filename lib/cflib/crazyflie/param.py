@@ -235,13 +235,11 @@ class _ParamUpdater(Thread):
             if (pk.channel != TOC_CHANNEL and self._req_param == var_id
                 and pk is not None):
                 self.updated_callback(pk)
+                self._req_param = -1
                 try:
                     self.wait_lock.release()
                 except:
                     pass
-                self._req_param = -1
-            elif self._req_param != var_id:
-                logger.debug("Param our of sync, discarding!")
 
     def request_param_update(self, var_id):
         """Place a param update request on the queue"""
@@ -257,6 +255,6 @@ class _ParamUpdater(Thread):
             self.wait_lock.acquire()
             if self.cf.link:
                 self._req_param = pk.datal[0]
-                self.cf.send_packet(pk, expect_answer=True)
+                self.cf.send_packet(pk, expected_reply=(pk.datat[0:2]))
             else:
                 self.wait_lock.release()
