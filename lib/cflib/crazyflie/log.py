@@ -234,7 +234,7 @@ class LogConfig(object):
 
             else:
                 logger.debug("Block already registered, starting logging"
-                             " for %d", self.id)
+                             " for id=%d", self.id)
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
                 pk.data = (CMD_START_LOGGING, self.id, self.period)
@@ -246,7 +246,7 @@ class LogConfig(object):
             if (self.id is None):
                 logger.warning("Stopping block, but no block registered")
             else:
-                logger.debug("Sending stop logging for block %d", self.id)
+                logger.debug("Sending stop logging for block id=%d", self.id)
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
                 pk.data = (CMD_STOP_LOGGING, self.id)
@@ -258,7 +258,7 @@ class LogConfig(object):
             if (self.id is None):
                 logger.warning("Delete block, but no block registered")
             else:
-                logger.debug("LogEntry: Sending delete logging for block %d"
+                logger.debug("LogEntry: Sending delete logging for block id=%d"
                              % self.id)
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
@@ -482,7 +482,7 @@ class Log():
                     logger.warning("No LogEntry to assign block to !!!")
             if (cmd == CMD_START_LOGGING):
                 if (error_status == 0x00):
-                    logger.info("Have successfully started logging for block=%d",
+                    logger.info("Have successfully started logging for id=%d",
                                 id)
                     if block:
                         block.started = True
@@ -494,27 +494,33 @@ class Log():
                     if block:
                         block.err_no = error_status
                         block.started_cb.call(False)
-                        block.error_cb.call(block, msg)
+                        # This is a temporary fix, we are adding a new issue
+                        # for this. For some reason we get an error back after
+                        # the block has been started and added. This will show
+                        # an error in the UI, but everything is still working.
+                        #block.error_cb.call(block, msg)
 
             if (cmd == CMD_STOP_LOGGING):
                 if (error_status == 0x00):
-                    logger.info("Have successfully stopped logging for block=%d",
+                    logger.info("Have successfully stopped logging for id=%d",
                                 id)
                     if block:
                         block.started = False
 
             if (cmd == CMD_DELETE_BLOCK):
-                if (error_status == 0x00):
-                    logger.info("Have successfully deleted block=%d",
+                # Accept deletion of a block that isn't added. This could
+                # happen due to timing (i.e add/start/delete in fast sequence)
+                if error_status == 0x00 or error_status == errno.ENOENT:
+                    logger.info("Have successfully deleted id=%d",
                                 id)
                     if block:
                         block.started = False
                         block.added = False
 
             if (cmd == CMD_RESET_LOGGING):
-                logger.debug("Logging reset, continue with TOC download")
                 # Guard against multiple responses due to re-sending
                 if not self._toc:
+                    logger.debug("Logging reset, continue with TOC download")
                     self.log_blocks = []
 
                     self._toc = Toc()
