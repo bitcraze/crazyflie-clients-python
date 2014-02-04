@@ -51,6 +51,9 @@ import struct
 from datetime import datetime
 from cflib.crazyflie.log import LogTocElement
 from cflib.crazyflie.param import ParamTocElement
+import random
+import string
+import errno
 
 import logging
 logger = logging.getLogger(__name__)
@@ -219,9 +222,19 @@ class DebugDriver (CRTPDriver):
                                   "value": 1})
 
         self.fakeflash = {}
+        self._random_answer_delay = True
+        self.queue = Queue.Queue()
+        self._packet_handler = _PacketHandlingThread(self.queue,
+                                                     self.fakeLogToc,
+                                                     self.fakeParamToc)
+        self._packet_handler.start()
 
     def scan_interface(self):
-        return [["debug://0/0", "Debugdriver for UI testing"]]
+        return [["debug://0/0", "Normal connection"],
+                ["debug://0/1", "Fail to connect"],
+                ["debug://0/2", "Incomplete log TOC download"],
+                ["debug://0/3", "Insert random delays on replies"],
+                ["debug://0/4", "Insert random delays on replies and random TOC CRCs"]]
 
     def get_status(self):
         return "Ok"
@@ -234,34 +247,37 @@ class DebugDriver (CRTPDriver):
         if not re.search("^debug://", uri):
             raise WrongUriType("Not a debug URI")
 
-        self.fakeLoggingThreads = []
-
-        self.queue = Queue.Queue()
-
-        self.linkErrorCallback = linkErrorCallback
-        self.linkQualityCallback = linkQualityCallback
+        self._packet_handler.linkErrorCallback = linkErrorCallback
+        self._packet_handler.linkQualityCallback = linkQualityCallback
 
         # Debug-options for this driver that
         # is set by using different connection URIs
-        self.inhibitAnswers = False
-        self.doIncompleteLogTOC = False
-        self.bootloader = False
+        self._packet_handler.inhibitAnswers = False
+        self._packet_handler.doIncompleteLogTOC = False
+        self._packet_handler.bootloader = False
+        self._packet_handler._random_answer_delay = False
+        self._packet_handler._random_toc_crcs = False
 
         if (re.search("^debug://.*/1\Z", uri)):
-            self.inhibitAnswers = True
+            self._packet_handler.inhibitAnswers = True
         if (re.search("^debug://.*/110\Z", uri)):
-            self.bootloader = True
+            self._packet_handler.bootloader = True
         if (re.search("^debug://.*/2\Z", uri)):
-            self.doIncompleteLogTOC = True
+            self._packet_handler.doIncompleteLogTOC = True
+        if (re.search("^debug://.*/3\Z", uri)):
+            self._packet_handler._random_answer_delay = True
+        if (re.search("^debug://.*/4\Z", uri)):
+            self._packet_handler._random_answer_delay = True
+            self._packet_handler._random_toc_crcs = True
 
-        if (self.inhibitAnswers is False and self.bootloader is False):
+        self.fakeConsoleThread = None
+
+        if (not self._packet_handler.inhibitAnswers and not self._packet_handler.bootloader):
             self.fakeConsoleThread = FakeConsoleThread(self.queue)
             self.fakeConsoleThread.start()
 
-        if (self.linkQualityCallback is not None):
-            self.linkQualityCallback(0)
-
-        self.nowAnswerCounter = 4
+        if (self._packet_handler.linkQualityCallback is not None):
+            self._packet_handler.linkQualityCallback(0)
 
     def receive_packet(self, time=0):
         if time == 0:
@@ -281,34 +297,68 @@ class DebugDriver (CRTPDriver):
                 return None
 
     def send_packet(self, pk):
-        if (self.inhibitAnswers):
-            self.nowAnswerCounter = self.nowAnswerCounter - 1
-            logger.debug("Not answering with any data, will send link errori"
-                         " in %d retries", self.nowAnswerCounter)
-            if (self.nowAnswerCounter == 0):
-                self.linkErrorCallback("Nothing is answering, and it"
-                                       " shouldn't")
-            return
-
-        if (pk.port == 0xFF):
-            self._handle_bootloader(pk)
-        elif (pk.port == CRTPPort.DEBUGDRIVER):
-            self._handle_debugmessage(pk)
-        elif (pk.port == CRTPPort.COMMANDER):
-            pass
-        elif (pk.port == CRTPPort.LOGGING):
-            self._handle_logging(pk)
-        elif (pk.port == CRTPPort.PARAM):
-            self.handleParam(pk)
-        else:
-            logger.warning("Not handling incomming packets on port [%d]",
-                           pk.port)
+        self._packet_handler.handle_packet(pk)
 
     def close(self):
         logger.info("Closing debugdriver")
-        for f in self.fakeLoggingThreads:
+        for f in self._packet_handler.fakeLoggingThreads:
             f.stop()
-        self.fakeConsoleThread.stop()
+        if self.fakeConsoleThread:
+            self.fakeConsoleThread.stop()
+
+
+class _PacketHandlingThread(Thread):
+    """Thread for handling packets asynchronously"""
+    def __init__(self, out_queue, fake_log_toc, fake_param_toc):
+        Thread.__init__(self)
+        self.setDaemon(True)
+        self.queue = out_queue
+        self.fakeLogToc = fake_log_toc
+        self.fakeParamToc = fake_param_toc
+        self._in_queue = Queue.Queue()
+
+        self.inhibitAnswers = False
+        self.doIncompleteLogTOC = False
+        self.bootloader = False
+        self._random_answer_delay = False
+        self._random_toc_crcs = False
+
+        self.linkErrorCallback = None
+        self.linkQualityCallback = None
+        random.seed(None)
+        self.fakeLoggingThreads = []
+
+        self._added_blocks = []
+
+        self.nowAnswerCounter = 4
+
+    def handle_packet(self, pk):
+        self._in_queue.put(pk)
+
+    def run(self):
+        while (True):
+            pk = self._in_queue.get(True)
+            if (self.inhibitAnswers):
+                self.nowAnswerCounter = self.nowAnswerCounter - 1
+                logger.debug("Not answering with any data, will send link errori"
+                             " in %d retries", self.nowAnswerCounter)
+                if (self.nowAnswerCounter == 0):
+                    self.linkErrorCallback("Nothing is answering, and it"
+                                           " shouldn't")
+            else:
+                if (pk.port == 0xFF):
+                    self._handle_bootloader(pk)
+                elif (pk.port == CRTPPort.DEBUGDRIVER):
+                    self._handle_debugmessage(pk)
+                elif (pk.port == CRTPPort.COMMANDER):
+                    pass
+                elif (pk.port == CRTPPort.LOGGING):
+                    self._handle_logging(pk)
+                elif (pk.port == CRTPPort.PARAM):
+                    self.handleParam(pk)
+                else:
+                    logger.warning("Not handling incomming packets on port [%d]",
+                               pk.port)
 
     def _handle_bootloader(self, pk):
         cmd = pk.datal[1]
@@ -322,7 +372,7 @@ class DebugDriver (CRTPDriver):
             p.data = struct.pack('<BBHHHH', 0xFF, 0x10, pageSize, buffPages,
                                  flashPages, flashStart)
             p.data += struct.pack('B' * 12, 0xA0A1A2A3A4A5)
-            self.queue.put(p)
+            self._send_packet(p)
             logging.info("Bootloader: Sending info back info")
         elif (cmd == 0x14):  # Upload buffer
             [page, addr] = struct.unpack('<HH', p.data[0:4])
@@ -330,7 +380,7 @@ class DebugDriver (CRTPDriver):
             p = CRTPPacket()
             p.set_header(0xFF, 0xFF)
             p.data = struct.pack('<BBH', 0xFF, 0x18, 1)
-            self.queue.put(p)
+            self._send_packet(p)
         elif (cmd == 0xFF):  # Reset to firmware
             logger.info("Bootloader: Got reset command")
         else:
@@ -386,9 +436,9 @@ class DebugDriver (CRTPDriver):
                     p.data += ch
                 p.data += '\0'
                 if (self.doIncompleteLogTOC is False):
-                    self.queue.put(p)
+                    self._send_packet(p)
                 elif (varIndex < 5):
-                    self.queue.put(p)
+                    self._send_packet(p)
                 else:
                     logger.info("TOC: Doing incomplete TOC, stopping after"
                                 " varIndex => 5")
@@ -401,12 +451,16 @@ class DebugDriver (CRTPDriver):
                 if (pk.port == CRTPPort.PARAM):
                     tocLen = len(self.fakeParamToc)
                     fakecrc = 0xBBBBBBBB
+
+                if self._random_toc_crcs:
+                    fakecrc = int(''.join(random.choice("ABCDEF" + string.digits) for x in range(8)), 16)
+                    logger.debug("Generated random TOC CRC: 0x%x", fakecrc)
                 logger.info("TOC[%d]: Requesting TOC CRC, sending back fake"
                             " stuff: %d", pk.port, len(self.fakeLogToc))
                 p = CRTPPacket()
                 p.set_header(pk.port, 0)
                 p.data = struct.pack('<BBIBB', 1, tocLen, fakecrc, 16, 24)
-                self.queue.put(p)
+                self._send_packet(p)
 
     def handleParam(self, pk):
         chan = pk.channel
@@ -428,17 +482,17 @@ class DebugDriver (CRTPDriver):
             p.set_header(pk.port, 2)
             p.data += struct.pack("<B", varId)
             p.data += struct.pack(formatStr, self.fakeParamToc[varId]["value"])
-            self.queue.put(p)
+            self._send_packet(p)
         elif (chan == 1):
             p = CRTPPacket()
-            p.set_header(pk.port, 2)
+            p.set_header(pk.port, 1)
             varId = cmd
             p.data += struct.pack("<B", varId)
             formatStr = ParamTocElement.types[self.fakeParamToc
                                               [varId]["vartype"]][1]
             p.data += struct.pack(formatStr, self.fakeParamToc[varId]["value"])
             logger.info("PARAM: Getting value for %d", varId)
-            self.queue.put(p)
+            self._send_packet(p)
 
     def _handle_logging(self, pk):
         chan = pk.channel
@@ -449,18 +503,25 @@ class DebugDriver (CRTPDriver):
         elif (chan == 1):  # Settings access
             if (cmd == 0):
                 blockId = ord(pk.data[1])
-                logger.info("LOG:Adding block id=%d", blockId)
-                listofvars = pk.data[3:]
-                fakeThread = _FakeLoggingDataThread(self.queue, blockId,
-                                                    listofvars,
-                                                    self.fakeLogToc)
-                self.fakeLoggingThreads.append(fakeThread)
-                fakeThread.start()
-                # Anser that everything is ok
-                p = CRTPPacket()
-                p.set_header(5, 1)
-                p.data = struct.pack('<BBB', 0, blockId, 0x00)
-                self.queue.put(p)
+                if blockId not in self._added_blocks:
+                    self._added_blocks.append(blockId)
+                    logger.info("LOG:Adding block id=%d", blockId)
+                    listofvars = pk.data[3:]
+                    fakeThread = _FakeLoggingDataThread(self.queue, blockId,
+                                                        listofvars,
+                                                        self.fakeLogToc)
+                    self.fakeLoggingThreads.append(fakeThread)
+                    fakeThread.start()
+                    # Anser that everything is ok
+                    p = CRTPPacket()
+                    p.set_header(5, 1)
+                    p.data = struct.pack('<BBB', 0, blockId, 0x00)
+                    self._send_packet(p)
+                else:
+                    p = CRTPPacket()
+                    p.set_header(5, 1)
+                    p.data = struct.pack('<BBB', 0, blockId, errno.EEXIST)
+                    self._send_packet(p)
             if (cmd == 1):
                 logger.warning("LOG: Appending block not implemented!")
             if (cmd == 2):
@@ -475,7 +536,7 @@ class DebugDriver (CRTPDriver):
                         p = CRTPPacket()
                         p.set_header(5, 1)
                         p.data = struct.pack('<BBB', cmd, blockId, 0x00)
-                        self.queue.put(p)
+                        self._send_packet(p)
                         logger.info("LOG: Deleted block=%d", blockId)
                         success = True
                 if (success is False):
@@ -495,7 +556,7 @@ class DebugDriver (CRTPDriver):
                         p = CRTPPacket()
                         p.set_header(5, 1)
                         p.data = struct.pack('<BBB', cmd, blockId, 0x00)
-                        self.queue.put(p)
+                        self._send_packet(p)
                         logger.info("LOG:Started block=%d", blockId)
                         success = True
                 if (success is False):
@@ -512,17 +573,33 @@ class DebugDriver (CRTPDriver):
                         p = CRTPPacket()
                         p.set_header(5, 1)
                         p.data = struct.pack('<BBB', cmd, blockId, 0x00)
-                        self.queue.put(p)
+                        self._send_packet(p)
                         logger.info("LOG:Pause block=%d", blockId)
                         success = True
                 if (success is False):
                     logger.warning("LOG:Could not pause block=%d, not found",
                                    blockId)
                     # TODO: Send back error code
+            if (cmd == 5):
+                logger.info("LOG: Reset logging, but doing nothing")
+                p = CRTPPacket()
+                p.set_header(5, 1)
+                p.data = struct.pack('<BBB', cmd, 0x00, 0x00)
+                self._send_packet(p)
+                import traceback
+                logger.info(traceback.format_exc())
         elif (chan > 1):
             logger.warning("LOG: Uplink packets with channes > 1 not"
                            " supported!")
 
+    def _send_packet(self, pk):
+        # Do not delay log data
+        if self._random_answer_delay and pk.port != 0x05 and pk.channel != 0x02:
+            # Calculate a delay between 0ms and 250ms
+            delay = random.randint(0, 250)/1000.0
+            logger.debug("Delaying answer %.2fms", delay*1000)
+            time.sleep(delay)
+        self.queue.put(pk)
 
 class _FakeLoggingDataThread (Thread):
     """Thread that will send back fake logging data via CRTP"""
