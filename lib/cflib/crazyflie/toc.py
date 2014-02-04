@@ -181,14 +181,6 @@ class TocFetcher:
             # Always add new element, but only request new if it's not the
             # last one.
             if self.requested_index != ord(payload[0]):
-                # TODO: There might be a timing issue here with resending old
-                #       packets while loosing new ones. Then if 7 is requested
-                #       but 6 is send back due to timing issues with the resend
-                #       while 7 is lost then we will never resend for 7.
-                #       This is pretty hard to reproduce but happens...
-                logging.warning("[%d]: Was expecting %d but got %d",
-                                self.port, self.requested_index,
-                                ord(payload[0]))
                 return
             self.toc.add_element(self.element_class(payload))
             logger.debug("Added element [%s]",
