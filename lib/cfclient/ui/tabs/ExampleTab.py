@@ -1,0 +1,100 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
+#  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
+#  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
+#   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
+#
+#  Copyright (C) 2011-2013 Bitcraze AB
+#
+#  Crazyflie Nano Quadcopter Client
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+#  02110-1301, USA.
+
+"""
+An example template for a tab.
+"""
+
+__author__ = 'Bitcraze AB'
+__all__ = ['ExampleTab']
+
+import logging
+import sys
+
+logger = logging.getLogger(__name__)
+
+from PyQt4 import QtCore, QtGui, uic
+from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread, Qt
+from PyQt4.QtGui import QMessageBox
+
+from cfclient.ui.tab import Tab
+
+example_tab_class = uic.loadUiType(sys.path[0] +
+                                "/cfclient/ui/tabs/exampleTab.ui")[0]
+
+class ExampleTab(Tab, example_tab_class):
+    """Tab for plotting logging data"""
+
+    _log_data_signal = pyqtSignal(int, object, object)
+    _log_error_signal = pyqtSignal(object, str)
+    _connected_signal = pyqtSignal(str)
+    _disconnected_signal = pyqtSignal(str)
+
+    def __init__(self, tabWidget, helper, *args):
+        super(ExampleTab, self).__init__(*args)
+        self.setupUi(self)
+
+        self.tabName = "Example"
+        self.menuName = "Example Tab"
+
+        self._helper = helper
+
+        # Always wrap callbacks from Crazyflie API though QT Signal/Slots
+        # to avoid manipulating the UI when rendering it
+        self._log_data_signal.connect(self._log_data_received)
+        self._connected_signal.connect(self._connected)
+        self._disconnected_signal.connect(self._disconnected)
+
+        # Connect the Crazyflie API callbacks to the signals
+        self._helper.cf.disconnected.add_callback(
+            self._disconnected_signal.emit)
+
+        self._helper.cf.disconnected.add_callback(
+            self._disconnected_signal.emit)
+
+    def _connected(self, link_uri):
+        """Callback when the Crazyflie has been connected"""
+
+        logger.debug("Crazyflie connected to %s", link_uri)
+
+    def _disconnected(self, link_uri):
+        """Callback for when the Crazyflie has been disconnected"""
+
+        logger.debug("Crazyflie disconnected from %s", link_uri)
+
+    def _log_data_received(self, timestamp, data, log_conf):
+        """Callback when the log layer receives new data"""
+
+        return
+
+    def _logging_error(self, log_conf, msg):
+        """Callback from the log layer when an error occurs"""
+
+        QMessageBox.about(self, "Example error",
+                          "Error when using log config"
+                          " [%s]: %s" % (log_conf.name, msg))
