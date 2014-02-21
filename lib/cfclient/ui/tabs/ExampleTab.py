@@ -44,16 +44,20 @@ from PyQt4.QtGui import QMessageBox
 
 from cfclient.ui.tab import Tab
 
+from cflib.crazyflie.log import LogConfig, Log
+from cflib.crazyflie.param import Param
+
 example_tab_class = uic.loadUiType(sys.path[0] +
                                 "/cfclient/ui/tabs/exampleTab.ui")[0]
 
 class ExampleTab(Tab, example_tab_class):
     """Tab for plotting logging data"""
 
-    _log_data_signal = pyqtSignal(int, object, object)
-    _log_error_signal = pyqtSignal(object, str)
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
+    _log_data_signal = pyqtSignal(int, object, object)
+    _log_error_signal = pyqtSignal(object, str)
+    _param_updated_signal = pyqtSignal(str, str)
 
     def __init__(self, tabWidget, helper, *args):
         super(ExampleTab, self).__init__(*args)
@@ -61,18 +65,20 @@ class ExampleTab(Tab, example_tab_class):
 
         self.tabName = "Example"
         self.menuName = "Example Tab"
+        self.tabWidget = tabWidget
 
         self._helper = helper
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
-        self._log_data_signal.connect(self._log_data_received)
         self._connected_signal.connect(self._connected)
         self._disconnected_signal.connect(self._disconnected)
+        self._log_data_signal.connect(self._log_data_received)
+        self._param_updated_signal.connect(self._param_updated)
 
         # Connect the Crazyflie API callbacks to the signals
-        self._helper.cf.disconnected.add_callback(
-            self._disconnected_signal.emit)
+        self._helper.cf.connected.add_callback(
+            self._connected_signal.emit)
 
         self._helper.cf.disconnected.add_callback(
             self._disconnected_signal.emit)
@@ -80,12 +86,17 @@ class ExampleTab(Tab, example_tab_class):
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
 
-        logger.debug("Crazyflie connected to %s", link_uri)
+        logger.debug("Crazyflie connected to {}".format(link_uri))
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
 
-        logger.debug("Crazyflie disconnected from %s", link_uri)
+        logger.debug("Crazyflie disconnected from {}".format(link_uri))
+
+    def _param_updated(self, name, value):
+        """Callback when the registered parameter get's updated"""
+
+        logger.debug("Updated {0} to {1}".format(name, value))
 
     def _log_data_received(self, timestamp, data, log_conf):
         """Callback when the log layer receives new data"""
@@ -97,4 +108,4 @@ class ExampleTab(Tab, example_tab_class):
 
         QMessageBox.about(self, "Example error",
                           "Error when using log config"
-                          " [%s]: %s" % (log_conf.name, msg))
+                          " [{0}]: {1}".format(log_conf.name, msg))
