@@ -27,7 +27,9 @@
 #  02110-1301, USA.
 
 """
-An example template for a tab.
+An example template for a tab in the Crazyflie Client. It comes pre-configured
+with the necessary QT Signals to wrap Crazyflie API callbacks and also
+connects the connected/disconnected callbacks.
 """
 
 __author__ = 'Bitcraze AB'
@@ -101,7 +103,7 @@ class ExampleTab(Tab, example_tab_class):
     def _log_data_received(self, timestamp, data, log_conf):
         """Callback when the log layer receives new data"""
 
-        return
+        logger.debug("{0}:{1}:{2}".format(timestamp, log_conf.name, data))
 
     def _logging_error(self, log_conf, msg):
         """Callback from the log layer when an error occurs"""
