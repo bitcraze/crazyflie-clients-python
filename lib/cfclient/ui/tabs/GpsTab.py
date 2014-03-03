@@ -136,7 +136,7 @@ class GpsTab(Tab, gps_tab_class):
             # Connect the callbacks from the Crazyflie API
             self.helper.cf.disconnected.add_callback(
                 self._disconnected_signal.emit)
-            self.helper.cf.connectSetupFinished.add_callback(
+            self.helper.cf.connected.add_callback(
                 self._connected_signal.emit)
 
             self.helper.cf.console.receivedChar.add_callback(self._console_signal.emit)
