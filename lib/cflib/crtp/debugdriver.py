@@ -135,6 +135,18 @@ class DebugDriver (CRTPDriver):
         self.fakeLogToc.append({"varid": 19, "vartype": 7,
                                 "vargroup": "altHold", "varname": "target",
                                 "min": 542, "max": 543, "mod": 0.1})
+        self.fakeLogToc.append({"varid": 20, "vartype": 7,
+                                "vargroup": "gps", "varname": "lat",
+                                "min": 55.611219, "max": 55.611279,
+                                "mod": 0.00001})
+        self.fakeLogToc.append({"varid": 21, "vartype": 7,
+                                "vargroup": "gps", "varname": "long",
+                                "min": 12.994511, "max": 12.994571,
+                                "mod": 0.00001})
+        self.fakeLogToc.append({"varid": 22, "vartype": 7,
+                                "vargroup": "gps", "varname": "alt",
+                                "min": 0.0, "max": 100.0,
+                                "mod": 1.0})
 
         # Fill up the fake logging TOC with values and data
         self.fakeParamToc = []
@@ -695,15 +707,41 @@ class FakeConsoleThread (Thread):
         self._shoud_run = False
 
     def run(self):
+        # Temporary hack to test GPS from firmware by sending NMEA string on
+        # console
+        long_val = 0
+        lat_val = 0
+        alt_val = 0
+
         while(self._should_run):
-            p = CRTPPacket()
-            p.set_header(0, 0)
 
-            message = "Time is now %s\n" % datetime.now()
+            long_val += 1
+            lat_val += 1
+            alt_val += 1.0
 
-            us = "%is" % len(message)
-            # This might be done prettier ;-)
-            p.data = struct.pack(us, message)
+            long_string = "5536.677%d" % (long_val % 99)
+            lat_string = "01259.645%d" % (lat_val % 99)
+            alt_string = "%.1f" % (alt_val % 100.0)
 
-            self.outQueue.put(p)
+            # Copy of what is sent from the module, but note that only
+            # the GPGGA message is being simulated, the others are fixed...
+            self._send_text("Time is now %s\n" % datetime.now())
+            self._send_text("$GPVTG,,T,,M,0.386,N,0.716,K,A*2E\n")
+            self._send_text("$GPGGA,135544.0")
+            self._send_text("0,%s,N,%s,E,1,04,2.62,3.6,M,%s,M,,*58\n" % (long_string, lat_string, alt_string))
+            self._send_text("$GPGSA,A,3,31,20,23,07,,,,,,,,,3.02,2.62,1.52*05\n")
+            self._send_text("$GPGSV,2,1,07,07,09,181,15,13,63,219,26,16,02,097,,17,05,233,20*7E\n")
+            self._send_text("$GPGSV,2,2,07,20,42,119,35,23,77,097,27,31,12,032,19*47\n")
+            self._send_text("$GPGLL,5536.67734,N,01259.64578,E,135544.00,A,A*68\n")
+
             time.sleep(2)
+
+    def _send_text(self, message):
+        p = CRTPPacket()
+        p.set_header(0, 0)
+
+        us = "%is" % len(message)
+        # This might be done prettier ;-)
+        p.data = struct.pack(us, message)
+
+        self.outQueue.put(p)
