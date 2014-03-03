@@ -77,6 +77,10 @@ class HeadlessClient():
         self._jr.start_input(devs[input_device]["name"],
                              input_config)
 
+    def controller_connected(self):
+        """ Return True if a controller is connected"""
+        return True if (len(self._jr.getAvailableDevices()) > 0) else False
+
     def list_controllers(self):
         """List the available controllers"""
         for dev in self._jr.getAvailableDevices():
@@ -142,8 +146,11 @@ def main():
     if (args.list_controllers):
         headless.list_controllers()
     else:
-        headless.setup_controller(input_config=args.input,
-                                  input_device=args.controller,
-                                  xmode=args.xmode)
-        headless.connect_crazyflie(link_uri=args.uri)
+        if headless.controller_connected():
+            headless.setup_controller(input_config=args.input,
+                                      input_device=args.controller,
+                                      xmode=args.xmode)
+            headless.connect_crazyflie(link_uri=args.uri)
+        else:
+            print "No input-device connected, exiting!"
 
