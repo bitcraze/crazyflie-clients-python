@@ -43,7 +43,21 @@ cload = None
 try:
     cflib.crtp.init_drivers()
     link = cflib.crtp.get_link_driver("radio://0")
-except(Exception):
+except Exception as e:
+    print "Error: {}".format(str(e))
+    if link:
+        link.close()
+    sys.exit(-1)
+
+#Set the default parameters
+#Default to the arnaud's copter
+cpu_id = "32:00:6e:06:58:37:35:32:60:58:01:43"
+clink = "radio://0/110"
+action = "info"
+boot = "cold"
+
+if len(sys.argv) < 2:
+    print
     print "=============================="
     print " CrazyLoader Flash Utility"
     print "=============================="
@@ -59,19 +73,9 @@ except(Exception):
     print "   flash <img> : flash the <img> binary file from the first"
     print "                 possible  page in flash and reset to firmware"
     print "                 mode."
-    sys.exit(0)
-except Exception as e:
-    print "CRTP Driver loading error:", e
     if link:
         link.close()
-    sys.exit(-1)
-
-#Set the default parameters
-#Default to the arnaud's copter
-cpu_id = "32:00:6e:06:58:37:35:32:60:58:01:43"
-clink = "radio://0/110"
-action = "info"
-boot = "cold"
+    sys.exit(0)
 
 #Analyse the command line parameters
 sys.argv = sys.argv[1:]
