@@ -125,6 +125,7 @@ class PlotTab(Tab, plot_tab_class):
     _log_data_signal = pyqtSignal(int, object, object)
     _log_error_signal = pyqtSignal(object, str)
     _disconnected_signal = pyqtSignal(str)
+    _connected_signal = pyqtSignal(str)
 
     colors = ['g', 'b', 'm', 'r', 'y', 'c']
 
@@ -155,6 +156,10 @@ class PlotTab(Tab, plot_tab_class):
             self.helper.cf.disconnected.add_callback(
                 self._disconnected_signal.emit)
 
+            self._connected_signal.connect(self._connected)
+            self.helper.cf.connected.add_callback(
+                self._connected_signal.emit)
+
             self.helper.cf.log.block_added_cb.add_callback(self._config_added)
             self.dataSelector.currentIndexChanged.connect(
                 self._selection_changed)
@@ -162,11 +167,14 @@ class PlotTab(Tab, plot_tab_class):
         self._previous_config = None
         self._started_previous = False
 
+    def _connected(self, link_uri):
+        """Callback when the Crazyflie has been disconnected"""
+        self._plot.removeAllDatasets()
+        self._plot.set_title("")
+
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
         self._model.reset()
-        self._plot.removeAllDatasets()
-        self._plot.set_title("")
         self.dataSelector.setCurrentIndex(-1)
         self._previous_config = None
         self._started_previous = False
