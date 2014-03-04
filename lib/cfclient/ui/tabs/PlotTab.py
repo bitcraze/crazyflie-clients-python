@@ -168,7 +168,7 @@ class PlotTab(Tab, plot_tab_class):
         self._started_previous = False
 
     def _connected(self, link_uri):
-        """Callback when the Crazyflie has been disconnected"""
+        """Callback when the Crazyflie has been connected"""
         self._plot.removeAllDatasets()
         self._plot.set_title("")
 
