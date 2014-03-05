@@ -141,6 +141,19 @@ class Param():
         else:
             logger.debug("Variable id [%d] not found in TOC", var_id)
 
+    def remove_update_callback(self, group, name=None, cb=None):
+        """Remove the supplied callback for a group or a group.name"""
+        if not cb:
+            return
+
+        if not name:
+            if group in self.group_update_callbacks:
+                self.group_update_callbacks[group].remove_callback(cb)
+        else:
+            paramname = "{}.{}".format(group, name)
+            if paramname in self.param_update_callbacks:
+                self.param_update_callbacks[paramname].remove_callback(cb)
+
     def add_update_callback(self, group, name=None, cb=None):
         """
         Add a callback for a specific parameter name. This callback will be
