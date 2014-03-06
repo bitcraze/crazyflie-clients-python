@@ -34,7 +34,6 @@ logging and also to write the logging data to file.
 __author__ = 'Bitcraze AB'
 __all__ = ['LogBlockTab']
 
-import time
 import sys
 
 from PyQt4 import QtCore, QtGui, uic
@@ -74,7 +73,7 @@ class LogBlockItem(object):
     """Class that acts as a parent in the tree view and represents a complete
     log block"""
 
-    def __init__(self, block, model):
+    def __init__(self, block, model, connected_ts):
         """Initialize the parent node"""
         super(LogBlockItem, self).__init__()
         self._block = block
@@ -84,7 +83,7 @@ class LogBlockItem(object):
         self.id = block.id
         self.period = block.period_in_ms
         self._model = model
-        self._log_file_writer = LogWriter(block)
+        self._log_file_writer = LogWriter(block, connected_ts)
 
         self._block.started_cb.add_callback(self._set_started)
         self._block.added_cb.add_callback(self._set_added)
@@ -172,8 +171,8 @@ class LogBlockModel(QAbstractItemModel):
         self._view = view
         self._nodes_written_to_file = []
 
-    def add_block(self, block):
-        self._nodes.append(LogBlockItem(block, self))
+    def add_block(self, block, connected_ts):
+        self._nodes.append(LogBlockItem(block, self, connected_ts))
         self.layoutChanged.emit()
 
     def refresh(self):
@@ -339,7 +338,7 @@ class LogBlockTab(Tab, logblock_tab_class):
 
     def _block_added(self, block):
         """Callback from logging layer when a new block is added"""
-        self._model.add_block(block)
+        self._model.add_block(block, self._helper.cf.connected_ts)
 
     def _disconnected(self, link_uri):
         """Callback when the Crazyflie is disconnected"""

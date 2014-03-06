@@ -41,6 +41,7 @@ __all__ = ['Crazyflie']
 import logging
 logger = logging.getLogger(__name__)
 import time
+import datetime
 from threading import Thread
 
 from threading import Timer, Lock
@@ -119,9 +120,12 @@ class Crazyflie():
 
         self._send_lock = Lock()
 
+        self.connected_ts = None
+
         # Connect callbacks to logger
         self.disconnected.add_callback(
             lambda uri: logger.info("Callback->Disconnected from [%s]", uri))
+        self.disconnected.add_callback(self._disconnected)
         self.link_established.add_callback(
             lambda uri: logger.info("Callback->Connected to [%s]", uri))
         self.connection_lost.add_callback(
@@ -137,6 +141,10 @@ class Crazyflie():
             lambda uri: logger.info("Callback->Connection setup finished [%s]",
                                     uri))
 
+    def _disconnected(self, link_uri):
+        """ Callback when disconnected."""
+        self.connected_ts = None
+
     def _start_connection_setup(self):
         """Start the connection setup by refreshing the TOCs"""
         logger.info("We are connected[%s], request connection setup",
@@ -146,6 +154,7 @@ class Crazyflie():
     def _param_toc_updated_cb(self):
         """Called when the param TOC has been fully updated"""
         logger.info("Param TOC finished updating")
+        self.connected_ts = datetime.datetime.now()
         self.connected.call(self.link_uri)
 
     def _log_toc_updated_cb(self):

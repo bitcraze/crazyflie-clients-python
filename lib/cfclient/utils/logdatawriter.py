@@ -35,6 +35,7 @@ __all__ = ['LogWriter']
 
 import os
 import sys
+import datetime
 
 import logging
 
@@ -48,22 +49,18 @@ import traceback
 class LogWriter():
     """Create a writer for a specific log block"""
 
-    def __init__(self, logblock, connect_time=None, directory=None):
+    def __init__(self, logblock, connected_ts=None, directory=None):
         """Initialize the writer"""
         self._block = logblock
         self._dir = directory
+        self._connected_ts = connected_ts
 
-        dir = os.path.join(sys.path[1], "logdata")
-        self._filename = os.path.join(dir, "%s.csv" % logblock.name)
-        # Due to concurrency let's not check first, just create
-        try:
-            os.makedirs(dir)
-        except OSError:
-            logger.debug("logdata directory already exists")
-
+        self._dir = os.path.join(sys.path[1], "logdata",
+                                 connected_ts.strftime("%Y%m%dT%H-%M-%S"))
         self._file = None
         self._header_written = False
         self._header_values = []
+        self._filename = None
 
     def _write_header(self):
         """Write the header to the file"""
@@ -102,7 +99,19 @@ class LogWriter():
 
     def start(self):
         """Start the logging to file"""
+
+        # Due to concurrency let's not check first, just create
+        try:
+            os.makedirs(self._dir)
+        except OSError:
+            logger.debug("logdata directory already exists")
+
         if not self._file:
+            time_now = datetime.datetime.now()
+            name = "{0}-{1}.csv".format(self._block.name,
+                                        time_now.strftime(
+                                            "%Y%m%dT%H-%M-%S"))
+            self._filename = os.path.join(self._dir, name)
             self._file = open(self._filename, 'w')
             self._write_header()
             self._block.data_received_cb.add_callback(self._new_data)
