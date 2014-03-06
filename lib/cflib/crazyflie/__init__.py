@@ -196,11 +196,17 @@ class Crazyflie():
                                                    self._link_quality_cb,
                                                    self._link_error_cb)
 
-            # Add a callback so we can check that any data is comming
-            # back from the copter
-            self.packet_received.add_callback(self._check_for_initial_packet_cb)
+            if not self.link:
+                message = "No driver found or malformed URI: {}"\
+                    .format(link_uri)
+                logger.warning(message)
+                self.connection_failed.call(link_uri, message)
+            else:
+                # Add a callback so we can check that any data is comming
+                # back from the copter
+                self.packet_received.add_callback(self._check_for_initial_packet_cb)
 
-            self._start_connection_setup()
+                self._start_connection_setup()
         except Exception as ex:  # pylint: disable=W0703
             # We want to catch every possible exception here and show
             # it in the user interface
