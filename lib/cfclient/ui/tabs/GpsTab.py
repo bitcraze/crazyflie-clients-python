@@ -232,50 +232,52 @@ class GpsTab(Tab, gps_tab_class):
         self._marble.add_data(long, lat, alt, accuracy,
                               True if fix_type == 3 else False)
 
-class FancyMarbleWidget(Marble.MarbleWidget):
-    def __init__(self):
-        Marble.MarbleWidget.__init__(self)
-        self._points = []
-        self._lat = None
-        self._long = None
-        self._height = None
-        self._accu =  None
+# If Marble is not installed then do not create MarbleWidget subclass
+if should_enable_tab:
+    class FancyMarbleWidget(Marble.MarbleWidget):
+        def __init__(self):
+            Marble.MarbleWidget.__init__(self)
+            self._points = []
+            self._lat = None
+            self._long = None
+            self._height = None
+            self._accu =  None
 
-    def clear_data(self):
-        self._points = []
-        self._lat = None
-        self._long = None
-        self._height = None
-        self._accu =  None
+        def clear_data(self):
+            self._points = []
+            self._lat = None
+            self._long = None
+            self._height = None
+            self._accu =  None
 
-    def add_data(self, long, lat, height, accu, locked):
-        self._points.append([long, lat, height, accu, locked])
-        self._lat = lat
-        self._long = long
-        self._height = height
-        self._accu =  accu
-        self.update()
+        def add_data(self, long, lat, height, accu, locked):
+            self._points.append([long, lat, height, accu, locked])
+            self._lat = lat
+            self._long = long
+            self._height = height
+            self._accu =  accu
+            self.update()
 
-    def customPaint(self, painter):
-        deg_per_m = 0.00001
-        if self._lat:
-            current = Marble.GeoDataCoordinates(self._long,
-                                                self._lat,
-                                                self._height,
-                                                Marble.GeoDataCoordinates.Degree)
-            painter.setPen(Qt.blue)
-            painter.drawEllipse(current, 10, 10, False)
+        def customPaint(self, painter):
+            deg_per_m = 0.00001
+            if self._lat:
+                current = Marble.GeoDataCoordinates(self._long,
+                                                    self._lat,
+                                                    self._height,
+                                                    Marble.GeoDataCoordinates.Degree)
+                painter.setPen(Qt.blue)
+                painter.drawEllipse(current, 10, 10, False)
 
 
-            painter.setPen(Qt.black)
-            painter.drawText(current, "Crazyflie")
-            for p in self._points:
-                pos = Marble.GeoDataCoordinates(p[0],
-                                                p[1],
-                                                p[2],
-                                                Marble.GeoDataCoordinates.Degree)
-                if p[4]:
-                    painter.setPen(Qt.green)
-                else:
-                    painter.setPen(Qt.red)
-                painter.drawEllipse(pos, 1, 1)
+                painter.setPen(Qt.black)
+                painter.drawText(current, "Crazyflie")
+                for p in self._points:
+                    pos = Marble.GeoDataCoordinates(p[0],
+                                                    p[1],
+                                                    p[2],
+                                                    Marble.GeoDataCoordinates.Degree)
+                    if p[4]:
+                        painter.setPen(Qt.green)
+                    else:
+                        painter.setPen(Qt.red)
+                    painter.drawEllipse(pos, 1, 1)
