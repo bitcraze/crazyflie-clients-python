@@ -97,7 +97,8 @@ class GpsTab(Tab, gps_tab_class):
 
         if self.enabled:
            # create the marble widget
-            self._marble = Marble.MarbleWidget()
+            #self._marble = Marble.MarbleWidget()
+            self._marble = FancyMarbleWidget()
 
             # Load the OpenStreetMap map
             self._marble.setMapThemeId("earth/openstreetmap/openstreetmap.dgml")
@@ -117,21 +118,17 @@ class GpsTab(Tab, gps_tab_class):
 
             # create the slider
             self.zoomSlider = QSlider(Qt.Horizontal)
-            # set the limits of the slider
-            #self.zoomSlider.setMinimum(1)
-            #self.zoomSlider.setMaximum(5000)
-            # set a default zoom value
-            #self.zoomSlider.setValue(1200)
+
+            self._reset_max_btn.clicked.connect(self._reset_max)
 
             # add all the components
-            self.gpslayout.addWidget(self._marble)
-
+            #self.gpslayout.addWidget(self._marble)
+            self.map_layout.addWidget(self._marble)
             # Connect the signals
             self._log_data_signal.connect(self._log_data_received)
             self._log_error_signal.connect(self._logging_error)
             self._connected_signal.connect(self._connected)
             self._disconnected_signal.connect(self._disconnected)
-            self._console_signal.connect(self._console_data)
 
             # Connect the callbacks from the Crazyflie API
             self.helper.cf.disconnected.add_callback(
@@ -139,16 +136,30 @@ class GpsTab(Tab, gps_tab_class):
             self.helper.cf.connected.add_callback(
                 self._connected_signal.emit)
 
-            self.helper.cf.console.receivedChar.add_callback(self._console_signal.emit)
         else:
             logger.warning("GPS tab not enabled since no Python"
                            "bindings for Marble was found")
 
+        self._max_speed = 0.0
+
+        self._fix_types = {
+            0: "No fix",
+            1: "Dead reckoning only",
+            2: "2D-fix",
+            3: "3D-fix",
+            4: "GNSS+dead",
+            5: "Time only fix"
+        }
+
     def _connected(self, link_uri):
-        lg = LogConfig("GPS", 1000)
-        lg.add_variable("gps.lat", "float")
-        lg.add_variable("gps.long", "float")
-        lg.add_variable("gps.alt", "float")
+        lg = LogConfig("GPS", 100)
+        lg.add_variable("gps.lat")
+        lg.add_variable("gps.lon")
+        lg.add_variable("gps.hMSL")
+        lg.add_variable("gps.heading")
+        lg.add_variable("gps.gSpeed")
+        lg.add_variable("gps.hAcc")
+        lg.add_variable("gps.fixType")
         self._cf.log.add_config(lg)
         if lg.valid:
             lg.data_received_cb.add_callback(self._log_data_signal.emit)
@@ -156,6 +167,7 @@ class GpsTab(Tab, gps_tab_class):
             lg.start()
         else:
             logger.warning("Could not setup logging block for GPS!")
+        self._max_speed = 0.0
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
@@ -167,48 +179,47 @@ class GpsTab(Tab, gps_tab_class):
         QMessageBox.about(self, "Plot error", "Error when starting log config"
                 " [%s]: %s" % (log_conf.name, msg))
 
-    def _console_data(self, s):
+    def _reset_max(self):
+        """Callback from reset button"""
+        self._max_speed = 0.0
+        self._speed_max.setText(str(self._max_speed))
+        self._marble.clear_data()
 
-        # For simulation don't use two sources, just return here unless
-        # you are actually connecting to a Crazyflie
+        self._long.setText("")
+        self._lat.setText("")
+        self._height.setText("")
 
-        return
+        self._speed.setText("")
+        self._heading.setText("")
+        self._accuracy.setText("")
 
-        self._line += s
-
-        if self._line[-1:] == '\n':
-            try:
-                parts = self._line.split(",")
-                if len(parts) > 1:
-                    if "$GPGGA" in parts[0]:
-                        #logger.info(self._line)
-                        if int(parts[6]) > 0:
-                            d = {}
-
-                            d["gps.long"] = float(parts[4][0:3])
-                            d["gps.long"] += float(parts[4][3:])/60.0
-
-                            d["gps.lat"] = float(parts[2][0:2])
-                            d["gps.lat"] += float(parts[2][2:])/60.0
-
-                            d["gps.alt"] = float(parts[11])
-
-                            #logger.info("Calc long: %.6f", d["gps.long"])
-                            #logger.info("Calc lat: %.6f", d["gps.lat"])
-                            #logger.info("Calc alt: %.6f", d["gps.alt"])
-
-                            self._log_data_received(0, d, None) # Not ok...
-                self._line = ""
-            except:
-                self._line = ""
+        self._fix_type.setText("")
 
 
     def _log_data_received(self, timestamp, data, logconf):
         """Callback when the log layer receives new data"""
 
-        long = float(data["gps.long"])
-        lat = float(data["gps.lat"])
-        alt = float(data["gps.alt"])
+        long = float(data["gps.lon"])/10000000.0
+        lat = float(data["gps.lat"])/10000000.0
+        alt = float(data["gps.hMSL"])/1000.0
+        speed = float(data["gps.gSpeed"])/1000.0
+        accuracy = float(data["gps.hAcc"])/1000.0
+        fix_type = float(data["gps.fixType"])
+        heading = float(data["gps.heading"])
+
+        self._long.setText(str(long))
+        self._lat.setText(str(lat))
+        self._height.setText(str(alt))
+
+        self._speed.setText(str(speed))
+        self._heading.setText(str(heading))
+        self._accuracy.setText(str(accuracy))
+        if speed > self._max_speed:
+            self._max_speed = speed
+        self._speed_max.setText(str(self._max_speed))
+
+        self._fix_type.setText(self._fix_types[fix_type])
+
 
         point = Marble.GeoDataCoordinates(long, lat, alt,
                                              Marble.GeoDataCoordinates.Degree)
@@ -218,10 +229,53 @@ class GpsTab(Tab, gps_tab_class):
             self._marble.centerOn(point, True)
             self._marble.zoomView(4000, Marble.Jump)
 
-            self._cf_marker = Marble.GeoDataPlacemark("Crazyflie")
-            self._doc = Marble.GeoDataDocument()
-            self._doc.append(self._cf_marker)
-            self._marble.model().treeModel().addDocument(self._doc)
+        self._marble.add_data(long, lat, alt, accuracy,
+                              True if fix_type == 3 else False)
 
-        self._cf_marker.setCoordinate(point)
-        self._marble.model().treeModel().updateFeature(self._cf_marker)
+class FancyMarbleWidget(Marble.MarbleWidget):
+    def __init__(self):
+        Marble.MarbleWidget.__init__(self)
+        self._points = []
+        self._lat = None
+        self._long = None
+        self._height = None
+        self._accu =  None
+
+    def clear_data(self):
+        self._points = []
+        self._lat = None
+        self._long = None
+        self._height = None
+        self._accu =  None
+
+    def add_data(self, long, lat, height, accu, locked):
+        self._points.append([long, lat, height, accu, locked])
+        self._lat = lat
+        self._long = long
+        self._height = height
+        self._accu =  accu
+        self.update()
+
+    def customPaint(self, painter):
+        deg_per_m = 0.00001
+        if self._lat:
+            current = Marble.GeoDataCoordinates(self._long,
+                                                self._lat,
+                                                self._height,
+                                                Marble.GeoDataCoordinates.Degree)
+            painter.setPen(Qt.blue)
+            painter.drawEllipse(current, 10, 10, False)
+
+
+            painter.setPen(Qt.black)
+            painter.drawText(current, "Crazyflie")
+            for p in self._points:
+                pos = Marble.GeoDataCoordinates(p[0],
+                                                p[1],
+                                                p[2],
+                                                Marble.GeoDataCoordinates.Degree)
+                if p[4]:
+                    painter.setPen(Qt.green)
+                else:
+                    painter.setPen(Qt.red)
+                painter.drawEllipse(pos, 1, 1)

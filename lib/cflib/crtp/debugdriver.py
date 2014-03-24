@@ -135,18 +135,35 @@ class DebugDriver (CRTPDriver):
         self.fakeLogToc.append({"varid": 19, "vartype": 7,
                                 "vargroup": "altHold", "varname": "target",
                                 "min": 542, "max": 543, "mod": 0.1})
-        self.fakeLogToc.append({"varid": 20, "vartype": 7,
+        self.fakeLogToc.append({"varid": 20, "vartype": 6,
                                 "vargroup": "gps", "varname": "lat",
-                                "min": 55.611219, "max": 55.611279,
-                                "mod": 0.00001})
-        self.fakeLogToc.append({"varid": 21, "vartype": 7,
-                                "vargroup": "gps", "varname": "long",
-                                "min": 12.994511, "max": 12.994571,
-                                "mod": 0.00001})
-        self.fakeLogToc.append({"varid": 22, "vartype": 7,
-                                "vargroup": "gps", "varname": "alt",
-                                "min": 0.0, "max": 100.0,
-                                "mod": 1.0})
+                                "min": 556112190, "max": 556112790,
+                                "mod": 10})
+        self.fakeLogToc.append({"varid": 21, "vartype": 6,
+                                "vargroup": "gps", "varname": "lon",
+                                "min": 129945110, "max": 129945710,
+                                "mod": 10})
+        self.fakeLogToc.append({"varid": 22, "vartype": 6,
+                                "vargroup": "gps", "varname": "hMSL",
+                                "min": 0, "max": 100000,
+                                "mod": 1000})
+        self.fakeLogToc.append({"varid": 23, "vartype": 6,
+                                "vargroup": "gps", "varname": "heading",
+                                "min": -10000000, "max": 10000000,
+                                "mod": 100000})
+        self.fakeLogToc.append({"varid": 24, "vartype": 6,
+                                "vargroup": "gps", "varname": "gSpeed",
+                                "min": 0, "max": 1000,
+                                "mod": 100})
+        self.fakeLogToc.append({"varid": 25, "vartype": 3,
+                                "vargroup": "gps", "varname": "hAcc",
+                                "min": 0, "max": 5000,
+                                "mod": 100})
+        self.fakeLogToc.append({"varid": 26, "vartype": 1,
+                                "vargroup": "gps", "varname": "fixType",
+                                "min": 0, "max": 5,
+                                "mod": 1})
+
 
         # Fill up the fake logging TOC with values and data
         self.fakeParamToc = []
@@ -246,7 +263,9 @@ class DebugDriver (CRTPDriver):
                 ["debug://0/1", "Fail to connect"],
                 ["debug://0/2", "Incomplete log TOC download"],
                 ["debug://0/3", "Insert random delays on replies"],
-                ["debug://0/4", "Insert random delays on replies and random TOC CRCs"]]
+                ["debug://0/4", "Insert random delays on replies and random TOC CRCs"],
+                ["debug://0/5", "Normal but random TOC CRCs"]]
+
 
     def get_status(self):
         return "Ok"
@@ -280,6 +299,8 @@ class DebugDriver (CRTPDriver):
             self._packet_handler._random_answer_delay = True
         if (re.search("^debug://.*/4\Z", uri)):
             self._packet_handler._random_answer_delay = True
+            self._packet_handler._random_toc_crcs = True
+        if (re.search("^debug://.*/5\Z", uri)):
             self._packet_handler._random_toc_crcs = True
 
         self.fakeConsoleThread = None
