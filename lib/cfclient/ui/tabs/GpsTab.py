@@ -29,6 +29,7 @@
 This tab plots different logging data defined by configurations that has been
 pre-configured.
 """
+import math
 
 __author__ = 'Bitcraze AB'
 __all__ = ['GpsTab']
@@ -111,6 +112,9 @@ class GpsTab(Tab, gps_tab_class):
             self._marble.setShowOverviewMap(False)
             self._marble.setShowScaleBar(False)
             self._marble.setShowCompass(False)
+
+            self._marble.setShowGrid(False)
+            self._marble.setProjection(Marble.Mercator)
 
             # Change the map to center on Australia
 
@@ -259,18 +263,13 @@ if should_enable_tab:
             self.update()
 
         def customPaint(self, painter):
-            deg_per_m = 0.00001
             if self._lat:
                 current = Marble.GeoDataCoordinates(self._long,
                                                     self._lat,
                                                     self._height,
                                                     Marble.GeoDataCoordinates.Degree)
-                painter.setPen(Qt.blue)
-                painter.drawEllipse(current, 10, 10, False)
 
-
-                painter.setPen(Qt.black)
-                painter.drawText(current, "Crazyflie")
+                #Paint data points
                 for p in self._points:
                     pos = Marble.GeoDataCoordinates(p[0],
                                                     p[1],
@@ -281,3 +280,14 @@ if should_enable_tab:
                     else:
                         painter.setPen(Qt.red)
                     painter.drawEllipse(pos, 1, 1)
+
+                # Paint accuracy
+                painter.setPen(Qt.blue)
+                painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 255, 64)))
+                pixel_per_meter = self.radiusFromDistance(self.distance())/(6371.0*1000)
+                painter.drawEllipse(current, self._accu*pixel_per_meter, self._accu*pixel_per_meter, False)
+
+                #Paint Crazyflie
+                painter.setPen(Qt.black)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawText(current, "Crazyflie")
