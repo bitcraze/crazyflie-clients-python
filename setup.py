@@ -5,20 +5,15 @@ import glob
 import os
 from subprocess import Popen, PIPE
 
-#Recover version from Mercurial
+#Recover version from Git
 try:
-    process = Popen(["hg", "identify", "-it"], stdout=PIPE)
+    process = Popen(["git", "describe", "--tags"], stdout=PIPE)
     (output, err) = process.communicate()
     exit_code = process.wait()
 except OSError:
-    raise Exception("Cannot run hg: Mercurial is required to generate packages!")
+    raise Exception("Cannot run git: Git is required to generate packages!")
 
-output = output.strip().split(" ")
-
-if len(output) < 2 or output[1] == "tip":
-    VERSION = output[0]
-else:
-    VERSION = output[1]
+VERSION = output.strip()
 
 try:
     import py2exe
