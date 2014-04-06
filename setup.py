@@ -6,6 +6,7 @@ import os
 import sys
 from subprocess import Popen, PIPE
 
+
 #Recover version from Git
 try:
     process = Popen(["git", "describe", "--tags"], stdout=PIPE)
@@ -15,6 +16,8 @@ except OSError:
     raise Exception("Cannot run git: Git is required to generate packages!")
 
 VERSION = output.strip()
+
+
 
 #Platform specific settings
 if sys.platform.startswith('win32'):
@@ -78,8 +81,9 @@ setup_args=dict(name='cfclient',
                    glob.glob('lib/cfclient/*.png'))],
       **setup_args)
 
+
+
 #Fetch values from package.xml when using catkin
-import os
 if os.getenv('CATKIN_TEST_RESULTS_DIR'):
     from catkin_pkg.python_setup import generate_distutils_setup
     #Delete keys which should not match catkin packaged variant
@@ -87,16 +91,18 @@ if os.getenv('CATKIN_TEST_RESULTS_DIR'):
         setup_args.pop(k, None)
     setup_args=generate_distutils_setup(**setup_args)
 
-#Write a temp file to pass version into script
-with open(os.path.join(os.path.dirname(__file__),
-                       "lib",
-                       "cfclient",
-                       "version.py"), "w") as versionpy:
-    versionpy.write("VERSION='{}'".format(VERSION))
+
+
+#Write a temp file to pass verision into script
+version_file = os.path.join(os.path.dirname(__file__),
+                            "lib", "cfclient", "version.py");
+try:
+    with open(version_file, "w") as versionpy:
+        versionpy.write("VERSION='{}'".format(VERSION))
+except:
+    print("Warning: Version file cannot be written.")
 
 setup(**setup_args)
 
-os.remove(os.path.join(os.path.dirname(__file__),
-                       "lib",
-                       "cfclient",
-                       "version.py"))
+if (os.path.isfile(version_file)):
+    os.remove(version_file)
