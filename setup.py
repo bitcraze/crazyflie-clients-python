@@ -42,13 +42,8 @@ else:
     setup_args=dict(
         scripts=['bin/cfclient', 'bin/cfheadless'])
 
-with open(os.path.join(os.path.dirname(__file__),
-                       "lib",
-                       "cfclient",
-                       "version.py"), "w") as versionpy:
-    versionpy.write("VERSION='{}'".format(VERSION))
-
-setup(name='cfclient',
+#Initial parameters
+setup_args=dict(name='cfclient',
       description='Bitcraze Cazyflie nano quadcopter client',
       version=VERSION,
       author='Bitcraze team',
@@ -82,6 +77,24 @@ setup(name='cfclient',
                   ('cfclient',
                    glob.glob('lib/cfclient/*.png'))],
       **setup_args)
+
+#Fetch values from package.xml when using catkin
+import os
+if os.getenv('CATKIN_TEST_RESULTS_DIR'):
+    from catkin_pkg.python_setup import generate_distutils_setup
+    #Delete keys which should not match catkin packaged variant
+    for k in ('version', 'url'):
+        setup_args.pop(k, None)
+    setup_args=generate_distutils_setup(**setup_args)
+
+#Write a temp file to pass version into script
+with open(os.path.join(os.path.dirname(__file__),
+                       "lib",
+                       "cfclient",
+                       "version.py"), "w") as versionpy:
+    versionpy.write("VERSION='{}'".format(VERSION))
+
+setup(**setup_args)
 
 os.remove(os.path.join(os.path.dirname(__file__),
                        "lib",
