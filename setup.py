@@ -3,6 +3,7 @@
 from distutils.core import setup
 import glob
 import os
+import sys
 from subprocess import Popen, PIPE
 
 #Recover version from Git
@@ -15,10 +16,31 @@ except OSError:
 
 VERSION = output.strip()
 
-try:
-    import py2exe
-except ImportError:
-    print("Warning: py2exe not usable")
+#Platform specific settings
+if sys.platform.startswith('win32'):
+    try:
+        import py2exe
+    except ImportError:
+        print("Warning: py2exe not usable")
+
+    setup_args=dict(
+        console=[{
+            "script": 'bin/cfclient',
+            "icon_resources": [(1, "bitcraze.ico")]
+        }],
+        options={"py2exe": {"includes": ["sip", "PyQt4",
+                                         "cfclient.ui.widgets",
+                                         "cflib.bootloader.cloader",
+                                         "cfclient.ui.toolboxes.*",
+                                         "cfclient.ui.*",
+                                         "cfclient.ui.tabs.*",
+                                         "cfclient.ui.widgets.*",
+                                         "cfclient.ui.dialogs.*"],
+                            "excludes": ["AppKit"],
+                            "skip_archive": True}})
+else:
+    setup_args=dict(
+        scripts=['bin/cfclient', 'bin/cfheadless'])
 
 with open(os.path.join(os.path.dirname(__file__),
                        "lib",
@@ -38,14 +60,6 @@ setup(name='cfclient',
                 'cfclient.utils', 'cfclient.ui.dialogs', 'cflib',
                 'cflib.bootloader', 'cflib.crazyflie', 'cflib.drivers',
                 'cflib.utils', 'cflib.crtp'],
-      scripts=['bin/cfclient'],
-
-      # Py2exe specifics
-      console=[ { 
-                  "script" : 'bin/cfclient',
-                  "icon_resources": [(1, "bitcraze.ico")]
-                }
-              ],
       data_files=[('', ['README.md', 'LICENSE.txt']),
                   ('cfclient/ui',
                    glob.glob('lib/cfclient/ui/*.ui')),
@@ -67,15 +81,7 @@ setup(name='cfclient',
                    glob.glob('lib/cfclient/configs/log/*.json')),
                   ('cfclient',
                    glob.glob('lib/cfclient/*.png'))],
-      options={"py2exe": {"includes": ["sip", "PyQt4",
-                                         "cfclient.ui.widgets",
-                                         "cflib.bootloader.cloader",
-                                         "cfclient.ui.toolboxes.*",
-                                         "cfclient.ui.*", "cfclient.ui.tabs.*",
-                                         "cfclient.ui.widgets.*",
-                                         "cfclient.ui.dialogs.*"],
-                           "excludes": ["AppKit"],
-                           "skip_archive": True}})
+      **setup_args)
 
 os.remove(os.path.join(os.path.dirname(__file__),
                        "lib",
