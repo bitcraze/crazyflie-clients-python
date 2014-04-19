@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#from pygame.locals import *
 #
 #     ||          ____  _ __
 #  +------+      / __ )(_) /_______________ _____  ___
@@ -92,9 +93,9 @@ def main():
         sys.exit(1)
 
     try:
-        import pygame
+        import sdl2
     except ImportError:
-        logger.critical("No pygame installation found, exiting!")
+        logger.critical("No pysdl2 installation found, exiting!")
         sys.exit(1)
 
     try:

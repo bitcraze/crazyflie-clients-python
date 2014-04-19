@@ -41,7 +41,6 @@ logger = logging.getLogger(__name__)
 
 from cfclient.utils.config_manager import ConfigManager
 from cflib.crtp.exceptions import CommunicationException
-from pygame.locals import *
 
 from PyQt4 import Qt, QtCore, QtGui, uic
 from PyQt4.QtCore import *
