@@ -1,0 +1,95 @@
+{
+  "inputconfig": {
+    "inputdevice": {
+      "updateperiod": 10, 
+      "springythrottle": false,
+      "name": "Joystick", 
+      "axis": [
+        {
+          "scale": -1.0, 
+          "type": "Input.AXIS", 
+          "id": 3, 
+          "key": "thrust", 
+          "name": "thrust"
+        }, 
+        {
+          "scale": 1.0, 
+          "type": "Input.AXIS", 
+          "id": 2, 
+          "key": "yaw", 
+          "name": "yaw"
+        }, 
+        {
+          "scale": 1.0, 
+          "type": "Input.AXIS", 
+          "id": 0, 
+          "key": "roll", 
+          "name": "roll"
+        }, 
+        {
+          "scale": -1.0, 
+          "type": "Input.AXIS", 
+          "id": 1, 
+          "key": "pitch", 
+          "name": "pitch"
+        }, 
+        {
+          "scale": 1.0,
+          "type": "Input.HAT",
+          "id": 0,
+          "key": "trim",
+          "name": "trim"
+        },
+        {
+          "scale": -1.0, 
+          "type": "Input.BUTTON", 
+          "id": 4, 
+          "key": "pitchcal", 
+          "name": "pitchNeg"
+        }, 
+        {
+          "scale": 1.0, 
+          "type": "Input.BUTTON", 
+          "id": 5, 
+          "key": "pitchcal", 
+          "name": "pitchPos"
+        }, 
+        {
+          "scale": 1.0, 
+          "type": "Input.BUTTON", 
+          "id": 1, 
+          "key": "estop", 
+          "name": "killswitch"
+        }, 
+        {
+          "scale": -1.0, 
+          "type": "Input.BUTTON", 
+          "id": 2, 
+          "key": "rollcal", 
+          "name": "rollNeg"
+        }, 
+        {
+          "scale": 1.0, 
+          "type": "Input.BUTTON", 
+          "id": 3, 
+          "key": "rollcal", 
+          "name": "rollPos"
+        }, 
+        {
+          "scale": 1.0, 
+          "type": "Input.BUTTON", 
+          "id": 0, 
+          "key": "althold", 
+          "name": "althold"
+        }, 
+        {
+          "scale": 1.0, 
+          "type": "Input.BUTTON", 
+          "id": 6, 
+          "key": "exit", 
+          "name": "exitapp"
+        }
+      ]
+    }
+  }
+}
