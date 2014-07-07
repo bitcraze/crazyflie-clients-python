@@ -31,8 +31,8 @@ The input module that will read joysticks/input devices and send control set-
 points to the Crazyflie. It will also accept settings from the UI.
 
 This module can use different drivers for reading the input device data.
-Currently it can just use the PyGame driver but in the future there will be a
-Linux and Windows driver that can bypass PyGame.
+Currently it can just use the PySdl2 driver but in the future there will be a
+Linux and Windows driver that can bypass PySdl2.
 """
 
 __author__ = 'Bitcraze AB'
