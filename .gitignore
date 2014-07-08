@@ -15,3 +15,4 @@ msvcp90.dll
 
 # PyCharm
 .idea/*
+.DS_Store
