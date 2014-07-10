@@ -81,6 +81,7 @@ class ConfigManager():
                 for a in data["inputconfig"]["inputdevice"]["axis"]:
                     axis = {}
                     axis["scale"] = a["scale"]
+                    axis["offset"] = a["offset"] if "offset" in a else 0.0
                     axis["type"] = a["type"]
                     axis["key"] = a["key"]
                     axis["name"] = a["name"]

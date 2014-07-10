@@ -63,6 +63,8 @@ class PyGameReader():
                 if (self.inputMap[index]["type"] == "Input.AXIS"):
                     key = self.inputMap[index]["key"]
                     axisvalue = self.j.get_axis(e.axis)
+                    # Offset the value first
+                    axisvalue = axisvalue + self.inputMap[index]["offset"]
                     # All axis are in the range [-a,+a]
                     axisvalue = axisvalue * self.inputMap[index]["scale"]
                     # The value is now in the correct direction and in the range [-1,1]
