@@ -142,11 +142,11 @@ class Joystick():
         """ Decode a jsdev event into a dict """
         #TODO: Add timestamp?
         if jsdata[JE_TYPE] & JS_EVENT_AXIS != 0:
-            return JEvent(type=TYPE_AXIS,
+            return JEvent(evt_type=TYPE_AXIS,
                           number=jsdata[JE_NUMBER],
                           value=jsdata[JE_VALUE] / 32768.0)
         if jsdata[JE_TYPE] & JS_EVENT_BUTTON != 0:
-            return JEvent(type=TYPE_BUTTON,
+            return JEvent(evt_type=TYPE_BUTTON,
                           number=jsdata[JE_NUMBER],
                           value=jsdata[JE_VALUE] / 32768.0)
 
