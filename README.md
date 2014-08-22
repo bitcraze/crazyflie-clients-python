@@ -31,26 +31,21 @@ client" will be added to the start menu.
 
 ### Using homebrew
 **IMPORTANT NOTE**: The following will use
-[[http://mxcl.github.io/homebrew/|homebrew]]and its own Python distribution. If
+[Homebrew](http://brew.sh/) and its own Python distribution. If
 you have a lot of other 3rd party python stuff already running on your system
 they might or might not affected of this.
 
-1. Install homebrew
+1. [Install the Command Line Tools](https://gist.github.com/derhuerst/1b15ff4652a867391f03#1--install-the-command-line-tools).
 
-```
-ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
-```
-You also need to install Command Line Tools for Xcode or
-[Xcode](https://developer.apple.com/xcode/) if you don't already have them
-installed.
+2. [Install Homebrew](https://gist.github.com/derhuerst/1b15ff4652a867391f03#2--install-homebrew).
 
-2. Install hombrew's Python installation
+3. Install Homebrew's Python
 ```
 brew install python
 ```
-This will also pull [pip](http://www.pip-installer.org/en/latest/), which we
+This will also pull [pip](https://pip.pypa.io/en/latest/), which we
 will use later to install some Python modules that are not distributed through
-homebrew.
+Homebrew.
 
 3. Make sure the homebrew Python version is used system-wide
 To do this we need to prepend this installation to our PYTHONPATH:
