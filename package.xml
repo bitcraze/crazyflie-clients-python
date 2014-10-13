@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+  <!-- Changed the name to cfclient to avoid '_', as, when installed,
+       python converts them to '-' which are not allowed in catkin pkgs.
+       This prevents get_distribution from working, and retriving version
+       as specified in setup.py -->
+  <name>cfclient</name>
+  <version>2014.04.9001</version>
+  <description>Bitcraze Cazyflie nano quadcopter client</description>
+
+  <url type="website">https://github.com/mchenryc/crazyflie_clients_python</url>
+  <license>GPL</license>
+
+  <author email="contact@bitcraze.se">Bitcraze team</author>
+  <maintainer email="mchenryc@gmail.com">Chadwick McHenry</maintainer>
+
+  <!-- Dependencies can be catkin packages or system dependencies -->
+  <!-- Use build_depend for packages you need at compile time: -->
+  <!-- Use buildtool_depend for build tool packages: -->
+  <!-- Use run_depend for packages you need at runtime: -->
+  <!-- Use test_depend for packages you need only for testing: -->
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>rospy</build_depend>
+
+</package>
