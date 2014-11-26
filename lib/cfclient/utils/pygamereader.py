@@ -44,7 +44,7 @@ class PyGameReader():
     def start_input(self, deviceId, inputMap):
         """Initalize the reading and open the device with deviceId and set the mapping for axis/buttons using the
         inputMap"""
-        self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":0.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False, "althold":False}
+        self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":-1.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False, "althold":False}
         self.inputMap = inputMap
         self.j = pygame.joystick.Joystick(deviceId)
         self.j.init()
@@ -98,6 +98,18 @@ class PyGameReader():
             except Exception:
                 # Button not mapped, ignore..
                 pass            
+
+          if e.type == pygame.locals.JOYHATMOTION:
+            index = "Input.HAT-%d" % e.hat
+            try:
+                if (self.inputMap[index]["type"] == "Input.HAT"):
+                    key = self.inputMap[index]["key"]
+                    if (key == "trim"):
+                        self.data["rollcal"] = e.value[0] * self.inputMap[index]["scale"]
+                        self.data["pitchcal"] = e.value[1] * self.inputMap[index]["scale"]
+            except Exception:
+                # Hat not mapped, ignore..
+                pass
             
 
         return self.data

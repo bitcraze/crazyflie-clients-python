@@ -59,10 +59,18 @@ class ConfigManager():
         self._list_of_configs = []
 
     def get_config(self, config_name):
-        """Get the configuration for an input device."""
+        """Get the button and axis mappings for an input device."""
         try:
             idx = self._list_of_configs.index(config_name)
             return self._input_config[idx]
+        except:
+            return None
+    
+    def get_settings(self, config_name):
+        """Get the settings for an input device."""
+        try:
+            idx = self._list_of_configs.index(config_name)
+            return self._input_settings[idx]
         except:
             return None
 
@@ -72,32 +80,39 @@ class ConfigManager():
             configs = [os.path.basename(f) for f in
                        glob.glob(self.configs_dir + "/[A-Za-z]*.json")]
             self._input_config = []
+	    self._input_settings = []
             self._list_of_configs = []
             for conf in configs:
                 logger.info("Parsing [%s]", conf)
                 json_data = open(self.configs_dir + "/%s" % conf)
                 data = json.load(json_data)
                 new_input_device = {}
-                for a in data["inputconfig"]["inputdevice"]["axis"]:
-                    axis = {}
-                    axis["scale"] = a["scale"]
-                    axis["type"] = a["type"]
-                    axis["key"] = a["key"]
-                    axis["name"] = a["name"]
-                    try:
-                        ids = a["ids"]
-                    except:
-                        ids = [a["id"]]
-                    for id in ids:
-                        locaxis = copy.deepcopy(axis)
-                        if "ids" in a:
-                            if id == a["ids"][0]:
-                                locaxis["scale"] = locaxis["scale"] * -1
-                        locaxis["id"] = id
-                        # 'type'-'id' defines unique index for axis
-                        index = "%s-%d" % (a["type"], id)
-                        new_input_device[index] = locaxis
+		new_input_settings = {"updateperiod":10, "springythrottle":True}
+		for s in data["inputconfig"]["inputdevice"]:
+                    if s == "axis":
+                        for a in data["inputconfig"]["inputdevice"]["axis"]:
+                            axis = {}
+                            axis["scale"] = a["scale"]
+                            axis["type"] = a["type"]
+                            axis["key"] = a["key"]
+                            axis["name"] = a["name"]
+                            try:
+                                ids = a["ids"]
+                            except:
+                                ids = [a["id"]]
+                            for id in ids:
+                                locaxis = copy.deepcopy(axis)
+                                if "ids" in a:
+                                    if id == a["ids"][0]:
+                                        locaxis["scale"] = locaxis["scale"] * -1
+                                locaxis["id"] = id
+                                # 'type'-'id' defines unique index for axis
+                                index = "%s-%d" % (a["type"], id)
+                                new_input_device[index] = locaxis
+                    else:
+                        new_input_settings[s] = data["inputconfig"]["inputdevice"][s]
                 self._input_config.append(new_input_device)
+		self._input_settings.append(new_input_settings)
                 json_data.close()
                 self._list_of_configs.append(conf[:-5])
         except Exception as e:
