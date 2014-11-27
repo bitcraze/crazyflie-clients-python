@@ -88,7 +88,7 @@ while:
 port install libusb
 port install py-pyusb-devel
 port install py27-pyqt4
-port install py27-pygame
+port install py27-game
 ```
 3. To make it easier to run MacPorts, add ```/opt/local/bin``` to your PATH variable.
 The MacPorts installer should take care of that, but take a look at
