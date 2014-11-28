@@ -56,7 +56,7 @@ source ~/.bashrc
 
 4. Install SDL for Python
 ```
-brew install sdl sdl_image
+brew install sdl sdl2 sdl_image
 sdl_mixer sdl_ttf portmidi
 ```
 
@@ -65,7 +65,7 @@ sdl_mixer sdl_ttf portmidi
 brew install pyqt
 brew install libusb
 brew install mercurial
-pip install hg+http://bitbucket.org/pygame/pygame
+pip install pysdl2
 pip install pyusb
 ```
 
@@ -88,7 +88,7 @@ while:
 port install libusb
 port install py-pyusb-devel
 port install py27-pyqt4
-port install py27-pygame
+port install py27-pysdl2
 ```
 3. To make it easier to run MacPorts, add ```/opt/local/bin``` to your PATH variable.
 The MacPorts installer should take care of that, but take a look at
@@ -118,7 +118,7 @@ Dependencies
 The Crazyflie PC client has the following dependencies:
 
 * Python 2.7
-* pyGame
+* PySdl2
 * PyUSB
 * libusb
 * PyQt4
@@ -127,15 +127,15 @@ Example commands to install these dependencies:
 
 * Fedora (tested for 16 to 18):
 
-```sudo yum install pygame pyusb PyQt4```
+```sudo yum install pysdl2 pyusb PyQt4```
 
 * Ubuntu (tested for 10.04 / 11.10 / 12.04):
 
-```sudo apt-get install python2.7 python-usb python-pygame python-qt4```
+```sudo apt-get install python2.7 python-usb python-pysdl2 python-qt4```
 
 * OpenSUSE (tested for 11.3):
 
-```sudo zypper install python-pygame libusb python-usb```
+```sudo zypper install python-pysdl2 libusb python-usb```
 
 Setting udev permissions
 ------------------------

@@ -76,7 +76,7 @@ CREDITS_FORMAT = U"""
 <b>Used libraries</b><br>
 <a href="http://qt-project.org/">QT</a><br>
 <a href="http://www.riverbankcomputing.co.uk/software/pyqt/intro">PyQT</a><br>
-<a href="http://www.pygame.org/news.html">PyGame</a><br>
+<a href="http://pysdl2.readthedocs.org">PySDL2</a><br>
 <a href="http://www.pyqtgraph.org/">PyQtGraph</a><br>
 <a href="http://marble.kde.org/">KDE Marble</a><br>
 <a href="http://sourceforge.net/projects/pyusb/">PyUSB</a><br>
