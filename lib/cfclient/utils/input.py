@@ -81,9 +81,9 @@ class JoystickReader:
         self._has_pressure_sensor = False
 
         self._old_thrust = 0
-	self._old_raw_thrust = 0
+        self._old_raw_thrust = 0
         self._old_alt_hold = False
-	self._springy_throttle = True
+        self._springy_throttle = True
 
         self._trim_roll = Config().get("trim_roll")
         self._trim_pitch = Config().get("trim_pitch")
@@ -203,7 +203,7 @@ class JoystickReader:
                                     device_id,
                                     ConfigManager().get_config(config_name))
             settings = ConfigManager().get_settings(config_name)
-	    self._springy_throttle = settings["springythrottle"]
+            self._springy_throttle = settings["springythrottle"]
             self._read_timer.start()
         except Exception:
             self.device_error.call(
@@ -290,7 +290,7 @@ class JoystickReader:
                 thrust = data["thrust"] / 2 + 0.5
                 if althold and self._has_pressure_sensor:
                     #thrust = int(round(JoystickReader.deadband(thrust,0.2)*32767 + 32767)) #Convert to uint16
-	            thrust = 32767
+                    thrust = 32767
                 
                 else:
                     if raw_thrust < -0.90 or emergency_stop:
@@ -309,7 +309,7 @@ class JoystickReader:
                             thrust = 0
 
             self._old_thrust = thrust
-	    self._old_raw_thrust = raw_thrust
+            self._old_raw_thrust = raw_thrust
             # Yaw deadband
             # TODO: Add to input device config?
             yaw = JoystickReader.deadband(yaw,0.2)*self._max_yaw_rate           

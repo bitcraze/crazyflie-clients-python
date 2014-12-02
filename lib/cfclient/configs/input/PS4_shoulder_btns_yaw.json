@@ -1,0 +1,91 @@
+{
+  "inputconfig": {
+    "inputdevice": {
+      "updateperiod": 10,
+      "name": "PS4_shoulder_btns_yaw",
+      "axis": [
+        {
+          "scale": -1.0,
+          "type": "Input.AXIS",
+          "id": 5,
+          "key": "thrust",
+          "name": "thrust"
+        },
+        {
+          "offset": 1.0,
+          "scale": 0.5,
+          "type": "Input.AXIS",
+          "ids": [
+            3,
+            4
+          ],
+          "key": "yaw",
+          "name": "yaw"
+        },
+        {
+          "scale": 1.0,
+          "type": "Input.AXIS",
+          "id": 0,
+          "key": "roll",
+          "name": "roll"
+        },
+        {
+          "scale": -1.0,
+          "type": "Input.AXIS",
+          "id": 1,
+          "key": "pitch",
+          "name": "pitch"
+        },
+        {
+          "scale": -1.0,
+          "type": "Input.BUTTON",
+          "id": 22,
+          "key": "pitchcal",
+          "name": "pitchNeg"
+        },
+        {
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": 21,
+          "key": "pitchcal",
+          "name": "pitchPos"
+        },
+        {
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": -1,
+          "key": "estop",
+          "name": "killswitch"
+        },
+        {
+          "scale": -1.0,
+          "type": "Input.BUTTON",
+          "id": 23,
+          "key": "rollcal",
+          "name": "rollNeg"
+        },
+        {
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": 24,
+          "key": "rollcal",
+          "name": "rollPos"
+        },
+        {
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": 5,
+          "key": "althold",
+          "name": "althold"
+        },
+        {
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": -1,
+          "key": "exit",
+          "name": "exitapp"
+        }
+      ]
+    }
+  }
+}
