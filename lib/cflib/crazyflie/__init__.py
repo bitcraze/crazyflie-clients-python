@@ -52,6 +52,7 @@ from .param import Param
 from .log import Log
 from .toccache import TocCache
 from .mem import Memory
+from .platformservice import PlatformService
 
 import cflib.crtp
 
@@ -111,6 +112,7 @@ class Crazyflie():
         self.console = Console(self)
         self.param = Param(self)
         self.mem = Memory(self)
+        self.platform = PlatformService(self)
 
         self.link_uri = ""
 
