@@ -67,12 +67,29 @@ memlogging = {0x01: {"min": 0, "max": 255, "mod": 1, "vartype": 1},
               0x06: {"min":-50000, "max": 50000, "mod": 1000, "vartype": 6},
               0x07: {"min": 0, "max": 255, "mod": 1, "vartype": 1}}
 
+class FakeMemory:
+
+    TYPE_I2C = 0
+    TYPE_1W = 1
+
+    def __init__(self, type, size, addr, data=None):
+        self.type = type
+        self.size = size
+        self.addr = addr
+        self.data = [0] * size
+        if data:
+            for i in range(len(data)):
+                self.data[i] = data[i]
+
+    def erase(self):
+        self.data = [0] * self.size
 
 class DebugDriver (CRTPDriver):
     """ Debug driver used for debugging UI/communication without using a
     Crazyflie"""
     def __init__(self):
         self.fakeLoggingThreads = []
+        self._fake_mems = []
         # Fill up the fake logging TOC with values and data
         self.fakeLogToc = []
         self.fakeLogToc.append({"varid": 0, "vartype": 5, "vargroup": "imu",
@@ -255,7 +272,8 @@ class DebugDriver (CRTPDriver):
         self.queue = Queue.Queue()
         self._packet_handler = _PacketHandlingThread(self.queue,
                                                      self.fakeLogToc,
-                                                     self.fakeParamToc)
+                                                     self.fakeParamToc,
+                                                     self._fake_mems)
         self._packet_handler.start()
 
     def scan_interface(self):
@@ -264,7 +282,8 @@ class DebugDriver (CRTPDriver):
                 ["debug://0/2", "Incomplete log TOC download"],
                 ["debug://0/3", "Insert random delays on replies"],
                 ["debug://0/4", "Insert random delays on replies and random TOC CRCs"],
-                ["debug://0/5", "Normal but random TOC CRCs"]]
+                ["debug://0/5", "Normal but random TOC CRCs"],
+                ["debug://0/6", "Normal but empty I2C and OW mems"]]
 
 
     def get_status(self):
@@ -302,6 +321,28 @@ class DebugDriver (CRTPDriver):
             self._packet_handler._random_toc_crcs = True
         if (re.search("^debug://.*/5\Z", uri)):
             self._packet_handler._random_toc_crcs = True
+
+        if len(self._fake_mems) == 0:
+            # Insert some data here
+            self._fake_mems.append(FakeMemory(type=0, size=100, addr=0))
+            self._fake_mems.append(FakeMemory(type=1, size=112, addr=0x1234567890ABCDEF,
+                                              data=[0xeb, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x44, 0x00, 0x0e,
+                                                    0x01, 0x09, 0x62, 0x63, 0x4c, 0x65, 0x64, 0x52, 0x69, 0x6e,
+                                                    0x67, 0x02, 0x01, 0x62, 0x55]))
+            #self._fake_mems.append(FakeMemory(type=1, size=112, addr=0xFEDCBA0987654321,
+            #                                  data=[0xeb, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x44, 0x00, 0x44,
+            #                                        0x01, 0x2e, 0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20,
+            #                                        0x61, 0x20, 0x72, 0x65, 0x61, 0x6c, 0x6c, 0x79, 0x20, 0x6c,
+            #                                        0x6f, 0x6e, 0x67, 0x20, 0x6e, 0x61, 0x6d, 0x65, 0x2c, 0x20,
+            #                                        0x74, 0x68, 0x61, 0x74, 0x27, 0x73, 0x20, 0x6a, 0x75, 0x73,
+            #                                        0x74, 0x20, 0x67, 0x72, 0x65, 0x61, 0x74, 0x21, 0x02, 0x12,
+            #                                        0x53, 0x75, 0x70, 0x65, 0x72, 0x20, 0x72, 0x65, 0x76, 0x69,
+            #                                        0x73, 0x69, 0x6f, 0x6e, 0x20, 0x41, 0x35, 0x35, 0xc8]))
+
+        if (re.search("^debug://.*/6\Z", uri)):
+            logger.info("------------->Erasing memories on connect")
+            for m in self._fake_mems:
+                m.erase()
 
         self.fakeConsoleThread = None
 
@@ -342,12 +383,13 @@ class DebugDriver (CRTPDriver):
 
 class _PacketHandlingThread(Thread):
     """Thread for handling packets asynchronously"""
-    def __init__(self, out_queue, fake_log_toc, fake_param_toc):
+    def __init__(self, out_queue, fake_log_toc, fake_param_toc, fake_mems):
         Thread.__init__(self)
         self.setDaemon(True)
         self.queue = out_queue
         self.fakeLogToc = fake_log_toc
         self.fakeParamToc = fake_param_toc
+        self._fake_mems = fake_mems
         self._in_queue = Queue.Queue()
 
         self.inhibitAnswers = False
@@ -389,9 +431,58 @@ class _PacketHandlingThread(Thread):
                     self._handle_logging(pk)
                 elif (pk.port == CRTPPort.PARAM):
                     self.handleParam(pk)
+                elif (pk.port == CRTPPort.MEM):
+                    self._handle_mem_access(pk)
                 else:
                     logger.warning("Not handling incomming packets on port [%d]",
                                pk.port)
+
+    def _handle_mem_access(self, pk):
+        chan = pk.channel
+        cmd = struct.unpack("B", pk.data[0])[0]
+        payload = struct.pack("B" * (len(pk.datal) - 1), *pk.datal[1:])
+
+        if chan == 0:  # Info channel
+            p_out = CRTPPacket()
+            p_out.set_header(CRTPPort.MEM, 0)
+            if cmd == 1:  # Request number of memories
+                p_out.data = (1, len(self._fake_mems))
+            if cmd == 2:
+                id = ord(payload[0])
+                logger.info("Getting mem {}".format(id))
+                m = self._fake_mems[id]
+                p_out.data = struct.pack('<BBBIQ', 2, id, m.type, m.size, m.addr)
+            self._send_packet(p_out)
+
+        if chan == 1:  # Read channel
+            id = cmd
+            addr = struct.unpack("I", payload[0:4])[0]
+            length = ord(payload[4])
+            status = 0
+            logger.info("MEM: Read {}bytes at 0x{:X} from memory {}".format(length, addr, id))
+            m = self._fake_mems[id]
+            p_out = CRTPPacket()
+            p_out.set_header(CRTPPort.MEM, 1)
+            p_out.data = struct.pack("<BIB", id, addr, status)
+            p_out.data += struct.pack("B"*length, *m.data[addr:addr+length])
+            self._send_packet(p_out)
+
+        if chan == 2:  # Write channel
+            id = cmd
+            addr = struct.unpack("I", payload[0:4])[0]
+            data = payload[4:]
+            logger.info("MEM: Write {}bytes at 0x{:X} to memory {}".format(len(data), addr, id))
+            m = self._fake_mems[id]
+
+            for i in range(len(data)):
+                m.data[addr+i] = ord(data[i])
+
+            status = 0
+
+            p_out = CRTPPacket()
+            p_out.set_header(CRTPPort.MEM, 2)
+            p_out.data = struct.pack("<BIB", id, addr, status)
+            self._send_packet(p_out)
 
     def _handle_bootloader(self, pk):
         cmd = pk.datal[1]
