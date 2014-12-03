@@ -39,9 +39,10 @@ from .radiodriver import RadioDriver
 from .udpdriver import UdpDriver
 from .serialdriver import SerialDriver
 from .debugdriver import DebugDriver
+from .usbdriver import UsbDriver
 from .exceptions import WrongUriType
 
-DRIVERS = [RadioDriver, SerialDriver, UdpDriver, DebugDriver]
+DRIVERS = [RadioDriver, SerialDriver, UdpDriver, DebugDriver, UsbDriver]
 INSTANCES = []
 
 
