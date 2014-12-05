@@ -85,7 +85,6 @@ class Cf2ConfigDialog(QtGui.QWidget, service_dialog_class):
         self._pitch_trim.setValue(0)
         self._radio_channel.setValue(0)
         self._radio_speed.setCurrentIndex(0)
-        self._serial.setText("")
 
     def _write_data(self):
         self._write_data_btn.setEnabled(False)
