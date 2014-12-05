@@ -193,6 +193,7 @@
     <addaction name="menuItemConnect"/>
     <addaction name="menuItemQuickConnect"/>
     <addaction name="menuItemBootloader"/>
+    <addaction name="_menu_cf_config"/>
    </widget>
    <widget class="QMenu" name="_menu_inputdevice">
     <property name="title">
@@ -349,6 +350,14 @@
   <action name="_menuItem_openconfigfolder">
    <property name="text">
     <string>Open config folder</string>
+   </property>
+  </action>
+  <action name="_menu_cf_config">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Configure 2.0</string>
    </property>
   </action>
  </widget>

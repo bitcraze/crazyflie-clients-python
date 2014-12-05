@@ -283,7 +283,7 @@ class Crazyflie():
         if len(longest_match) > 0:
             del self._answer_patterns[longest_match]
 
-    def send_packet(self, pk, expected_reply=(), resend=False):
+    def send_packet(self, pk, expected_reply=(), resend=False, timeout=0.2):
         """
         Send a packet through the link interface.
 

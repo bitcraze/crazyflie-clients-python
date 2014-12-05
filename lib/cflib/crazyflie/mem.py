@@ -87,6 +87,67 @@ class MemoryElement(object):
         return ("Memory: id={}, type={}, size={}".format(
                 self.id, MemoryElement.type_to_string(self.type), self.size))
 
+class I2CElement(MemoryElement):
+    def __init__(self, id, type, size, mem_handler):
+        super(I2CElement, self).__init__(id=id, type=type, size=size, mem_handler=mem_handler)
+        self._update_finished_cb = None
+        self._write_finished_cb = None
+        self.elements = {}
+        self.valid = False
+
+    def new_data(self, mem, addr, data):
+        """Callback for when new memory data has been fetched"""
+        if mem.id == self.id:
+            if addr == 0:
+                # Check for header
+                if data[0:4] == "0xBC":
+                    logger.info("Got new data: {}".format(data))
+                    [self.elements["radio_channel"],
+                     self.elements["radio_speed"],
+                     self.elements["pitch_trim"],
+                     self.elements["roll_trim"]] = struct.unpack("<BBff", data[5:15])
+                    logger.info(self.elements)
+                    if self._checksum256(data[:15]) == ord(data[15]):
+                        self.valid = True
+
+                if self._update_finished_cb:
+                    self._update_finished_cb(self)
+                    self._update_finished_cb = None
+
+    def _checksum256(self, st):
+        return reduce(lambda x, y: x + y, map(ord, st)) % 256
+
+    def write_data(self, write_finished_cb):
+        data = (0x00, self.elements["radio_channel"], self.elements["radio_speed"],
+                self.elements["pitch_trim"], self.elements["roll_trim"])
+        image = struct.pack("<BBBff", *data)
+        # Adding some magic:
+        image = "0xBC" + image
+        image += struct.pack("B", self._checksum256(image))
+
+        self._write_finished_cb = write_finished_cb
+
+        self.mem_handler.write(self, 0x00, struct.unpack("B"*len(image), image))
+
+    def update(self, update_finished_cb):
+        """Request an update of the memory content"""
+        if not self._update_finished_cb:
+            self._update_finished_cb = update_finished_cb
+            self.valid = False
+            logger.info("Updating content of memory {}".format(self.id))
+            # Start reading the header
+            self.mem_handler.read(self, 0, 16)
+
+    def write_done(self, mem, addr):
+        if self._write_finished_cb and mem.id == self.id:
+            self._write_finished_cb(self, addr)
+            self._write_finished_cb = None
+
+    def disconnect(self):
+        self._update_finished_cb = None
+        self._write_finished_cb = None
+
+
 class OWElement(MemoryElement):
     """Memory class with extra functionality for 1-wire memories"""
 
@@ -182,8 +243,6 @@ class OWElement(MemoryElement):
             key_encoding = self._rev_element_mapping[element]
             elem += struct.pack("BB", key_encoding, len(elem_string))
             elem += elem_string
-
-        #logger.info("<<<<<< ELEM IS {}".format(len(elem)))
 
         elem_data = struct.pack("BB", 0x00, len(elem))
         elem_data += elem
@@ -528,6 +587,11 @@ class Memory():
                         self.mem_read_cb.add_callback(mem.new_data)
                         self.mem_write_cb.add_callback(mem.write_done)
                         self._ow_mems_left_to_update.append(mem.id)
+                    elif mem_type == MemoryElement.TYPE_I2C:
+                        mem = I2CElement(id=mem_id, type=mem_type, size=mem_size, mem_handler=self)
+                        logger.info(mem)
+                        self.mem_read_cb.add_callback(mem.new_data)
+                        self.mem_write_cb.add_callback(mem.write_done)
                     else:
                         mem = MemoryElement(id=mem_id, type=mem_type, size=mem_size, mem_handler=self)
                         logger.info(mem)

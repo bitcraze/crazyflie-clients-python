@@ -42,6 +42,7 @@ from PyQt4.QtGui import QLabel, QActionGroup, QMessageBox, QAction, QDesktopServ
 
 from dialogs.connectiondialogue import ConnectDialogue
 from dialogs.inputconfigdialogue import InputConfigDialogue
+from dialogs.cf2config import Cf2ConfigDialog
 from cflib.crazyflie import Crazyflie
 from dialogs.logconfigdialogue import LogConfigDialogue
 
@@ -142,7 +143,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.batteryUpdatedSignal.connect(self.updateBatteryVoltage)
         self._menuitem_rescandevices.triggered.connect(self._rescan_devices)
         self._menuItem_openconfigfolder.triggered.connect(self._open_config_folder)
-           
+
         self._auto_reconnect_enabled = GuiConfig().get("auto_reconnect")
         self.autoReconnectCheckBox.toggled.connect(
                                               self._auto_reconnect_changed)
@@ -191,9 +192,12 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         self.logConfigDialogue = LogConfigDialogue(cfclient.ui.pluginhelper)
         self._bootloader_dialog = BootloaderDialog(cfclient.ui.pluginhelper)
+        self._cf2config_dialog = Cf2ConfigDialog(cfclient.ui.pluginhelper)
         self.menuItemBootloader.triggered.connect(self._bootloader_dialog.show)
         self._about_dialog = AboutDialog(cfclient.ui.pluginhelper)
         self.menuItemAbout.triggered.connect(self._about_dialog.show)
+        self._menu_cf2_config.triggered.connect(self._cf2config_dialog.show)
+
         # Loading toolboxes (A bit of magic for a lot of automatic)
         self.toolboxes = []
         self.toolboxesMenuItem.setMenu(QtGui.QMenu())
@@ -250,6 +254,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.connectButton.setText("Connect")
             self.menuItemQuickConnect.setEnabled(True)
             self.batteryBar.setValue(3000)
+            self._menu_cf2_config.setEnabled(False)
             self.linkQualityBar.setValue(0)
             self.menuItemBootloader.setEnabled(True)
             self.logConfigAction.setEnabled(False)
@@ -261,6 +266,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.menuItemConnect.setText("Disconnect")
             self.connectButton.setText("Disconnect")
             self.logConfigAction.setEnabled(True)
+            self._menu_cf2_config.setEnabled(True)
         if (newState == UIState.CONNECTING):
             s = "Connecting to %s ..." % linkURI
             self.setWindowTitle(s)
