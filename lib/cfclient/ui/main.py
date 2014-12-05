@@ -43,6 +43,7 @@ from PyQt4.QtGui import QLabel, QActionGroup, QMessageBox, QAction, QDesktopServ
 from dialogs.connectiondialogue import ConnectDialogue
 from dialogs.inputconfigdialogue import InputConfigDialogue
 from dialogs.cf2config import Cf2ConfigDialog
+from dialogs.cf1config import Cf1ConfigDialog
 from cflib.crazyflie import Crazyflie
 from dialogs.logconfigdialogue import LogConfigDialogue
 
@@ -193,10 +194,12 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.logConfigDialogue = LogConfigDialogue(cfclient.ui.pluginhelper)
         self._bootloader_dialog = BootloaderDialog(cfclient.ui.pluginhelper)
         self._cf2config_dialog = Cf2ConfigDialog(cfclient.ui.pluginhelper)
+        self._cf1config_dialog = Cf1ConfigDialog(cfclient.ui.pluginhelper)
         self.menuItemBootloader.triggered.connect(self._bootloader_dialog.show)
         self._about_dialog = AboutDialog(cfclient.ui.pluginhelper)
         self.menuItemAbout.triggered.connect(self._about_dialog.show)
         self._menu_cf2_config.triggered.connect(self._cf2config_dialog.show)
+        self._menu_cf1_config.triggered.connect(self._cf1config_dialog.show)
 
         # Loading toolboxes (A bit of magic for a lot of automatic)
         self.toolboxes = []

@@ -31,7 +31,7 @@ read/write the configuration block in the Crazyflie flash.
 """
 
 __author__ = 'Bitcraze AB'
-__all__ = ['BootloaderDialog']
+__all__ = ['Cf1ConfigDialog']
 
 import struct
 import sys
@@ -51,7 +51,7 @@ from cflib.bootloader.cloader import Cloader
 from cfclient.utils.guiconfig import GuiConfig
 
 service_dialog_class = uic.loadUiType(sys.path[0] +
-                                      "/cfclient/ui/dialogs/bootloader.ui")[0]
+                                      "/cfclient/ui/dialogs/cf1config.ui")[0]
 
 
 class UIState:
@@ -63,15 +63,15 @@ class UIState:
     RESET = 4
 
 
-class BootloaderDialog(QtGui.QWidget, service_dialog_class):
+class Cf1ConfigDialog(QtGui.QWidget, service_dialog_class):
     """Tab for update the Crazyflie firmware and for reading/writing the config
     block in flash"""
     def __init__(self, helper, *args):
-        super(BootloaderDialog, self).__init__(*args)
+        super(Cf1ConfigDialog, self).__init__(*args)
         self.setupUi(self)
 
-        self.tabName = "Service"
-        self.menuName = "Service"
+        self.tabName = "CF1 Config"
+        self.menuName = "CF1 Config"
 
         # self.tabWidget = tabWidget
         self.helper = helper
@@ -80,16 +80,14 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
         self.clt = CrazyloadThread()
 
         # Connecting GUI signals (a pity to do that manually...)
-        self.imagePathBrowseButton.clicked.connect(self.pathBrowse)
-        self.programButton.clicked.connect(self.programAction)
-        self.verifyButton.clicked.connect(self.verifyAction)
         self.coldBootButton.clicked.connect(self.initiateColdboot)
         self.resetButton.clicked.connect(self.resetCopter)
+        self.saveConfigblock.clicked.connect(self.writeConfig)
         self._cancel_bootloading.clicked.connect(self.close)
 
         # connecting other signals
-        self.clt.programmed.connect(self.programDone)
-        self.clt.verified.connect(self.verifyDone)
+        #self.clt.programmed.connect(self.programDone)
+        #self.clt.verified.connect(self.verifyDone)
         self.clt.statusChanged.connect(self.statusUpdate)
         # self.clt.updateBootloaderStatusSignal.connect(
         #                                         self.updateBootloaderStatus)
@@ -100,6 +98,9 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
         self.clt.failed_signal.connect(lambda m: self._ui_connection_fail(m))
         self.clt.disconnectedSignal.connect(lambda:
                                         self.setUiState(UIState.DISCONNECTED))
+        self.clt.updateConfigSignal.connect(self.updateConfig)
+        self.clt.updateCpuIdSignal.connect(lambda cpuid:
+                                           self.copterId.setText(cpuid))
 
         self.clt.start()
 
@@ -110,16 +111,14 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
     def setUiState(self, state):
         if (state == UIState.DISCONNECTED):
             self.resetButton.setEnabled(False)
-            self.programButton.setEnabled(False)
             self.setStatusLabel("Not connected")
             self.coldBootButton.setEnabled(True)
             self.progressBar.setTextVisible(False)
             self.progressBar.setValue(0)
             self.statusLabel.setText('Status: <b>IDLE</b>')
-            self.imagePathLine.setText("")
+            self.saveConfigblock.setEnabled(False)
         elif (state == UIState.CONNECTING):
             self.resetButton.setEnabled(False)
-            self.programButton.setEnabled(False)
             self.setStatusLabel("Trying to connect cold bootloader, restart "
                                 "the Crazyflie to connect")
             self.coldBootButton.setEnabled(False)
@@ -128,15 +127,18 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
             self.coldBootButton.setEnabled(True)
         elif (state == UIState.COLD_CONNECT):
             self.resetButton.setEnabled(True)
-            self.programButton.setEnabled(True)
+            self.saveConfigblock.setEnabled(True)
             self.setStatusLabel("Connected to bootloader")
             self.coldBootButton.setEnabled(False)
         elif (state == UIState.RESET):
             self.setStatusLabel("Resetting to firmware, disconnected")
             self.resetButton.setEnabled(False)
-            self.programButton.setEnabled(False)
             self.coldBootButton.setEnabled(False)
-            self.imagePathLine.setText("")
+            self.rollTrim.setValue(0)
+            self.pitchTrim.setValue(0)
+            self.radioChannel.setValue(0)
+            self.radioSpeed.setCurrentIndex(0)
+            self.copterId.setText("")
 
     def setStatusLabel(self, text):
         self.connectionStatus.setText("Status: <b>%s</b>" % text)
@@ -161,41 +163,6 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
         self.setUiState(UIState.RESET)
         self.clt.resetCopterSignal.emit()
 
-    @pyqtSlot()
-    def pathBrowse(self):
-        filename = QtGui.QFileDialog.getOpenFileName()
-        if filename != "":
-            self.imagePathLine.setText(filename)
-        pass
-
-    @pyqtSlot()
-    def programAction(self):
-        # self.setStatusLabel("Initiate programming")
-        self.resetButton.setEnabled(False)
-        if self.imagePathLine.text() != "":
-            self.clt.program.emit(self.imagePathLine.text(),
-                                  self.verifyCheckBox.isChecked())
-        else:
-            msgBox = QtGui.QMessageBox()
-            msgBox.setText("Please choose an image file to program.")
-
-            msgBox.exec_()
-
-    @pyqtSlot()
-    def verifyAction(self):
-        self.statusLabel.setText('Status: <b>Initiate verification</b>')
-        pass
-
-    @pyqtSlot()
-    def programDone(self):
-        self.statusLabel.setText('Status: <b>Programing complete</b>')
-        pass
-
-    @pyqtSlot()
-    def verifyDone(self):
-        self.statusLabel.setText('Status: <b>Verification complete</b>')
-        pass
-
     @pyqtSlot(str, int)
     def statusUpdate(self, status, progress):
         logger.debug("Status: [%s] | %d", status, progress)
@@ -211,6 +178,14 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
 
     def initiateColdboot(self):
         self.clt.initiateColdBootSignal.emit("radio://0/100")
+
+    def writeConfig(self):
+        pitchTrim = self.pitchTrim.value()
+        rollTrim = self.rollTrim.value()
+        channel = self.radioChannel.value()
+        speed = self.radioSpeed.currentIndex()
+
+        self.clt.writeConfigSignal.emit(channel, speed, rollTrim, pitchTrim)
 
 
 # No run method specified here as the default run implementation is running the

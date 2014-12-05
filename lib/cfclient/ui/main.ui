@@ -194,6 +194,7 @@
     <addaction name="menuItemQuickConnect"/>
     <addaction name="menuItemBootloader"/>
     <addaction name="_menu_cf2_config"/>
+    <addaction name="_menu_cf1_config"/>
    </widget>
    <widget class="QMenu" name="_menu_inputdevice">
     <property name="title">
@@ -361,6 +362,11 @@
    </property>
   </action>
   <action name="_menu_cf_config_2">
+   <property name="text">
+    <string>Configure 1.0</string>
+   </property>
+  </action>
+  <action name="_menu_cf1_config">
    <property name="text">
     <string>Configure 1.0</string>
    </property>
