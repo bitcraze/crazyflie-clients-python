@@ -18,7 +18,7 @@ To install the Crazyflie PC client in Linux, you can run the setup script with:
 This will install the Crazyflie PC client systemwide, create a udev entry for
 the Crazyradio and setup the permissions so that the current user can use the
 radio without root permissions after restarting the computer. For further
-instructions on how to install manually, see below.
+instructions on how to run from source see bellow.
 
 ## Windows
 
@@ -26,6 +26,9 @@ To install the Crazyflie PC client in Windows, download the installation
 program from the [binary download
 page](http://wiki.bitcraze.se/projects:crazyflie:binaries:index)."Crazyflie
 client" will be added to the start menu.
+
+Running from source
+-------------------
 
 ## Mac OSX
 
@@ -79,17 +82,24 @@ python bin/cfclient
 1. [Install MacPorts if needed](http://www.macports.org/install.php). Otherwise
 update your installation with:
 ```
-port selfupdate
-port upgrade outdated
+sudo port selfupdate
+sudo port upgrade outdated
 ```
+
 2. Install dependencies. Note that there are quite a few, so this could take a
 while:
 ```
-port install libusb
-port install py-pyusb-devel
-port install py27-pyqt4
-port install py27-pysdl2
+sudo port install libusb python27 py27-pyusb py27-SDL2 py27-pyqt4
 ```
+To enable the plotter tab install pyqtgraph, this takes a lot of time:
+```
+sudo port install py27-pyqtgraph
+```
+You can now run the client from source with
+```
+/opt/local/bin/python2.7 bin/cfclient
+```
+
 3. To make it easier to run MacPorts, add ```/opt/local/bin``` to your PATH variable.
 The MacPorts installer should take care of that, but take a look at
 ```~/.profile``` to make sure. If you have any issues it could be due to the
@@ -98,22 +108,23 @@ libraries not getting picked up correctly. Fix that by setting
 ```
 export DYLD_LIBRARY_PATH=/opt/local/lib
 ```
+
 4. Now you're good to go! Run the client from the source folder with the
 following command:
 ```
 python2.7 bin/cfclient
 ```
 
-Launching the GUI application
------------------------------
+## Linux
+
+###Launching the GUI application
 
 To launch the GUI application in the source folder type:
 ```python bin/cfclient```
 
 To launch the GUI after a systemwide installation, execute ```cfclient```. 
 
-Dependencies
-------------
+###Dependencies
 
 The Crazyflie PC client has the following dependencies:
 
@@ -137,8 +148,7 @@ Example commands to install these dependencies:
 
 ```sudo zypper install python-pysdl2 libusb python-usb```
 
-Setting udev permissions
-------------------------
+###Setting udev permissions
 
 The following steps make it possible to use the USB Radio without being root.
 
