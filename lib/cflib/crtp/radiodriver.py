@@ -46,6 +46,8 @@ import threading
 import Queue
 import re
 import array
+import binascii
+import struct
 
 from cflib.drivers.crazyradio import Crazyradio
 from usb import USBError
@@ -80,12 +82,12 @@ class RadioDriver(CRTPDriver):
             raise WrongUriType("Not a radio URI")
 
         # Open the USB dongle
-        if not re.search("^radio://([0-9]+)((/([0-9]+))(/(250K|1M|2M))?)?$",
+        if not re.search("^radio://([0-9]+)((/([0-9]+))((/(250K|1M|2M))?(/([0-9]+))?)?)?$",
                          uri):
             raise WrongUriType('Wrong radio URI format!')
 
         uri_data = re.search("^radio://([0-9]+)((/([0-9]+))"
-                             "(/(250K|1M|2M))?)?$",
+                             "((/(250K|1M|2M))?(/([0-9]+))?)?)?$",
                              uri)
 
         self.uri = uri
@@ -95,11 +97,11 @@ class RadioDriver(CRTPDriver):
             channel = int(uri_data.group(4))
 
         datarate = Crazyradio.DR_2MPS
-        if uri_data.group(6) == "250K":
+        if uri_data.group(7) == "250K":
             datarate = Crazyradio.DR_250KPS
-        if uri_data.group(6) == "1M":
+        if uri_data.group(7) == "1M":
             datarate = Crazyradio.DR_1MPS
-        if uri_data.group(6) == "2M":
+        if uri_data.group(7) == "2M":
             datarate = Crazyradio.DR_2MPS
 
         if self.cradio is None:
@@ -115,6 +117,11 @@ class RadioDriver(CRTPDriver):
         self.cradio.set_channel(channel)
 
         self.cradio.set_data_rate(datarate)
+
+        if uri_data.group(9):
+            addr = "{:X}".format(int(uri_data.group(9)))
+            new_addr = struct.unpack("<BBBBB", binascii.unhexlify(addr))
+            self.cradio.set_address(new_addr)
 
         # Prepare the inter-thread communication queue
         self.in_queue = Queue.Queue()
@@ -196,6 +203,44 @@ class RadioDriver(CRTPDriver):
     def _scan_radio_channels(self, start=0, stop=125):
         """ Scan for Crazyflies between the supplied channels. """
         return list(self.cradio.scan_channels(start, stop, (0xff,)))
+
+    def scan_selected(self, links):
+        to_scan = ()
+        for l in links:
+            one_to_scan = {}
+            uri_data = re.search("^radio://([0-9]+)((/([0-9]+))"
+                                 "(/(250K|1M|2M))?)?$",
+                                 l)
+
+            one_to_scan["channel"] = int(uri_data.group(4))
+
+            datarate = Crazyradio.DR_2MPS
+            if uri_data.group(6) == "250K":
+                datarate = Crazyradio.DR_250KPS
+            if uri_data.group(6) == "1M":
+                datarate = Crazyradio.DR_1MPS
+            if uri_data.group(6) == "2M":
+                datarate = Crazyradio.DR_2MPS
+
+            one_to_scan["datarate"] = datarate
+
+            to_scan += (one_to_scan, )
+
+        found = self.cradio.scan_selected(to_scan, (0xFF, 0xFF, 0xFF))
+
+        ret = ()
+        for f in found:
+            dr_string = ""
+            if f["datarate"] == Crazyradio.DR_2MPS:
+                dr_string = "2M"
+            if f["datarate"] == Crazyradio.DR_250KPS:
+                dr_string = "250K"
+            if f["datarate"] == Crazyradio.DR_1MPS:
+                dr_string = "1M"
+
+            ret += ("radio://0/{}/{}".format(f["channel"], dr_string),)
+
+        return ret
 
     def scan_interface(self):
         """ Scan interface for Crazyflies """

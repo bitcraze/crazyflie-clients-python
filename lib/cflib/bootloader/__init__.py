@@ -49,18 +49,15 @@ import thread
 class Bootloader:
 
     """Bootloader utility for the Crazyflie"""
-    def __init__(self, link, clink_address="radio://0/0/2M"):
+    def __init__(self, clink=None):
         """Init the communication class by starting to comunicate with the
         link given. clink is the link address used after reseting to the
         bootloader.
 
         The device is actually considered in firmware mode.
         """
-        self.link = link
-        self.clink_address = clink_address
+        self.clink = clink
         self.in_loader = False
-
-        clink = "radio://0/0/2M"
 
         self.page_size = 0
         self.buffer_pages = 0
@@ -85,18 +82,24 @@ class Bootloader:
 
         self._boot_plat = None
 
-        self._cload = Cloader(link, clink,
+        self._cload = Cloader(clink,
                              info_cb=self.dev_info_cb,
                              in_boot_cb=self.in_bootloader_cb)
 
     def start_bootloader(self, warm_boot=False):
         if warm_boot:
+            self._cload.open_bootloader_uri(self.clink)
             started = self._cload.reset_to_bootloader(TargetTypes.NRF51)
             if started:
                 started = self._cload.check_link_and_get_info()
         else:
-            self._cload.open_bootloader_uri(self.clink_address)
-            started = self._cload.check_link_and_get_info()
+            uri = self._cload.scan_for_bootloader()
+
+            if uri:
+                self._cload.open_bootloader_uri(uri)
+                started = self._cload.check_link_and_get_info()
+            else:
+                started = False
 
         if started:
             self.protocol_version = self._cload.protocol_version

@@ -215,6 +215,18 @@ class Crazyradio:
         # FIXME: Mitigation for Crazyradio firmware bug #9
         return False
 
+    def scan_selected(self, selected, packet):
+        result = ()
+        for s in selected:
+            self.set_channel(s["channel"])
+            self.set_data_rate(s["datarate"])
+            status = self.send_packet(packet)
+            if status and status.ack:
+                result = result + (s,)
+
+        return result
+
+
     def scan_channels(self, start, stop, packet):
         if self._has_fw_scan():  # Fast firmware-driven scann
             _send_vendor_setup(self.handle, SCANN_CHANNELS, start, stop,

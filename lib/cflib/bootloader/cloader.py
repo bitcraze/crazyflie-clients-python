@@ -49,15 +49,15 @@ from .boottypes import TargetTypes, Target
 
 class Cloader:
     """Bootloader utility for the Crazyflie"""
-    def __init__(self, link, clink_address="radio://0/110/2M", info_cb=None, in_boot_cb=None):
+    def __init__(self, link, info_cb=None, in_boot_cb=None):
         """Init the communication class by starting to comunicate with the
         link given. clink is the link address used after reseting to the
         bootloader.
 
         The device is actually considered in firmware mode.
         """
-        self.link = link
-        self.clink_address = clink_address
+        self.link = None
+        self.uri = link
         self.in_loader = False
 
         self.page_size = 0
@@ -73,11 +73,25 @@ class Cloader:
 
         self.targets = {}
         self.mapping = None
+        self._available_boot_uri = ("radio://0/110/2M", "radio://0/0/2M")
 
     def close(self):
         """ Close the link """
-        self.link.close()
+        if self.link:
+            self.link.close()
 
+    def scan_for_bootloader(self):
+        link = cflib.crtp.get_link_driver("radio://0")
+        ts = time.time()
+        res = ()
+        while len(res) == 0 and (time.time() - ts) < 10:
+            res = link.scan_selected(self._available_boot_uri)
+
+        link.close()
+
+        if len(res) > 0:
+            return res[0]
+        return None
 
     def reset_to_bootloader(self, target_id):
         retry_counter = 5
@@ -102,8 +116,6 @@ class Cloader:
             pk.set_header(0xFF, 0xFF)
             pk.data = (target_id, 0xF0, 0x00)
             self.link.send_packet(pk)
-
-            print "Got new addr"
 
             addr = int(struct.pack("B"*5, *new_address).encode('hex'), 16)
 
@@ -196,12 +208,12 @@ class Cloader:
         time.sleep(0.1)
 
     def open_bootloader_uri(self, uri=None):
-        self.link.close()
+        if self.link:
+            self.link.close()
         if uri:
             self.link = cflib.crtp.get_link_driver(uri)
         else:
             self.link = cflib.crtp.get_link_driver(self.clink_address)
-
 
     def check_link_and_get_info(self, target_id=0xFF):
         """Try to get a connection with the bootloader by requesting info

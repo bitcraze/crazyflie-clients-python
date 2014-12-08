@@ -43,7 +43,7 @@ link = None
 cload = None
 try:
     cflib.crtp.init_drivers()
-    link = cflib.crtp.get_link_driver("radio://0")
+    link = cflib.crtp.get_link_driver("radio://")
 except Exception as e:
     print "Error: {}".format(str(e))
     if link:
@@ -53,7 +53,7 @@ except Exception as e:
 #Set the default parameters
 #Default to the arnaud's copter
 cpu_id = "32:00:6e:06:58:37:35:32:60:58:01:43"
-clink = "radio://0/0"
+clink = None
 action = "info"
 boot = "cold"
 
@@ -94,15 +94,11 @@ while i < len(sys.argv):
     elif sys.argv[i] == "--warm-boot" or sys.argv[i] == "-w":
         boot = "reset"
         i += 1
-        warm_uri = sys.argv[i]
+        clink = sys.argv[i]
     else:
         argv += [sys.argv[i]]
     i += 1
 sys.argv = argv
-
-if warm_uri:
-    link.close()
-    link = cflib.crtp.get_link_driver(warm_uri)
 
 #Analyse the command
 if len(sys.argv) < 1:
@@ -136,7 +132,7 @@ targets = ()
 
 try:
     #Initialise the bootloader lib
-    bl = Bootloader(link, clink)
+    bl = Bootloader(clink)
 
     #########################################
     # Get the connection with the bootloader
@@ -160,7 +156,7 @@ try:
             print " done!"
         else:
             print "Cannot connect the bootloader!"
-            cload.close()
+            bl.close()
             sys.exit(-1)
 
     print "Connected to bootloader on {} (version=0x{:X})".format(
@@ -188,12 +184,17 @@ try:
     elif action == "flash":
         bl.flash(filename, targetnames)
         print "Reset in firmware mode ..."
-        #bl.reset_to_firmware()
+        bl.reset_to_firmware()
     else:
         None
+except Exception as e:
+    import traceback
+    traceback.print_exc(file=sys.stdout)
+    print e
+
 finally:
     #########################
     # Closing the connection
     #########################
-    if (bl is not None):
+    if bl:
         bl.close()
