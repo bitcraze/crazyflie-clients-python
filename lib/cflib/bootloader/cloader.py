@@ -44,10 +44,12 @@ import random
 import cflib.crtp
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 
+from .boottypes import TargetTypes, Target
+
 
 class Cloader:
     """Bootloader utility for the Crazyflie"""
-    def __init__(self, link, clink_address="radio://0/110"):
+    def __init__(self, link, clink_address="radio://0/110/2M", info_cb=None, in_boot_cb=None):
         """Init the communication class by starting to comunicate with the
         link given. clink is the link address used after reseting to the
         bootloader.
@@ -64,13 +66,58 @@ class Cloader:
         self.start_page = 0
         self.cpuid = "N/A"
         self.error_code = 0
-        self.protocol_version = 0
+        self.protocol_version = 0xFF
+
+        self._info_cb = info_cb
+        self._in_boot_cb = in_boot_cb
+
+        self.targets = {}
+        self.mapping = None
 
     def close(self):
         """ Close the link """
         self.link.close()
 
-    def reset_to_bootloader(self, cpu_id):
+
+    def reset_to_bootloader(self, target_id):
+        retry_counter = 5
+        pk = CRTPPacket()
+        pk.set_header(0xFF, 0xFF)
+        pk.data = (target_id, 0xFF)
+        self.link.send_packet(pk)
+
+        pk = self.link.receive_packet(1)
+
+        while ((not pk or pk.header != 0xFF or
+                struct.unpack("<BB", pk.data[0:2]) != (target_id, 0xFF)) and
+                retry_counter >= 0 ):
+
+            pk = self.link.receive_packet(1)
+            retry_counter -= 1
+
+        if pk:
+            new_address = (0xb1, ) + struct.unpack("<BBBB", pk.data[2:6][::-1])
+
+            pk = CRTPPacket()
+            pk.set_header(0xFF, 0xFF)
+            pk.data = (target_id, 0xF0, 0x00)
+            self.link.send_packet(pk)
+
+            print "Got new addr"
+
+            addr = int(struct.pack("B"*5, *new_address).encode('hex'), 16)
+
+            time.sleep(0.2)
+            self.link.close()
+            time.sleep(0.2)
+            self.link = cflib.crtp.get_link_driver("radio://0/0/2M/{}".format(addr))
+
+            return True
+        else:
+            return False
+
+
+    def reset_to_bootloader1(self, cpu_id):
         """ Reset to the bootloader
         The parameter cpuid shall correspond to the device to reset.
 
@@ -119,16 +166,17 @@ class Cloader:
 
         return self._update_info()
 
-    def reset_to_firmware(self, cpu_id):
+    def reset_to_firmware(self, target_id):
         """ Reset to firmware
         The parameter cpuid shall correspond to the device to reset.
 
         Return true if the reset has been done
         """
+        fake_cpu_id = (1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12)
         #Send the reset to bootloader request
         pk = CRTPPacket()
         pk.set_header(0xFF, 0xFF)
-        pk.data = (0xFF, 0xFF) + cpu_id
+        pk.data = (target_id, 0xFF) + fake_cpu_id
         self.link.send_packet(pk)
 
         #Wait to ack the reset ...
@@ -140,26 +188,35 @@ class Cloader:
 
             if (pk.header == 0xFF and
                 struct.unpack("B" * len(pk.data),
-                              pk.data) == (0xFF, 0xFF) + cpu_id):
-                pk.data = (0xFF, 0xF0) + cpu_id
+                              pk.data)[:2] == (target_id, 0xFF)):
+                pk.data = (target_id, 0xF0, 0x01)
                 self.link.send_packet(pk)
                 break
 
         time.sleep(0.1)
 
-    def coldboot(self):
+    def open_bootloader_uri(self, uri=None):
+        self.link.close()
+        if uri:
+            self.link = cflib.crtp.get_link_driver(uri)
+        else:
+            self.link = cflib.crtp.get_link_driver(self.clink_address)
+
+
+    def check_link_and_get_info(self, target_id=0xFF):
         """Try to get a connection with the bootloader by requesting info
         5 times. This let rougly 10 seconds to boot the copter ..."""
         for _ in range(0, 5):
-            self.link.close()
-            self.link = cflib.crtp.get_link_driver(self.clink_address)
-            if self._update_info():
-                if self.protocol_version == 0:
+            if self._update_info(target_id):
+                if self._in_boot_cb:
+                    self._in_boot_cb.call(True, self.targets[target_id].protocol_version)
+                if self._info_cb:
+                    self._info_cb.call(self.targets[target_id])
+                if self.protocol_version != 1:
                     return True
                 # Set radio link to a random address
                 addr = [0xbc] + map(lambda x: random.randint(0, 255), range(4))
                 return self._set_address(addr)
-
         return False
 
     def _set_address(self, new_address):
@@ -190,7 +247,14 @@ class Cloader:
         self.link.restart()
         return False
 
-    def _update_info(self):
+    def request_info_update(self, target_id):
+        if target_id not in self.targets:
+            self._update_info(target_id)
+        if self._info_cb:
+            self._info_cb.call(self.targets[target_id])
+        return self.targets[target_id]
+
+    def _update_info(self, target_id):
         """ Call the command getInfo and fill up the information received in
         the fields of the object
         """
@@ -198,37 +262,66 @@ class Cloader:
         #Call getInfo ...
         pk = CRTPPacket()
         pk.set_header(0xFF, 0xFF)
-        pk.data = (0xFF, 0x10)
+        pk.data = (target_id, 0x10)
         self.link.send_packet(pk)
 
         #Wait for the answer
         pk = self.link.receive_packet(2)
 
         if (pk and pk.header == 0xFF and
-                struct.unpack("<BB", pk.data[0:2]) == (0xFF, 0x10)):
+                struct.unpack("<BB", pk.data[0:2]) == (target_id, 0x10)):
             tab = struct.unpack("BBHHHH", pk.data[0:10])
             cpuid = struct.unpack("B" * 12, pk.data[10:22])
+            if not target_id in self.targets:
+                self.targets[target_id] = Target(target_id)
+            self.targets[target_id].addr = target_id
             if len(pk.data) > 22:
-                self.protocol_version = pk.data[22]
-            self.page_size = tab[2]
-            self.buffer_pages = tab[3]
-            self.flash_pages = tab[4]
-            self.start_page = tab[5]
-            self.cpuid = "%02X" % cpuid[0]
+                self.targets[target_id].protocol_version = pk.datat[22]
+                self.protocol_version = pk.datat[22]
+            self.targets[target_id].page_size = tab[2]
+            self.targets[target_id].buffer_pages = tab[3]
+            self.targets[target_id].flash_pages = tab[4]
+            self.targets[target_id].start_page = tab[5]
+            self.targets[target_id].cpuid = "%02X" % cpuid[0]
             for i in cpuid[1:]:
-                self.cpuid += ":%02X" % i
+                self.targets[target_id].cpuid += ":%02X" % i
+
+            if self.protocol_version == 0x10 and target_id == TargetTypes.STM32:
+                self._update_mapping(target_id)
 
             return True
 
         return False
 
-    def upload_buffer(self, page, address, buff):
+    def _update_mapping(self, target_id):
+        pk = CRTPPacket()
+        pk.set_header(0xff, 0xff)
+        pk.data = (target_id, 0x12)
+        self.link.send_packet(pk)
+
+        pk = self.link.receive_packet(2)
+
+        if (pk and pk.header == 0xFF and
+                struct.unpack("<BB", pk.data[0:2]) == (target_id, 0x12)):
+            m = pk.datat[2:]
+
+            if (len(m)%2)!=0:
+                raise Exception("Malformed flash mapping packet")
+
+            self.mapping = []
+            page = 0
+            for i in range(len(m)/2):
+                for j in range(m[2*i]):
+                    self.mapping.append(page)
+                    page += m[(2*i)+1]
+
+    def upload_buffer(self, target_id, page, address, buff):
         """Upload data into a buffer on the Crazyflie"""
         #print len(buff)
         count = 0
         pk = CRTPPacket()
         pk.set_header(0xFF, 0xFF)
-        pk.data = struct.pack("=BBHH", 0xFF, 0x14, page, address)
+        pk.data = struct.pack("=BBHH", target_id, 0x14, page, address)
 
         for i in range(0, len(buff)):
             #print "[0x%02X]" %  ord(buff[i]),
@@ -241,7 +334,7 @@ class Cloader:
                 count = 0
                 pk = CRTPPacket()
                 pk.set_header(0xFF, 0xFF)
-                pk.data = struct.pack("=BBHH", 0xFF, 0x14, page,
+                pk.data = struct.pack("=BBHH", target_id, 0x14, page,
                                       i + address + 1)
 
                 #sys.stdout.write("+")
@@ -249,7 +342,7 @@ class Cloader:
 
         self.link.send_packet(pk)
 
-    def read_flash(self, page):
+    def read_flash(self, addr, page):
         """Read back a flash page from the Crazyflie and return it"""
         buff = ""
 
@@ -257,11 +350,11 @@ class Cloader:
             pk = None
             retry_counter = 5
             while ((not pk or pk.header != 0xFF or
-                    struct.unpack("<BB", pk.data[0:2]) != (0xFF, 0x1C))
+                    struct.unpack("<BB", pk.data[0:2]) != (addr, 0x1C))
                     and retry_counter >= 0):
                 pk = CRTPPacket()
                 pk.set_header(0xFF, 0xFF)
-                pk.data = struct.pack("<BBHH", 0xFF, 0x1C, page, (i * 25))
+                pk.data = struct.pack("<BBHH", addr, 0x1C, page, (i * 25))
                 self.link.send_packet(pk)
 
                 pk = self.link.receive_packet(1)
@@ -273,18 +366,19 @@ class Cloader:
 
         return buff[0:self.page_size]  # For some reason we get one byte extra here...
 
-    def write_flash(self, page_buffer, target_page, page_count):
+    def write_flash(self, addr, page_buffer, target_page, page_count):
         """Initate flashing of data in the buffer to flash."""
         #print "Write page", flashPage
         #print "Writing page [%d] and [%d] forward" % (flashPage, nPage)
         pk = None
         retry_counter = 5
+        #print "Flasing to 0x{:X}".format(addr)
         while ((not pk or pk.header != 0xFF or
-                struct.unpack("<BB", pk.data[0:2]) != (0xFF, 0x18))
+                struct.unpack("<BB", pk.data[0:2]) != (addr, 0x18))
                 and retry_counter >= 0):
             pk = CRTPPacket()
             pk.set_header(0xFF, 0xFF)
-            pk.data = struct.pack("<BBHHH", 0xFF, 0x18, page_buffer,
+            pk.data = struct.pack("<BBHHH", addr, 0x18, page_buffer,
                                   target_page, page_count)
             self.link.send_packet(pk)
             pk = self.link.receive_packet(1)

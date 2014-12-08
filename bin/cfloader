@@ -35,7 +35,8 @@ import os
 sys.path[0] = os.path.join(sys.path[0][:-4], "lib")
 
 import cflib.crtp
-from cflib.bootloader.cloader import Cloader
+from cflib.bootloader import Bootloader
+from cflib.bootloader.boottypes import BootVersion, TargetTypes, Target
 
 #Initialise the CRTP link driver
 link = None
@@ -52,7 +53,7 @@ except Exception as e:
 #Set the default parameters
 #Default to the arnaud's copter
 cpu_id = "32:00:6e:06:58:37:35:32:60:58:01:43"
-clink = "radio://0/110"
+clink = "radio://0/0"
 action = "info"
 boot = "cold"
 
@@ -67,12 +68,12 @@ if len(sys.argv) < 2:
     print "The CRTP options are described above"
     print
     print "Crazyload option:"
-    print "   info        : Print the info of the bootloader and quit."
-    print "                 Will let the target in bootloader mode"
-    print "   reset       : Reset the device in firmware mode"
-    print "   flash <img> : flash the <img> binary file from the first"
-    print "                 possible  page in flash and reset to firmware"
-    print "                 mode."
+    print "   info                    : Print the info of the bootloader and quit."
+    print "                             Will let the target in bootloader mode"
+    print "   reset                   : Reset the device in firmware mode"
+    print "   flash <file> [targets]  : flash the <img> binary file from the first"
+    print "                             possible  page in flash and reset to firmware"
+    print "                             mode."
     if link:
         link.close()
     sys.exit(0)
@@ -81,6 +82,8 @@ if len(sys.argv) < 2:
 sys.argv = sys.argv[1:]
 argv = []
 
+warm_uri = None
+
 i = 0
 while i < len(sys.argv):
     if sys.argv[i] == "-i":
@@ -88,16 +91,24 @@ while i < len(sys.argv):
         cpu_id = sys.argv[i]
     elif sys.argv[i] == "--cold-boot" or sys.argv[i] == "-c":
         boot = "cold"
+    elif sys.argv[i] == "--warm-boot" or sys.argv[i] == "-w":
+        boot = "reset"
+        i += 1
+        warm_uri = sys.argv[i]
     else:
         argv += [sys.argv[i]]
     i += 1
 sys.argv = argv
 
+if warm_uri:
+    link.close()
+    link = cflib.crtp.get_link_driver(warm_uri)
+
 #Analyse the command
 if len(sys.argv) < 1:
     action = "info"
 elif sys.argv[0] == "info":
-    actrion = "info"
+    action = "info"
 elif sys.argv[0] == "reset":
     action = "reset"
 elif sys.argv[0] == "flash":
@@ -108,124 +119,81 @@ elif sys.argv[0] == "flash":
         sys.exit(-1)
     action = "flash"
     filename = sys.argv[1]
+    targetnames = {}
+    for t in sys.argv[2:]:
+        [target, type] = t.split("-")
+        if target in targetnames:
+            targetnames[target] += (type, )
+        else:
+            targetnames[target] = (type, )
 else:
     print "Action", sys.argv[0], "unknown!"
     link.close()
     sys.exit(-1)
 
+# Currently there's two different targets available
+targets = ()
+
 try:
-    #Initialise the cflib
-    cload = Cloader(link, clink)
+    #Initialise the bootloader lib
+    bl = Bootloader(link, clink)
 
     #########################################
     # Get the connection with the bootloader
     #########################################
     #The connection is done by reseting to the bootloader (default)
     if boot == "reset":
-        sys.stdout.write("Reset to bootloader mode ...")
+        print "Reset to bootloader mode ...",
         sys.stdout.flush()
-        if cload.reset_to_bootloader(cload.decode_cpu_id(cpu_id)):
-            print " Done."
+        if bl.start_bootloader(warm_boot=True):
+            print " done!"
         else:
-            print "\nFailed!\nThe loader with the ID",
-            print cpu_id, "does not answer."
-            cload.close()
+            print "Failed to warmboot"
+            bl.close()
             sys.exit(-1)
     else:  # The connection is done by a cold boot ...
-        print "Restart the CrazyFlie you want to bootload in the next",
-        print " 10 seconds ..."
+        print "Restart the Crazyflie you want to bootload in the next",
+        print " 10 seconds ...",
 
-        if cload.coldboot():
-            print "Connection established!"
+        sys.stdout.flush()
+        if bl.start_bootloader(warm_boot=False):
+            print " done!"
         else:
             print "Cannot connect the bootloader!"
             cload.close()
             sys.exit(-1)
 
+    print "Connected to bootloader on {} (version=0x{:X})".format(
+        BootVersion.to_ver_string(bl.protocol_version),
+        bl.protocol_version)
+
+    if bl.protocol_version == BootVersion.CF2_PROTO_VER:
+        targets += (bl.get_target(TargetTypes.NRF51), )
+    targets += (bl.get_target(TargetTypes.STM32), )
+
+
     ######################################
     # Doing something (hopefully) usefull
     ######################################
-    print "Flash pages: %d | Page size: %d | Buffer pages: %d |"\
-          " Start page: %d" % (cload.flash_pages, cload.page_size,
-                               cload.buffer_pages, cload.start_page)
-    print "%d KBytes of flash avaliable for firmware image." % (
-          (cload.flash_pages - cload.start_page) * cload.page_size / 1024)
 
+    # Print information about the targets
+    for target in targets:
+        print target
     if action == "info":
         None  # Already done ...
     elif action == "reset":
         print
         print "Reset in firmware mode ..."
-        cload.reset_to_firmware(cload.decode_cpu_id(cpu_id))
-        print "Done!"
+        bl.reset_to_firmware()
     elif action == "flash":
-        print
-        f = open(filename, "rb")
-        if not f:
-            print "Canno open image file", filename
-            raise Exception()
-        image = f.read()
-        f.close()
-
-        if len(image) > ((cload.flash_pages - cload.start_page) *
-                         cload.page_size):
-            print "Error: Not enough space to flash the image file."
-            raise Exception()
-
-        sys.stdout.write(("Flashing %d bytes (%d pages) " % ((len(image) - 1),
-                         int(len(image) / cload.page_size) + 1)))
-        sys.stdout.flush()
-
-        #For each page
-        ctr = 0  # Buffer counter
-        for i in range(0, int((len(image) - 1) / cload.page_size) + 1):
-            #Load the buffer
-            if ((i + 1) * cload.page_size) > len(image):
-                cload.upload_buffer(ctr, 0, image[i * cload.page_size:])
-            else:
-                cload.upload_buffer(ctr, 0, image[i * cload.page_size:
-                                                  (i + 1) * cload.page_size])
-
-            ctr += 1
-
-            sys.stdout.write(".")
-            sys.stdout.flush()
-
-            #Flash when the complete buffers are full
-            if ctr >= cload.buffer_pages:
-                sys.stdout.write("%d" % ctr)
-                sys.stdout.flush()
-                if not cload.write_flash(0,
-                                         cload.start_page + i - (ctr - 1),
-                                         ctr):
-                    print "\nError during flash operation (code %d). Maybe"\
-                          " wrong radio link?" % cload.error_code
-                    raise Exception()
-
-                ctr = 0
-
-        if ctr > 0:
-            sys.stdout.write("%d" % ctr)
-            sys.stdout.flush()
-            if not cload.write_flash(
-                                 0,
-                                 (cload.start_page +
-                                  (int((len(image) - 1) / cload.page_size)) -
-                                  (ctr - 1)),
-                                 ctr):
-                print "\nError during flash operation (code %d). Maybe wrong"\
-                      "radio link?" % cload.error_code
-                raise Exception()
-        print
-
+        bl.flash(filename, targetnames)
         print "Reset in firmware mode ..."
-        cload.reset_to_firmware(cload.decode_cpu_id(cpu_id))
-        print "Done!"
+        #bl.reset_to_firmware()
     else:
         None
 finally:
     #########################
     # Closing the connection
     #########################
-    if (cload is not None):
-        cload.close()
+    if (bl is not None):
+        bl.close()

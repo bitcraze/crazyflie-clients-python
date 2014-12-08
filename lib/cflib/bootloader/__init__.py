@@ -29,3 +29,233 @@
 """
 Bootloading utilities for the Crazyflie.
 """
+
+from cflib.utils.callbacks import Caller
+from .cloader import Cloader
+from .boottypes import BootVersion, TargetTypes, Target
+import zipfile
+import json
+import sys
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Bootloader']
+
+import thread
+
+#t1 = threading.Thread(target=someFunc)
+#t1.start()
+#t1.join()
+
+class Bootloader:
+
+    """Bootloader utility for the Crazyflie"""
+    def __init__(self, link, clink_address="radio://0/0/2M"):
+        """Init the communication class by starting to comunicate with the
+        link given. clink is the link address used after reseting to the
+        bootloader.
+
+        The device is actually considered in firmware mode.
+        """
+        self.link = link
+        self.clink_address = clink_address
+        self.in_loader = False
+
+        clink = "radio://0/0/2M"
+
+        self.page_size = 0
+        self.buffer_pages = 0
+        self.flash_pages = 0
+        self.start_page = 0
+        self.cpuid = "N/A"
+        self.error_code = 0
+        self.protocol_version = 0
+
+        # Outgoing callbacks for progress
+        # int
+        self.progress_cb = Caller()
+        # msg
+        self.error_cb = Caller()
+        # bool
+        self.in_bootloader_cb = Caller()
+        # Target
+        self.dev_info_cb = Caller()
+
+        #self.dev_info_cb.add_callback(self._dev_info)
+        #self.in_bootloader_cb.add_callback(self._bootloader_info)
+
+        self._boot_plat = None
+
+        self._cload = Cloader(link, clink,
+                             info_cb=self.dev_info_cb,
+                             in_boot_cb=self.in_bootloader_cb)
+
+    def start_bootloader(self, warm_boot=False):
+        if warm_boot:
+            started = self._cload.reset_to_bootloader(TargetTypes.NRF51)
+            if started:
+                started = self._cload.check_link_and_get_info()
+        else:
+            self._cload.open_bootloader_uri(self.clink_address)
+            started = self._cload.check_link_and_get_info()
+
+        if started:
+            self.protocol_version = self._cload.protocol_version
+
+            if self.protocol_version == BootVersion.CF1_PROTO_VER_0 or\
+                            self.protocol_version == BootVersion.CF1_PROTO_VER_1:
+                # Nothing more to do
+                pass
+            elif self.protocol_version == BootVersion.CF2_PROTO_VER:
+                self._cload.request_info_update(TargetTypes.NRF51)
+            else:
+                print "Bootloader protocol 0x{:X} not supported!".self.protocol_version
+
+        return started
+
+    def get_target(self, target_id):
+        return self._cload.request_info_update(target_id)
+
+
+    def flash(self, filename, targets):
+        for target in targets:
+            if TargetTypes.from_string(target) not in self._cload.targets:
+                print "Target {} not found by bootloader".format(target)
+                return False
+
+        files_to_flash = ()
+        if zipfile.is_zipfile(filename):
+            # Read the manifest (don't forget to check so there is one!)
+            try:
+                zf = zipfile.ZipFile(filename)
+                j = json.loads(zf.read("manifest.json"))
+                files = j["files"]
+                if len(targets) == 0:
+                    # No targets specified, just flash everything
+                    for file in files:
+                        if files[file]["target"] in targets:
+                            targets[files[file]["target"]] += (files[file]["type"], )
+                        else:
+                            targets[files[file]["target"]] = (files[file]["type"], )
+
+                zip_targets = {}
+                for file in files:
+                    file_name = file
+                    file_info = files[file]
+                    if file_info["target"] in zip_targets:
+                        zip_targets[file_info["target"]][file_info["type"]] = {"filename": file_name}
+                    else:
+                        zip_targets[file_info["target"]] = {}
+                        zip_targets[file_info["target"]][file_info["type"]] = {"filename": file_name}
+            except KeyError as e:
+                print e
+                print "No manifest.json in {}".format(filename)
+                return
+
+            try:
+                # Match and create targets
+                for target in targets:
+                    t = targets[target]
+                    for type in t:
+                        file_to_flash = {}
+                        current_target = "{}-{}".format(target, type)
+                        file_to_flash["type"] = type
+                        # Read the data, if this fails we bail
+                        file_to_flash["target"] = self._cload.targets[TargetTypes.from_string(target)]
+                        file_to_flash["data"] = zf.read(zip_targets[target][type]["filename"])
+                        files_to_flash += (file_to_flash, )
+            except KeyError as e:
+                print "Could not find a file for {} in {}".format(current_target, filename)
+                return False
+
+        else:
+            if len(targets) != 1:
+                print "Not an archive, must supply one target to flash"
+            else:
+                file_to_flash = {}
+                file_to_flash["type"] = "binary"
+                f = open(filename, 'rb')
+                for t in targets:
+                    file_to_flash["target"] = self._cload.targets[TargetTypes.from_string(t)]
+                    file_to_flash["type"] = targets[t][0]
+                file_to_flash["data"] = f.read()
+                f.close()
+                files_to_flash += (file_to_flash, )
+
+        print ""
+        for target in files_to_flash:
+            self._internal_flash(target)
+
+    def reset_to_firmware(self):
+        if self._cload.protocol_version == BootVersion.CF2_PROTO_VER:
+            self._cload.reset_to_firmware(TargetTypes.NRF51)
+        else:
+            self._cload.reset_to_firmware(TargetTypes.STM32)
+
+    def close(self):
+        if self._cload:
+            self._cload.close()
+
+    def _internal_flash(self, target):
+        image = target["data"]
+        t_data = target["target"]
+
+        #if not self._progress_cb:
+        sys.stdout.write("Flashing to {} ({}): ".format(TargetTypes.to_string(t_data.id), target["type"]))
+        sys.stdout.flush()
+
+        if len(image) > ((t_data.flash_pages - t_data.start_page) *
+                         t_data.page_size):
+            print "Error: Not enough space to flash the image file."
+            raise Exception()
+
+        #if not self._progress_cb:
+        sys.stdout.write(("%d bytes (%d pages) " % ((len(image) - 1),
+                         int(len(image) / t_data.page_size) + 1)))
+        sys.stdout.flush()
+
+        #For each page
+        ctr = 0  # Buffer counter
+        for i in range(0, int((len(image) - 1) / t_data.page_size) + 1):
+            #Load the buffer
+            if ((i + 1) * t_data.page_size) > len(image):
+                self._cload.upload_buffer(t_data.addr, ctr, 0, image[i * t_data.page_size:])
+            else:
+                self._cload.upload_buffer(t_data.addr, ctr, 0, image[i * t_data.page_size:
+                                                  (i + 1) * t_data.page_size])
+
+            ctr += 1
+
+            #if not self._progress_cb:
+            sys.stdout.write(".")
+            sys.stdout.flush()
+
+            #Flash when the complete buffers are full
+            if ctr >= t_data.buffer_pages:
+                #if not self._progress_cb:
+                sys.stdout.write("%d" % ctr)
+                sys.stdout.flush()
+                if not self._cload.write_flash(t_data.addr, 0,
+                                         t_data.start_page + i - (ctr - 1),
+                                         ctr):
+                    print "\nError during flash operation (code %d). Maybe"\
+                          " wrong radio link?" % self._cload.error_code
+                    raise Exception()
+
+                ctr = 0
+
+        if ctr > 0:
+            #if not self._progress_cb:
+            sys.stdout.write("%d" % ctr)
+            sys.stdout.flush()
+            if not self._cload.write_flash(t_data.addr,
+                                 0,
+                                 (t_data.start_page +
+                                  (int((len(image) - 1) / t_data.page_size)) -
+                                  (ctr - 1)),
+                                 ctr):
+                print "\nError during flash operation (code %d). Maybe wrong"\
+                      "radio link?" % self._cload.error_code
+                raise Exception()
+
+        print ""
+        return
