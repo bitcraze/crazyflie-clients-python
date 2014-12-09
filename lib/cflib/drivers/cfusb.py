@@ -37,6 +37,7 @@ __all__ = ['CfUsb']
 import os
 import usb
 import logging
+import sys
 import time
 import array
 import binascii
@@ -66,9 +67,8 @@ def _find_devices():
     logger.info("Looking for devices....")
 
     if pyusb1:
-        dev = usb.core.find(idVendor=USB_VID, idProduct=USB_PID, find_all=1, backend=pyusb_backend)
-        if dev is not None:
-            ret = dev
+        for d in usb.core.find(idVendor=USB_VID, idProduct=USB_PID, find_all=1, backend=pyusb_backend):
+            ret.append(d)
     else:
         busses = usb.busses()
         for bus in busses:
@@ -147,7 +147,7 @@ class CfUsb:
             if (pyusb1 is False):
                 count = self.handle.bulkWrite(1, dataOut, 20)
             else:
-                count = self.handle.write(1, dataOut, 0, 20)
+                count = self.handle.write(endpoint=1, data=dataOut, timeout=20)
         except usb.USBError as e:
             pass
 
@@ -158,7 +158,7 @@ class CfUsb:
             if (pyusb1 is False):
                 dataIn = self.handle.bulkRead(0x81, 64, 20)
             else:
-                dataIn = self.handle.read(0x81, 64, 0, 20)
+                dataIn = self.handle.read(0x81, 64, timeout=20)
         except usb.USBError as e:
             pass
 
