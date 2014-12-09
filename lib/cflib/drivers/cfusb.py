@@ -92,8 +92,11 @@ class CfUsb:
 
         if device is None:
             devices = _find_devices()
-            if len(devices) > 0:
+            try:
                 self.dev = devices[devid]
+            except Exception:
+                self.dev = None
+
 
         if self.dev:
             if (pyusb1 is True):
