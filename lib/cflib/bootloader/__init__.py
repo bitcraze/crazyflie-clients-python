@@ -69,13 +69,13 @@ class Bootloader:
 
         # Outgoing callbacks for progress
         # int
-        self.progress_cb = Caller()
+        self.progress_cb = None
         # msg
-        self.error_cb = Caller()
+        self.error_cb = None
         # bool
-        self.in_bootloader_cb = Caller()
+        self.in_bootloader_cb = None
         # Target
-        self.dev_info_cb = Caller()
+        self.dev_info_cb = None
 
         #self.dev_info_cb.add_callback(self._dev_info)
         #self.in_bootloader_cb.add_callback(self._bootloader_info)
@@ -117,7 +117,6 @@ class Bootloader:
 
     def get_target(self, target_id):
         return self._cload.request_info_update(target_id)
-
 
     def flash(self, filename, targets):
         for target in targets:
@@ -184,9 +183,13 @@ class Bootloader:
                 f.close()
                 files_to_flash += (file_to_flash, )
 
-        print ""
+        if not self.progress_cb:
+            print ""
+
+        file_counter = 0
         for target in files_to_flash:
-            self._internal_flash(target)
+            file_counter += 1
+            self._internal_flash(target, file_counter, len(files_to_flash))
 
     def reset_to_firmware(self):
         if self._cload.protocol_version == BootVersion.CF2_PROTO_VER:
@@ -198,23 +201,35 @@ class Bootloader:
         if self._cload:
             self._cload.close()
 
-    def _internal_flash(self, target):
+    def _internal_flash(self, target, current_file_number, total_files):
         image = target["data"]
         t_data = target["target"]
 
-        #if not self._progress_cb:
-        sys.stdout.write("Flashing to {} ({}): ".format(TargetTypes.to_string(t_data.id), target["type"]))
-        sys.stdout.flush()
+        # If used from a UI we need some extra things for reporting progress
+        factor = (100.0 * t_data.page_size) / len(image)
+        progress = 0
+
+        if self.progress_cb:
+            self.progress_cb("({}/{}) Starting...".format(current_file_number, total_files), int(progress))
+        else:
+            sys.stdout.write("Flashing {} of {} to {} ({}): ".format(current_file_number,
+                                                                     total_files,
+                                                                     TargetTypes.to_string(t_data.id),
+                                                                     target["type"]))
+            sys.stdout.flush()
 
         if len(image) > ((t_data.flash_pages - t_data.start_page) *
                          t_data.page_size):
-            print "Error: Not enough space to flash the image file."
+            if self.progress_cb:
+                self.progress_cb("Error: Not enough space to flash the image file.", int(progress))
+            else:
+                print "Error: Not enough space to flash the image file."
             raise Exception()
 
-        #if not self._progress_cb:
-        sys.stdout.write(("%d bytes (%d pages) " % ((len(image) - 1),
-                         int(len(image) / t_data.page_size) + 1)))
-        sys.stdout.flush()
+        if not self.progress_cb:
+            sys.stdout.write(("%d bytes (%d pages) " % ((len(image) - 1),
+                             int(len(image) / t_data.page_size) + 1)))
+            sys.stdout.flush()
 
         #For each page
         ctr = 0  # Buffer counter
@@ -228,37 +243,67 @@ class Bootloader:
 
             ctr += 1
 
-            #if not self._progress_cb:
-            sys.stdout.write(".")
-            sys.stdout.flush()
+            if self.progress_cb:
+                progress += factor
+                self.progress_cb("({}/{}) Uploading buffer to {}...".format(current_file_number,
+                                                                            total_files,
+                                                                            TargetTypes.to_string(t_data.id)),
+
+                                 int(progress))
+            else:
+                sys.stdout.write(".")
+                sys.stdout.flush()
 
             #Flash when the complete buffers are full
             if ctr >= t_data.buffer_pages:
-                #if not self._progress_cb:
-                sys.stdout.write("%d" % ctr)
-                sys.stdout.flush()
+                if self.progress_cb:
+                    self.progress_cb("({}/{}) Writing buffer to {}...".format(current_file_number,
+                                                                              total_files,
+                                                                              TargetTypes.to_string(t_data.id)),
+
+                                     int(progress))
+                else:
+                    sys.stdout.write("%d" % ctr)
+                    sys.stdout.flush()
                 if not self._cload.write_flash(t_data.addr, 0,
                                          t_data.start_page + i - (ctr - 1),
                                          ctr):
-                    print "\nError during flash operation (code %d). Maybe"\
-                          " wrong radio link?" % self._cload.error_code
+                    if self.progress_cb:
+                        self.progress_cb("Error during flash operation (code %d)".format(self._cload.error_code),
+                                         int(progress))
+                    else:
+                        print "\nError during flash operation (code %d). Maybe"\
+                              " wrong radio link?" % self._cload.error_code
                     raise Exception()
 
                 ctr = 0
 
         if ctr > 0:
-            #if not self._progress_cb:
-            sys.stdout.write("%d" % ctr)
-            sys.stdout.flush()
+            if self.progress_cb:
+                self.progress_cb("({}/{}) Writing buffer to {}...".format(current_file_number,
+                                                                          total_files,
+                                                                          TargetTypes.to_string(t_data.id)),
+                                 int(progress))
+            else:
+                sys.stdout.write("%d" % ctr)
+                sys.stdout.flush()
             if not self._cload.write_flash(t_data.addr,
                                  0,
                                  (t_data.start_page +
                                   (int((len(image) - 1) / t_data.page_size)) -
                                   (ctr - 1)),
                                  ctr):
-                print "\nError during flash operation (code %d). Maybe wrong"\
-                      "radio link?" % self._cload.error_code
+                if self.progress_cb:
+                    self.progress_cb("Error during flash operation (code %d)".format(self._cload.error_code),
+                                     int(progress))
+                else:
+                    print "\nError during flash operation (code %d). Maybe"\
+                          " wrong radio link?" % self._cload.error_code
                 raise Exception()
 
-        print ""
-        return
+
+        if self.progress_cb:
+            self.progress_cb("({}/{}) Flashing done!".format(current_file_number, total_files),
+                             int(progress))
+        else:
+            print ""
