@@ -360,6 +360,9 @@
    <property name="text">
     <string>Configure 2.0</string>
    </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
   </action>
   <action name="_menu_cf_config_2">
    <property name="text">
@@ -369,6 +372,9 @@
   <action name="_menu_cf1_config">
    <property name="text">
     <string>Configure 1.0</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
    </property>
   </action>
  </widget>
