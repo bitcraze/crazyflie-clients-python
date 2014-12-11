@@ -90,7 +90,12 @@ def init_paths():
 
     if sys.path[0] == "":
         raise Exception("Cannot find cfclient install folder!")
-
+    
+    if inSource:
+        os.environ["PYSDL2_DLL_PATH"] = os.path.abspath(sys.path[0]+"\..")
+    else:
+        os.environ["PYSDL2_DLL_PATH"] = sys.path[0]
+    
     sys.path.insert(1, init_config_path(inSource))
 
 
