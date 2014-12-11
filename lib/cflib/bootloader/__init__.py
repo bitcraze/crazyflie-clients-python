@@ -36,15 +36,10 @@ from .boottypes import BootVersion, TargetTypes, Target
 import zipfile
 import json
 import sys
+import time
 
 __author__ = 'Bitcraze AB'
 __all__ = ['Bootloader']
-
-import thread
-
-#t1 = threading.Thread(target=someFunc)
-#t1.start()
-#t1.join()
 
 class Bootloader:
 
@@ -94,7 +89,10 @@ class Bootloader:
                 started = self._cload.check_link_and_get_info()
         else:
             uri = self._cload.scan_for_bootloader()
-
+            
+            # Workaround for libusb on Windows (open/close too fast)
+            time.sleep(1)
+            
             if uri:
                 self._cload.open_bootloader_uri(uri)
                 started = self._cload.check_link_and_get_info()
