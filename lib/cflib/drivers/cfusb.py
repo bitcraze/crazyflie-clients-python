@@ -120,8 +120,7 @@ class CfUsb:
                 self.handle.reset()
         else:
             if self.dev:
-                if os.name != 'nt':
-                    self.dev.reset()
+                self.dev.reset()
 
         self.handle = None
         self.dev = None
