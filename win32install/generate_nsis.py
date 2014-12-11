@@ -1,5 +1,6 @@
 import jinja2
 import os
+from subprocess import Popen, PIPE
 
 DIST_PATH = "..\dist"
 
@@ -16,15 +17,16 @@ for root, dirs, files in os.walk("."):
 print "Found {} files in {} folders to install.".format(len(INSTALL_FILES),
                                                         len(INSTALL_DIRS))
 
-# Get mercurial tag or VERSION
-with os.popen("hg id -t") as hg:
-    TAG = hg.read().strip()
 
-if TAG != "tip":
-    VERSION = TAG
-else:
-    with os.popen("hg id -i") as hg:
-        VERSION = hg.read().strip()
+# Get git tag or VERSION
+try:
+    process = Popen(["git", "describe", "--tags"], stdout=PIPE)
+    (output, err) = process.communicate()
+    exit_code = process.wait()
+except OSError:
+    raise Exception("Cannot run git: Git is required to generate installer!")
+
+VERSION = output.strip()
 
 print "Cfclient version {}".format(VERSION)
 
