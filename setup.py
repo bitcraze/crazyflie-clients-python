@@ -18,6 +18,7 @@ except OSError:
 VERSION = output.strip()
 
 
+toplevel_data_files = ['README.md', 'LICENSE.txt']
 
 #Platform specific settings
 if sys.platform.startswith('win32'):
@@ -41,6 +42,8 @@ if sys.platform.startswith('win32'):
                                          "cfclient.ui.dialogs.*"],
                             "excludes": ["AppKit"],
                             "skip_archive": True}})
+
+    toplevel_data_files.append('SDL2.dll')
 else:
     setup_args=dict(
         scripts=['bin/cfclient', 'bin/cfheadless'])
@@ -58,7 +61,7 @@ setup_args=dict(name='cfclient',
                 'cfclient.utils', 'cfclient.ui.dialogs', 'cflib',
                 'cflib.bootloader', 'cflib.crazyflie', 'cflib.drivers',
                 'cflib.utils', 'cflib.crtp'],
-      data_files=[('', ['README.md', 'LICENSE.txt', 'SDL2.dll']),
+      data_files=[('', toplevel_data_files),
                   ('cfclient/ui',
                    glob.glob('lib/cfclient/ui/*.ui')),
                   ('cfclient/ui/tabs',
