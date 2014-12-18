@@ -36,6 +36,7 @@ import sdl2.ext
 import sdl2.hints
 import time
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +124,9 @@ class PySDL2Reader():
 
     def enableRawReading(self, deviceId):
         """Enable reading of raw values (without mapping)"""
-        self.j = sdl2.joystick.SDL_JoystickOpen(deviceId)
+        logger.info("Now opening")
+        #self.j = sdl2.joystick.SDL_JoystickOpen(deviceId)
+        logger.info("Open")
 
     def disableRawReading(self):
         """Disable raw reading"""
@@ -132,6 +135,7 @@ class PySDL2Reader():
 
     def readRawValues(self):
         """Read out the raw values from the device"""
+
         rawaxis = {}
         rawbutton = {}
 
@@ -161,10 +165,13 @@ class PySDL2Reader():
 
     def getAvailableDevices(self):
         """List all the available devices."""
+        logger.info("Looking for devices")
         dev = []
         names = []
-        if hasattr(self, 'j') and sdl2.joystick.SDL_JoystickGetAttached(self.j):
+        if hasattr(self, 'j') and sdl2.joystick.SDL_JoystickGetAttached(self.j) and \
+                not sys.platform.startswith('linux'):
             sdl2.joystick.SDL_JoystickClose(self.j)
+
         nbrOfInputs = sdl2.joystick.SDL_NumJoysticks()
         for i in range(0, nbrOfInputs):
             j = sdl2.joystick.SDL_JoystickOpen(i)
