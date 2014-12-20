@@ -53,6 +53,7 @@ import shutil
 logger = logging.getLogger(__name__)
 
 from cfclient.utils.pysdl2reader import PySDL2Reader
+from cfclient.utils.joystick.linuxjsdev import Joystick
 from cfclient.utils.config import Config
 from cfclient.utils.config_manager import ConfigManager
 
@@ -69,8 +70,10 @@ class JoystickReader:
     inputConfig = []
 
     def __init__(self, do_device_discovery=True):
-        # TODO: Should be OS dependant
-        self.inputdevice = PySDL2Reader()
+        if sys.platform.startswith('linux'):
+            self.inputdevice = Joystick()
+        else:
+            self.inputdevice = PySDL2Reader()
         
         self._min_thrust = 0
         self._max_thrust = 0

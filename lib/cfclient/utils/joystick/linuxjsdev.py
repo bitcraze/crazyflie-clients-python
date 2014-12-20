@@ -36,9 +36,9 @@ import os
 import platform
 import ctypes
 import fcntl
+import logging
 
-from .constants import TYPE_BUTTON, TYPE_AXIS
-from .jevent import JEvent
+logger = logging.getLogger(__name__)
 
 if platform.system() != 'Linux':
     raise ImportError("This driver works on Linux only")
@@ -49,7 +49,6 @@ JE_VALUE = 1
 JE_TYPE = 2
 JE_NUMBER = 3
 
-
 JS_EVENT_BUTTON = 0x001
 JS_EVENT_AXIS = 0x002
 JS_EVENT_INIT = 0x080
@@ -58,6 +57,22 @@ JS_EVENT_INIT = 0x080
 JSIOCGAXES = 0x80016a11
 JSIOCGBUTTONS = 0x80016a12
 
+class JEvent(object):
+    """
+    Joystick event class. Encapsulate single joystick event.
+    """
+    def __init__(self, evt_type, number, value):
+        self.type = evt_type
+        self.number = number
+        self.value = value
+
+    def __repr__(self):
+        return "JEvent(type={}, number={}, value={})".format(self.type,
+                   self.number, self.value)
+
+#Constants
+TYPE_BUTTON = 1
+TYPE_AXIS = 2
 
 class Joystick():
     """
@@ -70,13 +85,14 @@ class Joystick():
         self.axes = []
         self.jsfile = None
         self.device_id = -1
+        self.inputMap = None
 
-    def available_devices(self):
+    def getAvailableDevices(self):
         """
         Returns a dict with device_id as key and device name as value of all
         the detected devices.
         """
-        devices = {}
+        devices = []
 
         syspaths = glob.glob("/sys/class/input/js*")
 
@@ -84,16 +100,23 @@ class Joystick():
             device_id = int(os.path.basename(path)[2:])
             with open(path + "/device/name") as namefile:
                 name = namefile.read().strip()
-            devices[device_id] = name
+            devices.append({"id": device_id, "name": name})
+
+        logger.info(devices)
 
         return devices
 
-    def open(self, device_id):
+    def start_input(self, device_id, inputMap):
         """
         Open the joystick device. The device_id is given by available_devices
         """
+        logger.info("Opening JS dev {}".format(device_id))
+        self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":-1.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False, "althold":False}
+        self.inputMap = inputMap
+
         if self.opened:
-            raise Exception("A joystick is already opened")
+            return
+            #raise Exception("A joystick is already opened")
 
         self.device_id = device_id
 
@@ -115,6 +138,9 @@ class Joystick():
         self.__initvalues()
 
         self.opened = True
+
+        #logger.info("Buttons: {}".format(self.buttons))
+        #logger.info("Axes: {}".format(self.axes))
 
     def close(self):
         """Open the joystick device"""
@@ -150,20 +176,105 @@ class Joystick():
                           number=jsdata[JE_NUMBER],
                           value=jsdata[JE_VALUE] / 32768.0)
 
-    def get_events(self):
+    def enableRawReading(self, deviceId):
+        """Enable reading of raw values (without mapping)"""
+        return
+
+    def disableRawReading(self):
+        """Disable raw reading"""
+        return
+
+    def _read_all_events(self):
+        """Consume all the events queued up in the JS device"""
+        try:
+            while True:
+                data = self.jsfile.read(struct.calcsize(JS_EVENT_FMT))
+                jsdata = struct.unpack(JS_EVENT_FMT, data)
+                self.__updatestate(jsdata)
+        except IOError:  # Raised when there are nothing to read
+            pass
+
+
+    def readRawValues(self):
+        raw_axes = {}
+        raw_btns = {}
+
+        events = []
+
+        self._read_all_events()
+
+        i = 0
+        for a in self.axes:
+            raw_axes[i] = a
+            i += 1
+
+        i = 0
+        for b in self.buttons:
+            raw_btns[i] = b
+            i += 1
+
+        return [raw_axes, raw_btns]
+
+    def read_input(self):
         """ Returns a list of all joystick event since the last call """
         if not self.opened:
             raise Exception("Joystick device not opened")
 
-        events = []
+        self._read_all_events()
 
-        while True:
+        self.data["pitchcal"] = 0.0
+        self.data["rollcal"]  = 0.0
+
+        i = 0
+        for a in self.axes:
+            index = "Input.AXIS-%d" % i
             try:
-                data = self.jsfile.read(struct.calcsize(JS_EVENT_FMT))
-            except IOError:  # Raised when there are nothing to read
-                break
-            jsdata = struct.unpack(JS_EVENT_FMT, data)
-            self.__updatestate(jsdata)
-            events.append(self.__decode_event(jsdata))
+                if (self.inputMap[index]["type"] == "Input.AXIS"):
+                    key = self.inputMap[index]["key"]
+                    axisvalue = a
+                    # Offset the value first
+                    axisvalue = axisvalue + self.inputMap[index]["offset"]
+                    # All axis are in the range [-a,+a]
+                    axisvalue = axisvalue * self.inputMap[index]["scale"]
+                    # The value is now in the correct direction and in the range [-1,1]
+                    self.data[key] = axisvalue
+            except Exception:
+                # Axis not mapped, ignore..
+                pass
+            i += 1
 
-        return events
+        i = 0
+        for b in self.buttons:
+            if b == 1:
+                index = "Input.BUTTON-%d" % i
+                try:
+                    if (self.inputMap[index]["type"] == "Input.BUTTON"):
+                        key = self.inputMap[index]["key"]
+                        if (key == "estop"):
+                            self.data["estop"] = not self.data["estop"]
+                        elif (key == "exit"):
+                            self.data["exit"] = True
+                        elif (key == "althold"):
+                            self.data["althold"] = not self.data["althold"]
+                        else: # Generic cal for pitch/roll
+                            self.data[key] = self.inputMap[index]["scale"]
+                except Exception:
+                    # Button not mapped, ignore..
+                    pass
+            i += 1
+
+        i = 0
+        for b in self.buttons:
+            if b == 0:
+                index = "Input.BUTTON-%d" % i
+                try:
+                    if (self.inputMap[index]["type"] == "Input.BUTTON"):
+                        key = self.inputMap[index]["key"]
+                        if (key == "althold"):
+                            self.data["althold"] = False
+                except Exception:
+                    # Button not mapped, ignore..
+                    pass
+
+
+        return self.data

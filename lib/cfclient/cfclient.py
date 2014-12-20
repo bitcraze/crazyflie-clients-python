@@ -91,11 +91,12 @@ def main():
         logger.critical("No pyusb installation found, exiting!")
         sys.exit(1)
 
-    try:
-        import sdl2
-    except ImportError:
-        logger.critical("No pysdl2 installation found, exiting!")
-        sys.exit(1)
+    if not sys.platform.startswith('linux'):
+        try:
+            import sdl2
+        except ImportError:
+            logger.critical("No pysdl2 installation found, exiting!")
+            sys.exit(1)
 
     try:
         import PyQt4
