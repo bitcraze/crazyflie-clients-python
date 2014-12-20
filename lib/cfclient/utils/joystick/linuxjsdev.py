@@ -86,6 +86,7 @@ class Joystick():
         self.jsfile = None
         self.device_id = -1
         self.inputMap = None
+        self._prev_pressed = {}
 
     def getAvailableDevices(self):
         """
@@ -102,16 +103,15 @@ class Joystick():
                 name = namefile.read().strip()
             devices.append({"id": device_id, "name": name})
 
-        logger.info(devices)
-
         return devices
 
     def start_input(self, device_id, inputMap):
         """
         Open the joystick device. The device_id is given by available_devices
         """
-        logger.info("Opening JS dev {}".format(device_id))
         self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":-1.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False, "althold":False}
+        self._prev_pressed = {"pitchNeg": False, "rollNeg": False,
+                              "pitchPos": False, "rollPos": False}
         self.inputMap = inputMap
 
         if self.opened:
@@ -245,8 +245,8 @@ class Joystick():
 
         i = 0
         for b in self.buttons:
+            index = "Input.BUTTON-%d" % i
             if b == 1:
-                index = "Input.BUTTON-%d" % i
                 try:
                     if (self.inputMap[index]["type"] == "Input.BUTTON"):
                         key = self.inputMap[index]["key"]
@@ -257,24 +257,26 @@ class Joystick():
                         elif (key == "althold"):
                             self.data["althold"] = not self.data["althold"]
                         else: # Generic cal for pitch/roll
-                            self.data[key] = self.inputMap[index]["scale"]
+                            # Workaround for event vs poll
+                            name = self.inputMap[index]["name"]
+                            self._prev_pressed[name] = True
                 except Exception:
                     # Button not mapped, ignore..
                     pass
-            i += 1
-
-        i = 0
-        for b in self.buttons:
-            if b == 0:
-                index = "Input.BUTTON-%d" % i
+            else:
                 try:
                     if (self.inputMap[index]["type"] == "Input.BUTTON"):
                         key = self.inputMap[index]["key"]
                         if (key == "althold"):
                             self.data["althold"] = False
+                        # Workaround for event vs poll
+                        name = self.inputMap[index]["name"]
+                        if self._prev_pressed[name]:
+                            self.data[key] = self.inputMap[index]["scale"]
+                            self._prev_pressed[name] = False
                 except Exception:
                     # Button not mapped, ignore..
                     pass
-
+            i += 1
 
         return self.data
