@@ -225,6 +225,11 @@ class Joystick():
         self.data["pitchcal"] = 0.0
         self.data["rollcal"]  = 0.0
 
+        # Since all the values are re-calculated each time on Linux
+        # since it's not event driven we can zero everything to make it
+        # easier to handle split axis (ie two axis affecting the same parameter)
+        self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":-1.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False, "althold":False}
+
         i = 0
         for a in self.axes:
             index = "Input.AXIS-%d" % i
@@ -237,7 +242,7 @@ class Joystick():
                     # All axis are in the range [-a,+a]
                     axisvalue = axisvalue * self.inputMap[index]["scale"]
                     # The value is now in the correct direction and in the range [-1,1]
-                    self.data[key] = axisvalue
+                    self.data[key] += axisvalue
             except Exception:
                 # Axis not mapped, ignore..
                 pass

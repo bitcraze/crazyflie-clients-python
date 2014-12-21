@@ -185,10 +185,11 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             for a in data:
                 # Axis must go low and high before it's accepted as selected
                 # otherwise maxed out axis (like gyro/acc) in some controllers
-                # will always be selected
+                # will always be selected. Not enforcing negative values makes it
+                # possible to detect split axis (like bumpers on PS3 controller)
                 if a not in self._maxed_axis and data[a] > 0.8:
                     self._maxed_axis.append(a)
-                if a not in self._mined_axis and data[a] < -0.8:
+                if a not in self._mined_axis and data[a] < 0.1:
                     self._mined_axis.append(a)
                 if a in self._maxed_axis and a in self._mined_axis and len(self.axisDetect) > 0:
                     if self.combinedDetection == 0:
