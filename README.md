@@ -79,17 +79,13 @@ source ~/.bashrc
 
 4. Install SDL for Python
 ```
-brew install sdl sdl2 sdl_image
-sdl_mixer sdl_ttf portmidi
+brew install sdl sdl2 sdl_image sdl_mixer sdl_ttf portmidi
 ```
 
 5. Install remaining dependencies
 ```
-brew install pyqt
-brew install libusb
-brew install mercurial
-pip install pysdl2
-pip install pyusb
+brew install pyqt libusb mercurial
+pip install --pre pysdl2 pyusb pyqtgraph
 ```
 
 6. You now have all the dependencies needed to run the client. From the source
