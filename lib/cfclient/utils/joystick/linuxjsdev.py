@@ -228,7 +228,7 @@ class Joystick():
         # Since all the values are re-calculated each time on Linux
         # since it's not event driven we can zero everything to make it
         # easier to handle split axis (ie two axis affecting the same parameter)
-        self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":-1.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False, "althold":False}
+        self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":0.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False, "althold":False}
 
         i = 0
         for a in self.axes:
