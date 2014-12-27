@@ -50,6 +50,8 @@ import traceback
 import logging
 import shutil
 
+import cfclient.utils.inputreaders
+
 logger = logging.getLogger(__name__)
 
 from cfclient.utils.config import Config
@@ -68,13 +70,9 @@ class JoystickReader:
     inputConfig = []
 
     def __init__(self, do_device_discovery=True):
-        if sys.platform.startswith('linux'):
-            from cfclient.utils.joystick.linuxjsdev import Joystick
-            self.inputdevice = Joystick()
-        else:
-            from cfclient.utils.pysdl2reader import PySDL2Reader
-            self.inputdevice = PySDL2Reader()
-        
+        # Currently only supports one input reader
+        self.inputdevice = cfclient.utils.inputreaders.readers[0]()
+
         self._min_thrust = 0
         self._max_thrust = 0
         self._thrust_slew_rate = 0

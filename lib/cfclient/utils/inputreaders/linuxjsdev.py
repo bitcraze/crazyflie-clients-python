@@ -30,18 +30,21 @@ to be mounted on /sys and /dev/input/js* to be readable.
 This module is very linux specific but should work on any CPU platform
 """
 
+import sys
+if not sys.platform.startswith('linux'):
+    raise Exception("Only supported on Linux")
+
 import struct
 import glob
 import os
-import platform
 import ctypes
 import fcntl
 import logging
 
 logger = logging.getLogger(__name__)
 
-if platform.system() != 'Linux':
-    raise ImportError("This driver works on Linux only")
+__author__ = 'Bitcraze AB'
+__all__ = ['Joystick']
 
 JS_EVENT_FMT = "@IhBB"
 JE_TIME = 0
@@ -56,6 +59,9 @@ JS_EVENT_INIT = 0x080
 #ioctls
 JSIOCGAXES = 0x80016a11
 JSIOCGBUTTONS = 0x80016a12
+
+MODULE_MAIN = "Joystick"
+MODULE_NAME = "Joystick"
 
 class JEvent(object):
     """

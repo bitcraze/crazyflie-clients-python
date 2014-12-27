@@ -29,16 +29,23 @@
 Driver for reading data from the PySDL2 API. Used from Inpyt.py for reading input data.
 """
 
+import sys
+if sys.platform.startswith('linux'):
+    raise Exception("No SDL2 support on Linux")
+
 __author__ = 'Bitcraze AB'
 __all__ = ['PySDL2Reader']
+
 import sdl2
 import sdl2.ext
 import sdl2.hints
 import time
 import logging
-import sys
 
 logger = logging.getLogger(__name__)
+
+MODULE_MAIN = "PySDL2Reader"
+MODULE_NAME = "Joystick"
 
 class PySDL2Reader():
     """Used for reading data from input devices using the PySDL2 API."""
