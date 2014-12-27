@@ -94,7 +94,7 @@ class Joystick():
         self.inputMap = None
         self._prev_pressed = {}
 
-    def getAvailableDevices(self):
+    def devices(self):
         """
         Returns a dict with device_id as key and device name as value of all
         the detected devices.
@@ -111,18 +111,13 @@ class Joystick():
 
         return devices
 
-    def start_input(self, device_id, inputMap):
+    def open(self, device_id):
         """
         Open the joystick device. The device_id is given by available_devices
         """
-        self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":-1.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False, "althold":False}
-        self._prev_pressed = {"pitchNeg": False, "rollNeg": False,
-                              "pitchPos": False, "rollPos": False}
-        self.inputMap = inputMap
-
-        if self.opened:
-            return
-            #raise Exception("A joystick is already opened")
+        if self.opened and device_id != self.device_id:
+            # TODO: Don't open a device twice!
+            raise Exception("A joystick is already opened")
 
         self.device_id = device_id
 
@@ -144,9 +139,6 @@ class Joystick():
         self.__initvalues()
 
         self.opened = True
-
-        #logger.info("Buttons: {}".format(self.buttons))
-        #logger.info("Axes: {}".format(self.axes))
 
     def close(self):
         """Open the joystick device"""
@@ -182,14 +174,6 @@ class Joystick():
                           number=jsdata[JE_NUMBER],
                           value=jsdata[JE_VALUE] / 32768.0)
 
-    def enableRawReading(self, deviceId):
-        """Enable reading of raw values (without mapping)"""
-        return
-
-    def disableRawReading(self):
-        """Disable raw reading"""
-        return
-
     def _read_all_events(self):
         """Consume all the events queued up in the JS device"""
         try:
@@ -200,94 +184,11 @@ class Joystick():
         except IOError:  # Raised when there are nothing to read
             pass
 
-
-    def readRawValues(self):
-        raw_axes = {}
-        raw_btns = {}
-
-        events = []
-
-        self._read_all_events()
-
-        i = 0
-        for a in self.axes:
-            raw_axes[i] = a
-            i += 1
-
-        i = 0
-        for b in self.buttons:
-            raw_btns[i] = b
-            i += 1
-
-        return [raw_axes, raw_btns]
-
-    def read_input(self):
+    def read(self):
         """ Returns a list of all joystick event since the last call """
         if not self.opened:
             raise Exception("Joystick device not opened")
 
         self._read_all_events()
 
-        self.data["pitchcal"] = 0.0
-        self.data["rollcal"]  = 0.0
-
-        # Since all the values are re-calculated each time on Linux
-        # since it's not event driven we can zero everything to make it
-        # easier to handle split axis (ie two axis affecting the same parameter)
-        self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":0.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False, "althold":False}
-
-        i = 0
-        for a in self.axes:
-            index = "Input.AXIS-%d" % i
-            try:
-                if (self.inputMap[index]["type"] == "Input.AXIS"):
-                    key = self.inputMap[index]["key"]
-                    axisvalue = a
-                    # Offset the value first
-                    axisvalue = axisvalue + self.inputMap[index]["offset"]
-                    # All axis are in the range [-a,+a]
-                    axisvalue = axisvalue * self.inputMap[index]["scale"]
-                    # The value is now in the correct direction and in the range [-1,1]
-                    self.data[key] += axisvalue
-            except Exception:
-                # Axis not mapped, ignore..
-                pass
-            i += 1
-
-        i = 0
-        for b in self.buttons:
-            index = "Input.BUTTON-%d" % i
-            if b == 1:
-                try:
-                    if (self.inputMap[index]["type"] == "Input.BUTTON"):
-                        key = self.inputMap[index]["key"]
-                        if (key == "estop"):
-                            self.data["estop"] = not self.data["estop"]
-                        elif (key == "exit"):
-                            self.data["exit"] = True
-                        elif (key == "althold"):
-                            self.data["althold"] = not self.data["althold"]
-                        else: # Generic cal for pitch/roll
-                            # Workaround for event vs poll
-                            name = self.inputMap[index]["name"]
-                            self._prev_pressed[name] = True
-                except Exception:
-                    # Button not mapped, ignore..
-                    pass
-            else:
-                try:
-                    if (self.inputMap[index]["type"] == "Input.BUTTON"):
-                        key = self.inputMap[index]["key"]
-                        if (key == "althold"):
-                            self.data["althold"] = False
-                        # Workaround for event vs poll
-                        name = self.inputMap[index]["name"]
-                        if self._prev_pressed[name]:
-                            self.data[key] = self.inputMap[index]["scale"]
-                            self._prev_pressed[name] = False
-                except Exception:
-                    # Button not mapped, ignore..
-                    pass
-            i += 1
-
-        return self.data
+        return [self.axes, self.buttons]

@@ -50,133 +50,47 @@ MODULE_NAME = "Joystick"
 class PySDL2Reader():
     """Used for reading data from input devices using the PySDL2 API."""
     def __init__(self):
-        self.inputMap = None
+        self._j = None
         sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO | sdl2.SDL_INIT_JOYSTICK)
         sdl2.SDL_SetHint(sdl2.hints.SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1")
         sdl2.ext.init()
+        self.axes = []
+        self.buttons = []
 
-    def start_input(self, deviceId, inputMap):
+
+    def open(self, deviceId):
         """Initalize the reading and open the device with deviceId and set the mapping for axis/buttons using the
         inputMap"""
-        self.data = {"roll":0.0, "pitch":0.0, "yaw":0.0, "thrust":-1.0, "pitchcal":0.0, "rollcal":0.0, "estop": False, "exit":False, "althold":False}
-        self.inputMap = inputMap
-        self.j = sdl2.SDL_JoystickOpen(deviceId)
+        self._j = sdl2.SDL_JoystickOpen(deviceId)
 
-    def read_input(self):
+        self.axes = list(0 for i in range(sdl2.SDL_JoystickNumAxes(self._j)))
+        self.buttons = list(0 for i in range(sdl2.SDL_JoystickNumButtons(self._j)))
+
+    def close(self):
+        sdl2.joystick.SDL_JoystickClose(self._j)
+
+    def read(self):
         """Read input from the selected device."""
-        # We only want the pitch/roll cal to be "oneshot", don't
-        # save this value.
-        self.data["pitchcal"] = 0.0
-        self.data["rollcal"]  = 0.0
 
         for e in sdl2.ext.get_events():
-          if e.type == sdl2.SDL_JOYAXISMOTION:
-            index = "Input.AXIS-%d" % e.jaxis.axis
-            try:
-                if (self.inputMap[index]["type"] == "Input.AXIS"):
-                    key = self.inputMap[index]["key"]
-                    axisvalue = e.jaxis.value / 32767.0
-                    # Offset the value first
-                    axisvalue = axisvalue + self.inputMap[index]["offset"]
-                    # All axis are in the range [-a,+a]
-                    axisvalue = axisvalue * self.inputMap[index]["scale"]
-                    # The value is now in the correct direction and in the range [-1,1]
-                    self.data[key] = axisvalue
-            except Exception:
-                # Axis not mapped, ignore..
-                pass          
+            if e.type == sdl2.SDL_JOYAXISMOTION:
+                self.axes[e.jaxis.axis] = e.jaxis.value / 32767.0
 
-          if e.type == sdl2.SDL_JOYBUTTONDOWN:
-            index = "Input.BUTTON-%d" % e.jbutton.button            
-            try:
-                if (self.inputMap[index]["type"] == "Input.BUTTON"):
-                    key = self.inputMap[index]["key"]
-                    if (key == "estop"):
-                        self.data["estop"] = not self.data["estop"]
-                    elif (key == "exit"):
-                        self.data["exit"] = True
-                    elif (key == "althold"):
-                        self.data["althold"] = not self.data["althold"]                        
-                    else: # Generic cal for pitch/roll
-                        self.data[key] = self.inputMap[index]["scale"]
-            except Exception:
-                # Button not mapped, ignore..
-                pass
-          
-          if e.type == sdl2.SDL_JOYBUTTONUP:
-            index = "Input.BUTTON-%d" % e.jbutton.button
-            try:
-                if (self.inputMap[index]["type"] == "Input.BUTTON"):
-                    key = self.inputMap[index]["key"]
-                    if (key == "althold"):
-                        self.data["althold"] = False                     
-            except Exception:
-                # Button not mapped, ignore..
-                pass            
+            if e.type == sdl2.SDL_JOYBUTTONDOWN:
+                self.buttons[e.jbutton.button] = 0
 
-          if e.type == sdl2.SDL_JOYHATMOTION:
-            index = "Input.HAT-%d" % e.jhat.hat
-            try:
-                if (self.inputMap[index]["type"] == "Input.HAT"):
-                    key = self.inputMap[index]["key"]
-                    if (key == "trim"):
-                        self.data["rollcal"] = e.value[0] * self.inputMap[index]["scale"]
-                        self.data["pitchcal"] = e.value[1] * self.inputMap[index]["scale"]
-            except Exception:
-                # Hat not mapped, ignore..
-                pass
-            
+            if e.type == sdl2.SDL_JOYBUTTONUP:
+                self.buttons[e.jbutton.button] = 1
 
-        return self.data
+        return [self.axes, self.buttons]
 
-    def enableRawReading(self, deviceId):
-        """Enable reading of raw values (without mapping)"""
-        logger.info("Now opening")
-        #self.j = sdl2.joystick.SDL_JoystickOpen(deviceId)
-        logger.info("Open")
-
-    def disableRawReading(self):
-        """Disable raw reading"""
-        # No need to de-init since there's no good support for multiple input devices
-        pass
-
-    def readRawValues(self):
-        """Read out the raw values from the device"""
-
-        rawaxis = {}
-        rawbutton = {}
-
-        for event in sdl2.ext.get_events():
-            if event.type == sdl2.SDL_JOYBUTTONDOWN:
-                rawbutton[event.jbutton.button] = 1
-            if event.type == sdl2.SDL_JOYBUTTONUP:
-                rawbutton[event.jbutton.button] = 0
-            if event.type == sdl2.SDL_JOYAXISMOTION:
-                rawaxis[event.jaxis.axis] = event.jaxis.value / 32767.0
-            if event.type == sdl2.SDL_JOYHATMOTION:
-                if event.jhat.value == sdl2.SDL_HAT_CENTERED:
-                    rawbutton[21] = 0
-                    rawbutton[22] = 0
-                    rawbutton[23] = 0
-                    rawbutton[24] = 0
-                elif event.jhat.value == sdl2.SDL_HAT_UP:
-                    rawbutton[21] = 1
-                elif event.jhat.value == sdl2.SDL_HAT_DOWN:
-                    rawbutton[22] = 1
-                elif event.jhat.value == sdl2.SDL_HAT_LEFT:
-                    rawbutton[23] = 1
-                elif event.jhat.value == sdl2.SDL_HAT_RIGHT:
-                    rawbutton[24] = 1
-
-        return [rawaxis,rawbutton]
-
-    def getAvailableDevices(self):
+    def devices(self):
         """List all the available devices."""
         logger.info("Looking for devices")
         dev = []
         names = []
-        if hasattr(self, 'j') and sdl2.joystick.SDL_JoystickGetAttached(self.j):
-            sdl2.joystick.SDL_JoystickClose(self.j)
+        if hasattr(self, 'j') and sdl2.joystick.SDL_JoystickGetAttached(self._j):
+            sdl2.joystick.SDL_JoystickClose(self._j)
 
         nbrOfInputs = sdl2.joystick.SDL_NumJoysticks()
         for i in range(0, nbrOfInputs):
@@ -184,7 +98,7 @@ class PySDL2Reader():
             name = sdl2.joystick.SDL_JoystickName(j)
             if names.count(name) > 0:
                 name = "{0} #{1}".format(name, names.count(name) + 1)
-            dev.append({"id":i, "name" : name})
+            dev.append({"id": i, "name": name})
             names.append(name)
             sdl2.joystick.SDL_JoystickClose(j)
         return dev

@@ -50,7 +50,7 @@ import traceback
 import logging
 import shutil
 
-import cfclient.utils.inputreaders
+import cfclient.utils.inputreaders as readers
 
 logger = logging.getLogger(__name__)
 
@@ -70,8 +70,7 @@ class JoystickReader:
     inputConfig = []
 
     def __init__(self, do_device_discovery=True):
-        # Currently only supports one input reader
-        self.inputdevice = cfclient.utils.inputreaders.readers[0]()
+        self._input_device = None
 
         self._min_thrust = 0
         self._max_thrust = 0
@@ -165,14 +164,13 @@ class JoystickReader:
         """List all available and approved input devices.
         This function will filter available devices by using the
         blacklist configuration and only return approved devices."""
-        devs = self.inputdevice.getAvailableDevices()
+        devs = readers.devices()
         approved_devs = []
 
         for dev in devs:
             if ((not self._dev_blacklist) or 
                     (self._dev_blacklist and not
-                     self._dev_blacklist.match(dev["name"]))):
-                self._available_devices[dev["name"]] = dev["id"]
+                     self._dev_blacklist.match(dev.name))):
                 approved_devs.append(dev)
 
         return approved_devs 
@@ -183,11 +181,11 @@ class JoystickReader:
         to get raw values for setting up of input devices. Values are read
         without using a mapping.
         """
-        self.inputdevice.enableRawReading(deviceId)
+        return
 
     def disableRawReading(self):
         """Disable raw reading of input device."""
-        self.inputdevice.disableRawReading()
+        return
 
     def readRawValues(self):
         """ Read raw values from the input device."""
@@ -199,17 +197,27 @@ class JoystickReader:
         config_name
         """
         try:
-            device_id = self._available_devices[device_name]
-            self.inputdevice.start_input(
-                                    device_id,
-                                    ConfigManager().get_config(config_name))
-            settings = ConfigManager().get_settings(config_name)
-            self._springy_throttle = settings["springythrottle"]
-            self._read_timer.start()
+            #device_id = self._available_devices[device_name]
+            for d in readers.devices():
+                if d.name == device_name:
+                    self._input_device = d
+                    logger.info("Trying to open device {}".format(device_name))
+                    self._input_device.open()
+                    self._input_device.input_map = ConfigManager().get_config(config_name)
+                    #self.inputdevice.start_input(
+                    #                        device_id,
+                    #                        ConfigManager().get_config(config_name))
+                    settings = ConfigManager().get_settings(config_name)
+                    self._springy_throttle = settings["springythrottle"]
+                    self._read_timer.start()
         except Exception:
             self.device_error.call(
                      "Error while opening/initializing  input device\n\n%s" %
                      (traceback.format_exc()))
+
+        if not self._input_device:
+            self.device_error.call(
+                     "Could not find device {}".format(device_name))
 
     def stop_input(self):
         """Stop reading from the input device."""
@@ -249,7 +257,7 @@ class JoystickReader:
     def read_input(self):
         """Read input data from the selected device"""
         try:
-            data = self.inputdevice.read_input()
+            data = self._input_device.read()
             roll = data["roll"] * self._max_rp_angle
             pitch = data["pitch"] * self._max_rp_angle
             thrust = data["thrust"]

@@ -467,12 +467,12 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         group = QActionGroup(self._menu_devices, exclusive=True)
 
         for d in devs:
-            node = QAction(d["name"], self._menu_devices, checkable=True)
+            node = QAction(d.name, self._menu_devices, checkable=True)
             node.toggled.connect(self._inputdevice_selected)
             group.addAction(node)
             self._menu_devices.addAction(node)
-            if (d["name"] == GuiConfig().get("input_device")):
-                self._active_device = d["name"]
+            if (d.name == GuiConfig().get("input_device")):
+                self._active_device = d.name
         if (len(self._active_device) == 0):
             self._active_device = self._menu_devices.actions()[0].text()
 
