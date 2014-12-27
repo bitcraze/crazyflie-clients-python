@@ -84,6 +84,8 @@ class JoystickReader:
         self._old_raw_thrust = 0
         self._old_alt_hold = False
         self._springy_throttle = True
+        self._alt1 = False
+        self._alt2 = False
 
         self._trim_roll = Config().get("trim_roll")
         self._trim_pitch = Config().get("trim_pitch")
@@ -146,6 +148,8 @@ class JoystickReader:
         self.device_discovery = Caller()
         self.device_error = Caller()
         self.althold_updated = Caller()
+        self.alt1_updated = Caller()
+        self.alt2_updated = Caller()
 
     def setAltHoldAvailable(self, available):
         self._has_pressure_sensor = available
@@ -181,15 +185,34 @@ class JoystickReader:
         to get raw values for setting up of input devices. Values are read
         without using a mapping.
         """
-        return
+        if self._input_device:
+            self._input_device.close()
+
+        for d in readers.devices():
+            if d.id == deviceId:
+                self._input_device = d
+
+        # Set the mapping to None to get raw values
+        self._input_device.input_map = None
+        self._input_device.open()
 
     def disableRawReading(self):
         """Disable raw reading of input device."""
-        return
+        self._input_device.close()
 
     def readRawValues(self):
         """ Read raw values from the input device."""
-        return self.inputdevice.readRawValues()
+        [axes, buttons] = self._input_device.read()
+        dict_axes = {}
+        dict_buttons = {}
+
+        for i, a in enumerate(axes):
+            dict_axes[i] = a
+
+        for i, b in enumerate(buttons):
+            dict_buttons[i] = b
+
+        return [dict_axes, dict_buttons]
 
     def start_input(self, device_name, config_name):
         """
@@ -204,9 +227,6 @@ class JoystickReader:
                     logger.info("Trying to open device {}".format(device_name))
                     self._input_device.open()
                     self._input_device.input_map = ConfigManager().get_config(config_name)
-                    #self.inputdevice.start_input(
-                    #                        device_id,
-                    #                        ConfigManager().get_config(config_name))
                     settings = ConfigManager().get_settings(config_name)
                     self._springy_throttle = settings["springythrottle"]
                     self._read_timer.start()
@@ -267,6 +287,8 @@ class JoystickReader:
             trim_roll = data["rollcal"]
             trim_pitch = data["pitchcal"]
             althold = data["althold"]
+            alt1 = data["alt1"]
+            alt2 = data["alt2"]
 
             if (self._old_alt_hold != althold):
                 self.althold_updated.call(str(althold))
@@ -275,6 +297,14 @@ class JoystickReader:
             if self._emergency_stop != emergency_stop:
                 self._emergency_stop = emergency_stop
                 self.emergency_stop_updated.call(self._emergency_stop)
+
+            if self._alt1 != alt1:
+                self._alt1 = alt1
+                self.alt1_updated.call(alt1)
+
+            if self._alt2 != alt2:
+                self._alt2 = alt2
+                self.alt2_updated.call(alt2)
 
             # Thust limiting (slew, minimum and emergency stop)
             if self._springy_throttle:

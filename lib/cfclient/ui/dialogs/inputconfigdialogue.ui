@@ -505,12 +505,25 @@
           <property name="geometry">
            <rect>
             <x>600</x>
-            <y>200</y>
+            <y>170</y>
             <width>292</width>
-            <height>123</height>
+            <height>161</height>
            </rect>
           </property>
           <layout class="QGridLayout" name="gridLayout_5">
+           <item row="4" column="0">
+            <widget class="QCheckBox" name="alt1">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Alt 1</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
            <item row="3" column="1">
             <widget class="QPushButton" name="detectExitapp">
              <property name="enabled">
@@ -572,6 +585,39 @@
            </item>
            <item row="1" column="1">
             <widget class="QPushButton" name="detectAltHold">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Detect</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QCheckBox" name="alt2">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Alt 2</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QPushButton" name="detectAlt1">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Detect</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QPushButton" name="detectAlt2">
              <property name="enabled">
               <bool>false</bool>
              </property>

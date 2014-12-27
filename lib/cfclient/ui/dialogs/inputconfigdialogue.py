@@ -88,6 +88,10 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                                                     "Press the button for Roll negative calibration"))
         self.detectKillswitch.clicked.connect(lambda : self.doButtonDetect("killswitch", "Killswitch",
                                                        "Press the button for the killswitch (will disable motors)"))
+        self.detectAlt1.clicked.connect(lambda : self.doButtonDetect("alt1", "Alternative function 1",
+                                                       "The alternative function 1 that will do a callback"))
+        self.detectAlt2.clicked.connect(lambda : self.doButtonDetect("alt2", "Alternative function 2",
+                                                       "The alternative function 2 that will do a callback"))
         self.detectExitapp.clicked.connect(lambda : self.doButtonDetect("exitapp", "Exit application",
                                                     "Press the button for the exiting the application"))
         self.detectAltHold.clicked.connect(lambda : self.doButtonDetect("althold", "Altitude hold",
@@ -104,7 +108,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                               self.detectPitchPos, self.detectPitchNeg,
                               self.detectRollPos, self.detectRollNeg,
                               self.detectKillswitch, self.detectExitapp,
-                              self.detectAltHold]
+                              self.detectAltHold, self.detectAlt1, self.detectAlt2]
 
         self._reset_mapping()
         self.btnDetect = ""
@@ -115,7 +119,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self._mined_axis = []
 
         for d in self.joystickReader.getAvailableDevices():
-            self.inputDeviceSelector.addItem(d["name"], d["id"])
+            self.inputDeviceSelector.addItem(d.name, d.id)
 
         if (len(self.joystickReader.getAvailableDevices()) > 0):
             self.configButton.setEnabled(True)
@@ -127,6 +131,8 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             "rollPos": {"id":-1, "indicator": self.rollPos},
             "rollNeg": {"id":-1, "indicator": self.rollNeg},
             "killswitch": {"id":-1, "indicator": self.killswitch},
+            "alt1": {"id":-1, "indicator": self.alt1},
+            "alt2": {"id":-1, "indicator": self.alt2},
             "exitapp": {"id":-1, "indicator": self.exitapp},
             "althold": {"id":-1, "indicator": self.althold},
             }
@@ -291,6 +297,10 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             newKey = "rollNeg"
         if ("estop" in key):
             newKey = "killswitch"
+        if ("alt1" in key):
+            newKey = "alt1"
+        if ("alt2" in key):
+            newKey = "alt2"
         if ("exit" in key):
             newKey = "exitapp"
         if ("althold" in key):
@@ -372,6 +382,14 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
 
             if ("killswitch" in a):
                 newC['key'] = "estop"
+                newC['name'] = a
+
+            if ("alt1" in a):
+                newC['key'] = "alt1"
+                newC['name'] = a
+
+            if ("alt2" in a):
+                newC['key'] = "alt2"
                 newC['name'] = a
 
             if ("exit" in a):

@@ -160,9 +160,12 @@ class FlightTab(Tab, flight_tab_class):
                     cb=(lambda name, enabled:
                     self.helper.inputDeviceReader.setAltHold(eval(enabled))))
 
+        self._ledring_nbr_effects = 0
+
         self.helper.cf.param.add_update_callback(
-                        group="imu_sensors",
-                        cb=self._set_available_sensors)
+                        group="ring",
+                        name="neffect",
+                        cb=(lambda name, value: self._set_neffect(eval(value))))
                 
         self.logBaro = None
         self.logAltHold = None
@@ -173,6 +176,14 @@ class FlightTab(Tab, flight_tab_class):
 
         self.targetCalPitch.setValue(GuiConfig().get("trim_pitch"))
         self.targetCalRoll.setValue(GuiConfig().get("trim_roll"))
+
+        self.helper.inputDeviceReader.alt1_updated.add_callback(self.alt1_updated)
+        self.helper.inputDeviceReader.alt2_updated.add_callback(self.alt2_updated)
+        self._tf_state = 0
+        self._ring_effect = 0
+
+    def _set_neffect(self, n):
+        self._ledring_nbr_effects = n
 
     def thrustToPercentage(self, thrust):
         return ((thrust / MAX_THRUST) * 100.0)
@@ -427,3 +438,13 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.cf.commander.set_client_xmode(checked)
         GuiConfig().set("client_side_xmode", checked)
         logger.info("Clientside X-mode enabled: %s", checked)
+
+    def alt1_updated(self, state):
+        if state:
+            self._ring_effect += 1
+            if self._ring_effect > self._ledring_nbr_effects:
+                self._ring_effect = 0
+            self.helper.cf.param.set_value("ring.effect", str(self._ring_effect))
+
+    def alt2_updated(self, state):
+        self.helper.cf.param.set_value("ring.headlightEnable", str(state))
