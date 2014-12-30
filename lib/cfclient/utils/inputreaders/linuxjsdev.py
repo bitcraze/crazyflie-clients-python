@@ -61,7 +61,7 @@ JSIOCGAXES = 0x80016a11
 JSIOCGBUTTONS = 0x80016a12
 
 MODULE_MAIN = "Joystick"
-MODULE_NAME = "Joystick"
+MODULE_NAME = "linuxjsdev"
 
 class JEvent(object):
     """
@@ -93,6 +93,7 @@ class Joystick():
         self.device_id = -1
         self.inputMap = None
         self._prev_pressed = {}
+        self.name = MODULE_NAME
 
     def devices(self):
         """

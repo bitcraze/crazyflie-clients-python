@@ -83,6 +83,7 @@ class InputDevice():
         self.input_map = None
         self.data = None
         self._prev_pressed = None
+        self.reader_name = dev_reader.MODULE_NAME
 
     def open(self):
         self.data = {"roll": 0.0, "pitch": 0.0, "yaw": 0.0,

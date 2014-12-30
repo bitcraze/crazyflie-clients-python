@@ -45,7 +45,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 MODULE_MAIN = "PySDL2Reader"
-MODULE_NAME = "Joystick"
+MODULE_NAME = "PySDL2"
 
 class PySDL2Reader():
     """Used for reading data from input devices using the PySDL2 API."""
@@ -56,6 +56,7 @@ class PySDL2Reader():
         sdl2.ext.init()
         self.axes = []
         self.buttons = []
+        self.name = MODULE_NAME
 
 
     def open(self, deviceId):

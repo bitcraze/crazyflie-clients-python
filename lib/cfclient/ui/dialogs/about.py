@@ -55,6 +55,12 @@ System: {system}<br>
 <b>Interface status</b><br>
 {interface_status}
 <br>
+<b>Input readers</b><br>
+{input_readers}
+<br>
+<b>Input devices</b><br>
+{input_devices}
+<br>
 <b>Crazyflie</b><br>
 Connected: {uri}<br>
 Firmware: {firmware}<br>
@@ -65,6 +71,8 @@ Firmware: {firmware}<br>
 """
 
 INTERFACE_FORMAT = "{}: {}<br>"
+INPUT_READER_FORMAT = "{} ({} devices connected)<br>"
+DEVICE_FORMAT = "{}: ({}) {}<br>"
 IMU_SENSORS_FORMAT = "{}: {}<br>"
 SENSOR_TESTS_FORMAT = "{}: {}<br>"
 FIRMWARE_FORMAT = "{:x}{:x} ({})"
@@ -138,6 +146,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         self._fw_rev0 = None
         self._fw_rev1 = None
         self._fw_modified = None
+        self._helper = helper
 
         helper.cf.param.add_update_callback(group="imu_sensors",
                                             cb=self._imu_sensors_update)
@@ -162,6 +171,24 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
             self._interface_text += INTERFACE_FORMAT.format(key,
                                                     interface_status[key])
         firmware = None
+
+        self._device_text = ""
+        devs = self._helper.inputDeviceReader.getAvailableDevices()
+        for d in devs:
+            self._device_text += DEVICE_FORMAT.format(d.reader_name,
+                                                      d.id,
+                                                      d.name)
+        if len(self._device_text) == 0:
+            self._device_text = "None<br>"
+
+        self._input_readers_text = ""
+        #readers = self._helper.inputDeviceReader.getAvailableDevices()
+        for reader in cfclient.utils.inputreaders.initialized_readers:
+            self._input_readers_text += INPUT_READER_FORMAT.format(reader.name,
+                                                                   len(reader.devices()))
+        if len(self._input_readers_text) == 0:
+            self._input_readers_text = "None<br>"
+
         if self._uri:
             firmware = FIRMWARE_FORMAT.format(self._fw_rev0, self._fw_rev1,
                                 "MODIFIED" if self._fw_modified else "CLEAN")
@@ -169,6 +196,8 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
                 DEBUG_INFO_FORMAT.format(version=cfclient.VERSION,
                                          system=sys.platform,
                                          interface_status=self._interface_text,
+                                         input_devices=self._device_text,
+                                         input_readers=self._input_readers_text,
                                          uri = self._uri,
                                          firmware = firmware,
                                          imu_sensors=self._imu_sensors_text,
