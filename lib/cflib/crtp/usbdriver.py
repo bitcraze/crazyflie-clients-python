@@ -201,16 +201,7 @@ class UsbDriver(CRTPDriver):
         return found
 
     def get_status(self):
-        if self.cfusb is None:
-            try:
-                self.cfusb = CfUsb()
-            except USBError as e:
-                return "Cannot open Crazyflie. Permission problem?"\
-                       " ({})".format(str(e))
-            except Exception as e:
-                return str(e)
-
-        return "Crazyradio version {}".format(self.cfusb.version)
+        return "No information available"
 
     def get_name(self):
         return "UsbCdc"
