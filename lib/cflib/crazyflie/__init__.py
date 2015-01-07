@@ -169,7 +169,9 @@ class Crazyflie():
     def _log_toc_updated_cb(self):
         """Called when the log TOC has been fully updated"""
         logger.info("Log TOC finished updating")
-        self.mem.refresh(self._mems_updated_cb)
+        # Temporary workaround for CF1 connectivity
+        #self.mem.refresh(self._mems_updated_cb)
+        self.param.refresh_toc(self._param_toc_updated_cb, self._toc_cache)
 
     def _link_error_cb(self, errmsg):
         """Called from the link driver when there's an error"""
