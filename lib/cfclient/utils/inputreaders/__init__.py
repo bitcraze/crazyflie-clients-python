@@ -83,7 +83,7 @@ class InputDevice():
         self.input_map = None
         self.data = None
         self._prev_pressed = None
-        self.reader_name = dev_reader.MODULE_NAME
+        self.reader_name = dev_reader.name
 
     def open(self):
         self.data = {"roll": 0.0, "pitch": 0.0, "yaw": 0.0,
@@ -119,7 +119,7 @@ class InputDevice():
                         # Offset the value first
                         axisvalue = axisvalue + self.input_map[index]["offset"]
                         # All axis are in the range [-a,+a]
-                        axisvalue = axisvalue * self.input_map[index]["scale"]
+                        axisvalue = axisvalue / self.input_map[index]["scale"]
                         # The value is now in the correct direction and in the range [-1,1]
                         self.data[key] += axisvalue
                 except Exception:
