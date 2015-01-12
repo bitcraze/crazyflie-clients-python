@@ -97,7 +97,41 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def __init__(self, *args):
         super(MainUI, self).__init__(*args)
         self.setupUi(self)
-
+        
+        ######################################################
+        ### By lxrocks
+        ### 'Skinny Progress Bar' tweak for Yosemite
+        ### Tweak progress bar - artistic I am not - so pick your own colors !!!
+        ### Only apply to Yosemite
+        ######################################################
+        import platform
+        if platform.system() == 'Darwin':
+        
+            (Version,junk,machine) =  platform.mac_ver()
+            logger.info("This is a MAC - checking if we can apply Progress Bar Stylesheet for Yosemite Skinny Bars ")
+            yosemite = (10,10,0)
+            tVersion = tuple(map(int, (Version.split("."))))
+            
+            if tVersion >= yosemite:
+                logger.info( "Found Yosemite:")
+        
+                tcss = """
+                    QProgressBar {
+                    border: 2px solid grey;
+                    border-radius: 5px;
+                    text-align: center;
+                }
+                QProgressBar::chunk {
+                     background-color: #05B8CC;
+                 }
+                 """
+                self.setStyleSheet(tcss)
+                
+            else:
+                logger.info( "Pre-Yosemite")
+        
+        ######################################################
+        
         self.cf = Crazyflie(ro_cache=sys.path[0] + "/cflib/cache",
                             rw_cache=sys.path[1] + "/cache")
 
