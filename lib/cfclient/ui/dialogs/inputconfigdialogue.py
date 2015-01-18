@@ -71,13 +71,13 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.saveButton.clicked.connect(self.saveConfig)
         
         self.detectPitch.clicked.connect(lambda : self.doAxisDetect("pitch", "Pitch axis",
-                                                 "Press the pitch axis to max %s pitch", ["forward", "backward"]))
+                                                 "Press the pitch axis to min and max %s pitch", ["forward", "backward"]))
         self.detectRoll.clicked.connect(lambda : self.doAxisDetect("roll", "Roll axis",
-                                                 "Press the roll axis to max %s roll", ["right", "left"]))
+                                                 "Press the roll axis to min and max %s roll", ["right", "left"]))
         self.detectYaw.clicked.connect(lambda : self.doAxisDetect("yaw", "Yaw axis",
-                                                "Press the yaw axis to max rotation %s", ["right", "left"]))
+                                                "Press the yaw axis to min and max rotation %s", ["right", "left"]))
         self.detectThrust.clicked.connect(lambda : self.doAxisDetect("thrust", "Thrust axis",
-                                                   "Press the thrust axis to max thrust (also used to adjust target altitude in altitude hold mode)"))
+                                                   "Press the thrust axis to min and max thrust (also used to adjust target altitude in altitude hold mode)"))
         self.detectPitchPos.clicked.connect(lambda : self.doButtonDetect("pitchPos", "Pitch Cal Positive",
                                                   "Press the button for Pitch postive calibration"))
         self.detectPitchNeg.clicked.connect(lambda : self.doButtonDetect("pitchNeg", "Pitch Cal Negative",
@@ -110,6 +110,9 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.btnDetect = ""
         self.axisDetect = ""
         self.combinedDetection = 0
+
+        self._maxed_axis = []
+        self._mined_axis = []
 
         for d in self.joystickReader.getAvailableDevices():
             self.inputDeviceSelector.addItem(d["name"], d["id"])
@@ -148,6 +151,8 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.btnDetect = ""
 
     def showConfigBox(self, caption, message, directions=[]):
+        self._maxed_axis = []
+        self._mined_axis = []
         self.box = QMessageBox()
         self.box.directions = directions
         self.combinedButton = QtGui.QPushButton('Combined Axis Detection')
@@ -178,9 +183,15 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                 self.combinedButton.setDisabled(True)
                 self.combinedDetection = 1
             for a in data:
-                # TODO: Some axis on the PS3 controller are maxed out by default which causes problems...check change instead?
-                # TODO: This assumes a range [-1.0,1.0] from input device driver, but is that safe?
-                if (abs(data[a]) > 0.8 and abs(data[a]) < 1.0 and len(self.axisDetect) > 0):
+                # Axis must go low and high before it's accepted as selected
+                # otherwise maxed out axis (like gyro/acc) in some controllers
+                # will always be selected. Not enforcing negative values makes it
+                # possible to detect split axis (like bumpers on PS3 controller)
+                if a not in self._maxed_axis and data[a] > 0.8:
+                    self._maxed_axis.append(a)
+                if a not in self._mined_axis and data[a] < 0.1:
+                    self._mined_axis.append(a)
+                if a in self._maxed_axis and a in self._mined_axis and len(self.axisDetect) > 0:
                     if self.combinedDetection == 0:
                         self.axismapping[self.axisDetect]["id"] = a
                         if (data[a] >= 0):
@@ -394,6 +405,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
     def closeEvent(self, event):
         self.rawinputreader.stopReading()
 
+import math
 
 class RawJoystickReader(QThread):
 
@@ -406,6 +418,7 @@ class RawJoystickReader(QThread):
         self.joystickReader = joystickReader
         self.readTimer = QTimer()
         self.readTimer.setInterval(25)
+
         self.connect(self.readTimer, SIGNAL("timeout()"), self.read_input)
 
     def stopReading(self):

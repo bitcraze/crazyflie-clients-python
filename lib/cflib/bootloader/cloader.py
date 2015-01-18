@@ -184,6 +184,11 @@ class Cloader:
 
         Return true if the reset has been done
         """
+        # The fake CPU ID is legacy from the Crazyflie 1.0
+        # In order to reset the CPU id had to be sent, but this
+        # was removed before launching it. But the length check is
+        # still in the bootloader. So to work around this bug so
+        # some extra data needs to be sent.
         fake_cpu_id = (1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12)
         #Send the reset to bootloader request
         pk = CRTPPacket()
@@ -201,7 +206,11 @@ class Cloader:
             if (pk.header == 0xFF and
                 struct.unpack("B" * len(pk.data),
                               pk.data)[:2] == (target_id, 0xFF)):
-                pk.data = (target_id, 0xF0, 0x01)
+                # Differance in CF1 and CF2 (CPU ID)
+                if target_id == 0xFE:
+                    pk.data = (target_id, 0xF0, 0x01)
+                else:
+                    pk.data = (target_id, 0xF0) + fake_cpu_id
                 self.link.send_packet(pk)
                 break
 
@@ -336,7 +345,6 @@ class Cloader:
         pk.data = struct.pack("=BBHH", target_id, 0x14, page, address)
 
         for i in range(0, len(buff)):
-            #print "[0x%02X]" %  ord(buff[i]),
             pk.data += buff[i]
 
             count += 1
@@ -349,16 +357,15 @@ class Cloader:
                 pk.data = struct.pack("=BBHH", target_id, 0x14, page,
                                       i + address + 1)
 
-                #sys.stdout.write("+")
-                #sys.stdout.flush()
-
         self.link.send_packet(pk)
 
-    def read_flash(self, addr, page):
+    def read_flash(self, addr=0xFF, page=0x00):
         """Read back a flash page from the Crazyflie and return it"""
         buff = ""
 
-        for i in range(0, int(math.ceil(self.page_size / 25.0))):
+        page_size = self.targets[addr].page_size
+
+        for i in range(0, int(math.ceil(page_size / 25.0))):
             pk = None
             retry_counter = 5
             while ((not pk or pk.header != 0xFF or
@@ -376,7 +383,7 @@ class Cloader:
             else:
                 buff += pk.data[6:]
 
-        return buff[0:self.page_size]  # For some reason we get one byte extra here...
+        return buff[0:page_size]  # For some reason we get one byte extra here...
 
     def write_flash(self, addr, page_buffer, target_page, page_count):
         """Initate flashing of data in the buffer to flash."""

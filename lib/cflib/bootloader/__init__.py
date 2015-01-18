@@ -37,6 +37,8 @@ import zipfile
 import json
 import sys
 import time
+import logging
+logger = logging.getLogger(__name__)
 
 __author__ = 'Bitcraze AB'
 __all__ = ['Bootloader']
@@ -116,6 +118,22 @@ class Bootloader:
     def get_target(self, target_id):
         return self._cload.request_info_update(target_id)
 
+    def read_cf1_config(self):
+        """Read a flash page from the specified target"""
+        target = self._cload.targets[0xFF]
+        config_page = target.flash_pages - 1
+
+        return self._cload.read_flash(addr=0xFF, page=config_page)
+
+    def write_cf1_config(self, data):
+        target = self._cload.targets[0xFF]
+        config_page = target.flash_pages - 1
+
+        to_flash = {"target": target, "data": data, "type": "CF1 config",
+                    "start_page": config_page}
+
+        self._internal_flash(target=to_flash)
+
     def flash(self, filename, targets):
         for target in targets:
             if TargetTypes.from_string(target) not in self._cload.targets:
@@ -162,6 +180,7 @@ class Bootloader:
                         # Read the data, if this fails we bail
                         file_to_flash["target"] = self._cload.targets[TargetTypes.from_string(target)]
                         file_to_flash["data"] = zf.read(zip_targets[target][type]["filename"])
+                        file_to_flash["start_page"] = file_to_flash["target"].start_page
                         files_to_flash += (file_to_flash, )
             except KeyError as e:
                 print "Could not find a file for {} in {}".format(current_target, filename)
@@ -177,6 +196,7 @@ class Bootloader:
                 for t in targets:
                     file_to_flash["target"] = self._cload.targets[TargetTypes.from_string(t)]
                     file_to_flash["type"] = targets[t][0]
+                    file_to_flash["start_page"] = file_to_flash["target"].start_page
                 file_to_flash["data"] = f.read()
                 f.close()
                 files_to_flash += (file_to_flash, )
@@ -199,9 +219,12 @@ class Bootloader:
         if self._cload:
             self._cload.close()
 
-    def _internal_flash(self, target, current_file_number, total_files):
+    def _internal_flash(self, target, current_file_number=1, total_files=1):
+
         image = target["data"]
         t_data = target["target"]
+
+        start_page = target["start_page"]
 
         # If used from a UI we need some extra things for reporting progress
         factor = (100.0 * t_data.page_size) / len(image)
@@ -216,7 +239,7 @@ class Bootloader:
                                                                      target["type"]))
             sys.stdout.flush()
 
-        if len(image) > ((t_data.flash_pages - t_data.start_page) *
+        if len(image) > ((t_data.flash_pages - start_page) *
                          t_data.page_size):
             if self.progress_cb:
                 self.progress_cb("Error: Not enough space to flash the image file.", int(progress))
@@ -225,6 +248,8 @@ class Bootloader:
             raise Exception()
 
         if not self.progress_cb:
+            logger.info(("%d bytes (%d pages) " % ((len(image) - 1),
+                             int(len(image) / t_data.page_size) + 1)))
             sys.stdout.write(("%d bytes (%d pages) " % ((len(image) - 1),
                              int(len(image) / t_data.page_size) + 1)))
             sys.stdout.flush()
@@ -264,7 +289,7 @@ class Bootloader:
                     sys.stdout.write("%d" % ctr)
                     sys.stdout.flush()
                 if not self._cload.write_flash(t_data.addr, 0,
-                                         t_data.start_page + i - (ctr - 1),
+                                         start_page + i - (ctr - 1),
                                          ctr):
                     if self.progress_cb:
                         self.progress_cb("Error during flash operation (code %d)".format(self._cload.error_code),
@@ -287,7 +312,7 @@ class Bootloader:
                 sys.stdout.flush()
             if not self._cload.write_flash(t_data.addr,
                                  0,
-                                 (t_data.start_page +
+                                 (start_page +
                                   (int((len(image) - 1) / t_data.page_size)) -
                                   (ctr - 1)),
                                  ctr):
@@ -302,6 +327,6 @@ class Bootloader:
 
         if self.progress_cb:
             self.progress_cb("({}/{}) Flashing done!".format(current_file_number, total_files),
-                             int(progress))
+                             int(100))
         else:
             print ""

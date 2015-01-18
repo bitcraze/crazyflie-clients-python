@@ -34,6 +34,7 @@ __all__ = ['MainUI']
 import sys
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 from PyQt4 import QtGui, uic
@@ -292,6 +293,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.menuItemQuickConnect.setEnabled(True)
             self.batteryBar.setValue(3000)
             self._menu_cf2_config.setEnabled(False)
+            self._menu_cf1_config.setEnabled(True)
             self.linkQualityBar.setValue(0)
             self.menuItemBootloader.setEnabled(True)
             self.logConfigAction.setEnabled(False)
@@ -304,6 +306,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.connectButton.setText("Disconnect")
             self.logConfigAction.setEnabled(True)
             self._menu_cf2_config.setEnabled(True)
+            self._menu_cf1_config.setEnabled(False)
         if (newState == UIState.CONNECTING):
             s = "Connecting to %s ..." % linkURI
             self.setWindowTitle(s)

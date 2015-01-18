@@ -168,8 +168,7 @@ class PySDL2Reader():
         logger.info("Looking for devices")
         dev = []
         names = []
-        if hasattr(self, 'j') and sdl2.joystick.SDL_JoystickGetAttached(self.j) and \
-                not sys.platform.startswith('linux'):
+        if hasattr(self, 'j') and sdl2.joystick.SDL_JoystickGetAttached(self.j):
             sdl2.joystick.SDL_JoystickClose(self.j)
 
         nbrOfInputs = sdl2.joystick.SDL_NumJoysticks()

@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>825</width>
-    <height>482</height>
+    <height>395</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,7 +25,7 @@
      <item>
       <widget class="QGroupBox" name="groupBox">
        <property name="title">
-        <string>Copter connection</string>
+        <string>Crazyflie connection</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
@@ -103,14 +103,14 @@
           <string>Configutation block</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_2">
-          <item row="7" column="0">
+          <item row="6" column="0">
            <widget class="QLabel" name="label_9">
             <property name="text">
              <string>Radio bandwith:</string>
             </property>
            </widget>
           </item>
-          <item row="7" column="2">
+          <item row="6" column="2">
            <widget class="QComboBox" name="radioSpeed">
             <property name="editable">
              <bool>false</bool>
@@ -135,34 +135,21 @@
             </item>
            </widget>
           </item>
-          <item row="2" column="0">
+          <item row="1" column="0">
            <widget class="QLabel" name="label_4">
             <property name="text">
              <string>Pitch trim:</string>
             </property>
            </widget>
           </item>
-          <item row="3" column="0">
+          <item row="2" column="0">
            <widget class="QLabel" name="label_6">
             <property name="text">
              <string>Roll trim:</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
-           <widget class="QLineEdit" name="copterId">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="2">
+          <item row="8" column="2">
            <widget class="QPushButton" name="saveConfigblock">
             <property name="enabled">
              <bool>false</bool>
@@ -172,44 +159,14 @@
             </property>
            </widget>
           </item>
-          <item row="6" column="0">
+          <item row="5" column="0">
            <widget class="QLabel" name="label_8">
             <property name="text">
              <string>Radio channel:</string>
             </property>
            </widget>
           </item>
-          <item row="6" column="2">
-           <widget class="QSpinBox" name="radioChannel">
-            <property name="prefix">
-             <string>Ch. </string>
-            </property>
-            <property name="maximum">
-             <number>127</number>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="2">
-           <spacer name="verticalSpacer">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_10">
-            <property name="text">
-             <string>Copter ID:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="0">
+          <item row="7" column="0">
            <spacer name="verticalSpacer_2">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
@@ -222,7 +179,30 @@
             </property>
            </spacer>
           </item>
-          <item row="2" column="2">
+          <item row="5" column="2">
+           <widget class="QSpinBox" name="radioChannel">
+            <property name="prefix">
+             <string>Ch. </string>
+            </property>
+            <property name="maximum">
+             <number>127</number>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="2">
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="1" column="2">
            <widget class="QDoubleSpinBox" name="pitchTrim">
             <property name="decimals">
              <number>1</number>
@@ -235,7 +215,7 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="2">
+          <item row="2" column="2">
            <widget class="QDoubleSpinBox" name="rollTrim">
             <property name="decimals">
              <number>1</number>
