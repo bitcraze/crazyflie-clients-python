@@ -286,7 +286,11 @@ class RadioDriver(CRTPDriver):
             except Exception as e:
                 return str(e)
 
-        return "Crazyradio version {}".format(self.cradio.version)
+        ver = self.cradio.version
+        self.cradio.close()
+        self.cradio = None
+
+        return "Crazyradio version {}".format(ver)
 
     def get_name(self):
         return "radio"
