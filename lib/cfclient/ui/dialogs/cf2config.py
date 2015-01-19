@@ -77,7 +77,9 @@ class Cf2ConfigDialog(QtGui.QWidget, service_dialog_class):
         self._write_data_btn.setEnabled(True)
 
     def _set_ui_connected(self, link_uri):
-        self._cf.mem.get_mems(MemoryElement.TYPE_I2C)[0].update(self._data_updated)
+        mems = self._cf.mem.get_mems(MemoryElement.TYPE_I2C)
+        if len(mems) > 0:
+            mems[0].update(self._data_updated)
 
     def _set_ui_disconnected(self, link_uri):
         self._write_data_btn.setEnabled(False)

@@ -34,6 +34,7 @@ __all__ = ['MainUI']
 import sys
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 from PyQt4 import QtGui, uic
@@ -60,6 +61,8 @@ from cflib.crazyflie.log import Log, LogVariable, LogConfig
 
 from cfclient.ui.dialogs.bootloader import BootloaderDialog
 from cfclient.ui.dialogs.about import AboutDialog
+
+from cflib.crazyflie.mem import MemoryElement
 
 (main_window_class,
 main_windows_base_class) = (uic.loadUiType(sys.path[0] +
@@ -97,7 +100,41 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def __init__(self, *args):
         super(MainUI, self).__init__(*args)
         self.setupUi(self)
-
+        
+        ######################################################
+        ### By lxrocks
+        ### 'Skinny Progress Bar' tweak for Yosemite
+        ### Tweak progress bar - artistic I am not - so pick your own colors !!!
+        ### Only apply to Yosemite
+        ######################################################
+        import platform
+        if platform.system() == 'Darwin':
+        
+            (Version,junk,machine) =  platform.mac_ver()
+            logger.info("This is a MAC - checking if we can apply Progress Bar Stylesheet for Yosemite Skinny Bars ")
+            yosemite = (10,10,0)
+            tVersion = tuple(map(int, (Version.split("."))))
+            
+            if tVersion >= yosemite:
+                logger.info( "Found Yosemite:")
+        
+                tcss = """
+                    QProgressBar {
+                    border: 2px solid grey;
+                    border-radius: 5px;
+                    text-align: center;
+                }
+                QProgressBar::chunk {
+                     background-color: #05B8CC;
+                 }
+                 """
+                self.setStyleSheet(tcss)
+                
+            else:
+                logger.info( "Pre-Yosemite")
+        
+        ######################################################
+        
         self.cf = Crazyflie(ro_cache=sys.path[0] + "/cflib/cache",
                             rw_cache=sys.path[1] + "/cache")
 
@@ -121,7 +158,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         # Connections for the Connect Dialogue
         self.connectDialogue.requestConnectionSignal.connect(self.cf.open_link)
 
-        self.connectionDoneSignal.connect(self.connectionDone)
         self.cf.connection_failed.add_callback(self.connectionFailedSignal.emit)
         self.connectionFailedSignal.connect(self.connectionFailed)
         
@@ -159,8 +195,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                                          self.cf.commander.send_setpoint)
 
         # Connection callbacks and signal wrappers for UI protection
-        self.cf.connected.add_callback(
-                                              self.connectionDoneSignal.emit)
+        self.cf.connected.add_callback(self.connectionDoneSignal.emit)
         self.connectionDoneSignal.connect(self.connectionDone)
         self.cf.disconnected.add_callback(self.disconnectedSignal.emit)
         self.disconnectedSignal.connect(
@@ -258,6 +293,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.menuItemQuickConnect.setEnabled(True)
             self.batteryBar.setValue(3000)
             self._menu_cf2_config.setEnabled(False)
+            self._menu_cf1_config.setEnabled(True)
             self.linkQualityBar.setValue(0)
             self.menuItemBootloader.setEnabled(True)
             self.logConfigAction.setEnabled(False)
@@ -269,7 +305,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.menuItemConnect.setText("Disconnect")
             self.connectButton.setText("Disconnect")
             self.logConfigAction.setEnabled(True)
-            self._menu_cf2_config.setEnabled(True)
+            # Find out if there's an I2C EEPROM, otherwise don't show the
+            # dialog.
+            if len(self.cf.mem.get_mems(MemoryElement.TYPE_I2C)) > 0:
+                self._menu_cf2_config.setEnabled(True)
+            self._menu_cf1_config.setEnabled(False)
         if (newState == UIState.CONNECTING):
             s = "Connecting to %s ..." % linkURI
             self.setWindowTitle(s)
