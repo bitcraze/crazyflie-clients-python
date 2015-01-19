@@ -360,6 +360,11 @@ class JoystickReader:
 
             trimmed_roll = roll + self._trim_roll
             trimmed_pitch = pitch + self._trim_pitch
+
+            # Thrust might be <0 here, make sure it's not otherwise we'll get an error.
+            if thrust < 0:
+              thrust = 0
+
             self.input_updated.call(trimmed_roll, trimmed_pitch, yaw, thrust)
         except Exception:
             logger.warning("Exception while reading inputdevice: %s",
