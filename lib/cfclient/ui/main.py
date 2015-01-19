@@ -62,6 +62,8 @@ from cflib.crazyflie.log import Log, LogVariable, LogConfig
 from cfclient.ui.dialogs.bootloader import BootloaderDialog
 from cfclient.ui.dialogs.about import AboutDialog
 
+from cflib.crazyflie.mem import MemoryElement
+
 (main_window_class,
 main_windows_base_class) = (uic.loadUiType(sys.path[0] +
                                            '/cfclient/ui/main.ui'))
@@ -156,7 +158,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         # Connections for the Connect Dialogue
         self.connectDialogue.requestConnectionSignal.connect(self.cf.open_link)
 
-        self.connectionDoneSignal.connect(self.connectionDone)
         self.cf.connection_failed.add_callback(self.connectionFailedSignal.emit)
         self.connectionFailedSignal.connect(self.connectionFailed)
         
@@ -194,8 +195,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                                          self.cf.commander.send_setpoint)
 
         # Connection callbacks and signal wrappers for UI protection
-        self.cf.connected.add_callback(
-                                              self.connectionDoneSignal.emit)
+        self.cf.connected.add_callback(self.connectionDoneSignal.emit)
         self.connectionDoneSignal.connect(self.connectionDone)
         self.cf.disconnected.add_callback(self.disconnectedSignal.emit)
         self.disconnectedSignal.connect(
@@ -305,7 +305,10 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self.menuItemConnect.setText("Disconnect")
             self.connectButton.setText("Disconnect")
             self.logConfigAction.setEnabled(True)
-            self._menu_cf2_config.setEnabled(True)
+            # Find out if there's an I2C EEPROM, otherwise don't show the
+            # dialog.
+            if len(self.cf.mem.get_mems(MemoryElement.TYPE_I2C)) > 0:
+                self._menu_cf2_config.setEnabled(True)
             self._menu_cf1_config.setEnabled(False)
         if (newState == UIState.CONNECTING):
             s = "Connecting to %s ..." % linkURI
