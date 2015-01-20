@@ -182,8 +182,10 @@ class Joystick():
                 data = self.jsfile.read(struct.calcsize(JS_EVENT_FMT))
                 jsdata = struct.unpack(JS_EVENT_FMT, data)
                 self.__updatestate(jsdata)
-        except IOError:  # Raised when there are nothing to read
-            pass
+        except IOError as e:
+            if e.errno != 11:
+                logger.info(str(e))
+                raise IOError("Device has been disconnected")
 
     def read(self):
         """ Returns a list of all joystick event since the last call """
