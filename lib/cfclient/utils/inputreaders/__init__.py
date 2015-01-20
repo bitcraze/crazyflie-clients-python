@@ -98,10 +98,10 @@ class InputDevice():
     def close(self):
         self._reader.close()
 
-    def read(self):
+    def read(self, use_mapping=True):
         [axis, buttons] = self._reader.read()
 
-        if self.input_map:
+        if use_mapping:
             self.data["pitchcal"] = 0.0
             self.data["rollcal"] = 0.0
 

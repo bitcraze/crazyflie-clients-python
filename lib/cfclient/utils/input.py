@@ -90,6 +90,8 @@ class JoystickReader:
         self._trim_roll = Config().get("trim_roll")
         self._trim_pitch = Config().get("trim_pitch")
 
+        self._input_map = None
+
         if (Config().get("flightmode") is "Normal"):
             self._max_yaw_rate = Config().get("normal_max_yaw")
             self._max_rp_angle = Config().get("normal_max_rp")
@@ -202,7 +204,7 @@ class JoystickReader:
 
     def readRawValues(self):
         """ Read raw values from the input device."""
-        [axes, buttons] = self._input_device.read()
+        [axes, buttons] = self._input_device.read(use_mapping=False)
         dict_axes = {}
         dict_buttons = {}
 
@@ -214,7 +216,14 @@ class JoystickReader:
 
         return [dict_axes, dict_buttons]
 
-    def start_input(self, device_name, config_name):
+    def set_input_map(self, input_map_name):
+        settings = ConfigManager().get_settings(input_map_name)
+        self._springy_throttle = settings["springythrottle"]
+        self._input_map = ConfigManager().get_config(input_map_name)
+        if self._input_device:
+            self._input_device.input_map = self._input_map
+
+    def start_input(self, device_name):
         """
         Start reading input from the device with name device_name using config
         config_name
@@ -226,10 +235,11 @@ class JoystickReader:
                     self._input_device = d
                     logger.info("Trying to open device {}".format(device_name))
                     self._input_device.open()
-                    self._input_device.input_map = ConfigManager().get_config(config_name)
-                    settings = ConfigManager().get_settings(config_name)
-                    self._springy_throttle = settings["springythrottle"]
+                    #logger.info("Setting inputmap: {}".format(self._input_map))
+                    self._input_device.input_map = self._input_map
+                    logger.info("Starting timer")
                     self._read_timer.start()
+                    logger.info("Started timer")
         except Exception:
             self.device_error.call(
                      "Error while opening/initializing  input device\n\n%s" %
@@ -242,6 +252,8 @@ class JoystickReader:
     def stop_input(self):
         """Stop reading from the input device."""
         self._read_timer.stop()
+        if self._input_device:
+            self._input_device.close()
 
     def set_yaw_limit(self, max_yaw_rate):
         """Set a new max yaw rate value."""
@@ -363,7 +375,11 @@ class JoystickReader:
 
             # Thrust might be <0 here, make sure it's not otherwise we'll get an error.
             if thrust < 0:
-              thrust = 0
+                thrust = 0
+            if thrust > 65535:
+                thrust = 65535
+
+            #logger.info("TH: {}".format(thrust))
 
             self.input_updated.call(trimmed_roll, trimmed_pitch, yaw, thrust)
         except Exception:
@@ -371,6 +387,7 @@ class JoystickReader:
                            traceback.format_exc())
             self.device_error.call("Error reading from input device\n\n%s" %
                                      traceback.format_exc())
+            self.input_updated.call(0, 0, 0, 0)
             self._read_timer.stop()
 
     @staticmethod

@@ -152,7 +152,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._active_device = ""
         self.configGroup = QActionGroup(self._menu_mappings, exclusive=True)
         self._load_input_data()
-        self._update_input
         ConfigManager().conf_needs_reload.add_callback(self._reload_configs)
 
         # Connections for the Connect Dialogue
@@ -220,6 +219,10 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         # Parse the log configuration files
         self.logConfigReader = LogConfigReader(self.cf)
+
+        self._current_input_config = None
+        self._active_config = None
+        self._active_config = None
 
         # Add things to helper so tabs can access it
         cfclient.ui.pluginhelper.cf = self.cf
@@ -430,6 +433,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self._menu_mappings.addAction(node)
 
     def _reload_configs(self, newConfigName):
+        logger.info("RELOAD CONFIGS")
         # remove the old actions from the group and the menu
         for action in self._menu_mappings.actions():
             self.configGroup.removeAction(action)
@@ -441,16 +445,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._update_input(self._active_device, newConfigName)
 
     def _update_input(self, device="", config=""):
-        self.joystickReader.stop_input()
+        #self.joystickReader.stop_input()
         self._active_config = str(config)
         self._active_device = str(device)
 
         GuiConfig().set("input_device", self._active_device)
-        GuiConfig().get(
-                     "device_config_mapping"
-                     )[self._active_device] = self._active_config
-        self.joystickReader.start_input(self._active_device,
-                                       self._active_config)
 
         # update the checked state of the menu items
         for c in self._menu_mappings.actions():
@@ -474,34 +473,61 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                                           (self._active_device,
                                            self._active_config))
 
+    def _get_saved_device_mapping(self, device_name):
+        """Return the saved mapping for a given device"""
+        config = None
+        device_config_mapping = GuiConfig().get("device_config_mapping")
+        logger.info(device_config_mapping)
+        if device_name in device_config_mapping.keys():
+            config = device_config_mapping[device_name]
+
+        logging.info("For [{}] we recommend [{}]".format(device_name, config))
+        return config
+
+
+    def _update_input_device_footer(self, device_name=None, mapping_name=None):
+        """Update the footer in the bottom of the UI with status for the
+        input device and its mapping"""
+        if not device_name and not mapping_name:
+            self._statusbar_label.setText("No input device selected")
+        elif not mapping_name:
+            self._statusbar_label.setText("Using [{}] - "
+                                          "No input config selected".format(
+                                            device_name))
+        else:
+            self._statusbar_label.setText("Using [{}] with config [{}]".format(
+                                            device_name, mapping_name))
+
     def _inputdevice_selected(self, checked):
-        if (not checked):
+        """Called when a new input device has been selected from the menu"""
+        if not checked:
             return
         self.joystickReader.stop_input()
-        sender = self.sender()
-        self._active_device = sender.text()
-        device_config_mapping = GuiConfig().get("device_config_mapping")
-        if (self._active_device in device_config_mapping.keys()):
-            self._current_input_config = device_config_mapping[
-                str(self._active_device)]
-        else:
-            self._current_input_config = self._menu_mappings.actions()[0].text()
-        GuiConfig().set("input_device", str(self._active_device))
+        selected_device_name = str(self.sender().text())
+        self._active_device = selected_device_name
 
-        for c in self._menu_mappings.actions():
-            if (c.text() == self._current_input_config):
-                c.setChecked(True)
+        # Save the device as "last used device"
+        GuiConfig().set("input_device", selected_device_name)
 
-        self.joystickReader.start_input(str(sender.text()),
-                                        self._current_input_config)
-        self._statusbar_label.setText("Using [%s] with config [%s]" % (
-                                      self._active_device,
-                                      self._current_input_config))
+        # Read preferred config used for this controller from config,
+        # if found then select this config in the menu
+        preferred_config = self._get_saved_device_mapping(selected_device_name)
+        if preferred_config:
+            for c in self._menu_mappings.actions():
+                if c.text() == preferred_config:
+                    c.setChecked(True)
+
+        self.joystickReader.start_input(selected_device_name)
 
     def _inputconfig_selected(self, checked):
-        if (not checked):
+        """Called when a new configuration has been selected from the menu"""
+        if not checked:
             return
-        self._update_input(self._active_device, self.sender().text())
+        logger.info("SELECTED INPUT")
+        selected_mapping = str(self.sender().text())
+        self.joystickReader.set_input_map(selected_mapping)
+        GuiConfig().get("device_config_mapping")[self._active_device] = selected_mapping
+        self._update_input_device_footer(self._active_device, selected_mapping)
 
     def device_discovery(self, devs):
         group = QActionGroup(self._menu_devices, exclusive=True)
@@ -514,13 +540,13 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             if (d.name == GuiConfig().get("input_device")):
                 self._active_device = d.name
         if (len(self._active_device) == 0):
-            self._active_device = self._menu_devices.actions()[0].text()
+            self._active_device = str(self._menu_devices.actions()[0].text())
 
         device_config_mapping = GuiConfig().get("device_config_mapping")
         if (device_config_mapping):
             if (self._active_device in device_config_mapping.keys()):
                 self._current_input_config = device_config_mapping[
-                    str(self._active_device)]
+                    self._active_device]
             else:
                 self._current_input_config = self._menu_mappings.actions()[0].text()
         else:

@@ -108,8 +108,8 @@ class LeapListener(Leap.Listener):
             #yaw = direction.yaw * Leap.RAD_TO_DEG / 70.0
             #thrust = (hand.palm_position[1] - 80)/150.0 # Use the elevation of the hand for thrust
 
-            roll = -direction.pitch * Leap.RAD_TO_DEG
-            pitch = -normal.roll * Leap.RAD_TO_DEG
+            pitch = -direction.pitch * Leap.RAD_TO_DEG
+            roll = -normal.roll * Leap.RAD_TO_DEG
             yaw = direction.yaw * Leap.RAD_TO_DEG
             thrust = hand.palm_position[1]
 
@@ -136,14 +136,10 @@ class LeapmotionReader():
     def __init__(self):
         #pygame.init()
         self._ts = 0
-        logger.info("Initializing")
         self._listener = LeapListener()
         self._listener.set_data_callback(self.leap_callback)
-        logger.info("Created listender")
         self._controller = Leap.Controller()
-        logger.info("Created controller")
         self._controller.add_listener(self._listener)
-        logger.info("Registered listener")
         self.name = MODULE_NAME
 
         self._axes = None
@@ -156,35 +152,22 @@ class LeapmotionReader():
         self._buttons = [0]
 
     def leap_callback(self, axes, buttons):
-        #logger.info("AX: {}".format(axes))
-        #logger.info("BT: {}".format(buttons))
-
         self._axes = axes
         self._buttons = buttons
 
     def read(self):
         """Read input from the selected device."""
-        # We only want the pitch/roll cal to be "oneshot", don't
-        # save this value.
-        #self.data["pitchcal"] = 0.0
-        #self.data["rollcal"] = 0.0
-        #self.data["estop"] = False
-
-        #if (self._listener.nbr_of_fingers() < 5 and self._listener.nbr_of_fingers() > 3 and (time.time() - self._ts) > 1):
-        #    self.data["estop"] = True
-        #    self._ts = time.time()
-        #    logger.info("Change!!")
-        #else:
-        #    self.data["estop"] = False
-
         return [self._axes, self._buttons]
+
+    def close(self):
+        return
 
     def devices(self):
         """List all the available devices."""
         dev = []
 
         # According to API doc only 0 or 1 devices is supported
-        logger.info("Devs: {}".format(self._controller.is_connected))
+        #logger.info("Devs: {}".format(self._controller.is_connected))
         if self._controller.is_connected:
             dev.append({"id": 0, "name": "Leapmotion"})
         
