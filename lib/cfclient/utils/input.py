@@ -181,7 +181,7 @@ class JoystickReader:
 
         return approved_devs 
 
-    def enableRawReading(self, deviceId):
+    def enableRawReading(self, device_name):
         """
         Enable raw reading of the input device with id deviceId. This is used
         to get raw values for setting up of input devices. Values are read
@@ -191,7 +191,7 @@ class JoystickReader:
             self._input_device.close()
 
         for d in readers.devices():
-            if d.id == deviceId:
+            if d.name == device_name:
                 self._input_device = d
 
         # Set the mapping to None to get raw values

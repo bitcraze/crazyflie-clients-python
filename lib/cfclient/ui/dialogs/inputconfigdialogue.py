@@ -176,7 +176,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.box.show()
 
     def startConfigOfInputDevice(self):
-        self.joystickReader.enableRawReading(self.inputDeviceSelector.currentIndex())
+        self.joystickReader.enableRawReading(str(self.inputDeviceSelector.currentText()))
         self.rawinputreader.startReading()
         self.populateDropDown()
         self.profileCombo.setEnabled(True)
@@ -448,5 +448,7 @@ class RawJoystickReader(QThread):
     @pyqtSlot()
     def read_input(self):
         [rawaxis, rawbuttons] = self.joystickReader.readRawValues()
+        #logger.info("AX: {}".format(rawaxis))
+        #logger.info("BT: {}".format(rawbuttons))
         self.rawAxisUpdateSignal.emit(rawaxis)
         self.rawButtonUpdateSignal.emit(rawbuttons)
