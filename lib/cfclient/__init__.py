@@ -29,4 +29,14 @@ from .cfclient import main
 try:
     from .version import VERSION
 except:
-    VERSION = "dev"
+    try:
+        import subprocess
+        VERSION = subprocess.check_output(["git", "describe"])
+    except:
+        VERSION = "dev"
+    try:
+        import subprocess
+        ret = subprocess.check_call(["git", "diff --quiet HEAD"])
+    except:
+        VERSION += "+"
+
