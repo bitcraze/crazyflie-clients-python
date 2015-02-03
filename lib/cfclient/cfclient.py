@@ -91,7 +91,14 @@ def main():
         logger.critical("No pyusb installation found, exiting!")
         sys.exit(1)
 
-    if not sys.platform.startswith('linux'):
+    # On linux systems use pygame instead of pysdl2
+    if sys.platform.startswith('linux'):
+        try:
+            import pygame
+        except ImportError:
+            logger.critical("No pygame installation found, exiting!")
+            sys.exit(1)
+    else:
         try:
             import sdl2
         except ImportError:
