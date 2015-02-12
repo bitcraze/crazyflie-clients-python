@@ -91,7 +91,7 @@ class JoystickReader:
 
         self._input_map = None
 
-        if (Config().get("flightmode") is "Normal"):
+        if Config().get("flightmode") is "Normal":
             self._max_yaw_rate = Config().get("normal_max_yaw")
             self._max_rp_angle = Config().get("normal_max_rp")
             # Values are stored at %, so use the functions to set the values
@@ -111,7 +111,7 @@ class JoystickReader:
                 Config().get("slew_rate"), Config().get("slew_limit"))
 
         self._dev_blacklist = None
-        if (len(Config().get("input_device_blacklist")) > 0):
+        if len(Config().get("input_device_blacklist")) > 0:
             self._dev_blacklist = re.compile(
                             Config().get("input_device_blacklist"))
         logger.info("Using device blacklist [{}]".format(
@@ -152,20 +152,22 @@ class JoystickReader:
         self.alt1_updated = Caller()
         self.alt2_updated = Caller()
 
-    def setAltHoldAvailable(self, available):
+    def set_alt_hold_available(self, available):
+        """Set if altitude hold is available or not (depending on HW)"""
         self._has_pressure_sensor = available
 
-    def setAltHold(self, althold):
+    def enable_alt_hold(self, althold):
+        """Enable or disable altitude hold"""
         self._old_alt_hold = althold
 
     def _do_device_discovery(self):
-        devs = self.getAvailableDevices()
+        devs = self.available_devices()
 
         if len(devs):
             self.device_discovery.call(devs)
             self._discovery_timer.stop()
 
-    def getAvailableDevices(self):
+    def available_devices(self):
         """List all available and approved input devices.
         This function will filter available devices by using the
         blacklist configuration and only return approved devices."""
@@ -197,11 +199,11 @@ class JoystickReader:
         self._input_device.input_map = None
         self._input_device.open()
 
-    def disableRawReading(self):
+    def stop_raw_reading(self):
         """Disable raw reading of input device."""
         self._input_device.close()
 
-    def readRawValues(self):
+    def read_raw_values(self):
         """ Read raw values from the input device."""
         [axes, buttons, mapped_values] = self._input_device.read(include_raw=True)
         dict_axes = {}
@@ -216,11 +218,12 @@ class JoystickReader:
         return [dict_axes, dict_buttons, mapped_values]
 
     def set_raw_input_map(self, input_map):
-        logger.info(input_map)
+        """Set an input device map"""
         if self._input_device:
             self._input_device.input_map = input_map
 
     def set_input_map(self, input_map_name):
+        """Load and set an input device map with the given name"""
         settings = ConfigManager().get_settings(input_map_name)
         self._springy_throttle = settings["springythrottle"]
         self._input_map = ConfigManager().get_config(input_map_name)
@@ -243,12 +246,9 @@ class JoystickReader:
             for d in readers.devices():
                 if d.name == device_name:
                     self._input_device = d
-                    logger.info("Trying to open device {}".format(device_name))
                     self._input_device.open()
                     self._input_device.input_map = self._input_map
-                    logger.info("Starting timer")
                     self._read_timer.start()
-                    logger.info("Started timer")
         except Exception:
             self.device_error.call(
                      "Error while opening/initializing  input device\n\n%s" %
@@ -277,7 +277,7 @@ class JoystickReader:
         for the slewrate."""
         self._thrust_slew_rate = JoystickReader.p2t(thrust_slew_rate)
         self._thrust_slew_limit = JoystickReader.p2t(thrust_slew_limit)
-        if (thrust_slew_rate > 0):
+        if thrust_slew_rate > 0:
             self._thrust_slew_enabled = True
         else:
             self._thrust_slew_enabled = False
@@ -297,20 +297,15 @@ class JoystickReader:
 
     def _calc_rp_trim(self, key_neg, key_pos, data):
         if self._check_toggle(key_neg, data) and not data[key_neg]:
-            logger.info("{}: --".format(key_neg))
             return -1.0
         if self._check_toggle(key_pos, data) and not data[key_pos]:
-            logger.info("{}: ++".format(key_pos))
             return 1.0
         return 0.0
 
     def _check_toggle(self, key, data):
         if not key in self._prev_values:
             self._prev_values[key] = data[key]
-            logger.info("Adding: {}".format(key))
-            logger.info(self._prev_values)
         elif self._prev_values[key] != data[key]:
-            logger.info("TOGGLE ON {}".format(key))
             self._prev_values[key] = data[key]
             return True
         return False

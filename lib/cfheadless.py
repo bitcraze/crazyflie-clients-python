@@ -72,18 +72,18 @@ class HeadlessClient():
         if (xmode):
             self._cf.commander.set_client_xmode(xmode)
 
-        devs = self._jr.getAvailableDevices()
+        devs = self._jr.available_devices()
         print "Will use [%s] for input" % devs[input_device]["name"]
         self._jr.start_input(devs[input_device]["name"],
                              input_config)
 
     def controller_connected(self):
         """ Return True if a controller is connected"""
-        return True if (len(self._jr.getAvailableDevices()) > 0) else False
+        return True if (len(self._jr.available_devices()) > 0) else False
 
     def list_controllers(self):
         """List the available controllers"""
-        for dev in self._jr.getAvailableDevices():
+        for dev in self._jr.available_devices():
             print "Controller #{}: {}".format(dev["id"], dev["name"])
 
     def connect_crazyflie(self, link_uri):
@@ -93,7 +93,7 @@ class HeadlessClient():
         self._cf.connected.add_callback(self._connected)
         self._cf.param.add_update_callback(group="imu_sensors", name="HMC5883L",
                 cb=(lambda name, found:
-                    self._jr.setAltHoldAvailable(eval(found))))
+                    self._jr.set_alt_hold_available(eval(found))))
         self._jr.althold_updated.add_callback(
                 lambda enabled: self._cf.param.set_value("flightmode.althold", enabled))
 

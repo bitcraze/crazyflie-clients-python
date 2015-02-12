@@ -342,7 +342,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.joystickReader.stop_input()
         for c in self._menu_mappings.actions():
             c.setEnabled(False)
-        devs = self.joystickReader.getAvailableDevices()
+        devs = self.joystickReader.available_devices()
         if (len(devs) > 0):
             self.device_discovery(devs)
 
@@ -430,7 +430,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self._menu_mappings.addAction(node)
 
     def _reload_configs(self, newConfigName):
-        logger.info("RELOAD CONFIGS")
         # remove the old actions from the group and the menu
         for action in self._menu_mappings.actions():
             self.configGroup.removeAction(action)
@@ -473,11 +472,10 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         """Return the saved mapping for a given device"""
         config = None
         device_config_mapping = GuiConfig().get("device_config_mapping")
-        logger.info(device_config_mapping)
         if device_name in device_config_mapping.keys():
             config = device_config_mapping[device_name]
 
-        logging.info("For [{}] we recommend [{}]".format(device_name, config))
+        logging.debug("For [{}] we recommend [{}]".format(device_name, config))
         return config
 
 

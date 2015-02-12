@@ -173,7 +173,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         firmware = None
 
         self._device_text = ""
-        devs = self._helper.inputDeviceReader.getAvailableDevices()
+        devs = self._helper.inputDeviceReader.available_devices()
         for d in devs:
             self._device_text += DEVICE_FORMAT.format(d.reader_name,
                                                       d.id,

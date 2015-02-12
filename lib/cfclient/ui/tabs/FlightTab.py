@@ -158,7 +158,7 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.cf.param.add_update_callback(
                     group="flightmode", name="althold",
                     cb=(lambda name, enabled:
-                    self.helper.inputDeviceReader.setAltHold(eval(enabled))))
+                    self.helper.inputDeviceReader.enable_alt_hold(eval(enabled))))
 
         self._ledring_nbr_effects = 0
 
@@ -281,7 +281,7 @@ class FlightTab(Tab, flight_tab_class):
                 self.actualASL.setEnabled(False)
             else:
                 self.actualASL.setEnabled(True)
-                self.helper.inputDeviceReader.setAltHoldAvailable(available)
+                self.helper.inputDeviceReader.set_alt_hold_available(available)
                 if (not self.logBaro and not self.logAltHold):
                     # The sensor is available, set up the logging
                     self.logBaro = LogConfig("Baro", 200)
@@ -401,7 +401,7 @@ class FlightTab(Tab, flight_tab_class):
 
     def flightmodeChange(self, item):
         GuiConfig().set("flightmode", self.flightModeCombo.itemText(item))
-        logger.info("Changed flightmode to %s",
+        logger.debug("Changed flightmode to %s",
                     self.flightModeCombo.itemText(item))
         self.isInCrazyFlightmode = False
         if (item == 0):  # Normal

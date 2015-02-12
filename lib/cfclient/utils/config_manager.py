@@ -83,7 +83,7 @@ class ConfigManager():
             self._input_settings = []
             self._list_of_configs = []
             for conf in configs:
-                logger.info("Parsing [%s]", conf)
+                logger.debug("Parsing [%s]", conf)
                 json_data = open(self.configs_dir + "/%s" % conf)
                 data = json.load(json_data)
                 new_input_device = {}
