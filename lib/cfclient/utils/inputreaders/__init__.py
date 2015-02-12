@@ -97,6 +97,12 @@ class InputDevice():
     def close(self):
         self._reader.close()
 
+    def _zero_all_buttons(self):
+        buttons = ("estop", "exit", "althold", "alt1", "alt2", "rollPos",
+                   "rollNeg", "pitchPos", "pitchNeg")
+        for b in buttons:
+            self.data[b] = False
+
     def read(self, include_raw=False):
         [axis, buttons] = self._reader.read()
 
@@ -119,6 +125,10 @@ class InputDevice():
                 #logger.warning("Axis {}".format(i))
                 pass
             i += 1
+
+        # Workaround for fixing issues during mapping (remapping buttons while
+        # they are pressed.
+        self._zero_all_buttons()
 
         i = 0
         for b in buttons:

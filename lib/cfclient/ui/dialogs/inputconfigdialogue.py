@@ -244,6 +244,14 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self._input.set_raw_input_map(self._map)
 
     def _map_button(self, function, key_id):
+        # Duplicate buttons is not allowed, remove if there's already one mapped
+        prev_button = None
+        for m in self._map:
+            if "key" in self._map[m] and self._map[m]["key"] == function:
+                prev_button = m
+        if prev_button:
+            del self._map[prev_button]
+
         self._map["Input.BUTTON-{}".format(key_id)] = {}
         self._map["Input.BUTTON-{}".format(key_id)]["id"] = key_id
         self._map["Input.BUTTON-{}".format(key_id)]["key"] = function
