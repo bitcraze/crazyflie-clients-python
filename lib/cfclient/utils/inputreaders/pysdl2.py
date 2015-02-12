@@ -57,18 +57,29 @@ class PySDL2Reader():
         self.axes = []
         self.buttons = []
         self.name = MODULE_NAME
+        self._btn_count = 0
 
 
     def open(self, deviceId):
         """Initalize the reading and open the device with deviceId and set the mapping for axis/buttons using the
         inputMap"""
         self._j = sdl2.SDL_JoystickOpen(deviceId)
+        self._btn_count = sdl2.SDL_JoystickNumButtons(self._j)
 
         self.axes = list(0 for i in range(sdl2.SDL_JoystickNumAxes(self._j)))
-        self.buttons = list(0 for i in range(sdl2.SDL_JoystickNumButtons(self._j)))
+        self.buttons = list(0 for i in range(sdl2.SDL_JoystickNumButtons(self._j)+4))
 
     def close(self):
         sdl2.joystick.SDL_JoystickClose(self._j)
+
+    def _set_fake_hat_button(self, btn=None):
+        self.buttons[self._btn_count] = 0
+        self.buttons[self._btn_count+1] = 0
+        self.buttons[self._btn_count+2] = 0
+        self.buttons[self._btn_count+3] = 0
+
+        if btn:
+            self.buttons[self._btn_count+btn] = 1
 
     def read(self):
         """Read input from the selected device."""
@@ -82,6 +93,18 @@ class PySDL2Reader():
 
             if e.type == sdl2.SDL_JOYBUTTONUP:
                 self.buttons[e.jbutton.button] = 0
+
+            if e.type == sdl2.SDL_JOYHATMOTION:
+                if e.jhat.value == sdl2.SDL_HAT_CENTERED:
+                    self._set_fake_hat_button()
+                elif e.jhat.value == sdl2.SDL_HAT_UP:
+                    self._set_fake_hat_button(0)
+                elif e.jhat.value == sdl2.SDL_HAT_DOWN:
+                    self._set_fake_hat_button(1)
+                elif e.jhat.value == sdl2.SDL_HAT_LEFT:
+                    self._set_fake_hat_button(2)
+                elif e.jhat.value == sdl2.SDL_HAT_RIGHT:
+                    self._set_fake_hat_button(3)
 
         return [self.axes, self.buttons]
 
