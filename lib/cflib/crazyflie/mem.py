@@ -481,6 +481,13 @@ class Memory():
 
         return ret
 
+    def ow_search(self, vid=0xBC, pid=None, name=None):
+        """Search for specific memory id/name and return it"""
+        for m in self.get_mems(MemoryElement.TYPE_1W):
+            if pid and m.pid == pid or name and m.name == name:
+                return m
+
+        return None
 
     def write(self, memory, addr, data):
         """Write the specified data to the given memory at the given address"""

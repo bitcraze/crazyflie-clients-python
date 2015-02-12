@@ -160,6 +160,8 @@ class Crazyflie():
         logger.info("Param TOC finished updating")
         self.connected_ts = datetime.datetime.now()
         self.connected.call(self.link_uri)
+        # Trigger the update for all the parameters
+        self.param.request_update_of_all_params()
 
     def _mems_updated_cb(self):
         """Called when the memroies has been identified"""

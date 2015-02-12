@@ -335,7 +335,7 @@ class JoystickReader:
                 self.alt1_updated.call(data["alt1"])
 
             if self._check_toggle("alt2", data):
-                self.alt1_updated.call(data["alt2"])
+                self.alt2_updated.call(data["alt2"])
 
             trim_pitch = self._calc_rp_trim("pitchNeg", "pitchPos", data)
             trim_roll = self._calc_rp_trim("rollNeg", "rollPos", data)

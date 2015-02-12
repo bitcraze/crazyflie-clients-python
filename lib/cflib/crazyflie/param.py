@@ -125,6 +125,30 @@ class Param():
 
         self.cf.disconnected.add_callback(self.param_updater.close)
 
+        self.all_updated = Caller()
+        self._have_updated = False
+
+        self.values = {}
+
+    def request_update_of_all_params(self):
+        """Request an update of all the parameters in the TOC"""
+        for group in self.toc.toc:
+            for name in self.toc.toc[group]:
+                complete_name = "%s.%s" % (group, name)
+                self.request_param_update(complete_name)
+
+    def _check_if_all_updated(self):
+        """Check if all parameters from the TOC has at least been fetched
+        once"""
+        for g in self.toc.toc:
+            if not g in self.values:
+                return False
+            for n in self.toc.toc[g]:
+                if not n in self.values[g]:
+                    return False
+
+        return True
+
     def _param_updated(self, pk):
         """Callback with data for an updated parameter"""
         var_id = pk.datal[0]
@@ -133,6 +157,17 @@ class Param():
             s = struct.unpack(element.pytype, pk.data[1:])[0]
             s = s.__str__()
             complete_name = "%s.%s" % (element.group, element.name)
+
+            # Save the value for synchronous access
+            if not element.group in self.values:
+                self.values[element.group] = {}
+            self.values[element.group][element.name] = s
+
+            # This will only be called once
+            if self._check_if_all_updated() and not self._have_updated:
+                self._have_updated = True
+                self.all_updated.call()
+
             logger.debug("Updated parameter [%s]" % complete_name)
             if complete_name in self.param_update_callbacks:
                 self.param_update_callbacks[complete_name].call(complete_name, s)
@@ -182,6 +217,7 @@ class Param():
     def disconnected(self, uri):
         """Disconnected callback from Crazyflie API"""
         self.param_updater.close()
+        self._have_updated = False
 
     def request_param_update(self, complete_name):
         """

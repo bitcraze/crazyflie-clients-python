@@ -96,14 +96,14 @@ class Toc:
         """Get the TocElement element id-number of the element with the
         supplied name."""
         [group, name] = complete_name.split(".")
-        element = self._get_element(group, name)
+        element = self.get_element(group, name)
         if element:
             return element.ident
         else:
             logger.warning("Unable to find variable [%s]", complete_name)
             return None
 
-    def _get_element(self, group, name):
+    def get_element(self, group, name):
         """Get a TocElement element identified by name and group from the
         container."""
         try:

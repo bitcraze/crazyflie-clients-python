@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 from time import time
 
 from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
+from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QVariant
 from PyQt4.QtGui import QMessageBox
 
 from cflib.crazyflie import Crazyflie
@@ -51,6 +51,8 @@ from cfclient.utils.guiconfig import GuiConfig
 from cflib.crazyflie.log import Log, LogVariable, LogConfig
 
 from cfclient.ui.tab import Tab
+
+from cflib.crazyflie.mem import MemoryElement
 
 flight_tab_class = uic.loadUiType(sys.path[0] +
                                   "/cfclient/ui/tabs/flightTab.ui")[0]
@@ -142,19 +144,32 @@ class FlightTab(Tab, flight_tab_class):
                         group="flightmode", name="xmode",
                         cb=( lambda name, checked:
                         self.crazyflieXModeCheckbox.setChecked(eval(checked))))
+
         self.ratePidRadioButton.clicked.connect(
                     lambda enabled:
                     self.helper.cf.param.set_value("flightmode.ratepid",
                                                    str(enabled)))
+
         self.angularPidRadioButton.clicked.connect(
                     lambda enabled:
                     self.helper.cf.param.set_value("flightmode.ratepid",
                                                    str(not enabled)))
+
+        self._led_ring_headlight.clicked.connect(
+                    lambda enabled:
+                    self.helper.cf.param.set_value("ring.headlightEnable",
+                                                   str(enabled)))
+
         self.helper.cf.param.add_update_callback(
                     group="flightmode", name="ratepid",
                     cb=(lambda name, checked:
                     self.ratePidRadioButton.setChecked(eval(checked))))
-        
+
+        self.helper.cf.param.add_update_callback(
+                    group="ring", name="headlightEnable",
+                    cb=(lambda name, checked:
+                    self._led_ring_headlight.setChecked(eval(checked))))
+
         self.helper.cf.param.add_update_callback(
                     group="flightmode", name="althold",
                     cb=(lambda name, enabled:
@@ -166,7 +181,13 @@ class FlightTab(Tab, flight_tab_class):
                         group="ring",
                         name="neffect",
                         cb=(lambda name, value: self._set_neffect(eval(value))))
-                
+
+        self.helper.cf.param.add_update_callback(
+                        group="imu_sensors",
+                        cb=self._set_available_sensors)
+
+        self.helper.cf.param.all_updated.add_callback(self._ring_populate_dropdown)
+
         self.logBaro = None
         self.logAltHold = None
 
@@ -271,7 +292,11 @@ class FlightTab(Tab, flight_tab_class):
         else:
             logger.warning("Could not setup logconfiguration after "
                            "connection!")
-            
+
+        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x01):
+            self._led_ring_effect.setEnabled(True)
+            self._led_ring_headlight.setEnabled(True)
+
     def _set_available_sensors(self, name, available):
         logger.info("[%s]: %s", name, available)
         available = eval(available)
@@ -327,6 +352,9 @@ class FlightTab(Tab, flight_tab_class):
         self.actualASL.setEnabled(False)
         self.logBaro = None
         self.logAltHold = None
+        self._led_ring_effect.setEnabled(False)
+        self._led_ring_headlight.setEnabled(False)
+
 
     def minMaxThrustChanged(self):
         self.helper.inputDeviceReader.set_thrust_limits(
@@ -448,3 +476,42 @@ class FlightTab(Tab, flight_tab_class):
 
     def alt2_updated(self, state):
         self.helper.cf.param.set_value("ring.headlightEnable", str(state))
+
+    def _ring_populate_dropdown(self):
+        nbr = int(self.helper.cf.param.values["ring"]["neffect"])
+        current = int(self.helper.cf.param.values["ring"]["effect"])
+
+        hardcoded_names = {0: "Off",
+                           1: "White spinner",
+                           2: "Color spinner",
+                           3: "Tilt effect",
+                           4: "Brightness effect",
+                           5: "Color spinner 2",
+                           6: "Double spinner",
+                           7: "Solid color effect",
+                           8: "Factory test",
+                           9: "Battery status",
+                           10: "Boat lights"}
+
+        for i in range(nbr+1):
+            name = "{}: ".format(i)
+            if i in hardcoded_names:
+                name += hardcoded_names[i]
+            else:
+                name += "N/A"
+            self._led_ring_effect.addItem(name, QVariant(i))
+
+        self._led_ring_effect.setCurrentIndex(current)
+        self._led_ring_effect.currentIndexChanged.connect(self._ring_effect_changed)
+        self.helper.cf.param.add_update_callback(group="ring",
+                                         name="effect",
+                                         cb=self._ring_effect_updated)
+
+    def _ring_effect_changed(self, index):
+        i = self._led_ring_effect.itemData(index).toInt()[0]
+        logger.info("Changed effect to {}".format(i))
+        if i != self.helper.cf.param.values["ring"]["effect"]:
+            self.helper.cf.param.set_value("ring.effect", str(i))
+
+    def _ring_effect_updated(self, name, value):
+        self._led_ring_effect.setCurrentIndex(int(value))
