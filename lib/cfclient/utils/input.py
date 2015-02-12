@@ -190,6 +190,7 @@ class JoystickReader:
         """
         if self._input_device:
             self._input_device.close()
+            self._input_device = None
 
         for d in readers.devices():
             if d.name == device_name:
@@ -201,7 +202,9 @@ class JoystickReader:
 
     def stop_raw_reading(self):
         """Disable raw reading of input device."""
-        self._input_device.close()
+        if self._input_device:
+            self._input_device.close()
+            self._input_device = None
 
     def read_raw_values(self):
         """ Read raw values from the input device."""
@@ -263,6 +266,7 @@ class JoystickReader:
         self._read_timer.stop()
         if self._input_device:
             self._input_device.close()
+            self._input_device = None
 
     def set_yaw_limit(self, max_yaw_rate):
         """Set a new max yaw rate value."""
