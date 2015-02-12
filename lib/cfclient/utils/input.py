@@ -77,15 +77,14 @@ class JoystickReader:
         self._thrust_slew_rate = 0
         self._thrust_slew_enabled = False
         self._thrust_slew_limit = 0
-        self._emergency_stop = False
         self._has_pressure_sensor = False
 
         self._old_thrust = 0
         self._old_raw_thrust = 0
         self._old_alt_hold = False
         self._springy_throttle = True
-        self._alt1 = False
-        self._alt2 = False
+
+        self._prev_values = {}
 
         self._trim_roll = Config().get("trim_roll")
         self._trim_pitch = Config().get("trim_pitch")
@@ -204,7 +203,7 @@ class JoystickReader:
 
     def readRawValues(self):
         """ Read raw values from the input device."""
-        [axes, buttons] = self._input_device.read(use_mapping=False)
+        [axes, buttons, mapped_values] = self._input_device.read(include_raw=True)
         dict_axes = {}
         dict_buttons = {}
 
@@ -214,7 +213,12 @@ class JoystickReader:
         for i, b in enumerate(buttons):
             dict_buttons[i] = b
 
-        return [dict_axes, dict_buttons]
+        return [dict_axes, dict_buttons, mapped_values]
+
+    def set_raw_input_map(self, input_map):
+        logger.info(input_map)
+        if self._input_device:
+            self._input_device.input_map = input_map
 
     def set_input_map(self, input_map_name):
         settings = ConfigManager().get_settings(input_map_name)
@@ -222,6 +226,12 @@ class JoystickReader:
         self._input_map = ConfigManager().get_config(input_map_name)
         if self._input_device:
             self._input_device.input_map = self._input_map
+
+    def get_device_name(self):
+        """Get the name of the current open device"""
+        if self._input_device:
+            return self._input_device.name
+        return None
 
     def start_input(self, device_name):
         """
@@ -235,7 +245,6 @@ class JoystickReader:
                     self._input_device = d
                     logger.info("Trying to open device {}".format(device_name))
                     self._input_device.open()
-                    #logger.info("Setting inputmap: {}".format(self._input_map))
                     self._input_device.input_map = self._input_map
                     logger.info("Starting timer")
                     self._read_timer.start()
@@ -286,6 +295,26 @@ class JoystickReader:
         """Set a new value for the trim trim."""
         self._trim_pitch = trim_pitch
 
+    def _calc_rp_trim(self, key_neg, key_pos, data):
+        if self._check_toggle(key_neg, data) and not data[key_neg]:
+            logger.info("{}: --".format(key_neg))
+            return -1.0
+        if self._check_toggle(key_pos, data) and not data[key_pos]:
+            logger.info("{}: ++".format(key_pos))
+            return 1.0
+        return 0.0
+
+    def _check_toggle(self, key, data):
+        if not key in self._prev_values:
+            self._prev_values[key] = data[key]
+            logger.info("Adding: {}".format(key))
+            logger.info(self._prev_values)
+        elif self._prev_values[key] != data[key]:
+            logger.info("TOGGLE ON {}".format(key))
+            self._prev_values[key] = data[key]
+            return True
+        return False
+
     def read_input(self):
         """Read input data from the selected device"""
         try:
@@ -296,27 +325,25 @@ class JoystickReader:
             yaw = data["yaw"]
             raw_thrust = data["thrust"]
             emergency_stop = data["estop"]
-            trim_roll = data["rollcal"]
-            trim_pitch = data["pitchcal"]
+            #logger.info("{}".format(data["rollNeg"]))
+            #trim_roll = data["rollcal"]
+            #trim_pitch = data["pitchcal"]
             althold = data["althold"]
-            alt1 = data["alt1"]
-            alt2 = data["alt2"]
 
-            if (self._old_alt_hold != althold):
+            if self._check_toggle("althold", data):
                 self.althold_updated.call(str(althold))
-                self._old_alt_hold = althold
 
-            if self._emergency_stop != emergency_stop:
-                self._emergency_stop = emergency_stop
-                self.emergency_stop_updated.call(self._emergency_stop)
+            if self._check_toggle("estop", data):
+                self.emergency_stop_updated.call(emergency_stop)
 
-            if self._alt1 != alt1:
-                self._alt1 = alt1
-                self.alt1_updated.call(alt1)
+            if self._check_toggle("alt1", data):
+                self.alt1_updated.call(data["alt1"])
 
-            if self._alt2 != alt2:
-                self._alt2 = alt2
-                self.alt2_updated.call(alt2)
+            if self._check_toggle("alt2", data):
+                self.alt1_updated.call(data["alt2"])
+
+            trim_pitch = self._calc_rp_trim("pitchNeg", "pitchPos", data)
+            trim_roll = self._calc_rp_trim("rollNeg", "rollPos", data)
 
             # Thust limiting (slew, minimum and emergency stop)
             if self._springy_throttle:

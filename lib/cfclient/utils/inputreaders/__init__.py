@@ -87,90 +87,52 @@ class InputDevice():
 
     def open(self):
         self.data = {"roll": 0.0, "pitch": 0.0, "yaw": 0.0,
-                     "thrust": -1.0, "pitchcal": 0.0, "rollcal": 0.0,
-                     "estop": False, "exit":False, "althold": False,
-                     "alt1": False, "alt2": False}
-        self._prev_pressed = {"pitchNeg": False, "rollNeg": False,
-                              "pitchPos": False, "rollPos": False}
+                     "thrust": -1.0, "estop": False, "exit":False,
+                     "althold": False, "alt1": False, "alt2": False,
+                     "pitchNeg": False, "rollNeg": False,
+                     "pitchPos": False, "rollPos": False}
 
         self._reader.open(self.id)
 
     def close(self):
         self._reader.close()
 
-    def read(self, use_mapping=True):
+    def read(self, include_raw=False):
         [axis, buttons] = self._reader.read()
 
-        if use_mapping:
-            self.data["pitchcal"] = 0.0
-            self.data["rollcal"] = 0.0
+        # To support split axis we need to zero all the axis
+        self.data["roll"] = 0.0
+        self.data["pitch"] = 0.0
+        self.data["yaw"] = 0.0
+        self.data["thrust"] = 0.0
 
-            self.data = {"roll": 0.0, "pitch": 0.0, "yaw": 0.0, "thrust": 0.0,
-                         "pitchcal": 0.0, "rollcal": 0.0, "estop": False, "exit": False,
-                         "althold": False, "alt1": False, "alt2": False}
+        i = 0
+        for a in axis:
+            index = "Input.AXIS-%d" % i
+            try:
+                if self.input_map[index]["type"] == "Input.AXIS":
+                    key = self.input_map[index]["key"]
+                    axisvalue = a + self.input_map[index]["offset"]
+                    axisvalue = axisvalue / self.input_map[index]["scale"]
+                    self.data[key] += axisvalue
+            except Exception:
+                #logger.warning("Axis {}".format(i))
+                pass
+            i += 1
 
-            i = 0
-            for a in axis:
-                index = "Input.AXIS-%d" % i
-                try:
-                    if self.input_map[index]["type"] == "Input.AXIS":
-                        key = self.input_map[index]["key"]
-                        axisvalue = a
-                        # Offset the value first
-                        axisvalue = axisvalue + self.input_map[index]["offset"]
-                        # All axis are in the range [-a,+a]
-                        axisvalue = axisvalue / self.input_map[index]["scale"]
-                        # The value is now in the correct direction and in the range [-1,1]
-                        self.data[key] += axisvalue
-                except Exception:
-                    # Axis not mapped, ignore..
-                    pass
-                i += 1
+        i = 0
+        for b in buttons:
+            index = "Input.BUTTON-%d" % i
+            try:
+                if self.input_map[index]["type"] == "Input.BUTTON":
+                    key = self.input_map[index]["key"]
+                    self.data[key] = True if b == 1 else False
+            except Exception:
+                # Button not mapped, ignore..
+                pass
+            i += 1
 
-            i = 0
-            for b in buttons:
-                index = "Input.BUTTON-%d" % i
-                if b == 1:
-                    try:
-                        if self.input_map[index]["type"] == "Input.BUTTON":
-                            key = self.input_map[index]["key"]
-                            if (key == "estop"):
-                                self.data["estop"] = not self.data["estop"]
-                            elif (key == "exit"):
-                                self.data["exit"] = True
-                            elif (key == "althold"):
-                                self.data["althold"] = not self.data["althold"]
-                            elif key == "alt1":
-                                self.data["alt1"] = True
-                            elif key == "alt2":
-                                self.data["alt2"] = True
-                            else: # Generic cal for pitch/roll
-                                # Workaround for event vs poll
-                                name = self.input_map[index]["name"]
-                                self._prev_pressed[name] = True
-                    except Exception:
-                        # Button not mapped, ignore..
-                        pass
-                else:
-                    try:
-                        if self.input_map[index]["type"] == "Input.BUTTON":
-                            key = self.input_map[index]["key"]
-                            if (key == "althold"):
-                                self.data["althold"] = False
-                            elif key == "alt1":
-                                self.data["alt1"] = False
-                            elif key == "alt2":
-                                self.data["alt2"] = False
-                            # Workaround for event vs poll
-                            name = self.input_map[index]["name"]
-                            if self._prev_pressed[name]:
-                                self.data[key] = self.input_map[index]["scale"]
-                                self._prev_pressed[name] = False
-                    except Exception:
-                        # Button not mapped, ignore..
-                        pass
-                i += 1
-
-            return self.data
+        if include_raw:
+            return [axis, buttons, self.data]
         else:
-            return [axis, buttons]
+            return self.data

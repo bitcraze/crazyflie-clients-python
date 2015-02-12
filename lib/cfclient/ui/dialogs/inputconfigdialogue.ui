@@ -132,13 +132,13 @@
               </size>
              </property>
              <property name="minimum">
-              <number>0</number>
+              <number>-100</number>
              </property>
              <property name="maximum">
               <number>100</number>
              </property>
              <property name="sliderPosition">
-              <number>0</number>
+              <number>5</number>
              </property>
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
@@ -199,7 +199,7 @@
               <enum>Qt::LeftToRight</enum>
              </property>
              <property name="minimum">
-              <number>0</number>
+              <number>-100</number>
              </property>
              <property name="maximum">
               <number>100</number>
@@ -335,7 +335,7 @@
               </size>
              </property>
              <property name="minimum">
-              <number>1</number>
+              <number>-100</number>
              </property>
              <property name="maximum">
               <number>100</number>

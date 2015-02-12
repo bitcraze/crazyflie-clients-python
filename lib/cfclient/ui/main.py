@@ -519,7 +519,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         """Called when a new configuration has been selected from the menu"""
         if not checked:
             return
-        logger.info("SELECTED INPUT")
         selected_mapping = str(self.sender().text())
         self.joystickReader.set_input_map(selected_mapping)
         GuiConfig().get("device_config_mapping")[self._active_device] \
