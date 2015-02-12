@@ -78,10 +78,10 @@ class PySDL2Reader():
                 self.axes[e.jaxis.axis] = e.jaxis.value / 32767.0
 
             if e.type == sdl2.SDL_JOYBUTTONDOWN:
-                self.buttons[e.jbutton.button] = 0
+                self.buttons[e.jbutton.button] = 1
 
             if e.type == sdl2.SDL_JOYBUTTONUP:
-                self.buttons[e.jbutton.button] = 1
+                self.buttons[e.jbutton.button] = 0
 
         return [self.axes, self.buttons]
 
