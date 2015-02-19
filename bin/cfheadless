@@ -75,8 +75,8 @@ def init_paths():
         raise Exception("Cannot find cfclient install folder!")
 
     sys.path[1] = init_config_path(inSource)
-    print "Info: Using config path: ", sys.path[1]
-    print "Info: sys.path=", sys.path
+    #print "Info: Using config path: ", sys.path[1]
+    #print "Info: sys.path=", sys.path
 
 
 if __name__ == '__main__':

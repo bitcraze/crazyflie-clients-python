@@ -82,9 +82,13 @@ class HeadlessClient():
         return True if (len(self._jr.available_devices()) > 0) else False
 
     def list_controllers(self):
-        """List the available controllers"""
+        """List the available controllers and input mapping"""
+        print "\nAvailable controllers:"
         for dev in self._jr.available_devices():
-            print "Controller #{}: {}".format(dev.id, dev.name)
+            print " - Controller #{}: {}".format(dev.id, dev.name)
+        print "\nAvailable input mapping:"
+        for map in os.listdir(sys.path[1] + '/input'):
+            print " - " + map.split(".json")[0]
 
     def connect_crazyflie(self, link_uri):
         """Connect to a Crazyflie on the given link uri"""
