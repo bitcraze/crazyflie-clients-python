@@ -80,79 +80,58 @@ class JEvent(object):
 TYPE_BUTTON = 1
 TYPE_AXIS = 2
 
-class Joystick():
-    """
-    Linux jsdev implementation of the Joystick class
-    """
+class _JS():
+    def __init__(self, num, name):
+        self.num = num
+        self.name = name
+        self._f_name = "/dev/input/js{}".format(num)
+        self._f = None
 
-    def __init__(self):
         self.opened = False
         self.buttons = []
         self.axes = []
-        self.jsfile = None
-        self.device_id = -1
-        self.inputMap = None
         self._prev_pressed = {}
-        self.name = MODULE_NAME
 
-    def devices(self):
-        """
-        Returns a dict with device_id as key and device name as value of all
-        the detected devices.
-        """
-        devices = []
+    def open(self):
+        if self._f:
+            raise Exception("{} at {} is already "
+                            "opened".format(self.name, self._f_name))
 
-        syspaths = glob.glob("/sys/class/input/js*")
-
-        for path in syspaths:
-            device_id = int(os.path.basename(path)[2:])
-            with open(path + "/device/name") as namefile:
-                name = namefile.read().strip()
-            devices.append({"id": device_id, "name": name})
-
-        return devices
-
-    def open(self, device_id):
-        """
-        Open the joystick device. The device_id is given by available_devices
-        """
-        if self.opened and device_id != self.device_id:
-            # TODO: Don't open a device twice!
-            raise Exception("A joystick is already opened")
-
-        self.device_id = device_id
-
-        self.jsfile = open("/dev/input/js{}".format(self.device_id), "r")
-        fcntl.fcntl(self.jsfile.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+        self._f = open("/dev/input/js{}".format(self.num), "r")
+        fcntl.fcntl(self._f.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
 
         #Get number of axis and button
         val = ctypes.c_int()
-        if fcntl.ioctl(self.jsfile.fileno(), JSIOCGAXES, val) != 0:
-            self.jsfile.close()
+        if fcntl.ioctl(self._f.fileno(), JSIOCGAXES, val) != 0:
+            self._f.close()
+            self._f = None
             raise Exception("Failed to read number of axes")
+
         self.axes = list(0 for i in range(val.value))
-
-        if fcntl.ioctl(self.jsfile.fileno(), JSIOCGBUTTONS, val) != 0:
-            self.jsfile.close()
+        if fcntl.ioctl(self._f.fileno(), JSIOCGBUTTONS, val) != 0:
+            self._f.close()
+            self._f = None
             raise Exception("Failed to read number of axes")
-        self.buttons = list(0 for i in range(val.value))
 
+        self.buttons = list(0 for i in range(val.value))
         self.__initvalues()
 
-        self.opened = True
+        #logger.info("Opened {} ({})".format(self.name, self.num))
 
     def close(self):
         """Open the joystick device"""
-        if not self.opened:
+        if not self._f:
             return
 
-        self.jsfile.close()
-        self.opened = False
+        logger.info("Closed {} ({})".format(self.name, self.num))
+
+        self._f.close()
+        self._f = None
 
     def __initvalues(self):
         """Read the buttons and axes initial values from the js device"""
         for _ in range(len(self.axes) + len(self.buttons)):
-            data = self.jsfile.read(struct.calcsize(JS_EVENT_FMT))
+            data = self._f.read(struct.calcsize(JS_EVENT_FMT))
             jsdata = struct.unpack(JS_EVENT_FMT, data)
             self.__updatestate(jsdata)
 
@@ -179,19 +158,67 @@ class Joystick():
         """Consume all the events queued up in the JS device"""
         try:
             while True:
-                data = self.jsfile.read(struct.calcsize(JS_EVENT_FMT))
+                data = self._f.read(struct.calcsize(JS_EVENT_FMT))
                 jsdata = struct.unpack(JS_EVENT_FMT, data)
                 self.__updatestate(jsdata)
         except IOError as e:
             if e.errno != 11:
                 logger.info(str(e))
+                self._f.close()
+                self._f = None
                 raise IOError("Device has been disconnected")
 
     def read(self):
         """ Returns a list of all joystick event since the last call """
-        if not self.opened:
+        if not self._f:
             raise Exception("Joystick device not opened")
 
         self._read_all_events()
 
+        #if self.num == 0:
+        #    logger.error("{}:{}".format(self.num, self.buttons))
+
         return [self.axes, self.buttons]
+
+
+class Joystick():
+    """
+    Linux jsdev implementation of the Joystick class
+    """
+
+    def __init__(self):
+        self.name = MODULE_NAME
+        self._js = []
+
+    def devices(self):
+        """
+        Returns a dict with device_id as key and device name as value of all
+        the detected devices.
+        """
+        devices = []
+
+        syspaths = glob.glob("/sys/class/input/js*")
+
+        for path in syspaths:
+            device_id = int(os.path.basename(path)[2:])
+            logger.info("{}".format(device_id))
+            with open(path + "/device/name") as namefile:
+                name = namefile.read().strip()
+            self._js.append(_JS(device_id, name))
+            devices.append({"id": device_id, "name": name})
+
+        return devices
+
+    def open(self, device_id):
+        """
+        Open the joystick device. The device_id is given by available_devices
+        """
+        self._js[device_id].open()
+
+    def close(self, device_id):
+        """Open the joystick device"""
+        self._js[device_id].close()
+
+    def read(self, device_id):
+        """ Returns a list of all joystick event since the last call """
+        return self._js[device_id].read()

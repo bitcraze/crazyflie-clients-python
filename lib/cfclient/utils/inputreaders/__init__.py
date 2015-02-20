@@ -81,6 +81,7 @@ class InputDevice():
         self.id = dev_id
         self.name = dev_name
         self.input_map = None
+        self.input_map_name = ""
         self.data = None
         self._prev_pressed = None
         self.reader_name = dev_reader.name
@@ -95,7 +96,7 @@ class InputDevice():
         self._reader.open(self.id)
 
     def close(self):
-        self._reader.close()
+        self._reader.close(self.id)
 
     def _zero_all_buttons(self):
         buttons = ("estop", "exit", "althold", "alt1", "alt2", "rollPos",
@@ -104,7 +105,7 @@ class InputDevice():
             self.data[b] = False
 
     def read(self, include_raw=False):
-        [axis, buttons] = self._reader.read()
+        [axis, buttons] = self._reader.read(self.id)
 
         # To support split axis we need to zero all the axis
         self.data["roll"] = 0.0
@@ -145,4 +146,8 @@ class InputDevice():
         if include_raw:
             return [axis, buttons, self.data]
         else:
+            #logger.warning(self.data)
+            #if self.id == 0:
+            #    logger.info("{}".format(self.input_map["Input.AXIS-3"]["key"]))
+            #    logger.info("{}:{}".format(self.id, self.data["thrust"]))
             return self.data

@@ -108,8 +108,8 @@ class LeapListener(Leap.Listener):
             #yaw = direction.yaw * Leap.RAD_TO_DEG / 70.0
             #thrust = (hand.palm_position[1] - 80)/150.0 # Use the elevation of the hand for thrust
 
-            pitch = -direction.pitch * Leap.RAD_TO_DEG
-            roll = -normal.roll * Leap.RAD_TO_DEG
+            pitch = -direction.pitch * Leap.RAD_TO_DEG / 2
+            roll = -normal.roll * Leap.RAD_TO_DEG / 2
             yaw = direction.yaw * Leap.RAD_TO_DEG
             thrust = hand.palm_position[1]
 
@@ -155,11 +155,11 @@ class LeapmotionReader():
         self._axes = axes
         self._buttons = buttons
 
-    def read(self):
+    def read(self, id):
         """Read input from the selected device."""
         return [self._axes, self._buttons]
 
-    def close(self):
+    def close(self, id):
         return
 
     def devices(self):

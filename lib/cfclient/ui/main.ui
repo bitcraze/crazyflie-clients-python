@@ -210,9 +210,15 @@
       <string>Devices</string>
      </property>
     </widget>
+    <widget class="QMenu" name="_menu_mux">
+     <property name="title">
+      <string>Mux</string>
+     </property>
+    </widget>
     <addaction name="menuItemConfInputDevice"/>
     <addaction name="_menu_devices"/>
     <addaction name="_menu_mappings"/>
+    <addaction name="_menu_mux"/>
     <addaction name="_menuitem_rescandevices"/>
    </widget>
    <addaction name="menuFile"/>
