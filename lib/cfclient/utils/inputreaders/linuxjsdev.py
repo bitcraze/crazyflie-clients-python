@@ -188,7 +188,7 @@ class Joystick():
 
     def __init__(self):
         self.name = MODULE_NAME
-        self._js = []
+        self._js = {}
 
     def devices(self):
         """
@@ -204,7 +204,7 @@ class Joystick():
             logger.info("{}".format(device_id))
             with open(path + "/device/name") as namefile:
                 name = namefile.read().strip()
-            self._js.append(_JS(device_id, name))
+            self._js[device_id] = _JS(device_id, name)
             devices.append({"id": device_id, "name": name})
 
         return devices
