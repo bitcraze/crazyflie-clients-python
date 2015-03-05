@@ -298,6 +298,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._input_dev_stack = []
         self._menu_mux.actions()[0].setChecked(True)
 
+        if Config().get("enable_input_muxing"):
+            self._menu_mux.setEnabled(True)
+        else:
+            logger.info("Input device muxing disabled in config")
+
     def _update_ui_state(self, newState, linkURI=""):
         self.uiState = newState
         if newState == UIState.DISCONNECTED:

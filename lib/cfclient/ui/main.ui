@@ -211,6 +211,9 @@
      </property>
     </widget>
     <widget class="QMenu" name="_menu_mux">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="title">
       <string>Mux</string>
      </property>
