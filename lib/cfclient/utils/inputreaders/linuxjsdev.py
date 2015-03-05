@@ -116,8 +116,6 @@ class _JS():
         self.buttons = list(0 for i in range(val.value))
         self.__initvalues()
 
-        #logger.info("Opened {} ({})".format(self.name, self.num))
-
     def close(self):
         """Open the joystick device"""
         if not self._f:
@@ -175,9 +173,6 @@ class _JS():
 
         self._read_all_events()
 
-        #if self.num == 0:
-        #    logger.error("{}:{}".format(self.num, self.buttons))
-
         return [self.axes, self.buttons]
 
 
@@ -201,7 +196,6 @@ class Joystick():
 
         for path in syspaths:
             device_id = int(os.path.basename(path)[2:])
-            logger.info("{}".format(device_id))
             with open(path + "/device/name") as namefile:
                 name = namefile.read().strip()
             self._js[device_id] = _JS(device_id, name)

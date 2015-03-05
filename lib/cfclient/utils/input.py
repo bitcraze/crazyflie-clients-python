@@ -273,7 +273,6 @@ class JoystickReader:
         self._input_map = ConfigManager().get_config(input_map_name)
         if self._input_device:
             self._input_device.input_map = self._input_map
-        logger.info("Saving inputmap to {} for {}".format(input_map_name, device_name))
         Config().get("device_config_mapping")[device_name] = input_map_name
 
     def get_device_name(self):
@@ -295,7 +294,6 @@ class JoystickReader:
                     self._input_device = d
                     if not config_name:
                         config_name = self.get_saved_device_mapping(device_name)
-                        logger.info("{}-->{}".format(device_name, config_name))
                     self.set_input_map(device_name, config_name)
                     self._input_device.open()
                     self._input_device.input_map = self._input_map

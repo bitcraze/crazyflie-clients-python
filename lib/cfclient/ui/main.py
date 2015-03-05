@@ -485,17 +485,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def _mux_selected(self, checked):
         if not checked:
             return
-        #self.joystickReader.stop_input()
-        #self.joystickReader.stop_input()
+
         selected_mux_name = str(self.sender().text())
         self.joystickReader.set_mux(name=selected_mux_name)
 
-        # If MUX supports more than one device, de-select all
-        #if self.joystickReader.get_mux_supported_dev_count() > 1:
-        #    for c in self._menu_devices.actions():
-        #        c.setChecked(False)
-
-        logger.info("Selected mux supports {} devices".format(self.joystickReader.get_mux_supported_dev_count()))
+        logger.debug("Selected mux supports {} devices".format(self.joystickReader.get_mux_supported_dev_count()))
         self._adjust_nbr_of_selected_devices()
 
     def _get_saved_device_mapping(self, device_name):
@@ -527,14 +521,9 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         nbr_of_supported = self.joystickReader.get_mux_supported_dev_count()
         while len(self._input_dev_stack) > nbr_of_supported:
             to_close = self._input_dev_stack.pop(0)
-            logger.info("Supports {} open ({}),"
-                        "closing {}".format(nbr_of_supported,
-                                            len(self._input_dev_stack),
-                                            to_close))
             # Close and de-select it in the UI
             self.joystickReader.stop_input(to_close)
             for c in self._menu_devices.actions():
-                logger.info("Checking {}".format(c.text()))
                 if c.text() == to_close:
                         c.setChecked(False)
 
@@ -564,7 +553,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         if self.joystickReader.get_mux_supported_dev_count() == 1:
             preferred_config = self.joystickReader.get_saved_device_mapping(selected_device_name)
             if preferred_config:
-                logger.info("Preferred config is {} for {}".format(preferred_config, selected_device_name))
                 for c in self._menu_mappings.actions():
                     if c.text() == preferred_config:
                         c.setChecked(True)
