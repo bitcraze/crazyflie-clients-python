@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
-from cfclient.utils.guiconfig import GuiConfig
+from cfclient.utils.config import Config
 
 service_dialog_class = uic.loadUiType(sys.path[0] +
                                       "/cfclient/ui/dialogs/cf1config.ui")[0]
@@ -242,10 +242,10 @@ class CrazyloadThread(QThread):
                  rollTrim] = struct.unpack("<BBff", data[5:15])
                 self.statusChanged.emit("Reading config block...done!", 100)
             else:
-                channel = GuiConfig().get("default_cf_channel")
-                speed = GuiConfig().get("default_cf_speed")
-                pitchTrim = GuiConfig().get("default_cf_trim")
-                rollTrim = GuiConfig().get("default_cf_trim")
+                channel = Config().get("default_cf_channel")
+                speed = Config().get("default_cf_speed")
+                pitchTrim = Config().get("default_cf_trim")
+                rollTrim = Config().get("default_cf_trim")
                 self.statusChanged.emit("Could not find config block, showing defaults", 100)
             self.updateConfigSignal.emit(channel, speed, rollTrim, pitchTrim)
         else:
