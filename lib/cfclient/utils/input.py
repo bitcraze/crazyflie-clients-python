@@ -98,9 +98,13 @@ class JoystickReader:
 
         self._input_map = None
 
+        self._mux = [NoMux(self), SelectiveMux(self), TakeOverMux(self),
+                     MixMux(self), TakeOverSelectiveMux(self)]
+        self._selected_mux = None
+
         if Config().get("flightmode") is "Normal":
-            self._max_yaw_rate = Config().get("normal_max_yaw")
-            self._max_rp_angle = Config().get("normal_max_rp")
+            self.set_yaw_limit(Config().get("normal_max_yaw"))
+            self.set_rp_limit(Config().get("normal_max_rp"))
             # Values are stored at %, so use the functions to set the values
             self.set_thrust_limits(
                 Config().get("normal_min_thrust"),
@@ -109,8 +113,8 @@ class JoystickReader:
                 Config().get("normal_slew_rate"),
                 Config().get("normal_slew_limit"))
         else:
-            self._max_yaw_rate = Config().get("max_yaw")
-            self._max_rp_angle = Config().get("max_rp")
+            self.set_yaw_limit(Config().get("max_yaw"))
+            self.set_rp_limit(Config().get("max_rp"))
             # Values are stored at %, so use the functions to set the values
             self.set_thrust_limits(
                 Config().get("min_thrust"), Config().get("max_thrust"))
@@ -158,10 +162,6 @@ class JoystickReader:
         self.althold_updated = Caller()
         self.alt1_updated = Caller()
         self.alt2_updated = Caller()
-
-        self._mux = [NoMux(self), SelectiveMux(self), TakeOverMux(self),
-                     MixMux(self), TakeOverSelectiveMux(self)]
-        self._selected_mux = None
 
     def set_alt_hold_available(self, available):
         """Set if altitude hold is available or not (depending on HW)"""
@@ -266,15 +266,15 @@ class JoystickReader:
         if self._input_device:
             self._input_device.input_map = input_map
 
-    def set_input_map(self, input_map_name):
+    def set_input_map(self, device_name, input_map_name):
         """Load and set an input device map with the given name"""
         settings = ConfigManager().get_settings(input_map_name)
         self._springy_throttle = settings["springythrottle"]
         self._input_map = ConfigManager().get_config(input_map_name)
         if self._input_device:
             self._input_device.input_map = self._input_map
-            logger.info("Saving inputmap to {}".format(input_map_name))
-            Config().get("device_config_mapping")[self._input_device.name] = input_map_name
+        logger.info("Saving inputmap to {} for {}".format(input_map_name, device_name))
+        Config().get("device_config_mapping")[device_name] = input_map_name
 
     def get_device_name(self):
         """Get the name of the current open device"""
@@ -296,7 +296,7 @@ class JoystickReader:
                     if not config_name:
                         config_name = self.get_saved_device_mapping(device_name)
                         logger.info("{}-->{}".format(device_name, config_name))
-                    self.set_input_map(config_name)
+                    self.set_input_map(device_name, config_name)
                     self._input_device.open()
                     self._input_device.input_map = self._input_map
                     self._input_device.input_map_name = config_name
@@ -311,43 +311,55 @@ class JoystickReader:
             self.device_error.call(
                      "Could not find device {}".format(device_name))
 
-    def stop_input(self):
+    def stop_input(self, device_name = None):
         """Stop reading from the input device."""
-        self._read_timer.stop()
-        if self._input_device:
-            self._input_device.close()
-            self._input_device = None
+        if device_name:
+            for d in readers.devices():
+                if d.name == device_name:
+                    d.close()
+        else:
+            for d in readers.devices():
+                d.close()
+            #if self._input_device:
+            #    self._input_device.close()
+            #    self._input_device = None
 
     def set_yaw_limit(self, max_yaw_rate):
         """Set a new max yaw rate value."""
-        self._max_yaw_rate = max_yaw_rate
+        for m in self._mux:
+            m.max_yaw_rate = max_yaw_rate
 
     def set_rp_limit(self, max_rp_angle):
         """Set a new max roll/pitch value."""
-        self._max_rp_angle = max_rp_angle
+        for m in self._mux:
+            m.max_rp_angle = max_rp_angle
 
     def set_thrust_slew_limiting(self, thrust_slew_rate, thrust_slew_limit):
         """Set new values for limit where the slewrate control kicks in and
         for the slewrate."""
-        self._thrust_slew_rate = JoystickReader.p2t(thrust_slew_rate)
-        self._thrust_slew_limit = JoystickReader.p2t(thrust_slew_limit)
-        if thrust_slew_rate > 0:
-            self._thrust_slew_enabled = True
-        else:
-            self._thrust_slew_enabled = False
+        for m in self._mux:
+            m.thrust_slew_rate = JoystickReader.p2t(thrust_slew_rate)
+            m.thrust_slew_limit = JoystickReader.p2t(thrust_slew_limit)
+            if thrust_slew_rate > 0:
+                m.thrust_slew_enabled = True
+            else:
+                m.thrust_slew_enabled = False
 
     def set_thrust_limits(self, min_thrust, max_thrust):
         """Set a new min/max thrust limit."""
-        self._min_thrust = JoystickReader.p2t(min_thrust)
-        self._max_thrust = JoystickReader.p2t(max_thrust)
+        for m in self._mux:
+            m.min_thrust = JoystickReader.p2t(min_thrust)
+            m.max_thrust = JoystickReader.p2t(max_thrust)
 
     def set_trim_roll(self, trim_roll):
         """Set a new value for the roll trim."""
-        self._trim_roll = trim_roll
+        for m in self._mux:
+            m.trim_roll = trim_roll
 
     def set_trim_pitch(self, trim_pitch):
         """Set a new value for the trim trim."""
-        self._trim_pitch = trim_pitch
+        for m in self._mux:
+            m.trim_pitch = trim_pitch
 
     def _calc_rp_trim(self, key_neg, key_pos, data):
         if self._check_toggle(key_neg, data) and not data[key_neg]:

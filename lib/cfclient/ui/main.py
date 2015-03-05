@@ -295,6 +295,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self._mux_group.addAction(node)
             self._menu_mux.addAction(node)
         # TODO: Temporary
+        self._input_dev_stack = []
         self._menu_mux.actions()[0].setChecked(True)
 
     def _update_ui_state(self, newState, linkURI=""):
@@ -485,16 +486,17 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         if not checked:
             return
         #self.joystickReader.stop_input()
-        self.joystickReader.stop_input()
+        #self.joystickReader.stop_input()
         selected_mux_name = str(self.sender().text())
         self.joystickReader.set_mux(name=selected_mux_name)
 
         # If MUX supports more than one device, de-select all
-        if self.joystickReader.get_mux_supported_dev_count() > 1:
-            for c in self._menu_devices.actions():
-                c.setChecked(False)
+        #if self.joystickReader.get_mux_supported_dev_count() > 1:
+        #    for c in self._menu_devices.actions():
+        #        c.setChecked(False)
 
         logger.info("Selected mux supports {} devices".format(self.joystickReader.get_mux_supported_dev_count()))
+        self._adjust_nbr_of_selected_devices()
 
     def _get_saved_device_mapping(self, device_name):
         """Return the saved mapping for a given device"""
@@ -520,14 +522,32 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self._statusbar_label.setText("Using [{}] with config [{}]".format(
                                             device_name, mapping_name))
 
+    def _adjust_nbr_of_selected_devices(self):
+        nbr_of_selected = len(self._input_dev_stack)
+        nbr_of_supported = self.joystickReader.get_mux_supported_dev_count()
+        while len(self._input_dev_stack) > nbr_of_supported:
+            to_close = self._input_dev_stack.pop(0)
+            logger.info("Supports {} open ({}),"
+                        "closing {}".format(nbr_of_supported,
+                                            len(self._input_dev_stack),
+                                            to_close))
+            # Close and de-select it in the UI
+            self.joystickReader.stop_input(to_close)
+            for c in self._menu_devices.actions():
+                logger.info("Checking {}".format(c.text()))
+                if c.text() == to_close:
+                        c.setChecked(False)
+
     def _inputdevice_selected(self, checked):
         """Called when a new input device has been selected from the menu"""
         if not checked:
             return
 
+        self._input_dev_stack.append(self.sender().text())
+
         # If we can open multiple devices, don't close when new is selected
-        if self.joystickReader.get_mux_supported_dev_count() == 1:
-            self.joystickReader.stop_input()
+        #if self.joystickReader.get_mux_supported_dev_count() == 1:
+        #    self.joystickReader.stop_input()
 
         selected_device_name = str(self.sender().text())
         self._active_device = selected_device_name
@@ -537,21 +557,24 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         # Read preferred config used for this controller from config,
         # if found then select this config in the menu
+
+        self.joystickReader.start_input(selected_device_name)
+        self._adjust_nbr_of_selected_devices()
+
         if self.joystickReader.get_mux_supported_dev_count() == 1:
             preferred_config = self.joystickReader.get_saved_device_mapping(selected_device_name)
             if preferred_config:
+                logger.info("Preferred config is {} for {}".format(preferred_config, selected_device_name))
                 for c in self._menu_mappings.actions():
                     if c.text() == preferred_config:
                         c.setChecked(True)
-
-        self.joystickReader.start_input(selected_device_name)
 
     def _inputconfig_selected(self, checked):
         """Called when a new configuration has been selected from the menu"""
         if not checked:
             return
         selected_mapping = str(self.sender().text())
-        self.joystickReader.set_input_map(selected_mapping)
+        self.joystickReader.set_input_map(self._active_device, selected_mapping)
         #GuiConfig().get("device_config_mapping")[self._active_device] \
         #    = selected_mapping
         self._update_input_device_footer(self._active_device, selected_mapping)

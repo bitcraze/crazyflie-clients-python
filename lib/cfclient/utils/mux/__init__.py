@@ -51,6 +51,22 @@ class InputMux(object):
 
         self._prev_values = {}
 
+        # Roll/pitch limitation
+        self.max_rp_angle = 0
+
+        # Thrust limitations
+        self.thrust_slew_enabled = True
+        self.thrust_slew_limit = 0
+        self.thrust_slew_rate = 0
+        self.max_thrust = 0
+        self.max_yaw_rate = 0
+        self.springy_throttle = True
+
+        self.trim_roll = 0
+        self.trim_pitch = 0
+
+        self.has_pressure_sensor = False
+
         # TODO: Fix writing these values
         #self._max_rp_angle = 40
         #self._springy_throttle = True
@@ -83,18 +99,26 @@ class InputMux(object):
         return 1
 
     def add_device(self, dev, parameters):
+        logger.info("Adding device and opening it")
+        dev.open()
         self._devs.append(dev)
-        # TODO: Handle parameters ?
 
     def remove_device(self, dev):
         self._devs.remove(dev)
+        dev.close()
+
+    def close(self):
+        """Close down the MUX and close all it's devices"""
+        for d in self._devs:
+            d.close()
+        self._devs = []
 
     def _cap_rp(self, rp):
-        ret = rp * self.input._max_rp_angle
-        if ret > self.input._max_rp_angle:
-            ret = self.input._max_rp_angle
-        elif ret < -1 * self.input._max_rp_angle:
-            ret = -1 * self.input._max_rp_angle
+        ret = rp * self.max_rp_angle
+        if ret > self.max_rp_angle:
+            ret = self.max_rp_angle
+        elif ret < -1 * self.max_rp_angle:
+            ret = -1 * self.max_rp_angle
 
         return ret
 
@@ -102,48 +126,47 @@ class InputMux(object):
         return [self._cap_rp(roll), self._cap_rp(pitch)]
 
     def _scale_and_deadband_yaw(self, yaw):
-        return InputMux.deadband(yaw, 0.2)*self.input._max_yaw_rate
+        return InputMux.deadband(yaw, 0.2) * self.max_yaw_rate
 
     def _limit_thrust(self, thrust, althold, emergency_stop):
         # Thust limiting (slew, minimum and emergency stop)
-        if self.input._springy_throttle:
-            if althold and self.input._has_pressure_sensor:
+        if self.springy_throttle:
+            if althold and self.has_pressure_sensor:
                 thrust = int(round(InputMux.deadband(thrust, 0.2)*32767 + 32767)) #Convert to uint16
             else:
                 if thrust < 0.05 or emergency_stop:
                     thrust = 0
                 else:
-                    thrust = self.input._min_thrust + thrust * (self.input._max_thrust -
-                                                            self.input._min_thrust)
-                if (self.input._thrust_slew_enabled == True and
-                    self.input._thrust_slew_limit > thrust and not
+                    thrust = self.min_thrust + thrust * (self.max_thrust -
+                                                            self.min_thrust)
+                if (self.thrust_slew_enabled == True and
+                    self.thrust_slew_limit > thrust and not
                     emergency_stop):
-                    if self._old_thrust > self.input._thrust_slew_limit:
-                        self._old_thrust = self.input._thrust_slew_limit
-                    if thrust < (self._old_thrust - (self.input._thrust_slew_rate / 100)):
-                        thrust = self._old_thrust - self.input._thrust_slew_rate / 100
-                    if thrust < 0 or thrust < self.input._min_thrust:
+                    if self._old_thrust > self.thrust_slew_limit:
+                        self._old_thrust = self.thrust_slew_limit
+                    if thrust < (self._old_thrust - (self.thrust_slew_rate / 100)):
+                        thrust = self._old_thrust - self.thrust_slew_rate / 100
+                    if thrust < 0 or thrust < self.min_thrust:
                         thrust = 0
         else:
             thrust = thrust / 2 + 0.5
-            if althold and self._has_pressure_sensor:
+            if althold and self.has_pressure_sensor:
                 #thrust = int(round(JoystickReader.deadband(thrust,0.2)*32767 + 32767)) #Convert to uint16
                 thrust = 32767
-
             else:
                 if thrust < -0.90 or emergency_stop:
                     thrust = 0
                 else:
-                    thrust = self.input._min_thrust + thrust * (self.input._max_thrust -
-                                                            self.input._min_thrust)
-                if (self.input._thrust_slew_enabled == True and
-                    self.input._thrust_slew_limit > thrust and not
+                    thrust = self.min_thrust + thrust * (self.max_thrust -
+                                                            self.min_thrust)
+                if (self.thrust_slew_enabled == True and
+                    self.thrust_slew_limit > thrust and not
                     emergency_stop):
-                    if self._old_thrust > self.input._thrust_slew_limit:
-                        self._old_thrust = self.input._thrust_slew_limit
-                    if thrust < (self._old_thrust - (self.input._thrust_slew_rate / 100)):
-                        thrust = self._old_thrust - self.input._thrust_slew_rate / 100
-                    if thrust < -1 or thrust < self.input._min_thrust:
+                    if self._old_thrust > self.thrust_slew_limit:
+                        self._old_thrust = self.thrust_slew_limit
+                    if thrust < (self._old_thrust - (self.thrust_slew_rate / 100)):
+                        thrust = self._old_thrust - self.thrust_slew_rate / 100
+                    if thrust < -1 or thrust < self.min_thrust:
                         thrust = 0
 
         self._old_thrust = thrust
@@ -183,7 +206,7 @@ class InputMux(object):
             self.input.alt2_updated.call(value)
 
     def _trim_rp(self, roll, pitch):
-        return [roll + self.input._trim_roll, pitch + self.input._trim_pitch]
+        return [roll + self.trim_roll, pitch + self.trim_pitch]
 
     @staticmethod
     def p2t(percentage):
