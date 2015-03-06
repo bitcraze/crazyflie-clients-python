@@ -274,8 +274,9 @@ class JoystickReader:
     def set_input_map(self, device_name, input_map_name):
         """Load and set an input device map with the given name"""
         settings = ConfigManager().get_settings(input_map_name)
-        self._springy_throttle = settings["springythrottle"]
-        self._input_map = ConfigManager().get_config(input_map_name)
+        if settings:
+            self._springy_throttle = settings["springythrottle"]
+            self._input_map = ConfigManager().get_config(input_map_name)
         if self._input_device:
             self._input_device.input_map = self._input_map
         Config().get("device_config_mapping")[device_name] = input_map_name
