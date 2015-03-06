@@ -73,18 +73,22 @@ class HeadlessClient():
             self._cf.commander.set_client_xmode(xmode)
 
         devs = self._jr.available_devices()
-        print "Will use [%s] for input" % devs[input_device]["name"]
-        self._jr.start_input(devs[input_device]["name"],
-                             input_config)
+        print "Will use [%s] for input" % devs[input_device].name
+        self._jr.start_input(devs[input_device].name)
+        self._jr.set_input_map(input_config)
 
     def controller_connected(self):
         """ Return True if a controller is connected"""
         return True if (len(self._jr.available_devices()) > 0) else False
 
     def list_controllers(self):
-        """List the available controllers"""
+        """List the available controllers and input mapping"""
+        print "\nAvailable controllers:"
         for dev in self._jr.available_devices():
-            print "Controller #{}: {}".format(dev["id"], dev["name"])
+            print " - Controller #{}: {}".format(dev.id, dev.name)
+        print "\nAvailable input mapping:"
+        for map in os.listdir(sys.path[1] + '/input'):
+            print " - " + map.split(".json")[0]
 
     def connect_crazyflie(self, link_uri):
         """Connect to a Crazyflie on the given link uri"""
