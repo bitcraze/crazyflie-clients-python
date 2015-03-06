@@ -303,6 +303,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         else:
             logger.info("Input device muxing disabled in config")
 
+        self._mapping_support = True
+
     def _update_ui_state(self, newState, linkURI=""):
         self.uiState = newState
         if newState == UIState.DISCONNECTED:
@@ -474,7 +476,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             c.setEnabled(True)
             if c.text() == self._active_device:
                 c.setChecked(True)
-
         # update label
         if device == "" and config == "":
             self._statusbar_label.setText("No input device selected")
@@ -513,10 +514,12 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         input device and its mapping"""
         if not device_name and not mapping_name:
             self._statusbar_label.setText("No input device selected")
-        elif not mapping_name:
+        elif self._mapping_support and not mapping_name:
             self._statusbar_label.setText("Using [{}] - "
                                           "No input config selected".format(
                                             device_name))
+        elif not self._mapping_support:
+            self._statusbar_label.setText("Using [{}]".format(device_name))
         else:
             self._statusbar_label.setText("Using [{}] with config [{}]".format(
                                             device_name, mapping_name))
@@ -539,10 +542,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         self._input_dev_stack.append(self.sender().text())
 
-        # If we can open multiple devices, don't close when new is selected
-        #if self.joystickReader.get_mux_supported_dev_count() == 1:
-        #    self.joystickReader.stop_input()
-
         selected_device_name = str(self.sender().text())
         self._active_device = selected_device_name
 
@@ -552,7 +551,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         # Read preferred config used for this controller from config,
         # if found then select this config in the menu
 
-        self.joystickReader.start_input(selected_device_name)
+        self._mapping_support = self.joystickReader.start_input(selected_device_name)
         self._adjust_nbr_of_selected_devices()
 
         if self.joystickReader.get_mux_supported_dev_count() == 1:
@@ -568,8 +567,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             return
         selected_mapping = str(self.sender().text())
         self.joystickReader.set_input_map(self._active_device, selected_mapping)
-        #Config().get("device_config_mapping")[self._active_device] \
-        #    = selected_mapping
         self._update_input_device_footer(self._active_device, selected_mapping)
 
     def device_discovery(self, devs):
@@ -598,13 +595,13 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         # Now we know what device to use and what mapping, trigger the events
         # to change the menus and start the input
+        for c in self._menu_devices.actions():
+            if c.text() == self._active_device:
+                c.setChecked(True)
+
         for c in self._menu_mappings.actions():
             c.setEnabled(True)
             if c.text() == self._current_input_config:
-                c.setChecked(True)
-
-        for c in self._menu_devices.actions():
-            if c.text() == self._active_device:
                 c.setChecked(True)
 
     def _quick_connect(self):

@@ -80,6 +80,8 @@ class FlightTab(Tab, flight_tab_class):
     connectionFinishedSignal = pyqtSignal(str)
     disconnectedSignal = pyqtSignal(str)
 
+    _limiting_updated = pyqtSignal(bool, bool, bool)
+
     def __init__(self, tabWidget, helper, *args):
         super(FlightTab, self).__init__(*args)
         self.setupUi(self)
@@ -202,6 +204,23 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.inputDeviceReader.alt2_updated.add_callback(self.alt2_updated)
         self._tf_state = 0
         self._ring_effect = 0
+
+        # Connect callbacks for input device limiting of rpöö/pitch/yaw/thust
+        self.helper.inputDeviceReader.limiting_updated.add_callback(
+            self._limiting_updated.emit)
+        self._limiting_updated.connect(self._set_limiting_enabled)
+
+    def _set_limiting_enabled(self, rp_limiting_enabled,
+                                    yaw_limiting_enabled,
+                                    thrust_limiting_enabled):
+        self.maxAngle.setEnabled(rp_limiting_enabled)
+        self.targetCalRoll.setEnabled(rp_limiting_enabled)
+        self.targetCalPitch.setEnabled(rp_limiting_enabled)
+        self.maxYawRate.setEnabled(yaw_limiting_enabled)
+        self.maxThrust.setEnabled(thrust_limiting_enabled)
+        self.minThrust.setEnabled(thrust_limiting_enabled)
+        self.slewEnableLimit.setEnabled(thrust_limiting_enabled)
+        self.thrustLoweringSlewRateLimit.setEnabled(thrust_limiting_enabled)
 
     def _set_neffect(self, n):
         self._ledring_nbr_effects = n

@@ -51,6 +51,7 @@ import logging
 import shutil
 
 import cfclient.utils.inputreaders as readers
+import cfclient.utils.inputinterfaces as interfaces
 
 logger = logging.getLogger(__name__)
 
@@ -163,6 +164,9 @@ class JoystickReader:
         self.alt1_updated = Caller()
         self.alt2_updated = Caller()
 
+        # Call with 3 bools (rp_limiting, yaw_limiting, thrust_limiting)
+        self.limiting_updated = Caller()
+
     def set_alt_hold_available(self, available):
         """Set if altitude hold is available or not (depending on HW)"""
         self._has_pressure_sensor = available
@@ -203,6 +207,7 @@ class JoystickReader:
         This function will filter available devices by using the
         blacklist configuration and only return approved devices."""
         devs = readers.devices()
+        devs += interfaces.devices()
         approved_devs = []
 
         for dev in devs:
@@ -284,7 +289,7 @@ class JoystickReader:
     def start_input(self, device_name, config_name=None):
         """
         Start reading input from the device with name device_name using config
-        config_name
+        config_name. Returns True if device supports mapping, otherwise False
         """
         try:
             #device_id = self._available_devices[device_name]
@@ -299,7 +304,12 @@ class JoystickReader:
                     self._input_device.input_map = self._input_map
                     self._input_device.input_map_name = config_name
                     self._selected_mux.add_device(self._input_device, None)
+                    # Update the UI with the limiting for this device
+                    self.limiting_updated.call(self._input_device.limit_rp,
+                                               self._input_device.limit_yaw,
+                                               self._input_device.limit_thrust)
                     self._read_timer.start()
+                    return self._input_device.supports_mapping
         except Exception:
             self.device_error.call(
                      "Error while opening/initializing  input device\n\n%s" %
@@ -308,6 +318,7 @@ class JoystickReader:
         if not self._input_device:
             self.device_error.call(
                      "Could not find device {}".format(device_name))
+        return False
 
     def stop_input(self, device_name = None):
         """Stop reading from the input device."""
