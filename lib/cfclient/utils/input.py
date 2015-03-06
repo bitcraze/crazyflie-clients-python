@@ -101,7 +101,8 @@ class JoystickReader:
 
         self._mux = [NoMux(self), SelectiveMux(self), TakeOverMux(self),
                      MixMux(self), TakeOverSelectiveMux(self)]
-        self._selected_mux = None
+        # Set NoMux as default
+        self._selected_mux = self._mux[0]
 
         if Config().get("flightmode") is "Normal":
             self.set_yaw_limit(Config().get("normal_max_yaw"))

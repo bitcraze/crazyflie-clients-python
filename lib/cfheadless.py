@@ -64,6 +64,11 @@ class HeadlessClient():
 
         signal.signal(signal.SIGINT, signal.SIG_DFL) 
 
+        self._devs = []
+
+        for d in self._jr.available_devices():
+            self._devs.append(d.name)
+
     def setup_controller(self, input_config, input_device=0, xmode=False):
         """Set up the device reader""" 
         # Set up the joystick reader
@@ -73,9 +78,9 @@ class HeadlessClient():
             self._cf.commander.set_client_xmode(xmode)
 
         devs = self._jr.available_devices()
-        print "Will use [%s] for input" % devs[input_device].name
-        self._jr.start_input(devs[input_device].name)
-        self._jr.set_input_map(input_config)
+        print "Will use [%s] for input" % self._devs[input_device]
+        self._jr.start_input(self._devs[input_device])
+        self._jr.set_input_map(self._devs[input_device], input_config)
 
     def controller_connected(self):
         """ Return True if a controller is connected"""
@@ -84,8 +89,8 @@ class HeadlessClient():
     def list_controllers(self):
         """List the available controllers and input mapping"""
         print "\nAvailable controllers:"
-        for dev in self._jr.available_devices():
-            print " - Controller #{}: {}".format(dev.id, dev.name)
+        for i, dev in enumerate(self._devs):
+            print " - Controller #{}: {}".format(i, dev)
         print "\nAvailable input mapping:"
         for map in os.listdir(sys.path[1] + '/input'):
             print " - " + map.split(".json")[0]
