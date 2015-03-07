@@ -550,7 +550,7 @@
               <bool>false</bool>
              </property>
              <property name="text">
-              <string>Killswtich</string>
+              <string>Killswitch</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
