@@ -94,20 +94,23 @@ class _CtrlThread(Thread):
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
+SRV_ADDR = "tcp://127.0.0.1"
+CF_URI = "radio://0/10/250K"
+
 context = zmq.Context()
 client_conn = context.socket(zmq.REQ)
-client_conn.connect("tcp://127.0.0.1:2000")
+client_conn.connect("{}:2000".format(SRV_ADDR))
 
 log_conn = context.socket(zmq.SUB)
-log_conn.connect("tcp://127.0.0.1:2001")
+log_conn.connect("{}:2001".format(SRV_ADDR))
 log_conn.setsockopt_string(zmq.SUBSCRIBE, u"")
 
 param_conn = context.socket(zmq.SUB)
-param_conn.connect("tcp://127.0.0.1:2002")
+param_conn.connect("{}:2002".format(SRV_ADDR))
 param_conn.setsockopt_string(zmq.SUBSCRIBE, u"")
 
 ctrl_conn = context.socket(zmq.PUSH)
-ctrl_conn.connect("tcp://127.0.0.1:2004")
+ctrl_conn.connect("{}:2004".format(SRV_ADDR))
 
 # Start async threads
 log_thread = _LogThread(log_conn)
@@ -130,7 +133,7 @@ for i in resp["interfaces"]:
 connect_cmd = {
     "version": 1,
     "cmd": "connect",
-    "uri": "radio://0/10/250K"
+    "uri": "{}".format(CF_URI)
 }
 print "Connecting to {} ...".format(connect_cmd["uri"]),
 client_conn.send_json(connect_cmd)
