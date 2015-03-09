@@ -179,7 +179,7 @@ class UsbDriver(CRTPDriver):
             pass
         self.cfusb = None
 
-    def scan_interface(self):
+    def scan_interface(self, address):
         """ Scan interface for Crazyflies """
         if self.cfusb is None:
             try:

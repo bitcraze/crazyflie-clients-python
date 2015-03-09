@@ -99,17 +99,33 @@ class I2CElement(MemoryElement):
         """Callback for when new memory data has been fetched"""
         if mem.id == self.id:
             if addr == 0:
+                done = False
                 # Check for header
                 if data[0:4] == "0xBC":
                     logger.info("Got new data: {}".format(data))
-                    [self.elements["radio_channel"],
+                    [self.elements["version"],
+                     self.elements["radio_channel"],
                      self.elements["radio_speed"],
                      self.elements["pitch_trim"],
-                     self.elements["roll_trim"]] = struct.unpack("<BBff", data[5:15])
-                    logger.info(self.elements)
-                    if self._checksum256(data[:15]) == ord(data[15]):
-                        self.valid = True
+                     self.elements["roll_trim"]] = struct.unpack("<BBBff", data[4:15])
+                    if self.elements["version"] == 0:
+                        done = True
+                    elif self.elements["version"] == 1:
+                        self.datav0 = data
+                        self.mem_handler.read(self, 16, 5)
 
+            if addr == 16:
+                [radio_address_upper,
+                 radio_address_lower] = struct.unpack("<BI", self.datav0[15] + data[0:4])
+                self.elements["radio_address"] = int(radio_address_upper) << 32 | radio_address_lower
+
+                logger.info(self.elements)
+                data = self.datav0 + data
+                done = True
+
+            if done:
+                if self._checksum256(data[:len(data)-1]) == ord(data[len(data)-1]):
+                    self.valid = True
                 if self._update_finished_cb:
                     self._update_finished_cb(self)
                     self._update_finished_cb = None
@@ -118,9 +134,15 @@ class I2CElement(MemoryElement):
         return reduce(lambda x, y: x + y, map(ord, st)) % 256
 
     def write_data(self, write_finished_cb):
-        data = (0x00, self.elements["radio_channel"], self.elements["radio_speed"],
-                self.elements["pitch_trim"], self.elements["roll_trim"])
-        image = struct.pack("<BBBff", *data)
+        if self.elements["version"] == 0:
+            data = (0x00, self.elements["radio_channel"], self.elements["radio_speed"],
+                    self.elements["pitch_trim"], self.elements["roll_trim"])
+            image = struct.pack("<BBBff", *data)
+        elif self.elements["version"] == 1:
+            data = (0x01, self.elements["radio_channel"], self.elements["radio_speed"],
+                    self.elements["pitch_trim"], self.elements["roll_trim"],
+                    self.elements["radio_address"] >> 32, self.elements["radio_address"] & 0xFFFFFFFF)
+            image = struct.pack("<BBBffBI", *data)
         # Adding some magic:
         image = "0xBC" + image
         image += struct.pack("B", self._checksum256(image))
