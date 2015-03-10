@@ -63,6 +63,7 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
         self.interfaceList.itemDoubleClicked.connect(self.interfaceSelected)
         self.scanner.interfaceFoundSignal.connect(self.foundInterfaces)
         self.box = None
+        self.address.setValue(0xE7E7E7E7E7)
 
         self.available_interfaces = []
 
@@ -73,7 +74,7 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
         self.scanButton.setEnabled(False)
         self.cancelButton.setEnabled(False)
         self.connectButton.setEnabled(False)
-        self.scanner.scanSignal.emit()
+        self.scanner.scanSignal.emit(self.address.value())
 
     def foundInterfaces(self, interfaces):
         """
@@ -109,7 +110,7 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
 
 class ScannerThread(QThread):
 
-    scanSignal = pyqtSignal()
+    scanSignal = pyqtSignal(object)
     interfaceFoundSignal = pyqtSignal(object)
 
     def __init__(self):
@@ -117,6 +118,5 @@ class ScannerThread(QThread):
         self.moveToThread(self)
         self.scanSignal.connect(self.scan)
 
-    @pyqtSlot()
-    def scan(self):
-        self.interfaceFoundSignal.emit(cflib.crtp.scan_interfaces())
+    def scan(self, address):
+        self.interfaceFoundSignal.emit(cflib.crtp.scan_interfaces(address))

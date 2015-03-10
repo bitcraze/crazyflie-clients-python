@@ -276,7 +276,7 @@ class DebugDriver (CRTPDriver):
                                                      self._fake_mems)
         self._packet_handler.start()
 
-    def scan_interface(self):
+    def scan_interface(self, address):
         return [["debug://0/0", "Normal connection"],
                 ["debug://0/1", "Fail to connect"],
                 ["debug://0/2", "Incomplete log TOC download"],

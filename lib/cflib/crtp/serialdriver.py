@@ -58,5 +58,5 @@ class SerialDriver (CRTPDriver):
     def get_name(self):
         return "serial"
 
-    def scan_interface(self):
+    def scan_interface(self, address):
         return []
