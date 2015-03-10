@@ -82,12 +82,12 @@ class RadioDriver(CRTPDriver):
             raise WrongUriType("Not a radio URI")
 
         # Open the USB dongle
-        if not re.search("^radio://([0-9]+)((/([0-9]+))((/(250K|1M|2M))?(/([0-9]+))?)?)?$",
+        if not re.search("^radio://([0-9]+)((/([0-9]+))((/(250K|1M|2M))?(/([A-F0-9]+))?)?)?$",
                          uri):
             raise WrongUriType('Wrong radio URI format!')
 
         uri_data = re.search("^radio://([0-9]+)((/([0-9]+))"
-                             "((/(250K|1M|2M))?(/([0-9]+))?)?)?$",
+                             "((/(250K|1M|2M))?(/([A-F0-9]+))?)?)?$",
                              uri)
 
         self.uri = uri
@@ -119,7 +119,7 @@ class RadioDriver(CRTPDriver):
         self.cradio.set_data_rate(datarate)
 
         if uri_data.group(9):
-            addr = "{:X}".format(int(uri_data.group(9)))
+            addr = str(uri_data.group(9))
             new_addr = struct.unpack("<BBBBB", binascii.unhexlify(addr))
             self.cradio.set_address(new_addr)
 
@@ -242,7 +242,7 @@ class RadioDriver(CRTPDriver):
 
         return ret
 
-    def scan_interface(self):
+    def scan_interface(self, address):
         """ Scan interface for Crazyflies """
         if self.cradio is None:
             try:
@@ -259,17 +259,33 @@ class RadioDriver(CRTPDriver):
                     serial)
         found = []
 
+        if address != None:
+            addr = "{:X}".format(address)
+            new_addr = struct.unpack("<BBBBB", binascii.unhexlify(addr))
+            self.cradio.set_address(new_addr)
+
         self.cradio.set_arc(1)
 
         self.cradio.set_data_rate(self.cradio.DR_250KPS)
-        found += map(lambda c: ["radio://0/{}/250K".format(c), ""],
-                     self._scan_radio_channels())
-        self.cradio.set_data_rate(self.cradio.DR_1MPS)
-        found += map(lambda c: ["radio://0/{}/1M".format(c), ""],
-                     self._scan_radio_channels())
-        self.cradio.set_data_rate(self.cradio.DR_2MPS)
-        found += map(lambda c: ["radio://0/{}/2M".format(c), ""],
-                     self._scan_radio_channels())
+
+        if address == None or address == 0xE7E7E7E7E7:
+            found += map(lambda c: ["radio://0/{}/250K".format(c), ""],
+                         self._scan_radio_channels())
+            self.cradio.set_data_rate(self.cradio.DR_1MPS)
+            found += map(lambda c: ["radio://0/{}/1M".format(c), ""],
+                         self._scan_radio_channels())
+            self.cradio.set_data_rate(self.cradio.DR_2MPS)
+            found += map(lambda c: ["radio://0/{}/2M".format(c), ""],
+                         self._scan_radio_channels())
+        else:
+            found += map(lambda c: ["radio://0/{}/250K/{:X}".format(c, address), ""],
+                         self._scan_radio_channels())
+            self.cradio.set_data_rate(self.cradio.DR_1MPS)
+            found += map(lambda c: ["radio://0/{}/1M/{:X}".format(c, address), ""],
+                         self._scan_radio_channels())
+            self.cradio.set_data_rate(self.cradio.DR_2MPS)
+            found += map(lambda c: ["radio://0/{}/2M/{:X}".format(c, address), ""],
+                         self._scan_radio_channels())
 
         self.cradio.close()
         self.cradio = None

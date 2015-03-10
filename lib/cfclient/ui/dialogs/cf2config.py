@@ -74,6 +74,12 @@ class Cf2ConfigDialog(QtGui.QWidget, service_dialog_class):
         self._pitch_trim.setValue(mem.elements["pitch_trim"])
         self._radio_channel.setValue(mem.elements["radio_channel"])
         self._radio_speed.setCurrentIndex(mem.elements["radio_speed"])
+        if "radio_address" in mem.elements:
+            self._radio_address.setValue(mem.elements["radio_address"])
+            self._radio_address.setEnabled(True)
+        else:
+            self._radio_address.setValue(int("0xE7E7E7E7E7", 0))
+            self._radio_address.setEnabled(False)
         self._write_data_btn.setEnabled(True)
 
     def _set_ui_connected(self, link_uri):
@@ -87,6 +93,8 @@ class Cf2ConfigDialog(QtGui.QWidget, service_dialog_class):
         self._pitch_trim.setValue(0)
         self._radio_channel.setValue(0)
         self._radio_speed.setCurrentIndex(0)
+        self._radio_address.setValue(0)
+        self._radio_address.setEnabled(False)
 
     def _write_data(self):
         self._write_data_btn.setEnabled(False)
@@ -95,4 +103,6 @@ class Cf2ConfigDialog(QtGui.QWidget, service_dialog_class):
         mem.elements["roll_trim"] = self._roll_trim.value()
         mem.elements["radio_channel"] = self._radio_channel.value()
         mem.elements["radio_speed"] = self._radio_speed.currentIndex()
+        if "radio_address" in mem.elements:
+            mem.elements["radio_address"] = self._radio_address.value()
         mem.write_data(self._write_done)
