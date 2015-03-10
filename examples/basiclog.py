@@ -85,16 +85,19 @@ class LoggingExample:
         # Adding the configuration cannot be done until a Crazyflie is
         # connected, since we need to check that the variables we
         # would like to log are in the TOC.
-        self._cf.log.add_config(self._lg_stab)
-        if self._lg_stab.valid:
+        try:
+            self._cf.log.add_config(self._lg_stab)
             # This callback will receive the data
             self._lg_stab.data_received_cb.add_callback(self._stab_log_data)
             # This callback will be called on errors
             self._lg_stab.error_cb.add_callback(self._stab_log_error)
             # Start the logging
             self._lg_stab.start()
-        else:
-            print("Could not add logconfig since some variables are not in TOC")
+        except KeyError as e:
+            print "Could not start log configuration," \
+                  "{} not found in TOC".format(str(e))
+        except AttributeError:
+            print "Could not add Stabilizer log config, bad configuration."
 
         # Start a timer to disconnect in 10s
         t = Timer(5, self._cf.close_link)

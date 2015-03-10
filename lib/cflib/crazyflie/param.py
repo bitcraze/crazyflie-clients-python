@@ -118,6 +118,7 @@ class Param():
         self.cf = crazyflie
         self.param_update_callbacks = {}
         self.group_update_callbacks = {}
+        self.all_update_callback = Caller()
         self.param_updater = None
 
         self.param_updater = _ParamUpdater(self.cf, self._param_updated)
@@ -173,6 +174,7 @@ class Param():
                 self.param_update_callbacks[complete_name].call(complete_name, s)
             if element.group in self.group_update_callbacks:
                 self.group_update_callbacks[element.group].call(complete_name, s)
+            self.all_update_callback.call(complete_name, s)
         else:
             logger.debug("Variable id [%d] not found in TOC", var_id)
 
@@ -189,12 +191,14 @@ class Param():
             if paramname in self.param_update_callbacks:
                 self.param_update_callbacks[paramname].remove_callback(cb)
 
-    def add_update_callback(self, group, name=None, cb=None):
+    def add_update_callback(self, group=None, name=None, cb=None):
         """
         Add a callback for a specific parameter name. This callback will be
         executed when a new value is read from the Crazyflie.
         """
-        if not name:
+        if not group and not name:
+            self.all_update_callback.add_callback(cb)
+        elif not name:
             if not group in self.group_update_callbacks:
                 self.group_update_callbacks[group] = Caller()
             self.group_update_callbacks[group].add_callback(cb)
@@ -235,8 +239,10 @@ class Param():
         if not element:
             logger.warning("Cannot set value for [%s], it's not in the TOC!",
                            complete_name)
+            raise KeyError("{} not in param TOC".format(complete_name))
         elif element.access == ParamTocElement.RO_ACCESS:
             logger.debug("[%s] is read only, no trying to set value", complete_name)
+            raise AttributeError("{} is read-only!".format(complete_name))
         else:
             varid = element.ident
             pk = CRTPPacket()

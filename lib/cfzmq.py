@@ -27,8 +27,6 @@
 
 """
 Server used to connect to a Crazyflie using ZMQ.
-
-
 """
 
 import sys
@@ -36,12 +34,11 @@ import os
 import logging
 import signal
 import zmq
-
+import Queue
+from threading import Thread
 import cflib.crtp
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.log import LogConfig
-from threading import Thread
-from Queue import Queue
 
 if os.name == 'posix':
     print 'Disabling standard output for libraries!'
@@ -64,30 +61,66 @@ ZMQ_CONN_PORT = 2003
 # Control set-poins for Crazyflie (pull)
 ZMQ_CTRL_PORT = 2004
 
+# Timeout before giving up when verifying param write
+PARAM_TIMEOUT = 2
+# Timeout before giving up connection
+CONNECT_TIMEOUT = 5
+# Timeout before giving up adding/starting log config
+LOG_TIMEOUT = 10
+
 logger = logging.getLogger(__name__)
 
 class _SrvThread(Thread):
 
-    def __init__(self, socket, log_socket, param_socket, cf, *args):
+    def __init__(self, socket, log_socket, param_socket, conn_socket, cf, *args):
         super(_SrvThread, self).__init__(*args)
         self._socket = socket
         self._log_socket = log_socket
         self._param_socket = param_socket
-        #self.daemon = True
-        self._cf =cf
+        self._conn_socket = conn_socket
+        self._cf = cf
 
         self._cf.connected.add_callback(self._connected)
+        self._cf.connection_failed.add_callback(self._connection_failed)
+        self._cf.connection_lost.add_callback(self._connection_lost)
+        self._cf.disconnected.add_callback(self._disconnected)
+        self._cf.connection_requested.add_callback(self._connection_requested)
         self._cf.param.all_updated.add_callback(self._tocs_updated)
+        self._cf.param.all_update_callback.add_callback(self._all_param_update)
 
-        self._conn_queue = Queue(1)
-        self._param_queue = Queue(1)
+        self._conn_queue = Queue.Queue(1)
+        self._param_queue = Queue.Queue(1)
+        self._log_started_queue = Queue.Queue(1)
+        self._log_added_queue = Queue.Queue(1)
+
+        self._logging_configs = {}
+
+    def _connection_requested(self, uri):
+        conn_ev = {"version": 1, "event": "requested", "uri": uri}
+        self._conn_socket.send_json(conn_ev)
 
     def _connected(self, uri):
-        logger.info("Connected to {}".format(uri))
+        conn_ev = {"version": 1, "event": "connected", "uri": uri}
+        self._conn_socket.send_json(conn_ev)
+
+    def _connection_failed(self, uri, msg):
+        logger.info("Connection failed to {}: {}".format(uri, msg))
+        resp = {"version": 1, "status": 1, "msg": msg}
+        self._conn_queue.put_nowait(resp)
+        conn_ev = {"version": 1, "event": "failed", "uri": uri, "msg": msg}
+        self._conn_socket.send_json(conn_ev)
+
+    def _connection_lost(self, uri, msg):
+        conn_ev = {"version": 1, "event": "lost", "uri": uri, "msg": msg}
+        self._conn_socket.send_json(conn_ev)
+
+    def _disconnected(self, uri):
+        conn_ev = {"version": 1, "event": "disconnected", "uri": uri}
+        self._conn_socket.send_json(conn_ev)
 
     def _tocs_updated(self):
         # First do the log
-        log_toc = self._cf.log._toc.toc
+        log_toc = self._cf.log.toc.toc
         log = {}
         for group in log_toc:
             log[group] = {}
@@ -104,49 +137,126 @@ class _SrvThread(Thread):
                     "access": "RW" if param_toc[group][name].access == 0 else "RO",
                     "value": self._cf.param.values[group][name]}
 
-        self._conn_queue.put_nowait([log, param])
+        resp = {"version": 1, "status": 0, "log": log, "param": param}
+        self._conn_queue.put_nowait(resp)
 
-    def _disconnected(self, uri):
-        print "Disconnected from {}".format(uri)
-
-    def _handle_scanning(self, data):
+    def _handle_scanning(self):
+        resp = {"version": 1}
         interfaces = cflib.crtp.scan_interfaces()
-        data["interfaces"] = []
+        resp["interfaces"] = []
         for i in interfaces:
-            data["interfaces"].append({"uri": i[0], "info": i[1]})
+            resp["interfaces"].append({"uri": i[0], "info": i[1]})
+        return resp
 
-    def _handle_connect(self, uri, data):
+    def _handle_connect(self, uri):
         self._cf.open_link(uri)
-        [data["log"], data["param"]] = self._conn_queue.get(block=True)
+        return self._conn_queue.get(block=True)
+
+    def _logging_started(self, conf, started):
+        out = {"version": 1, "name": conf.name}
+        if started:
+            out["event"] = "started"
+        else:
+            out["event"] = "stopped"
+        self._log_socket.send_json(out)
+        self._log_started_queue.put_nowait(started)
+
+    def _logging_added(self, conf, added):
+        out = {"version": 1, "name": conf.name}
+        if added:
+            out["event"] = "created"
+        else:
+            out["event"] = "deleted"
+        self._log_socket.send_json(out)
+        self._log_added_queue.put_nowait(added)
 
     def _handle_logging(self, data):
+        resp = {"version": 1}
         if data["action"] == "create":
             lg = LogConfig(data["name"], data["period"])
             for v in data["variables"]:
                 lg.add_variable(v)
-
-            self._cf.log.add_config(lg)
-            if lg.valid:
+            lg.started_cb.add_callback(self._logging_started)
+            lg.added_cb.add_callback(self._logging_added)
+            try:
                 lg.data_received_cb.add_callback(self._logdata_callback)
-                #lg.error_cb.add_callback(self._log_error_signal.emit)
-                lg.start()
-                return 0
+                self._logging_configs[data["name"]] = lg
+                self._cf.log.add_config(lg)
+                lg.create()
+                self._log_added_queue.get(block=True, timeout=LOG_TIMEOUT)
+                resp["status"] = 0
+            except KeyError as e:
+                resp["status"] = 1
+                resp["msg"] = str(e)
+            except AttributeError as e:
+                resp["status"] = 2
+                resp["msg"] = str(e)
+            except Queue.Empty:
+                resp["status"] = 3
+                resp["msg"] = "Log configuration did not start"
+        if data["action"] == "start":
+            try:
+                self._logging_configs[data["name"]].start()
+                self._log_started_queue.get(block=True, timeout=LOG_TIMEOUT)
+                resp["status"] = 0
+            except KeyError as e:
+                resp["status"] = 1
+                resp["msg"] = "{} config not found".format(str(e))
+            except Queue.Empty:
+                resp["status"] = 2
+                resp["msg"] = "Log configuration did not stop"
+        if data["action"] == "stop":
+            try:
+                self._logging_configs[data["name"]].stop()
+                self._log_started_queue.get(block=True, timeout=LOG_TIMEOUT)
+                resp["status"] = 0
+            except KeyError as e:
+                resp["status"] = 1
+                resp["msg"] = "{} config not found".format(str(e))
+            except Queue.Empty:
+                resp["status"] = 2
+                resp["msg"] = "Log configuration did not stop"
+        if data["action"] == "delete":
+            try:
+                self._logging_configs[data["name"]].delete()
+                self._log_added_queue.get(block=True, timeout=LOG_TIMEOUT)
+                resp["status"] = 0
+            except KeyError as e:
+                resp["status"] = 1
+                resp["msg"] = "{} config not found".format(str(e))
+            except Queue.Empty:
+                resp["status"] = 2
+                resp["msg"] = "Log configuration did not stop"
 
-            else:
-                logger.warning("Could not setup logconfiguration after "
-                               "connection!")
-                return 1
+        return resp
 
-    def _handle_param(self, data, response):
+    def _handle_param(self, data):
+        resp = {"version": 1}
         group = data["name"].split(".")[0]
         name = data["name"].split(".")[1]
         self._cf.param.add_update_callback(group=group, name=name,
                                            cb=self._param_callback)
-        self._cf.param.set_value(data["name"], str(data["value"]))
-        answer = self._param_queue.get(block=True)
-        response["name"] = answer["name"]
-        response["value"] = answer["value"]
-        response["status"] = 0
+        try:
+            self._cf.param.set_value(data["name"], str(data["value"]))
+            answer = self._param_queue.get(block=True, timeout=PARAM_TIMEOUT)
+            resp["name"] = answer["name"]
+            resp["value"] = answer["value"]
+            resp["status"] = 0
+        except KeyError as e:
+            resp["status"] = 1
+            resp["msg"] = str(e)
+        except AttributeError as e:
+            resp["status"] = 2
+            resp["msg"] = str(e)
+        except Queue.Empty:
+            resp["status"] = 3
+            resp["msg"] = "Timeout when setting parameter" \
+                          "{}".format(data["name"])
+        return resp
+
+    def _all_param_update(self, name, value):
+        resp = {"version": 1, "name": name, "value": value}
+        self._param_socket.send_json(resp)
 
     def _param_callback(self, name, value):
         group = name.split(".")[0]
@@ -155,7 +265,8 @@ class _SrvThread(Thread):
         self._param_queue.put_nowait({"name": name, "value": value})
 
     def _logdata_callback(self, ts, data, conf):
-        out = {"version": 1, "name": conf.name, "timestamp": ts, "variables": {}}
+        out = {"version": 1, "name": conf.name, "event": "data",
+               "timestamp": ts, "variables": {}}
         for d in data:
             out["variables"][d] = data[d]
         self._log_socket.send_json(out)
@@ -168,14 +279,21 @@ class _SrvThread(Thread):
             response = {"version": 1}
             logger.info("Got command {}".format(cmd))
             if cmd["cmd"] == "scan":
-                self._handle_scanning(response)
-            if cmd["cmd"] == "connect":
-                self._handle_connect(cmd["uri"], response)
-            if cmd["cmd"] == "log":
-                response["status"] = self._handle_logging(cmd)
-            if cmd["cmd"] == "param":
-                self._handle_param(cmd, response)
+                response = self._handle_scanning()
+            elif cmd["cmd"] == "connect":
+                response = self._handle_connect(cmd["uri"])
+            elif cmd["cmd"] == "disconnect":
+                self._cf.close_link()
+                response["status"] = 0
+            elif cmd["cmd"] == "log":
+                response = self._handle_logging(cmd)
+            elif cmd["cmd"] == "param":
+                response = self._handle_param(cmd)
+            else:
+                response["status"] = 0xFF
+                response["msg"] = "Unknown command {}".format(cmd["cmd"])
             self._socket.send_json(response)
+
 
 class _CtrlThread(Thread):
     def __init__(self, socket, cf, *args):
@@ -194,40 +312,36 @@ class ZMQServer():
     """Crazyflie ZMQ server"""
 
     def __init__(self, base_url):
-        """Initialize the headless client and libraries"""
+        """Start threads and bind ports"""
         cflib.crtp.init_drivers(enable_debug_driver=True)
-
         self._cf = Crazyflie(ro_cache=sys.path[0]+"/cflib/cache",
                              rw_cache=sys.path[1]+"/cache")
 
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-        context = zmq.Context()
-        srv = context.socket(zmq.REP)
-        self._srv_addr = "{}:{}".format(base_url, ZMQ_SRV_PORT)
-        srv.bind(self._srv_addr)
-        logger.info("Biding ZMQ command server at {}".format(self._srv_addr))
+        self._base_url = base_url
+        self._context = zmq.Context()
 
-        log_srv = context.socket(zmq.PUB)
-        self._log_srv_addr = "{}:{}".format(base_url, ZMQ_LOG_PORT)
-        log_srv.bind(self._log_srv_addr)
-        logger.info("Biding ZMQ log server at {}".format(self._log_srv_addr))
+        cmd_srv = self._bind_zmq_socket(zmq.REP, "cmd", ZMQ_SRV_PORT)
+        log_srv = self._bind_zmq_socket(zmq.PUB, "log", ZMQ_LOG_PORT)
+        param_srv = self._bind_zmq_socket(zmq.PUB, "param", ZMQ_PARAM_PORT)
+        ctrl_srv = self._bind_zmq_socket(zmq.PULL, "ctrl", ZMQ_CTRL_PORT)
+        conn_srv = self._bind_zmq_socket(zmq.PUB, "conn", ZMQ_CONN_PORT)
 
-        param_srv = context.socket(zmq.PUB)
-        self._param_srv_addr = "{}:{}".format(base_url, ZMQ_PARAM_PORT)
-        param_srv.bind(self._param_srv_addr)
-        logger.info("Biding ZMQ param server at {}".format(self._param_srv_addr))
-
-        ctrl_srv = context.socket(zmq.PULL)
-        self._ctrl_srv_addr = "{}:{}".format(base_url, ZMQ_CTRL_PORT)
-        ctrl_srv.bind(self._ctrl_srv_addr)
-        logger.info("Biding ZMQ ctrl server at {}".format(self._ctrl_srv_addr))
-
-        self._scan_thread = _SrvThread(srv, log_srv, param_srv, self._cf)
+        self._scan_thread = _SrvThread(cmd_srv, log_srv, param_srv, conn_srv,
+                                       self._cf)
         self._scan_thread.start()
 
         self._ctrl_thread = _CtrlThread(ctrl_srv, self._cf)
         self._ctrl_thread.start()
+
+    def _bind_zmq_socket(self, pattern, name, port):
+        srv = self._context.socket(pattern)
+        srv_addr = "{}:{}".format(self._base_url, port)
+        srv.bind(srv_addr)
+        logger.info("Biding ZMQ {} server"
+                    "at {}".format(name, srv_addr))
+        return srv
 
 
 def main():

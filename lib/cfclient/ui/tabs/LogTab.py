@@ -80,7 +80,7 @@ class LogTab(Tab, param_tab_class):
     def connected(self, linkURI):
         self.logTree.clear()
 
-        toc = self.cf.log._toc
+        toc = self.cf.log.toc
 
         for group in toc.toc.keys():
             groupItem = QtGui.QTreeWidgetItem()

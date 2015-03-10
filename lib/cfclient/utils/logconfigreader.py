@@ -102,10 +102,12 @@ class LogConfigReader():
         # Just add all the configurations. Via callbacks other parts of the
         # application will pick up these configurations and use them
         for d in self.dsList:
-            self._cf.log.add_config(d)
-            if not d.valid:
-                logger.warning("Could not add log configuration [%s]",
-                               d.name)
+            try:
+                self._cf.log.add_config(d)
+            except KeyError as e:
+                logger.warning(str(e))
+            except AttributeError as e:
+                logger.warning(str(e))
 
     def getLogConfigs(self):
         """Return the log configurations"""

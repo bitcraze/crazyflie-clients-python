@@ -385,17 +385,17 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def _connected(self, linkURI):
         self._update_ui_state(UIState.CONNECTED, linkURI)
 
-        Config().set("link_uri", linkURI)
+        Config().set("link_uri", str(linkURI))
 
         lg = LogConfig("Battery", 1000)
         lg.add_variable("pm.vbat", "float")
-        self.cf.log.add_config(lg)
-        if lg.valid:
+        try:
+            self.cf.log.add_config(lg)
             lg.data_received_cb.add_callback(self.batteryUpdatedSignal.emit)
             lg.error_cb.add_callback(self._log_error_signal.emit)
             lg.start()
-        else:
-            logger.warning("Could not setup loggingblock!")
+        except KeyError as e:
+            logger.warning(str(e))
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error", "Error when starting log config"

@@ -35,6 +35,7 @@ import zmq
 from threading import Thread
 import signal
 import time
+import sys
 
 class _LogThread(Thread):
     def __init__(self, socket, *args):
@@ -44,7 +45,16 @@ class _LogThread(Thread):
     def run(self):
         while True:
             log = self._socket.recv_json()
-            print log
+            if log["event"] == "data":
+                print log
+            if log["event"] == "created":
+                print "Created block {}".format(log["name"])
+            if log["event"] == "started":
+                print "Started block {}".format(log["name"])
+            if log["event"] == "stopped":
+                print "Stopped block {}".format(log["name"])
+            if log["event"] == "deleted":
+                print "Deleted block {}".format(log["name"])
 
 class _ParamThread(Thread):
     def __init__(self, socket, *args):
@@ -95,7 +105,7 @@ class _CtrlThread(Thread):
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 SRV_ADDR = "tcp://127.0.0.1"
-CF_URI = "radio://0/10/250K"
+CF_URI = "radio://0/100/250K"
 
 context = zmq.Context()
 client_conn = context.socket(zmq.REQ)
@@ -109,6 +119,10 @@ param_conn = context.socket(zmq.SUB)
 param_conn.connect("{}:2002".format(SRV_ADDR))
 param_conn.setsockopt_string(zmq.SUBSCRIBE, u"")
 
+conn_conn = context.socket(zmq.SUB)
+conn_conn.connect("{}:2003".format(SRV_ADDR))
+conn_conn.setsockopt_string(zmq.SUBSCRIBE, u"")
+
 ctrl_conn = context.socket(zmq.PUSH)
 ctrl_conn.connect("{}:2004".format(SRV_ADDR))
 
@@ -119,6 +133,21 @@ log_thread.start()
 param_thread = _ParamThread(param_conn)
 param_thread.start()
 
+conn_thread = _ConnThread(conn_conn)
+conn_thread.start()
+
+print "Trying unknown command ...",
+scan_cmd = {
+    "version": 1,
+    "cmd": "blah"
+}
+client_conn.send_json(scan_cmd)
+resp = client_conn.recv_json()
+if resp["status"] != 0:
+    print "fail! {}".format(resp["msg"])
+else:
+    print "done!"
+
 print "Scanning for Crazyflies ...",
 scan_cmd = {
     "version": 1,
@@ -128,7 +157,7 @@ client_conn.send_json(scan_cmd)
 resp = client_conn.recv_json()
 print "done!"
 for i in resp["interfaces"]:
-    print "\t{}".format(i["uri"])
+    print "\t{} - {}".format(i["uri"], i["info"])
 
 connect_cmd = {
     "version": 1,
@@ -138,6 +167,9 @@ connect_cmd = {
 print "Connecting to {} ...".format(connect_cmd["uri"]),
 client_conn.send_json(connect_cmd)
 resp = client_conn.recv_json()
+if resp["status"] != 0:
+    print "fail! {}".format(resp["msg"])
+    sys.exit(1)
 print "done!"
 
 # Do logging
@@ -168,6 +200,20 @@ log_cmd = {
         "stabilizer.roll"
     ]
 }
+print "Creating logging {} ...".format(log_cmd["name"]),
+client_conn.send_json(log_cmd)
+resp = client_conn.recv_json()
+if resp["status"] == 0:
+    print "done!"
+else:
+    print "fail! {}".format(resp["msg"])
+
+log_cmd = {
+    "version": 1,
+    "cmd": "log",
+    "action": "start",
+    "name": "Test log block"
+}
 print "Starting logging {} ...".format(log_cmd["name"]),
 client_conn.send_json(log_cmd)
 resp = client_conn.recv_json()
@@ -190,9 +236,88 @@ resp = client_conn.recv_json()
 if resp["status"] == 0:
     print "done!"
 else:
-    print "fail!"
+    print "fail! {}".format(resp["msg"])
+
+param_cmd = {
+    "version": 1,
+    "cmd": "param",
+    "name": "flightctrl.xmode",
+    "value": True
+}
+
+print "Setting param {} to {}...".format(param_cmd["name"],
+                                         param_cmd["value"]),
+client_conn.send_json(param_cmd)
+resp = client_conn.recv_json()
+if resp["status"] == 0:
+    print "done!"
+else:
+    print "fail! {}".format(resp["msg"])
 
 
 # Start sending control commands
 ctrl = _CtrlThread(ctrl_conn)
 ctrl.start()
+
+# Wait a bit, then stop the logging
+time.sleep(5)
+
+log_cmd = {
+    "version": 1,
+    "cmd": "log",
+    "action": "stop",
+    "name": "No name",
+}
+print "Stopping logging {} ...".format(log_cmd["name"]),
+client_conn.send_json(log_cmd)
+resp = client_conn.recv_json()
+if resp["status"] == 0:
+    print "done!"
+else:
+    print "fail! {}".format(resp["msg"])
+
+
+log_cmd = {
+    "version": 1,
+    "cmd": "log",
+    "action": "stop",
+    "name": "Test log block",
+}
+print "Stopping logging {} ...".format(log_cmd["name"]),
+client_conn.send_json(log_cmd)
+resp = client_conn.recv_json()
+if resp["status"] == 0:
+    print "done!"
+else:
+    print "fail!"
+
+log_cmd = {
+    "version": 1,
+    "cmd": "log",
+    "action": "delete",
+    "name": "Test log block",
+}
+print "Deleting logging {} ...".format(log_cmd["name"]),
+client_conn.send_json(log_cmd)
+resp = client_conn.recv_json()
+if resp["status"] == 0:
+    print "done!"
+else:
+    print "fail!"
+
+
+# Wait a bit, then disconnect
+time.sleep(5)
+
+connect_cmd = {
+    "version": 1,
+    "cmd": "disconnect",
+    "uri": "{}".format(CF_URI)
+}
+print "Disconnecting from {} ...".format(connect_cmd["uri"]),
+client_conn.send_json(connect_cmd)
+resp = client_conn.recv_json()
+if resp["status"] != 0:
+    print "fail! {}".format(resp["msg"])
+    sys.exit(1)
+print "done!"

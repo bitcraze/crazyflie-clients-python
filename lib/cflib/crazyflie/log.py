@@ -191,15 +191,17 @@ class LogConfig(object):
                                           stored_as, address))
 
     def _set_added(self, added):
+        if added != self._added:
+            self.added_cb.call(self, added)
         self._added = added
-        self.added_cb.call(added)
 
     def _get_added(self):
         return self._added
 
     def _set_started(self, started):
+        if started != self._started:
+            self.started_cb.call(self, started)
         self._started = started
-        self.started_cb.call(started)
 
     def _get_started(self):
         return self._started
@@ -207,31 +209,34 @@ class LogConfig(object):
     added = property(_get_added, _set_added)
     started = property(_get_started, _set_started)
 
+    def create(self):
+        """Save the log configuration in the Crazyflie"""
+        pk = CRTPPacket()
+        pk.set_header(5, CHAN_SETTINGS)
+        pk.data = (CMD_CREATE_BLOCK, self.id)
+        for var in self.variables:
+            if (var.is_toc_variable() is False):  # Memory location
+                logger.debug("Logging to raw memory %d, 0x%04X",
+                             var.get_storage_and_fetch_byte(), var.address)
+                pk.data += struct.pack('<B', var.get_storage_and_fetch_byte())
+                pk.data += struct.pack('<I', var.address)
+            else:  # Item in TOC
+                logger.debug("Adding %s with id=%d and type=0x%02X",
+                             var.name,
+                             self.cf.log.toc.get_element_id(
+                             var.name), var.get_storage_and_fetch_byte())
+                pk.data += struct.pack('<B', var.get_storage_and_fetch_byte())
+                pk.data += struct.pack('<B', self.cf.log.toc.
+                                       get_element_id(var.name))
+        logger.debug("Adding log block id {}".format(self.id))
+        self.cf.send_packet(pk, expected_reply=(CMD_CREATE_BLOCK, self.id))
+
     def start(self):
         """Start the logging for this entry"""
         if (self.cf.link is not None):
             if (self._added is False):
+                self.create()
                 logger.debug("First time block is started, add block")
-                pk = CRTPPacket()
-                pk.set_header(5, CHAN_SETTINGS)
-                pk.data = (CMD_CREATE_BLOCK, self.id)
-                for var in self.variables:
-                    if (var.is_toc_variable() is False):  # Memory location
-                        logger.debug("Logging to raw memory %d, 0x%04X",
-                                     var.get_storage_and_fetch_byte(), var.address)
-                        pk.data += struct.pack('<B', var.get_storage_and_fetch_byte())
-                        pk.data += struct.pack('<I', var.address)
-                    else:  # Item in TOC
-                        logger.debug("Adding %s with id=%d and type=0x%02X",
-                                     var.name,
-                                     self.cf.log._toc.get_element_id(
-                                     var.name), var.get_storage_and_fetch_byte())
-                        pk.data += struct.pack('<B', var.get_storage_and_fetch_byte())
-                        pk.data += struct.pack('<B', self.cf.log._toc.
-                                               get_element_id(var.name))
-                logger.debug("Adding log block id {}".format(self.id))
-                self.cf.send_packet(pk, expected_reply=(CMD_CREATE_BLOCK, self.id))
-
             else:
                 logger.debug("Block already registered, starting logging"
                              " for id=%d", self.id)
@@ -365,7 +370,7 @@ class Log():
         self.block_added_cb = Caller()
 
         self.cf = crazyflie
-        self._toc = None
+        self.toc = None
         self.cf.add_port_callback(CRTPPort.LOGGING, self._new_packet_cb)
 
         self.toc_updated = Caller()
@@ -394,12 +399,12 @@ class Log():
         # type (i.e we want the stored as type for fetching as well) then
         # resolve this now and add them to the block again.
         for name in logconf.default_fetch_as:
-            var = self._toc.get_element_by_complete_name(name)
+            var = self.toc.get_element_by_complete_name(name)
             if not var:
                 logger.warning("%s not in TOC, this block cannot be"
                                " used!", name)
                 logconf.valid = False
-                return
+                raise KeyError("Variable {} not in TOC".format(name))
             # Now that we know what type this variable has, add it to the log
             # config again with the correct type
             logconf.add_variable(name, var.ctype)
@@ -413,12 +418,12 @@ class Log():
             # Check that we are able to find the variable in the TOC so
             # we can return error already now and not when the config is sent
             if var.is_toc_variable():
-                if (self._toc.get_element_by_complete_name(
+                if (self.toc.get_element_by_complete_name(
                         var.name) is None):
                     logger.warning("Log: %s not in TOC, this block cannot be"
                                    " used!", var.name)
                     logconf.valid = False
-                    return
+                    raise KeyError("Variable {} not in TOC".format(var.name))
 
         if (size <= MAX_LOG_DATA_PACKET_SIZE and
                 (logconf.period > 0 and logconf.period < 0xFF)):
@@ -428,13 +433,14 @@ class Log():
             self.block_added_cb.call(logconf)
         else:
             logconf.valid = False
+            raise AttributeError("The log configuration is too large or has an invalid parameter")
 
     def refresh_toc(self, refresh_done_callback, toc_cache):
         """Start refreshing the table of loggale variables"""
 
         self._toc_cache = toc_cache
         self._refresh_callback = refresh_done_callback
-        self._toc = None
+        self.toc = None
 
         pk = CRTPPacket()
         pk.set_header(CRTPPort.LOGGING, CHAN_SETTINGS)
@@ -519,14 +525,14 @@ class Log():
 
             if (cmd == CMD_RESET_LOGGING):
                 # Guard against multiple responses due to re-sending
-                if not self._toc:
+                if not self.toc:
                     logger.debug("Logging reset, continue with TOC download")
                     self.log_blocks = []
 
-                    self._toc = Toc()
+                    self.toc = Toc()
                     toc_fetcher = TocFetcher(self.cf, LogTocElement,
                                              CRTPPort.LOGGING,
-                                             self._toc, self._refresh_callback,
+                                             self.toc, self._refresh_callback,
                                              self._toc_cache)
                     toc_fetcher.start()
 

@@ -287,14 +287,15 @@ class FlightTab(Tab, flight_tab_class):
         lg.add_variable("stabilizer.yaw", "float")
         lg.add_variable("stabilizer.thrust", "uint16_t")
 
-        self.helper.cf.log.add_config(lg)
-        if (lg.valid):
+        try:
+            self.helper.cf.log.add_config(lg)
             lg.data_received_cb.add_callback(self._imu_data_signal.emit)
             lg.error_cb.add_callback(self._log_error_signal.emit)
             lg.start()
-        else:
-            logger.warning("Could not setup logconfiguration after "
-                           "connection!")
+        except KeyError as e:
+            logger.warning(str(e))
+        except AttributeError as e:
+            logger.warning(str(e))
 
         # MOTOR
         lg = LogConfig("Motors", Config().get("ui_update_period"))
@@ -303,14 +304,15 @@ class FlightTab(Tab, flight_tab_class):
         lg.add_variable("motor.m3")
         lg.add_variable("motor.m4")
 
-        self.helper.cf.log.add_config(lg)
-        if lg.valid:
+        try:
+            self.helper.cf.log.add_config(lg)
             lg.data_received_cb.add_callback(self._motor_data_signal.emit)
             lg.error_cb.add_callback(self._log_error_signal.emit)
             lg.start()
-        else:
-            logger.warning("Could not setup logconfiguration after "
-                           "connection!")
+        except KeyError as e:
+            logger.warning(str(e))
+        except AttributeError as e:
+            logger.warning(str(e))
 
         if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x01):
             self._led_ring_effect.setEnabled(True)
@@ -331,29 +333,31 @@ class FlightTab(Tab, flight_tab_class):
                     self.logBaro = LogConfig("Baro", 200)
                     self.logBaro.add_variable("baro.aslLong", "float")
 
-                    self.helper.cf.log.add_config(self.logBaro)
-                    if self.logBaro.valid:
+                    try:
+                        self.helper.cf.log.add_config(self.logBaro)
                         self.logBaro.data_received_cb.add_callback(
-                            self._baro_data_signal.emit)
+                                self._baro_data_signal.emit)
                         self.logBaro.error_cb.add_callback(
-                            self._log_error_signal.emit)
+                                self._log_error_signal.emit)
                         self.logBaro.start()
-                    else:
-                        logger.warning("Could not setup logconfiguration after "
-                                       "connection!")            
+                    except KeyError as e:
+                        logger.warning(str(e))
+                    except AttributeError as e:
+                        logger.warning(str(e))
                     self.logAltHold = LogConfig("AltHold", 200)
                     self.logAltHold.add_variable("altHold.target", "float")
 
-                    self.helper.cf.log.add_config(self.logAltHold)
-                    if self.logAltHold.valid:
+                    try:
+                        self.helper.cf.log.add_config(self.logAltHold)
                         self.logAltHold.data_received_cb.add_callback(
                             self._althold_data_signal.emit)
                         self.logAltHold.error_cb.add_callback(
                             self._log_error_signal.emit)
                         self.logAltHold.start()
-                    else:
-                        logger.warning("Could not setup logconfiguration after "
-                                       "connection!")                        
+                    except KeyError as e:
+                        logger.warning(str(e))
+                    except AttributeError:
+                        logger.warning(str(e))
 
     def disconnected(self, linkURI):
         self.ai.setRollPitch(0, 0)
