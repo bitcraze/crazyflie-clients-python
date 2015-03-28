@@ -56,7 +56,7 @@ class HandleWiimote(Thread):
     def run(self):
         logger.info("\n\nRUNNING THREAD!\n\n\n")
         t_delta = 100
-        move_delta = .9
+        move_delta = .3
         max_move = 8
         min_sample = .1
         max_sample = .01
@@ -100,14 +100,14 @@ class HandleWiimote(Thread):
         pitch = self.reader.data['pitch']
         if pitch > 1.2:
             self.reader.data['pitch'] -= 1
-        elif pitch < 1.2:
+        elif pitch < -1.2:
             self.reader.data['pitch'] += 1
         else:
             self.reader.data['pitch'] = 0
         roll = self.reader.data['roll']
         if roll > 1.2:
             self.reader.data['roll'] -= 1
-        elif roll < 1.2:
+        elif roll < -1.2:
             self.reader.data['roll'] += 1
         else:
             self.reader.data['roll'] = 0
