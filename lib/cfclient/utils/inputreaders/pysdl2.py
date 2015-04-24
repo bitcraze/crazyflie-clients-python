@@ -65,7 +65,9 @@ class _JS():
         self.buttons = list(0 for i in range(sdl2.SDL_JoystickNumButtons(self._j)+4))
 
     def close(self):
-        sdl2.joystick.SDL_JoystickClose(self._j)
+        if self._j:
+            sdl2.joystick.SDL_JoystickClose(self._j)
+        self._j = None
 
     def _set_fake_hat_button(self, btn=None):
         self.buttons[self._btn_count] = 0
