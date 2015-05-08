@@ -62,6 +62,7 @@ class MemoryElement(object):
 
     TYPE_I2C = 0
     TYPE_1W = 1
+    TYPE_DRIVER_LED = 0x10
 
     def __init__(self, id, type, size, mem_handler):
         """Initialize the element with default values"""
@@ -77,6 +78,8 @@ class MemoryElement(object):
             return "I2C"
         if t == MemoryElement.TYPE_1W:
             return "1-wire"
+        if t == MemoryElement.TYPE_DRIVER_LED:
+            return "LED driver"
         return "Unknown"
 
     def new_data(self, mem, addr, data):
@@ -86,6 +89,65 @@ class MemoryElement(object):
         """Generate debug string for memory"""
         return ("Memory: id={}, type={}, size={}".format(
                 self.id, MemoryElement.type_to_string(self.type), self.size))
+
+class LEDDriverMemory(MemoryElement):
+    def __init__(self, id, type, size, mem_handler):
+        super(LEDDriverMemory, self).__init__(id=id, type=type, size=size,
+                                              mem_handler=mem_handler)
+        self._update_finished_cb = None
+        self._write_finished_cb = None
+
+        self.leds = [
+            [128, 0, 0],
+            [0, 128, 0],
+            [0, 0, 128],
+            [128, 128, 128],
+            [128, 128, 128],
+            [128, 128, 128],
+            [128, 128, 128],
+            [128, 128, 128],
+            [128, 128, 128],
+            [128, 128, 128],
+            [128, 128, 128],
+            [128, 128, 128]
+        ]
+
+    def new_data(self, mem, addr, data):
+        """Callback for when new memory data has been fetched"""
+        if mem.id == self.id:
+            logger.info("Got new data from the LED driver, but we don't care.")
+
+    def write_data(self, write_finished_cb):
+        self._write_finished_cb = write_finished_cb
+        data = ()
+        for led in self.leds:
+            R5 = (( (int(led[0]) & 0xFF) * 249 + 1014 )) & 0xF800
+            G6 = (( (int(led[1]) & 0xFF) * 253 +  505 ) >> 5) & 0x7E0
+            B5 = (( (int(led[2]) & 0xFF) * 249 + 1014 ) >> 11) & 0x1F
+            tmp = R5 | G6 | B5
+            data += (tmp >> 8, tmp & 0xFF)
+        #logger.info(data)
+        self.mem_handler.write(self, 0x00, data)
+
+    def update(self, update_finished_cb):
+        """Request an update of the memory content"""
+        if not self._update_finished_cb:
+            self._update_finished_cb = update_finished_cb
+            self.valid = False
+            logger.info("Updating content of memory {}".format(self.id))
+            # Start reading the header
+            self.mem_handler.read(self, 0, 16)
+
+    def write_done(self, mem, addr):
+        if self._write_finished_cb and mem.id == self.id:
+            logger.info("Write to LED driver done")
+            self._write_finished_cb(self, addr)
+            self._write_finished_cb = None
+
+    def disconnect(self):
+        self._update_finished_cb = None
+        self._write_finished_cb = None
+
 
 class I2CElement(MemoryElement):
     def __init__(self, id, type, size, mem_handler):
@@ -371,7 +433,7 @@ class _ReadRequest:
 
 class _WriteRequest:
     """Class used to handle memory reads that will split up the read in multiple packets in necessary"""
-    MAX_DATA_LENGTH = 20
+    MAX_DATA_LENGTH = 25
 
     def __init__(self, mem, addr, data, cf):
         """Initialize the object with good defaults"""
@@ -395,7 +457,7 @@ class _WriteRequest:
 
     def resend(self):
         logger.info("Sending write again...")
-        self.cf.send_packet(self._sent_packet, expected_reply=self._sent_reply, timeout=3)
+        self.cf.send_packet(self._sent_packet)
 
     def _write_new_chunk(self):
         """Called to request a new chunk of data to be read from the Crazyflie"""
@@ -418,7 +480,7 @@ class _WriteRequest:
         # Add the data
         pk.data += struct.pack("B"*len(data), *data)
         self._sent_packet = pk
-        self.cf.send_packet(pk, expected_reply=reply, timeout=3)
+        self.cf.send_packet(pk)
 
         self._addr_add = len(data)
 
@@ -513,9 +575,9 @@ class Memory():
 
     def write(self, memory, addr, data):
         """Write the specified data to the given memory at the given address"""
-        if memory.id in self._write_requests:
-            logger.warning("There is already a write operation ongoing for memory id {}".format(memory.id))
-            return False
+        #if memory.id in self._write_requests:
+        #    logger.warning("There is already a write operation ongoing for memory id {}".format(memory.id))
+        #    return False
 
         wreq = _WriteRequest(memory, addr, data, self.cf)
         self._write_requests[memory.id] = wreq
@@ -612,12 +674,20 @@ class Memory():
 
                 if (not self.get_mem(mem_id)):
                     if mem_type == MemoryElement.TYPE_1W:
-                        mem = OWElement(id=mem_id, type=mem_type, size=mem_size, addr=mem_addr, mem_handler=self)
+                        mem = OWElement(id=mem_id, type=mem_type, size=mem_size,
+                                        addr=mem_addr, mem_handler=self)
                         self.mem_read_cb.add_callback(mem.new_data)
                         self.mem_write_cb.add_callback(mem.write_done)
                         self._ow_mems_left_to_update.append(mem.id)
                     elif mem_type == MemoryElement.TYPE_I2C:
-                        mem = I2CElement(id=mem_id, type=mem_type, size=mem_size, mem_handler=self)
+                        mem = I2CElement(id=mem_id, type=mem_type, size=mem_size,
+                                         mem_handler=self)
+                        #logger.info(mem)
+                        self.mem_read_cb.add_callback(mem.new_data)
+                        self.mem_write_cb.add_callback(mem.write_done)
+                    elif mem_type == MemoryElement.TYPE_DRIVER_LED:
+                        mem = LEDDriverMemory(id=mem_id, type=mem_type,
+                                              size=mem_size, mem_handler=self)
                         logger.info(mem)
                         self.mem_read_cb.add_callback(mem.new_data)
                         self.mem_write_cb.add_callback(mem.write_done)
@@ -659,6 +729,7 @@ class Memory():
                         self._write_requests.pop(id, None)
                         self.mem_write_cb.call(wreq.mem, wreq.addr)
                 else:
+                    logger.info("Status {}: write resending...".format(status))
                     wreq.resend()
 
         if chan == CHAN_READ:
@@ -675,4 +746,5 @@ class Memory():
                         self._read_requests.pop(id, None)
                         self.mem_read_cb.call(rreq.mem, rreq.addr, rreq.data)
                 else:
+                    logger.info("Status {}: resending...".format(status))
                     rreq.resend()

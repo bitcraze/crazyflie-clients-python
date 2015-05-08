@@ -49,6 +49,8 @@ from cflib.crazyflie import Crazyflie
 from dialogs.logconfigdialogue import LogConfigDialogue
 
 from cfclient.utils.input import JoystickReader
+from cfclient.utils.zmq_param import ZMQParamAccess
+from cfclient.utils.zmq_led_driver import ZMQLEDDriver
 from cfclient.utils.config import Config
 from cfclient.utils.logconfigreader import LogConfigReader
 from cfclient.utils.config_manager import ConfigManager
@@ -140,6 +142,12 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         cflib.crtp.init_drivers(enable_debug_driver=Config()
                                                 .get("enable_debug_driver"))
+
+        zmq_params = ZMQParamAccess(self.cf)
+        zmq_params.start()
+
+        zmq_leds = ZMQLEDDriver(self.cf)
+        zmq_leds.start()
 
         # Create the connection dialogue
         self.connectDialogue = ConnectDialogue()
@@ -396,6 +404,20 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             lg.start()
         except KeyError as e:
             logger.warning(str(e))
+
+        mem = self.cf.mem.get_mems(MemoryElement.TYPE_DRIVER_LED)[0]
+        mem.write_data(self._led_write_done)
+
+        #self._led_write_test = 0
+
+        #mem.leds[self._led_write_test] = [10, 20, 30]
+        #mem.write_data(self._led_write_done)
+
+    def _led_write_done(self, mem, addr):
+        logger.info("LED write done callback")
+        #self._led_write_test += 1
+        #mem.leds[self._led_write_test] = [10, 20, 30]
+        #mem.write_data(self._led_write_done)
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error", "Error when starting log config"
