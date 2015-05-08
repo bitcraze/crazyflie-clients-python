@@ -283,6 +283,7 @@ class Crazyflie():
                             logger.debug("Found new longest match %s", match)
                             longest_match = match
         if len(longest_match) > 0:
+            self._answer_patterns[longest_match].cancel()
             del self._answer_patterns[longest_match]
 
     def send_packet(self, pk, expected_reply=(), resend=False, timeout=0.2):
@@ -295,14 +296,12 @@ class Crazyflie():
 
         """
         self._send_lock.acquire()
-        if (self.link is not None):
-            self.link.send_packet(pk)
-            self.packet_sent.call(pk)
+        if self.link is not None:
             if len(expected_reply) > 0 and not resend:
                 pattern = (pk.header,) + expected_reply
                 logger.debug("Sending packet and expecting the %s pattern back",
                              pattern)
-                new_timer = Timer(0.2,
+                new_timer = Timer(timeout,
                                   lambda: self._no_answer_do_retry(pk, pattern))
                 self._answer_patterns[pattern] = new_timer
                 new_timer.start()
@@ -312,7 +311,7 @@ class Crazyflie():
                 if pattern in self._answer_patterns:
                     logger.debug("We want to resend and the pattern is there")
                     if self._answer_patterns[pattern]:
-                        new_timer = Timer(0.2,
+                        new_timer = Timer(timeout,
                                           lambda:
                                           self._no_answer_do_retry(
                                               pk, pattern))
@@ -321,6 +320,8 @@ class Crazyflie():
                 else:
                     logger.debug("Resend requested, but no pattern found: %s",
                                  self._answer_patterns)
+            self.link.send_packet(pk)
+            self.packet_sent.call(pk)
         self._send_lock.release()
 
 class _IncomingPacketHandler(Thread):
