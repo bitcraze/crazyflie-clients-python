@@ -65,8 +65,7 @@ class Commander():
         be sent to the copter
         """
         if self._x_mode:
-            roll = 0.707 * (roll - pitch)
-            pitch = 0.707 * (roll + pitch)
+            roll, pitch = 0.707 * (roll - pitch), 0.707 * (roll + pitch)
 
         pk = CRTPPacket()
         pk.port = CRTPPort.COMMANDER
