@@ -99,7 +99,10 @@ class VisionMux(InputMux):
             else:
                 thrust *= 65300
 
-            yaw = self._scale_and_deadband_yaw(data["yaw"])
+            if use_master:
+                yaw = self._scale_and_deadband_yaw(data["yaw"])
+            else:
+                yaw = data["yaw"]
 
             return [roll, pitch, yaw, thrust]
 

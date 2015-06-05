@@ -63,6 +63,7 @@ from cflib.utils.callbacks import Caller
 import cfclient.utils.mux
 from cfclient.utils.mux import InputMux
 from cfclient.utils.mux.nomux import NoMux
+from cfclient.utils.mux.visionmux import VisionMux
 from cfclient.utils.mux.selectivemux import SelectiveMux
 from cfclient.utils.mux.takeovermux import TakeOverMux
 from cfclient.utils.mux.mixmux import MixMux
@@ -100,7 +101,7 @@ class JoystickReader:
         self._input_map = None
 
         self._mux = [NoMux(self), SelectiveMux(self), TakeOverMux(self),
-                     MixMux(self), TakeOverSelectiveMux(self)]
+                     MixMux(self), TakeOverSelectiveMux(self), VisionMux(self)]
         # Set NoMux as default
         self._selected_mux = self._mux[0]
 
