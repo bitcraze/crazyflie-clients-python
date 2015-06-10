@@ -90,27 +90,37 @@ class MemoryElement(object):
         return ("Memory: id={}, type={}, size={}".format(
                 self.id, MemoryElement.type_to_string(self.type), self.size))
 
+
+class LED:
+    """Used to set color/intensity of one LED in the LED-ring"""
+    def __init__(self):
+        """Initialize to off"""
+        self.r = 0
+        self.g = 0
+        self.b = 0
+        self.intensity = 100
+
+    def set(self, r, g, b, intensity=None):
+        """Set the R/G/B and optionally intensity in one call"""
+        self.r = r
+        self.g = g
+        self.b = b
+        if intensity:
+            self.intensity = intensity
+
 class LEDDriverMemory(MemoryElement):
+    """Memory interface for using the LED-ring mapped memory for setting RGB
+       values for all the LEDs in the ring"""
     def __init__(self, id, type, size, mem_handler):
+        """Initialize with 12 LEDs"""
         super(LEDDriverMemory, self).__init__(id=id, type=type, size=size,
                                               mem_handler=mem_handler)
         self._update_finished_cb = None
         self._write_finished_cb = None
 
-        self.leds = [
-            [128, 0, 0],
-            [0, 128, 0],
-            [0, 0, 128],
-            [128, 128, 128],
-            [128, 128, 128],
-            [128, 128, 128],
-            [128, 128, 128],
-            [128, 128, 128],
-            [128, 128, 128],
-            [128, 128, 128],
-            [128, 128, 128],
-            [128, 128, 128]
-        ]
+        self.leds = []
+        for i in range(12):
+            self.leds.append(LED())
 
     def new_data(self, mem, addr, data):
         """Callback for when new memory data has been fetched"""
@@ -118,15 +128,20 @@ class LEDDriverMemory(MemoryElement):
             logger.info("Got new data from the LED driver, but we don't care.")
 
     def write_data(self, write_finished_cb):
+        """Write the saved LED-ring data to the Crazyflie"""
         self._write_finished_cb = write_finished_cb
         data = ()
         for led in self.leds:
-            R5 = (( (int(led[0]) & 0xFF) * 249 + 1014 )) & 0xF800
-            G6 = (( (int(led[1]) & 0xFF) * 253 +  505 ) >> 5) & 0x7E0
-            B5 = (( (int(led[2]) & 0xFF) * 249 + 1014 ) >> 11) & 0x1F
-            tmp = R5 | G6 | B5
+            # In order to fit all the LEDs in one radio packet RGB565 is used
+            # to compress the colors. The calculations below converts 3 bytes
+            # RGB into 2 bytes RGB565. Then shifts the value of each color to
+            # LSB, applies the intensity  and shifts them back for correct
+            # alignment on 2 bytes.
+            R5 = (int)((((int(led.r) & 0xFF) * 249 + 1014) >> 11) & 0x1F) * led.intensity/100
+            G6 = (int)((((int(led.g) & 0xFF) * 253 + 505) >> 10) & 0x3F) * led.intensity/100
+            B5 = (int)((((int(led.b) & 0xFF) * 249 + 1014) >> 11) & 0x1F) * led.intensity/100
+            tmp = (R5 << 11) | (G6 << 5) | (B5 << 0)
             data += (tmp >> 8, tmp & 0xFF)
-        #logger.info(data)
         self.mem_handler.write(self, 0x00, data)
 
     def update(self, update_finished_cb):

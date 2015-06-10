@@ -27,7 +27,7 @@
 #  USA.
 
 """
-Give access to the parameter framework via ZMQ.
+Give access to the LED driver memory via ZMQ.
 """
 
 import cflib
@@ -44,12 +44,13 @@ try:
     import zmq
     enabled = True
 except Exception as e:
-    logger.warning("Not enabling ZMQ LED driver access, import failed ({})".format(e))
-
+    logger.warning("Not enabling ZMQ LED driver access,"
+                   "import failed ({})".format(e))
 
 class _PullReader(Thread):
-
+    """Blocking thread for reading from ZMQ socket"""
     def __init__(self, receiver, callback, *args):
+        """Initialize"""
         super(_PullReader, self).__init__(*args)
         self._receiver = receiver
         self._cb = callback
@@ -74,20 +75,24 @@ class ZMQLEDDriver:
             # If the port is already bound an exception will be thrown
             # and caught in the initialization of the readers and handled.
             self._receiver.bind(self._bind_addr)
-            logger.info("Biding ZMQ for LED driver at {}".format(self._bind_addr))
-            self._receiver_thread = _PullReader(self._receiver, self._cmd_callback)
+            logger.info("Biding ZMQ for LED driver"
+                        "at {}".format(self._bind_addr))
+            self._receiver_thread = _PullReader(self._receiver,
+                                                self._cmd_callback)
 
     def start(self):
         if enabled:
             self._receiver_thread.start()
 
     def _cmd_callback(self, data):
+        """Called when new data arrives via ZMQ"""
         if len(self._cf.mem.get_mems(MemoryElement.TYPE_DRIVER_LED)) > 0:
             logger.info("Updating memory")
             memory = self._cf.mem.get_mems(MemoryElement.TYPE_DRIVER_LED)[0]
             for i_led in range(len(data["rgbleds"])):
-                memory.leds[i_led] = data["rgbleds"][i_led]
-            #logger.info(memory.leds)
+                memory.leds[i_led].set(data["rgbleds"][i_led][0],
+                                       data["rgbleds"][i_led][1],
+                                       data["rgbleds"][i_led][2])
             memory.write_data(self._write_cb)
 
     def _write_cb(self, mem, addr):
