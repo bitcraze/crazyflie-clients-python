@@ -36,6 +36,8 @@ __all__ = ['Memory', 'MemoryElement']
 
 import struct
 import errno
+from Queue import Queue
+from threading import Lock
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from cflib.utils.callbacks import Caller
 from binascii import crc32
@@ -142,7 +144,7 @@ class LEDDriverMemory(MemoryElement):
             B5 = (int)((((int(led.b) & 0xFF) * 249 + 1014) >> 11) & 0x1F) * led.intensity/100
             tmp = (R5 << 11) | (G6 << 5) | (B5 << 0)
             data += (tmp >> 8, tmp & 0xFF)
-        self.mem_handler.write(self, 0x00, data)
+        self.mem_handler.write(self, 0x00, data, flush_queue=True)
 
     def update(self, update_finished_cb):
         """Request an update of the memory content"""
@@ -472,7 +474,7 @@ class _WriteRequest:
 
     def resend(self):
         logger.info("Sending write again...")
-        self.cf.send_packet(self._sent_packet)
+        self.cf.send_packet(self._sent_packet, expected_reply=self._sent_reply, timeout=1)
 
     def _write_new_chunk(self):
         """Called to request a new chunk of data to be read from the Crazyflie"""
@@ -495,7 +497,7 @@ class _WriteRequest:
         # Add the data
         pk.data += struct.pack("B"*len(data), *data)
         self._sent_packet = pk
-        self.cf.send_packet(pk)
+        self.cf.send_packet(pk, expected_reply=reply, timeout=1)
 
         self._addr_add = len(data)
 
@@ -546,7 +548,9 @@ class Memory():
         self._ow_mem_fetch_index = 0
         self._elem_data = ()
         self._read_requests = {}
+        self._read_requests_lock = Lock()
         self._write_requests = {}
+        self._write_requests_lock = Lock()
         self._ow_mems_left_to_update = []
 
         self._getting_count = False
@@ -588,16 +592,21 @@ class Memory():
 
         return None
 
-    def write(self, memory, addr, data):
+    def write(self, memory, addr, data, flush_queue=False):
         """Write the specified data to the given memory at the given address"""
-        #if memory.id in self._write_requests:
-        #    logger.warning("There is already a write operation ongoing for memory id {}".format(memory.id))
-        #    return False
-
         wreq = _WriteRequest(memory, addr, data, self.cf)
-        self._write_requests[memory.id] = wreq
+        if not memory.id in self._write_requests:
+            self._write_requests[memory.id] = []
 
-        wreq.start()
+        # Workaround until we secure the uplink and change messages for
+        # mems to non-blocking
+        self._write_requests_lock.acquire()
+        if flush_queue:
+            self._write_requests[memory.id] = self._write_requests[memory.id][:1]
+        self._write_requests[memory.id].insert(len(self._write_requests), wreq)
+        if len(self._write_requests[memory.id]) == 1:
+            wreq.start()
+        self._write_requests_lock.release()
 
         return True
 
@@ -697,7 +706,6 @@ class Memory():
                     elif mem_type == MemoryElement.TYPE_I2C:
                         mem = I2CElement(id=mem_id, type=mem_type, size=mem_size,
                                          mem_handler=self)
-                        #logger.info(mem)
                         self.mem_read_cb.add_callback(mem.new_data)
                         self.mem_write_cb.add_callback(mem.write_done)
                     elif mem_type == MemoryElement.TYPE_DRIVER_LED:
@@ -738,14 +746,23 @@ class Memory():
             logger.info("WRITE: Mem={}, addr=0x{:X}, status=0x{}".format(id, addr, status))
             # Find the read request
             if id in self._write_requests:
-                wreq = self._write_requests[id]
+                self._write_requests_lock.acquire()
+                wreq = self._write_requests[id][0]
                 if status == 0:
                     if wreq.write_done(addr):
-                        self._write_requests.pop(id, None)
+                        #self._write_requests.pop(id, None)
+                        # Remove the first item
+                        self._write_requests[id].pop(0)
                         self.mem_write_cb.call(wreq.mem, wreq.addr)
+
+                        # Get a new one to start (if there are any)
+                        if len(self._write_requests[id]) > 0:
+                            self._write_requests[id][0].start()
+
                 else:
                     logger.info("Status {}: write resending...".format(status))
                     wreq.resend()
+                self._write_requests_lock.release()
 
         if chan == CHAN_READ:
             id = cmd
