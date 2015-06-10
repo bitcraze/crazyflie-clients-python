@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2014 Bitcraze AB
+#  Copyright (C) 2015 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -26,16 +26,14 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #  02110-1301, USA.
 """
-
+Input mux used to mix manual control with automatic control from a vision
+system.
 """
 
 __author__ = 'Bitcraze AB'
 __all__ = ['VisionMux']
 
-import os
-import glob
 import logging
-
 from . import InputMux
 
 logger = logging.getLogger(__name__)
@@ -53,9 +51,6 @@ class VisionMux(InputMux):
         else:
             parameters = ("roll", "pitch", "yaw", "thrust")
         self._devs.append((dev, parameters))
-        #logger.info("First has mapping {}".format(self._devs[0][0].input_map["Input.AXIS-3"]["key"]))
-        #if len(self._devs) > 1:
-        #    logger.info("Second has mapping {}".format(self._devs[1][0].input_map["Input.AXIS-3"]["key"]))
 
     def get_supported_dev_count(self):
         return 2
@@ -87,12 +82,8 @@ class VisionMux(InputMux):
             [roll, pitch] = self._scale_rp(data["roll"], data["pitch"])
             [roll, pitch] = self._trim_rp(roll, pitch)
             enable_alt_hold = False
-            #if data["alt1"] == False:
-            #    enable_alt_hold = True
-            #self._update_alt_hold(enable_alt_hold)
             self._update_em_stop(data["estop"])
             self._update_alt1(data["alt2"])
-            #self._update_alt2(data["alt2"])
             thrust = data["thrust"]
             if enable_alt_hold:
                 thrust = int(round(thrust*32767 + 32767))
