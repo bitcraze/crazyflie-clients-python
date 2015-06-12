@@ -29,6 +29,6 @@ Out goal is to comply with PEP-8, but there's lots of code that's not up to stan
  - Don't include name, date or information about the change in the code. That's what Git is for.
  - CamelCase classes, but not functions and variables
  - Private variables and functions should start with _
- - 4 spaces intendation
+ - 4 spaces indentation
  - When catching exceptions try to make it as specific as possible, it makes it harder for bugs to hide
  - Short variable and function names are ok if the scope is small

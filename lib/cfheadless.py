@@ -110,7 +110,7 @@ class HeadlessClient():
         self._jr.input_updated.add_callback(self._cf.commander.send_setpoint)
 
     def _connected(self, link):
-        """Callback for a successsful Crazyflie connection."""
+        """Callback for a successful Crazyflie connection."""
         # 2014-11-25 chad: When we are connected to the Crazyflie, request a
         # parameter update for the following parameters...
         param_list = ["imu_sensors.HMC5883L"]

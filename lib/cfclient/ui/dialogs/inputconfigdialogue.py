@@ -26,7 +26,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-Dialogue used to select and configure an inputdevice. This includes mapping buttuns and
+Dialogue used to select and configure an inputdevice. This includes mapping buttons and
 axis to match controls for the Crazyflie.
 """
 
@@ -94,7 +94,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.detectAlt2.clicked.connect(lambda : self._button_detect("alt2", "Alternative function 2",
                                                        "The alternative function 2 that will do a callback"))
         self.detectExitapp.clicked.connect(lambda : self._button_detect("exitapp", "Exit application",
-                                                    "Press the button for the exiting the application"))
+                                                    "Press the button for exiting the application"))
         self.detectAltHold.clicked.connect(lambda : self._button_detect("althold", "Altitude hold",
                                                     "Press the button for altitude hold mode activation (releasing returns to manual mode)"))        
 

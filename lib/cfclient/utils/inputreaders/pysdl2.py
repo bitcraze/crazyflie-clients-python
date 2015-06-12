@@ -112,7 +112,7 @@ class PySDL2Reader():
         self.name = MODULE_NAME
 
     def open(self, device_id):
-        """Initalize the reading and open the device with deviceId and set the mapping for axis/buttons using the
+        """Initialize the reading and open the device with deviceId and set the mapping for axis/buttons using the
         inputMap"""
         self._js[device_id].open()
 

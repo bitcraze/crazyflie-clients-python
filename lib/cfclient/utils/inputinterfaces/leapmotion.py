@@ -121,7 +121,7 @@ class LeapmotionReader:
         logger.info("Initialized Leap")
 
     def open(self, deviceId):
-        """Initalize the reading and open the device with deviceId and set the mapping for axis/buttons using the
+        """Initialize the reading and open the device with deviceId and set the mapping for axis/buttons using the
         inputMap"""
         return
 

@@ -27,7 +27,7 @@
 #  MA  02110-1301, USA.
 
 """
-Enableds reading/writing of parameter values to/from the Crazyflie.
+Enables reading/writing of parameter values to/from the Crazyflie.
 
 When a Crazyflie is connected it's possible to download a TableOfContent of all
 the parameters that can be written/read.

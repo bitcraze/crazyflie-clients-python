@@ -226,12 +226,12 @@ class Crazyradio:
 
 
     def scan_channels(self, start, stop, packet):
-        if self._has_fw_scan():  # Fast firmware-driven scann
+        if self._has_fw_scan():  # Fast firmware-driven scan
             _send_vendor_setup(self.handle, SCANN_CHANNELS, start, stop,
                                packet)
             return tuple(_get_vendor_setup(self.handle, SCANN_CHANNELS,
                                            0, 0, 64))
-        else:  # Slow PC-driven scann
+        else:  # Slow PC-driven scan
             result = tuple()
             for i in range(start, stop + 1):
                 self.set_channel(i)
