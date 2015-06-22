@@ -26,7 +26,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-The flight control tab shows telimitry data and flight settings.
+The flight control tab shows telemetry data and flight settings.
 """
 
 __author__ = 'Bitcraze AB'
@@ -281,7 +281,7 @@ class FlightTab(Tab, flight_tab_class):
 
     def connected(self, linkURI):
         # IMU & THRUST
-        lg = LogConfig("Stabalizer", Config().get("ui_update_period"))
+        lg = LogConfig("Stabilizer", Config().get("ui_update_period"))
         lg.add_variable("stabilizer.roll", "float")
         lg.add_variable("stabilizer.pitch", "float")
         lg.add_variable("stabilizer.yaw", "float")

@@ -26,7 +26,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-Showns the Log TOC of available variables in the Crazyflie.
+Shows the Log TOC of available variables in the Crazyflie.
 """
 
 __author__ = 'Bitcraze AB'

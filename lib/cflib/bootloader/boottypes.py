@@ -84,6 +84,6 @@ class Target:
         ret += "Flash pages: %d | Page size: %d | Buffer pages: %d |"\
                " Start page: %d\n" % (self.flash_pages, self.page_size,
                                self.buffer_pages, self.start_page)
-        ret += "%d KBytes of flash avaliable for firmware image." % (
+        ret += "%d KBytes of flash available for firmware image." % (
                             (self.flash_pages - self.start_page) * self.page_size / 1024)
         return ret

@@ -139,11 +139,9 @@ class Crazyflie():
             lambda uri, errmsg: logger.info("Callback->Connected failed to"
                                             " [%s]: %s", uri, errmsg))
         self.connection_requested.add_callback(
-            lambda uri: logger.info("Callback->Connection initialized[%s]",
-                                    uri))
+            lambda uri: logger.info("Callback->Connection initialized[%s]", uri))
         self.connected.add_callback(
-            lambda uri: logger.info("Callback->Connection setup finished [%s]",
-                                    uri))
+            lambda uri: logger.info("Callback->Connection setup finished [%s]", uri))
 
     def _disconnected(self, link_uri):
         """ Callback when disconnected."""
@@ -164,7 +162,7 @@ class Crazyflie():
         self.param.request_update_of_all_params()
 
     def _mems_updated_cb(self):
-        """Called when the memroies has been identified"""
+        """Called when the memories have been identified"""
         logger.info("Memories finished updating")
         self.param.refresh_toc(self._param_toc_updated_cb, self._toc_cache)
 
@@ -222,7 +220,7 @@ class Crazyflie():
                 logger.warning(message)
                 self.connection_failed.call(link_uri, message)
             else:
-                # Add a callback so we can check that any data is comming
+                # Add a callback so we can check that any data is coming
                 # back from the copter
                 self.packet_received.add_callback(self._check_for_initial_packet_cb)
 

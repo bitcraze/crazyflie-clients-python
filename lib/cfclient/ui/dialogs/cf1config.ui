@@ -100,13 +100,13 @@
           <bool>true</bool>
          </property>
          <property name="title">
-          <string>Configutation block</string>
+          <string>Configuration block</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_2">
           <item row="6" column="0">
            <widget class="QLabel" name="label_9">
             <property name="text">
-             <string>Radio bandwith:</string>
+             <string>Radio bandwidth:</string>
             </property>
            </widget>
           </item>

@@ -94,7 +94,7 @@ CREDITS_FORMAT = U"""
 # This is temporary and will be fixed during the next release. It should
 # be picked up from the CREDITS.txt file
 CREDITS_NAMES = U"""
-We are very greatful for all the contributions we have received for this project
+We are very grateful for all the contributions we have received for this project
 and below is a list of users that have contributed to the crazyflie-pc-client.
 Thanks! <br><br>
 
@@ -218,7 +218,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
             self._fw_modified = eval(value)
 
     def _imu_sensors_update(self, name, value):
-        """Callback for sensor found paramters"""
+        """Callback for sensor found parameters"""
         param = name[name.index('.') + 1:]
         if not param in self._imu_sensors_text:
             self._imu_sensors_text += IMU_SENSORS_FORMAT.format(param,

@@ -29,7 +29,7 @@
 """
 Exception used when the URI is not for the current driver
 (ie. radio:// for the serial driver ...)
-It basically means that an oser driver could do the job
+It basically means that an other driver could do the job
 It does NOT means that the URI is good or bad
 """
 
