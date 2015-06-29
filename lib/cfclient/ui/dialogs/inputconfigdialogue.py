@@ -78,7 +78,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.detectYaw.clicked.connect(lambda : self._axis_detect("yaw", "Yaw axis",
                                                 "Center the yaw axis and then do max %s yaw", ["right", "left"]))
         self.detectThrust.clicked.connect(lambda : self._axis_detect("thrust", "Thrust axis",
-                                                   "Center the thrust axis do max thrust (also used to adjust target altitude in altitude hold mode)"))
+                                                   "Center the thrust axis, and then do max thrust (also used to adjust target altitude in altitude hold mode)"))
         self.detectPitchPos.clicked.connect(lambda : self._button_detect("pitchPos", "Pitch Cal Positive",
                                                   "Press the button for Pitch postive calibration"))
         self.detectPitchNeg.clicked.connect(lambda : self._button_detect("pitchNeg", "Pitch Cal Negative",
