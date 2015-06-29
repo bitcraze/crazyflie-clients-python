@@ -73,7 +73,7 @@ class RadioDriver(CRTPDriver):
 
         The callback for linkQuality can be called at any moment from the
         driver to report back the link quality in percentage. The
-        callback from linkError will be called when a error occues with
+        callback from linkError will be called when a error occurs with
         an error message.
         """
 

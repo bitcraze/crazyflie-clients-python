@@ -60,7 +60,7 @@ class InputReaderInterface(object):
                      "pitchPos": False, "rollPos": False}
 
     def open(self, device_id):
-        """Initalize the reading and open the device with deviceId and set the mapping for axis/buttons using the
+        """Initialize the reading and open the device with deviceId and set the mapping for axis/buttons using the
         inputMap"""
         return
 

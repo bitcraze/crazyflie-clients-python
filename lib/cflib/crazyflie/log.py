@@ -330,8 +330,7 @@ class LogTocElement:
         try:
             return LogTocElement.types[ident][1]
         except KeyError:
-            raise KeyError("Type [%d] not found in LogTocElement.types"
-                           "!" % ident)
+            raise KeyError("Type [%d] not found in LogTocElement.types!" % ident)
 
     def __init__(self, data=None):
         """TocElement creator. Data is the binary payload of the element."""
@@ -354,7 +353,7 @@ class Log():
     """Create log configuration"""
 
     # These codes can be decoded using os.stderror, but
-    # some of the text messages will look very stange
+    # some of the text messages will look very strange
     # in the UI, so they are redefined here
     _err_codes = {
             errno.ENOMEM: "No more memory available",
@@ -401,8 +400,7 @@ class Log():
         for name in logconf.default_fetch_as:
             var = self.toc.get_element_by_complete_name(name)
             if not var:
-                logger.warning("%s not in TOC, this block cannot be"
-                               " used!", name)
+                logger.warning("%s not in TOC, this block cannot be used!", name)
                 logconf.valid = False
                 raise KeyError("Variable {} not in TOC".format(name))
             # Now that we know what type this variable has, add it to the log
@@ -418,8 +416,7 @@ class Log():
             # Check that we are able to find the variable in the TOC so
             # we can return error already now and not when the config is sent
             if var.is_toc_variable():
-                if (self.toc.get_element_by_complete_name(
-                        var.name) is None):
+                if (self.toc.get_element_by_complete_name(var.name) is None):
                     logger.warning("Log: %s not in TOC, this block cannot be"
                                    " used!", var.name)
                     logconf.valid = False
@@ -467,19 +464,16 @@ class Log():
                 if (block is not None):
                     if error_status == 0 or error_status == errno.EEXIST:
                         if not block.added:
-                            logger.debug("Have successfully added id=%d",
-                                         id)
+                            logger.debug("Have successfully added id=%d", id)
 
                             pk = CRTPPacket()
                             pk.set_header(5, CHAN_SETTINGS)
-                            pk.data = (CMD_START_LOGGING, id,
-                                       block.period)
+                            pk.data = (CMD_START_LOGGING, id, block.period)
                             self.cf.send_packet(pk, expected_reply=(CMD_START_LOGGING, id))
                             block.added = True
                     else:
                         msg = self._err_codes[error_status]
-                        logger.warning("Error %d when adding id=%d (%s)"
-                                       , error_status, id, msg)
+                        logger.warning("Error %d when adding id=%d (%s)", error_status, id, msg)
                         block.err_no = error_status
                         block.added_cb.call(False)
                         block.error_cb.call(block, msg)
@@ -488,15 +482,13 @@ class Log():
                     logger.warning("No LogEntry to assign block to !!!")
             if (cmd == CMD_START_LOGGING):
                 if (error_status == 0x00):
-                    logger.info("Have successfully started logging for id=%d",
-                                id)
+                    logger.info("Have successfully started logging for id=%d", id)
                     if block:
                         block.started = True
 
                 else:
                     msg = self._err_codes[error_status]
-                    logger.warning("Error %d when starting id=%d (%s)"
-                                   , error_status, id, msg)
+                    logger.warning("Error %d when starting id=%d (%s)", error_status, id, msg)
                     if block:
                         block.err_no = error_status
                         block.started_cb.call(False)
@@ -508,8 +500,7 @@ class Log():
 
             if (cmd == CMD_STOP_LOGGING):
                 if (error_status == 0x00):
-                    logger.info("Have successfully stopped logging for id=%d",
-                                id)
+                    logger.info("Have successfully stopped logging for id=%d", id)
                     if block:
                         block.started = False
 
@@ -517,8 +508,7 @@ class Log():
                 # Accept deletion of a block that isn't added. This could
                 # happen due to timing (i.e add/start/delete in fast sequence)
                 if error_status == 0x00 or error_status == errno.ENOENT:
-                    logger.info("Have successfully deleted id=%d",
-                                id)
+                    logger.info("Have successfully deleted id=%d", id)
                     if block:
                         block.started = False
                         block.added = False

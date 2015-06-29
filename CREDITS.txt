@@ -1,4 +1,4 @@
-We are very greatful for all the contributions we have received for this project
+We are very grateful for all the contributions we have received for this project
 and below is a list of users that have contributed to the crazyflie-pc-client.
 Thanks!
 

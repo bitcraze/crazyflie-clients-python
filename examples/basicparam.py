@@ -146,7 +146,7 @@ class ParamExample:
 
     def _connection_failed(self, link_uri, msg):
         """Callback when connection initial connection fails (i.e no Crazyflie
-        at the speficied address)"""
+        at the specified address)"""
         print "Connection to %s failed: %s" % (link_uri, msg)
         self.is_connected = False
 

@@ -50,8 +50,8 @@ from .boottypes import TargetTypes, Target
 class Cloader:
     """Bootloader utility for the Crazyflie"""
     def __init__(self, link, info_cb=None, in_boot_cb=None):
-        """Init the communication class by starting to comunicate with the
-        link given. clink is the link address used after reseting to the
+        """Init the communication class by starting to communicate with the
+        link given. clink is the link address used after resetting to the
         bootloader.
 
         The device is actually considered in firmware mode.
@@ -137,7 +137,7 @@ class Cloader:
         bootloader is established.
         """
         #Send an echo request and wait for the answer
-        #Mainly aim to bypass a bug of the crazyflie firmware that prevent
+        #Mainly aim to bypass a bug of the crazyflie firmware that prevents
         #reset before normal CRTP communication
         pk = CRTPPacket()
         pk.port = CRTPPort.LINKCTRL
@@ -206,7 +206,7 @@ class Cloader:
             if (pk.header == 0xFF and
                 struct.unpack("B" * len(pk.data),
                               pk.data)[:2] == (target_id, 0xFF)):
-                # Differance in CF1 and CF2 (CPU ID)
+                # Difference in CF1 and CF2 (CPU ID)
                 if target_id == 0xFE:
                     pk.data = (target_id, 0xF0, 0x01)
                 else:
@@ -226,7 +226,7 @@ class Cloader:
 
     def check_link_and_get_info(self, target_id=0xFF):
         """Try to get a connection with the bootloader by requesting info
-        5 times. This let rougly 10 seconds to boot the copter ..."""
+        5 times. This let roughly 10 seconds to boot the copter ..."""
         for _ in range(0, 5):
             if self._update_info(target_id):
                 if self._in_boot_cb:
@@ -242,7 +242,7 @@ class Cloader:
 
     def _set_address(self, new_address):
         """ Change copter radio address.
-            This function workd only with crazyradio crtp link.
+            This function works only with crazyradio CRTP link.
         """
 
         logging.debug("Setting bootloader radio address to"
@@ -386,7 +386,7 @@ class Cloader:
         return buff[0:page_size]  # For some reason we get one byte extra here...
 
     def write_flash(self, addr, page_buffer, target_page, page_count):
-        """Initate flashing of data in the buffer to flash."""
+        """Initiate flashing of data in the buffer to flash."""
         #print "Write page", flashPage
         #print "Writing page [%d] and [%d] forward" % (flashPage, nPage)
         pk = None

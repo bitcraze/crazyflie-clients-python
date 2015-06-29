@@ -74,7 +74,7 @@ MAX_THRUST = 65000
 class JoystickReader:
     """
     Thread that will read input from devices/joysticks and send control-set
-    ponts to the Crazyflie
+    points to the Crazyflie
     """
     inputConfig = []
 

@@ -519,7 +519,7 @@ class Memory():
     """Access memories on the Crazyflie"""
 
     # These codes can be decoded using os.stderror, but
-    # some of the text messages will look very stange
+    # some of the text messages will look very strange
     # in the UI, so they are redefined here
     _err_codes = {
             errno.ENOMEM: "No more memory available",

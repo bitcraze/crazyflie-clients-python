@@ -2,7 +2,7 @@
 <package>
   <!-- Changed the name to cfclient to avoid '_', as, when installed,
        python converts them to '-' which are not allowed in catkin pkgs.
-       This prevents get_distribution from working, and retriving version
+       This prevents get_distribution from working, and retrieving version
        as specified in setup.py -->
   <name>cfclient</name>
   <version>2014.04.9001</version>

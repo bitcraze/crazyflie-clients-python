@@ -23,7 +23,7 @@ class _Reader(object):
         """List all the available connections"""
         raise NotImplemented()
     def open(self, device_id):
-        """Initalize the reading and open the device with deviceId and set the mapping for axis/buttons using the
+        """Initialize the reading and open the device with deviceId and set the mapping for axis/buttons using the
         inputMap"""
         return
     def close(self, device_id):

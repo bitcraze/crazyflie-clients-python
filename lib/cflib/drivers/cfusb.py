@@ -137,7 +137,7 @@ class CfUsb:
         else:
             _send_vendor_setup(self.handle, 0x01, 0x01, 0, ())
 
-    ### Data transferts ###
+    ### Data transfers ###
     def send_packet(self, dataOut):
         """ Send a packet and receive the ack from the radio dongle
             The ack contains information about the packet transmition
