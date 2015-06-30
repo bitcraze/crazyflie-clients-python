@@ -50,8 +50,8 @@ import traceback
 import logging
 import shutil
 
-import cfclient.utils.inputreaders as readers
-import cfclient.utils.inputinterfaces as interfaces
+import inputreaders as readers
+import inputinterfaces as interfaces
 
 logger = logging.getLogger(__name__)
 
@@ -60,16 +60,60 @@ from cfclient.utils.config_manager import ConfigManager
 
 from cfclient.utils.periodictimer import PeriodicTimer
 from cflib.utils.callbacks import Caller
-import cfclient.utils.mux
-from cfclient.utils.mux import InputMux
-from cfclient.utils.mux.nomux import NoMux
-from cfclient.utils.mux.visionmux import VisionMux
-from cfclient.utils.mux.selectivemux import SelectiveMux
-from cfclient.utils.mux.takeovermux import TakeOverMux
-from cfclient.utils.mux.mixmux import MixMux
-from cfclient.utils.mux.takeoverselectivemux import TakeOverSelectiveMux
+import mux
+from .mux import InputMux
+from .mux.nomux import NoMux
+from .mux.visionmux import VisionMux
+from .mux.selectivemux import SelectiveMux
+from .mux.takeovermux import TakeOverMux
+from .mux.mixmux import MixMux
+from .mux.takeoverselectivemux import TakeOverSelectiveMux
 
 MAX_THRUST = 65000
+
+class InputReaderInterface(object):
+
+    def __init__(self, dev_name, dev_id, dev_reader):
+        """Initialize the reader"""
+        # Set if the device supports mapping and can be configured
+        self.supports_mapping = True
+
+        # Set if the MUX should automatically limit roll/pitch/thrust/yaw
+        # according to the settings in the UI
+        self.limit_rp = True
+        self.limit_thrust = True
+        self.limit_yaw = True
+
+        self._reader = dev_reader
+        self.id = dev_id
+        self.name = dev_name
+        self.input_map = None
+        self.input_map_name = ""
+        self.data = None
+        self._prev_pressed = None
+        self.reader_name = dev_reader.name
+
+        self.data = {"roll": 0.0, "pitch": 0.0, "yaw": 0.0,
+                     "thrust": 0.0, "estop": False, "exit": False,
+                     "althold": False, "alt1": False, "alt2": False,
+                     "pitchNeg": False, "rollNeg": False,
+                     "pitchPos": False, "rollPos": False}
+
+    def open(self, device_id):
+        """Initialize the reading and open the device with deviceId and set the mapping for axis/buttons using the
+        inputMap"""
+        return
+
+    def read(self, device_id):
+        """Read input from the selected device."""
+        return None
+
+    def close(self, device_id):
+        return
+
+    def devices(self):
+        """List all the available devices."""
+        return []
 
 class JoystickReader:
     """

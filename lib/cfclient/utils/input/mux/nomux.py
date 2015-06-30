@@ -38,8 +38,6 @@ from . import InputMux
 import logging
 logger = logging.getLogger(__name__)
 
-
-
 class NoMux(InputMux):
     def __init__(self, *args):
         super(NoMux, self).__init__(*args)
