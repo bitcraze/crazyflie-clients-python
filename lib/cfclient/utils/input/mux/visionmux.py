@@ -42,6 +42,7 @@ class VisionMux(InputMux):
     def __init__(self, *args):
         super(VisionMux, self).__init__(*args)
         self.name = "Vision"
+        self.supported_names = ("Master", "Auto")
 
     def add_device(self, dev, parameters):
         logger.info("Adding device {} to {}".format(dev.name, self.name))

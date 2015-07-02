@@ -59,18 +59,20 @@ class InputReaderInterface(object):
                      "pitchNeg": False, "rollNeg": False,
                      "pitchPos": False, "rollPos": False}
 
-    def open(self, device_id):
+    def open(self):
         """Initialize the reading and open the device with deviceId and set the mapping for axis/buttons using the
         inputMap"""
         return
 
-    def read(self, device_id):
+    def read(self):
         """Read input from the selected device."""
         return None
 
-    def close(self, device_id):
+    def close(self):
         return
 
     def devices(self):
         """List all the available devices."""
         return []
+
+

@@ -47,6 +47,7 @@ class TakeOverMux(InputMux):
         self._master_control = False
         self._key = "alt1"
         self._toggle_mode = False
+        self.supported_names = ("Master", "Slave")
 
     def add_device(self, dev, parameters):
         logger.info("Adding device {} to {}".format(dev.name, self.name))

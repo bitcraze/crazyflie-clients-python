@@ -41,7 +41,8 @@ logger = logging.getLogger(__name__)
 class NoMux(InputMux):
     def __init__(self, *args):
         super(NoMux, self).__init__(*args)
-        self.name = "None"
+        self.name = "Normal"
+        self.supported_names = ("Device",)
 
     def add_device(self, dev, parameters):
         logger.info("Adding device {} to MUX {}".format(dev.name, self.name))

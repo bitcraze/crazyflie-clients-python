@@ -46,6 +46,7 @@ class MixMux(InputMux):
         self.name = "MixMux"
         self._mix_axes = ("roll", "pitch", "yaw", "thrust")
         self._mix_buttons = ("alt1", "alt2", "estop")
+        self.supported_names = ("Master", "Slave")
 
     def add_device(self, dev, parameters):
         logger.info("Adding device {} to {}".format(dev.name, self.name))

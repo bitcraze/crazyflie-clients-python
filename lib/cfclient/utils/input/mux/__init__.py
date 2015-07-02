@@ -95,8 +95,7 @@ class InputMux(object):
         #self.alt1_updated = Caller()
         #self.alt2_updated = Caller()
 
-    def get_supported_dev_count(self):
-        return 1
+        self.supported_names = ("Device", )
 
     def add_device(self, dev, parameters):
         logger.info("Adding device and opening it")

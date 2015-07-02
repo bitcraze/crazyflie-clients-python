@@ -44,6 +44,7 @@ class TakeOverSelectiveMux(InputMux):
     def __init__(self, *args):
         super(TakeOverSelectiveMux, self).__init__(*args)
         self.name = "TakeOverSelective"
+        self.supported_names = ("Master", "Slave")
 
     def add_device(self, dev, parameters):
         logger.info("Adding device {} to {}".format(dev.name, self.name))
