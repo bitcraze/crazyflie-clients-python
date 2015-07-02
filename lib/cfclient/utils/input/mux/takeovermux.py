@@ -43,27 +43,24 @@ logger = logging.getLogger(__name__)
 class TakeOverMux(InputMux):
     def __init__(self, *args):
         super(TakeOverMux, self).__init__(*args)
-        self.name = "TakeOver"
+        self.name = "Teacher (RPYT)"
         self._master_control = False
         self._key = "alt1"
         self._toggle_mode = False
-        self.supported_names = ("Master", "Slave")
+        self._devs = {"Teacher": None, "Student": None}
 
-    def add_device(self, dev, parameters):
+    def add_device(self, dev, role):
         logger.info("Adding device {} to {}".format(dev.name, self.name))
         logger.info("Device has mapping {}".format(dev.input_map_name))
         self._devs.append(dev)
-
-    def get_supported_dev_count(self):
-        return 2
 
     def _estop_callback(self, state):
         logger.info(state)
 
     def read(self):
         try:
-            dm = self._devs[0].read()
-            ds = self._devs[1].read()
+            dm = self._devs["Teacher"].read()
+            ds = self._devs["Student"].read()
 
             if self._check_toggle(self._key, dm[self._key]):
                 if self._toggle_mode:

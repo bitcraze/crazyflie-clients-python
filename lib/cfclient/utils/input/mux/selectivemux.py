@@ -44,9 +44,9 @@ class SelectiveMux(InputMux):
     def __init__(self, *args):
         super(SelectiveMux, self).__init__(*args)
         self.name = "Selective"
-        self.supported_names = ("Master", "Slave")
+        self._devs = {"Master": None, "Slave": None}
 
-    def add_device(self, dev, parameters):
+    def add_device(self, dev, role):
         logger.info("Adding device {} to {}".format(dev.name, self.name))
         logger.info("Device has mapping {}".format(dev.input_map_name))
         if len(self._devs) == 0:
@@ -63,8 +63,8 @@ class SelectiveMux(InputMux):
 
     def read(self):
         try:
-            dm = self._devs[0][0].read()
-            ds = self._devs[1][0].read()
+            dm = self._devs["Master"][0].read()
+            ds = self._devs["Slave"][0].read()
 
             # Mux the two together
             data = {}

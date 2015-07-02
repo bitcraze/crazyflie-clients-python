@@ -42,9 +42,9 @@ class VisionMux(InputMux):
     def __init__(self, *args):
         super(VisionMux, self).__init__(*args)
         self.name = "Vision"
-        self.supported_names = ("Master", "Auto")
+        self._devs = {"Master": None, "Autonomous": None}
 
-    def add_device(self, dev, parameters):
+    def add_device(self, dev, role):
         logger.info("Adding device {} to {}".format(dev.name, self.name))
         logger.info("Device has mapping {}".format(dev.input_map_name))
         if len(self._devs) == 0:
@@ -59,8 +59,8 @@ class VisionMux(InputMux):
     def read(self):
         try:
             use_master = False
-            dm = self._devs[0][0].read()
-            ds = self._devs[1][0].read()
+            dm = self._devs["Master"][0].read()
+            ds = self._devs["Autonomous"][0].read()
 
             if self._check_toggle("alt1", dm):
                 if dm["alt1"]:

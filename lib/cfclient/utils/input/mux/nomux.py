@@ -42,37 +42,40 @@ class NoMux(InputMux):
     def __init__(self, *args):
         super(NoMux, self).__init__(*args)
         self.name = "Normal"
-        self.supported_names = ("Device",)
+        self._devs = {"Device": None}
 
-    def add_device(self, dev, parameters):
+    def add_device(self, dev, role):
         logger.info("Adding device {} to MUX {}".format(dev.name, self.name))
-        self._devs = [dev] # We only allow one device for this Mux
+        # Save the old dev and close after the new one is opened
+        self._open_new_device(dev, role)
 
     def read(self):
-        data = self._devs[0].read()
-        roll = data["roll"]
-        pitch = data["pitch"]
-        thrust = data["thrust"]
-        yaw = data["yaw"]
+        if self._devs["Device"]:
+            data = self._devs["Device"].read()
+            roll = data["roll"]
+            pitch = data["pitch"]
+            thrust = data["thrust"]
+            yaw = data["yaw"]
 
-        if self._devs[0].limit_rp:
-            [roll, pitch] = self._scale_rp(roll, pitch)
-            [roll, pitch] = self._trim_rp(roll, pitch)
+            if self._devs["Device"].limit_rp:
+                [roll, pitch] = self._scale_rp(roll, pitch)
+                [roll, pitch] = self._trim_rp(roll, pitch)
 
-        if self._devs[0].limit_thrust:
-            thrust = self._limit_thrust(thrust,
-                                        data["althold"],
-                                        data["estop"])
-        if self._devs[0].limit_yaw:
-            yaw = self._scale_and_deadband_yaw(yaw)
+            if self._devs["Device"].limit_thrust:
+                thrust = self._limit_thrust(thrust,
+                                            data["althold"],
+                                            data["estop"])
+            if self._devs["Device"].limit_yaw:
+                yaw = self._scale_and_deadband_yaw(yaw)
 
 
-        self._update_alt_hold(data["althold"])
-        self._update_em_stop(data["estop"])
-        self._update_alt1(data["alt1"])
-        self._update_alt2(data["alt2"])
+            self._update_alt_hold(data["althold"])
+            self._update_em_stop(data["estop"])
+            self._update_alt1(data["alt1"])
+            self._update_alt2(data["alt2"])
 
-        return [roll, pitch, yaw, thrust]
-
+            return [roll, pitch, yaw, thrust]
+        else:
+            return [0.0, 0.0, 0.0, 0.0]
 
 

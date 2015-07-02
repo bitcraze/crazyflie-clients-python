@@ -45,7 +45,7 @@ MAX_THRUST = 65000
 
 class InputMux(object):
     def __init__(self, input):
-        self._devs = []
+        self._devs = {"Device": None}
         self.name = "N/A"
         self.input = input
 
@@ -95,7 +95,15 @@ class InputMux(object):
         #self.alt1_updated = Caller()
         #self.alt2_updated = Caller()
 
-        self.supported_names = ("Device", )
+    def _open_new_device(self, dev, role):
+        old_dev = self._devs[role]
+        self._devs[role] = dev
+        self._devs[role].open()
+        if old_dev:
+            old_dev.close()
+
+    def supported_roles(self):
+        return self._devs.keys()
 
     def add_device(self, dev, parameters):
         logger.info("Adding device and opening it")
@@ -106,11 +114,19 @@ class InputMux(object):
         self._devs.remove(dev)
         dev.close()
 
+    def pause(self):
+        for d in [key for key in self._devs.keys() if self._devs[key]]:
+            self._devs[d].close()
+
+    def resume(self):
+        for d in [key for key in self._devs.keys() if self._devs[key]]:
+            self._devs[d].open()
+
     def close(self):
         """Close down the MUX and close all it's devices"""
-        for d in self._devs:
-            d.close()
-        self._devs = []
+        for d in [key for key in self._devs.keys() if self._devs[key]]:
+            self._devs[d].close()
+            self._devs[d] = None
 
     def _cap_rp(self, rp):
         ret = rp * self.max_rp_angle

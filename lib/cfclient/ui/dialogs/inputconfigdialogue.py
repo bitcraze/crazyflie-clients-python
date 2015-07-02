@@ -124,7 +124,8 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self._reset_mapping()
 
         for d in self._input.available_devices():
-            self.inputDeviceSelector.addItem(d.name, d.id)
+            if d.supports_mapping:
+                self.inputDeviceSelector.addItem(d.name, d.id)
 
         if len(self._input.available_devices()) > 0:
             self.configButton.setEnabled(True)
@@ -358,14 +359,16 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
 
     def showEvent(self, event):
         """Called when dialog is opened"""
-        self._saved_open_device = self._input.get_device_name()
-        self._input.stop_input()
+        #self._saved_open_device = self._input.get_device_name()
+        #self._input.stop_input()
+        self._input.pause_input()
 
     def closeEvent(self, event):
         """Called when dialog is closed"""
         self._input.stop_raw_reading()
         self._input_device_reader.stop_reading()
-        self._input.start_input(self._saved_open_device)
+        #self._input.start_input(self._saved_open_device)
+        self._input.resume_input()
 
 class DeviceReader(QThread):
     """Used for polling data from the Input layer during configuration"""

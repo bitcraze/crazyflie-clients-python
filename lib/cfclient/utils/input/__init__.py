@@ -169,6 +169,13 @@ class JoystickReader:
         # Call with 3 bools (rp_limiting, yaw_limiting, thrust_limiting)
         self.limiting_updated = Caller()
 
+    def _get_device_from_name(self, device_name):
+        """Get the raw device from a name"""
+        for d in readers.devices():
+            if d.name == device_name:
+                return d
+        return None
+
     def set_alt_hold_available(self, available):
         """Set if altitude hold is available or not (depending on HW)"""
         self._has_pressure_sensor = available
@@ -188,6 +195,7 @@ class JoystickReader:
         return self._mux
 
     def set_mux(self, name=None, mux=None):
+        old_mux = self._selected_mux
         if name:
             for m in self._mux:
                 if m.name == name:
@@ -195,10 +203,9 @@ class JoystickReader:
         elif mux:
             self._selected_mux = mux
 
-        logger.info("Selected MUX: {}".format(self._selected_mux.name))
+        old_mux.close()
 
-    def get_mux_supported_dev_count(self):
-        return self._selected_mux.get_supported_dev_count()
+        logger.info("Selected MUX: {}".format(self._selected_mux.name))
 
     def available_devices(self):
         """List all available and approved input devices.
@@ -266,6 +273,7 @@ class JoystickReader:
 
     def set_raw_input_map(self, input_map):
         """Set an input device map"""
+        # TODO: Will not work!
         if self._input_device:
             self._input_device.input_map = input_map
 
@@ -275,17 +283,17 @@ class JoystickReader:
         if settings:
             self._springy_throttle = settings["springythrottle"]
             self._input_map = ConfigManager().get_config(input_map_name)
-        if self._input_device:
-            self._input_device.input_map = self._input_map
+        self._get_device_from_name(device_name).input_map = self._input_map
+        self._get_device_from_name(device_name).input_map_name = input_map_name
         Config().get("device_config_mapping")[device_name] = input_map_name
 
-    def get_device_name(self):
-        """Get the name of the current open device"""
-        if self._input_device:
-            return self._input_device.name
-        return None
+    #def get_device_name(self):
+    #    """Get the name of the current open device"""
+    #    if self._input_device:
+    #        return self._input_device.name
+    #    return None
 
-    def start_input(self, device_name, config_name=None):
+    def start_input(self, device_name, role="", config_name=None):
         """
         Start reading input from the device with name device_name using config
         config_name. Returns True if device supports mapping, otherwise False
@@ -293,22 +301,14 @@ class JoystickReader:
         try:
             #device_id = self._available_devices[device_name]
             # Check if we supplied a new map, if not use the preferred one
-            for d in readers.devices():
-                if d.name == device_name:
-                    self._input_device = d
-                    if not config_name:
-                        config_name = self.get_saved_device_mapping(device_name)
-                    self.set_input_map(device_name, config_name)
-                    self._input_device.open()
-                    self._input_device.input_map = self._input_map
-                    self._input_device.input_map_name = config_name
-                    self._selected_mux.add_device(self._input_device, None)
-                    # Update the UI with the limiting for this device
-                    self.limiting_updated.call(self._input_device.limit_rp,
-                                               self._input_device.limit_yaw,
-                                               self._input_device.limit_thrust)
-                    self._read_timer.start()
-                    return self._input_device.supports_mapping
+            device = self._get_device_from_name(device_name)
+            self._selected_mux.add_device(device, role)
+            # Update the UI with the limiting for this device
+            self.limiting_updated.call(device.limit_rp,
+                                       device.limit_yaw,
+                                       device.limit_thrust)
+            self._read_timer.start()
+            return device.supports_mapping
         except Exception:
             self.device_error.call(
                      "Error while opening/initializing  input device\n\n%s" %
@@ -319,18 +319,21 @@ class JoystickReader:
                      "Could not find device {}".format(device_name))
         return False
 
-    def stop_input(self, device_name = None):
+    def resume_input(self):
+        self._selected_mux.resume()
+        self._read_timer.start()
+
+    def pause_input(self, device_name = None):
         """Stop reading from the input device."""
-        if device_name:
-            for d in readers.devices():
-                if d.name == device_name:
-                    d.close()
-        else:
-            for d in readers.devices():
-                d.close()
-            #if self._input_device:
-            #    self._input_device.close()
-            #    self._input_device = None
+        self._read_timer.stop()
+        self._selected_mux.pause()
+        #if device_name:
+        #    for d in readers.devices():
+        #        if d.name == device_name:
+        #            d.close()
+        #else:
+        #    for d in readers.devices():
+        #        d.close()
 
     def set_yaw_limit(self, max_yaw_rate):
         """Set a new max yaw rate value."""

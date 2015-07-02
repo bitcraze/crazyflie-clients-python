@@ -43,61 +43,58 @@ logger = logging.getLogger(__name__)
 class TakeOverSelectiveMux(InputMux):
     def __init__(self, *args):
         super(TakeOverSelectiveMux, self).__init__(*args)
-        self.name = "TakeOverSelective"
-        self.supported_names = ("Master", "Slave")
+        self._master = "Teacher"
+        self._slave = "Student"
+        self.name = "Teacher (RP)"
+        self._devs = {self._master: None, self._slave: None}
 
-    def add_device(self, dev, parameters):
-        logger.info("Adding device {} to {}".format(dev.name, self.name))
-        logger.info("Device has mapping {}".format(dev.input_map_name))
-        if len(self._devs) == 0:
-            parameters = ("thrust", "yaw", "estop", "alt1", "alt2", "althold", "exit")
-        else:
-            parameters = ("roll", "pitch")
-        self._devs.append((dev, parameters))
-        #logger.info("First has mapping {}".format(self._devs[0][0].input_map["Input.AXIS-3"]["key"]))
-        #if len(self._devs) > 1:
-        #    logger.info("Second has mapping {}".format(self._devs[1][0].input_map["Input.AXIS-3"]["key"]))
+        self._muxing = {self._master: ("thrust", "yaw", "estop", "alt1", "alt2",
+                                    "althold", "exit"),
+                        self._slave: ("roll", "pitch")}
 
-    def get_supported_dev_count(self):
-        return 2
+    def add_device(self, dev, role):
+        self._open_new_device(dev, role)
 
     def read(self):
         try:
-            use_master = False
-            dm = self._devs[0][0].read()
-            ds = self._devs[1][0].read()
+            if self._devs[self._master] and self._devs[self._slave]:
+                use_master = False
+                dm = self._devs[self._master].read()
+                ds = self._devs[self._slave].read()
 
-            if self._check_toggle("alt1", dm):
-                if dm["alt1"]:
-                    use_master = True
+                if self._check_toggle("alt1", dm):
+                    if dm["alt1"]:
+                        use_master = True
 
-            if use_master:
-                data = dm
+                if use_master:
+                    data = dm
+                else:
+                    # Mux the two together
+                    data = {}
+                    for mk in dm:
+                        if mk in self._muxing[self._master]:
+                            data[mk] = dm[mk]
+
+                    for sk in ds:
+                        if sk in self._muxing[self._slave]:
+                            data[sk] = ds[sk]
+
+                # Now res contains the mix of the two
+                [roll, pitch] = self._scale_rp(data["roll"], data["pitch"])
+                [roll, pitch] = self._trim_rp(roll, pitch)
+                self._update_alt_hold(data["althold"])
+                self._update_em_stop(data["estop"])
+                self._update_alt1(data["alt2"])
+                #self._update_alt2(data["alt2"])
+                thrust = self._limit_thrust(data["thrust"],
+                                            data["althold"],
+                                            data["estop"])
+
+                yaw = self._scale_and_deadband_yaw(data["yaw"])
+
+                return [roll, pitch, yaw, thrust]
             else:
-                # Mux the two together
-                data = {}
-                for mk in dm:
-                    if mk in self._devs[0][1]:
-                        data[mk] = dm[mk]
-
-                for sk in ds:
-                    if sk in self._devs[1][1]:
-                        data[sk] = ds[sk]
-
-            # Now res contains the mix of the two
-            [roll, pitch] = self._scale_rp(data["roll"], data["pitch"])
-            [roll, pitch] = self._trim_rp(roll, pitch)
-            self._update_alt_hold(data["althold"])
-            self._update_em_stop(data["estop"])
-            self._update_alt1(data["alt2"])
-            #self._update_alt2(data["alt2"])
-            thrust = self._limit_thrust(data["thrust"],
-                                        data["althold"],
-                                        data["estop"])
-
-            yaw = self._scale_and_deadband_yaw(data["yaw"])
-
-            return [roll, pitch, yaw, thrust]
+                return [0.0, 0.0, 0.0, 0.0]
 
         except Exception as e:
             logger.info("Could not read devices: {}".format(e))

@@ -46,23 +46,20 @@ class MixMux(InputMux):
         self.name = "MixMux"
         self._mix_axes = ("roll", "pitch", "yaw", "thrust")
         self._mix_buttons = ("alt1", "alt2", "estop")
-        self.supported_names = ("Master", "Slave")
+        self._devs = {"Master": None, "Slave": None}
 
-    def add_device(self, dev, parameters):
+    def add_device(self, dev, role):
         logger.info("Adding device {} to {}".format(dev.name, self.name))
         logger.info("Device has mapping {}".format(dev.input_map_name))
         self._devs.append(dev)
-
-    def get_supported_dev_count(self):
-        return 2
 
     def _estop_callback(self, state):
         logger.info(state)
 
     def read(self):
         try:
-            d1 = self._devs[0].read()
-            d2 = self._devs[1].read()
+            d1 = self._devs["Master"].read()
+            d2 = self._devs["Slave"].read()
 
             # Master has precedence if the axis/button is not mixed
             data = d1
