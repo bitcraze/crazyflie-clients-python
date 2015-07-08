@@ -61,8 +61,6 @@ for interface in found_interfaces:
         logger.info("Successfully initialized [{}]".format(interface))
     except Exception as e:
         logger.info("Could not initialize [{}]: {}".format(interface, e))
-        import traceback
-        logger.info(traceback.format_exc())
 
 def devices():
     # Todo: Support rescanning and adding/removing devices

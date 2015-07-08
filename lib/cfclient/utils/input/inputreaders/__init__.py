@@ -63,9 +63,6 @@ for reader in found_readers:
         logger.info("Successfully initialized [{}]".format(reader))
     except Exception as e:
         logger.info("Could not initialize [{}]: {}".format(reader, e))
-        #import traceback
-        #logger.info(traceback.format_exc())
-
 
 def devices():
     # Todo: Support rescanning and adding/removing devices
