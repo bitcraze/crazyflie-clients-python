@@ -71,7 +71,7 @@ from .mux.takeoverselectivemux import TakeOverSelectiveMux
 
 MAX_THRUST = 65000
 
-class JoystickReader:
+class JoystickReader(object):
     """
     Thread that will read input from devices/joysticks and send control-set
     points to the Crazyflie
@@ -290,12 +290,6 @@ class JoystickReader:
         self._get_device_from_name(device_name).input_map = self._input_map
         self._get_device_from_name(device_name).input_map_name = input_map_name
         Config().get("device_config_mapping")[device_name] = input_map_name
-
-    #def get_device_name(self):
-    #    """Get the name of the current open device"""
-    #    if self._input_device:
-    #        return self._input_device.name
-    #    return None
 
     def start_input(self, device_name, role="Device", config_name=None):
         """
