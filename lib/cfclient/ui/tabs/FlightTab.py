@@ -380,40 +380,39 @@ class FlightTab(Tab, flight_tab_class):
 
 
     def minMaxThrustChanged(self):
-        self.helper.inputDeviceReader.set_thrust_limits(
-                            self.minThrust.value(), self.maxThrust.value())
+        self.helper.inputDeviceReader.min_thrust = self.minThrust.value()
+        self.helper.inputDeviceReader.max_thrust = self.maxThrust.value()
         if (self.isInCrazyFlightmode == True):
             Config().set("min_thrust", self.minThrust.value())
             Config().set("max_thrust", self.maxThrust.value())
 
     def thrustLoweringSlewRateLimitChanged(self):
-        self.helper.inputDeviceReader.set_thrust_slew_limiting(
-                            self.thrustLoweringSlewRateLimit.value(),
-                            self.slewEnableLimit.value())
+        self.helper.inputDeviceReader.thrust_slew_rate = self.thrustLoweringSlewRateLimit.value()
+        self.helper.inputDeviceReader.thrust_slew_limit = self.slewEnableLimit.value()
         if (self.isInCrazyFlightmode == True):
             Config().set("slew_limit", self.slewEnableLimit.value())
             Config().set("slew_rate", self.thrustLoweringSlewRateLimit.value())
 
     def maxYawRateChanged(self):
         logger.debug("MaxYawrate changed to %d", self.maxYawRate.value())
-        self.helper.inputDeviceReader.set_yaw_limit(self.maxYawRate.value())
+        self.helper.inputDeviceReader.max_yaw_rate = self.maxYawRate.value()
         if (self.isInCrazyFlightmode == True):
             Config().set("max_yaw", self.maxYawRate.value())
 
     def maxAngleChanged(self):
         logger.debug("MaxAngle changed to %d", self.maxAngle.value())
-        self.helper.inputDeviceReader.set_rp_limit(self.maxAngle.value())
+        self.helper.inputDeviceReader.max_rp_angle = self.maxAngle.value()
         if (self.isInCrazyFlightmode == True):
             Config().set("max_rp", self.maxAngle.value())
 
     def _trim_pitch_changed(self, value):
         logger.debug("Pitch trim updated to [%f]" % value)
-        self.helper.inputDeviceReader.set_trim_pitch(value)
+        self.helper.inputDeviceReader.trim_pitch = value
         Config().set("trim_pitch", value)
 
     def _trim_roll_changed(self, value):
         logger.debug("Roll trim updated to [%f]" % value)
-        self.helper.inputDeviceReader.set_trim_roll(value)
+        self.helper.inputDeviceReader.trim_roll = value
         Config().set("trim_roll", value)
 
     def calUpdateFromInput(self, rollCal, pitchCal):

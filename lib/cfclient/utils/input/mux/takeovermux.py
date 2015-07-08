@@ -26,75 +26,25 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #  02110-1301, USA.
 """
-
+Mux for giving control to one device (slave/student) for all axis (roll/pitch/
+yaw/thrust) with the ability to take over all of them from a second device
+(master/teacher).
 """
 
 __author__ = 'Bitcraze AB'
 __all__ = ['SelectiveMux']
 
-import os
-import glob
 import logging
 
-from . import InputMux
+from .takeoverselectivemux import TakeOverSelectiveMux
 
 logger = logging.getLogger(__name__)
 
-class TakeOverMux(InputMux):
+
+class TakeOverMux(TakeOverSelectiveMux):
     def __init__(self, *args):
         super(TakeOverMux, self).__init__(*args)
         self.name = "Teacher (RPYT)"
-        self._master_control = False
-        self._key = "alt1"
-        self._toggle_mode = False
-        self._devs = {"Teacher": None, "Student": None}
-
-    def add_device(self, dev, role):
-        logger.info("Adding device {} to {}".format(dev.name, self.name))
-        logger.info("Device has mapping {}".format(dev.input_map_name))
-        self._devs.append(dev)
-
-    def _estop_callback(self, state):
-        logger.info(state)
-
-    def read(self):
-        try:
-            dm = self._devs["Teacher"].read()
-            ds = self._devs["Student"].read()
-
-            if self._check_toggle(self._key, dm[self._key]):
-                if self._toggle_mode:
-                    if not dm[self._key]:
-                        self._master_control = not self._master_control
-                        #logger.info("Master controlling: {}".format(self._master_control))
-                else:
-                    if dm[self._key]:
-                        self._master_control = True
-                        #logger.info("Master controlling: {}".format(self._master_control))
-                    else:
-                        self._master_control = False
-
-
-            if self._master_control:
-                data = dm
-            else:
-                data = ds
-
-            # Now res contains the mix of the two
-            [roll, pitch] = self._scale_rp(data["roll"], data["pitch"])
-            [roll, pitch] = self._trim_rp(roll, pitch)
-            self._update_alt_hold(data["althold"])
-            self._update_em_stop(data["estop"])
-            #self._update_alt1(data["alt1"])
-            self._update_alt2(data["alt2"])
-            thrust = self._limit_thrust(data["thrust"],
-                                        data["althold"],
-                                        data["estop"])
-
-            yaw = self._scale_and_deadband_yaw(data["yaw"])
-
-            return [roll, pitch, yaw, thrust]
-
-        except Exception as e:
-            #logger.info("Could not read devices: {}".format(e))
-            return [0.0, 0.0, 0.0, 0.0]
+        self._muxing = {self._master: ("estop", "alt1", "alt2", "althold",
+                                       "exit"),
+                        self._slave: ("roll", "pitch", "yaw", "thrust")}

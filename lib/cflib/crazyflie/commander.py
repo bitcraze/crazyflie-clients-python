@@ -64,7 +64,6 @@ class Commander():
         The arguments roll/pitch/yaw/trust is the new setpoints that should
         be sent to the copter
         """
-
         if thrust > 0xFFFF or thrust < 0:
             raise ValueError("Thrust must be between 0 and 0xFFFF")
 

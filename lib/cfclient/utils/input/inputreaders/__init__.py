@@ -23,7 +23,8 @@
 
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA  02110-1301, USA.
 
 """
 Find all the available input readers and try to import them.
@@ -38,16 +39,16 @@ __all__ = ['InputDevice']
 import os
 import glob
 import logging
-from cfclient.utils.input.inputreaderinterface import InputReaderInterface
+from ..inputreaderinterface import InputReaderInterface
 
 logger = logging.getLogger(__name__)
 
 found_readers = [os.path.splitext(os.path.basename(f))[0] for
-             f in glob.glob(os.path.dirname(__file__) + "/[A-Za-z]*.py")]
+                 f in glob.glob(os.path.dirname(__file__) + "/[A-Za-z]*.py")]
 if len(found_readers) == 0:
     found_readers = [os.path.splitext(os.path.basename(f))[0] for
-                 f in glob.glob(os.path.dirname(__file__) +
-                                "/[A-Za-z]*.pyc")]
+                     f in glob.glob(os.path.dirname(__file__) +
+                                    "/[A-Za-z]*.pyc")]
 
 logger.info("Found readers: {}".format(found_readers))
 
@@ -65,16 +66,18 @@ for reader in found_readers:
         #import traceback
         #logger.info(traceback.format_exc())
 
+
 def devices():
     # Todo: Support rescanning and adding/removing devices
     if len(available_devices) == 0:
-        for reader in initialized_readers:
-            devs = reader.devices()
+        for r in initialized_readers:
+            devs = r.devices()
             for dev in devs:
                 available_devices.append(InputDevice(dev["name"],
                                                      dev["id"],
-                                                     reader))
+                                                     r))
     return available_devices
+
 
 class InputDevice(InputReaderInterface):
     def __init__(self, dev_name, dev_id, dev_reader):
@@ -89,31 +92,17 @@ class InputDevice(InputReaderInterface):
         self.limit_yaw = True
 
     def open(self):
-        self.data = {"roll": 0.0, "pitch": 0.0, "yaw": 0.0,
-                     "thrust": -1.0, "estop": False, "exit":False,
-                     "althold": False, "alt1": False, "alt2": False,
-                     "pitchNeg": False, "rollNeg": False,
-                     "pitchPos": False, "rollPos": False}
-
+        # TODO: Reset data?
         self._reader.open(self.id)
 
     def close(self):
         self._reader.close(self.id)
 
-    def _zero_all_buttons(self):
-        buttons = ("estop", "exit", "althold", "alt1", "alt2", "rollPos",
-                   "rollNeg", "pitchPos", "pitchNeg")
-        for b in buttons:
-            self.data[b] = False
-
     def read(self, include_raw=False):
         [axis, buttons] = self._reader.read(self.id)
 
         # To support split axis we need to zero all the axis
-        self.data["roll"] = 0.0
-        self.data["pitch"] = 0.0
-        self.data["yaw"] = 0.0
-        self.data["thrust"] = 0.0
+        self.data.reset_axes()
 
         i = 0
         for a in axis:
@@ -123,15 +112,14 @@ class InputDevice(InputReaderInterface):
                     key = self.input_map[index]["key"]
                     axisvalue = a + self.input_map[index]["offset"]
                     axisvalue = axisvalue / self.input_map[index]["scale"]
-                    self.data[key] += axisvalue
-            except Exception:
-                #logger.warning("Axis {}".format(i))
+                    self.data.set(key, axisvalue + self.data.get(key))
+            except (KeyError, TypeError):
                 pass
             i += 1
 
         # Workaround for fixing issues during mapping (remapping buttons while
         # they are pressed.
-        self._zero_all_buttons()
+        self.data.reset_buttons()
 
         i = 0
         for b in buttons:
@@ -139,17 +127,23 @@ class InputDevice(InputReaderInterface):
             try:
                 if self.input_map[index]["type"] == "Input.BUTTON":
                     key = self.input_map[index]["key"]
-                    self.data[key] = True if b == 1 else False
-            except Exception:
+                    self.data.set(key, True if b == 1 else False)
+            except (KeyError, TypeError):
                 # Button not mapped, ignore..
                 pass
             i += 1
 
+        if self.limit_rp:
+            [self.data.roll, self.data.pitch] = self._scale_rp(self.data.roll,
+                                                               self.data.pitch)
+        if self.limit_thrust:
+            self.data.thrust = self._limit_thrust(self.data.thrust,
+                                                  self.data.althold,
+                                                  self.data.estop)
+        if self.limit_yaw:
+            self.data.yaw = self._scale_and_deadband_yaw(self.data.yaw)
+
         if include_raw:
             return [axis, buttons, self.data]
         else:
-            #logger.warning(self.data)
-            #if self.id == 0:
-            #    logger.info("{}".format(self.input_map["Input.AXIS-3"]["key"]))
-            #    logger.info("{}:{}".format(self.id, self.data["thrust"]))
             return self.data

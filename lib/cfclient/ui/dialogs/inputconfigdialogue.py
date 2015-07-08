@@ -97,6 +97,9 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                                                     "Press the button for exiting the application"))
         self.detectAltHold.clicked.connect(lambda : self._button_detect("althold", "Altitude hold",
                                                     "Press the button for altitude hold mode activation (releasing returns to manual mode)"))        
+        self.detectMuxswitch.clicked.connect(lambda: self._button_detect("muxswitch", "Mux Switch",
+                                                     "Press the button for mux switching"))
+
 
         self.configButton.clicked.connect(self._start_configuration)
         self.loadButton.clicked.connect(self._load_config_from_file)
@@ -109,7 +112,8 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                               self.detectPitchPos, self.detectPitchNeg,
                               self.detectRollPos, self.detectRollNeg,
                               self.detectKillswitch, self.detectExitapp,
-                              self.detectAltHold, self.detectAlt1, self.detectAlt2]
+                              self.detectAltHold, self.detectAlt1,
+                              self.detectAlt2, self.detectMuxswitch]
 
         self._button_to_detect = ""
         self._axis_to_detect = ""
@@ -133,6 +137,10 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self._map = {}
         self._saved_open_device = None
 
+    @staticmethod
+    def _scale(max_value, value):
+        return (value/max_value) * 100
+
     def _reset_mapping(self):
         self._buttonindicators= {
             "pitchPos": self.pitchPos,
@@ -144,6 +152,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             "alt2": self.alt2,
             "exitapp": self.exitapp,
             "althold": self.althold,
+            "muxswitch": self.muxswitch,
             }
 
         self._axisindicators = {
@@ -223,17 +232,31 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                         message = self._popup.originalMessage % self._popup.directions[1]
                         self._popup.setText(message)
 
-    def _update_mapped_values(self, values):
-        for v in values:
+    def _update_mapped_values(self, mapped_data):
+        for v in mapped_data.get_all_indicators():
             if v in self._buttonindicators:
-                if values[v]:
+                if mapped_data.get(v):
                     self._buttonindicators[v].setChecked(True)
                 else:
                     self._buttonindicators[v].setChecked(False)
             if v in self._axisindicators:
-                # The sliders used are set to 0-100 and the values from the input
-                # layer is -1 to 1. So scale the value and place 0 in the middle
-                self._axisindicators[v].setValue(values[v]*100)
+                # The sliders used are set to 0-100 and the values from the
+                # input-layer is scaled according to the max settings in
+                # the input-layer. So scale the value and place 0 in the middle.
+                scaled_value = mapped_data.get(v)
+                if v == "thrust":
+                    scaled_value = InputConfigDialogue._scale(
+                        self._input.max_thrust, scaled_value
+                    )
+                if v == "roll" or v == "pitch":
+                    scaled_value = InputConfigDialogue._scale(
+                        self._input.max_rp_angle, scaled_value
+                    )
+                if v == "yaw":
+                    scaled_value = InputConfigDialogue._scale(
+                        self._input.max_yaw_rate, scaled_value
+                    )
+                self._axisindicators[v].setValue(scaled_value)
 
     def _map_axis(self, function, key_id, scale):
         self._map["Input.AXIS-{}".format(key_id)] = {}
