@@ -154,7 +154,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.connectDialogue = ConnectDialogue()
 
         # Create and start the Input Reader
-        self._statusbar_label = QLabel("")
+        self._statusbar_label = QLabel("No input-device found, insert one to"
+                                       " fly.")
         self.statusBar().addWidget(self._statusbar_label)
 
         self.joystickReader = JoystickReader()
@@ -300,6 +301,9 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._all_device_menus = ()
         # Used to filter what new devices to add default mapping to
         self._available_devices = ()
+        # Keep track of mux nodes so we can enable according to how many
+        # devices we have
+        self._all_mux_nodes = ()
 
         # Check which Input muxes are available
         self._mux_group = QActionGroup(self._menu_inputdevice, exclusive=True)
@@ -307,10 +311,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             node = QAction(m.name,
                            self._menu_inputdevice,
                            checkable=True,
-                           enabled=True)
+                           enabled=False)
             node.toggled.connect(self._mux_selected)
             self._mux_group.addAction(node)
             self._menu_inputdevice.addAction(node)
+            self._all_mux_nodes += (node, )
             mux_subnodes = ()
             for name in m.supported_roles():
                 sub_node = QMenu("\t{}".format(name),
@@ -320,9 +325,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                 mux_subnodes += (sub_node, )
                 self._all_device_menus += (sub_node, )
             node.setData((m, mux_subnodes))
-            # TODO: Temporary to select the "default" mux
-            if len(m.supported_roles()) == 1:
-                node.setChecked(True)
 
         self._mapping_support = True
 
@@ -604,6 +606,24 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                     menu.addMenu(map_node)
                 dev_node.setData((map_node, d))
 
+        # Update the list of what devices we found
+        # to avoid selecting default mapping for all devices when
+        # a new one is inserted
+        self._available_devices = ()
+        for d in devs:
+            self._available_devices += (d, )
+
+        # Only enable MUX nodes if we have enough devies to cover
+        # the roles
+        for mux_node in self._all_mux_nodes:
+            (mux, sub_nodes) = mux_node.data().toPyObject()
+            if len(mux.supported_roles()) <= len(self._available_devices):
+                mux_node.setEnabled(True)
+
+        # TODO: Currently only supports selecting default mux
+        if self._all_mux_nodes[0].isEnabled():
+            self._all_mux_nodes[0].setChecked(True)
+
         # If the previous length of the available devies was 0, then select
         # the default on. If that's not available then select the first
         # on in the list.
@@ -618,14 +638,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             # mux)
             self._all_device_menus[0].actions()[0].setChecked(True)
             logger.info("Select first device")
-
-
-        # Update the list of what devices we found
-        # to avoid selecting default mapping for all devices when
-        # a new one is inserted
-        self._available_devices = ()
-        for d in devs:
-            self._available_devices += (d, )
 
         self._update_input_device_footer()
 

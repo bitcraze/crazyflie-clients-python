@@ -17,7 +17,8 @@
     "device_config_mapping": {},
     "enable_debug_driver": false,
     "input_device_blacklist": "(VirtualBox|VMware)",
-    "ui_update_period": 100
+    "ui_update_period": 100,
+    "enable_zmq_input": false
   },
   "read-only" : {
     "normal_slew_limit": 45, 

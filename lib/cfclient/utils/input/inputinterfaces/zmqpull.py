@@ -38,6 +38,10 @@ try:
 except Exception as e:
     raise Exception("ZMQ library probably not installed ({})".format(e))
 
+from cfclient.utils.config import Config
+if not Config().get("enable_zmq_input"):
+    raise Exception("ZMQ input disabled in config file")
+
 import logging
 import time
 import pprint
