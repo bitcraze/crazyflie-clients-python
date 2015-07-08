@@ -214,6 +214,7 @@ class ParamBlockModel(QAbstractItemModel):
     def reset(self):
         """Reset the model"""
         self._nodes = []
+        super(ParamBlockModel, self).reset()
         self.layoutChanged.emit()
 
 
