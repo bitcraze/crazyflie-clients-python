@@ -343,13 +343,31 @@ class JoystickReader(object):
 
             if data:
                 if data.toggled.althold:
-                    self.althold_updated.call(str(data.althold))
+                    try:
+                        self.althold_updated.call(str(data.althold))
+                    except Exception as e:
+                        logger.warning("Exception while doing callback from"
+                                       "input-device for althold: {}".format(e))
+
                 if data.toggled.estop:
-                    self.emergency_stop_updated.call(data.estop)
+                    try:
+                        self.emergency_stop_updated.call(data.estop)
+                    except Exception as e:
+                        logger.warning("Exception while doing callback from"
+                                       "input-device for estop: {}".format(e))
+
                 if data.toggled.alt1:
-                    self.alt1_updated.call(data.alt1)
+                    try:
+                        self.alt1_updated.call(data.alt1)
+                    except Exception as e:
+                        logger.warning("Exception while doing callback from"
+                                       "input-device for alt1: {}".format(e))
                 if data.toggled.alt2:
-                    self.alt2_updated.call(data.alt2)
+                    try:
+                        self.alt2_updated.call(data.alt2)
+                    except Exception as e:
+                        logger.warning("Exception while doing callback from"
+                                       "input-device for alt2: {}".format(e))
 
                 # Update the user roll/pitch trim from device
                 if data.toggled.pitchNeg:
