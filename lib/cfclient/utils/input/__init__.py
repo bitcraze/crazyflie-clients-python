@@ -176,7 +176,7 @@ class JoystickReader(object):
 
     def set_alt_hold_available(self, available):
         """Set if altitude hold is available or not (depending on HW)"""
-        self._has_pressure_sensor = available
+        self.has_pressure_sensor = available
 
     def enable_alt_hold(self, althold):
         """Enable or disable altitude hold"""
@@ -371,7 +371,9 @@ class JoystickReader(object):
                 if data.thrust > 0xFFFF:
                     data.thrust = 0xFFFF
 
-                data.thrust = JoystickReader.p2t(data.thrust)
+                # If we are using alt hold the data is not in a percentage
+                if not data.althold:
+                    data.thrust = JoystickReader.p2t(data.thrust)
 
                 self.input_updated.call(data.roll + self.trim_roll,
                                         data.pitch + self.trim_pitch,
