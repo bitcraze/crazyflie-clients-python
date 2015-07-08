@@ -222,6 +222,7 @@ class JoystickReader:
             if ((not self._dev_blacklist) or 
                     (self._dev_blacklist and not
                      self._dev_blacklist.match(dev.name))):
+                dev.input = self
                 approved_devs.append(dev)
 
         return approved_devs 
@@ -296,7 +297,7 @@ class JoystickReader:
     #        return self._input_device.name
     #    return None
 
-    def start_input(self, device_name, role="", config_name=None):
+    def start_input(self, device_name, role="Device", config_name=None):
         """
         Start reading input from the device with name device_name using config
         config_name. Returns True if device supports mapping, otherwise False

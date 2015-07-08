@@ -123,7 +123,6 @@ class HeadlessClient():
     def _connection_failed(self, link, message):
         """Callback for a failed Crazyflie connection"""
         print "Connection failed on {}: {}".format(link, message)
-        self._jr.stop_input()
         sys.exit(-1)
 
     def _input_dev_error(self, message):
