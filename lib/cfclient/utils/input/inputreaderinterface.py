@@ -30,6 +30,7 @@
 Interface for reading input devices and interfaces
 """
 
+from time import time
 import logging
 
 logger = logging.getLogger(__name__)
@@ -123,6 +124,11 @@ class InputReaderInterface(object):
         self._old_raw_thrust = 0
         self._old_alt_hold = False
 
+        self._prev_thrust = 0
+        self._last_time = 0
+        # How low you have to pull the thrust to bypass the slew-rate (0-100%)
+        self.thrust_stop_limit = -90
+
     def open(self):
         """Initialize the reading and open the device with deviceId and set the
         mapping for axis/buttons using the inputMap"""
@@ -162,22 +168,50 @@ class InputReaderInterface(object):
                 thrust = int(round(InputReaderInterface.deadband(thrust, 0.2)
                                    * 32767 + 32767))  # Convert to uint16
             else:
-                if thrust < 0.05 or emergency_stop:
-                    thrust = 0
-                else:
-                    thrust = self.input.min_thrust + thrust \
-                        * (self.input.max_thrust - self.input.min_thrust)
-                if (self.input.thrust_slew_enabled and
-                        self.input.thrust_slew_limit > thrust and not
-                        emergency_stop):
-                    if self._old_thrust > self.input.thrust_slew_limit:
-                        self._old_thrust = self.input.thrust_slew_limit
-                    if thrust < (self._old_thrust -
-                                (self.input.thrust_slew_rate / 100)):
-                        thrust = self._old_thrust - \
-                            self.input.thrust_slew_rate / 100
-                    if thrust < 0 or thrust < self.input.min_thrust:
-                        thrust = 0
+                # Scale the thrust to percent (it's between 0 and 1)
+                thrust *= 100
+
+                # The default action is to just use the thrust...
+                limited_thrust = thrust
+
+                # ... but if we are lowering the thrust, check the limit
+                if self._prev_thrust > thrust >= self.thrust_stop_limit and \
+                        not emergency_stop:
+                    # If we are above the limit, then don't use the slew...
+                    if thrust > self.input.thrust_slew_limit:
+                        limited_thrust = thrust
+                    else:
+                        # ... but if we are below first check if we "entered"
+                        # the limit, then set it to the limit
+                        if self._prev_thrust > self.input.thrust_slew_limit:
+                            limited_thrust = self.input.thrust_slew_limit
+                        else:
+                            # If we are "inside" the limit, then lower
+                            # according to the rate we have set each iteration
+                            lowering = (time() - self._last_time) * \
+                                self.input.thrust_slew_rate
+                            limited_thrust = self._prev_thrust - lowering
+                elif emergency_stop or thrust < self.thrust_stop_limit:
+                    # If the thrust have been pulled down or the
+                    # emergency stop has been activated then bypass
+                    # the slew and force 0
+                    self._prev_thrust = 0
+                    limited_thrust = 0
+
+                # For the next iteration set the previous thrust to the limited
+                # one (will be the slewed thrust if we are slewing)
+                self._prev_thrust = limited_thrust
+
+                # Lastly make sure we're following the "minimum" thrust setting
+                if limited_thrust < self.input.min_thrust:
+                    self._prev_thrust = 0
+                    limited_thrust = 0
+
+                self._last_time = time()
+
+
+
+                thrust = limited_thrust
         else:
             thrust = thrust / 2 + 0.5
             if althold and self.input.has_pressure_sensor:
@@ -190,14 +224,14 @@ class InputReaderInterface(object):
                         self.input.max_thrust -
                         self.input.min_thrust)
                 if (self.input.thrust_slew_enabled and
-                        self.input.thrust_slew_limit > thrust and not
-                        emergency_stop):
+                            self.input.thrust_slew_limit > thrust and not
+                emergency_stop):
                     if self._old_thrust > self.input.thrust_slew_limit:
                         self._old_thrust = self.input.thrust_slew_limit
                     if thrust < (self._old_thrust -
-                                (self.input.thrust_slew_rate / 100)):
+                                     (self.input.thrust_slew_rate / 100)):
                         thrust = self._old_thrust - \
-                            self.input.thrust_slew_rate / 100
+                                 self.input.thrust_slew_rate / 100
                     if thrust < -1 or thrust < self.input.min_thrust:
                         thrust = 0
 
