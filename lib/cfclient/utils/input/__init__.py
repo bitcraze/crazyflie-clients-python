@@ -370,20 +370,21 @@ class JoystickReader(object):
                                        "input-device for alt2: {}".format(e))
 
                 # Update the user roll/pitch trim from device
-                if data.toggled.pitchNeg:
+                if data.toggled.pitchNeg and data.pitchNeg:
                     self.trim_pitch -= 1
-                if data.toggled.pitchPos:
+                if data.toggled.pitchPos and data.pitchPos:
                     self.trim_pitch += 1
-                if data.toggled.rollNeg:
+                if data.toggled.rollNeg and data.rollNeg:
                     self.trim_roll -= 1
-                if data.toggled.rollPos:
+                if data.toggled.rollPos and data.rollPos:
                     self.trim_roll += 1
 
-                if data.toggled.pitchNeg or data.toggled.pitchPost or \
+                if data.toggled.pitchNeg or data.toggled.pitchPos or \
                         data.toggled.rollNeg or data.toggled.rollPos:
                     self.rp_trim_updated.call(self.trim_roll, self.trim_pitch)
 
-                # Thrust might be <0 here, make sure it's not otherwise we'll get an error.
+                # Thrust might be <0 here, make sure it's not otherwise we'll
+                # get an error.
                 if data.thrust < 0:
                     data.thrust = 0
                 if data.thrust > 0xFFFF:
