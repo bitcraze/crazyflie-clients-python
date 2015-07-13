@@ -37,7 +37,7 @@ __all__ = ['InputInterface']
 import os
 import glob
 import logging
-from cfclient.utils.inputreaderinterface import InputReaderInterface
+from ..inputreaderinterface import InputReaderInterface
 
 logger = logging.getLogger(__name__)
 

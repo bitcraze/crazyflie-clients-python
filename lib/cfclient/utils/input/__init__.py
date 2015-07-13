@@ -63,10 +63,7 @@ from cflib.utils.callbacks import Caller
 import mux
 from .mux import InputMux
 from .mux.nomux import NoMux
-from .mux.visionmux import VisionMux
-from .mux.selectivemux import SelectiveMux
 from .mux.takeovermux import TakeOverMux
-from .mux.mixmux import MixMux
 from .mux.takeoverselectivemux import TakeOverSelectiveMux
 
 MAX_THRUST = 65000
