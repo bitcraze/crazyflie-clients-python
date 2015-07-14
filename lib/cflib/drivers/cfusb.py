@@ -159,7 +159,11 @@ class CfUsb:
             else:
                 dataIn = self.handle.read(0x81, 64, timeout=20)
         except usb.USBError as e:
-            pass
+            if e.backend_error_code == -7:
+                # Normal, the read was empty
+                pass
+            else:
+                raise IOError("Crazyflie disconnected")
 
         return dataIn
 
