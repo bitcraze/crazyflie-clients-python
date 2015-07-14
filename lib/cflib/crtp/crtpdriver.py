@@ -44,6 +44,7 @@ class CRTPDriver:
         """Driver constructor. Throw an exception if the driver is unable to
         open the URI
         """
+        self.needs_resending = True
 
     def connect(self, uri, link_quality_callback, link_error_callback):
         """Connect the driver to a specified URI

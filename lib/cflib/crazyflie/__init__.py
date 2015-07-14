@@ -295,7 +295,8 @@ class Crazyflie():
         """
         self._send_lock.acquire()
         if self.link is not None:
-            if len(expected_reply) > 0 and not resend:
+            if len(expected_reply) > 0 and not resend and \
+                    self.link.needs_resending:
                 pattern = (pk.header,) + expected_reply
                 logger.debug("Sending packet and expecting the %s pattern back",
                              pattern)
