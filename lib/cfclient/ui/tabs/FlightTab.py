@@ -168,6 +168,13 @@ class FlightTab(Tab, flight_tab_class):
                     self.ratePidRadioButton.setChecked(eval(checked))))
 
         self.helper.cf.param.add_update_callback(
+                    group="cpu", name="flash",
+                    cb=(lambda name, checked:
+                    self.clientXModeCheckbox.setEnabled(
+                        True if eval(checked) <= 128 else False
+                    )))
+
+        self.helper.cf.param.add_update_callback(
                     group="ring", name="headlightEnable",
                     cb=(lambda name, checked:
                     self._led_ring_headlight.setChecked(eval(checked))))
@@ -373,6 +380,7 @@ class FlightTab(Tab, flight_tab_class):
         self.targetASL.setText("Not Set")
         self.targetASL.setEnabled(False)
         self.actualASL.setEnabled(False)
+        self.clientXModeCheckbox.setEnabled(False)
         self.logBaro = None
         self.logAltHold = None
         self._led_ring_effect.setEnabled(False)
