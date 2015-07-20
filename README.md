@@ -39,7 +39,7 @@ Install dependencies. With Windows installers (tested with 32Bit versions):
  - PyQTGraph (http://www.pyqtgraph.org/)
 
 Python libs (to be install by running 'setup.py install'):
- - PyUSB (https://github.com/walac/pyusb/releases)
+ - PyUSB **1.0.0a3** (https://github.com/walac/pyusb/releases)
  - pysdl2 (https://bitbucket.org/marcusva/py-sdl2/downloads)
 
 Download SDL2 from http://libsdl.org/download-2.0.php and copy SDL2.dll in the
