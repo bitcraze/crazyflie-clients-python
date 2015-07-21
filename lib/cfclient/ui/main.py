@@ -601,7 +601,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                         # select the default mapping for it.
                         if d not in self._available_devices:
                             last_map = Config().get("device_config_mapping")
-                            if last_map[d.name] == c:
+                            if last_map.has_key(d.name) and last_map[d.name] == c:
                                 node.setChecked(True)
                     menu.addMenu(map_node)
                 dev_node.setData((map_node, d))
