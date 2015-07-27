@@ -93,6 +93,9 @@ class InputInterface(InputReaderInterface):
         self._reader.close(self.id)
 
     def read(self, include_raw=False):
-        self.data = self._reader.read(self.id)
+        mydata = self._reader.read(self.id)
+        # Merge interface returned data into InputReader Data Item
+        for key in mydata.keys():
+            self.data.set(key, mydata[key])
 
         return self.data
