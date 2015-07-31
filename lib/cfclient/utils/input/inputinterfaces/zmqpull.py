@@ -41,6 +41,7 @@ except Exception as e:
 from cfclient.utils.config import Config
 if not Config().get("enable_zmq_input"):
     raise Exception("ZMQ input disabled in config file")
+from cfclient.utils.input.inputreaderinterface import InputData
 
 import logging
 import time
@@ -106,7 +107,12 @@ class ZMQReader:
     def read(self, device_id):
         """Read input from the selected device."""
 
-        return self.data
+        inputData = InputData()
+
+        for key,value in self.data.iteritems():
+            inputData.set(key, value)
+
+        return inputData
 
     def close(self, device_id):
         return
