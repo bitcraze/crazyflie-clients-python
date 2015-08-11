@@ -169,10 +169,7 @@ class FlightTab(Tab, flight_tab_class):
 
         self.helper.cf.param.add_update_callback(
                     group="cpu", name="flash",
-                    cb=(lambda name, checked:
-                    self.clientXModeCheckbox.setEnabled(
-                        True if eval(checked) <= 128 else False
-                    )))
+                    cb=self._set_enable_client_xmode)
 
         self.helper.cf.param.add_update_callback(
                     group="ring", name="headlightEnable",
@@ -216,6 +213,14 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.inputDeviceReader.limiting_updated.add_callback(
             self._limiting_updated.emit)
         self._limiting_updated.connect(self._set_limiting_enabled)
+
+    def _set_enable_client_xmode(self, name, value):
+        logger.info("Flash size: {}".format(value))
+        if eval(value) <= 128:
+            self.clientXModeCheckbox.setEnabled(True)
+        else:
+            self.clientXModeCheckbox.setEnabled(False)
+            self.clientXModeCheckbox.setChecked(False)
 
     def _set_limiting_enabled(self, rp_limiting_enabled,
                                     yaw_limiting_enabled,
