@@ -200,6 +200,10 @@ class RadioDriver(CRTPDriver):
             pass
         self.cradio = None
 
+        # Clear callbacks
+        self.link_error_callback = None
+        self.link_quality_callback = None
+
     def _scan_radio_channels(self, start=0, stop=125):
         """ Scan for Crazyflies between the supplied channels. """
         return list(self.cradio.scan_channels(start, stop, (0xff,)))
