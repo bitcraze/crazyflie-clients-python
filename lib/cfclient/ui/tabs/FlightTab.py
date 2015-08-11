@@ -215,7 +215,6 @@ class FlightTab(Tab, flight_tab_class):
         self._limiting_updated.connect(self._set_limiting_enabled)
 
     def _set_enable_client_xmode(self, name, value):
-        logger.info("Flash size: {}".format(value))
         if eval(value) <= 128:
             self.clientXModeCheckbox.setEnabled(True)
         else:
