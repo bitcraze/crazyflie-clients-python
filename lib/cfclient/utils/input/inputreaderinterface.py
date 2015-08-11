@@ -173,6 +173,8 @@ class InputReaderInterface(object):
 
                 # The default action is to just use the thrust...
                 limited_thrust = thrust
+                if limited_thrust > self.input.max_thrust:
+                    limited_thrust = self.input.max_thrust
 
                 # ... but if we are lowering the thrust, check the limit
                 if self._prev_thrust > thrust >= self.thrust_stop_limit and \
@@ -208,8 +210,6 @@ class InputReaderInterface(object):
                     limited_thrust = 0
 
                 self._last_time = time()
-
-
 
                 thrust = limited_thrust
         else:
