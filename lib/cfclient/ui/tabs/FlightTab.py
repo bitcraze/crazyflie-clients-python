@@ -512,8 +512,11 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.cf.param.set_value("ring.headlightEnable", str(state))
 
     def _ring_populate_dropdown(self):
-        nbr = int(self.helper.cf.param.values["ring"]["neffect"])
-        current = int(self.helper.cf.param.values["ring"]["effect"])
+        try:
+            nbr = int(self.helper.cf.param.values["ring"]["neffect"])
+            current = int(self.helper.cf.param.values["ring"]["effect"])
+        except KeyError:
+            return
 
         hardcoded_names = {0: "Off",
                            1: "White spinner",
