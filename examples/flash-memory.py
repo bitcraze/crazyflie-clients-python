@@ -26,8 +26,8 @@ import sys
 import time
 import datetime
 
-sys.path.append("../lib")
-sys.path.append("lib")
+sys.path.insert(0, "../lib")
+sys.path.insert(0, "lib")
 
 import cflib.crtp
 from cflib.crazyflie import Crazyflie
@@ -157,6 +157,13 @@ if __name__ == '__main__':
     if radio_uri is None:
         print('None found.')
         sys.exit(1)
+
+    # Show info about bug 166
+    print('\n###\n'
+          'Please make sure that your NRF firmware is compiled without\n'
+          'BLE support for this to work.\n'
+          'See https://github.com/bitcraze/crazyflie-clients-python/issues/166\n'
+          '###\n')
 
     # Initialize flasher
     flasher = Flasher(radio_uri)
