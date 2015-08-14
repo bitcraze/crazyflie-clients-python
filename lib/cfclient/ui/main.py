@@ -298,7 +298,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             logger.warning("Exception while opening tabs [{}]".format(e))
 
         # References to all the device sub-menus in the "Input device" menu
-        self._all_device_menus = ()
+        self._all_role_menus = ()
         # Used to filter what new devices to add default mapping to
         self._available_devices = ()
         # Keep track of mux nodes so we can enable according to how many
@@ -323,7 +323,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                                    enabled=False)
                 self._menu_inputdevice.addMenu(sub_node)
                 mux_subnodes += (sub_node, )
-                self._all_device_menus += (sub_node, )
+                self._all_role_menus += ({"muxmenu": node,
+                                          "rolemenu": sub_node}, )
             node.setData((m, mux_subnodes))
 
         self._mapping_support = True
@@ -536,7 +537,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         """Called when a new input device has been selected from the menu. The
         data in the menu object is the associated map menu (directly under the
         item in the menu) and the raw device"""
-        (map_menu, device) = self.sender().data().toPyObject()
+        (map_menu, device, mux_menu) = self.sender().data().toPyObject()
         if not checked:
             if map_menu:
                 map_menu.setEnabled(False)
@@ -546,6 +547,13 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         else:
             if map_menu:
                 map_menu.setEnabled(True)
+
+            (mux, sub_nodes) = mux_menu.data().toPyObject()
+            for role_node in sub_nodes:
+                for dev_node in role_node.children():
+                    if type(dev_node) is QAction and dev_node.isChecked():
+                        if device.name == dev_node.text() and dev_node is not self.sender():
+                            dev_node.setChecked(False)
 
             role_in_mux = str(self.sender().parent().title()).strip()
             logger.info("Role of {} is {}".format(device.name,
@@ -571,19 +579,21 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
     def device_discovery(self, devs):
         """Called when new devices have been added"""
-        for menu in self._all_device_menus:
-            dev_group = QActionGroup(menu, exclusive=True)
+        for menu in self._all_role_menus:
+            role_menu = menu["rolemenu"]
+            mux_menu = menu["muxmenu"]
+            dev_group = QActionGroup(role_menu, exclusive=True)
             for d in devs:
-                dev_node = QAction(d.name, menu, checkable=True,
+                dev_node = QAction(d.name, role_menu, checkable=True,
                                    enabled=True)
-                menu.addAction(dev_node)
+                role_menu.addAction(dev_node)
                 dev_group.addAction(dev_node)
                 dev_node.toggled.connect(self._inputdevice_selected)
 
                 map_node = None
                 if d.supports_mapping:
-                    map_node = QMenu("\tInput map", menu, enabled=False)
-                    map_group = QActionGroup(menu, exclusive=True)
+                    map_node = QMenu("\tInput map", role_menu, enabled=False)
+                    map_group = QActionGroup(role_menu, exclusive=True)
                     # Connect device node to map node for easy
                     # enabling/disabling when selection changes and device
                     # to easily enable it
@@ -603,8 +613,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                             last_map = Config().get("device_config_mapping")
                             if last_map.has_key(d.name) and last_map[d.name] == c:
                                 node.setChecked(True)
-                    menu.addMenu(map_node)
-                dev_node.setData((map_node, d))
+                    role_menu.addMenu(map_node)
+                dev_node.setData((map_node, d, mux_menu))
 
         # Update the list of what devices we found
         # to avoid selecting default mapping for all devices when
@@ -630,13 +640,13 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         # TODO: This will only work for the "Normal" mux so this will be
         #       selected by default
         if Config().get("input_device") in [d.name for d in devs]:
-            for dev_menu in self._all_device_menus[0].actions():
+            for dev_menu in self._all_role_menus[0]["rolemenu"].actions():
                 if dev_menu.text() == Config().get("input_device"):
                     dev_menu.setChecked(True)
         else:
             # Select the first device in the first mux (will always be "Normal"
             # mux)
-            self._all_device_menus[0].actions()[0].setChecked(True)
+            self._all_role_menus[0]["rolemenu"].actions()[0].setChecked(True)
             logger.info("Select first device")
 
         self._update_input_device_footer()

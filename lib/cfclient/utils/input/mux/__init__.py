@@ -45,6 +45,13 @@ class InputMux(object):
         self.input = input_layer
 
     def _open_new_device(self, dev, role):
+        # Silently close device if open as other role
+        for r in self._devs:
+            if self._devs[r]:
+                if self._devs[r] == dev:
+                    self._devs[r].close()
+                    self._devs[r] = None
+
         old_dev = self._devs[role]
         self._devs[role] = dev
         self._devs[role].open()

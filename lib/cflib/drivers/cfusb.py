@@ -159,11 +159,18 @@ class CfUsb:
             else:
                 dataIn = self.handle.read(0x81, 64, timeout=20)
         except usb.USBError as e:
-            if e.backend_error_code == -7:
-                # Normal, the read was empty
+            try:
+                if e.backend_error_code == -7:
+                    # Normal, the read was empty
+                    pass
+                else:
+                    raise IOError("Crazyflie disconnected")
+            except AttributeError as e:
+                # pyusb < 1.0 doesn't implement getting the underlying error
+                # number and it seems as if it's not possible to detect
+                # if the cable is disconnected. So this detection is not
+                # supported, but the "normal" case will work.
                 pass
-            else:
-                raise IOError("Crazyflie disconnected")
 
         return dataIn
 

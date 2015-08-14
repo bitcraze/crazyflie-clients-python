@@ -169,10 +169,7 @@ class FlightTab(Tab, flight_tab_class):
 
         self.helper.cf.param.add_update_callback(
                     group="cpu", name="flash",
-                    cb=(lambda name, checked:
-                    self.clientXModeCheckbox.setEnabled(
-                        True if eval(checked) <= 128 else False
-                    )))
+                    cb=self._set_enable_client_xmode)
 
         self.helper.cf.param.add_update_callback(
                     group="ring", name="headlightEnable",
@@ -216,6 +213,13 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.inputDeviceReader.limiting_updated.add_callback(
             self._limiting_updated.emit)
         self._limiting_updated.connect(self._set_limiting_enabled)
+
+    def _set_enable_client_xmode(self, name, value):
+        if eval(value) <= 128:
+            self.clientXModeCheckbox.setEnabled(True)
+        else:
+            self.clientXModeCheckbox.setEnabled(False)
+            self.clientXModeCheckbox.setChecked(False)
 
     def _set_limiting_enabled(self, rp_limiting_enabled,
                                     yaw_limiting_enabled,
@@ -508,8 +512,11 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.cf.param.set_value("ring.headlightEnable", str(state))
 
     def _ring_populate_dropdown(self):
-        nbr = int(self.helper.cf.param.values["ring"]["neffect"])
-        current = int(self.helper.cf.param.values["ring"]["effect"])
+        try:
+            nbr = int(self.helper.cf.param.values["ring"]["neffect"])
+            current = int(self.helper.cf.param.values["ring"]["effect"])
+        except KeyError:
+            return
 
         hardcoded_names = {0: "Off",
                            1: "White spinner",
@@ -521,7 +528,9 @@ class FlightTab(Tab, flight_tab_class):
                            7: "Solid color effect",
                            8: "Factory test",
                            9: "Battery status",
-                           10: "Boat lights"}
+                           10: "Boat lights",
+                           11: "Alert",
+                           12: "Gravity"}
 
         for i in range(nbr+1):
             name = "{}: ".format(i)
