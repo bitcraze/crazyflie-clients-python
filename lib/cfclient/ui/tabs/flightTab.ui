@@ -624,6 +624,26 @@
                 </property>
                </widget>
               </item>
+              <item row="1" column="12" rowspan="5">
+               <widget class="QProgressBar" name="batteryVoltage">
+                <property name="maximum">
+                 <number>65535</number>
+                </property>
+                <property name="value">
+                 <number>0</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="12">
+               <widget class="QLabel" name="batLabel">
+                <property name="text">
+                 <string>Bat</string>
+                </property>
+               </widget>
+              </item>
               <item row="1" column="2">
                <widget class="QLineEdit" name="targetThrust"/>
               </item>

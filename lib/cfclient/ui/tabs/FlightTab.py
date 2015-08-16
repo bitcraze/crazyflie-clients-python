@@ -32,6 +32,7 @@ The flight control tab shows telemetry data and flight settings.
 __author__ = 'Bitcraze AB'
 __all__ = ['FlightTab']
 
+import os
 import sys
 
 import logging
@@ -54,11 +55,19 @@ from cfclient.ui.tab import Tab
 
 from cflib.crazyflie.mem import MemoryElement
 
-flight_tab_class = uic.loadUiType(sys.path[0] +
-                                  "/cfclient/ui/tabs/flightTab.ui")[0]
+ui_path = os.path.join(sys.path[0], "cfclient", "ui", "tabs")
+
+flight_tab_class = uic.loadUiType(os.path.join(ui_path, "flightTab.ui"))[0]
 
 MAX_THRUST = 65365.0
 
+# originally taken from firmware, but experimentation confirmed
+# lower bound is ~2.5
+BATTERY_VOLTAGE_MIN = 2.5
+BATTERY_VOLTAGE_MAX = 4.2
+
+class BatteryStates:
+    Battery, Charging, Charged, LowPower = range(4)
 
 class FlightTab(Tab, flight_tab_class):
 
@@ -68,6 +77,7 @@ class FlightTab(Tab, flight_tab_class):
     _imu_data_signal = pyqtSignal(int, object, object)
     _althold_data_signal = pyqtSignal(int, object, object)
     _baro_data_signal = pyqtSignal(int, object, object)
+    _pm_data_signal = pyqtSignal(int, object, object)
 
     _input_updated_signal = pyqtSignal(float, float, float, float)
     _rp_trim_updated_signal = pyqtSignal(float, float)
@@ -86,11 +96,22 @@ class FlightTab(Tab, flight_tab_class):
         super(FlightTab, self).__init__(*args)
         self.setupUi(self)
 
+        with open(os.path.join(ui_path, "flightTab.qss")) as f:
+            stylesheet = f.read()
+        self.setStyleSheet(stylesheet)
+
         self.tabName = "Flight Control"
         self.menuName = "Flight Control"
 
         self.tabWidget = tabWidget
         self.helper = helper
+
+        self.thrustProgress.setTextVisible(False)
+        self.actualM1.setTextVisible(False)
+        self.actualM2.setTextVisible(False)
+        self.actualM3.setTextVisible(False)
+        self.actualM4.setTextVisible(False)
+        self.batteryVoltage.setTextVisible(False)
 
         self.disconnectedSignal.connect(self.disconnected)
         self.connectionFinishedSignal.connect(self.connected)
@@ -116,6 +137,7 @@ class FlightTab(Tab, flight_tab_class):
         self._baro_data_signal.connect(self._baro_data_received)
         self._althold_data_signal.connect(self._althold_data_received)
         self._motor_data_signal.connect(self._motor_data_received)
+        self._pm_data_signal.connect(self._pm_data_received)
 
         self._log_error_signal.connect(self._logging_error)
 
@@ -290,23 +312,28 @@ class FlightTab(Tab, flight_tab_class):
             self.ai.setRollPitch(-data["stabilizer.roll"],
                                  data["stabilizer.pitch"])
 
+    def _pm_data_received(self, timestamp, data, logconf):
+        if self.isVisible():
+            scaledVoltage = (data["pm.vbat"] - BATTERY_VOLTAGE_MIN) / (BATTERY_VOLTAGE_MAX - BATTERY_VOLTAGE_MIN)
+            self.batteryVoltage.setValue(scaledVoltage * self.batteryVoltage.maximum())
+            color = "blue"
+            # TODO firmware reports fully-charged state as 'Battery', rather than 'Charged'
+            if data["pm.state"] in [BatteryStates.Charging, BatteryStates.Charged]:
+                color = "green"
+            elif data["pm.state"] == BatteryStates.LowPower:
+                color = "red"
+            self.batteryVoltage.setStyleSheet("::chunk { background-color: " + color + "; }")
+
     def connected(self, linkURI):
+        logConfigs = []
+
         # IMU & THRUST
         lg = LogConfig("Stabilizer", Config().get("ui_update_period"))
         lg.add_variable("stabilizer.roll", "float")
         lg.add_variable("stabilizer.pitch", "float")
         lg.add_variable("stabilizer.yaw", "float")
         lg.add_variable("stabilizer.thrust", "uint16_t")
-
-        try:
-            self.helper.cf.log.add_config(lg)
-            lg.data_received_cb.add_callback(self._imu_data_signal.emit)
-            lg.error_cb.add_callback(self._log_error_signal.emit)
-            lg.start()
-        except KeyError as e:
-            logger.warning(str(e))
-        except AttributeError as e:
-            logger.warning(str(e))
+        logConfigs.append((lg, self._imu_data_signal))
 
         # MOTOR
         lg = LogConfig("Motors", Config().get("ui_update_period"))
@@ -314,16 +341,24 @@ class FlightTab(Tab, flight_tab_class):
         lg.add_variable("motor.m2")
         lg.add_variable("motor.m3")
         lg.add_variable("motor.m4")
+        logConfigs.append((lg, self._motor_data_signal))
 
-        try:
-            self.helper.cf.log.add_config(lg)
-            lg.data_received_cb.add_callback(self._motor_data_signal.emit)
-            lg.error_cb.add_callback(self._log_error_signal.emit)
-            lg.start()
-        except KeyError as e:
-            logger.warning(str(e))
-        except AttributeError as e:
-            logger.warning(str(e))
+        # BATTERY
+        lg = LogConfig("Power", Config().get("ui_update_period"))
+        lg.add_variable("pm.vbat", "float")
+        lg.add_variable("pm.state", "int8_t")
+        logConfigs.append((lg, self._pm_data_signal))
+
+        for lg, signal in logConfigs:
+            try:
+                self.helper.cf.log.add_config(lg)
+                lg.data_received_cb.add_callback(signal.emit)
+                lg.error_cb.add_callback(self._log_error_signal.emit)
+                lg.start()
+            except KeyError as e:
+                logger.warning(str(e))
+            except AttributeError as e:
+                logger.warning(str(e))
 
         if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x01):
             self._led_ring_effect.setEnabled(True)
@@ -376,6 +411,7 @@ class FlightTab(Tab, flight_tab_class):
         self.actualM2.setValue(0)
         self.actualM3.setValue(0)
         self.actualM4.setValue(0)
+        self.batteryVoltage.setValue(0)
         self.actualRoll.setText("")
         self.actualPitch.setText("")
         self.actualYaw.setText("")
