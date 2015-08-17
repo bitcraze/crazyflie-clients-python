@@ -186,9 +186,9 @@
     <addaction name="separator"/>
     <addaction name="_menuItem_openconfigfolder"/>
    </widget>
-   <widget class="QMenu" name="menuCrazyflie">
+   <widget class="QMenu" name="menuConnect">
     <property name="title">
-     <string>Crazyflie</string>
+     <string>Connect</string>
     </property>
     <addaction name="menuItemConnect"/>
     <addaction name="menuItemQuickConnect"/>
@@ -205,7 +205,7 @@
     <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuCrazyflie"/>
+   <addaction name="menuConnect"/>
    <addaction name="_menu_inputdevice"/>
    <addaction name="menuSettings"/>
    <addaction name="menuView"/>
@@ -220,9 +220,6 @@
   <action name="menuItemExit">
    <property name="text">
     <string>Exit</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::NoRole</enum>
    </property>
   </action>
   <action name="menuItemRegulation">
