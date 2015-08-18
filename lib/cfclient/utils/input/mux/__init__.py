@@ -52,11 +52,10 @@ class InputMux(object):
                     self._devs[r].close()
                     self._devs[r] = None
 
-        old_dev = self._devs[role]
+        if self._devs[role]:
+            self._devs[role].close()
         self._devs[role] = dev
         self._devs[role].open()
-        if old_dev:
-            old_dev.close()
 
     def supported_roles(self):
         return self._devs.keys()

@@ -165,6 +165,13 @@ class _JS():
                 self._f.close()
                 self._f = None
                 raise IOError("Device has been disconnected")
+        except ValueError:
+            # This will happen if I/O operations are done on a closed device,
+            # which is the case when you first close and then open the device
+            # while switching device. But, in order for SDL2 to work on Linux
+            # (for debugging) the device needs to be closed before it's opened.
+            # This is the workaround to make both cases work.
+            pass
 
     def read(self):
         """ Returns a list of all joystick event since the last call """
