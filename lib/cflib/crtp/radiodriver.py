@@ -36,6 +36,7 @@ USB dongle.
 __author__ = 'Bitcraze AB'
 __all__ = ['RadioDriver']
 
+import collections
 import logging
 logger = logging.getLogger(__name__)
 
@@ -335,6 +336,8 @@ class _RadioDriverThread (threading.Thread):
         self.link_error_callback = link_error_callback
         self.link_quality_callback = link_quality_callback
         self.retryBeforeDisconnect = self.RETRYCOUNT_BEFORE_DISCONNECT
+        self.retries = collections.deque()
+        self.retry_sum = 0
 
     def stop(self):
         """ Stop the thread """
@@ -371,7 +374,14 @@ class _RadioDriverThread (threading.Thread):
                 continue
 
             if (self.link_quality_callback is not None):
-                self.link_quality_callback((10 - ackStatus.retry) * 10)
+                # track the mean of a sliding window of the last N packets
+                retry = 10 - ackStatus.retry
+                self.retries.append(retry)
+                self.retry_sum += retry
+                if len(self.retries) > 100:
+                    self.retry_sum -= self.retries.popleft()
+                link_quality = float(self.retry_sum) / len(self.retries) * 10
+                self.link_quality_callback(link_quality)
 
             # If no copter, retry
             if ackStatus.ack is False:
