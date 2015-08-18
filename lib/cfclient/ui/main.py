@@ -318,7 +318,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self._all_mux_nodes += (node, )
             mux_subnodes = ()
             for name in m.supported_roles():
-                sub_node = QMenu("\t{}".format(name),
+                sub_node = QMenu("    {}".format(name),
                                    self._menu_inputdevice,
                                    enabled=False)
                 self._menu_inputdevice.addMenu(sub_node)
@@ -592,7 +592,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
                 map_node = None
                 if d.supports_mapping:
-                    map_node = QMenu("\tInput map", role_menu, enabled=False)
+                    map_node = QMenu("    Input map", role_menu, enabled=False)
                     map_group = QActionGroup(role_menu, exclusive=True)
                     # Connect device node to map node for easy
                     # enabling/disabling when selection changes and device
