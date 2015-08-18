@@ -552,7 +552,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             for role_node in sub_nodes:
                 for dev_node in role_node.children():
                     if type(dev_node) is QAction and dev_node.isChecked():
-                        if device.name == dev_node.text() and dev_node is not self.sender():
+                        if device.id == dev_node.data().toPyObject()[1].id \
+                                and dev_node is not self.sender():
                             dev_node.setChecked(False)
 
             role_in_mux = str(self.sender().parent().title()).strip()
