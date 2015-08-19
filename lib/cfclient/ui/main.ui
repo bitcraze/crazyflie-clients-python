@@ -333,6 +333,9 @@
    </property>
   </action>
   <action name="_menuitem_rescandevices">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Rescan devices</string>
    </property>
