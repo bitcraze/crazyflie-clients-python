@@ -3,11 +3,6 @@ Crazyflie Python client/API
 
 Checks
 ------
- - Verify that input devices are working
-     - No input devices
-     - One input devices
-     - Multiple input devices
-     - Map device from scratch and by loading previous configuration
  - Verify that configuration files are still working
  - Verify that params are working
      - Param list shows all params
@@ -20,7 +15,11 @@ Checks
      - Possible to write logged data from log configuration to file
  - Verify that it's possible to connect to the debugdriver
  - Verify that the following works on all OSes supported
-     - Open/close one and multiple input devices
+     - Verify that input devices are working
+         - No input devices
+         - One input devices
+         - Multiple input devices
+         - Map device from scratch and by loading previous configuration
      - Scan and connect to Crazyflie via Crazyradio
      - Scan and connect to Crazyflie via USB
      - Negative tests such as
