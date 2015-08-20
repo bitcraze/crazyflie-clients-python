@@ -77,18 +77,19 @@ class _SDLEventDispatcher(Thread):
 
 class _JS():
     """Wrapper for one input device"""
-    def __init__(self, num, name):
+    def __init__(self, sdl_index, sdl_id, name):
         self.axes = []
         self.buttons = []
         self.name = MODULE_NAME
         self._j = None
         self._btn_count = 0
-        self._id = num
+        self._id = sdl_id
+        self._index = sdl_index
         self._name = name
         self._event_queue = Queue()
 
     def open(self):
-        self._j = sdl2.SDL_JoystickOpen(self._id)
+        self._j = sdl2.SDL_JoystickOpen(self._index)
         self._btn_count = sdl2.SDL_JoystickNumButtons(self._j)
 
         self.axes = list(0 for i in range(sdl2.SDL_JoystickNumAxes(self._j)))
@@ -174,13 +175,14 @@ class PySDL2Reader():
         names = []
 
         nbrOfInputs = sdl2.joystick.SDL_NumJoysticks()
-        for i in range(0, nbrOfInputs):
-            j = sdl2.joystick.SDL_JoystickOpen(i)
+        for sdl_index in range(0, nbrOfInputs):
+            j = sdl2.joystick.SDL_JoystickOpen(sdl_index)
             name = sdl2.joystick.SDL_JoystickName(j)
             if names.count(name) > 0:
                 name = "{0} #{1}".format(name, names.count(name) + 1)
-            dev.append({"id": i, "name": name})
-            self._js[i] = _JS(i, name)
+            sdl_id = sdl2.joystick.SDL_JoystickInstanceID(j)
+            dev.append({"id": sdl_id, "name": name})
+            self._js[sdl_id] = _JS(sdl_index, sdl_id, name)
             names.append(name)
             sdl2.joystick.SDL_JoystickClose(j)
         return dev
