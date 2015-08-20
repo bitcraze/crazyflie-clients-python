@@ -91,41 +91,6 @@ CREDITS_FORMAT = U"""
 <a href="http://www.python.org/">Python</a><br>
 """
 
-# This is temporary and will be fixed during the next release. It should
-# be picked up from the CREDITS.txt file
-CREDITS_NAMES = U"""
-We are very grateful for all the contributions we have received for this project
-and below is a list of users that have contributed to the crazyflie-pc-client.
-Thanks! <br><br>
-
-Allyn Bauer <br>
-Anton Krasovsky <br>
-Arnaud Taffanel <br>
-Chadwick McHenry <br>
-Daniel Lee <br>
-David Benes <br>
-Gina Häußge <br>
-Jannis Redmann <br>
-Marcus Eliasson <br>
-Marlon Petry <br>
-Mike Voytovich <br>
-Philipp A. Mohrenweiser <br>
-Surrender <br>
-Thomas DE BONA <br>
-Tobias Antonsson <br>
-Tyler Anderson <br>
-bitcraze <br>
-cstanke <br>
-danmark <br>
-erget <br>
-omwdunkley <br>
-
-<br>
-This list of names have been automatically generated using the following command
-in the crazyflie-clients-python repository:<br>
-git shortlog -s | cut -c8-
-"""
-
 class AboutDialog(QtGui.QWidget, about_widget_class):
 
     _disconnected_signal = pyqtSignal(str)
@@ -159,8 +124,17 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         self._disconnected_signal.connect(self._disconnected)
         helper.cf.disconnected.add_callback(self._disconnected_signal.emit)
 
+        # Open the Credits file and show it in the UI
+        credits = U""
+        try:
+            with open("CREDITS.txt", 'r') as f:
+                for line in f:
+                    credits += U"{}<br>".format(line.decode("UTF-8"))
+        except IOError:
+            credits = U""
+
         self._credits.setHtml(
-            CREDITS_FORMAT.format(contribs=CREDITS_NAMES)
+            CREDITS_FORMAT.format(contribs=credits)
         )
 
     def showEvent(self, event):

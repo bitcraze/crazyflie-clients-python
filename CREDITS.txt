@@ -1,5 +1,4 @@
-We are very grateful for all the contributions we have received for this project
-and below is a list of users that have contributed to the crazyflie-pc-client.
+We are very grateful for all the contributions we have received for this project and below is a list of users that have contributed to the crazyflie-pc-client.
 Thanks!
 
 Allyn Bauer
@@ -33,6 +32,5 @@ Tobias Antonsson
 Tyler Anderson
 Wolfgang Hoenig
 
-This list of names have been automatically generated using the following command
-in the crazyflie-pc-client repository:
+This list of names have been automatically generated using the following command in the crazyflie-pc-client repository:
 git shortlog -sn | cut -f2 | sort -f
