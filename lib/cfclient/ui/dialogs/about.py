@@ -157,7 +157,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
 
         self._input_readers_text = ""
         #readers = self._helper.inputDeviceReader.getAvailableDevices()
-        for reader in cfclient.utils.inputreaders.initialized_readers:
+        for reader in cfclient.utils.input.inputreaders.initialized_readers:
             self._input_readers_text += INPUT_READER_FORMAT.format(reader.name,
                                                                    len(reader.devices()))
         if len(self._input_readers_text) == 0:

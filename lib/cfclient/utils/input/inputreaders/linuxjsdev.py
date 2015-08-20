@@ -191,24 +191,26 @@ class Joystick():
     def __init__(self):
         self.name = MODULE_NAME
         self._js = {}
+        self._devices = []
 
     def devices(self):
         """
         Returns a dict with device_id as key and device name as value of all
-        the detected devices.
+        the detected devices (result is cached once one or more device are
+        found).
         """
-        devices = []
 
-        syspaths = glob.glob("/sys/class/input/js*")
+        if len(self._devices) == 0:
+            syspaths = glob.glob("/sys/class/input/js*")
 
-        for path in syspaths:
-            device_id = int(os.path.basename(path)[2:])
-            with open(path + "/device/name") as namefile:
-                name = namefile.read().strip()
-            self._js[device_id] = _JS(device_id, name)
-            devices.append({"id": device_id, "name": name})
+            for path in syspaths:
+                device_id = int(os.path.basename(path)[2:])
+                with open(path + "/device/name") as namefile:
+                    name = namefile.read().strip()
+                self._js[device_id] = _JS(device_id, name)
+                self._devices.append({"id": device_id, "name": name})
 
-        return devices
+        return self._devices
 
     def open(self, device_id):
         """

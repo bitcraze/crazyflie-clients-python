@@ -149,6 +149,7 @@ class PySDL2Reader():
         self.name = MODULE_NAME
         self._event_dispatcher = _SDLEventDispatcher(self._dispatch_events)
         self._event_dispatcher.start()
+        self._devices = []
 
     def open(self, device_id):
         """Initialize the reading and open the device with deviceId and set
@@ -171,18 +172,18 @@ class PySDL2Reader():
     def devices(self):
         """List all the available devices."""
         logger.info("Looking for devices")
-        dev = []
         names = []
-
-        nbrOfInputs = sdl2.joystick.SDL_NumJoysticks()
-        for sdl_index in range(0, nbrOfInputs):
-            j = sdl2.joystick.SDL_JoystickOpen(sdl_index)
-            name = sdl2.joystick.SDL_JoystickName(j)
-            if names.count(name) > 0:
-                name = "{0} #{1}".format(name, names.count(name) + 1)
-            sdl_id = sdl2.joystick.SDL_JoystickInstanceID(j)
-            dev.append({"id": sdl_id, "name": name})
-            self._js[sdl_id] = _JS(sdl_index, sdl_id, name)
-            names.append(name)
-            sdl2.joystick.SDL_JoystickClose(j)
-        return dev
+        if len(self._devices) == 0:
+            nbrOfInputs = sdl2.joystick.SDL_NumJoysticks()
+            logger.info("Found {} devices".format(nbrOfInputs))
+            for sdl_index in range(0, nbrOfInputs):
+                j = sdl2.joystick.SDL_JoystickOpen(sdl_index)
+                name = sdl2.joystick.SDL_JoystickName(j)
+                if names.count(name) > 0:
+                    name = "{0} #{1}".format(name, names.count(name) + 1)
+                sdl_id = sdl2.joystick.SDL_JoystickInstanceID(j)
+                self._devices.append({"id": sdl_id, "name": name})
+                self._js[sdl_id] = _JS(sdl_index, sdl_id, name)
+                names.append(name)
+                sdl2.joystick.SDL_JoystickClose(j)
+        return self._devices
