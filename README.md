@@ -13,7 +13,7 @@ Installation
 
 To install the Crazyflie PC client in Linux, you can run the setup script with:
 
-```sudo setup.sh```
+```sudo setup_linux.sh```
 
 This will install the Crazyflie PC client systemwide, create a udev entry for
 the Crazyradio and setup the permissions so that the current user can use the
