@@ -25,6 +25,7 @@ Checks
      - Negative tests such as
          - Disconnect Crazyflie via USB when connected
          - Disconnect Crazyradio when connected
+     - Showing the Debug tab in the About dialog
  - Verify that it's possible to change the Crazyflie configuration block
  - Verify bootloading, both from UI and cfload
  - Verify that it's possible to connect to a Crazyflie and control it
