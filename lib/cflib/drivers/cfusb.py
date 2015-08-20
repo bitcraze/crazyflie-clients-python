@@ -160,7 +160,7 @@ class CfUsb:
                 dataIn = self.handle.read(0x81, 64, timeout=20)
         except usb.USBError as e:
             try:
-                if e.backend_error_code == -7:
+                if e.backend_error_code == -7 or e.backend_error_code == -116:
                     # Normal, the read was empty
                     pass
                 else:
