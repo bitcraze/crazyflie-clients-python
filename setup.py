@@ -39,8 +39,12 @@ if sys.platform.startswith('win32'):
                                          "cfclient.ui.*",
                                          "cfclient.ui.tabs.*",
                                          "cfclient.ui.widgets.*",
-                                         "cfclient.ui.dialogs.*"],
-                            "excludes": ["AppKit"],
+                                         "cfclient.ui.dialogs.*",
+                                         "cfclient.utils.input.inputreaders.*",
+                                         "cfclient.utils.input.inputinterfaces.*",
+                                         'zmq.backend.cython'],
+                            "excludes": ["AppKit", 'zmq.libzmq'],
+                            'dll_excludes': ['libzmq.pyd'],
                             "skip_archive": True}})
 
     toplevel_data_files.append('SDL2.dll')

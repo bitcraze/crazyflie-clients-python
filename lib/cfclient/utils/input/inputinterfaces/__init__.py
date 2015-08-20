@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 found_interfaces = [os.path.splitext(os.path.basename(f))[0] for
              f in glob.glob(os.path.dirname(__file__) + "/[A-Za-z]*.py")]
 if len(found_interfaces) == 0:
-    found_readers = [os.path.splitext(os.path.basename(f))[0] for
+    found_interfaces = [os.path.splitext(os.path.basename(f))[0] for
                  f in glob.glob(os.path.dirname(__file__) +
                                 "/[A-Za-z]*.pyc")]
 
