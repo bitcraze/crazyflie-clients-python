@@ -41,10 +41,10 @@ from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
 from cfclient.ui.tab import Tab
 
-logblock_tab_class = uic.loadUiType(sys.path[0] +
-                                 "/cfclient/ui/tabs/logBlockTab.ui")[0]
+logblock_tab_class = uic.loadUiType(sys.path[0] + "/cfclient/ui/tabs/logBlockTab.ui")[0]
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView
@@ -59,6 +59,7 @@ from cfclient.utils.logdatawriter import LogWriter
 class LogBlockChildItem(object):
     """Class that acts as a child in the tree and represents one variable in
     a log block"""
+
     def __init__(self, parent, name):
         """Initialize the node"""
         self.parent = parent
@@ -109,9 +110,9 @@ class LogBlockItem(object):
         """Callback when a block has been started in the Crazyflie"""
         logger.debug("%s started: %s", self.name, started)
         if started:
-             self._block_started = True
+            self._block_started = True
         else:
-             self._block_started = False
+            self._block_started = False
         self._doing_transaction = False
         self._model.refresh()
 
@@ -282,7 +283,7 @@ class CheckboxDelegate(QStyledItemDelegate):
         col = index.column()
         if not item.parent and (col == 3 or col == 4):
             s = QStyleOptionButton()
-            checkbox_rect = QApplication.style().\
+            checkbox_rect = QApplication.style(). \
                 subElementRect(QStyle.SE_CheckBoxIndicator, option)
             s.rect = option.rect
             center_offset = s.rect.width() / 2 - checkbox_rect.width() / 2
