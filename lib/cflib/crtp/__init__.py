@@ -31,8 +31,8 @@
 __author__ = 'Bitcraze AB'
 __all__ = []
 
-
 import logging
+
 logger = logging.getLogger(__name__)
 
 from .radiodriver import RadioDriver
@@ -56,7 +56,7 @@ def init_drivers(enable_debug_driver=False):
             continue
 
 
-def scan_interfaces(address = None):
+def scan_interfaces(address=None):
     """ Scan all the interfaces for available Crazyflies """
     available = []
     found = []

@@ -39,6 +39,7 @@ except Exception as e:
     raise Exception("ZMQ library probably not installed ({})".format(e))
 
 from cfclient.utils.config import Config
+
 if not Config().get("enable_zmq_input"):
     raise Exception("ZMQ input disabled in config file")
 
@@ -54,8 +55,8 @@ logger = logging.getLogger(__name__)
 MODULE_MAIN = "ZMQReader"
 MODULE_NAME = "ZMQ"
 
-class _PullReader(Thread):
 
+class _PullReader(Thread):
     def __init__(self, receiver, callback, *args):
         super(_PullReader, self).__init__(*args)
         self._receiver = receiver
@@ -66,8 +67,10 @@ class _PullReader(Thread):
         while True:
             self._cb(self._receiver.recv_json())
 
+
 class ZMQReader:
     """Used for reading data from input devices using the PyGame API."""
+
     def __init__(self):
         context = zmq.Context()
         receiver = context.socket(zmq.PULL)
@@ -116,4 +119,3 @@ class ZMQReader:
         # As a temporary workaround we always say we have ZMQ
         # connected. If it's not connected, there's just no data.
         return [{"id": 0, "name": "ZMQ@{}".format(self._bind_addr)}]
-

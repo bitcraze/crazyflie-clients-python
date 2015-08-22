@@ -36,8 +36,9 @@ import sys, time
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal
-  
+
 console_class = uic.loadUiType(sys.path[0] + "/cfclient/ui/toolboxes/consoleToolbox.ui")[0]
+
 
 class ConsoleToolbox(QtGui.QWidget, console_class):
     """Console toolbox for showing printouts from the Crazyflie"""
@@ -46,20 +47,19 @@ class ConsoleToolbox(QtGui.QWidget, console_class):
     def __init__(self, helper, *args):
         super(ConsoleToolbox, self).__init__(*args)
         self.setupUi(self)
-        
+
         self.update.connect(self.console.insertPlainText)
-        
+
         self.helper = helper
 
     def getName(self):
         return 'Console'
-    
+
     def enable(self):
         self.helper.cf.console.receivedChar.add_callback(self.update.emit)
-    
+
     def disable(self):
         self.helper.cf.console.receivedChar.remove_callback(self.update.emit)
-    
+
     def preferedDockArea(self):
         return Qt.BottomDockWidgetArea
-

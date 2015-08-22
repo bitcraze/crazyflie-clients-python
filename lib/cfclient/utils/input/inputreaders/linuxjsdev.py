@@ -31,6 +31,7 @@ This module is very linux specific but should work on any CPU platform
 """
 
 import sys
+
 if not sys.platform.startswith('linux'):
     raise Exception("Only supported on Linux")
 
@@ -56,17 +57,19 @@ JS_EVENT_BUTTON = 0x001
 JS_EVENT_AXIS = 0x002
 JS_EVENT_INIT = 0x080
 
-#ioctls
+# ioctls
 JSIOCGAXES = 0x80016a11
 JSIOCGBUTTONS = 0x80016a12
 
 MODULE_MAIN = "Joystick"
 MODULE_NAME = "linuxjsdev"
 
+
 class JEvent(object):
     """
     Joystick event class. Encapsulate single joystick event.
     """
+
     def __init__(self, evt_type, number, value):
         self.type = evt_type
         self.number = number
@@ -74,11 +77,12 @@ class JEvent(object):
 
     def __repr__(self):
         return "JEvent(type={}, number={}, value={})".format(self.type,
-                   self.number, self.value)
+                                                             self.number, self.value)
 
-#Constants
+# Constants
 TYPE_BUTTON = 1
 TYPE_AXIS = 2
+
 
 class _JS():
     def __init__(self, num, name):
@@ -100,7 +104,7 @@ class _JS():
         self._f = open("/dev/input/js{}".format(self.num), "r")
         fcntl.fcntl(self._f.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
 
-        #Get number of axis and button
+        # Get number of axis and button
         val = ctypes.c_int()
         if fcntl.ioctl(self._f.fileno(), JSIOCGAXES, val) != 0:
             self._f.close()
@@ -142,7 +146,7 @@ class _JS():
 
     def __decode_event(self, jsdata):
         """ Decode a jsdev event into a dict """
-        #TODO: Add timestamp?
+        # TODO: Add timestamp?
         if jsdata[JE_TYPE] & JS_EVENT_AXIS != 0:
             return JEvent(evt_type=TYPE_AXIS,
                           number=jsdata[JE_NUMBER],

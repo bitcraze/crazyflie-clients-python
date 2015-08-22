@@ -57,7 +57,9 @@ CMD_INFO_DETAILS = 2
 MAX_LOG_DATA_PACKET_SIZE = 30
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class MemoryElement(object):
     """A memory """
@@ -90,11 +92,12 @@ class MemoryElement(object):
     def __str__(self):
         """Generate debug string for memory"""
         return ("Memory: id={}, type={}, size={}".format(
-                self.id, MemoryElement.type_to_string(self.type), self.size))
+            self.id, MemoryElement.type_to_string(self.type), self.size))
 
 
 class LED:
     """Used to set color/intensity of one LED in the LED-ring"""
+
     def __init__(self):
         """Initialize to off"""
         self.r = 0
@@ -110,9 +113,11 @@ class LED:
         if intensity:
             self.intensity = intensity
 
+
 class LEDDriverMemory(MemoryElement):
     """Memory interface for using the LED-ring mapped memory for setting RGB
        values for all the LEDs in the ring"""
+
     def __init__(self, id, type, size, mem_handler):
         """Initialize with 12 LEDs"""
         super(LEDDriverMemory, self).__init__(id=id, type=type, size=size,
@@ -139,9 +144,9 @@ class LEDDriverMemory(MemoryElement):
             # RGB into 2 bytes RGB565. Then shifts the value of each color to
             # LSB, applies the intensity  and shifts them back for correct
             # alignment on 2 bytes.
-            R5 = (int)((((int(led.r) & 0xFF) * 249 + 1014) >> 11) & 0x1F) * led.intensity/100
-            G6 = (int)((((int(led.g) & 0xFF) * 253 + 505) >> 10) & 0x3F) * led.intensity/100
-            B5 = (int)((((int(led.b) & 0xFF) * 249 + 1014) >> 11) & 0x1F) * led.intensity/100
+            R5 = (int)((((int(led.r) & 0xFF) * 249 + 1014) >> 11) & 0x1F) * led.intensity / 100
+            G6 = (int)((((int(led.g) & 0xFF) * 253 + 505) >> 10) & 0x3F) * led.intensity / 100
+            B5 = (int)((((int(led.b) & 0xFF) * 249 + 1014) >> 11) & 0x1F) * led.intensity / 100
             tmp = (R5 << 11) | (G6 << 5) | (B5 << 0)
             data += (tmp >> 8, tmp & 0xFF)
         self.mem_handler.write(self, 0x00, data, flush_queue=True)
@@ -203,7 +208,7 @@ class I2CElement(MemoryElement):
                 done = True
 
             if done:
-                if self._checksum256(data[:len(data)-1]) == ord(data[len(data)-1]):
+                if self._checksum256(data[:len(data) - 1]) == ord(data[len(data) - 1]):
                     self.valid = True
                 if self._update_finished_cb:
                     self._update_finished_cb(self)
@@ -228,7 +233,7 @@ class I2CElement(MemoryElement):
 
         self._write_finished_cb = write_finished_cb
 
-        self.mem_handler.write(self, 0x00, struct.unpack("B"*len(image), image))
+        self.mem_handler.write(self, 0x00, struct.unpack("B" * len(image), image))
 
     def update(self, update_finished_cb):
         """Request an update of the memory content"""
@@ -308,8 +313,6 @@ class OWElement(MemoryElement):
                     self._update_finished_cb(self)
                     self._update_finished_cb = None
 
-
-
     def _parse_and_check_elements(self, data):
         """Parse and check the CRC and length of the elements part of the memory"""
         (elem_ver, elem_len, crc) = struct.unpack("<BBB", data[0] + data[1] + data[-1])
@@ -318,11 +321,10 @@ class OWElement(MemoryElement):
         if test_crc == crc:
             while len(elem_data) > 0:
                 (eid, elen) = struct.unpack("BB", elem_data[:2])
-                self.elements[self.element_mapping[eid]] = elem_data[2:2+elen]
-                elem_data = elem_data[2+elen:]
+                self.elements[self.element_mapping[eid]] = elem_data[2:2 + elen]
+                elem_data = elem_data[2 + elen:]
             return True
         return False
-
 
     def write_done(self, mem, addr):
         if self._write_finished_cb:
@@ -340,7 +342,7 @@ class OWElement(MemoryElement):
         logger.info(self.elements.keys())
         for element in reversed(self.elements.keys()):
             elem_string = self.elements[element]
-            #logger.info(">>>> {}".format(elem_string))
+            # logger.info(">>>> {}".format(elem_string))
             key_encoding = self._rev_element_mapping[element]
             elem += struct.pack("BB", key_encoding, len(elem_string))
             elem += elem_string
@@ -358,7 +360,7 @@ class OWElement(MemoryElement):
             p += "0x{:02X} ".format(ord(s))
         logger.info(p)
 
-        self.mem_handler.write(self, 0x00, struct.unpack("B"*len(data), data))
+        self.mem_handler.write(self, 0x00, struct.unpack("B" * len(data), data))
 
         self._write_finished_cb = write_finished_cb
 
@@ -370,12 +372,12 @@ class OWElement(MemoryElement):
             logger.info("Updating content of memory {}".format(self.id))
             # Start reading the header
             self.mem_handler.read(self, 0, 11)
-        #else:
-        #    logger.warning("Already in progress of updating memory {}".format(self.id))
+            # else:
+            #    logger.warning("Already in progress of updating memory {}".format(self.id))
 
     def _parse_and_check_header(self, data):
         """Parse and check the CRC of the header part of the memory"""
-        #logger.info("Should parse header: {}".format(data))
+        # logger.info("Should parse header: {}".format(data))
         (start, self.pins, self.vid, self.pid, crc) = struct.unpack("<BIBBB", data)
         test_crc = crc32(data[:-1]) & 0x0ff
         if start == 0xEB and crc == test_crc:
@@ -385,7 +387,7 @@ class OWElement(MemoryElement):
     def __str__(self):
         """Generate debug string for memory"""
         return ("OW {} ({:02X}:{:02X}): {}".format(
-                self.addr, self.vid, self.pid, self.elements))
+            self.addr, self.vid, self.pid, self.elements))
 
     def disconnect(self):
         self._update_finished_cb = None
@@ -448,6 +450,7 @@ class _ReadRequest:
         else:
             return True
 
+
 class _WriteRequest:
     """Class used to handle memory reads that will split up the read in multiple packets in necessary"""
     MAX_DATA_LENGTH = 25
@@ -495,7 +498,7 @@ class _WriteRequest:
         reply = struct.unpack("<BBBBB", pk.data)
         self._sent_reply = reply
         # Add the data
-        pk.data += struct.pack("B"*len(data), *data)
+        pk.data += struct.pack("B" * len(data), *data)
         self._sent_packet = pk
         self.cf.send_packet(pk, expected_reply=reply, timeout=1)
 
@@ -515,6 +518,7 @@ class _WriteRequest:
             logger.info("This write request is done")
             return True
 
+
 class Memory():
     """Access memories on the Crazyflie"""
 
@@ -522,12 +526,12 @@ class Memory():
     # some of the text messages will look very strange
     # in the UI, so they are redefined here
     _err_codes = {
-            errno.ENOMEM: "No more memory available",
-            errno.ENOEXEC: "Command not found",
-            errno.ENOENT: "No such block id",
-            errno.E2BIG: "Block too large",
-            errno.EEXIST: "Block already exists"
-            }
+        errno.ENOMEM: "No more memory available",
+        errno.ENOEXEC: "Command not found",
+        errno.ENOENT: "No such block id",
+        errno.E2BIG: "Block too large",
+        errno.EEXIST: "Block already exists"
+    }
 
     def __init__(self, crazyflie=None):
         """Instantiate class and connect callbacks"""
@@ -580,7 +584,7 @@ class Memory():
         ret = ()
         for m in self.mems:
             if m.type == type:
-                ret += (m, )
+                ret += (m,)
 
         return ret
 
@@ -609,7 +613,6 @@ class Memory():
         self._write_requests_lock.release()
 
         return True
-
 
     def read(self, memory, addr, length):
         """Read the specified amount of bytes from the given memory at the given address"""
@@ -642,7 +645,7 @@ class Memory():
         logger.info("Requesting number of memories")
         pk = CRTPPacket()
         pk.set_header(CRTPPort.MEM, CHAN_INFO)
-        pk.data = (CMD_INFO_NBR, )
+        pk.data = (CMD_INFO_NBR,)
         self.cf.send_packet(pk, expected_reply=(CMD_INFO_NBR,))
 
     def _new_packet_cb(self, packet):
@@ -650,7 +653,7 @@ class Memory():
         chan = packet.channel
         cmd = packet.datal[0]
         payload = struct.pack("B" * (len(packet.datal) - 1), *packet.datal[1:])
-        #logger.info("--------------->CHAN:{}=>{}".format(chan, struct.unpack("B"*len(payload), payload)))
+        # logger.info("--------------->CHAN:{}=>{}".format(chan, struct.unpack("B"*len(payload), payload)))
 
         if chan == CHAN_INFO:
             if cmd == CMD_INFO_NBR:
@@ -691,7 +694,7 @@ class Memory():
                 # Size 4 bytes (as addr)
                 mem_size = struct.unpack("I", payload[2:6])[0]
                 # Addr (only valid for 1-wire?)
-                mem_addr_raw = struct.unpack("B"*8, payload[6:14])
+                mem_addr_raw = struct.unpack("B" * 8, payload[6:14])
                 mem_addr = ""
                 for m in mem_addr_raw:
                     mem_addr += "{:02X}".format(m)
@@ -719,7 +722,7 @@ class Memory():
                         logger.info(mem)
                     self.mems.append(mem)
                     self.mem_added_cb.call(mem)
-                    #logger.info(mem)
+                    # logger.info(mem)
 
                     self._fetch_id = mem_id + 1
 
@@ -735,7 +738,7 @@ class Memory():
                     # If there are any OW mems start reading them, otherwise we are done
                     for ow_mem in self.get_mems(MemoryElement.TYPE_1W):
                         ow_mem.update(self._mem_update_done)
-                    if len (self.get_mems(MemoryElement.TYPE_1W)) == 0:
+                    if len(self.get_mems(MemoryElement.TYPE_1W)) == 0:
                         if self._refresh_callback:
                             self._refresh_callback()
                             self._refresh_callback = None
@@ -750,7 +753,7 @@ class Memory():
                 wreq = self._write_requests[id][0]
                 if status == 0:
                     if wreq.write_done(addr):
-                        #self._write_requests.pop(id, None)
+                        # self._write_requests.pop(id, None)
                         # Remove the first item
                         self._write_requests[id].pop(0)
                         self.mem_write_cb.call(wreq.mem, wreq.addr)
@@ -767,7 +770,7 @@ class Memory():
         if chan == CHAN_READ:
             id = cmd
             (addr, status) = struct.unpack("<IB", payload[0:5])
-            data = struct.unpack("B"*len(payload[5:]), payload[5:])
+            data = struct.unpack("B" * len(payload[5:]), payload[5:])
             logger.info("READ: Mem={}, addr=0x{:X}, status=0x{}, data={}".format(id, addr, status, data))
             # Find the read request
             if id in self._read_requests:

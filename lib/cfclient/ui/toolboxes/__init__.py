@@ -49,7 +49,6 @@ if len(foundToolboxes) == 0:
                       glob.glob(os.path.dirname(__file__) +
                                 "/[A-Za-z]*Toolbox.pyc")]
 
-
 logger.debug("Found toolboxes: %s", foundToolboxes)
 
 toolboxes = []

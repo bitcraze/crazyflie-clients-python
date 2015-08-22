@@ -36,6 +36,7 @@ __author__ = 'Bitcraze AB'
 __all__ = ['UsbDriver']
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 from cflib.crtp.crtpdriver import CRTPDriver
@@ -52,6 +53,7 @@ from usb import USBError
 
 class UsbDriver(CRTPDriver):
     """ Crazyradio link driver """
+
     def __init__(self):
         """ Create the link driver """
         CRTPDriver.__init__(self)
@@ -93,7 +95,7 @@ class UsbDriver(CRTPDriver):
             self.cfusb = CfUsb(devid=int(uri_data.group(1)))
             if self.cfusb.dev:
                 self.cfusb.set_crtp_to_usb(True)
-                time.sleep(1) # Wait for the blocking queues in the firmware to time out
+                time.sleep(1)  # Wait for the blocking queues in the firmware to time out
             else:
                 self.cfusb = None
                 raise Exception("Could not open {}".format(self.uri))
@@ -108,8 +110,8 @@ class UsbDriver(CRTPDriver):
 
         # Launch the comm thread
         self._thread = _UsbReceiveThread(self.cfusb, self.in_queue,
-                                          link_quality_callback,
-                                          link_error_callback)
+                                         link_quality_callback,
+                                         link_error_callback)
         self._thread.start()
 
         self.link_error_callback = link_error_callback
@@ -160,8 +162,8 @@ class UsbDriver(CRTPDriver):
             return
 
         self._thread = _UsbReceiveThread(self.cfusb, self.in_queue,
-                                          self.link_quality_callback,
-                                          self.link_error_callback)
+                                         self.link_quality_callback,
+                                         self.link_error_callback)
         self._thread.start()
 
     def close(self):
@@ -192,7 +194,7 @@ class UsbDriver(CRTPDriver):
             raise Exception("Cannot scan for links while the link is open!")
 
         # FIXME: implements serial number in the Crazyradio driver!
-        #serial = "N/A"
+        # serial = "N/A"
 
         found = self.cfusb.scan()
 
@@ -209,12 +211,12 @@ class UsbDriver(CRTPDriver):
 
 
 # Transmit/receive radio thread
-class _UsbReceiveThread (threading.Thread):
+class _UsbReceiveThread(threading.Thread):
     """
     Radio link receiver thread used to read data from the
     Crazyradio USB driver. """
 
-    #RETRYCOUNT_BEFORE_DISCONNECT = 10
+    # RETRYCOUNT_BEFORE_DISCONNECT = 10
 
     def __init__(self, cfusb, inQueue, link_quality_callback,
                  link_error_callback):
@@ -237,7 +239,7 @@ class _UsbReceiveThread (threading.Thread):
     def run(self):
         """ Run the receiver thread """
 
-        while(True):
+        while (True):
             if (self.sp):
                 break
             try:
@@ -248,7 +250,8 @@ class _UsbReceiveThread (threading.Thread):
                     self.in_queue.put(pk)
             except Exception as e:
                 import traceback
+
                 self.link_error_callback("Error communicating with the Crazyflie"
                                          " ,it has probably been unplugged!\n"
                                          "Exception:%s\n\n%s" % (e,
-                                         traceback.format_exc()))
+                                                                 traceback.format_exc()))

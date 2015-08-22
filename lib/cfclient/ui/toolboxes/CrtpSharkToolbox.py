@@ -40,24 +40,25 @@ from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 from time import time
 
 param_tab_class = uic.loadUiType(sys.path[0] +
-                                "/cfclient/ui/toolboxes/crtpSharkToolbox.ui")[0]
+                                 "/cfclient/ui/toolboxes/crtpSharkToolbox.ui")[0]
+
 
 class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
     """Show packets that is sent vie the communication link"""
     nameModified = pyqtSignal()
     _incoming_packet_signal = pyqtSignal(object)
     _outgoing_packet_signal = pyqtSignal(object)
-    
+
     def __init__(self, helper, *args):
         super(CrtpSharkToolbox, self).__init__(*args)
         self.setupUi(self)
 
         self.helper = helper
-        
-        #Init the tree widget
+
+        # Init the tree widget
         self.logTree.setHeaderLabels(['ms', 'Direction', 'Port/Chan', 'Data'])
-        
-        #Connect GUI signals
+
+        # Connect GUI signals
         self.clearButton.clicked.connect(self.clearLog)
         self.saveButton.clicked.connect(self._save_data)
 
@@ -71,30 +72,30 @@ class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
         if self.masterCheck.isChecked():
             line = QtGui.QTreeWidgetItem()
 
-            ms_diff = int(round(time()*1000))-self._ms_offset
+            ms_diff = int(round(time() * 1000)) - self._ms_offset
             line.setData(0, Qt.DisplayRole, "%d" % ms_diff)
             line.setData(1, Qt.DisplayRole, "%s" % dir)
             line.setData(2, Qt.DisplayRole, "%d/%d" % (pk.port, pk.channel))
             line.setData(3, Qt.DisplayRole, pk.datal.__str__())
 
             s = "%d, %s, %d/%d, %s" % (ms_diff, dir, pk.port, pk.channel,
-                                      pk.datal.__str__())
+                                       pk.datal.__str__())
             self._data.append(s)
 
             self.logTree.addTopLevelItem(line)
             self.logTree.scrollToItem(line)
-    
+
     @pyqtSlot()
     def clearLog(self):
         self.logTree.clear()
         self._data = []
-    
+
     def getName(self):
         return 'Crtp sniffer'
-    
+
     def getTabName(self):
         return 'Crtp sniffer'
-    
+
     def enable(self):
         self.helper.cf.packet_received.add_callback(
             self._incoming_packet_signal.emit)
@@ -119,8 +120,3 @@ class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
         for s in self._data:
             f.write("%s\n" % s)
         f.close()
-
-
-
-
-

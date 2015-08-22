@@ -39,6 +39,7 @@ __author__ = 'Bitcraze AB'
 __all__ = ['Crazyflie']
 
 import logging
+
 logger = logging.getLogger(__name__)
 import time
 import datetime
@@ -181,7 +182,7 @@ class Crazyflie():
         if (self.state == State.INITIALIZED):
             self.connection_failed.call(self.link_uri, errmsg)
         if (self.state == State.CONNECTED or
-                self.state == State.SETUP_FINISHED):
+                    self.state == State.SETUP_FINISHED):
             self.disconnected.call(self.link_uri)
             self.connection_lost.call(self.link_uri, errmsg)
         self.state = State.DISCONNECTED
@@ -215,7 +216,7 @@ class Crazyflie():
                                                    self._link_error_cb)
 
             if not self.link:
-                message = "No driver found or malformed URI: {}"\
+                message = "No driver found or malformed URI: {}" \
                     .format(link_uri)
                 logger.warning(message)
                 self.connection_failed.call(link_uri, message)
@@ -229,10 +230,11 @@ class Crazyflie():
             # We want to catch every possible exception here and show
             # it in the user interface
             import traceback
+
             logger.error("Couldn't load link driver: %s\n\n%s",
                          ex, traceback.format_exc())
             exception_text = "Couldn't load link driver: %s\n\n%s" % (
-                             ex, traceback.format_exc())
+                ex, traceback.format_exc())
             if self.link:
                 self.link.close()
                 self.link = None
@@ -323,8 +325,10 @@ class Crazyflie():
             self.packet_sent.call(pk)
         self._send_lock.release()
 
+
 class _IncomingPacketHandler(Thread):
     """Handles incoming packets and sends the data to the correct receivers"""
+
     def __init__(self, cf):
         Thread.__init__(self)
         self.cf = cf
@@ -352,7 +356,7 @@ class _IncomingPacketHandler(Thread):
         self.cb.append([port, port_mask, channel, channel_mask, cb])
 
     def run(self):
-        while(True):
+        while (True):
             if self.cf.link is None:
                 time.sleep(1)
                 continue
@@ -361,13 +365,13 @@ class _IncomingPacketHandler(Thread):
             if pk is None:
                 continue
 
-            #All-packet callbacks
+            # All-packet callbacks
             self.cf.packet_received.call(pk)
 
             found = False
             for cb in self.cb:
                 if (cb[0] == pk.port & cb[1] and
-                        cb[2] == pk.channel & cb[3]):
+                            cb[2] == pk.channel & cb[3]):
                     try:
                         cb[4](pk)
                     except Exception:  # pylint: disable=W0703
@@ -375,6 +379,7 @@ class _IncomingPacketHandler(Thread):
                         # exceptions and we can't know what will happen in
                         # the callbacks.
                         import traceback
+
                         logger.warning("Exception while doing callback on port"
                                        " [%d]\n\n%s", pk.port,
                                        traceback.format_exc())

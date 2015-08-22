@@ -46,9 +46,10 @@ from threading import Thread, Lock
 from Queue import Queue
 
 import logging
+
 logger = logging.getLogger(__name__)
 
-#Possible states
+# Possible states
 IDLE = 0
 WAIT_TOC = 1
 WAIT_READ = 2
@@ -71,17 +72,17 @@ class ParamTocElement:
     RW_ACCESS = 0
     RO_ACCESS = 1
 
-    types = {0x08: ("uint8_t",  '<B'),
+    types = {0x08: ("uint8_t", '<B'),
              0x09: ("uint16_t", '<H'),
              0x0A: ("uint32_t", '<L'),
              0x0B: ("uint64_t", '<Q'),
-             0x00: ("int8_t",   '<b'),
-             0x01: ("int16_t",  '<h'),
-             0x02: ("int32_t",  '<i'),
-             0x03: ("int64_t",  '<q'),
-             0x05: ("FP16",     ''),
-             0x06: ("float",    '<f'),
-             0x07: ("double",   '<d')}
+             0x00: ("int8_t", '<b'),
+             0x01: ("int16_t", '<h'),
+             0x02: ("int32_t", '<i'),
+             0x03: ("int64_t", '<q'),
+             0x05: ("FP16", ''),
+             0x06: ("float", '<f'),
+             0x07: ("double", '<d')}
 
     def __init__(self, data=None):
         """TocElement creator. Data is the binary payload of the element."""
@@ -214,8 +215,8 @@ class Param():
         """
         self.toc = Toc()
         toc_fetcher = TocFetcher(self.cf, ParamTocElement,
-                                CRTPPort.PARAM, self.toc,
-                                refresh_done_callback, toc_cache)
+                                 CRTPPort.PARAM, self.toc,
+                                 refresh_done_callback, toc_cache)
         toc_fetcher.start()
 
     def disconnected(self, uri):
@@ -255,6 +256,7 @@ class Param():
 class _ParamUpdater(Thread):
     """This thread will update params through a queue to make sure that we
     get back values"""
+
     def __init__(self, cf, updated_callback):
         """Initialize the thread"""
         Thread.__init__(self)

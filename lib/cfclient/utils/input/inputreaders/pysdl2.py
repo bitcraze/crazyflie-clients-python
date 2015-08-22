@@ -32,6 +32,7 @@ input data.
 """
 
 import sys
+
 if sys.platform.startswith('linux'):
     raise Exception("No SDL2 support on Linux")
 
@@ -51,9 +52,11 @@ logger = logging.getLogger(__name__)
 MODULE_MAIN = "PySDL2Reader"
 MODULE_NAME = "PySDL2"
 
+
 class _SDLEventDispatcher(Thread):
     """Wrapper to read all SDL2 events from the global queue and distribute
     them to the different devices"""
+
     def __init__(self, callback):
         Thread.__init__(self)
         self._callback = callback
@@ -77,6 +80,7 @@ class _SDLEventDispatcher(Thread):
 
 class _JS():
     """Wrapper for one input device"""
+
     def __init__(self, sdl_index, sdl_id, name):
         self.axes = []
         self.buttons = []
@@ -103,12 +107,12 @@ class _JS():
 
     def _set_fake_hat_button(self, btn=None):
         self.buttons[self._btn_count] = 0
-        self.buttons[self._btn_count+1] = 0
-        self.buttons[self._btn_count+2] = 0
-        self.buttons[self._btn_count+3] = 0
+        self.buttons[self._btn_count + 1] = 0
+        self.buttons[self._btn_count + 2] = 0
+        self.buttons[self._btn_count + 3] = 0
 
         if btn:
-            self.buttons[self._btn_count+btn] = 1
+            self.buttons[self._btn_count + btn] = 1
 
     def add_event(self, event):
         self._event_queue.put(event)
@@ -138,8 +142,10 @@ class _JS():
                     self._set_fake_hat_button(3)
         return [self.axes, self.buttons]
 
+
 class PySDL2Reader():
     """Used for reading data from input devices using the PySDL2 API."""
+
     def __init__(self):
         sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO | sdl2.SDL_INIT_JOYSTICK)
         sdl2.SDL_SetHint(sdl2.hints.SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS,

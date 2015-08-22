@@ -1,10 +1,20 @@
 #!/usr/bin/env bash
-set -e
 
 scriptDir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-# We will remove more and more errors over time. We don't want them all at one time to avoid mental overload.
-exclude_errors="E114,E122,E123,E126,E127,E128,E129,E201,E202,E203,E211,E222,E225,E226,E227,E228,E231,E241,E251,E261,E262,E265,E266,E301,E302,E303,E401,E402,E501,E701,E703,E711,E712,E713,W291,W292,W293,W391,W503,W601"
+printf "Nr of PEP 8 errors/warnings remaining to be fixed\n"
+pep8 --count -qq --filename="*" ${scriptDir}/../../bin
+pep8 --count -qq ${scriptDir}/../..
 
-pep8 --statistics --filename="*" --ignore="${exclude_errors}" ${scriptDir}/../../bin
-pep8 --statistics --ignore=${exclude_errors} ${scriptDir}/../..
+printf "Now looking for errors that will break the build\n"
+# We will remove more and more errors over time. We don't want them all at one time to avoid mental overload.
+exclude_errors="E121,E126,E127,E128,E129,E225,E251,E265,E266,E303,E401,E402,E501,E703,E711,E712,E713,W291,W503,W601"
+
+pep8 --count --statistics --filename="*" --ignore="${exclude_errors}" ${scriptDir}/../../bin
+result1=$?
+pep8 --count --statistics --ignore=${exclude_errors} ${scriptDir}/../..
+result2=$?
+
+if [ ${result1} != 0 ] || [ ${result2} != 0 ] ; then
+    exit 1
+fi

@@ -33,17 +33,20 @@ the motors and disconnects.
 import time, sys
 from threading import Thread
 
-#FIXME: Has to be launched from within the example folder
+# FIXME: Has to be launched from within the example folder
 sys.path.append("../lib")
 import cflib
 from cflib.crazyflie import Crazyflie
 
 import logging
+
 logging.basicConfig(level=logging.ERROR)
+
 
 class MotorRampExample:
     """Example that connects to a Crazyflie and ramps the motors up/down and
     the disconnects"""
+
     def __init__(self, link_uri):
         """ Initialize and run the example with the specified link_uri """
 
@@ -88,7 +91,7 @@ class MotorRampExample:
         roll = 0
         yawrate = 0
 
-        #Unlock startup thrust protection
+        # Unlock startup thrust protection
         self._cf.commander.send_setpoint(0, 0, 0, 0)
 
         while thrust >= 20000:
@@ -102,6 +105,7 @@ class MotorRampExample:
         # since the message queue is not flushed before closing
         time.sleep(0.1)
         self._cf.close_link()
+
 
 if __name__ == '__main__':
     # Initialize the low-level drivers (don't list the debug drivers)

@@ -70,8 +70,8 @@ LOG_TIMEOUT = 10
 
 logger = logging.getLogger(__name__)
 
-class _SrvThread(Thread):
 
+class _SrvThread(Thread):
     def __init__(self, socket, log_socket, param_socket, conn_socket, cf, *args):
         super(_SrvThread, self).__init__(*args)
         self._socket = socket
@@ -314,8 +314,8 @@ class ZMQServer():
     def __init__(self, base_url):
         """Start threads and bind ports"""
         cflib.crtp.init_drivers(enable_debug_driver=True)
-        self._cf = Crazyflie(ro_cache=sys.path[0]+"/cflib/cache",
-                             rw_cache=sys.path[1]+"/cache")
+        self._cf = Crazyflie(ro_cache=sys.path[0] + "/cflib/cache",
+                             rw_cache=sys.path[1] + "/cache")
 
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 

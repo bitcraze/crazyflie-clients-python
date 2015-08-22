@@ -33,6 +33,7 @@ __author__ = 'Bitcraze AB'
 __all__ = ['Tab']
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 from PyQt4 import QtCore, QtGui, uic

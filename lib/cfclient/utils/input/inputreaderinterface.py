@@ -46,7 +46,7 @@ class _ToggleState(dict):
 
 class InputData:
     def __init__(self):
-        #self._toggled = {}
+        # self._toggled = {}
         self._axes = ("roll", "pitch", "yaw", "thrust")
         self._buttons = ("alt1", "alt2", "estop", "exit", "pitchNeg",
                          "pitchPos", "rollNeg", "rollPos", "althold",
@@ -191,7 +191,7 @@ class InputReaderInterface(object):
                             # If we are "inside" the limit, then lower
                             # according to the rate we have set each iteration
                             lowering = (time() - self._last_time) * \
-                                self.input.thrust_slew_rate
+                                       self.input.thrust_slew_rate
                             limited_thrust = self._prev_thrust - lowering
                 elif emergency_stop or thrust < self.thrust_stop_limit:
                     # If the thrust have been pulled down or the

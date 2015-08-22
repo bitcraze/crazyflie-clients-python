@@ -59,8 +59,10 @@ from cfclient.ui.tab import Tab
 plot_tab_class = uic.loadUiType(sys.path[0] +
                                 "/cfclient/ui/tabs/plotTab.ui")[0]
 
+
 class LogConfigModel(QAbstractItemModel):
     """Model for log configurations in the ComboBox"""
+
     def __init__(self, parent=None):
         super(LogConfigModel, self).__init__(parent)
         self._nodes = []
@@ -105,8 +107,8 @@ class LogConfigModel(QAbstractItemModel):
     def data(self, index, role):
         """Re-implemented method to get the data for a given index and role"""
         node = index.internalPointer()
-        if not index.isValid() or not 0 <= index.row() < len(self._nodes): 
-            return QVariant() 
+        if not index.isValid() or not 0 <= index.row() < len(self._nodes):
+            return QVariant()
         if role == Qt.DisplayRole:
             return self._nodes[index.row()].name
         return QVariant()
@@ -118,6 +120,7 @@ class LogConfigModel(QAbstractItemModel):
 
     def get_config(self, i):
         return self._nodes[i]
+
 
 class PlotTab(Tab, plot_tab_class):
     """Tab for plotting logging data"""
@@ -204,7 +207,7 @@ class PlotTab(Tab, plot_tab_class):
         # First check if we need to stop the old block
         if self._started_previous and self._previous_config:
             logger.debug("Should stop config [%s], stopping!",
-                        self._previous_config.name)
+                         self._previous_config.name)
             self._previous_config.delete()
 
         # Remove our callback for the previous config
@@ -228,7 +231,7 @@ class PlotTab(Tab, plot_tab_class):
 
         for d in lg.variables:
             self._plot.add_curve(d.name,
-                                self.colors[color_selector % len(self.colors)])
+                                 self.colors[color_selector % len(self.colors)])
             color_selector += 1
         lg.data_received_cb.add_callback(self._log_data_signal_wrapper)
         lg.error_cb.add_callback(self._log_error_signal_wrapper)
@@ -243,7 +246,7 @@ class PlotTab(Tab, plot_tab_class):
     def _logging_error(self, log_conf, msg):
         """Callback from the log layer when an error occurs"""
         QMessageBox.about(self, "Plot error", "Error when starting log config"
-                " [%s]: %s" % (log_conf.name, msg))
+                                              " [%s]: %s" % (log_conf.name, msg))
 
     def _log_data_received(self, timestamp, data, logconf):
         """Callback when the log layer receives new data"""

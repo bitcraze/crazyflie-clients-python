@@ -44,8 +44,8 @@ import cfclient
 import cflib.crtp
 
 (about_widget_class,
-about_widget_base_class) = (uic.loadUiType(sys.path[0] +
-                                           '/cfclient/ui/dialogs/about.ui'))
+ about_widget_base_class) = (uic.loadUiType(sys.path[0] +
+                                            '/cfclient/ui/dialogs/about.ui'))
 
 DEBUG_INFO_FORMAT = """
 <b>Cfclient</b><br>
@@ -91,23 +91,24 @@ CREDITS_FORMAT = U"""
 <a href="http://www.python.org/">Python</a><br>
 """
 
-class AboutDialog(QtGui.QWidget, about_widget_class):
 
+class AboutDialog(QtGui.QWidget, about_widget_class):
     _disconnected_signal = pyqtSignal(str)
 
     """Crazyflie client About box for debugging and information"""
+
     def __init__(self, helper, *args):
         super(AboutDialog, self).__init__(*args)
         self.setupUi(self)
         self._close_button.clicked.connect(self.close)
         self._name_label.setText(
-                             self._name_label.text().replace('#version#',
-                                                             cfclient.VERSION))
+            self._name_label.text().replace('#version#',
+                                            cfclient.VERSION))
 
         self._interface_text = ""
         self._imu_sensors_text = ""
         self._imu_sensor_test_text = ""
-        self._uri = None 
+        self._uri = None
         self._fw_rev0 = None
         self._fw_rev1 = None
         self._fw_modified = None
@@ -143,7 +144,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         interface_status = cflib.crtp.get_interfaces_status()
         for key in interface_status.keys():
             self._interface_text += INTERFACE_FORMAT.format(key,
-                                                    interface_status[key])
+                                                            interface_status[key])
         firmware = None
 
         self._device_text = ""
@@ -156,7 +157,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
             self._device_text = "None<br>"
 
         self._input_readers_text = ""
-        #readers = self._helper.inputDeviceReader.getAvailableDevices()
+        # readers = self._helper.inputDeviceReader.getAvailableDevices()
         for reader in cfclient.utils.input.inputreaders.initialized_readers:
             self._input_readers_text += INPUT_READER_FORMAT.format(reader.name,
                                                                    len(reader.devices()))
@@ -165,18 +166,18 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
 
         if self._uri:
             firmware = FIRMWARE_FORMAT.format(self._fw_rev0, self._fw_rev1,
-                                "MODIFIED" if self._fw_modified else "CLEAN")
+                                              "MODIFIED" if self._fw_modified else "CLEAN")
         self._debug_out.setHtml(
-                DEBUG_INFO_FORMAT.format(version=cfclient.VERSION,
-                                         system=sys.platform,
-                                         interface_status=self._interface_text,
-                                         input_devices=self._device_text,
-                                         input_readers=self._input_readers_text,
-                                         uri = self._uri,
-                                         firmware = firmware,
-                                         imu_sensors=self._imu_sensors_text,
-                                         imu_sensor_tests=
-                                            self._imu_sensor_test_text))
+            DEBUG_INFO_FORMAT.format(version=cfclient.VERSION,
+                                     system=sys.platform,
+                                     interface_status=self._interface_text,
+                                     input_devices=self._device_text,
+                                     input_readers=self._input_readers_text,
+                                     uri=self._uri,
+                                     firmware=firmware,
+                                     imu_sensors=self._imu_sensors_text,
+                                     imu_sensor_tests=
+                                     self._imu_sensor_test_text))
 
     def _connected(self, uri):
         """Callback when Crazyflie is connected"""
@@ -203,7 +204,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         param = name[name.index('.') + 1:]
         if not param in self._imu_sensor_test_text:
             self._imu_sensor_test_text += SENSOR_TESTS_FORMAT.format(param,
-                                                                 eval(value))
+                                                                     eval(value))
 
     def _disconnected(self, uri):
         """Callback for Crazyflie disconnected"""

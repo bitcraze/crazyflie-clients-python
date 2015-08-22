@@ -33,7 +33,6 @@ CRTP packet and ports.
 __author__ = 'Bitcraze AB'
 __all__ = ['CRTPPort', 'CRTPPacket']
 
-
 import struct
 
 
@@ -108,7 +107,7 @@ class CRTPPacket(object):
         self.header = ((self._port & 0x0f) << 4 | 3 << 2 |
                        (self.channel & 0x03))
 
-    #Some python madness to access different format of the data
+    # Some python madness to access different format of the data
     def _get_data(self):
         """Get the packet data"""
         return self._data

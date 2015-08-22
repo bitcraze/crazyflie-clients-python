@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#Original code from rshum19
+# Original code from rshum19
 
 
 """
@@ -29,7 +29,7 @@ cmdmess = {
         "pitch": 0.0,
         "yaw": 0.0,
         "thrust": 30
-        }
+    }
 }
 print "starting to send control commands!"
 
@@ -38,7 +38,7 @@ cmdmess["ctrl"]["thrust"] = 0
 sender.send_json(cmdmess)
 
 for i in range(2500, 4500, 1):
-    cmdmess["ctrl"]["thrust"] = i/100.0
+    cmdmess["ctrl"]["thrust"] = i / 100.0
     sender.send_json(cmdmess)
     time.sleep(0.01)
 

@@ -56,19 +56,20 @@ import string
 import errno
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 # This setup is used to debug raw memory logging
 memlogging = {0x01: {"min": 0, "max": 255, "mod": 1, "vartype": 1},
               0x02: {"min": 0, "max": 65000, "mod": 100, "vartype": 2},
               0x03: {"min": 0, "max": 100000, "mod": 1000, "vartype": 3},
-              0x04: {"min":-100, "max": 100, "mod": 1, "vartype": 4},
-              0x05: {"min":-10000, "max": 10000, "mod": 2000, "vartype": 5},
-              0x06: {"min":-50000, "max": 50000, "mod": 1000, "vartype": 6},
+              0x04: {"min": -100, "max": 100, "mod": 1, "vartype": 4},
+              0x05: {"min": -10000, "max": 10000, "mod": 2000, "vartype": 5},
+              0x06: {"min": -50000, "max": 50000, "mod": 1000, "vartype": 6},
               0x07: {"min": 0, "max": 255, "mod": 1, "vartype": 1}}
 
-class FakeMemory:
 
+class FakeMemory:
     TYPE_I2C = 0
     TYPE_1W = 1
 
@@ -84,41 +85,43 @@ class FakeMemory:
     def erase(self):
         self.data = [0] * self.size
 
-class DebugDriver (CRTPDriver):
+
+class DebugDriver(CRTPDriver):
     """ Debug driver used for debugging UI/communication without using a
     Crazyflie"""
+
     def __init__(self):
         self.fakeLoggingThreads = []
         self._fake_mems = []
         # Fill up the fake logging TOC with values and data
         self.fakeLogToc = []
         self.fakeLogToc.append({"varid": 0, "vartype": 5, "vargroup": "imu",
-                                "varname": "gyro_x", "min":-10000,
+                                "varname": "gyro_x", "min": -10000,
                                 "max": 10000, "mod": 1000})
         self.fakeLogToc.append({"varid": 1, "vartype": 5, "vargroup": "imu",
-                                "varname": "gyro_y", "min":-10000,
+                                "varname": "gyro_y", "min": -10000,
                                 "max": 10000, "mod": 150})
         self.fakeLogToc.append({"varid": 2, "vartype": 5, "vargroup": "imu",
-                                "varname": "gyro_z", "min":-10000,
+                                "varname": "gyro_z", "min": -10000,
                                 "max": 10000, "mod": 200})
         self.fakeLogToc.append({"varid": 3, "vartype": 5, "vargroup": "imu",
-                                "varname": "acc_x", "min":-1000,
+                                "varname": "acc_x", "min": -1000,
                                 "max": 1000, "mod": 15})
         self.fakeLogToc.append({"varid": 4, "vartype": 5, "vargroup": "imu",
-                                "varname": "acc_y", "min":-1000,
+                                "varname": "acc_y", "min": -1000,
                                 "max": 1000, "mod": 10})
         self.fakeLogToc.append({"varid": 5, "vartype": 5, "vargroup": "imu",
-                                "varname": "acc_z", "min":-1000,
+                                "varname": "acc_z", "min": -1000,
                                 "max": 1000, "mod": 20})
         self.fakeLogToc.append({"varid": 6, "vartype": 7,
                                 "vargroup": "stabilizer", "varname": "roll",
-                                "min":-90, "max": 90, "mod": 2})
+                                "min": -90, "max": 90, "mod": 2})
         self.fakeLogToc.append({"varid": 7, "vartype": 7,
                                 "vargroup": "stabilizer", "varname": "pitch",
-                                "min":-90, "max": 90, "mod": 1.5})
+                                "min": -90, "max": 90, "mod": 1.5})
         self.fakeLogToc.append({"varid": 8, "vartype": 7,
                                 "vargroup": "stabilizer", "varname": "yaw",
-                                "min":-90, "max": 90, "mod": 2.5})
+                                "min": -90, "max": 90, "mod": 2.5})
         self.fakeLogToc.append({"varid": 9, "vartype": 7, "vargroup": "pm",
                                 "varname": "vbat", "min": 3.0,
                                 "max": 4.2, "mod": 0.1})
@@ -285,7 +288,6 @@ class DebugDriver (CRTPDriver):
                 ["debug://0/5", "Normal but random TOC CRCs"],
                 ["debug://0/6", "Normal but empty I2C and OW mems"]]
 
-
     def get_status(self):
         return "Ok"
 
@@ -329,7 +331,7 @@ class DebugDriver (CRTPDriver):
                                               data=[0xeb, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x44, 0x00, 0x0e,
                                                     0x01, 0x09, 0x62, 0x63, 0x4c, 0x65, 0x64, 0x52, 0x69, 0x6e,
                                                     0x67, 0x02, 0x01, 0x62, 0x55]))
-            #self._fake_mems.append(FakeMemory(type=1, size=112, addr=0xFEDCBA0987654321,
+            # self._fake_mems.append(FakeMemory(type=1, size=112, addr=0xFEDCBA0987654321,
             #                                  data=[0xeb, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x44, 0x00, 0x44,
             #                                        0x01, 0x2e, 0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20,
             #                                        0x61, 0x20, 0x72, 0x65, 0x61, 0x6c, 0x6c, 0x79, 0x20, 0x6c,
@@ -383,6 +385,7 @@ class DebugDriver (CRTPDriver):
 
 class _PacketHandlingThread(Thread):
     """Thread for handling packets asynchronously"""
+
     def __init__(self, out_queue, fake_log_toc, fake_param_toc, fake_mems):
         Thread.__init__(self)
         self.setDaemon(True)
@@ -435,7 +438,7 @@ class _PacketHandlingThread(Thread):
                     self._handle_mem_access(pk)
                 else:
                     logger.warning("Not handling incoming packets on port [%d]",
-                               pk.port)
+                                   pk.port)
 
     def _handle_mem_access(self, pk):
         chan = pk.channel
@@ -464,7 +467,7 @@ class _PacketHandlingThread(Thread):
             p_out = CRTPPacket()
             p_out.set_header(CRTPPort.MEM, 1)
             p_out.data = struct.pack("<BIB", id, addr, status)
-            p_out.data += struct.pack("B"*length, *m.data[addr:addr+length])
+            p_out.data += struct.pack("B" * length, *m.data[addr:addr + length])
             self._send_packet(p_out)
 
         if chan == 2:  # Write channel
@@ -475,7 +478,7 @@ class _PacketHandlingThread(Thread):
             m = self._fake_mems[id]
 
             for i in range(len(data)):
-                m.data[addr+i] = ord(data[i])
+                m.data[addr + i] = ord(data[i])
 
             status = 0
 
@@ -596,7 +599,7 @@ class _PacketHandlingThread(Thread):
         elif (chan == 2):  # Settings access
             varId = pk.datal[0]
             formatStr = ParamTocElement.types[self.fakeParamToc
-                                              [varId]["vartype"]][1]
+            [varId]["vartype"]][1]
             newvalue = struct.unpack(formatStr, pk.data[1:])[0]
             self.fakeParamToc[varId]["value"] = newvalue
             logger.info("PARAM: New value [%s] for param [%d]", newvalue,
@@ -613,7 +616,7 @@ class _PacketHandlingThread(Thread):
             varId = cmd
             p.data += struct.pack("<B", varId)
             formatStr = ParamTocElement.types[self.fakeParamToc
-                                              [varId]["vartype"]][1]
+            [varId]["vartype"]][1]
             p.data += struct.pack(formatStr, self.fakeParamToc[varId]["value"])
             logger.info("PARAM: Getting value for %d", varId)
             self._send_packet(p)
@@ -711,6 +714,7 @@ class _PacketHandlingThread(Thread):
                 p.data = struct.pack('<BBB', cmd, 0x00, 0x00)
                 self._send_packet(p)
                 import traceback
+
                 logger.info(traceback.format_exc())
         elif (chan > 1):
             logger.warning("LOG: Uplink packets with channels > 1 not"
@@ -720,12 +724,13 @@ class _PacketHandlingThread(Thread):
         # Do not delay log data
         if self._random_answer_delay and pk.port != 0x05 and pk.channel != 0x02:
             # Calculate a delay between 0ms and 250ms
-            delay = random.randint(0, 250)/1000.0
-            logger.debug("Delaying answer %.2fms", delay*1000)
+            delay = random.randint(0, 250) / 1000.0
+            logger.debug("Delaying answer %.2fms", delay * 1000)
             time.sleep(delay)
         self.queue.put(pk)
 
-class _FakeLoggingDataThread (Thread):
+
+class _FakeLoggingDataThread(Thread):
     """Thread that will send back fake logging data via CRTP"""
 
     def __init__(self, outQueue, blockId, listofvars, fakeLogToc):
@@ -754,8 +759,8 @@ class _FakeLoggingDataThread (Thread):
                 logger.debug("FakeLoggingThread: We should log a memory addr"
                              " 0x%04X", addr)
                 self.fakeLoggingData.append([memlogging[var_fetch_as],
-                                            memlogging[var_fetch_as]["min"],
-                                            1])
+                                             memlogging[var_fetch_as]["min"],
+                                             1])
                 i = i + 5
             else:
                 varId = ord(listofvars[i])
@@ -781,14 +786,15 @@ class _FakeLoggingDataThread (Thread):
         self.shouldQuit = True
 
     def run(self):
-        while(self.shouldQuit is False):
+        while (self.shouldQuit is False):
             if (self.shouldLog is True):
 
                 p = CRTPPacket()
                 p.set_header(5, 2)
                 p.data = struct.pack('<B', self.blockId)
-                timestamp = int((datetime.now()-self.starttime).total_seconds()*1000)
-                p.data += struct.pack('BBB', timestamp&0xff, (timestamp>>8)&0x0ff, (timestamp>>16)&0x0ff)  # Timestamp
+                timestamp = int((datetime.now() - self.starttime).total_seconds() * 1000)
+                p.data += struct.pack('BBB', timestamp & 0xff, (timestamp >> 8) & 0x0ff,
+                                      (timestamp >> 16) & 0x0ff)  # Timestamp
 
                 for d in self.fakeLoggingData:
                     # Set new value
@@ -807,8 +813,9 @@ class _FakeLoggingDataThread (Thread):
             time.sleep(self.period / 1000.0)  # Period in ms here
 
 
-class FakeConsoleThread (Thread):
+class FakeConsoleThread(Thread):
     """Thread that will send back fake console data via CRTP"""
+
     def __init__(self, outQueue):
         Thread.__init__(self)
         self.outQueue = outQueue
@@ -824,8 +831,7 @@ class FakeConsoleThread (Thread):
         lat_val = 0
         alt_val = 0
 
-        while(self._should_run):
-
+        while (self._should_run):
             long_val += 1
             lat_val += 1
             alt_val += 1.0

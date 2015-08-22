@@ -57,4 +57,3 @@ class PlatformService():
         pk.set_header(CRTPPort.PLATFORM, 0)
         pk.data = (0, enabled)
         self._cf.send_packet(pk)
-

@@ -65,7 +65,7 @@ class ConfigManager():
             return self._input_config[idx]
         except:
             return None
-    
+
     def get_settings(self, config_name):
         """Get the settings for an input device."""
         try:
@@ -87,7 +87,7 @@ class ConfigManager():
                 json_data = open(self.configs_dir + "/%s" % conf)
                 data = json.load(json_data)
                 new_input_device = {}
-                new_input_settings = {"updateperiod":10, "springythrottle":True}
+                new_input_settings = {"updateperiod": 10, "springythrottle": True}
                 for s in data["inputconfig"]["inputdevice"]:
                     if s == "axis":
                         for a in data["inputconfig"]["inputdevice"]["axis"]:

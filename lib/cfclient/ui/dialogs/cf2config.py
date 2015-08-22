@@ -45,6 +45,7 @@ from cflib.crazyflie.mem import MemoryElement
 service_dialog_class = uic.loadUiType(sys.path[0] +
                                       "/cfclient/ui/dialogs/cf2config.ui")[0]
 
+
 class Cf2ConfigDialog(QtGui.QWidget, service_dialog_class):
     """Tab for update the Crazyflie firmware and for reading/writing the config
     block in flash"""

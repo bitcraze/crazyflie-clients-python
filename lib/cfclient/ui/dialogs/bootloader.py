@@ -39,6 +39,7 @@ import sys
 import time
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 from PyQt4 import QtCore, QtGui, uic
@@ -66,6 +67,7 @@ class UIState:
 class BootloaderDialog(QtGui.QWidget, service_dialog_class):
     """Tab for update the Crazyflie firmware and for reading/writing the config
     block in flash"""
+
     def __init__(self, helper, *args):
         super(BootloaderDialog, self).__init__(*args)
         self.setupUi(self)
@@ -99,7 +101,7 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
                                          self.setUiState(UIState.COLD_CONNECT))
         self.clt.failed_signal.connect(lambda m: self._ui_connection_fail(m))
         self.clt.disconnectedSignal.connect(lambda:
-                                        self.setUiState(UIState.DISCONNECTED))
+                                            self.setUiState(UIState.DISCONNECTED))
 
         self.clt.start()
 
@@ -271,7 +273,7 @@ class CrazyloadThread(QThread):
     def programAction(self, filename, verify):
         targets = {}
         if str(filename).endswith("bin"):
-            targets["stm32"] = ("fw", )
+            targets["stm32"] = ("fw",)
         try:
             self._bl.flash(str(filename), targets)
             self.programmed.emit(True)

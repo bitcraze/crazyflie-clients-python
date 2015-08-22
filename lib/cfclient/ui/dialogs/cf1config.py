@@ -38,6 +38,7 @@ import sys
 from cflib.bootloader import Bootloader
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 from PyQt4 import QtCore, QtGui, uic
@@ -47,6 +48,7 @@ from cfclient.utils.config import Config
 
 service_dialog_class = uic.loadUiType(sys.path[0] +
                                       "/cfclient/ui/dialogs/cf1config.ui")[0]
+
 
 class UIState:
     DISCONNECTED = 0
@@ -60,6 +62,7 @@ class UIState:
 class Cf1ConfigDialog(QtGui.QWidget, service_dialog_class):
     """Tab for update the Crazyflie firmware and for reading/writing the config
     block in flash"""
+
     def __init__(self, helper, *args):
         super(Cf1ConfigDialog, self).__init__(*args)
         self.setupUi(self)
@@ -86,7 +89,7 @@ class Cf1ConfigDialog(QtGui.QWidget, service_dialog_class):
                                          self.setUiState(UIState.COLD_CONNECT))
         self.clt.failed_signal.connect(lambda m: self._ui_connection_fail(m))
         self.clt.disconnectedSignal.connect(lambda:
-                                        self.setUiState(UIState.DISCONNECTED))
+                                            self.setUiState(UIState.DISCONNECTED))
         self.clt.updateConfigSignal.connect(self.updateConfig)
 
         self.clt.start()

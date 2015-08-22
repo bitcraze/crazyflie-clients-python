@@ -46,10 +46,13 @@ param_tab_class = uic.loadUiType(sys.path[0] +
                                  "/cfclient/ui/tabs/paramTab.ui")[0]
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class ParamChildItem(object):
     """Represents a leaf-node in the tree-view (one parameter)"""
+
     def __init__(self, parent, name, crazyflie):
         """Initialize the node"""
         self.parent = parent
@@ -81,6 +84,7 @@ class ParamChildItem(object):
 
 class ParamGroupItem(object):
     """Represents a parameter group in the tree-view"""
+
     def __init__(self, name, model):
         """Initialize the parent node"""
         super(ParamGroupItem, self).__init__()
@@ -93,8 +97,10 @@ class ParamGroupItem(object):
         """Return the number of children this node has"""
         return len(self.children)
 
+
 class ParamBlockModel(QAbstractItemModel):
     """Model for handling the parameters in the tree-view"""
+
     def __init__(self, parent):
         """Create the empty model"""
         super(ParamBlockModel, self).__init__(parent)
@@ -185,7 +191,7 @@ class ParamBlockModel(QAbstractItemModel):
         elif role == Qt.EditRole and index.column() == 3:
             return node.value
         elif (role == Qt.BackgroundRole and index.column() == 3
-                and node.is_updating):
+              and node.is_updating):
             return self._red_brush
 
         return QVariant()
@@ -201,15 +207,13 @@ class ParamBlockModel(QAbstractItemModel):
             return True
         return False
 
-
     def flags(self, index):
         """Re-implemented function for getting the flags for a certain index"""
         flag = super(ParamBlockModel, self).flags(index)
         node = index.internalPointer()
-        if index.column() == 3 and node.parent and node.access=="RW":
+        if index.column() == 3 and node.parent and node.access == "RW":
             flag |= Qt.ItemIsEditable
         return flag
-
 
     def reset(self):
         """Reset the model"""

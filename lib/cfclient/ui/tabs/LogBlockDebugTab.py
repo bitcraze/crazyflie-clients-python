@@ -42,7 +42,8 @@ from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 from cfclient.ui.tab import Tab
 
 logblock_tab_class = uic.loadUiType(sys.path[0] +
-                                 "/cfclient/ui/tabs/logBlockDebugTab.ui")[0]
+                                    "/cfclient/ui/tabs/logBlockDebugTab.ui")[0]
+
 
 class LogBlockDebugTab(Tab, logblock_tab_class):
     """
@@ -91,9 +92,9 @@ class LogBlockDebugTab(Tab, logblock_tab_class):
             for var in block.variables:
                 subItem = QtGui.QTreeWidgetItem()
                 subItem.setFlags(Qt.ItemIsEnabled |
-                              Qt.ItemIsSelectable)
+                                 Qt.ItemIsSelectable)
                 subItem.setData(6, Qt.EditRole, var.name)
-                item.addChild(subItem)                
+                item.addChild(subItem)
 
             self._block_tree.addTopLevelItem(item)
             self._block_tree.expandItem(item)

@@ -34,6 +34,7 @@ __all__ = ['NoMux']
 
 from . import InputMux
 import logging
+
 logger = logging.getLogger(__name__)
 
 

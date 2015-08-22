@@ -40,9 +40,11 @@ from .singleton import Singleton
 
 logger = logging.getLogger(__name__)
 
+
 class Config():
     """ Singleton class for accessing application configuration """
     __metaclass__ = Singleton
+
     def __init__(self):
         """ Initializes the singleton and reads the config files """
         self._dist_config = sys.path[0] + "/cfclient/configs/config.json"

@@ -37,6 +37,7 @@ import signal
 import time
 import sys
 
+
 class _LogThread(Thread):
     def __init__(self, socket, *args):
         super(_LogThread, self).__init__(*args)
@@ -56,6 +57,7 @@ class _LogThread(Thread):
             if log["event"] == "deleted":
                 print "Deleted block {}".format(log["name"])
 
+
 class _ParamThread(Thread):
     def __init__(self, socket, *args):
         super(_ParamThread, self).__init__(*args)
@@ -66,6 +68,7 @@ class _ParamThread(Thread):
             param = self._socket.recv_json()
             print param
 
+
 class _ConnThread(Thread):
     def __init__(self, socket, *args):
         super(_ConnThread, self).__init__(*args)
@@ -75,6 +78,7 @@ class _ConnThread(Thread):
         while True:
             msg = self._socket.recv_json()
             print msg
+
 
 class _CtrlThread(Thread):
     def __init__(self, socket, *args):
@@ -101,6 +105,7 @@ class _CtrlThread(Thread):
                 self._thrust_step *= -1
             self._cmd["thrust"] = self._thrust
             self._socket.send_json(self._cmd)
+
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -275,7 +280,6 @@ if resp["status"] == 0:
     print "done!"
 else:
     print "fail! {}".format(resp["msg"])
-
 
 log_cmd = {
     "version": 1,

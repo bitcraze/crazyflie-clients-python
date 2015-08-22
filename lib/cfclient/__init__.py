@@ -31,12 +31,14 @@ try:
 except:
     try:
         import subprocess
+
         VERSION = subprocess.check_output(["git", "describe"])
     except:
         VERSION = "dev"
 
     try:
         import subprocess
+
         ret = subprocess.call(["git", "diff", "--quiet", "HEAD"])
         if ret > 0:
             VERSION += "+"

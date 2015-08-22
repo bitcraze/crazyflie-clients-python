@@ -38,6 +38,7 @@ from cflib.crtp.crtpstack import CRTPPacket
 import struct
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 TOC_CHANNEL = 0
@@ -123,6 +124,7 @@ class Toc:
 
 class TocFetcher:
     """Fetches TOC entries from the Crazyflie"""
+
     def __init__(self, crazyflie, element_class, port, toc_holder,
                  finished_callback, toc_cache):
         self.cf = crazyflie
@@ -146,7 +148,7 @@ class TocFetcher:
         self.state = GET_TOC_INFO
         pk = CRTPPacket()
         pk.set_header(self.port, TOC_CHANNEL)
-        pk.data = (CMD_TOC_INFO, )
+        pk.data = (CMD_TOC_INFO,)
         self.cf.send_packet(pk, expected_reply=(CMD_TOC_INFO,))
 
     def _toc_fetch_finished(self):

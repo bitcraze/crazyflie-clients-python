@@ -42,11 +42,11 @@ from ..inputreaderinterface import InputReaderInterface
 logger = logging.getLogger(__name__)
 
 found_interfaces = [os.path.splitext(os.path.basename(f))[0] for
-             f in glob.glob(os.path.dirname(__file__) + "/[A-Za-z]*.py")]
+                    f in glob.glob(os.path.dirname(__file__) + "/[A-Za-z]*.py")]
 if len(found_interfaces) == 0:
     found_interfaces = [os.path.splitext(os.path.basename(f))[0] for
-                 f in glob.glob(os.path.dirname(__file__) +
-                                "/[A-Za-z]*.pyc")]
+                        f in glob.glob(os.path.dirname(__file__) +
+                                       "/[A-Za-z]*.pyc")]
 
 logger.info("Found interfaces: {}".format(found_interfaces))
 
@@ -62,6 +62,7 @@ for interface in found_interfaces:
     except Exception as e:
         logger.info("Could not initialize [{}]: {}".format(interface, e))
 
+
 def devices():
     # Todo: Support rescanning and adding/removing devices
     if len(available_interfaces) == 0:
@@ -72,6 +73,7 @@ def devices():
                                                            dev["id"],
                                                            reader))
     return available_interfaces
+
 
 class InputInterface(InputReaderInterface):
     def __init__(self, dev_name, dev_id, dev_reader):

@@ -75,8 +75,8 @@ def decompileBlock(binFile, configFile):
     bfile.close()
 
     if (bin[0:4] != "0xBC" or
-        len(bin) < (struct.calcsize(structFormat) + 5) or
-        checksum256(bin[0:struct.calcsize(structFormat) + 5]) != 0):
+                len(bin) < (struct.calcsize(structFormat) + 5) or
+                checksum256(bin[0:struct.calcsize(structFormat) + 5]) != 0):
         print "Config block erased of altered, generating default file"
         cfile = open(configFile, "w")
         cfile.write(defaultConfig)
@@ -97,9 +97,10 @@ def decompileBlock(binFile, configFile):
         cfile.close()
         print "Config block successfully extracted to", configFile
 
+
 if __name__ == "__main__":
     if (len(sys.argv) < 4 or
-        (sys.argv[1] != "generate" and sys.argv[1] != "extract")):
+            (sys.argv[1] != "generate" and sys.argv[1] != "extract")):
         print "Configuration block compiler/decompiler."
         print "  Usage: %s <generate|extract> <infile> <outfile>" % sys.argv[0]
 

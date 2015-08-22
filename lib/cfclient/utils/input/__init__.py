@@ -68,6 +68,7 @@ from .mux.takeoverselectivemux import TakeOverSelectiveMux
 
 MAX_THRUST = 65000
 
+
 class JoystickReader(object):
     """
     Thread that will read input from devices/joysticks and send control-set
@@ -122,10 +123,9 @@ class JoystickReader(object):
         self._dev_blacklist = None
         if len(Config().get("input_device_blacklist")) > 0:
             self._dev_blacklist = re.compile(
-                            Config().get("input_device_blacklist"))
+                Config().get("input_device_blacklist"))
         logger.info("Using device blacklist [{}]".format(
-                            Config().get("input_device_blacklist")))
-
+            Config().get("input_device_blacklist")))
 
         self._available_devices = {}
 
@@ -133,8 +133,8 @@ class JoystickReader(object):
         self._read_timer = PeriodicTimer(0.01, self.read_input)
 
         if do_device_discovery:
-            self._discovery_timer = PeriodicTimer(1.0, 
-                            self._do_device_discovery)
+            self._discovery_timer = PeriodicTimer(1.0,
+                                                  self._do_device_discovery)
             self._discovery_timer.start()
 
         # Check if user config exists, otherwise copy files
@@ -143,7 +143,7 @@ class JoystickReader(object):
             os.makedirs(ConfigManager().configs_dir)
 
         for f in glob.glob(sys.path[0] +
-                           "/cfclient/configs/input/[A-Za-z]*.json"):
+                                   "/cfclient/configs/input/[A-Za-z]*.json"):
             dest = os.path.join(ConfigManager().
                                 configs_dir, os.path.basename(f))
             if not os.path.isfile(dest):
@@ -216,13 +216,13 @@ class JoystickReader(object):
         approved_devs = []
 
         for dev in devs:
-            if ((not self._dev_blacklist) or 
+            if ((not self._dev_blacklist) or
                     (self._dev_blacklist and not
-                     self._dev_blacklist.match(dev.name))):
+                    self._dev_blacklist.match(dev.name))):
                 dev.input = self
                 approved_devs.append(dev)
 
-        return approved_devs 
+        return approved_devs
 
     def enableRawReading(self, device_name):
         """
@@ -294,7 +294,7 @@ class JoystickReader(object):
         config_name. Returns True if device supports mapping, otherwise False
         """
         try:
-            #device_id = self._available_devices[device_name]
+            # device_id = self._available_devices[device_name]
             # Check if we supplied a new map, if not use the preferred one
             device = self._get_device_from_name(device_name)
             self._selected_mux.add_device(device, role)
@@ -306,19 +306,19 @@ class JoystickReader(object):
             return device.supports_mapping
         except Exception:
             self.device_error.call(
-                     "Error while opening/initializing  input device\n\n%s" %
-                     (traceback.format_exc()))
+                "Error while opening/initializing  input device\n\n%s" %
+                (traceback.format_exc()))
 
         if not self._input_device:
             self.device_error.call(
-                     "Could not find device {}".format(device_name))
+                "Could not find device {}".format(device_name))
         return False
 
     def resume_input(self):
         self._selected_mux.resume()
         self._read_timer.start()
 
-    def pause_input(self, device_name = None):
+    def pause_input(self, device_name=None):
         """Stop reading from the input device."""
         self._read_timer.stop()
         self._selected_mux.pause()
@@ -400,7 +400,7 @@ class JoystickReader(object):
             logger.warning("Exception while reading inputdevice: %s",
                            traceback.format_exc())
             self.device_error.call("Error reading from input device\n\n%s" %
-                                     traceback.format_exc())
+                                   traceback.format_exc())
             self.input_updated.call(0, 0, 0, 0)
             self._read_timer.stop()
 

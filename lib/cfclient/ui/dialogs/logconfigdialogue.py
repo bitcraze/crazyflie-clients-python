@@ -48,8 +48,8 @@ from PyQt4.Qt import *
 from cflib.crazyflie.log import Log, LogVariable, LogConfig
 
 (logconfig_widget_class,
-connect_widget_base_class) = (uic.loadUiType(sys.path[0] +
-                                 '/cfclient/ui/dialogs/logconfigdialogue.ui'))
+ connect_widget_base_class) = (uic.loadUiType(sys.path[0] +
+                                              '/cfclient/ui/dialogs/logconfigdialogue.ui'))
 
 NAME_FIELD = 0
 ID_FIELD = 1
@@ -58,7 +58,6 @@ CTYPE_FIELD = 3
 
 
 class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
-
     def __init__(self, helper, *args):
         super(LogConfigDialogue, self).__init__(*args)
         self.setupUi(self)
@@ -253,9 +252,9 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
                     varParent = parts[0]
                     varName = parts[1]
                     if self.moveNodeByName(self.logTree,
-                                            self.varTree,
-                                            varParent,
-                                            varName) == False:
+                                           self.varTree,
+                                           varParent,
+                                           varName) == False:
                         logger.warning("Could not find node %s.%s!!", varParent, varName)
                 else:
                     logger.warning("Error: Mem vars not supported!")
@@ -280,4 +279,3 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
                 completeName = "%s.%s" % (parentName, varName)
                 logconfig.add_variable(completeName, varType)
         return logconfig
-

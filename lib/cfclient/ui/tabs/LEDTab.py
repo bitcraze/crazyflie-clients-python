@@ -47,7 +47,8 @@ from cfclient.ui.tab import Tab
 from cflib.crazyflie.mem import MemoryElement
 
 led_tab_class = uic.loadUiType(sys.path[0] +
-                                "/cfclient/ui/tabs/ledTab.ui")[0]
+                               "/cfclient/ui/tabs/ledTab.ui")[0]
+
 
 class LEDTab(Tab, led_tab_class):
     """Tab for plotting logging data"""

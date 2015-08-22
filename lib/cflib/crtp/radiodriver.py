@@ -37,6 +37,7 @@ __author__ = 'Bitcraze AB'
 __all__ = ['RadioDriver']
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 from cflib.crtp.crtpdriver import CRTPDriver
@@ -55,6 +56,7 @@ from usb import USBError
 
 class RadioDriver(CRTPDriver):
     """ Crazyradio link driver """
+
     def __init__(self):
         """ Create the link driver """
         CRTPDriver.__init__(self)
@@ -228,7 +230,7 @@ class RadioDriver(CRTPDriver):
 
             one_to_scan["datarate"] = datarate
 
-            to_scan += (one_to_scan, )
+            to_scan += (one_to_scan,)
 
         found = self.cradio.scan_selected(to_scan, (0xFF, 0xFF, 0xFF))
 
@@ -301,7 +303,7 @@ class RadioDriver(CRTPDriver):
             try:
                 self.cradio = Crazyradio()
             except USBError as e:
-                return "Cannot open Crazyradio. Permission problem?"\
+                return "Cannot open Crazyradio. Permission problem?" \
                        " ({})".format(str(e))
             except Exception as e:
                 return str(e)
@@ -317,7 +319,7 @@ class RadioDriver(CRTPDriver):
 
 
 # Transmit/receive radio thread
-class _RadioDriverThread (threading.Thread):
+class _RadioDriverThread(threading.Thread):
     """
     Radio link receiver thread used to read data from the
     Crazyradio USB driver. """
@@ -350,7 +352,7 @@ class _RadioDriverThread (threading.Thread):
         waitTime = 0
         emptyCtr = 0
 
-        while(True):
+        while (True):
             if (self.sp):
                 break
 
@@ -358,10 +360,11 @@ class _RadioDriverThread (threading.Thread):
                 ackStatus = self.cradio.send_packet(dataOut)
             except Exception as e:
                 import traceback
+
                 self.link_error_callback("Error communicating with crazy radio"
                                          " ,it has probably been unplugged!\n"
                                          "Exception:%s\n\n%s" % (e,
-                                         traceback.format_exc()))
+                                                                 traceback.format_exc()))
 
             # Analise the in data packet ...
             if ackStatus is None:
@@ -377,7 +380,7 @@ class _RadioDriverThread (threading.Thread):
             if ackStatus.ack is False:
                 self.retryBeforeDisconnect = self.retryBeforeDisconnect - 1
                 if (self.retryBeforeDisconnect == 0 and
-                        self.link_error_callback is not None):
+                            self.link_error_callback is not None):
                     self.link_error_callback("Too many packets lost")
                 continue
             self.retryBeforeDisconnect = self.RETRYCOUNT_BEFORE_DISCONNECT

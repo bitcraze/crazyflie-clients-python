@@ -55,8 +55,8 @@ from PyQt4.Qt import *
 from time import time
 
 (plot_widget_class,
-connect_widget_base_class) = (uic.loadUiType(
-                             sys.path[0] + '/cfclient/ui/widgets/plotter.ui'))
+ connect_widget_base_class) = (uic.loadUiType(
+    sys.path[0] + '/cfclient/ui/widgets/plotter.ui'))
 
 # Try the imports for PyQtGraph to see if it is installed
 try:
@@ -65,10 +65,11 @@ try:
     from pyqtgraph.Qt import QtCore, QtGui
     import pyqtgraph.console
     import numpy as np
-    
+
     _pyqtgraph_found = True
 except Exception:
     import traceback
+
     logger.warning("PyQtGraph (or dependency) failed to import:\n%s",
                    traceback.format_exc())
     _pyqtgraph_found = False
@@ -83,8 +84,10 @@ try:
 except Exception:
     pass
 
+
 class PlotItemWrapper:
     """Wrapper for PlotDataItem to handle what data is shown"""
+
     def __init__(self, curve):
         """Initialize"""
         self.data = []
@@ -106,7 +109,8 @@ class PlotItemWrapper:
         points have been added."""
         limit = min(stop, len(self.data))
         self.curve.setData(y=self.data[start:limit], x=self.ts[start:limit])
-        return [self.ts[start], self.ts[limit-1]]
+        return [self.ts[start], self.ts[limit - 1]]
+
 
 class PlotWidget(QtGui.QWidget, plot_widget_class):
     """Wrapper widget for PyQtGraph adding some extra buttons"""
@@ -130,8 +134,8 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         self._last_item = 0
 
         self.setSizePolicy(QtGui.QSizePolicy(
-                                         QtGui.QSizePolicy.MinimumExpanding,
-                                         QtGui.QSizePolicy.MinimumExpanding))
+            QtGui.QSizePolicy.MinimumExpanding,
+            QtGui.QSizePolicy.MinimumExpanding))
 
         self.setMinimumSize(self.minimumSizeHint())
         self.parent = parent
@@ -149,7 +153,7 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
 
         self.plotLayout.addWidget(self._plot_widget)
 
-        #self.saveToFile.clicked.connect(self.saveToFileSignal)
+        # self.saveToFile.clicked.connect(self.saveToFileSignal)
         self._x_min = 0
         self._x_max = 500
         self._enable_auto_y.setChecked(True)
@@ -213,7 +217,7 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
 
     def _manual_range_change(self, obj):
         """Callback from pyqtplot when users changes the range of the plot using the mouse"""
-        [[x_min,x_max],[y_min,y_max]] = self._plot_widget.getViewBox().viewRange()
+        [[x_min, x_max], [y_min, y_max]] = self._plot_widget.getViewBox().viewRange()
         self._range_y_min.setValue(y_min)
         self._range_y_max.setValue(y_max)
         self._range_y_min.setEnabled(True)
@@ -263,7 +267,7 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         x_max_limit = 0
         # We are adding new datasets, calculate what we should show.
         if self._enable_samples_x.isChecked():
-            x_min_limit = max(0, self._last_item-self._nbr_samples)
+            x_min_limit = max(0, self._last_item - self._nbr_samples)
             x_max_limit = max(self._last_item, self._nbr_samples)
 
         for name in self._items:
@@ -288,4 +292,3 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         self._last_ts = None
         self._dtime = None
         self._plot_widget.clear()
-

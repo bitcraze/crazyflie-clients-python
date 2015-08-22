@@ -35,7 +35,8 @@ def init_config_path(isInSource):
             # Unknown OS, I hope this is good enough
             configPath = _path.join(prefix, "." + APP_NAME)
 
-    if not _path.exists(configPath): os.makedirs(configPath)
+    if not _path.exists(configPath):
+        os.makedirs(configPath)
 
     return configPath
 

@@ -43,8 +43,8 @@ from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
 debugdriver_tab_class = uic.loadUiType(
-                           sys.path[0] +
-                           "/cfclient/ui/toolboxes/debugDriverToolbox.ui")[0]
+    sys.path[0] +
+    "/cfclient/ui/toolboxes/debugDriverToolbox.ui")[0]
 
 
 class DebugDriverToolbox(QtGui.QWidget, debugdriver_tab_class):
@@ -60,7 +60,7 @@ class DebugDriverToolbox(QtGui.QWidget, debugdriver_tab_class):
 
         # Connected / disconnected signals
         self.helper.cf.connected.add_callback(
-                                             self.connectionDoneSignal.emit)
+            self.connectionDoneSignal.emit)
         self.connectionDoneSignal.connect(self.connectionDone)
         self.helper.cf.disconnected.add_callback(self.disconnectedSignal.emit)
         self.disconnectedSignal.connect(self.disconnected)
@@ -106,4 +106,3 @@ class DebugDriverToolbox(QtGui.QWidget, debugdriver_tab_class):
 
     def preferedDockArea(self):
         return Qt.RightDockWidgetArea
-

@@ -35,6 +35,7 @@ __all__ = ['HexSpinBox']
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QAbstractSpinBox
 
+
 class HexSpinBox(QAbstractSpinBox):
     def __init__(self, *args):
         QAbstractSpinBox.__init__(self, *args)

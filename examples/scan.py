@@ -30,6 +30,7 @@ Simple example that scans for available Crazyflies and lists them.
 """
 
 import sys
+
 sys.path.append("../lib")
 
 import cflib.crtp
@@ -42,4 +43,3 @@ available = cflib.crtp.scan_interfaces()
 print "Crazyflies found:"
 for i in available:
     print i[0]
-

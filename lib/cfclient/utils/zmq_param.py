@@ -32,19 +32,20 @@ Give access to the parameter framework via ZMQ.
 
 import logging
 from threading import Thread, Lock
+
 ZMQ_PULL_PORT = 1024 + 189
 logger = logging.getLogger(__name__)
 
 enabled = False
 try:
     import zmq
+
     enabled = True
 except Exception as e:
     logger.warning("Not enabling ZMQ param access, import failed ({})".format(e))
 
 
 class _PullReader(Thread):
-
     def __init__(self, receiver, callback, *args):
         super(_PullReader, self).__init__(*args)
         self._receiver = receiver
@@ -60,6 +61,7 @@ class _PullReader(Thread):
 
 class ZMQParamAccess:
     """Used for reading data from input devices using the PyGame API."""
+
     def __init__(self, crazyflie):
 
         if enabled:
@@ -78,9 +80,9 @@ class ZMQParamAccess:
             self._receiver_thread.start()
 
     def _cmd_callback(self, data):
-        #logger.info(data)
+        # logger.info(data)
         if data["cmd"] == "toc":
-            response = {"version":1, "toc": []}
+            response = {"version": 1, "toc": []}
             self._receiver.send_json(response)
             self._receiver_thread.lock.release()
         if data["cmd"] == "set":
@@ -98,6 +100,6 @@ class ZMQParamAccess:
         self._cf.param.remove_update_callback(group=group, name=name_short,
                                               cb=self._param_callback)
 
-        response = {"version":1, "cmd": "set", "name": name, "value": value}
+        response = {"version": 1, "cmd": "set", "name": name, "value": value}
         self._receiver.send_json(response)
         self._receiver_thread.lock.release()

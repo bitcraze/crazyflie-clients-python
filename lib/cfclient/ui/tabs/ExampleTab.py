@@ -50,7 +50,8 @@ from cflib.crazyflie.log import LogConfig, Log
 from cflib.crazyflie.param import Param
 
 example_tab_class = uic.loadUiType(sys.path[0] +
-                                "/cfclient/ui/tabs/exampleTab.ui")[0]
+                                   "/cfclient/ui/tabs/exampleTab.ui")[0]
+
 
 class ExampleTab(Tab, example_tab_class):
     """Tab for plotting logging data"""

@@ -60,7 +60,7 @@ zmess = {
 
 context = zmq.Context()
 receiver = context.socket(zmq.PUSH)
-bind_addr = "tcp://127.0.0.1:{}".format(1024+190)
+bind_addr = "tcp://127.0.0.1:{}".format(1024 + 190)
 receiver.connect(bind_addr)
 
 for i in range(12):

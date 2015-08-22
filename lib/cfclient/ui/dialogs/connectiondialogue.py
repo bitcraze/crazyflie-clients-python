@@ -40,12 +40,11 @@ from PyQt4.QtCore import pyqtSignal, pyqtSlot, QThread
 import cflib.crtp
 
 (connect_widget_class,
-connect_widget_base_class) = (uic.loadUiType(sys.path[0] +
-                                 '/cfclient/ui/dialogs/connectiondialogue.ui'))
+ connect_widget_base_class) = (uic.loadUiType(sys.path[0] +
+                                              '/cfclient/ui/dialogs/connectiondialogue.ui'))
 
 
 class ConnectDialogue(QtGui.QWidget, connect_widget_class):
-
     # Outgoing signal for connecting a Crazyflie
     requestConnectionSignal = pyqtSignal(str)
 
@@ -95,7 +94,7 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
 
     def interfaceSelected(self, listItem):
         self.requestConnectionSignal.emit(
-                self.available_interfaces[self.interfaceList.currentRow()][0])
+            self.available_interfaces[self.interfaceList.currentRow()][0])
         self.close()
 
     def openConnection(self):
@@ -109,7 +108,6 @@ class ConnectDialogue(QtGui.QWidget, connect_widget_class):
 
 
 class ScannerThread(QThread):
-
     scanSignal = pyqtSignal(object)
     interfaceFoundSignal = pyqtSignal(object)
 

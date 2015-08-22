@@ -41,16 +41,16 @@ from .exceptions import WrongUriType
 import re
 
 
-class SerialDriver (CRTPDriver):
+class SerialDriver(CRTPDriver):
     def __init__(self):
         None
 
     def connect(self, uri, linkQualityCallback, linkErrorCallback):
-        #check if the URI is a serial URI
+        # check if the URI is a serial URI
         if not re.search("^serial://", uri):
             raise WrongUriType("Not a serial URI")
 
-        #Check if it is a valid serial URI
+        # Check if it is a valid serial URI
         uriRe = re.search("^serial://([a-z A-Z 0-9]+)/?([0-9]+)?$", uri)
         if not uriRe:
             raise Exception("Invalid serial URI")

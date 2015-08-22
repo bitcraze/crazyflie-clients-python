@@ -49,8 +49,8 @@ logger = logging.getLogger(__name__)
 MODULE_MAIN = "LeapmotionReader"
 MODULE_NAME = "Leap Motion"
 
-class LeapListener(Leap.Listener):
 
+class LeapListener(Leap.Listener):
     def set_data_callback(self, callback):
         self._dcb = callback
         self._nbr_of_fingers = 0
@@ -75,7 +75,7 @@ class LeapListener(Leap.Listener):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
         data = {"roll": 0, "pitch": 0, "yaw": 0, "thrust": 0}
-        #logger.info("Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
+        # logger.info("Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
         #                              frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures())))
         if not frame.hands.is_empty:
             # Get the first hand
@@ -89,7 +89,7 @@ class LeapListener(Leap.Listener):
                 data["roll"] = -direction.pitch * Leap.RAD_TO_DEG / 30.0
                 data["pitch"] = -normal.roll * Leap.RAD_TO_DEG / 30.0
                 data["yaw"] = direction.yaw * Leap.RAD_TO_DEG / 70.0
-                data["thrust"] = (hand.palm_position[1] - 80)/150.0 # Use the elevation of the hand for thrust
+                data["thrust"] = (hand.palm_position[1] - 80) / 150.0  # Use the elevation of the hand for thrust
 
             if data["thrust"] < 0.0:
                 data["thrust"] = 0.0
@@ -98,10 +98,12 @@ class LeapListener(Leap.Listener):
 
         self._dcb(data)
 
+
 class LeapmotionReader:
     """Used for reading data from input devices using the PyGame API."""
+
     def __init__(self):
-        #pygame.init()
+        # pygame.init()
         self._ts = 0
         self._listener = LeapListener()
         self._listener.set_data_callback(self.leap_callback)
@@ -141,9 +143,8 @@ class LeapmotionReader:
         dev = []
 
         # According to API doc only 0 or 1 devices is supported
-        #logger.info("Devs: {}".format(self._controller.is_connected))
+        # logger.info("Devs: {}".format(self._controller.is_connected))
         if self._controller.is_connected:
             dev.append({"id": 0, "name": "Leapmotion"})
-        
-        return dev
 
+        return dev

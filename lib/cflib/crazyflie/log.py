@@ -98,7 +98,9 @@ GET_TOC_ELEMENT = "GET_TOC_ELEMENT"
 MAX_LOG_DATA_PACKET_SIZE = 30
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class LogVariable():
     """A logging variable"""
@@ -134,6 +136,7 @@ class LogVariable():
         return ("LogVariable: name=%s, store=%s, fetch=%s" %
                 (self.name, LogTocElement.get_cstring_from_id(self.stored_as),
                  LogTocElement.get_cstring_from_id(self.fetch_as)))
+
 
 class LogConfig(object):
     """Representation of one log configuration that enables logging
@@ -224,7 +227,7 @@ class LogConfig(object):
                 logger.debug("Adding %s with id=%d and type=0x%02X",
                              var.name,
                              self.cf.log.toc.get_element_id(
-                             var.name), var.get_storage_and_fetch_byte())
+                                 var.name), var.get_storage_and_fetch_byte())
                 pk.data += struct.pack('<B', var.get_storage_and_fetch_byte())
                 pk.data += struct.pack('<B', self.cf.log.toc.
                                        get_element_id(var.name))
@@ -289,14 +292,14 @@ class LogConfig(object):
 
 class LogTocElement:
     """An element in the Log TOC."""
-    types = {0x01: ("uint8_t",  '<B', 1),
+    types = {0x01: ("uint8_t", '<B', 1),
              0x02: ("uint16_t", '<H', 2),
              0x03: ("uint32_t", '<L', 4),
-             0x04: ("int8_t",   '<b', 1),
-             0x05: ("int16_t",  '<h', 2),
-             0x06: ("int32_t",  '<i', 4),
-             0x08: ("FP16",     '<h', 2),
-             0x07: ("float",    '<f', 4)}
+             0x04: ("int8_t", '<b', 1),
+             0x05: ("int16_t", '<h', 2),
+             0x06: ("int32_t", '<i', 4),
+             0x08: ("FP16", '<h', 2),
+             0x07: ("float", '<f', 4)}
 
     @staticmethod
     def get_id_from_cstring(name):
@@ -356,12 +359,12 @@ class Log():
     # some of the text messages will look very strange
     # in the UI, so they are redefined here
     _err_codes = {
-            errno.ENOMEM: "No more memory available",
-            errno.ENOEXEC: "Command not found",
-            errno.ENOENT: "No such block id",
-            errno.E2BIG: "Block too large",
-            errno.EEXIST: "Block already exists"
-            }
+        errno.ENOMEM: "No more memory available",
+        errno.ENOEXEC: "Command not found",
+        errno.ENOENT: "No such block id",
+        errno.E2BIG: "Block too large",
+        errno.EEXIST: "Block already exists"
+    }
 
     def __init__(self, crazyflie=None):
         self.log_blocks = []
@@ -441,7 +444,7 @@ class Log():
 
         pk = CRTPPacket()
         pk.set_header(CRTPPort.LOGGING, CHAN_SETTINGS)
-        pk.data = (CMD_RESET_LOGGING, )
+        pk.data = (CMD_RESET_LOGGING,)
         self.cf.send_packet(pk, expected_reply=(CMD_RESET_LOGGING,))
 
     def _find_block(self, id):
@@ -496,7 +499,7 @@ class Log():
                         # for this. For some reason we get an error back after
                         # the block has been started and added. This will show
                         # an error in the UI, but everything is still working.
-                        #block.error_cb.call(block, msg)
+                        # block.error_cb.call(block, msg)
 
             if (cmd == CMD_STOP_LOGGING):
                 if (error_status == 0x00):

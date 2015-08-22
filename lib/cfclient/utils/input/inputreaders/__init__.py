@@ -64,6 +64,7 @@ for reader in found_readers:
     except Exception as e:
         logger.info("Could not initialize [{}]: {}".format(reader, e))
 
+
 def devices():
     # Todo: Support rescanning and adding/removing devices
     if len(available_devices) == 0:

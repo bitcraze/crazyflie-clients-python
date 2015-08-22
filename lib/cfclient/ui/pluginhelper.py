@@ -35,6 +35,7 @@ __all__ = ['PluginHelper']
 
 class PluginHelper():
     """Used for passing objects to tabs and toolboxes"""
+
     def __init__(self):
         self.cf = None
         self.menu = None
