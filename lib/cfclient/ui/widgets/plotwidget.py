@@ -32,9 +32,6 @@ and manipulating the plot.
 For more advanced plotting save the data and use an external application.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['PlotWidget']
-
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, QLine, QPoint, \
     QPointF, QSize, QRectF
@@ -44,8 +41,6 @@ import math
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 import sys
 
 from PyQt4 import Qt, QtCore, QtGui, uic
@@ -54,6 +49,11 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
 from time import time
+
+__author__ = 'Bitcraze AB'
+__all__ = ['PlotWidget']
+
+logger = logging.getLogger(__name__)
 
 (plot_widget_class, connect_widget_base_class) = (
     uic.loadUiType(sys.path[0] + '/cfclient/ui/widgets/plotter.ui'))

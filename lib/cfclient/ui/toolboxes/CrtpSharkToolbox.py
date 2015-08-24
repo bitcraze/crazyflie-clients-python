@@ -30,15 +30,15 @@ Toolbox for showing packets that is sent via the communication link when
 debugging.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['CrtpSharkBoolbox']
-
 import sys
 import os
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 from time import time
+
+__author__ = 'Bitcraze AB'
+__all__ = ['CrtpSharkBoolbox']
 
 param_tab_class = uic.loadUiType(
     sys.path[0] + "/cfclient/ui/toolboxes/crtpSharkToolbox.ui")[0]

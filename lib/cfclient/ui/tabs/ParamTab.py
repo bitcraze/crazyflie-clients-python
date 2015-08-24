@@ -30,10 +30,9 @@ Shows all the parameters available in the Crazyflie and also gives the ability
 to edit them.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['ParamTab']
-
 import sys
+import logging
+
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 from PyQt4.QtCore import QAbstractItemModel, QModelIndex, QString, QVariant
@@ -43,10 +42,11 @@ from PyQt4.QtGui import QSortFilterProxyModel
 
 from cfclient.ui.tab import Tab
 
-param_tab_class = uic.loadUiType(sys.path[0] +
-                                 "/cfclient/ui/tabs/paramTab.ui")[0]
+__author__ = 'Bitcraze AB'
+__all__ = ['ParamTab']
 
-import logging
+param_tab_class = uic.loadUiType(
+    sys.path[0] + "/cfclient/ui/tabs/paramTab.ui")[0]
 
 logger = logging.getLogger(__name__)
 

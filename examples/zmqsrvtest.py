@@ -31,11 +31,15 @@ ZMQ server test application. Use CTRL-C to end the application.
 NOTE! If connected to a Crazyflie this will power on the motors!
 """
 
-import zmq
 from threading import Thread
 import signal
 import time
 import sys
+
+try:
+    import zmq
+except ImportError as e:
+    raise Exception("ZMQ library probably not installed ({})".format(e))
 
 
 class _LogThread(Thread):

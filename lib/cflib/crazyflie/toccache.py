@@ -31,19 +31,19 @@ Access the TOC cache for reading/writing. It supports both user
 cache and dist cache.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['TocCache']
-
 import os
 import json
 from glob import glob
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 from .log import LogTocElement  # pylint: disable=W0611
 from .param import ParamTocElement  # pylint: disable=W0611
+
+__author__ = 'Bitcraze AB'
+__all__ = ['TocCache']
+
+logger = logging.getLogger(__name__)
 
 
 class TocCache():

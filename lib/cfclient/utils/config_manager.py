@@ -31,9 +31,6 @@
 Manager for loading/accesing input device mappings.
 """
 
-__author__ = 'Bitcraze AB/Allyn Bauer'
-__all__ = ['ConfigManager']
-
 import sys
 import json
 import logging
@@ -43,6 +40,9 @@ import copy
 
 from .singleton import Singleton
 from cflib.utils.callbacks import Caller
+
+__author__ = 'Bitcraze AB/Allyn Bauer'
+__all__ = ['ConfigManager']
 
 logger = logging.getLogger(__name__)
 

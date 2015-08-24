@@ -30,12 +30,12 @@ Crazyflie console is used to receive characters printed using printf
 from the firmware.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Console']
-
 import struct
 from cflib.utils.callbacks import Caller
 from cflib.crtp.crtpstack import CRTPPort
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Console']
 
 
 class Console:

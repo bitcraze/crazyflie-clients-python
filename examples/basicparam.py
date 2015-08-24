@@ -32,17 +32,13 @@ one parameter and reads back it's value. Finally it disconnects.
 """
 
 import sys
-
-sys.path.append("../lib")
-
-import cflib.crtp
-
 import logging
 import time
 import random
 
-import cflib.crtp
-from cflib.crazyflie import Crazyflie
+sys.path.append("../lib")
+import cflib.crtp  # noqa
+from cflib.crazyflie import Crazyflie  # noqa
 
 # Only output errors from the logging framework
 logging.basicConfig(level=logging.WARNING)

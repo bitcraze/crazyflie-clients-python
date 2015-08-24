@@ -30,10 +30,10 @@ The mux is used to open one or more devices and mix the inputs from all
 of them into one "input" for the Crazyflie and UI.
 """
 
+import logging
+
 __author__ = 'Bitcraze AB'
 __all__ = ['InputMux']
-
-import logging
 
 logger = logging.getLogger(__name__)
 

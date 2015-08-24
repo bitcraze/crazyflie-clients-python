@@ -29,14 +29,9 @@
 The flight control tab shows telemetry data and flight settings.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['FlightTab']
-
 import sys
 
 import logging
-
-logger = logging.getLogger(__name__)
 
 from time import time
 
@@ -54,6 +49,11 @@ from cflib.crazyflie.log import Log, LogVariable, LogConfig
 from cfclient.ui.tab import Tab
 
 from cflib.crazyflie.mem import MemoryElement
+
+__author__ = 'Bitcraze AB'
+__all__ = ['FlightTab']
+
+logger = logging.getLogger(__name__)
 
 flight_tab_class = uic.loadUiType(sys.path[0] +
                                   "/cfclient/ui/tabs/flightTab.ui")[0]

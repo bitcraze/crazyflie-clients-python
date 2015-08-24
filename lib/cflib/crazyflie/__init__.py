@@ -35,12 +35,8 @@ to access that functionality. The same design is then used in the Crazyflie
 firmware which makes the mapping 1:1 in most cases.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Crazyflie']
-
 import logging
 
-logger = logging.getLogger(__name__)
 import time
 import datetime
 from threading import Thread
@@ -58,6 +54,11 @@ from .platformservice import PlatformService
 import cflib.crtp
 
 from cflib.utils.callbacks import Caller
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Crazyflie']
+
+logger = logging.getLogger(__name__)
 
 
 class State:

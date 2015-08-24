@@ -34,9 +34,9 @@ import os
 # Fix the path so imports works regardless from where it's run
 sys.path[0] = os.path.join(sys.path[0][:-4], "lib")
 
-import cflib.crtp
-from cflib.bootloader import Bootloader
-from cflib.bootloader.boottypes import BootVersion, TargetTypes, Target
+import cflib.crtp  # noqa
+from cflib.bootloader import Bootloader  # noqa
+from cflib.bootloader.boottypes import BootVersion, TargetTypes, Target  # noqa
 
 # Initialise the CRTP link driver
 link = None

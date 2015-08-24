@@ -29,15 +29,15 @@
 Dialogue that lists available Crazyflies, lets user choose which to connect to.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['ConnectionDialogue']
-
 import sys
 
 from PyQt4 import QtGui, uic
 from PyQt4.QtCore import pyqtSignal, pyqtSlot, QThread
 
 import cflib.crtp
+
+__author__ = 'Bitcraze AB'
+__all__ = ['ConnectionDialogue']
 
 (connect_widget_class, connect_widget_base_class) = (
     uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/connectiondialogue.ui'))

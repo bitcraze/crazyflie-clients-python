@@ -16,7 +16,7 @@ import time
 
 try:
     import zmq
-except Exception as e:
+except ImportError as e:
     raise Exception("ZMQ library probably not installed ({})".format(e))
 
 context = zmq.Context()

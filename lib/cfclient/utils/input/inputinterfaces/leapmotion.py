@@ -32,9 +32,6 @@ the Leap Motion SDK to be manually copied. See lib/leapsdk/__init__.py for
 more info.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['LeapmotionReader']
-
 try:
     import leapsdk.Leap as Leap
     from leapsdk.Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, \
@@ -45,6 +42,9 @@ except Exception as e:
 
 import logging
 import time
+
+__author__ = 'Bitcraze AB'
+__all__ = ['LeapmotionReader']
 
 logger = logging.getLogger(__name__)
 

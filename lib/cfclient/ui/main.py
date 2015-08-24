@@ -28,13 +28,9 @@
 """
 The main file for the Crazyflie control application.
 """
-__author__ = 'Bitcraze AB'
-__all__ = ['MainUI']
 
 import sys
 import logging
-
-logger = logging.getLogger(__name__)
 
 import PyQt4
 from PyQt4 import QtGui, uic
@@ -66,6 +62,11 @@ from cfclient.ui.dialogs.bootloader import BootloaderDialog
 from cfclient.ui.dialogs.about import AboutDialog
 
 from cflib.crazyflie.mem import MemoryElement
+
+__author__ = 'Bitcraze AB'
+__all__ = ['MainUI']
+
+logger = logging.getLogger(__name__)
 
 (main_window_class,
  main_windows_base_class) = (uic.loadUiType(sys.path[0] +

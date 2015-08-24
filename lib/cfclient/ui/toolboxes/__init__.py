@@ -32,12 +32,12 @@ Dropping a new .py file into this directory will automatically list and load
 it into the UI when it is started.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = []
-
 import os
 import glob
 import logging
+
+__author__ = 'Bitcraze AB'
+__all__ = []
 
 logger = logging.getLogger(__name__)
 

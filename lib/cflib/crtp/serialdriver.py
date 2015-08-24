@@ -31,14 +31,14 @@ An early serial link driver. This could still be used (after some fixing) to
 run high-speed CRTP with the Crazyflie. The UART can be run at 2Mbit.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['SerialDriver']
-
 from .crtpdriver import CRTPDriver
 
 from .exceptions import WrongUriType
 
 import re
+
+__author__ = 'Bitcraze AB'
+__all__ = ['SerialDriver']
 
 
 class SerialDriver(CRTPDriver):

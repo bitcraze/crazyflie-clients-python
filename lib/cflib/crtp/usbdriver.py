@@ -32,12 +32,7 @@ Crazyflie USB driver.
 This driver is used to communicate with the Crazyflie using the USB connection.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['UsbDriver']
-
 import logging
-
-logger = logging.getLogger(__name__)
 
 from cflib.crtp.crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket
@@ -49,6 +44,11 @@ import time
 
 from cflib.drivers.cfusb import CfUsb
 from usb import USBError
+
+__author__ = 'Bitcraze AB'
+__all__ = ['UsbDriver']
+
+logger = logging.getLogger(__name__)
 
 
 class UsbDriver(CRTPDriver):

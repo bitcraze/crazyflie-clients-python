@@ -30,11 +30,11 @@
 Used for sending control setpoints to the Crazyflie
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Commander']
-
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 import struct
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Commander']
 
 
 class Commander():

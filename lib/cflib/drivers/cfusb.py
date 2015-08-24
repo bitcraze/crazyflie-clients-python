@@ -30,9 +30,6 @@
 USB driver for the Crazyflie.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['CfUsb']
-
 import os
 import usb
 import logging
@@ -40,6 +37,9 @@ import sys
 import time
 import array
 import binascii
+
+__author__ = 'Bitcraze AB'
+__all__ = ['CfUsb']
 
 logger = logging.getLogger(__name__)
 

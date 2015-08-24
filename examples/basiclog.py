@@ -31,18 +31,14 @@ and prints it to the console. After 10s the application disconnects and exits.
 """
 
 import sys
-
-sys.path.append("../lib")
-
-import cflib.crtp
-
 import logging
 import time
 from threading import Timer
 
-import cflib.crtp
-from cfclient.utils.logconfigreader import LogConfig
-from cflib.crazyflie import Crazyflie
+sys.path.append("../lib")
+import cflib.crtp  # noqa
+from cfclient.utils.logconfigreader import LogConfig  # noqa
+from cflib.crazyflie import Crazyflie  # noqa
 
 # Only output errors from the logging framework
 logging.basicConfig(level=logging.ERROR)

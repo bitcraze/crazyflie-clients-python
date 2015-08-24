@@ -30,12 +30,7 @@
 Crazyflie radio bootloader for flashing firmware.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Cloader']
-
 import logging
-
-logger = logging.getLogger(__name__)
 
 import time
 import struct
@@ -46,6 +41,11 @@ import cflib.crtp
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 
 from .boottypes import TargetTypes, Target
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Cloader']
+
+logger = logging.getLogger(__name__)
 
 
 class Cloader:

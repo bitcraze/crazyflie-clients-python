@@ -2,19 +2,14 @@
 
 scriptDir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-printf "Nr of PEP 8 errors/warnings remaining to be fixed\n"
-pep8 --count -qq --filename="*" ${scriptDir}/../../bin
-pep8 --count -qq ${scriptDir}/../..
-
-printf "Now looking for errors that will break the build\n"
-# We will remove more and more errors over time. We don't want them all at one time to avoid mental overload.
-exclude_errors="E402"
-
-pep8 --count --statistics --filename="*" --ignore="${exclude_errors}" ${scriptDir}/../../bin
+pep8 --count --statistics --filename="*" ${scriptDir}/../../bin
 result1=$?
-pep8 --count --statistics --ignore=${exclude_errors} ${scriptDir}/../..
+pep8 --count --statistics ${scriptDir}/../..
 result2=$?
 
 if [ ${result1} != 0 ] || [ ${result2} != 0 ] ; then
+    echo "PEP-8 check fail"
     exit 1
+else
+    echo "PEP-8 check pass"
 fi

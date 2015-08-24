@@ -29,11 +29,11 @@
 Attitude indicator widget.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['AttitudeIndicator']
-
 import sys
 from PyQt4 import QtGui, QtCore
+
+__author__ = 'Bitcraze AB'
+__all__ = ['AttitudeIndicator']
 
 
 class AttitudeIndicator(QtGui.QWidget):

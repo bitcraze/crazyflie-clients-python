@@ -19,6 +19,7 @@
 """
 Flash the DS28E05 EEPROM via CRTP.
 """
+
 from __future__ import print_function, division, absolute_import, \
     unicode_literals
 
@@ -27,12 +28,10 @@ import sys
 import time
 import datetime
 
-sys.path.insert(0, "../lib")
-sys.path.insert(0, "lib")
-
-import cflib.crtp
-from cflib.crazyflie import Crazyflie
-from cflib.crazyflie.mem import MemoryElement
+sys.path.append("../lib")
+import cflib.crtp  # noqa
+from cflib.crazyflie import Crazyflie  # noqa
+from cflib.crazyflie.mem import MemoryElement  # noqa
 
 
 class NotConnected(RuntimeError):

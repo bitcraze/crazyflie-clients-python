@@ -29,18 +29,14 @@
 This tab plots different logging data defined by configurations that has been
 pre-configured.
 """
-import math
 
-__author__ = 'Bitcraze AB'
-__all__ = ['GpsTab']
+import math
 
 import glob
 import json
 import logging
 import os
 import sys
-
-logger = logging.getLogger(__name__)
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import *
@@ -65,7 +61,10 @@ try:
 except:
     should_enable_tab = False
 
-import sys
+__author__ = 'Bitcraze AB'
+__all__ = ['GpsTab']
+
+logger = logging.getLogger(__name__)
 
 gps_tab_class = uic.loadUiType(sys.path[0] +
                                "/cfclient/ui/tabs/gpsTab.ui")[0]

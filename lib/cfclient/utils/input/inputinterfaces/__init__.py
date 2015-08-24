@@ -31,13 +31,13 @@ Find all the available input interfaces and try to initialize them.
 
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['InputInterface']
-
 import os
 import glob
 import logging
 from ..inputreaderinterface import InputReaderInterface
+
+__author__ = 'Bitcraze AB'
+__all__ = ['InputInterface']
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +69,8 @@ def devices():
         for reader in initialized_interfaces:
             devs = reader.devices()
             for dev in devs:
-                available_interfaces.append(InputInterface(dev["name"],
-                                                           dev["id"],
-                                                           reader))
+                available_interfaces.append(InputInterface(
+                    dev["name"], dev["id"], reader))
     return available_interfaces
 
 

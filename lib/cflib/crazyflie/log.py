@@ -63,14 +63,15 @@ States of a configuration:
                     be used again.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Log', 'LogTocElement']
-
 import struct
 import errno
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from cflib.utils.callbacks import Caller
 from .toc import Toc, TocFetcher
+import logging
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Log', 'LogTocElement']
 
 # Channels used for the logging port
 CHAN_TOC = 0
@@ -97,7 +98,6 @@ GET_TOC_ELEMENT = "GET_TOC_ELEMENT"
 # The max size of a CRTP packet payload
 MAX_LOG_DATA_PACKET_SIZE = 30
 
-import logging
 
 logger = logging.getLogger(__name__)
 

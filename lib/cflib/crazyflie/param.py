@@ -34,9 +34,6 @@ the parameters that can be written/read.
 
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Param', 'ParamTocElement']
-
 from cflib.utils.callbacks import Caller
 import struct
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
@@ -46,6 +43,9 @@ from threading import Thread, Lock
 from Queue import Queue
 
 import logging
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Param', 'ParamTocElement']
 
 logger = logging.getLogger(__name__)
 

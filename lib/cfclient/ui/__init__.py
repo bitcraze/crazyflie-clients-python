@@ -30,9 +30,9 @@ Create a plugin helper that is passed to all the tabs and toolboxes for easy #
 access to objects that are needed.
 """
 
+from cfclient.ui.pluginhelper import PluginHelper
+
 __author__ = 'Bitcraze AB'
 __all__ = []
-
-from cfclient.ui.pluginhelper import PluginHelper
 
 pluginhelper = PluginHelper()

@@ -31,12 +31,12 @@ yaw/thrust) with the ability to take over all of them from a second device
 (master/teacher).
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['SelectiveMux']
-
 import logging
 
 from .takeoverselectivemux import TakeOverSelectiveMux
+
+__author__ = 'Bitcraze AB'
+__all__ = ['SelectiveMux']
 
 logger = logging.getLogger(__name__)
 

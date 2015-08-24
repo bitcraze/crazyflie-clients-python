@@ -30,16 +30,11 @@ This tab plots different logging data defined by configurations that has been
 pre-configured.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['PlotTab']
-
 import glob
 import json
 import logging
 import os
 import sys
-
-logger = logging.getLogger(__name__)
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread, Qt
@@ -55,6 +50,11 @@ from cfclient.ui.widgets.plotwidget import PlotWidget
 from cflib.crazyflie.log import Log
 
 from cfclient.ui.tab import Tab
+
+__author__ = 'Bitcraze AB'
+__all__ = ['PlotTab']
+
+logger = logging.getLogger(__name__)
 
 plot_tab_class = uic.loadUiType(sys.path[0] +
                                 "/cfclient/ui/tabs/plotTab.ui")[0]

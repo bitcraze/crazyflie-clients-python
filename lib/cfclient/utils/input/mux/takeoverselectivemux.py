@@ -31,12 +31,12 @@ from a second device (master/teacher) with the possibility to take over
 roll/pitch as well.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['TakeOverSelectiveMux']
-
 import logging
 
 from . import InputMux
+
+__author__ = 'Bitcraze AB'
+__all__ = ['TakeOverSelectiveMux']
 
 logger = logging.getLogger(__name__)
 

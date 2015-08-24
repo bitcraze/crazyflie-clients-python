@@ -30,13 +30,8 @@
 Basic tab to be able to set (and test) colors in the LED-ring.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['LEDTab']
-
 import logging
 import sys
-
-logger = logging.getLogger(__name__)
 
 from PyQt4 import QtGui, uic
 from PyQt4.QtCore import pyqtSignal
@@ -45,6 +40,11 @@ from PyQt4.QtGui import QColorDialog
 from cfclient.ui.tab import Tab
 
 from cflib.crazyflie.mem import MemoryElement
+
+__author__ = 'Bitcraze AB'
+__all__ = ['LEDTab']
+
+logger = logging.getLogger(__name__)
 
 led_tab_class = uic.loadUiType(sys.path[0] +
                                "/cfclient/ui/tabs/ledTab.ui")[0]

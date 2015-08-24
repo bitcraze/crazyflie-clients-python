@@ -37,7 +37,7 @@ LED lit up, until all of them are lit up in the last message.
 
 try:
     import zmq
-except Exception as e:
+except ImportError as e:
     raise Exception("ZMQ library probably not installed ({})".format(e))
 
 zmess = {

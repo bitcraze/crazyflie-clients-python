@@ -29,9 +29,6 @@
 """ CRTP UDP Driver. Work either with the UDP server or with an UDP device
 See udpserver.py for the protocol"""
 
-__author__ = 'Bitcraze AB'
-__all__ = ['UdpDriver']
-
 from .crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket
 from .exceptions import WrongUriType
@@ -39,6 +36,9 @@ import Queue
 import re
 import struct
 from socket import socket
+
+__author__ = 'Bitcraze AB'
+__all__ = ['UdpDriver']
 
 
 class UdpDriver(CRTPDriver):

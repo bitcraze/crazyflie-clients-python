@@ -37,9 +37,6 @@ For normal connections a console thread is also started that will send
 generated console output via CRTP.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['DebugDriver']
-
 from threading import Thread
 from .crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket, CRTPPort
@@ -56,6 +53,9 @@ import string
 import errno
 
 import logging
+
+__author__ = 'Bitcraze AB'
+__all__ = ['DebugDriver']
 
 logger = logging.getLogger(__name__)
 

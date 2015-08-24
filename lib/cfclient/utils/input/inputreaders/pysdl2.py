@@ -32,20 +32,23 @@ input data.
 """
 
 import sys
-
-if sys.platform.startswith('linux'):
-    raise Exception("No SDL2 support on Linux")
-
-__author__ = 'Bitcraze AB'
-__all__ = ['PySDL2Reader']
-
-import sdl2
-import sdl2.ext
-import sdl2.hints
 from threading import Thread
 from Queue import Queue
 import time
 import logging
+
+if sys.platform.startswith('linux'):
+    raise Exception("No SDL2 support on Linux")
+
+try:
+    import sdl2
+    import sdl2.ext
+    import sdl2.hints
+except ImportError as e:
+    raise Exception("sdl2 library probably not installed ({})".format(e))
+
+__author__ = 'Bitcraze AB'
+__all__ = ['PySDL2Reader']
 
 logger = logging.getLogger(__name__)
 

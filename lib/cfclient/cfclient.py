@@ -26,15 +26,15 @@
 
 """Initialization of the PC Client GUI."""
 
-__author__ = 'Bitcraze AB'
-__all__ = ['']
-
 import sys
 import os
 import argparse
 import datetime
 
 import logging
+
+__author__ = 'Bitcraze AB'
+__all__ = ['']
 
 
 def main():

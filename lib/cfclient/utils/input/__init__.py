@@ -39,9 +39,6 @@ The input device's axes and buttons are mapped to software inputs using a
 configuration file.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['JoystickReader']
-
 import sys
 import os
 import re
@@ -53,8 +50,6 @@ import shutil
 import inputreaders as readers
 import inputinterfaces as interfaces
 
-logger = logging.getLogger(__name__)
-
 from cfclient.utils.config import Config
 from cfclient.utils.config_manager import ConfigManager
 
@@ -65,6 +60,11 @@ from .mux import InputMux
 from .mux.nomux import NoMux
 from .mux.takeovermux import TakeOverMux
 from .mux.takeoverselectivemux import TakeOverSelectiveMux
+
+__author__ = 'Bitcraze AB'
+__all__ = ['JoystickReader']
+
+logger = logging.getLogger(__name__)
 
 MAX_THRUST = 65000
 

@@ -33,13 +33,8 @@ This driver is used to communicate with the Crazyflie using the Crazyradio
 USB dongle.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['RadioDriver']
-
 import collections
 import logging
-
-logger = logging.getLogger(__name__)
 
 from cflib.crtp.crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket
@@ -53,6 +48,11 @@ import struct
 
 from cflib.drivers.crazyradio import Crazyradio
 from usb import USBError
+
+__author__ = 'Bitcraze AB'
+__all__ = ['RadioDriver']
+
+logger = logging.getLogger(__name__)
 
 
 class RadioDriver(CRTPDriver):

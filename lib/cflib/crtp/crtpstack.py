@@ -30,10 +30,10 @@
 CRTP packet and ports.
 """
 
+import struct
+
 __author__ = 'Bitcraze AB'
 __all__ = ['CRTPPort', 'CRTPPacket']
-
-import struct
 
 
 class CRTPPort:

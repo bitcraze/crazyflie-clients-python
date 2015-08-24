@@ -29,13 +29,13 @@
 A detachable toolbox for showing console printouts from the Crazyflie
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['ConsoleToolbox']
-
 import sys
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal
+
+__author__ = 'Bitcraze AB'
+__all__ = ['ConsoleToolbox']
 
 console_class = uic.loadUiType(
     sys.path[0] + "/cfclient/ui/toolboxes/consoleToolbox.ui")[0]

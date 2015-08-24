@@ -33,13 +33,13 @@ To create a new input device reader drop a .py file into this
 directory and it will be picked up automatically.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['InputDevice']
-
 import os
 import glob
 import logging
 from ..inputreaderinterface import InputReaderInterface
+
+__author__ = 'Bitcraze AB'
+__all__ = ['InputDevice']
 
 logger = logging.getLogger(__name__)
 

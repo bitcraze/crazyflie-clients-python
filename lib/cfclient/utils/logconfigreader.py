@@ -35,9 +35,6 @@ Currently it can just use the PySdl2 driver but in the future there will be a
 Linux and Windows driver that can bypass PySdl2.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['LogVariable', 'LogConfigReader', 'LogConfigRemoveThis']
-
 import glob
 import json
 import logging
@@ -45,12 +42,15 @@ import os
 import shutil
 import sys
 
-logger = logging.getLogger(__name__)
-
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import pyqtSlot, pyqtSignal
 
 from cflib.crazyflie.log import LogVariable, LogConfig
+
+__author__ = 'Bitcraze AB'
+__all__ = ['LogVariable', 'LogConfigReader', 'LogConfigRemoveThis']
+
+logger = logging.getLogger(__name__)
 
 
 class LogConfigReader():

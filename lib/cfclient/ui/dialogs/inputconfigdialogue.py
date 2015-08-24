@@ -30,14 +30,9 @@ Dialogue used to select and configure an inputdevice. This includes mapping
 buttons and axis to match controls for the Crazyflie.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['InputConfigDialogue']
-
 import sys
 import json
 import logging
-
-logger = logging.getLogger(__name__)
 
 from cfclient.utils.config_manager import ConfigManager
 from cflib.crtp.exceptions import CommunicationException
@@ -48,6 +43,11 @@ from PyQt4.QtGui import *
 from PyQt4.Qt import *
 
 from cfclient.utils.input import JoystickReader
+
+__author__ = 'Bitcraze AB'
+__all__ = ['InputConfigDialogue']
+
+logger = logging.getLogger(__name__)
 
 (inputconfig_widget_class, connect_widget_base_class) = (
     uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/inputconfigdialogue.ui')

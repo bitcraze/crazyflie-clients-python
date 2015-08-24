@@ -30,9 +30,6 @@ Toolbox used to interact with the DebugDriver using a designated port. It's
 intended to be used for debugging.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['DebugDriverToolbox']
-
 import time
 import sys
 
@@ -41,6 +38,9 @@ from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
+
+__author__ = 'Bitcraze AB'
+__all__ = ['DebugDriverToolbox']
 
 debugdriver_tab_class = uic.loadUiType(
     sys.path[0] +

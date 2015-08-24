@@ -30,17 +30,17 @@ The bootloader dialog is used to update the Crazyflie firmware and to
 read/write the configuration block in the Crazyflie flash.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['CfConfig']
-
 import sys
 import logging
-
-logger = logging.getLogger(__name__)
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 from cflib.crazyflie.mem import MemoryElement
+
+__author__ = 'Bitcraze AB'
+__all__ = ['CfConfig']
+
+logger = logging.getLogger(__name__)
 
 service_dialog_class = uic.loadUiType(sys.path[0] +
                                       "/cfclient/ui/dialogs/cf2config.ui")[0]

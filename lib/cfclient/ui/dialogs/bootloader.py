@@ -31,16 +31,11 @@ read/write the configuration block in the Crazyflie flash.
 """
 from cflib.bootloader import Bootloader
 
-__author__ = 'Bitcraze AB'
-__all__ = ['BootloaderDialog']
-
 import struct
 import sys
 import time
 
 import logging
-
-logger = logging.getLogger(__name__)
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
@@ -50,6 +45,11 @@ from cfclient.ui.tab import Tab
 import cflib.crtp
 
 from cflib.bootloader.cloader import Cloader
+
+__author__ = 'Bitcraze AB'
+__all__ = ['BootloaderDialog']
+
+logger = logging.getLogger(__name__)
 
 service_dialog_class = uic.loadUiType(sys.path[0] +
                                       "/cfclient/ui/dialogs/bootloader.ui")[0]

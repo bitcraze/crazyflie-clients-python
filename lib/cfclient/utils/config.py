@@ -30,13 +30,13 @@
 Gives access for reading and writing application configuration parameters
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Config']
-
 import sys
 import json
 import logging
 from .singleton import Singleton
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Config']
 
 logger = logging.getLogger(__name__)
 

@@ -29,11 +29,11 @@
 This mux will only use one device and not mix it with any other input.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['NoMux']
-
 from . import InputMux
 import logging
+
+__author__ = 'Bitcraze AB'
+__all__ = ['NoMux']
 
 logger = logging.getLogger(__name__)
 

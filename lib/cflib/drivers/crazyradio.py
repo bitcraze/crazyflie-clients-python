@@ -30,12 +30,12 @@
 USB driver for the Crazyradio USB dongle.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Crazyradio']
-
 import os
 import usb
 import logging
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Crazyradio']
 
 logger = logging.getLogger(__name__)
 

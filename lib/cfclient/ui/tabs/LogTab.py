@@ -29,9 +29,6 @@
 Shows the Log TOC of available variables in the Crazyflie.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['LogTab']
-
 import time
 import sys
 
@@ -41,6 +38,9 @@ from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 from cflib.crazyflie import Crazyflie
 
 from cfclient.ui.tab import Tab
+
+__author__ = 'Bitcraze AB'
+__all__ = ['LogTab']
 
 param_tab_class = uic.loadUiType(sys.path[0] +
                                  "/cfclient/ui/tabs/logTab.ui")[0]

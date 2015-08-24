@@ -29,17 +29,17 @@
 Superclass for all tabs that implements common functions.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Tab']
-
 import logging
-
-logger = logging.getLogger(__name__)
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
 from cfclient.utils.config import Config
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Tab']
+
+logger = logging.getLogger(__name__)
 
 
 class Tab(QtGui.QWidget):

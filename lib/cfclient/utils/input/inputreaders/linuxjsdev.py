@@ -31,21 +31,24 @@ This module is very linux specific but should work on any CPU platform
 """
 
 import sys
-
-if not sys.platform.startswith('linux'):
-    raise Exception("Only supported on Linux")
-
 import struct
 import glob
 import os
 import ctypes
-import fcntl
 import logging
 
-logger = logging.getLogger(__name__)
+if not sys.platform.startswith('linux'):
+    raise Exception("Only supported on Linux")
+
+try:
+    import fcntl
+except ImportError as e:
+    raise Exception("fcntl library probably not installed ({})".format(e))
 
 __author__ = 'Bitcraze AB'
 __all__ = ['Joystick']
+
+logger = logging.getLogger(__name__)
 
 JS_EVENT_FMT = "@IhBB"
 JE_TIME = 0

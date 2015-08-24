@@ -29,9 +29,6 @@
 The about dialog.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['AboutDialog']
-
 import sys
 
 from PyQt4 import Qt, QtCore, QtGui, uic
@@ -42,6 +39,9 @@ from PyQt4.Qt import *
 import cfclient
 
 import cflib.crtp
+
+__author__ = 'Bitcraze AB'
+__all__ = ['AboutDialog']
 
 (about_widget_class,
  about_widget_base_class) = (uic.loadUiType(sys.path[0] +

@@ -31,9 +31,6 @@ Enables flash access to the Crazyflie.
 
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Memory', 'MemoryElement']
-
 import struct
 import errno
 from Queue import Queue
@@ -42,6 +39,10 @@ from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from cflib.utils.callbacks import Caller
 from binascii import crc32
 import binascii
+import logging
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Memory', 'MemoryElement']
 
 # Channels used for the logging port
 CHAN_INFO = 0
@@ -56,7 +57,6 @@ CMD_INFO_DETAILS = 2
 # The max size of a CRTP packet payload
 MAX_LOG_DATA_PACKET_SIZE = 30
 
-import logging
 
 logger = logging.getLogger(__name__)
 

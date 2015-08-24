@@ -30,23 +30,23 @@
 Input interface that supports receiving commands via ZMQ.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['ZMQReader']
+import logging
+import time
+import pprint
+from threading import Thread
+
+from cfclient.utils.config import Config
 
 try:
     import zmq
 except Exception as e:
     raise Exception("ZMQ library probably not installed ({})".format(e))
 
-from cfclient.utils.config import Config
-
 if not Config().get("enable_zmq_input"):
     raise Exception("ZMQ input disabled in config file")
 
-import logging
-import time
-import pprint
-from threading import Thread
+__author__ = 'Bitcraze AB'
+__all__ = ['ZMQReader']
 
 ZMQ_PULL_PORT = 1024 + 188
 
