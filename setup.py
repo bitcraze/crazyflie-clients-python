@@ -31,20 +31,25 @@ if sys.platform.startswith('win32'):
             "script": 'bin/cfclient',
             "icon_resources": [(1, "bitcraze.ico")]
         }],
-        options={"py2exe": {"includes": ["sip", "PyQt4",
-                                         "cfclient.ui.widgets",
-                                         "cflib.bootloader.cloader",
-                                         "cfclient.ui.toolboxes.*",
-                                         "cfclient.ui.*",
-                                         "cfclient.ui.tabs.*",
-                                         "cfclient.ui.widgets.*",
-                                         "cfclient.ui.dialogs.*",
-                                         "cfclient.utils.input.inputreaders.*",
-                                         "cfclient.utils.input.inputinterfaces.*",
-                                         'zmq.backend.cython'],
-                            "excludes": ["AppKit", 'zmq.libzmq'],
-                            'dll_excludes': ['libzmq.pyd'],
-                            "skip_archive": True}})
+        options={"py2exe": {
+            "includes": [
+                "sip", "PyQt4",
+                "cfclient.ui.widgets",
+                "cflib.bootloader.cloader",
+                "cfclient.ui.toolboxes.*",
+                "cfclient.ui.*",
+                "cfclient.ui.tabs.*",
+                "cfclient.ui.widgets.*",
+                "cfclient.ui.dialogs.*",
+                "cfclient.utils.input.inputreaders.*",
+                "cfclient.utils.input.inputinterfaces.*",
+                'zmq.backend.cython'],
+            "excludes": [
+                "AppKit",
+                'zmq.libzmq'],
+            'dll_excludes': [
+                'libzmq.pyd'],
+            "skip_archive": True}})
 
     toplevel_data_files.append('SDL2.dll')
 else:
@@ -62,8 +67,10 @@ setup_args = dict(name='cfclient',
                   packages=['cfclient', 'cfclient.ui', 'cfclient.ui.tabs',
                             'cfclient.ui.toolboxes', 'cfclient.ui.widgets',
                             'cfclient.utils', 'cfclient.ui.dialogs', 'cflib',
-                            'cflib.bootloader', 'cflib.crazyflie', 'cflib.drivers',
-                            'cflib.utils', 'cflib.crtp', 'cfclient.utils.input',
+                            'cflib.bootloader', 'cflib.crazyflie',
+                            'cflib.drivers',
+                            'cflib.utils', 'cflib.crtp',
+                            'cfclient.utils.input',
                             'cfclient.utils.input.inputinterfaces',
                             'cfclient.utils.input.mux',
                             'cfclient.utils.input.inputreaders'],

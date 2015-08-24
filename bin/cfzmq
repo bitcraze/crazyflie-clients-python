@@ -30,7 +30,8 @@ def init_config_path(isInSource):
             # NSApplicationSupportDirectory = 14
             # NSUserDomainMask = 1
             # True for expanding the tilde into a fully qualified path
-            configPath = path.join(NSSearchPathForDirectoriesInDomains(14, 1, True)[0], APPNAME)
+            configPath = path.join(
+                NSSearchPathForDirectoriesInDomains(14, 1, True)[0], APPNAME)
         else:
             # Unknown OS, I hope this is good enough
             configPath = _path.join(prefix, "." + APP_NAME)
@@ -53,7 +54,8 @@ def init_paths():
 
     if hasattr(sys, "frozen"):
         if sys.frozen in ('dll', 'console_exe', 'windows_exe'):
-            sys.path[0] = _path.normpath(_path.dirname(_path.realpath(sys.executable)))
+            sys.path[0] = _path.normpath(
+                _path.dirname(_path.realpath(sys.executable)))
         elif frozen in ('macosx_app',):
             # FIXME: Copy-pasted from StackOverflow, not tested!
             # py2app:
@@ -61,7 +63,8 @@ def init_paths():
             # http://mail.python.org/pipermail/pythonmac-sig/2004-November/012121.html
             approot = os.environ['RESOURCEPATH']
     else:
-        prefix = _path.normpath(_path.join(_path.dirname(_path.realpath(__file__)), '..'))
+        prefix = _path.normpath(
+            _path.join(_path.dirname(_path.realpath(__file__)), '..'))
 
         src_lib = _path.join(prefix, 'lib')
         share_lib = prefix

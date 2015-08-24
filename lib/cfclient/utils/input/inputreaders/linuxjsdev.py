@@ -76,8 +76,8 @@ class JEvent(object):
         self.value = value
 
     def __repr__(self):
-        return "JEvent(type={}, number={}, value={})".format(self.type,
-                                                             self.number, self.value)
+        return "JEvent(type={}, number={}, value={})".format(
+            self.type, self.number, self.value)
 
 # Constants
 TYPE_BUTTON = 1

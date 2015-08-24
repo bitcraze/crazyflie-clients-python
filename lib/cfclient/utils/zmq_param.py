@@ -42,7 +42,8 @@ try:
 
     enabled = True
 except Exception as e:
-    logger.warning("Not enabling ZMQ param access, import failed ({})".format(e))
+    logger.warning(
+        "Not enabling ZMQ param access, import failed ({})".format(e))
 
 
 class _PullReader(Thread):
@@ -72,8 +73,10 @@ class ZMQParamAccess:
             # If the port is already bound an exception will be thrown
             # and caught in the initialization of the readers and handled.
             self._receiver.bind(self._bind_addr)
-            logger.info("Biding ZMQ for parameters at {}".format(self._bind_addr))
-            self._receiver_thread = _PullReader(self._receiver, self._cmd_callback)
+            logger.info(
+                "Biding ZMQ for parameters at {}".format(self._bind_addr))
+            self._receiver_thread = _PullReader(self._receiver,
+                                                self._cmd_callback)
 
     def start(self):
         if enabled:

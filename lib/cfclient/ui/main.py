@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
 import PyQt4
 from PyQt4 import QtGui, uic
 from PyQt4.QtCore import pyqtSignal, Qt, pyqtSlot, QDir, QUrl
-from PyQt4.QtGui import QLabel, QActionGroup, QMessageBox, QAction, QDesktopServices, QMenu
+from PyQt4.QtGui import QLabel, QActionGroup, QMessageBox, QAction, \
+    QDesktopServices, QMenu
 
 from dialogs.connectiondialogue import ConnectDialogue
 from dialogs.inputconfigdialogue import InputConfigDialogue
@@ -125,17 +126,18 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.setupUi(self)
 
         ######################################################
-        ### By lxrocks
-        ### 'Skinny Progress Bar' tweak for Yosemite
-        ### Tweak progress bar - artistic I am not - so pick your own colors !!!
-        ### Only apply to Yosemite
+        # By lxrocks
+        # 'Skinny Progress Bar' tweak for Yosemite
+        # Tweak progress bar - artistic I am not - so pick your own colors !!!
+        # Only apply to Yosemite
         ######################################################
         import platform
 
         if platform.system() == 'Darwin':
 
             (Version, junk, machine) = platform.mac_ver()
-            logger.info("This is a MAC - checking if we can apply Progress Bar Stylesheet for Yosemite Skinny Bars ")
+            logger.info("This is a MAC - checking if we can apply Progress "
+                        "Bar Stylesheet for Yosemite Skinny Bars ")
             yosemite = (10, 10, 0)
             tVersion = tuple(map(int, (Version.split("."))))
 
@@ -191,10 +193,12 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         # Connections for the Connect Dialogue
         self.connectDialogue.requestConnectionSignal.connect(self.cf.open_link)
 
-        self.cf.connection_failed.add_callback(self.connectionFailedSignal.emit)
+        self.cf.connection_failed.add_callback(
+            self.connectionFailedSignal.emit)
         self.connectionFailedSignal.connect(self._connection_failed)
 
-        self._input_device_error_signal.connect(self._display_input_device_error)
+        self._input_device_error_signal.connect(
+            self._display_input_device_error)
         self.joystickReader.device_error.add_callback(
             self._input_device_error_signal.emit)
         self._input_discovery_signal.connect(self.device_discovery)
@@ -212,11 +216,13 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.connectButton.clicked.connect(self._connect)
         self.quickConnectButton.clicked.connect(self._quick_connect)
         self.menuItemQuickConnect.triggered.connect(self._quick_connect)
-        self.menuItemConfInputDevice.triggered.connect(self._show_input_device_config_dialog)
+        self.menuItemConfInputDevice.triggered.connect(
+            self._show_input_device_config_dialog)
         self.menuItemExit.triggered.connect(self.closeAppRequest)
         self.batteryUpdatedSignal.connect(self._update_battery)
         self._menuitem_rescandevices.triggered.connect(self._rescan_devices)
-        self._menuItem_openconfigfolder.triggered.connect(self._open_config_folder)
+        self._menuItem_openconfigfolder.triggered.connect(
+            self._open_config_folder)
 
         self._auto_reconnect_enabled = Config().get("auto_reconnect")
         self.autoReconnectCheckBox.toggled.connect(
@@ -439,7 +445,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.batteryBar.setValue(int(data["pm.vbat"] * 1000))
 
         color = COLOR_BLUE
-        # TODO firmware reports fully-charged state as 'Battery', rather than 'Charged'
+        # TODO firmware reports fully-charged state as 'Battery',
+        # rather than 'Charged'
         if data["pm.state"] in [BatteryStates.CHARGING, BatteryStates.CHARGED]:
             color = COLOR_GREEN
         elif data["pm.state"] == BatteryStates.LOW_POWER:
@@ -479,7 +486,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error", "Error when starting log config"
-                                             " [{}]: {}".format(log_conf.name, msg))
+                                             " [{}]: {}".format(log_conf.name,
+                                                                msg))
 
     def _connection_lost(self, linkURI, msg):
         if not self._auto_reconnect_enabled:
@@ -603,8 +611,9 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
             Config().set("input_device", str(device.name))
 
-            self._mapping_support = self.joystickReader.start_input(device.name,
-                                                                    role_in_mux)
+            self._mapping_support = self.joystickReader.start_input(
+                device.name,
+                role_in_mux)
         self._update_input_device_footer()
 
     def _inputconfig_selected(self, checked):
@@ -653,7 +662,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                         # select the default mapping for it.
                         if d not in self._available_devices:
                             last_map = Config().get("device_config_mapping")
-                            if last_map.has_key(d.name) and last_map[d.name] == c:
+                            if last_map.has_key(d.name) and last_map[
+                                    d.name] == c:
                                 node.setChecked(True)
                     role_menu.addMenu(map_node)
                 dev_node.setData((map_node, d, mux_menu))

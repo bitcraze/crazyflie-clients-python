@@ -85,13 +85,12 @@ class RadioDriver(CRTPDriver):
             raise WrongUriType("Not a radio URI")
 
         # Open the USB dongle
-        if not re.search("^radio://([0-9]+)((/([0-9]+))((/(250K|1M|2M))?(/([A-F0-9]+))?)?)?$",
-                         uri):
+        if not re.search("^radio://([0-9]+)((/([0-9]+))"
+                         "((/(250K|1M|2M))?(/([A-F0-9]+))?)?)?$", uri):
             raise WrongUriType('Wrong radio URI format!')
 
         uri_data = re.search("^radio://([0-9]+)((/([0-9]+))"
-                             "((/(250K|1M|2M))?(/([A-F0-9]+))?)?)?$",
-                             uri)
+                             "((/(250K|1M|2M))?(/([A-F0-9]+))?)?)?$", uri)
 
         self.uri = uri
 
@@ -285,14 +284,17 @@ class RadioDriver(CRTPDriver):
             found += map(lambda c: ["radio://0/{}/2M".format(c), ""],
                          self._scan_radio_channels())
         else:
-            found += map(lambda c: ["radio://0/{}/250K/{:X}".format(c, address), ""],
-                         self._scan_radio_channels())
+            found += map(
+                lambda c: ["radio://0/{}/250K/{:X}".format(c, address), ""],
+                self._scan_radio_channels())
             self.cradio.set_data_rate(self.cradio.DR_1MPS)
-            found += map(lambda c: ["radio://0/{}/1M/{:X}".format(c, address), ""],
-                         self._scan_radio_channels())
+            found += map(
+                lambda c: ["radio://0/{}/1M/{:X}".format(c, address), ""],
+                self._scan_radio_channels())
             self.cradio.set_data_rate(self.cradio.DR_2MPS)
-            found += map(lambda c: ["radio://0/{}/2M/{:X}".format(c, address), ""],
-                         self._scan_radio_channels())
+            found += map(
+                lambda c: ["radio://0/{}/2M/{:X}".format(c, address), ""],
+                self._scan_radio_channels())
 
         self.cradio.close()
         self.cradio = None
@@ -364,10 +366,10 @@ class _RadioDriverThread(threading.Thread):
             except Exception as e:
                 import traceback
 
-                self.link_error_callback("Error communicating with crazy radio"
-                                         " ,it has probably been unplugged!\n"
-                                         "Exception:%s\n\n%s" % (e,
-                                                                 traceback.format_exc()))
+                self.link_error_callback(
+                    "Error communicating with crazy radio ,it has probably "
+                    "been unplugged!\nException:%s\n\n%s" % (
+                        e, traceback.format_exc()))
 
             # Analise the in data packet ...
             if ackStatus is None:

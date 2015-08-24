@@ -19,7 +19,8 @@
 """
 Flash the DS28E05 EEPROM via CRTP.
 """
-from __future__ import print_function, division, absolute_import, unicode_literals
+from __future__ import print_function, division, absolute_import, \
+    unicode_literals
 
 import os
 import sys
@@ -162,7 +163,8 @@ if __name__ == '__main__':
     print('\n###\n'
           'Please make sure that your NRF firmware is compiled without\n'
           'BLE support for this to work.\n'
-          'See https://github.com/bitcraze/crazyflie-clients-python/issues/166\n'
+          'See '
+          'https://github.com/bitcraze/crazyflie-clients-python/issues/166\n'
           '###\n')
 
     # Initialize flasher
@@ -209,7 +211,8 @@ if __name__ == '__main__':
             if not 0 <= vid <= 0xff:
                 raise ValueError()
         except ValueError:
-            print('Invalid vendor ID. Please specify a number between 0x00 and 0xff.')
+            print('Invalid vendor ID. Please specify a number between 0x00 '
+                  'and 0xff.')
             abort()
         else:
             mem.vid = vid
@@ -222,7 +225,8 @@ if __name__ == '__main__':
             if not 0 <= pid <= 0xff:
                 raise ValueError()
         except ValueError:
-            print('Invalid memory ID. Please specify a number between 0x00 and 0xff.')
+            print('Invalid memory ID. Please specify a number between 0x00 '
+                  'and 0xff.')
             abort()
         else:
             mem.pid = pid

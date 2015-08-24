@@ -21,9 +21,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 This dialogue is used to configure different log configurations that is used to
@@ -47,9 +47,8 @@ from PyQt4.Qt import *
 
 from cflib.crazyflie.log import Log, LogVariable, LogConfig
 
-(logconfig_widget_class,
- connect_widget_base_class) = (uic.loadUiType(sys.path[0] +
-                                              '/cfclient/ui/dialogs/logconfigdialogue.ui'))
+(logconfig_widget_class, connect_widget_base_class) = (
+    uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/logconfigdialogue.ui'))
 
 NAME_FIELD = 0
 ID_FIELD = 1
@@ -255,7 +254,8 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
                                            self.varTree,
                                            varParent,
                                            varName) == False:
-                        logger.warning("Could not find node %s.%s!!", varParent, varName)
+                        logger.warning("Could not find node %s.%s!!",
+                                       varParent, varName)
                 else:
                     logger.warning("Error: Mem vars not supported!")
 

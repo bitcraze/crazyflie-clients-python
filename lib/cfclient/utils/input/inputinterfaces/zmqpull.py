@@ -102,8 +102,10 @@ class ZMQReader:
             self.data[k] = cmd["ctrl"][k]
 
     def open(self, device_id):
-        """Initialize the reading and open the device with deviceId and set the mapping for axis/buttons using the
-        inputMap"""
+        """
+        Initialize the reading and open the device with deviceId and set the
+        mapping for axis/buttons using the inputMap
+        """
         return
 
     def read(self, device_id):

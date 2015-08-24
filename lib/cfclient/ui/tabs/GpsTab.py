@@ -21,9 +21,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 This tab plots different logging data defined by configurations that has been
@@ -103,7 +103,8 @@ class GpsTab(Tab, gps_tab_class):
             self._marble = FancyMarbleWidget()
 
             # Load the OpenStreetMap map
-            self._marble.setMapThemeId("earth/openstreetmap/openstreetmap.dgml")
+            self._marble.setMapThemeId(
+                "earth/openstreetmap/openstreetmap.dgml")
 
             # Enable the cloud cover and enable the country borders
             self._marble.setShowClouds(True)
@@ -183,8 +184,9 @@ class GpsTab(Tab, gps_tab_class):
 
     def _logging_error(self, log_conf, msg):
         """Callback from the log layer when an error occurs"""
-        QMessageBox.about(self, "Plot error", "Error when starting log config"
-                                              " [%s]: %s" % (log_conf.name, msg))
+        QMessageBox.about(self, "Plot error",
+                          "Error when starting log config [%s]: %s" % (
+                              log_conf.name, msg))
 
     def _reset_max(self):
         """Callback from reset button"""
@@ -265,17 +267,14 @@ if should_enable_tab:
 
         def customPaint(self, painter):
             if self._lat:
-                current = Marble.GeoDataCoordinates(self._long,
-                                                    self._lat,
-                                                    self._height,
-                                                    Marble.GeoDataCoordinates.Degree)
+                current = Marble.GeoDataCoordinates(
+                    self._long, self._lat, self._height,
+                    Marble.GeoDataCoordinates.Degree)
 
                 # Paint data points
                 for p in self._points:
-                    pos = Marble.GeoDataCoordinates(p[0],
-                                                    p[1],
-                                                    p[2],
-                                                    Marble.GeoDataCoordinates.Degree)
+                    pos = Marble.GeoDataCoordinates(
+                        p[0], p[1], p[2], Marble.GeoDataCoordinates.Degree)
                     if p[4]:
                         painter.setPen(Qt.green)
                     else:
@@ -285,8 +284,10 @@ if should_enable_tab:
                 # Paint accuracy
                 painter.setPen(Qt.blue)
                 painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 255, 64)))
-                pixel_per_meter = self.radiusFromDistance(self.distance()) / (6371.0 * 1000)
-                painter.drawEllipse(current, self._accu * pixel_per_meter, self._accu * pixel_per_meter, False)
+                pixel_per_meter = self.radiusFromDistance(self.distance()) / (
+                    6371.0 * 1000)
+                painter.drawEllipse(current, self._accu * pixel_per_meter,
+                                    self._accu * pixel_per_meter, False)
 
                 # Paint Crazyflie
                 painter.setPen(Qt.black)

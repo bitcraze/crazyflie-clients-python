@@ -101,11 +101,13 @@ class HeadlessClient():
         self._cf.connection_failed.add_callback(self._connection_failed)
         # 2014-11-25 chad: Add a callback for when we have a good connection.
         self._cf.connected.add_callback(self._connected)
-        self._cf.param.add_update_callback(group="imu_sensors", name="HMC5883L",
-                                           cb=(lambda name, found:
-                                               self._jr.set_alt_hold_available(eval(found))))
+        self._cf.param.add_update_callback(
+            group="imu_sensors", name="HMC5883L", cb=(
+                lambda name, found: self._jr.set_alt_hold_available(
+                    eval(found))))
         self._jr.althold_updated.add_callback(
-            lambda enabled: self._cf.param.set_value("flightmode.althold", enabled))
+            lambda enabled: self._cf.param.set_value("flightmode.althold",
+                                                     enabled))
 
         self._cf.open_link(link_uri)
         self._jr.input_updated.add_callback(self._cf.commander.send_setpoint)

@@ -246,7 +246,8 @@ class LogConfig(object):
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
                 pk.data = (CMD_START_LOGGING, self.id, self.period)
-                self.cf.send_packet(pk, expected_reply=(CMD_START_LOGGING, self.id))
+                self.cf.send_packet(pk, expected_reply=(
+                    CMD_START_LOGGING, self.id))
 
     def stop(self):
         """Stop the logging for this entry"""
@@ -258,7 +259,8 @@ class LogConfig(object):
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
                 pk.data = (CMD_STOP_LOGGING, self.id)
-                self.cf.send_packet(pk, expected_reply=(CMD_STOP_LOGGING, self.id))
+                self.cf.send_packet(
+                    pk, expected_reply=(CMD_STOP_LOGGING, self.id))
 
     def delete(self):
         """Delete this entry in the Crazyflie"""
@@ -271,7 +273,8 @@ class LogConfig(object):
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
                 pk.data = (CMD_DELETE_BLOCK, self.id)
-                self.cf.send_packet(pk, expected_reply=(CMD_DELETE_BLOCK, self.id))
+                self.cf.send_packet(
+                    pk, expected_reply=(CMD_DELETE_BLOCK, self.id))
 
     def unpack_log_data(self, log_data, timestamp):
         """Unpack received logging data so it represent real values according
@@ -283,8 +286,8 @@ class LogConfig(object):
             name = var.name
             unpackstring = LogTocElement.get_unpack_string_from_id(
                 var.fetch_as)
-            value = struct.unpack(unpackstring,
-                                  log_data[data_index:data_index + size])[0]
+            value = struct.unpack(
+                unpackstring, log_data[data_index:data_index + size])[0]
             data_index += size
             ret_data[name] = value
         self.data_received_cb.call(timestamp, ret_data, self)
@@ -333,7 +336,8 @@ class LogTocElement:
         try:
             return LogTocElement.types[ident][1]
         except KeyError:
-            raise KeyError("Type [%d] not found in LogTocElement.types!" % ident)
+            raise KeyError(
+                "Type [%d] not found in LogTocElement.types!" % ident)
 
     def __init__(self, data=None):
         """TocElement creator. Data is the binary payload of the element."""
@@ -403,7 +407,8 @@ class Log():
         for name in logconf.default_fetch_as:
             var = self.toc.get_element_by_complete_name(name)
             if not var:
-                logger.warning("%s not in TOC, this block cannot be used!", name)
+                logger.warning(
+                    "%s not in TOC, this block cannot be used!", name)
                 logconf.valid = False
                 raise KeyError("Variable {} not in TOC".format(name))
             # Now that we know what type this variable has, add it to the log
@@ -420,8 +425,9 @@ class Log():
             # we can return error already now and not when the config is sent
             if var.is_toc_variable():
                 if (self.toc.get_element_by_complete_name(var.name) is None):
-                    logger.warning("Log: %s not in TOC, this block cannot be"
-                                   " used!", var.name)
+                    logger.warning(
+                        "Log: %s not in TOC, this block cannot be used!",
+                        var.name)
                     logconf.valid = False
                     raise KeyError("Variable {} not in TOC".format(var.name))
 
@@ -433,7 +439,9 @@ class Log():
             self.block_added_cb.call(logconf)
         else:
             logconf.valid = False
-            raise AttributeError("The log configuration is too large or has an invalid parameter")
+            raise AttributeError(
+                "The log configuration is too large or has an invalid "
+                "parameter")
 
     def refresh_toc(self, refresh_done_callback, toc_cache):
         """Start refreshing the table of loggale variables"""
@@ -472,11 +480,13 @@ class Log():
                             pk = CRTPPacket()
                             pk.set_header(5, CHAN_SETTINGS)
                             pk.data = (CMD_START_LOGGING, id, block.period)
-                            self.cf.send_packet(pk, expected_reply=(CMD_START_LOGGING, id))
+                            self.cf.send_packet(pk, expected_reply=(
+                                CMD_START_LOGGING, id))
                             block.added = True
                     else:
                         msg = self._err_codes[error_status]
-                        logger.warning("Error %d when adding id=%d (%s)", error_status, id, msg)
+                        logger.warning("Error %d when adding id=%d (%s)",
+                                       error_status, id, msg)
                         block.err_no = error_status
                         block.added_cb.call(False)
                         block.error_cb.call(block, msg)
@@ -485,13 +495,15 @@ class Log():
                     logger.warning("No LogEntry to assign block to !!!")
             if (cmd == CMD_START_LOGGING):
                 if (error_status == 0x00):
-                    logger.info("Have successfully started logging for id=%d", id)
+                    logger.info("Have successfully started logging for id=%d",
+                                id)
                     if block:
                         block.started = True
 
                 else:
                     msg = self._err_codes[error_status]
-                    logger.warning("Error %d when starting id=%d (%s)", error_status, id, msg)
+                    logger.warning("Error %d when starting id=%d (%s)",
+                                   error_status, id, msg)
                     if block:
                         block.err_no = error_status
                         block.started_cb.call(False)
@@ -503,7 +515,8 @@ class Log():
 
             if (cmd == CMD_STOP_LOGGING):
                 if (error_status == 0x00):
-                    logger.info("Have successfully stopped logging for id=%d", id)
+                    logger.info("Have successfully stopped logging for id=%d",
+                                id)
                     if block:
                         block.started = False
 
@@ -534,7 +547,8 @@ class Log():
             id = packet.datal[0]
             block = self._find_block(id)
             timestamps = struct.unpack("<BBB", packet.data[1:4])
-            timestamp = (timestamps[0] | timestamps[1] << 8 | timestamps[2] << 16)
+            timestamp = (
+                timestamps[0] | timestamps[1] << 8 | timestamps[2] << 16)
             logdata = packet.data[4:]
             if (block is not None):
                 block.unpack_log_data(logdata, timestamp)

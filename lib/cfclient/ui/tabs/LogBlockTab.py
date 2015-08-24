@@ -41,7 +41,8 @@ from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
 from cfclient.ui.tab import Tab
 
-logblock_tab_class = uic.loadUiType(sys.path[0] + "/cfclient/ui/tabs/logBlockTab.ui")[0]
+logblock_tab_class = uic.loadUiType(
+    sys.path[0] + "/cfclient/ui/tabs/logBlockTab.ui")[0]
 
 import logging
 
@@ -101,7 +102,9 @@ class LogBlockItem(object):
         self._doing_transaction = False
 
     def _log_error(self, logconfig, msg):
-        """Callback when there's an error starting the block in the Crazyflie"""
+        """
+        Callback when there's an error starting the block in the Crazyflie
+        """
         # Do nothing here, a pop-up will notify the user that the
         # starting failed
         self._doing_transaction = False
@@ -181,7 +184,9 @@ class LogBlockModel(QAbstractItemModel):
         self.layoutChanged.emit()
 
     def clicked(self, index):
-        """Callback when a cell has been clicked (mouse down/up on same cell)"""
+        """
+        Callback when a cell has been clicked (mouse down/up on same cell)
+        """
         node = index.internalPointer()
         if not node.parent and index.column() == 3:
             if node.logging_started():

@@ -21,9 +21,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 This tab plots different logging data defined by configurations that has been
@@ -230,8 +230,8 @@ class PlotTab(Tab, plot_tab_class):
         self._plot.set_title(lg.name)
 
         for d in lg.variables:
-            self._plot.add_curve(d.name,
-                                 self.colors[color_selector % len(self.colors)])
+            self._plot.add_curve(d.name, self.colors[
+                color_selector % len(self.colors)])
             color_selector += 1
         lg.data_received_cb.add_callback(self._log_data_signal_wrapper)
         lg.error_cb.add_callback(self._log_error_signal_wrapper)
@@ -245,8 +245,9 @@ class PlotTab(Tab, plot_tab_class):
 
     def _logging_error(self, log_conf, msg):
         """Callback from the log layer when an error occurs"""
-        QMessageBox.about(self, "Plot error", "Error when starting log config"
-                                              " [%s]: %s" % (log_conf.name, msg))
+        QMessageBox.about(
+            self, "Plot error", "Error when starting log config [%s]: %s" % (
+                log_conf.name, msg))
 
     def _log_data_received(self, timestamp, data, logconf):
         """Callback when the log layer receives new data"""

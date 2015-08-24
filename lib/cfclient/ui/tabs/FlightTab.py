@@ -21,9 +21,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 The flight control tab shows telemetry data and flight settings.
@@ -110,7 +110,8 @@ class FlightTab(Tab, flight_tab_class):
             self._emergency_stop_updated_signal.emit)
 
         self.helper.inputDeviceReader.althold_updated.add_callback(
-            lambda enabled: self.helper.cf.param.set_value("flightmode.althold", enabled))
+            lambda enabled: self.helper.cf.param.set_value(
+                "flightmode.althold", enabled))
 
         self._imu_data_signal.connect(self._imu_data_received)
         self._baro_data_signal.connect(self._baro_data_received)
@@ -192,7 +193,8 @@ class FlightTab(Tab, flight_tab_class):
             group="imu_sensors",
             cb=self._set_available_sensors)
 
-        self.helper.cf.param.all_updated.add_callback(self._ring_populate_dropdown)
+        self.helper.cf.param.all_updated.add_callback(
+            self._ring_populate_dropdown)
 
         self.logBaro = None
         self.logAltHold = None
@@ -204,8 +206,10 @@ class FlightTab(Tab, flight_tab_class):
         self.targetCalPitch.setValue(Config().get("trim_pitch"))
         self.targetCalRoll.setValue(Config().get("trim_roll"))
 
-        self.helper.inputDeviceReader.alt1_updated.add_callback(self.alt1_updated)
-        self.helper.inputDeviceReader.alt2_updated.add_callback(self.alt2_updated)
+        self.helper.inputDeviceReader.alt1_updated.add_callback(
+            self.alt1_updated)
+        self.helper.inputDeviceReader.alt2_updated.add_callback(
+            self.alt2_updated)
         self._tf_state = 0
         self._ring_effect = 0
 
@@ -250,8 +254,9 @@ class FlightTab(Tab, flight_tab_class):
             self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)
 
     def _logging_error(self, log_conf, msg):
-        QMessageBox.about(self, "Log error", "Error when starting log config"
-                                             " [%s]: %s" % (log_conf.name, msg))
+        QMessageBox.about(self, "Log error",
+                          "Error when starting log config [%s]: %s" % (
+                              log_conf.name, msg))
 
     def _motor_data_received(self, timestamp, data, logconf):
         if self.isVisible():
@@ -398,8 +403,10 @@ class FlightTab(Tab, flight_tab_class):
             Config().set("max_thrust", self.maxThrust.value())
 
     def thrustLoweringSlewRateLimitChanged(self):
-        self.helper.inputDeviceReader.thrust_slew_rate = self.thrustLoweringSlewRateLimit.value()
-        self.helper.inputDeviceReader.thrust_slew_limit = self.slewEnableLimit.value()
+        self.helper.inputDeviceReader.thrust_slew_rate = (
+            self.thrustLoweringSlewRateLimit.value())
+        self.helper.inputDeviceReader.thrust_slew_limit = (
+            self.slewEnableLimit.value())
         if (self.isInCrazyFlightmode == True):
             Config().set("slew_limit", self.slewEnableLimit.value())
             Config().set("slew_rate", self.thrustLoweringSlewRateLimit.value())
@@ -505,7 +512,8 @@ class FlightTab(Tab, flight_tab_class):
             self._ring_effect += 1
             if self._ring_effect > self._ledring_nbr_effects:
                 self._ring_effect = 0
-            self.helper.cf.param.set_value("ring.effect", str(self._ring_effect))
+            self.helper.cf.param.set_value("ring.effect",
+                                           str(self._ring_effect))
 
     def alt2_updated(self, state):
         self.helper.cf.param.set_value("ring.headlightEnable", str(state))
@@ -540,7 +548,8 @@ class FlightTab(Tab, flight_tab_class):
             self._led_ring_effect.addItem(name, QVariant(i))
 
         self._led_ring_effect.setCurrentIndex(current)
-        self._led_ring_effect.currentIndexChanged.connect(self._ring_effect_changed)
+        self._led_ring_effect.currentIndexChanged.connect(
+            self._ring_effect_changed)
         self.helper.cf.param.add_update_callback(group="ring",
                                                  name="effect",
                                                  cb=self._ring_effect_updated)

@@ -104,9 +104,11 @@ class Cloader:
 
         pk = self.link.receive_packet(1)
 
-        while ((not pk or pk.header != 0xFF or
-                        struct.unpack("<BB", pk.data[0:2]) != (target_id, 0xFF)) and
-                       retry_counter >= 0):
+        while ((not pk
+                or pk.header != 0xFF
+                or struct.unpack("<BB", pk.data[0:2]) != (target_id, 0xFF)
+                )
+               and retry_counter >= 0):
             pk = self.link.receive_packet(1)
             retry_counter -= 1
 
@@ -123,7 +125,8 @@ class Cloader:
             time.sleep(0.2)
             self.link.close()
             time.sleep(0.2)
-            self.link = cflib.crtp.get_link_driver("radio://0/0/2M/{}".format(addr))
+            self.link = cflib.crtp.get_link_driver(
+                "radio://0/0/2M/{}".format(addr))
 
             return True
         else:
@@ -230,7 +233,8 @@ class Cloader:
         for _ in range(0, 5):
             if self._update_info(target_id):
                 if self._in_boot_cb:
-                    self._in_boot_cb.call(True, self.targets[target_id].protocol_version)
+                    self._in_boot_cb.call(True, self.targets[
+                        target_id].protocol_version)
                 if self._info_cb:
                     self._info_cb.call(self.targets[target_id])
                 if self.protocol_version != 1:
@@ -307,7 +311,8 @@ class Cloader:
             for i in cpuid[1:]:
                 self.targets[target_id].cpuid += ":%02X" % i
 
-            if self.protocol_version == 0x10 and target_id == TargetTypes.STM32:
+            if (self.protocol_version == 0x10 and
+                    target_id == TargetTypes.STM32):
                 self._update_mapping(target_id)
 
             return True
@@ -369,8 +374,8 @@ class Cloader:
             pk = None
             retry_counter = 5
             while ((not pk or pk.header != 0xFF or
-                            struct.unpack("<BB", pk.data[0:2]) != (addr, 0x1C))
-                   and retry_counter >= 0):
+                    struct.unpack("<BB", pk.data[0:2]) != (addr, 0x1C)) and
+                    retry_counter >= 0):
                 pk = CRTPPacket()
                 pk.set_header(0xFF, 0xFF)
                 pk.data = struct.pack("<BBHH", addr, 0x1C, page, (i * 25))
@@ -383,7 +388,8 @@ class Cloader:
             else:
                 buff += pk.data[6:]
 
-        return buff[0:page_size]  # For some reason we get one byte extra here...
+        # For some reason we get one byte extra here...
+        return buff[0:page_size]
 
     def write_flash(self, addr, page_buffer, target_page, page_count):
         """Initiate flashing of data in the buffer to flash."""

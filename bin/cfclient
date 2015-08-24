@@ -36,7 +36,7 @@ def init_config_path(isInSource):
         elif sys.platform == "darwin":
             from AppKit import NSSearchPathForDirectoriesInDomains
             # FIXME: Copy-pasted from StackOverflow, not tested!
-            # http://developer.apple.com/DOCUMENTATION/Cocoa/Reference/Foundation/Miscellaneous/Foundation_Functions/Reference/reference.html#//apple_ref/c/func/NSSearchPathForDirectoriesInDomains @IgnorePep8
+            # http://developer.apple.com/DOCUMENTATION/Cocoa/Reference/Foundation/Miscellaneous/Foundation_Functions/Reference/reference.html#//apple_ref/c/func/NSSearchPathForDirectoriesInDomains
             # NSApplicationSupportDirectory = 14
             # NSUserDomainMask = 1
             # True for expanding the tilde into a fully qualified path
@@ -70,7 +70,7 @@ def init_paths():
             # FIXME: Copy-pasted from StackOverflow, not tested!
             # py2app:
             # Notes on how to find stuff on MAC, by an expert (Bob Ippolito):
-            # http://mail.python.org/pipermail/pythonmac-sig/2004-November/012121.html @IgnorePep8
+            # http://mail.python.org/pipermail/pythonmac-sig/2004-November/012121.html
             approot = os.environ['RESOURCEPATH']
     else:
         prefix = _path.normpath(

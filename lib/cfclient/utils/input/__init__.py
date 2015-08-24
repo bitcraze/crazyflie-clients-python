@@ -99,7 +99,8 @@ class JoystickReader(object):
 
         self._input_map = None
 
-        self._mux = [NoMux(self), TakeOverSelectiveMux(self), TakeOverMux(self)]
+        self._mux = [NoMux(self), TakeOverSelectiveMux(self),
+                     TakeOverMux(self)]
         # Set NoMux as default
         self._selected_mux = self._mux[0]
 
@@ -260,7 +261,8 @@ class JoystickReader(object):
 
     def read_raw_values(self):
         """ Read raw values from the input device."""
-        [axes, buttons, mapped_values] = self._input_device.read(include_raw=True)
+        [axes, buttons, mapped_values] = self._input_device.read(
+            include_raw=True)
         dict_axes = {}
         dict_buttons = {}
 
@@ -343,8 +345,9 @@ class JoystickReader(object):
                     try:
                         self.althold_updated.call(str(data.althold))
                     except Exception as e:
-                        logger.warning("Exception while doing callback from"
-                                       "input-device for althold: {}".format(e))
+                        logger.warning(
+                            "Exception while doing callback from input-device "
+                            "for althold: {}".format(e))
 
                 if data.toggled.estop:
                     try:

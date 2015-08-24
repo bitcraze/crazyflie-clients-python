@@ -21,9 +21,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 Shows all the parameters available in the Crazyflie and also gives the ability
@@ -37,7 +37,8 @@ import sys
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 from PyQt4.QtCore import QAbstractItemModel, QModelIndex, QString, QVariant
-from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView, QBrush, QColor
+from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView, \
+    QBrush, QColor
 from PyQt4.QtGui import QSortFilterProxyModel
 
 from cfclient.ui.tab import Tab

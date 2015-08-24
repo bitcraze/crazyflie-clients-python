@@ -134,15 +134,17 @@ class Crazyflie():
         self.link_established.add_callback(
             lambda uri: logger.info("Callback->Connected to [%s]", uri))
         self.connection_lost.add_callback(
-            lambda uri, errmsg: logger.info("Callback->Connection lost to"
-                                            " [%s]: %s", uri, errmsg))
+            lambda uri, errmsg: logger.info(
+                "Callback->Connection lost to [%s]: %s", uri, errmsg))
         self.connection_failed.add_callback(
-            lambda uri, errmsg: logger.info("Callback->Connected failed to"
-                                            " [%s]: %s", uri, errmsg))
+            lambda uri, errmsg: logger.info(
+                "Callback->Connected failed to [%s]: %s", uri, errmsg))
         self.connection_requested.add_callback(
-            lambda uri: logger.info("Callback->Connection initialized[%s]", uri))
+            lambda uri: logger.info(
+                "Callback->Connection initialized[%s]", uri))
         self.connected.add_callback(
-            lambda uri: logger.info("Callback->Connection setup finished [%s]", uri))
+            lambda uri: logger.info(
+                "Callback->Connection setup finished [%s]", uri))
 
     def _disconnected(self, link_uri):
         """ Callback when disconnected."""
@@ -211,9 +213,8 @@ class Crazyflie():
         self.state = State.INITIALIZED
         self.link_uri = link_uri
         try:
-            self.link = cflib.crtp.get_link_driver(link_uri,
-                                                   self._link_quality_cb,
-                                                   self._link_error_cb)
+            self.link = cflib.crtp.get_link_driver(
+                link_uri, self._link_quality_cb, self._link_error_cb)
 
             if not self.link:
                 message = "No driver found or malformed URI: {}" \
@@ -223,7 +224,8 @@ class Crazyflie():
             else:
                 # Add a callback so we can check that any data is coming
                 # back from the copter
-                self.packet_received.add_callback(self._check_for_initial_packet_cb)
+                self.packet_received.add_callback(
+                    self._check_for_initial_packet_cb)
 
                 self._start_connection_setup()
         except Exception as ex:  # pylint: disable=W0703
@@ -300,10 +302,12 @@ class Crazyflie():
             if len(expected_reply) > 0 and not resend and \
                     self.link.needs_resending:
                 pattern = (pk.header,) + expected_reply
-                logger.debug("Sending packet and expecting the %s pattern back",
-                             pattern)
+                logger.debug(
+                    "Sending packet and expecting the %s pattern back",
+                    pattern)
                 new_timer = Timer(timeout,
-                                  lambda: self._no_answer_do_retry(pk, pattern))
+                                  lambda: self._no_answer_do_retry(pk,
+                                                                   pattern))
                 self._answer_patterns[pattern] = new_timer
                 new_timer.start()
             elif resend:

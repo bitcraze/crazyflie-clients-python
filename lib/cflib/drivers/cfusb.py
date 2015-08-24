@@ -68,7 +68,8 @@ def _find_devices():
     logger.info("Looking for devices....")
 
     if pyusb1:
-        for d in usb.core.find(idVendor=USB_VID, idProduct=USB_PID, find_all=1, backend=pyusb_backend):
+        for d in usb.core.find(idVendor=USB_VID, idProduct=USB_PID, find_all=1,
+                               backend=pyusb_backend):
             ret.append(d)
     else:
         busses = usb.busses()
@@ -102,8 +103,9 @@ class CfUsb:
             if (pyusb1 is True):
                 self.dev.set_configuration(1)
                 self.handle = self.dev
-                self.version = float("{0:x}.{1:x}".format(self.dev.bcdDevice >> 8,
-                                                          self.dev.bcdDevice & 0x0FF))
+                self.version = float(
+                    "{0:x}.{1:x}".format(self.dev.bcdDevice >> 8,
+                                         self.dev.bcdDevice & 0x0FF))
             else:
                 self.handle = self.dev.open()
                 self.handle.setConfiguration(1)

@@ -37,9 +37,11 @@ __all__ = ['LeapmotionReader']
 
 try:
     import leapsdk.Leap as Leap
-    from leapsdk.Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
+    from leapsdk.Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, \
+        SwipeGesture
 except Exception as e:
-    raise Exception("Leap Motion library probably not installed ({})".format(e))
+    raise Exception(
+        "Leap Motion library probably not installed ({})".format(e))
 
 import logging
 import time
@@ -75,8 +77,6 @@ class LeapListener(Leap.Listener):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
         data = {"roll": 0, "pitch": 0, "yaw": 0, "thrust": 0}
-        # logger.info("Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
-        #                              frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures())))
         if not frame.hands.is_empty:
             # Get the first hand
             hand = frame.hands[0]
@@ -89,7 +89,8 @@ class LeapListener(Leap.Listener):
                 data["roll"] = -direction.pitch * Leap.RAD_TO_DEG / 30.0
                 data["pitch"] = -normal.roll * Leap.RAD_TO_DEG / 30.0
                 data["yaw"] = direction.yaw * Leap.RAD_TO_DEG / 70.0
-                data["thrust"] = (hand.palm_position[1] - 80) / 150.0  # Use the elevation of the hand for thrust
+                # Use the elevation of the hand for thrust
+                data["thrust"] = (hand.palm_position[1] - 80) / 150.0
 
             if data["thrust"] < 0.0:
                 data["thrust"] = 0.0
@@ -123,8 +124,10 @@ class LeapmotionReader:
         logger.info("Initialized Leap")
 
     def open(self, deviceId):
-        """Initialize the reading and open the device with deviceId and set the mapping for axis/buttons using the
-        inputMap"""
+        """
+        Initialize the reading and open the device with deviceId and set the
+        mapping for axis/buttons using the inputMap
+        """
         return
 
     def leap_callback(self, data):

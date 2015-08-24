@@ -50,8 +50,8 @@ def main():
     qtlogger = logging.getLogger('PyQt4')
     qtlogger.setLevel(logging.ERROR)
 
-    parser = argparse.ArgumentParser(description="cfclient - "
-                                                 "Crazyflie graphical control client")
+    parser = argparse.ArgumentParser(
+        description="cfclient - Crazyflie graphical control client")
     parser.add_argument('--debug', '-d', nargs=1, default='info', type=str,
                         help="set debug level "
                              "[minimal, info, debug, debugfile]")
@@ -142,7 +142,8 @@ def main():
 
         try:
             myappid = 'mycompany.myproduct.subproduct.version'
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                myappid)
         except Exception:
             pass
 

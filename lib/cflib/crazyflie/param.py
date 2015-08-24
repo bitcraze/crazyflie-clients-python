@@ -172,9 +172,11 @@ class Param():
 
             logger.debug("Updated parameter [%s]" % complete_name)
             if complete_name in self.param_update_callbacks:
-                self.param_update_callbacks[complete_name].call(complete_name, s)
+                self.param_update_callbacks[complete_name].call(
+                    complete_name, s)
             if element.group in self.group_update_callbacks:
-                self.group_update_callbacks[element.group].call(complete_name, s)
+                self.group_update_callbacks[element.group].call(
+                    complete_name, s)
             self.all_update_callback.call(complete_name, s)
         else:
             logger.debug("Variable id [%d] not found in TOC", var_id)
@@ -242,7 +244,8 @@ class Param():
                            complete_name)
             raise KeyError("{} not in param TOC".format(complete_name))
         elif element.access == ParamTocElement.RO_ACCESS:
-            logger.debug("[%s] is read only, no trying to set value", complete_name)
+            logger.debug("[%s] is read only, no trying to set value",
+                         complete_name)
             raise AttributeError("{} is read-only!".format(complete_name))
         else:
             varid = element.ident

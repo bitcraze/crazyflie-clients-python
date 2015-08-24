@@ -106,14 +106,15 @@ class Bootloader:
         if started:
             self.protocol_version = self._cload.protocol_version
 
-            if self.protocol_version == BootVersion.CF1_PROTO_VER_0 or \
-                            self.protocol_version == BootVersion.CF1_PROTO_VER_1:
+            if (self.protocol_version == BootVersion.CF1_PROTO_VER_0 or
+                    self.protocol_version == BootVersion.CF1_PROTO_VER_1):
                 # Nothing more to do
                 pass
             elif self.protocol_version == BootVersion.CF2_PROTO_VER:
                 self._cload.request_info_update(TargetTypes.NRF51)
             else:
-                print "Bootloader protocol 0x{:X} not supported!".self.protocol_version
+                print("Bootloader protocol 0x{:X} not "
+                      "supported!".self.protocol_version)
 
         return started
 
@@ -153,19 +154,23 @@ class Bootloader:
                     # No targets specified, just flash everything
                     for file in files:
                         if files[file]["target"] in targets:
-                            targets[files[file]["target"]] += (files[file]["type"],)
+                            targets[files[file]["target"]] += (
+                                files[file]["type"],)
                         else:
-                            targets[files[file]["target"]] = (files[file]["type"],)
+                            targets[files[file]["target"]] = (
+                                files[file]["type"],)
 
                 zip_targets = {}
                 for file in files:
                     file_name = file
                     file_info = files[file]
                     if file_info["target"] in zip_targets:
-                        zip_targets[file_info["target"]][file_info["type"]] = {"filename": file_name}
+                        zip_targets[file_info["target"]][file_info["type"]] = {
+                            "filename": file_name}
                     else:
                         zip_targets[file_info["target"]] = {}
-                        zip_targets[file_info["target"]][file_info["type"]] = {"filename": file_name}
+                        zip_targets[file_info["target"]][file_info["type"]] = {
+                            "filename": file_name}
             except KeyError as e:
                 print e
                 print "No manifest.json in {}".format(filename)
@@ -180,12 +185,16 @@ class Bootloader:
                         current_target = "{}-{}".format(target, type)
                         file_to_flash["type"] = type
                         # Read the data, if this fails we bail
-                        file_to_flash["target"] = self._cload.targets[TargetTypes.from_string(target)]
-                        file_to_flash["data"] = zf.read(zip_targets[target][type]["filename"])
-                        file_to_flash["start_page"] = file_to_flash["target"].start_page
+                        file_to_flash["target"] = self._cload.targets[
+                            TargetTypes.from_string(target)]
+                        file_to_flash["data"] = zf.read(
+                            zip_targets[target][type]["filename"])
+                        file_to_flash["start_page"] = file_to_flash[
+                            "target"].start_page
                         files_to_flash += (file_to_flash,)
             except KeyError as e:
-                print "Could not find a file for {} in {}".format(current_target, filename)
+                print "Could not find a file for {} in {}".format(
+                    current_target, filename)
                 return False
 
         else:
@@ -196,9 +205,11 @@ class Bootloader:
                 file_to_flash["type"] = "binary"
                 f = open(filename, 'rb')
                 for t in targets:
-                    file_to_flash["target"] = self._cload.targets[TargetTypes.from_string(t)]
+                    file_to_flash["target"] = self._cload.targets[
+                        TargetTypes.from_string(t)]
                     file_to_flash["type"] = targets[t][0]
-                    file_to_flash["start_page"] = file_to_flash["target"].start_page
+                    file_to_flash["start_page"] = file_to_flash[
+                        "target"].start_page
                 file_to_flash["data"] = f.read()
                 f.close()
                 files_to_flash += (file_to_flash,)
@@ -233,27 +244,31 @@ class Bootloader:
         progress = 0
 
         if self.progress_cb:
-            self.progress_cb("({}/{}) Starting...".format(current_file_number, total_files), int(progress))
+            self.progress_cb(
+                "({}/{}) Starting...".format(current_file_number, total_files),
+                int(progress))
         else:
-            sys.stdout.write("Flashing {} of {} to {} ({}): ".format(current_file_number,
-                                                                     total_files,
-                                                                     TargetTypes.to_string(t_data.id),
-                                                                     target["type"]))
+            sys.stdout.write(
+                "Flashing {} of {} to {} ({}): ".format(
+                    current_file_number, total_files,
+                    TargetTypes.to_string(t_data.id), target["type"]))
             sys.stdout.flush()
 
         if len(image) > ((t_data.flash_pages - start_page) *
                              t_data.page_size):
             if self.progress_cb:
-                self.progress_cb("Error: Not enough space to flash the image file.", int(progress))
+                self.progress_cb(
+                    "Error: Not enough space to flash the image file.",
+                    int(progress))
             else:
                 print "Error: Not enough space to flash the image file."
             raise Exception()
 
         if not self.progress_cb:
-            logger.info(("%d bytes (%d pages) " % ((len(image) - 1),
-                                                   int(len(image) / t_data.page_size) + 1)))
-            sys.stdout.write(("%d bytes (%d pages) " % ((len(image) - 1),
-                                                        int(len(image) / t_data.page_size) + 1)))
+            logger.info(("%d bytes (%d pages) " % (
+                (len(image) - 1), int(len(image) / t_data.page_size) + 1)))
+            sys.stdout.write(("%d bytes (%d pages) " % (
+                (len(image) - 1), int(len(image) / t_data.page_size) + 1)))
             sys.stdout.flush()
 
         # For each page
@@ -261,20 +276,23 @@ class Bootloader:
         for i in range(0, int((len(image) - 1) / t_data.page_size) + 1):
             # Load the buffer
             if ((i + 1) * t_data.page_size) > len(image):
-                self._cload.upload_buffer(t_data.addr, ctr, 0, image[i * t_data.page_size:])
+                self._cload.upload_buffer(
+                    t_data.addr, ctr, 0, image[i * t_data.page_size:])
             else:
-                self._cload.upload_buffer(t_data.addr, ctr, 0, image[i * t_data.page_size:
-                (i + 1) * t_data.page_size])
+                self._cload.upload_buffer(
+                    t_data.addr, ctr, 0,
+                    image[i * t_data.page_size: (i + 1) * t_data.page_size])
 
             ctr += 1
 
             if self.progress_cb:
                 progress += factor
-                self.progress_cb("({}/{}) Uploading buffer to {}...".format(current_file_number,
-                                                                            total_files,
-                                                                            TargetTypes.to_string(t_data.id)),
+                self.progress_cb("({}/{}) Uploading buffer to {}...".format(
+                    current_file_number,
+                    total_files,
+                    TargetTypes.to_string(t_data.id)),
 
-                                 int(progress))
+                    int(progress))
             else:
                 sys.stdout.write(".")
                 sys.stdout.flush()
@@ -282,11 +300,12 @@ class Bootloader:
             # Flash when the complete buffers are full
             if ctr >= t_data.buffer_pages:
                 if self.progress_cb:
-                    self.progress_cb("({}/{}) Writing buffer to {}...".format(current_file_number,
-                                                                              total_files,
-                                                                              TargetTypes.to_string(t_data.id)),
+                    self.progress_cb("({}/{}) Writing buffer to {}...".format(
+                        current_file_number,
+                        total_files,
+                        TargetTypes.to_string(t_data.id)),
 
-                                     int(progress))
+                        int(progress))
                 else:
                     sys.stdout.write("%d" % ctr)
                     sys.stdout.flush()
@@ -294,40 +313,46 @@ class Bootloader:
                                                start_page + i - (ctr - 1),
                                                ctr):
                     if self.progress_cb:
-                        self.progress_cb("Error during flash operation (code %d)".format(self._cload.error_code),
-                                         int(progress))
+                        self.progress_cb(
+                            "Error during flash operation (code %d)".format(
+                                self._cload.error_code),
+                            int(progress))
                     else:
-                        print "\nError during flash operation (code %d). Maybe" \
-                              " wrong radio link?" % self._cload.error_code
+                        print "\nError during flash operation (code %d). " \
+                              "Maybe wrong radio link?" % \
+                              self._cload.error_code
                     raise Exception()
 
                 ctr = 0
 
         if ctr > 0:
             if self.progress_cb:
-                self.progress_cb("({}/{}) Writing buffer to {}...".format(current_file_number,
-                                                                          total_files,
-                                                                          TargetTypes.to_string(t_data.id)),
-                                 int(progress))
+                self.progress_cb("({}/{}) Writing buffer to {}...".format(
+                    current_file_number,
+                    total_files,
+                    TargetTypes.to_string(t_data.id)),
+                    int(progress))
             else:
                 sys.stdout.write("%d" % ctr)
                 sys.stdout.flush()
-            if not self._cload.write_flash(t_data.addr,
-                                           0,
-                                           (start_page +
-                                                (int((len(image) - 1) / t_data.page_size)) -
-                                                (ctr - 1)),
-                                           ctr):
+            if not self._cload.write_flash(
+                    t_data.addr, 0,
+                    (start_page + (int((len(image) - 1) / t_data.page_size)) -
+                         (ctr - 1)), ctr):
                 if self.progress_cb:
-                    self.progress_cb("Error during flash operation (code %d)".format(self._cload.error_code),
-                                     int(progress))
+                    self.progress_cb(
+                        "Error during flash operation (code %d)".format(
+                            self._cload.error_code),
+                        int(progress))
                 else:
                     print "\nError during flash operation (code %d). Maybe" \
                           " wrong radio link?" % self._cload.error_code
                 raise Exception()
 
         if self.progress_cb:
-            self.progress_cb("({}/{}) Flashing done!".format(current_file_number, total_files),
-                             int(100))
+            self.progress_cb(
+                "({}/{}) Flashing done!".format(current_file_number,
+                                                total_files),
+                int(100))
         else:
             print ""

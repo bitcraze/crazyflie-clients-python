@@ -72,7 +72,8 @@ logger = logging.getLogger(__name__)
 
 
 class _SrvThread(Thread):
-    def __init__(self, socket, log_socket, param_socket, conn_socket, cf, *args):
+    def __init__(self, socket, log_socket, param_socket, conn_socket, cf,
+                 *args):
         super(_SrvThread, self).__init__(*args)
         self._socket = socket
         self._log_socket = log_socket
@@ -134,7 +135,8 @@ class _SrvThread(Thread):
             for name in param_toc[group]:
                 param[group][name] = {
                     "type": param_toc[group][name].ctype,
-                    "access": "RW" if param_toc[group][name].access == 0 else "RO",
+                    "access": "RW" if param_toc[group][
+                                          name].access == 0 else "RO",
                     "value": self._cf.param.values[group][name]}
 
         resp = {"version": 1, "status": 0, "log": log, "param": param}

@@ -21,9 +21,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 The bootloader dialog is used to update the Crazyflie firmware and to
@@ -83,13 +83,13 @@ class Cf1ConfigDialog(QtGui.QWidget, service_dialog_class):
         self._cancel_bootloading.clicked.connect(self.close)
 
         self.clt.statusChanged.connect(self.statusUpdate)
-        self.clt.connectingSignal.connect(lambda:
-                                          self.setUiState(UIState.CONNECTING))
-        self.clt.connectedSignal.connect(lambda:
-                                         self.setUiState(UIState.COLD_CONNECT))
+        self.clt.connectingSignal.connect(
+            lambda: self.setUiState(UIState.CONNECTING))
+        self.clt.connectedSignal.connect(
+            lambda: self.setUiState(UIState.COLD_CONNECT))
         self.clt.failed_signal.connect(lambda m: self._ui_connection_fail(m))
-        self.clt.disconnectedSignal.connect(lambda:
-                                            self.setUiState(UIState.DISCONNECTED))
+        self.clt.disconnectedSignal.connect(
+            lambda: self.setUiState(UIState.DISCONNECTED))
         self.clt.updateConfigSignal.connect(self.updateConfig)
 
         self.clt.start()
@@ -249,7 +249,8 @@ class CrazyloadThread(QThread):
                 speed = Config().get("default_cf_speed")
                 pitchTrim = Config().get("default_cf_trim")
                 rollTrim = Config().get("default_cf_trim")
-                self.statusChanged.emit("Could not find config block, showing defaults", 100)
+                self.statusChanged.emit(
+                    "Could not find config block, showing defaults", 100)
             self.updateConfigSignal.emit(channel, speed, rollTrim, pitchTrim)
         else:
             self.statusChanged.emit("Reading config block failed!", 0)

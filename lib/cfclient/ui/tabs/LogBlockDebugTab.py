@@ -21,9 +21,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 Shows all the parameters available in the Crazyflie and also gives the ability
@@ -65,10 +65,13 @@ class LogBlockDebugTab(Tab, logblock_tab_class):
 
         self._helper.cf.log.block_added_cb.add_callback(self._block_added)
         self._disconnected_signal.connect(self._disconnected)
-        self._helper.cf.disconnected.add_callback(self._disconnected_signal.emit)
+        self._helper.cf.disconnected.add_callback(
+            self._disconnected_signal.emit)
         self._blocks_updated_signal.connect(self._update_tree)
 
-        self._block_tree.setHeaderLabels(['Id', 'Name', 'Period (ms)', 'Added', 'Started', 'Error', 'Contents'])
+        self._block_tree.setHeaderLabels(
+            ['Id', 'Name', 'Period (ms)', 'Added', 'Started', 'Error',
+             'Contents'])
         self._block_tree.sortItems(0, QtCore.Qt.AscendingOrder)
 
     def _block_added(self, block):

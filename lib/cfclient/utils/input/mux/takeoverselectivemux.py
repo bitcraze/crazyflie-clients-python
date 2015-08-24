@@ -49,9 +49,10 @@ class TakeOverSelectiveMux(InputMux):
         self.name = "Teacher (RP)"
         self._devs = {self._master: None, self._slave: None}
 
-        self._muxing = {self._master: ("thrust", "yaw", "estop", "alt1", "alt2",
-                                       "althold", "exit"),
-                        self._slave: ("roll", "pitch")}
+        self._muxing = {
+            self._master: ("thrust", "yaw", "estop", "alt1", "alt2",
+                           "althold", "exit"), self._slave: ("roll", "pitch")
+        }
 
     def read(self):
         try:

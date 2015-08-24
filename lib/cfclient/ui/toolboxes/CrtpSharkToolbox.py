@@ -21,12 +21,13 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-Toolbox for showing packets that is sent via the communication link when debugging.
+Toolbox for showing packets that is sent via the communication link when
+debugging.
 """
 
 __author__ = 'Bitcraze AB'
@@ -39,8 +40,8 @@ from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 from time import time
 
-param_tab_class = uic.loadUiType(sys.path[0] +
-                                 "/cfclient/ui/toolboxes/crtpSharkToolbox.ui")[0]
+param_tab_class = uic.loadUiType(
+    sys.path[0] + "/cfclient/ui/toolboxes/crtpSharkToolbox.ui")[0]
 
 
 class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):

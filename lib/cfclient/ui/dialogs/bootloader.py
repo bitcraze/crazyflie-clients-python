@@ -21,9 +21,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 The bootloader dialog is used to update the Crazyflie firmware and to
@@ -95,13 +95,13 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
         self.clt.statusChanged.connect(self.statusUpdate)
         # self.clt.updateBootloaderStatusSignal.connect(
         #                                         self.updateBootloaderStatus)
-        self.clt.connectingSignal.connect(lambda:
-                                          self.setUiState(UIState.CONNECTING))
-        self.clt.connectedSignal.connect(lambda:
-                                         self.setUiState(UIState.COLD_CONNECT))
+        self.clt.connectingSignal.connect(
+            lambda: self.setUiState(UIState.CONNECTING))
+        self.clt.connectedSignal.connect(
+            lambda: self.setUiState(UIState.COLD_CONNECT))
         self.clt.failed_signal.connect(lambda m: self._ui_connection_fail(m))
-        self.clt.disconnectedSignal.connect(lambda:
-                                            self.setUiState(UIState.DISCONNECTED))
+        self.clt.disconnectedSignal.connect(
+            lambda: self.setUiState(UIState.DISCONNECTED))
 
         self.clt.start()
 

@@ -68,11 +68,14 @@ if len(sys.argv) < 2:
     print "The CRTP options are described above"
     print
     print "Crazyload option:"
-    print "   info                    : Print the info of the bootloader and quit."
+    print "   info                    : Print the info of the bootloader " \
+          "and quit."
     print "                             Will let the target in bootloader mode"
     print "   reset                   : Reset the device in firmware mode"
-    print "   flash <file> [targets]  : flash the <img> binary file from the first"
-    print "                             possible  page in flash and reset to firmware"
+    print "   flash <file> [targets]  : flash the <img> binary file from " \
+          "the first"
+    print "                             possible  page in flash and reset " \
+          "to firmware"
     print "                             mode."
     if link:
         link.close()

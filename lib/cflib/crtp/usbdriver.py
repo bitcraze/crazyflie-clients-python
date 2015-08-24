@@ -95,7 +95,8 @@ class UsbDriver(CRTPDriver):
             self.cfusb = CfUsb(devid=int(uri_data.group(1)))
             if self.cfusb.dev:
                 self.cfusb.set_crtp_to_usb(True)
-                time.sleep(1)  # Wait for the blocking queues in the firmware to time out
+                # Wait for the blocking queues in the firmware to time out
+                time.sleep(1)
             else:
                 self.cfusb = None
                 raise Exception("Could not open {}".format(self.uri))
@@ -150,8 +151,8 @@ class UsbDriver(CRTPDriver):
             self.cfusb.send_packet(dataOut)
         except Queue.Full:
             if self.link_error_callback:
-                self.link_error_callback("UsbDriver: Could not send packet"
-                                         " to Crazyflie")
+                self.link_error_callback(
+                    "UsbDriver: Could not send packet to Crazyflie")
 
     def pause(self):
         self._thread.stop()
@@ -188,7 +189,9 @@ class UsbDriver(CRTPDriver):
             try:
                 self.cfusb = CfUsb()
             except Exception as e:
-                logger.warn("Exception while scanning for Crazyflie USB: {}".format(str(e)))
+                logger.warn(
+                    "Exception while scanning for Crazyflie USB: {}".format(
+                        str(e)))
                 return []
         else:
             raise Exception("Cannot scan for links while the link is open!")
@@ -251,7 +254,8 @@ class _UsbReceiveThread(threading.Thread):
             except Exception as e:
                 import traceback
 
-                self.link_error_callback("Error communicating with the Crazyflie"
-                                         " ,it has probably been unplugged!\n"
-                                         "Exception:%s\n\n%s" % (e,
-                                                                 traceback.format_exc()))
+                self.link_error_callback(
+                    "Error communicating with the Crazyflie"
+                    " ,it has probably been unplugged!\n"
+                    "Exception:%s\n\n%s" % (e,
+                                            traceback.format_exc()))

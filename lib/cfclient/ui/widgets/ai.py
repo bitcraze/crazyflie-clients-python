@@ -21,9 +21,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 Attitude indicator widget.
@@ -141,8 +141,6 @@ class AttitudeIndicator(QtGui.QWidget):
         qp.setPen(pen)
         qp.drawLine(0, h / 2, w, h / 2)
 
-
-
         # Draw Hover vs Target
 
         qp.setWorldMatrixEnabled(False)
@@ -158,10 +156,13 @@ class AttitudeIndicator(QtGui.QWidget):
 
         qp.translate(0, h / 2)
         if not self.hover:
-            qp.drawText(w - fh * 10, fh / 2, str(round(self.hoverASL, 2)))  # asl
+            # asl
+            qp.drawText(w - fh * 10, fh / 2, str(round(self.hoverASL, 2)))
 
         if self.hover:
-            qp.drawText(w - fh * 10, fh / 2, str(round(self.hoverTargetASL, 2)))  # target asl (center)
+            # target asl (center)
+            qp.drawText(
+                w - fh * 10, fh / 2, str(round(self.hoverTargetASL, 2)))
             diff = round(self.hoverASL - self.hoverTargetASL, 2)
             pos_y = -h / 6 * diff
 
@@ -172,11 +173,15 @@ class AttitudeIndicator(QtGui.QWidget):
                 pos_y = -h / 6 * 2.8
             else:
                 pos_y = -h / 6 * diff
-            qp.drawText(w - fh * 3.8, pos_y + fh / 2,
-                        str(diff))  # difference from target (moves up and down +- 2.8m)
-            qp.drawLine(w - fh * 4.5, 0, w - fh * 4.5, pos_y)  # vertical line
-            qp.drawLine(w - fh * 4.7, 0, w - fh * 4.5, 0)  # left horizontal line
-            qp.drawLine(w - fh * 4.2, pos_y, w - fh * 4.5, pos_y)  # right horizontal line
+
+            # difference from target (moves up and down +- 2.8m)
+            qp.drawText(w - fh * 3.8, pos_y + fh / 2, str(diff))
+            # vertical line
+            qp.drawLine(w - fh * 4.5, 0, w - fh * 4.5, pos_y)
+            # left horizontal line
+            qp.drawLine(w - fh * 4.7, 0, w - fh * 4.5, 0)
+            # right horizontal line
+            qp.drawLine(w - fh * 4.2, pos_y, w - fh * 4.5, pos_y)
 
 
 if __name__ == "__main__":

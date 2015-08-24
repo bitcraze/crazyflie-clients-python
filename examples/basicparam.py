@@ -177,9 +177,9 @@ if __name__ == '__main__':
     if len(available) > 0:
         # pe = ParamExample(available[0][0])
         pe = ParamExample("radio://0/90/250K")
-        # The Crazyflie lib doesn't contain anything to keep the application alive,
-        # so this is where your application should do something. In our case we
-        # are just waiting until we are disconnected.
+        # The Crazyflie lib doesn't contain anything to keep the application
+        # alive, so this is where your application should do something. In our
+        # case we are just waiting until we are disconnected.
         while pe.is_connected:
             time.sleep(1)
     else:

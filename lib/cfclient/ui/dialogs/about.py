@@ -21,9 +21,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 The about dialog.
@@ -102,8 +102,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         self.setupUi(self)
         self._close_button.clicked.connect(self.close)
         self._name_label.setText(
-            self._name_label.text().replace('#version#',
-                                            cfclient.VERSION))
+            self._name_label.text().replace('#version#', cfclient.VERSION))
 
         self._interface_text = ""
         self._imu_sensors_text = ""
@@ -114,12 +113,12 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         self._fw_modified = None
         self._helper = helper
 
-        helper.cf.param.add_update_callback(group="imu_sensors",
-                                            cb=self._imu_sensors_update)
-        helper.cf.param.add_update_callback(group="imu_tests",
-                                            cb=self._imu_sensor_tests_update)
-        helper.cf.param.add_update_callback(group="firmware",
-                                            cb=self._firmware_update)
+        helper.cf.param.add_update_callback(
+            group="imu_sensors", cb=self._imu_sensors_update)
+        helper.cf.param.add_update_callback(
+            group="imu_tests", cb=self._imu_sensor_tests_update)
+        helper.cf.param.add_update_callback(
+            group="firmware", cb=self._firmware_update)
         helper.cf.connected.add_callback(self._connected)
 
         self._disconnected_signal.connect(self._disconnected)
@@ -143,41 +142,42 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         self._interface_text = ""
         interface_status = cflib.crtp.get_interfaces_status()
         for key in interface_status.keys():
-            self._interface_text += INTERFACE_FORMAT.format(key,
-                                                            interface_status[key])
+            self._interface_text += INTERFACE_FORMAT.format(
+                key, interface_status[key])
         firmware = None
 
         self._device_text = ""
         devs = self._helper.inputDeviceReader.available_devices()
         for d in devs:
-            self._device_text += DEVICE_FORMAT.format(d.reader_name,
-                                                      d.id,
-                                                      d.name)
+            self._device_text += DEVICE_FORMAT.format(
+                d.reader_name, d.id, d.name)
         if len(self._device_text) == 0:
             self._device_text = "None<br>"
 
         self._input_readers_text = ""
         # readers = self._helper.inputDeviceReader.getAvailableDevices()
         for reader in cfclient.utils.input.inputreaders.initialized_readers:
-            self._input_readers_text += INPUT_READER_FORMAT.format(reader.name,
-                                                                   len(reader.devices()))
+            self._input_readers_text += INPUT_READER_FORMAT.format(
+                reader.name, len(reader.devices()))
         if len(self._input_readers_text) == 0:
             self._input_readers_text = "None<br>"
 
         if self._uri:
-            firmware = FIRMWARE_FORMAT.format(self._fw_rev0, self._fw_rev1,
-                                              "MODIFIED" if self._fw_modified else "CLEAN")
+            firmware = FIRMWARE_FORMAT.format(
+                self._fw_rev0,
+                self._fw_rev1,
+                "MODIFIED" if self._fw_modified else "CLEAN")
         self._debug_out.setHtml(
-            DEBUG_INFO_FORMAT.format(version=cfclient.VERSION,
-                                     system=sys.platform,
-                                     interface_status=self._interface_text,
-                                     input_devices=self._device_text,
-                                     input_readers=self._input_readers_text,
-                                     uri=self._uri,
-                                     firmware=firmware,
-                                     imu_sensors=self._imu_sensors_text,
-                                     imu_sensor_tests=
-                                     self._imu_sensor_test_text))
+            DEBUG_INFO_FORMAT.format(
+                version=cfclient.VERSION,
+                system=sys.platform,
+                interface_status=self._interface_text,
+                input_devices=self._device_text,
+                input_readers=self._input_readers_text,
+                uri=self._uri,
+                firmware=firmware,
+                imu_sensors=self._imu_sensors_text,
+                imu_sensor_tests=self._imu_sensor_test_text))
 
     def _connected(self, uri):
         """Callback when Crazyflie is connected"""
@@ -196,15 +196,15 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         """Callback for sensor found parameters"""
         param = name[name.index('.') + 1:]
         if not param in self._imu_sensors_text:
-            self._imu_sensors_text += IMU_SENSORS_FORMAT.format(param,
-                                                                eval(value))
+            self._imu_sensors_text += IMU_SENSORS_FORMAT.format(
+                param, eval(value))
 
     def _imu_sensor_tests_update(self, name, value):
         """Callback for sensor test parameters"""
         param = name[name.index('.') + 1:]
         if not param in self._imu_sensor_test_text:
-            self._imu_sensor_test_text += SENSOR_TESTS_FORMAT.format(param,
-                                                                     eval(value))
+            self._imu_sensor_test_text += SENSOR_TESTS_FORMAT.format(
+                param, eval(value))
 
     def _disconnected(self, uri):
         """Callback for Crazyflie disconnected"""

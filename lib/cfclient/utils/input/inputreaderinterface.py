@@ -159,7 +159,8 @@ class InputReaderInterface(object):
         return [self._cap_rp(roll), self._cap_rp(pitch)]
 
     def _scale_and_deadband_yaw(self, yaw):
-        return InputReaderInterface.deadband(yaw, 0.2) * self.input.max_yaw_rate
+        return InputReaderInterface.deadband(
+            yaw, 0.2) * self.input.max_yaw_rate
 
     def _limit_thrust(self, thrust, althold, emergency_stop):
         # Thust limiting (slew, minimum and emergency stop)

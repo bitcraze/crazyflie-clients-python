@@ -284,7 +284,8 @@ class DebugDriver(CRTPDriver):
                 ["debug://0/1", "Fail to connect"],
                 ["debug://0/2", "Incomplete log TOC download"],
                 ["debug://0/3", "Insert random delays on replies"],
-                ["debug://0/4", "Insert random delays on replies and random TOC CRCs"],
+                ["debug://0/4",
+                 "Insert random delays on replies and random TOC CRCs"],
                 ["debug://0/5", "Normal but random TOC CRCs"],
                 ["debug://0/6", "Normal but empty I2C and OW mems"]]
 
@@ -327,19 +328,13 @@ class DebugDriver(CRTPDriver):
         if len(self._fake_mems) == 0:
             # Insert some data here
             self._fake_mems.append(FakeMemory(type=0, size=100, addr=0))
-            self._fake_mems.append(FakeMemory(type=1, size=112, addr=0x1234567890ABCDEF,
-                                              data=[0xeb, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x44, 0x00, 0x0e,
-                                                    0x01, 0x09, 0x62, 0x63, 0x4c, 0x65, 0x64, 0x52, 0x69, 0x6e,
-                                                    0x67, 0x02, 0x01, 0x62, 0x55]))
-            # self._fake_mems.append(FakeMemory(type=1, size=112, addr=0xFEDCBA0987654321,
-            #                                  data=[0xeb, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x44, 0x00, 0x44,
-            #                                        0x01, 0x2e, 0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20,
-            #                                        0x61, 0x20, 0x72, 0x65, 0x61, 0x6c, 0x6c, 0x79, 0x20, 0x6c,
-            #                                        0x6f, 0x6e, 0x67, 0x20, 0x6e, 0x61, 0x6d, 0x65, 0x2c, 0x20,
-            #                                        0x74, 0x68, 0x61, 0x74, 0x27, 0x73, 0x20, 0x6a, 0x75, 0x73,
-            #                                        0x74, 0x20, 0x67, 0x72, 0x65, 0x61, 0x74, 0x21, 0x02, 0x12,
-            #                                        0x53, 0x75, 0x70, 0x65, 0x72, 0x20, 0x72, 0x65, 0x76, 0x69,
-            #                                        0x73, 0x69, 0x6f, 0x6e, 0x20, 0x41, 0x35, 0x35, 0xc8]))
+            self._fake_mems.append(
+                FakeMemory(type=1, size=112, addr=0x1234567890ABCDEF,
+                           data=[0xeb, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01,
+                                 0x44, 0x00, 0x0e,
+                                 0x01, 0x09, 0x62, 0x63, 0x4c, 0x65, 0x64,
+                                 0x52, 0x69, 0x6e,
+                                 0x67, 0x02, 0x01, 0x62, 0x55]))
 
         if (re.search("^debug://.*/6\Z", uri)):
             logger.info("------------->Erasing memories on connect")
@@ -348,7 +343,8 @@ class DebugDriver(CRTPDriver):
 
         self.fakeConsoleThread = None
 
-        if (not self._packet_handler.inhibitAnswers and not self._packet_handler.bootloader):
+        if (not self._packet_handler.inhibitAnswers and
+                not self._packet_handler.bootloader):
             self.fakeConsoleThread = FakeConsoleThread(self.queue)
             self.fakeConsoleThread.start()
 
@@ -418,8 +414,9 @@ class _PacketHandlingThread(Thread):
             pk = self._in_queue.get(True)
             if (self.inhibitAnswers):
                 self.nowAnswerCounter = self.nowAnswerCounter - 1
-                logger.debug("Not answering with any data, will send link errori"
-                             " in %d retries", self.nowAnswerCounter)
+                logger.debug(
+                    "Not answering with any data, will send link errori"
+                    " in %d retries", self.nowAnswerCounter)
                 if (self.nowAnswerCounter == 0):
                     self.linkErrorCallback("Nothing is answering, and it"
                                            " shouldn't")
@@ -437,8 +434,9 @@ class _PacketHandlingThread(Thread):
                 elif (pk.port == CRTPPort.MEM):
                     self._handle_mem_access(pk)
                 else:
-                    logger.warning("Not handling incoming packets on port [%d]",
-                                   pk.port)
+                    logger.warning(
+                        "Not handling incoming packets on port [%d]",
+                        pk.port)
 
     def _handle_mem_access(self, pk):
         chan = pk.channel
@@ -454,7 +452,8 @@ class _PacketHandlingThread(Thread):
                 id = ord(payload[0])
                 logger.info("Getting mem {}".format(id))
                 m = self._fake_mems[id]
-                p_out.data = struct.pack('<BBBIQ', 2, id, m.type, m.size, m.addr)
+                p_out.data = struct.pack(
+                    '<BBBIQ', 2, id, m.type, m.size, m.addr)
             self._send_packet(p_out)
 
         if chan == 1:  # Read channel
@@ -462,19 +461,22 @@ class _PacketHandlingThread(Thread):
             addr = struct.unpack("I", payload[0:4])[0]
             length = ord(payload[4])
             status = 0
-            logger.info("MEM: Read {}bytes at 0x{:X} from memory {}".format(length, addr, id))
+            logger.info("MEM: Read {}bytes at 0x{:X} from memory {}".format(
+                length, addr, id))
             m = self._fake_mems[id]
             p_out = CRTPPacket()
             p_out.set_header(CRTPPort.MEM, 1)
             p_out.data = struct.pack("<BIB", id, addr, status)
-            p_out.data += struct.pack("B" * length, *m.data[addr:addr + length])
+            p_out.data += struct.pack("B" * length,
+                                      *m.data[addr:addr + length])
             self._send_packet(p_out)
 
         if chan == 2:  # Write channel
             id = cmd
             addr = struct.unpack("I", payload[0:4])[0]
             data = payload[4:]
-            logger.info("MEM: Write {}bytes at 0x{:X} to memory {}".format(len(data), addr, id))
+            logger.info("MEM: Write {}bytes at 0x{:X} to memory {}".format(
+                len(data), addr, id))
             m = self._fake_mems[id]
 
             for i in range(len(data)):
@@ -580,7 +582,9 @@ class _PacketHandlingThread(Thread):
                     fakecrc = 0xBBBBBBBB
 
                 if self._random_toc_crcs:
-                    fakecrc = int(''.join(random.choice("ABCDEF" + string.digits) for x in range(8)), 16)
+                    fakecrc = int(''.join(
+                        random.choice("ABCDEF" + string.digits) for x in
+                        range(8)), 16)
                     logger.debug("Generated random TOC CRC: 0x%x", fakecrc)
                 logger.info("TOC[%d]: Requesting TOC CRC, sending back fake"
                             " stuff: %d", pk.port, len(self.fakeLogToc))
@@ -722,7 +726,8 @@ class _PacketHandlingThread(Thread):
 
     def _send_packet(self, pk):
         # Do not delay log data
-        if self._random_answer_delay and pk.port != 0x05 and pk.channel != 0x02:
+        if (self._random_answer_delay and pk.port != 0x05 and
+                pk.channel != 0x02):
             # Calculate a delay between 0ms and 250ms
             delay = random.randint(0, 250) / 1000.0
             logger.debug("Delaying answer %.2fms", delay * 1000)
@@ -792,8 +797,10 @@ class _FakeLoggingDataThread(Thread):
                 p = CRTPPacket()
                 p.set_header(5, 2)
                 p.data = struct.pack('<B', self.blockId)
-                timestamp = int((datetime.now() - self.starttime).total_seconds() * 1000)
-                p.data += struct.pack('BBB', timestamp & 0xff, (timestamp >> 8) & 0x0ff,
+                timestamp = int(
+                    (datetime.now() - self.starttime).total_seconds() * 1000)
+                p.data += struct.pack('BBB', timestamp & 0xff,
+                                      (timestamp >> 8) & 0x0ff,
                                       (timestamp >> 16) & 0x0ff)  # Timestamp
 
                 for d in self.fakeLoggingData:
@@ -826,7 +833,8 @@ class FakeConsoleThread(Thread):
         self._shoud_run = False
 
     def run(self):
-        # Temporary hack to test GPS from firmware by sending NMEA string on console
+        # Temporary hack to test GPS from firmware by sending NMEA string
+        # on console
         long_val = 0
         lat_val = 0
         alt_val = 0
@@ -845,11 +853,16 @@ class FakeConsoleThread(Thread):
             self._send_text("Time is now %s\n" % datetime.now())
             self._send_text("$GPVTG,,T,,M,0.386,N,0.716,K,A*2E\n")
             self._send_text("$GPGGA,135544.0")
-            self._send_text("0,%s,N,%s,E,1,04,2.62,3.6,M,%s,M,,*58\n" % (long_string, lat_string, alt_string))
-            self._send_text("$GPGSA,A,3,31,20,23,07,,,,,,,,,3.02,2.62,1.52*05\n")
-            self._send_text("$GPGSV,2,1,07,07,09,181,15,13,63,219,26,16,02,097,,17,05,233,20*7E\n")
-            self._send_text("$GPGSV,2,2,07,20,42,119,35,23,77,097,27,31,12,032,19*47\n")
-            self._send_text("$GPGLL,5536.67734,N,01259.64578,E,135544.00,A,A*68\n")
+            self._send_text("0,%s,N,%s,E,1,04,2.62,3.6,M,%s,M,,*58\n" % (
+                long_string, lat_string, alt_string))
+            self._send_text(
+                "$GPGSA,A,3,31,20,23,07,,,,,,,,,3.02,2.62,1.52*05\n")
+            self._send_text("$GPGSV,2,1,07,07,09,181,15,13,63,219,26,16,02,"
+                            "097,,17,05,233,20*7E\n")
+            self._send_text(
+                "$GPGSV,2,2,07,20,42,119,35,23,77,097,27,31,12,032,19*47\n")
+            self._send_text(
+                "$GPGLL,5536.67734,N,01259.64578,E,135544.00,A,A*68\n")
 
             time.sleep(2)
 
