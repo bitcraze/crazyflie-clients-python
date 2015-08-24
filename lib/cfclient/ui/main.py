@@ -93,6 +93,7 @@ COLOR_BLUE = '#3399ff'
 COLOR_GREEN = '#00ff60'
 COLOR_RED = '#cc0404'
 
+
 def progressbar_stylesheet(color):
     return """
         QProgressBar {

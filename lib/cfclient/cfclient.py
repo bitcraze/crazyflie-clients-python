@@ -117,12 +117,17 @@ def main():
         logger.info("Disabling STL printouts")
 
     if sys.platform == 'darwin':
-        import Foundation
-        bundle = Foundation.NSBundle.mainBundle()
-        if bundle:
-            info = bundle.localizedInfoDictionary() or bundle.infoDictionary()
-            if info:
-                info['CFBundleName'] = 'Crazyflie'
+        try:
+            import Foundation
+            bundle = Foundation.NSBundle.mainBundle()
+            if bundle:
+                info = (bundle.localizedInfoDictionary() or
+                        bundle.infoDictionary())
+                if info:
+                    info['CFBundleName'] = 'Crazyflie'
+        except ImportError:
+            logger.info("Foundation not found. Menu will show python as "
+                        "application name")
 
     # Start up the main user-interface
     from ui.main import MainUI
