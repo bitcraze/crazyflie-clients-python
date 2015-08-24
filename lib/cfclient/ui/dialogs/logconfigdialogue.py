@@ -169,7 +169,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
                 if (parent.child(n).text(NAME_FIELD) == itemName):
                     node = parent.child(n)
                     break
-        if (node != None):
+        if (node is not None):
             self.moveNodeItem(source, target, node)
             return True
         return False
@@ -239,7 +239,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         for d in self.helper.logConfigReader.getLogConfigs():
             if (d.name == cText):
                 config = d
-        if (config == None):
+        if (config is None):
             logger.warning("Could not load config")
         else:
             self.resetTrees()

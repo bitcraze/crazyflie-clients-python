@@ -64,7 +64,7 @@ class InputData:
         return self._axes + self._buttons
 
     def _check_toggle(self, key, data):
-        if not key in self._prev_btn_values:
+        if key not in self._prev_btn_values:
             self._prev_btn_values[key] = data
         elif self._prev_btn_values[key] != data:
             self._prev_btn_values[key] = data
@@ -166,8 +166,8 @@ class InputReaderInterface(object):
         # Thust limiting (slew, minimum and emergency stop)
         if self.input.springy_throttle:
             if althold and self.input.has_pressure_sensor:
-                thrust = int(round(InputReaderInterface.deadband(thrust, 0.2)
-                                   * 32767 + 32767))  # Convert to uint16
+                thrust = int(round(InputReaderInterface.deadband(thrust, 0.2) *
+                                   32767 + 32767))  # Convert to uint16
             else:
                 # Scale the thrust to percent (it's between 0 and 1)
                 thrust *= 100

@@ -143,10 +143,10 @@ class Param():
         """Check if all parameters from the TOC has at least been fetched
         once"""
         for g in self.toc.toc:
-            if not g in self.values:
+            if g not in self.values:
                 return False
             for n in self.toc.toc[g]:
-                if not n in self.values[g]:
+                if n not in self.values[g]:
                     return False
 
         return True
@@ -161,7 +161,7 @@ class Param():
             complete_name = "%s.%s" % (element.group, element.name)
 
             # Save the value for synchronous access
-            if not element.group in self.values:
+            if element.group not in self.values:
                 self.values[element.group] = {}
             self.values[element.group][element.name] = s
 
@@ -202,12 +202,12 @@ class Param():
         if not group and not name:
             self.all_update_callback.add_callback(cb)
         elif not name:
-            if not group in self.group_update_callbacks:
+            if group not in self.group_update_callbacks:
                 self.group_update_callbacks[group] = Caller()
             self.group_update_callbacks[group].add_callback(cb)
         else:
             paramname = "{}.{}".format(group, name)
-            if not paramname in self.param_update_callbacks:
+            if paramname not in self.param_update_callbacks:
                 self.param_update_callbacks[paramname] = Caller()
             self.param_update_callbacks[paramname].add_callback(cb)
 
@@ -292,8 +292,8 @@ class _ParamUpdater(Thread):
         """Callback for newly arrived packets"""
         if pk.channel == READ_CHANNEL or pk.channel == WRITE_CHANNEL:
             var_id = pk.datal[0]
-            if (pk.channel != TOC_CHANNEL and self._req_param == var_id
-                    and pk is not None):
+            if (pk.channel != TOC_CHANNEL and self._req_param == var_id and
+                    pk is not None):
                 self.updated_callback(pk)
                 self._req_param = -1
                 try:

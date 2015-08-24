@@ -69,14 +69,14 @@ class DebugDriverToolbox(QtGui.QWidget, debugdriver_tab_class):
         self.forceDisconnect.pressed.connect(self.forceDisconnecPressed)
 
     def forceDisconnecPressed(self):
-        if (self.helper.cf.link != None):
+        if (self.helper.cf.link is not None):
             p = CRTPPacket()
             p.set_header(CRTPPort.DEBUGDRIVER, 0)
             p.data = struct.pack('<B', 1)  # Force disconnect
             self.helper.cf.send_packet(p)
 
     def linkQualityChanged(self, value):
-        if (self.helper.cf.link != None):
+        if (self.helper.cf.link is not None):
             p = CRTPPacket()
             p.set_header(CRTPPort.DEBUGDRIVER, 0)
             p.data = struct.pack('<BB', 0, value)  # Set link quality

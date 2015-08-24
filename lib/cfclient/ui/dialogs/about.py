@@ -195,14 +195,14 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
     def _imu_sensors_update(self, name, value):
         """Callback for sensor found parameters"""
         param = name[name.index('.') + 1:]
-        if not param in self._imu_sensors_text:
+        if param not in self._imu_sensors_text:
             self._imu_sensors_text += IMU_SENSORS_FORMAT.format(
                 param, eval(value))
 
     def _imu_sensor_tests_update(self, name, value):
         """Callback for sensor test parameters"""
         param = name[name.index('.') + 1:]
-        if not param in self._imu_sensor_test_text:
+        if param not in self._imu_sensor_test_text:
             self._imu_sensor_test_text += SENSOR_TESTS_FORMAT.format(
                 param, eval(value))
 

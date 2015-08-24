@@ -265,7 +265,7 @@ class RadioDriver(CRTPDriver):
                     serial)
         found = []
 
-        if address != None:
+        if address is not None:
             addr = "{:X}".format(address)
             new_addr = struct.unpack("<BBBBB", binascii.unhexlify(addr))
             self.cradio.set_address(new_addr)
@@ -274,7 +274,7 @@ class RadioDriver(CRTPDriver):
 
         self.cradio.set_data_rate(self.cradio.DR_250KPS)
 
-        if address == None or address == 0xE7E7E7E7E7:
+        if address is None or address == 0xE7E7E7E7E7:
             found += map(lambda c: ["radio://0/{}/250K".format(c), ""],
                          self._scan_radio_channels())
             self.cradio.set_data_rate(self.cradio.DR_1MPS)
@@ -391,8 +391,8 @@ class _RadioDriverThread(threading.Thread):
             # If no copter, retry
             if ackStatus.ack is False:
                 self.retryBeforeDisconnect = self.retryBeforeDisconnect - 1
-                if (self.retryBeforeDisconnect == 0
-                        and self.link_error_callback is not None):
+                if (self.retryBeforeDisconnect == 0 and
+                        self.link_error_callback is not None):
                     self.link_error_callback("Too many packets lost")
                 continue
             self.retryBeforeDisconnect = self.RETRYCOUNT_BEFORE_DISCONNECT

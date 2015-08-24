@@ -328,7 +328,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         try:
             for tName in Config().get("open_tabs").split(","):
                 t = tabItems[tName]
-                if (t != None and t.isEnabled()):
+                if (t is not None and t.isEnabled()):
                     # Toggle though menu so it's also marked as open there
                     t.toggle()
         except Exception as e:
@@ -662,8 +662,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                         # select the default mapping for it.
                         if d not in self._available_devices:
                             last_map = Config().get("device_config_mapping")
-                            if last_map.has_key(d.name) and last_map[
-                                    d.name] == c:
+                            if d.name in last_map and last_map[d.name] == c:
                                 node.setChecked(True)
                     role_menu.addMenu(map_node)
                 dev_node.setData((map_node, d, mux_menu))

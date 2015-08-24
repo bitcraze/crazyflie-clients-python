@@ -191,8 +191,8 @@ class ParamBlockModel(QAbstractItemModel):
                 return node.value
         elif role == Qt.EditRole and index.column() == 3:
             return node.value
-        elif (role == Qt.BackgroundRole and index.column() == 3
-              and node.is_updating):
+        elif (role == Qt.BackgroundRole and index.column() == 3 and
+              node.is_updating):
             return self._red_brush
 
         return QVariant()

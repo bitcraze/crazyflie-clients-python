@@ -183,8 +183,8 @@ class Crazyflie():
         self.link = None
         if (self.state == State.INITIALIZED):
             self.connection_failed.call(self.link_uri, errmsg)
-        if (self.state == State.CONNECTED
-                or self.state == State.SETUP_FINISHED):
+        if (self.state == State.CONNECTED or
+                self.state == State.SETUP_FINISHED):
             self.disconnected.call(self.link_uri)
             self.connection_lost.call(self.link_uri, errmsg)
         self.state = State.DISCONNECTED
@@ -374,8 +374,7 @@ class _IncomingPacketHandler(Thread):
 
             found = False
             for cb in self.cb:
-                if (cb[0] == pk.port & cb[1]
-                        and cb[2] == pk.channel & cb[3]):
+                if (cb[0] == pk.port & cb[1] and cb[2] == pk.channel & cb[3]):
                     try:
                         cb[4](pk)
                     except Exception:  # pylint: disable=W0703

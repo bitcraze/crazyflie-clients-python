@@ -104,11 +104,9 @@ class Cloader:
 
         pk = self.link.receive_packet(1)
 
-        while ((not pk
-                or pk.header != 0xFF
-                or struct.unpack("<BB", pk.data[0:2]) != (target_id, 0xFF)
-                )
-               and retry_counter >= 0):
+        while ((not pk or pk.header != 0xFF or
+                struct.unpack("<BB", pk.data[0:2]) != (target_id, 0xFF)
+                ) and retry_counter >= 0):
             pk = self.link.receive_packet(1)
             retry_counter -= 1
 
@@ -296,7 +294,7 @@ class Cloader:
                 (target_id, 0x10)):
             tab = struct.unpack("BBHHHH", pk.data[0:10])
             cpuid = struct.unpack("B" * 12, pk.data[10:22])
-            if not target_id in self.targets:
+            if target_id not in self.targets:
                 self.targets[target_id] = Target(target_id)
             self.targets[target_id].addr = target_id
             if len(pk.data) > 22:

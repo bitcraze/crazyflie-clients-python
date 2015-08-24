@@ -636,7 +636,7 @@ class Memory():
     def write(self, memory, addr, data, flush_queue=False):
         """Write the specified data to the given memory at the given address"""
         wreq = _WriteRequest(memory, addr, data, self.cf)
-        if not memory.id in self._write_requests:
+        if memory.id not in self._write_requests:
             self._write_requests[memory.id] = []
 
         # Workaround until we secure the uplink and change messages for

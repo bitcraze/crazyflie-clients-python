@@ -255,7 +255,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                             self._map_axis(self._axis_to_detect, a, -1.0)
                         self._axis_to_detect = ""
                         self._check_and_enable_saving()
-                        if self._popup != None:
+                        if self._popup is not None:
                             self.cancelButton.click()
                     elif self.combinedDetection == 2:  # finished detection
                         # not the same axis again ...
@@ -263,7 +263,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                             self._map_axis(self._axis_to_detect, a, -1.0)
                             self._axis_to_detect = ""
                             self._check_and_enable_saving()
-                            if (self._popup != None):
+                            if (self._popup is not None):
                                 self.cancelButton.click()
                             self.combinedDetection = 0
                     elif self.combinedDetection == 1:
@@ -333,7 +333,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                     self._map_button(self._button_to_detect, b)
                     self._button_to_detect = ""
                     self._check_and_enable_saving()
-                    if self._popup != None:
+                    if self._popup is not None:
                         self._popup.close()
 
     def _check_and_enable_saving(self):
@@ -390,7 +390,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         funcs = {}
         for m in self._map:
             key = self._map[m]["key"]
-            if not key in funcs:
+            if key not in funcs:
                 funcs[key] = []
             funcs[key].append(self._map[m])
 

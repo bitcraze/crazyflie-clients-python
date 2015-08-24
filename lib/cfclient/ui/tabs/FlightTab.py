@@ -398,7 +398,7 @@ class FlightTab(Tab, flight_tab_class):
     def minMaxThrustChanged(self):
         self.helper.inputDeviceReader.min_thrust = self.minThrust.value()
         self.helper.inputDeviceReader.max_thrust = self.maxThrust.value()
-        if (self.isInCrazyFlightmode == True):
+        if (self.isInCrazyFlightmode is True):
             Config().set("min_thrust", self.minThrust.value())
             Config().set("max_thrust", self.maxThrust.value())
 
@@ -407,20 +407,20 @@ class FlightTab(Tab, flight_tab_class):
             self.thrustLoweringSlewRateLimit.value())
         self.helper.inputDeviceReader.thrust_slew_limit = (
             self.slewEnableLimit.value())
-        if (self.isInCrazyFlightmode == True):
+        if (self.isInCrazyFlightmode is True):
             Config().set("slew_limit", self.slewEnableLimit.value())
             Config().set("slew_rate", self.thrustLoweringSlewRateLimit.value())
 
     def maxYawRateChanged(self):
         logger.debug("MaxYawrate changed to %d", self.maxYawRate.value())
         self.helper.inputDeviceReader.max_yaw_rate = self.maxYawRate.value()
-        if (self.isInCrazyFlightmode == True):
+        if (self.isInCrazyFlightmode is True):
             Config().set("max_yaw", self.maxYawRate.value())
 
     def maxAngleChanged(self):
         logger.debug("MaxAngle changed to %d", self.maxAngle.value())
         self.helper.inputDeviceReader.max_rp_angle = self.maxAngle.value()
-        if (self.isInCrazyFlightmode == True):
+        if (self.isInCrazyFlightmode is True):
             Config().set("max_rp", self.maxAngle.value())
 
     def _trim_pitch_changed(self, value):

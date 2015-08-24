@@ -8,7 +8,7 @@ pep8 --count -qq ${scriptDir}/../..
 
 printf "Now looking for errors that will break the build\n"
 # We will remove more and more errors over time. We don't want them all at one time to avoid mental overload.
-exclude_errors="E402,E712,E713,W291,W503,W601"
+exclude_errors="E402"
 
 pep8 --count --statistics --filename="*" --ignore="${exclude_errors}" ${scriptDir}/../../bin
 result1=$?

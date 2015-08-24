@@ -101,8 +101,8 @@ class _CtrlThread(Thread):
         while True:
             time.sleep(0.01)
             self._thrust += self._thrust_step
-            if (self._thrust >= self._thrust_max
-                    or self._thrust <= self._thrust_min):
+            if (self._thrust >= self._thrust_max or
+                    self._thrust <= self._thrust_min):
                 self._thrust_step *= -1
             self._cmd["thrust"] = self._thrust
             self._socket.send_json(self._cmd)
