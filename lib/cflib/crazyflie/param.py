@@ -293,7 +293,7 @@ class _ParamUpdater(Thread):
         if pk.channel == READ_CHANNEL or pk.channel == WRITE_CHANNEL:
             var_id = pk.datal[0]
             if (pk.channel != TOC_CHANNEL and self._req_param == var_id
-                and pk is not None):
+                    and pk is not None):
                 self.updated_callback(pk)
                 self._req_param = -1
                 try:

@@ -74,9 +74,8 @@ def decompileBlock(binFile, configFile):
     bin = bfile.read()
     bfile.close()
 
-    if (bin[0:4] != "0xBC" or
-                len(bin) < (struct.calcsize(structFormat) + 5) or
-                checksum256(bin[0:struct.calcsize(structFormat) + 5]) != 0):
+    if (bin[0:4] != "0xBC" or len(bin) < (struct.calcsize(structFormat) + 5) or
+            checksum256(bin[0:struct.calcsize(structFormat) + 5]) != 0):
         print "Config block erased of altered, generating default file"
         cfile = open(configFile, "w")
         cfile.write(defaultConfig)

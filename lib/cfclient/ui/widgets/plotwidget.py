@@ -55,9 +55,8 @@ from PyQt4.QtGui import *
 from PyQt4.Qt import *
 from time import time
 
-(plot_widget_class,
- connect_widget_base_class) = (uic.loadUiType(
-    sys.path[0] + '/cfclient/ui/widgets/plotter.ui'))
+(plot_widget_class, connect_widget_base_class) = (
+    uic.loadUiType(sys.path[0] + '/cfclient/ui/widgets/plotter.ui'))
 
 # Try the imports for PyQtGraph to see if it is installed
 try:

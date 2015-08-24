@@ -159,7 +159,7 @@ class Crazyradio:
         self.handle = None
         self.dev = None
 
-    ### Dongle configuration ###
+    # Dongle configuration
     def set_channel(self, channel):
         """ Set the radio channel to be used """
         _send_vendor_setup(self.handle, SET_RADIO_CHANNEL, channel, 0, ())
@@ -242,7 +242,7 @@ class Crazyradio:
                     result = result + (i,)
             return result
 
-    ### Data transferts ###
+    # Data transferts
     def send_packet(self, dataOut):
         """ Send a packet and receive the ack from the radio dongle
             The ack contains information about the packet transmition

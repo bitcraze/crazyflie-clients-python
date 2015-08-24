@@ -270,8 +270,8 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
                         self._map_axis(self._axis_to_detect, a, 1.0)
                         self._prev_combined_id = a
                         self.combinedDetection = 2
-                        message = self._popup.originalMessage % \
-                                  self._popup.directions[1]
+                        message = (self._popup.originalMessage %
+                                   self._popup.directions[1])
                         self._popup.setText(message)
 
     def _update_mapped_values(self, mapped_data):

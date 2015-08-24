@@ -206,9 +206,8 @@ class Cloader:
             if not pk:
                 return False
 
-            if (pk.header == 0xFF and
-                        struct.unpack("B" * len(pk.data),
-                                      pk.data)[:2] == (target_id, 0xFF)):
+            if (pk.header == 0xFF and struct.unpack(
+                    "B" * len(pk.data), pk.data)[:2] == (target_id, 0xFF)):
                 # Difference in CF1 and CF2 (CPU ID)
                 if target_id == 0xFE:
                     pk.data = (target_id, 0xF0, 0x01)
@@ -293,8 +292,8 @@ class Cloader:
         # Wait for the answer
         pk = self.link.receive_packet(2)
 
-        if (pk and pk.header == 0xFF and
-                    struct.unpack("<BB", pk.data[0:2]) == (target_id, 0x10)):
+        if (pk and pk.header == 0xFF and struct.unpack("<BB", pk.data[0:2]) ==
+                (target_id, 0x10)):
             tab = struct.unpack("BBHHHH", pk.data[0:10])
             cpuid = struct.unpack("B" * 12, pk.data[10:22])
             if not target_id in self.targets:
@@ -327,8 +326,8 @@ class Cloader:
 
         pk = self.link.receive_packet(2)
 
-        if (pk and pk.header == 0xFF and
-                    struct.unpack("<BB", pk.data[0:2]) == (target_id, 0x12)):
+        if (pk and pk.header == 0xFF and struct.unpack("<BB", pk.data[0:2]) ==
+                (target_id, 0x12)):
             m = pk.datat[2:]
 
             if (len(m) % 2) != 0:
@@ -399,8 +398,8 @@ class Cloader:
         retry_counter = 5
         # print "Flasing to 0x{:X}".format(addr)
         while ((not pk or pk.header != 0xFF or
-                        struct.unpack("<BB", pk.data[0:2]) != (addr, 0x18))
-               and retry_counter >= 0):
+                struct.unpack("<BB", pk.data[0:2]) != (addr, 0x18)) and
+               retry_counter >= 0):
             pk = CRTPPacket()
             pk.set_header(0xFF, 0xFF)
             pk.data = struct.pack("<BBHHH", addr, 0x18, page_buffer,

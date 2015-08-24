@@ -65,7 +65,7 @@ class AttitudeIndicator(QtGui.QWidget):
         self.repaint()
 
     def setBaro(self, asl):
-        self.hoverASL = asl;
+        self.hoverASL = asl
         self.repaint()
 
     def setRollPitch(self, roll, pitch):

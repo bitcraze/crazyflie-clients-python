@@ -33,7 +33,7 @@ debugging.
 __author__ = 'Bitcraze AB'
 __all__ = ['CrtpSharkBoolbox']
 
-import sys, time
+import sys
 import os
 
 from PyQt4 import QtCore, QtGui, uic

@@ -30,7 +30,8 @@ Simple example that connects to the first Crazyflie found, ramps up/down
 the motors and disconnects.
 """
 
-import time, sys
+import time
+import sys
 from threading import Thread
 
 # FIXME: Has to be launched from within the example folder

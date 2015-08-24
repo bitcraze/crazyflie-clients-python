@@ -143,8 +143,8 @@ class JoystickReader(object):
             logger.info("No user config found, copying dist files")
             os.makedirs(ConfigManager().configs_dir)
 
-        for f in glob.glob(sys.path[0] +
-                                   "/cfclient/configs/input/[A-Za-z]*.json"):
+        for f in glob.glob(
+                sys.path[0] + "/cfclient/configs/input/[A-Za-z]*.json"):
             dest = os.path.join(ConfigManager().
                                 configs_dir, os.path.basename(f))
             if not os.path.isfile(dest):
@@ -218,8 +218,8 @@ class JoystickReader(object):
 
         for dev in devs:
             if ((not self._dev_blacklist) or
-                    (self._dev_blacklist and not
-                    self._dev_blacklist.match(dev.name))):
+                    (self._dev_blacklist and
+                     not self._dev_blacklist.match(dev.name))):
                 dev.input = self
                 approved_devs.append(dev)
 

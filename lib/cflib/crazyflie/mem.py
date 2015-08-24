@@ -340,7 +340,7 @@ class OWElement(MemoryElement):
             while len(elem_data) > 0:
                 (eid, elen) = struct.unpack("BB", elem_data[:2])
                 self.elements[self.element_mapping[eid]] = elem_data[
-                                                           2:2 + elen]
+                    2:2 + elen]
                 elem_data = elem_data[2 + elen:]
             return True
         return False
@@ -644,7 +644,7 @@ class Memory():
         self._write_requests_lock.acquire()
         if flush_queue:
             self._write_requests[memory.id] = self._write_requests[
-                                                  memory.id][:1]
+                memory.id][:1]
         self._write_requests[memory.id].insert(len(self._write_requests), wreq)
         if len(self._write_requests[memory.id]) == 1:
             wreq.start()

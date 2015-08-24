@@ -136,7 +136,7 @@ class _SrvThread(Thread):
                 param[group][name] = {
                     "type": param_toc[group][name].ctype,
                     "access": "RW" if param_toc[group][
-                                          name].access == 0 else "RO",
+                        name].access == 0 else "RO",
                     "value": self._cf.param.values[group][name]}
 
         resp = {"version": 1, "status": 0, "log": log, "param": param}

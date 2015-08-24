@@ -108,7 +108,7 @@ class ConfigManager():
                                 if "ids" in a:
                                     if id == a["ids"][0]:
                                         locaxis["scale"] = locaxis[
-                                                               "scale"] * -1
+                                            "scale"] * -1
                                 locaxis["id"] = id
                                 # 'type'-'id' defines unique index for axis
                                 index = "%s-%d" % (a["type"], id)

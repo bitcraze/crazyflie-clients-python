@@ -255,7 +255,7 @@ class Bootloader:
             sys.stdout.flush()
 
         if len(image) > ((t_data.flash_pages - start_page) *
-                             t_data.page_size):
+                         t_data.page_size):
             if self.progress_cb:
                 self.progress_cb(
                     "Error: Not enough space to flash the image file.",
@@ -338,7 +338,7 @@ class Bootloader:
             if not self._cload.write_flash(
                     t_data.addr, 0,
                     (start_page + (int((len(image) - 1) / t_data.page_size)) -
-                         (ctr - 1)), ctr):
+                     (ctr - 1)), ctr):
                 if self.progress_cb:
                     self.progress_cb(
                         "Error during flash operation (code %d)".format(

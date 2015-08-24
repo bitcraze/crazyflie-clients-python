@@ -98,7 +98,6 @@ setup_args = dict(name='cfclient',
                   **setup_args)
 
 
-
 # Fetch values from package.xml when using catkin
 if os.getenv('CATKIN_TEST_RESULTS_DIR'):
     from catkin_pkg.python_setup import generate_distutils_setup
@@ -108,10 +107,9 @@ if os.getenv('CATKIN_TEST_RESULTS_DIR'):
     setup_args = generate_distutils_setup(**setup_args)
 
 
-
 # Write a temp file to pass verision into script
 version_file = os.path.join(os.path.dirname(__file__),
-                            "lib", "cfclient", "version.py");
+                            "lib", "cfclient", "version.py")
 try:
     with open(version_file, "w") as versionpy:
         versionpy.write("VERSION='{}'".format(VERSION))

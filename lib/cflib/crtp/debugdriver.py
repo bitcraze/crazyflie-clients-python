@@ -184,7 +184,6 @@ class DebugDriver(CRTPDriver):
                                 "min": 0, "max": 5,
                                 "mod": 1})
 
-
         # Fill up the fake logging TOC with values and data
         self.fakeParamToc = []
         self.fakeParamToc.append({"varid": 0, "vartype": 0x08,
@@ -602,8 +601,8 @@ class _PacketHandlingThread(Thread):
             self._handle_toc_access(pk)
         elif (chan == 2):  # Settings access
             varId = pk.datal[0]
-            formatStr = ParamTocElement.types[self.fakeParamToc
-            [varId]["vartype"]][1]
+            formatStr = ParamTocElement.types[
+                self.fakeParamToc[varId]["vartype"]][1]
             newvalue = struct.unpack(formatStr, pk.data[1:])[0]
             self.fakeParamToc[varId]["value"] = newvalue
             logger.info("PARAM: New value [%s] for param [%d]", newvalue,
@@ -619,8 +618,8 @@ class _PacketHandlingThread(Thread):
             p.set_header(pk.port, 1)
             varId = cmd
             p.data += struct.pack("<B", varId)
-            formatStr = ParamTocElement.types[self.fakeParamToc
-            [varId]["vartype"]][1]
+            formatStr = ParamTocElement.types[
+                self.fakeParamToc[varId]["vartype"]][1]
             p.data += struct.pack(formatStr, self.fakeParamToc[varId]["value"])
             logger.info("PARAM: Getting value for %d", varId)
             self._send_packet(p)

@@ -32,7 +32,7 @@ A detachable toolbox for showing console printouts from the Crazyflie
 __author__ = 'Bitcraze AB'
 __all__ = ['ConsoleToolbox']
 
-import sys, time
+import sys
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal

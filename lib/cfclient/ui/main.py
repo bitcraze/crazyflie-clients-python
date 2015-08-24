@@ -249,10 +249,10 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._log_error_signal.connect(self._logging_error)
 
         self.batteryBar.setTextVisible(False)
-        self.batteryBar.setStyleSheet(progressbar_stylesheet(COLOR_BLUE));
+        self.batteryBar.setStyleSheet(progressbar_stylesheet(COLOR_BLUE))
 
         self.linkQualityBar.setTextVisible(False)
-        self.linkQualityBar.setStyleSheet(progressbar_stylesheet(COLOR_BLUE));
+        self.linkQualityBar.setStyleSheet(progressbar_stylesheet(COLOR_BLUE))
 
         # Connect link quality feedback
         self.cf.link_quality_updated.add_callback(self.linkQualitySignal.emit)

@@ -62,8 +62,8 @@ class LogConfigReader():
         if (not os.path.exists(sys.path[1] + "/log")):
             logger.info("No user config found, copying dist files")
             os.makedirs(sys.path[1] + "/log")
-            for f in glob.glob(sys.path[0] +
-                                       "/cfclient/configs/log/[A-Za-z]*.json"):
+            for f in glob.glob(
+                    sys.path[0] + "/cfclient/configs/log/[A-Za-z]*.json"):
                 shutil.copy2(f, sys.path[1] + "/log")
         self._cf = crazyflie
         self._cf.connected.add_callback(self._connected)
