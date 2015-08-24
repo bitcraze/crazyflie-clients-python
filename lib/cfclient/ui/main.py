@@ -85,6 +85,27 @@ class UIState:
     CONNECTED = 2
 
 
+class BatteryStates:
+    BATTERY, CHARGING, CHARGED, LOW_POWER = range(4)
+
+
+COLOR_BLUE = '#3399ff'
+COLOR_GREEN = '#00ff60'
+COLOR_RED = '#cc0404'
+
+def progressbar_stylesheet(color):
+    return """
+        QProgressBar {
+            border: 1px solid #333;
+            background-color: transparent;
+        }
+
+        QProgressBar::chunk {
+            background-color: """ + color + """;
+        }
+    """
+
+
 class MainUI(QtGui.QMainWindow, main_window_class):
     connectionLostSignal = pyqtSignal(str, str)
     connectionInitiatedSignal = pyqtSignal(str)
@@ -192,7 +213,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.menuItemQuickConnect.triggered.connect(self._quick_connect)
         self.menuItemConfInputDevice.triggered.connect(self._show_input_device_config_dialog)
         self.menuItemExit.triggered.connect(self.closeAppRequest)
-        self.batteryUpdatedSignal.connect(self._update_vbatt)
+        self.batteryUpdatedSignal.connect(self._update_battery)
         self._menuitem_rescandevices.triggered.connect(self._rescan_devices)
         self._menuItem_openconfigfolder.triggered.connect(self._open_config_folder)
 
@@ -219,6 +240,12 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             lambda linkURI: self._update_ui_state(UIState.CONNECTING,
                                                   linkURI))
         self._log_error_signal.connect(self._logging_error)
+
+        self.batteryBar.setTextVisible(False)
+        self.batteryBar.setStyleSheet(progressbar_stylesheet(COLOR_BLUE));
+
+        self.linkQualityBar.setTextVisible(False)
+        self.linkQualityBar.setStyleSheet(progressbar_stylesheet(COLOR_BLUE));
 
         # Connect link quality feedback
         self.cf.link_quality_updated.add_callback(self.linkQualitySignal.emit)
@@ -407,8 +434,17 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def _show_connect_dialog(self):
         self.logConfigDialogue.show()
 
-    def _update_vbatt(self, timestamp, data, logconf):
+    def _update_battery(self, timestamp, data, logconf):
         self.batteryBar.setValue(int(data["pm.vbat"] * 1000))
+
+        color = COLOR_BLUE
+        # TODO firmware reports fully-charged state as 'Battery', rather than 'Charged'
+        if data["pm.state"] in [BatteryStates.CHARGING, BatteryStates.CHARGED]:
+            color = COLOR_GREEN
+        elif data["pm.state"] == BatteryStates.LOW_POWER:
+            color = COLOR_RED
+
+        self.batteryBar.setStyleSheet(progressbar_stylesheet(color))
 
     def _connected(self, linkURI):
         self._update_ui_state(UIState.CONNECTED, linkURI)
@@ -417,6 +453,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         lg = LogConfig("Battery", 1000)
         lg.add_variable("pm.vbat", "float")
+        lg.add_variable("pm.state", "int8_t")
         try:
             self.cf.log.add_config(lg)
             lg.data_received_cb.add_callback(self.batteryUpdatedSignal.emit)
