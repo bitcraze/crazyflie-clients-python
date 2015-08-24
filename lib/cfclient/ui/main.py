@@ -179,6 +179,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.joystickReader.device_discovery.add_callback(
             self._input_discovery_signal.emit)
 
+        # Hide the 'File' menu on OS X, since its only item, 'Exit', gets
+        # merged into the application menu.
+        if sys.platform == 'darwin':
+            self.menuFile.menuAction().setVisible(False)
+
         # Connect UI signals
         self.menuItemConnect.triggered.connect(self._connect)
         self.logConfigAction.triggered.connect(self._show_connect_dialog)

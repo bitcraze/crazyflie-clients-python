@@ -116,6 +116,14 @@ def main():
         sys.stdout = os.fdopen(stdout, 'w')
         logger.info("Disabling STL printouts")
 
+    if sys.platform == 'darwin':
+        import Foundation
+        bundle = Foundation.NSBundle.mainBundle()
+        if bundle:
+            info = bundle.localizedInfoDictionary() or bundle.infoDictionary()
+            if info:
+                info['CFBundleName'] = 'Crazyflie'
+
     # Start up the main user-interface
     from ui.main import MainUI
     from PyQt4.QtGui import QApplication, QIcon
