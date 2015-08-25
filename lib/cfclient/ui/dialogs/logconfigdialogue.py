@@ -135,7 +135,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
             parent.addChild(item)
 
     def moveNodeItem(self, source, target, item):
-        if (item.parent() == None):
+        if (item.parent() is None):
             children = self.getNodeChildren(item)
             for c in children:
                 self.addNewVar(c, target)
@@ -250,10 +250,9 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
                     parts = v.name.split(".")
                     varParent = parts[0]
                     varName = parts[1]
-                    if self.moveNodeByName(self.logTree,
-                                           self.varTree,
-                                           varParent,
-                                           varName) == False:
+                    if self.moveNodeByName(
+                            self.logTree, self.varTree, varParent,
+                            varName) is False:
                         logger.warning("Could not find node %s.%s!!",
                                        varParent, varName)
                 else:
