@@ -22,16 +22,36 @@
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="0" column="1">
-         <widget class="QPushButton" name="quickConnectButton">
-          <property name="enabled">
+        <item row="0" column="0">
+         <widget class="QComboBox" name="interfaceCombo">
+          <property name="minimumSize">
+           <size>
+            <width>160</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="editable">
            <bool>false</bool>
           </property>
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Quickconnect using the last connection parameters&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QPushButton" name="connectButton">
+          <property name="minimumSize">
+           <size>
+            <width>115</width>
+            <height>0</height>
+           </size>
           </property>
-          <property name="text">
-           <string>Quick Connect</string>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QPushButton" name="scanButton">
+          <property name="minimumSize">
+           <size>
+            <width>115</width>
+            <height>0</height>
+           </size>
           </property>
          </widget>
         </item>
@@ -83,16 +103,6 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="0">
-         <widget class="QPushButton" name="connectButton">
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Connect to a Crazyflie&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="text">
-           <string>Connect</string>
-          </property>
-         </widget>
-        </item>
         <item row="0" column="4">
          <widget class="QLabel" name="batteryLabel">
           <property name="text">
@@ -137,20 +147,43 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="2">
-         <widget class="QCheckBox" name="autoReconnectCheckBox">
-          <property name="mouseTracking">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Auto Reconnect</string>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
        </layout>
+      </item>
+      <item>
+       <widget class="QGroupBox">
+        <layout class="QHBoxLayout" stretch="0,0,1">
+         <item>
+          <widget class="QLabel" name="addressLabel">
+           <property name="text">
+             <string>Address:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="HexSpinBox" name="address">
+          <property name="minimumSize">
+           <size>
+            <width>120</width>
+            <height>0</height>
+           </size>
+          </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="autoReconnectCheckBox">
+           <property name="mouseTracking">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Auto Reconnect</string>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </item>
       <item>
        <widget class="QTabWidget" name="tabs">
@@ -205,7 +238,6 @@
      <string>Connect</string>
     </property>
     <addaction name="menuItemConnect"/>
-    <addaction name="menuItemQuickConnect"/>
     <addaction name="menuItemBootloader"/>
     <addaction name="_menu_cf2_config"/>
     <addaction name="_menu_cf1_config"/>
@@ -274,11 +306,6 @@
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>
-   </property>
-  </action>
-  <action name="menuItemQuickConnect">
-   <property name="text">
-    <string>Quick connect</string>
    </property>
   </action>
   <action name="menuItemConfInputDevice">
@@ -381,6 +408,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>HexSpinBox</class>
+   <extends>QSpinBox</extends>
+   <header>cfclient.ui.widgets.hexspinbox</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
