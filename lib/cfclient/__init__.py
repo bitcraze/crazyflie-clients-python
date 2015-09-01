@@ -39,7 +39,8 @@ except:
     try:
         import subprocess
 
-        ret = subprocess.call(["git", "diff", "--quiet", "HEAD"]).encode('utf-8')
+        ret = subprocess.call(["git", "diff", "--quiet", "HEAD"]
+                              ).encode('utf-8')
         if ret > 0:
             VERSION += "+"
     except:

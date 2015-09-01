@@ -70,7 +70,8 @@ if len(sys.argv) < 2:
     print("Crazyload option:")
     print("   info                    : Print the info of the bootloader "
           "and quit.")
-    print("                             Will let the target in bootloader mode")
+    print("                             Will let the target in bootloader "
+          "mode")
     print("   reset                   : Reset the device in firmware mode")
     print("   flash <file> [targets]  : flash the <img> binary file from "
           "the first")
