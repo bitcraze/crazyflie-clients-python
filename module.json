@@ -1,0 +1,4 @@
+{
+  "artifactType": "python",
+  "buildScript": "tools/build/build.sh"
+}

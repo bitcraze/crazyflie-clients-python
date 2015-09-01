@@ -1,7 +1,8 @@
+sudo: required
 language: python
 python:
   - "2.7"
-install:
-  - "pip install pep8"
+services:
+  - docker
 script:
-  - tools/build/pep8.sh
+  - docker run --rm -v ${PWD}:/module bitcraze/builder ./tools/build/build.sh
