@@ -33,7 +33,6 @@ Enables flash access to the Crazyflie.
 
 import struct
 import errno
-from queue import Queue
 from threading import Lock
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from cflib.utils.callbacks import Caller
@@ -696,7 +695,10 @@ class Memory():
         """Callback for newly arrived packets for the memory port"""
         chan = packet.channel
         cmd = packet.datal[0]
-        payload = struct.pack("B" * (len(packet.datal) - 1), *packet.datal[1:])
+        raw_payload = struct.pack("B" * (len(packet.datal) - 1),
+                                  *packet.datal[1:])
+        payload = packet.datal[1:]
+
         # logger.info("--------------->CHAN:{}=>{}".format(chan,
         # struct.unpack("B"*len(payload), payload)))
 
@@ -741,9 +743,9 @@ class Memory():
                 # Type - 1 byte
                 mem_type = payload[1]
                 # Size 4 bytes (as addr)
-                mem_size = struct.unpack("I", payload[2:6])[0]
+                mem_size = struct.unpack("I", raw_payload[2:6])[0]
                 # Addr (only valid for 1-wire?)
-                mem_addr_raw = struct.unpack("B" * 8, payload[6:14])
+                mem_addr_raw = struct.unpack("B" * 8, raw_payload[6:14])
                 mem_addr = ""
                 for m in mem_addr_raw:
                     mem_addr += "{:02X}".format(m)
@@ -828,8 +830,8 @@ class Memory():
 
         if chan == CHAN_READ:
             id = cmd
-            (addr, status) = struct.unpack("<IB", payload[0:5])
-            data = struct.unpack("B" * len(payload[5:]), payload[5:])
+            (addr, status) = struct.unpack("<IB", raw_payload[0:5])
+            data = struct.unpack("B" * len(raw_payload[5:]), raw_payload[5:])
             logger.info("READ: Mem={}, addr=0x{:X}, status=0x{}, "
                         "data={}".format(id, addr, status, data))
             # Find the read request
@@ -839,7 +841,7 @@ class Memory():
                     "mem {}".format(id))
                 rreq = self._read_requests[id]
                 if status == 0:
-                    if rreq.add_data(addr, payload[5:]):
+                    if rreq.add_data(addr, raw_payload[5:]):
                         self._read_requests.pop(id, None)
                         self.mem_read_cb.call(rreq.mem, rreq.addr, rreq.data)
                 else:

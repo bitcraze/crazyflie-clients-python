@@ -41,7 +41,11 @@ from threading import Thread
 from .crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket, CRTPPort
 from .exceptions import WrongUriType
-import queue
+import sys
+if sys.version_info < (3,):
+    import Queue as queue
+else:
+    import queue
 import re
 import time
 import struct

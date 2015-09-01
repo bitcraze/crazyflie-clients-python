@@ -31,6 +31,8 @@ ZMQ server test application. Use CTRL-C to end the application.
 NOTE! If connected to a Crazyflie this will power on the motors!
 """
 
+from __future__ import print_function
+
 from threading import Thread
 import signal
 import time
@@ -123,15 +125,15 @@ client_conn.connect("{}:2000".format(SRV_ADDR))
 
 log_conn = context.socket(zmq.SUB)
 log_conn.connect("{}:2001".format(SRV_ADDR))
-log_conn.setsockopt_string(zmq.SUBSCRIBE, "")
+log_conn.setsockopt_string(zmq.SUBSCRIBE, u"")
 
 param_conn = context.socket(zmq.SUB)
 param_conn.connect("{}:2002".format(SRV_ADDR))
-param_conn.setsockopt_string(zmq.SUBSCRIBE, "")
+param_conn.setsockopt_string(zmq.SUBSCRIBE, u"")
 
 conn_conn = context.socket(zmq.SUB)
 conn_conn.connect("{}:2003".format(SRV_ADDR))
-conn_conn.setsockopt_string(zmq.SUBSCRIBE, "")
+conn_conn.setsockopt_string(zmq.SUBSCRIBE, u"")
 
 ctrl_conn = context.socket(zmq.PUSH)
 ctrl_conn.connect("{}:2004".format(SRV_ADDR))

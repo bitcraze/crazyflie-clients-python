@@ -35,12 +35,17 @@ USB dongle.
 
 import collections
 import logging
+import sys
+
+if sys.version_info < (3,):
+    import Queue as queue
+else:
+    import queue
 
 from cflib.crtp.crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket
 from .exceptions import WrongUriType
 import threading
-import queue
 import re
 import array
 import binascii

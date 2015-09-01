@@ -96,7 +96,7 @@ class ParamExample:
         self._cf.param.add_update_callback(group="cpu", name="flash",
                                            cb=self._cpu_flash_callback)
 
-        print()
+        print("")
         print("Reading back back all parameter values")
         # Request update for all the parameters using the full name
         # group.name
@@ -125,7 +125,7 @@ class ParamExample:
             # Create a new random value [0.00,1.00] for pid_attitude.pitch_kd
             # and set it
             pkd = random.random()
-            print()
+            print("")
             print("Write: pid_attitude.pitch_kd={:.2f}".format(pkd))
             self._cf.param.add_update_callback(group="pid_attitude",
                                                name="pitch_kd",

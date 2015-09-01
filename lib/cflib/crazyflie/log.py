@@ -65,6 +65,7 @@ States of a configuration:
 
 import struct
 import errno
+import sys
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from cflib.utils.callbacks import Caller
 from .toc import Toc, TocFetcher
@@ -221,16 +222,15 @@ class LogConfig(object):
             if (var.is_toc_variable() is False):  # Memory location
                 logger.debug("Logging to raw memory %d, 0x%04X",
                              var.get_storage_and_fetch_byte(), var.address)
-                pk.data += struct.pack('<B', var.get_storage_and_fetch_byte())
-                pk.data += struct.pack('<I', var.address)
+                pk.data.append(struct.pack('<B', var.get_storage_and_fetch_byte()))
+                pk.data.append(struct.pack('<I', var.address))
             else:  # Item in TOC
                 logger.debug("Adding %s with id=%d and type=0x%02X",
                              var.name,
                              self.cf.log.toc.get_element_id(
                                  var.name), var.get_storage_and_fetch_byte())
-                pk.data += struct.pack('<B', var.get_storage_and_fetch_byte())
-                pk.data += struct.pack('<B', self.cf.log.toc.
-                                       get_element_id(var.name))
+                pk.data.append(var.get_storage_and_fetch_byte())
+                pk.data.append(self.cf.log.toc.get_element_id(var.name))
         logger.debug("Adding log block id {}".format(self.id))
         self.cf.send_packet(pk, expected_reply=(CMD_CREATE_BLOCK, self.id))
 
@@ -316,7 +316,10 @@ class LogTocElement:
     def get_cstring_from_id(ident):
         """Return the C-storage name given the variable type id"""
         try:
-            return LogTocElement.types[ident][0]
+            if type(ident) == str:
+                return LogTocElement.types[ord(ident)][0]
+            else:
+                return LogTocElement.types[ident][0]
         except KeyError:
             raise KeyError("Type [%d] not found in LogTocElement.types"
                            "!" % ident)
@@ -325,7 +328,10 @@ class LogTocElement:
     def get_size_from_id(ident):
         """Return the size in bytes given the variable type id"""
         try:
-            return LogTocElement.types[ident][2]
+            if type(ident) == str:
+                return LogTocElement.types[ord(ident)][2]
+            else:
+                return LogTocElement.types[ident][2]
         except KeyError:
             raise KeyError("Type [%d] not found in LogTocElement.types"
                            "!" % ident)
@@ -334,7 +340,10 @@ class LogTocElement:
     def get_unpack_string_from_id(ident):
         """Return the Python unpack string given the variable type id"""
         try:
-            return LogTocElement.types[ident][1]
+            if type(ident) == str:
+                return LogTocElement.types[ord(ident)][1]
+            else:
+                return LogTocElement.types[ident][1]
         except KeyError:
             raise KeyError(
                 "Type [%d] not found in LogTocElement.types!" % ident)
@@ -344,11 +353,13 @@ class LogTocElement:
 
         if (data):
             strs = struct.unpack("s" * len(data[2:]), data[2:])
-            s = ""
-            for ch in strs:
-                s += ch.decode('ISO-8859-1')
-            strs = s.split("\x00")
-            logger.info(strs)
+            if sys.version_info < (3,):
+                strs = ("{}" * len(strs)).format(*strs).split("\0")
+            else:
+                s = ""
+                for ch in strs:
+                    s += ch.decode('ISO-8859-1')
+                strs = s.split("\x00")
             self.group = strs[0]
             self.name = strs[1]
 
@@ -357,7 +368,10 @@ class LogTocElement:
             self.ctype = LogTocElement.get_cstring_from_id(data[1])
             self.pytype = LogTocElement.get_unpack_string_from_id(data[1])
 
-            self.access = data[1] & 0x10
+            if type(data[1]) == str:
+                self.access = ord(data[1]) & 0x10
+            else:
+                self.access = data[1] & 0x10
 
 
 class Log():
@@ -469,7 +483,7 @@ class Log():
         """Callback for newly arrived packets with TOC information"""
         chan = packet.channel
         cmd = packet.datal[0]
-        payload = struct.pack("B" * (len(packet.datal) - 1), *packet.datal[1:])
+        payload = packet.datal[1:]
 
         if (chan == CHAN_SETTINGS):
             id = payload[0]
