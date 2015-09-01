@@ -38,11 +38,11 @@ from PyQt4.QtCore import pyqtSignal, Qt, pyqtSlot, QDir, QUrl, QThread
 from PyQt4.QtGui import QLabel, QActionGroup, QMessageBox, QAction, \
     QDesktopServices, QMenu
 
-from dialogs.inputconfigdialogue import InputConfigDialogue
-from dialogs.cf2config import Cf2ConfigDialog
-from dialogs.cf1config import Cf1ConfigDialog
+from .dialogs.inputconfigdialogue import InputConfigDialogue
+from .dialogs.cf2config import Cf2ConfigDialog
+from .dialogs.cf1config import Cf1ConfigDialog
 from cflib.crazyflie import Crazyflie
-from dialogs.logconfigdialogue import LogConfigDialogue
+from .dialogs.logconfigdialogue import LogConfigDialogue
 
 from cfclient.utils.input import JoystickReader
 from cfclient.utils.zmq_param import ZMQParamAccess
@@ -90,7 +90,7 @@ class UIState:
 
 
 class BatteryStates:
-    BATTERY, CHARGING, CHARGED, LOW_POWER = range(4)
+    BATTERY, CHARGING, CHARGED, LOW_POWER = list(range(4))
 
 
 COLOR_BLUE = '#3399ff'
@@ -613,11 +613,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         reference to the raw mux object as well as to the associated device
         sub-nodes"""
         if not checked:
-            (mux, sub_nodes) = self.sender().data().toPyObject()
+            (mux, sub_nodes) = self.sender().data()
             for s in sub_nodes:
                 s.setEnabled(False)
         else:
-            (mux, sub_nodes) = self.sender().data().toPyObject()
+            (mux, sub_nodes) = self.sender().data()
             for s in sub_nodes:
                 s.setEnabled(True)
             self.joystickReader.set_mux(mux=mux)
@@ -649,13 +649,13 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         if len(self.joystickReader.available_devices()) > 0:
             mux = self.joystickReader._selected_mux
             msg = "Using {} mux with ".format(mux.name)
-            for key in mux._devs.keys()[:-1]:
+            for key in list(mux._devs.keys())[:-1]:
                 if mux._devs[key]:
                     msg += "{}, ".format(self._get_dev_status(mux._devs[key]))
                 else:
                     msg += "N/A, "
             # Last item
-            key = mux._devs.keys()[-1]
+            key = list(mux._devs.keys())[-1]
             if mux._devs[key]:
                 msg += "{}".format(self._get_dev_status(mux._devs[key]))
             else:
@@ -668,7 +668,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         """Called when a new input device has been selected from the menu. The
         data in the menu object is the associated map menu (directly under the
         item in the menu) and the raw device"""
-        (map_menu, device, mux_menu) = self.sender().data().toPyObject()
+        (map_menu, device, mux_menu) = self.sender().data()
         if not checked:
             if map_menu:
                 map_menu.setEnabled(False)
@@ -679,11 +679,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             if map_menu:
                 map_menu.setEnabled(True)
 
-            (mux, sub_nodes) = mux_menu.data().toPyObject()
+            (mux, sub_nodes) = mux_menu.data()
             for role_node in sub_nodes:
                 for dev_node in role_node.children():
                     if type(dev_node) is QAction and dev_node.isChecked():
-                        if device.id == dev_node.data().toPyObject()[1].id \
+                        if device.id == dev_node.data()[1].id \
                                 and dev_node is not self.sender():
                             dev_node.setChecked(False)
 
@@ -706,7 +706,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             return
 
         selected_mapping = str(self.sender().text())
-        device = self.sender().data().toPyObject().data().toPyObject()[1]
+        device = self.sender().data().data()[1]
         self.joystickReader.set_input_map(device.name, selected_mapping)
         self._update_input_device_footer()
 
@@ -759,7 +759,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         # Only enable MUX nodes if we have enough devies to cover
         # the roles
         for mux_node in self._all_mux_nodes:
-            (mux, sub_nodes) = mux_node.data().toPyObject()
+            (mux, sub_nodes) = mux_node.data()
             if len(mux.supported_roles()) <= len(self._available_devices):
                 mux_node.setEnabled(True)
 

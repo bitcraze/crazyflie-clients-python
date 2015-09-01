@@ -47,12 +47,10 @@ __all__ = ['ConfigManager']
 logger = logging.getLogger(__name__)
 
 
-class ConfigManager():
+class ConfigManager(metaclass=Singleton):
     """ Singleton class for managing input processing """
     conf_needs_reload = Caller()
     configs_dir = sys.path[1] + "/input"
-
-    __metaclass__ = Singleton
 
     def __init__(self):
         """Initialize and create empty config list"""

@@ -131,7 +131,7 @@ class LeapmotionReader:
         return
 
     def leap_callback(self, data):
-        for k in data.keys():
+        for k in list(data.keys()):
             self.data[k] = data[k]
 
     def read(self, id):

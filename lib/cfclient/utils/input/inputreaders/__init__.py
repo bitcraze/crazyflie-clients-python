@@ -57,7 +57,7 @@ available_devices = []
 
 for reader in found_readers:
     try:
-        module = __import__(reader, globals(), locals(), [reader], -1)
+        module = __import__(reader, globals(), locals(), [reader], 1)
         main_name = getattr(module, "MODULE_MAIN")
         initialized_readers.append(getattr(module, main_name)())
         logger.info("Successfully initialized [{}]".format(reader))

@@ -140,7 +140,7 @@ class Bootloader:
     def flash(self, filename, targets):
         for target in targets:
             if TargetTypes.from_string(target) not in self._cload.targets:
-                print "Target {} not found by bootloader".format(target)
+                print("Target {} not found by bootloader".format(target))
                 return False
 
         files_to_flash = ()
@@ -148,7 +148,8 @@ class Bootloader:
             # Read the manifest (don't forget to check so there is one!)
             try:
                 zf = zipfile.ZipFile(filename)
-                j = json.loads(zf.read("manifest.json"))
+                js = zf.read("manifest.json").decode("UTF-8")
+                j = json.loads(js)
                 files = j["files"]
                 if len(targets) == 0:
                     # No targets specified, just flash everything
@@ -172,8 +173,8 @@ class Bootloader:
                         zip_targets[file_info["target"]][file_info["type"]] = {
                             "filename": file_name}
             except KeyError as e:
-                print e
-                print "No manifest.json in {}".format(filename)
+                print(e)
+                print("No manifest.json in {}".format(filename))
                 return
 
             try:
@@ -193,13 +194,13 @@ class Bootloader:
                             "target"].start_page
                         files_to_flash += (file_to_flash,)
             except KeyError as e:
-                print "Could not find a file for {} in {}".format(
-                    current_target, filename)
+                print("Could not find a file for {} in {}".format(
+                    current_target, filename))
                 return False
 
         else:
             if len(targets) != 1:
-                print "Not an archive, must supply one target to flash"
+                print("Not an archive, must supply one target to flash")
             else:
                 file_to_flash = {}
                 file_to_flash["type"] = "binary"
@@ -215,7 +216,7 @@ class Bootloader:
                 files_to_flash += (file_to_flash,)
 
         if not self.progress_cb:
-            print ""
+            print("")
 
         file_counter = 0
         for target in files_to_flash:
@@ -261,7 +262,7 @@ class Bootloader:
                     "Error: Not enough space to flash the image file.",
                     int(progress))
             else:
-                print "Error: Not enough space to flash the image file."
+                print("Error: Not enough space to flash the image file.")
             raise Exception()
 
         if not self.progress_cb:
@@ -318,9 +319,9 @@ class Bootloader:
                                 self._cload.error_code),
                             int(progress))
                     else:
-                        print "\nError during flash operation (code %d). " \
-                              "Maybe wrong radio link?" % \
-                              self._cload.error_code
+                        print("\nError during flash operation (code %d). "
+                              "Maybe wrong radio link?" %
+                              self._cload.error_code)
                     raise Exception()
 
                 ctr = 0
@@ -345,8 +346,8 @@ class Bootloader:
                             self._cload.error_code),
                         int(progress))
                 else:
-                    print "\nError during flash operation (code %d). Maybe" \
-                          " wrong radio link?" % self._cload.error_code
+                    print("\nError during flash operation (code %d). Maybe"
+                          " wrong radio link?" % self._cload.error_code)
                 raise Exception()
 
         if self.progress_cb:
@@ -355,4 +356,4 @@ class Bootloader:
                                                 total_files),
                 int(100))
         else:
-            print ""
+            print("")

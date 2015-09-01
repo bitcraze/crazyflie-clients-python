@@ -54,5 +54,5 @@ logger.debug("Found toolboxes: %s", foundToolboxes)
 toolboxes = []
 
 for tb in foundToolboxes:
-    tbModule = __import__(tb, globals(), locals(), [tb], -1)
+    tbModule = __import__(tb, globals(), locals(), [tb], 1)
     toolboxes.append(getattr(tbModule, tb))

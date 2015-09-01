@@ -38,7 +38,7 @@ from cflib.crtp.crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket
 from .exceptions import WrongUriType
 import threading
-import Queue
+import queue
 import re
 import time
 
@@ -105,9 +105,9 @@ class UsbDriver(CRTPDriver):
             raise Exception("Link already open!")
 
         # Prepare the inter-thread communication queue
-        self.in_queue = Queue.Queue()
+        self.in_queue = queue.Queue()
         # Limited size out queue to avoid "ReadBack" effect
-        self.out_queue = Queue.Queue(50)
+        self.out_queue = queue.Queue(50)
 
         # Launch the comm thread
         self._thread = _UsbReceiveThread(self.cfusb, self.in_queue,
@@ -125,17 +125,17 @@ class UsbDriver(CRTPDriver):
         if time == 0:
             try:
                 return self.in_queue.get(False)
-            except Queue.Empty:
+            except queue.Empty:
                 return None
         elif time < 0:
             try:
                 return self.in_queue.get(True)
-            except Queue.Empty:
+            except queue.Empty:
                 return None
         else:
             try:
                 return self.in_queue.get(True, time)
-            except Queue.Empty:
+            except queue.Empty:
                 return None
 
     def send_packet(self, pk):
@@ -149,7 +149,7 @@ class UsbDriver(CRTPDriver):
             dataOut = (pk.header,)
             dataOut += pk.datat
             self.cfusb.send_packet(dataOut)
-        except Queue.Full:
+        except queue.Full:
             if self.link_error_callback:
                 self.link_error_callback(
                     "UsbDriver: Could not send packet to Crazyflie")

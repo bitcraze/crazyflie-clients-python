@@ -30,10 +30,13 @@
 CRTP packet and ports.
 """
 
-import struct
+import sys
+import logging
 
 __author__ = 'Bitcraze AB'
 __all__ = ['CRTPPort', 'CRTPPacket']
+
+logger = logging.getLogger(__name__)
 
 
 class CRTPPort:
@@ -114,15 +117,17 @@ class CRTPPacket(object):
 
     def _set_data(self, data):
         """Set the packet data"""
-        if type(data) == str:
+        if type(data) == bytearray:
             self._data = data
-        elif type(data) == list or type(data) == tuple:
-            if len(data) == 1:
-                self._data = struct.pack("B", data[0])
-            elif len(data) > 1:
-                self._data = struct.pack("B" * len(data), *data)
+        elif type(data) == str:
+            if sys.version_info < (3,):
+                self._data = bytearray(data)
             else:
-                self._data = ""
+                self._data = bytearray(data.encode('ISO-8859-1'))
+        elif type(data) == list or type(data) == tuple:
+            self._data = bytearray(data)
+        elif sys.version_info >= (3,) and type(data) == bytes:
+            self._data = bytearray(data)
         else:
             raise Exception("Data shall be of str, tupple or list type")
 
@@ -132,7 +137,7 @@ class CRTPPacket(object):
 
     def _get_data_t(self):
         """Get the data in the packet as a tuple"""
-        return struct.unpack("B" * len(self._data), self._data)
+        return tuple(self._data)
 
     def __str__(self):
         """Get a string representation of the packet"""

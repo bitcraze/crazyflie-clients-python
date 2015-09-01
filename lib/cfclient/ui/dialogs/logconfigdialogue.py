@@ -178,7 +178,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         self.updateToc()
         self.populateDropDown()
         toc = self.helper.cf.log.toc
-        if (len(toc.toc.keys()) > 0):
+        if (len(list(toc.toc.keys())) > 0):
             self.configNameCombo.setEnabled(True)
         else:
             self.configNameCombo.setEnabled(False)
@@ -207,10 +207,10 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
 
         toc = self.helper.cf.log.toc
 
-        for group in toc.toc.keys():
+        for group in list(toc.toc.keys()):
             groupItem = QtGui.QTreeWidgetItem()
             groupItem.setData(NAME_FIELD, Qt.DisplayRole, group)
-            for param in toc.toc[group].keys():
+            for param in list(toc.toc[group].keys()):
                 item = QtGui.QTreeWidgetItem()
                 item.setData(NAME_FIELD, Qt.DisplayRole, param)
                 item.setData(ID_FIELD, Qt.DisplayRole,

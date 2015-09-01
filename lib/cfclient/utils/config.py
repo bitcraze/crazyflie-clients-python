@@ -41,9 +41,8 @@ __all__ = ['Config']
 logger = logging.getLogger(__name__)
 
 
-class Config():
+class Config(metaclass=Singleton):
     """ Singleton class for accessing application configuration """
-    __metaclass__ = Singleton
 
     def __init__(self):
         """ Initializes the singleton and reads the config files """
@@ -82,7 +81,7 @@ class Config():
         else:
             raise KeyError("Could not get the parameter [%s]" % key)
 
-        if (isinstance(value, unicode)):
+        if (isinstance(value, str)):
             value = str(value)
 
         return value

@@ -154,7 +154,7 @@ class LogConfig(object):
         self.id = LogConfig._config_id_counter
         LogConfig._config_id_counter = (LogConfig._config_id_counter + 1) % 255
         self.cf = None
-        self.period = period_in_ms / 10
+        self.period = int(period_in_ms / 10)
         self.period_in_ms = period_in_ms
         self._added = False
         self._started = False
@@ -307,7 +307,7 @@ class LogTocElement:
     @staticmethod
     def get_id_from_cstring(name):
         """Return variable type id given the C-storage name"""
-        for key in LogTocElement.types.keys():
+        for key in list(LogTocElement.types.keys()):
             if (LogTocElement.types[key][0] == name):
                 return key
         raise KeyError("Type [%s] not found in LogTocElement.types!" % name)
@@ -344,16 +344,20 @@ class LogTocElement:
 
         if (data):
             strs = struct.unpack("s" * len(data[2:]), data[2:])
-            strs = ("{}" * len(strs)).format(*strs).split("\0")
+            s = ""
+            for ch in strs:
+                s += ch.decode('ISO-8859-1')
+            strs = s.split("\x00")
+            logger.info(strs)
             self.group = strs[0]
             self.name = strs[1]
 
-            self.ident = ord(data[0])
+            self.ident = data[0]
 
-            self.ctype = LogTocElement.get_cstring_from_id(ord(data[1]))
-            self.pytype = LogTocElement.get_unpack_string_from_id(ord(data[1]))
+            self.ctype = LogTocElement.get_cstring_from_id(data[1])
+            self.pytype = LogTocElement.get_unpack_string_from_id(data[1])
 
-            self.access = ord(data[1]) & 0x10
+            self.access = data[1] & 0x10
 
 
 class Log():
@@ -468,8 +472,8 @@ class Log():
         payload = struct.pack("B" * (len(packet.datal) - 1), *packet.datal[1:])
 
         if (chan == CHAN_SETTINGS):
-            id = ord(payload[0])
-            error_status = ord(payload[1])
+            id = payload[0]
+            error_status = payload[1]
             block = self._find_block(id)
             if (cmd == CMD_CREATE_BLOCK):
                 if (block is not None):

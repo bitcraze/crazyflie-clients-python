@@ -277,7 +277,7 @@ class Crazyflie():
         longest_match = ()
         if len(self._answer_patterns) > 0:
             data = (pk.header,) + pk.datat
-            for p in self._answer_patterns.keys():
+            for p in list(self._answer_patterns.keys()):
                 logger.debug("Looking for pattern match on %s vs %s", p, data)
                 if len(p) <= len(data):
                     if p == data[0:len(p)]:

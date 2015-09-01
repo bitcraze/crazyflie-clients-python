@@ -214,7 +214,7 @@ class GpsTab(Tab, gps_tab_class):
         fix_type = float(data["gps.fixType"])
         heading = float(data["gps.heading"])
 
-        self._long.setText(str(long))
+        self._long.setText(str(int))
         self._lat.setText(str(lat))
         self._height.setText(str(alt))
 
@@ -227,7 +227,7 @@ class GpsTab(Tab, gps_tab_class):
 
         self._fix_type.setText(self._fix_types[fix_type])
 
-        point = Marble.GeoDataCoordinates(long, lat, alt,
+        point = Marble.GeoDataCoordinates(int, lat, alt,
                                           Marble.GeoDataCoordinates.Degree)
         if not self._got_home_point:
             self._got_home_point = True
@@ -235,7 +235,7 @@ class GpsTab(Tab, gps_tab_class):
             self._marble.centerOn(point, True)
             self._marble.zoomView(4000, Marble.Jump)
 
-        self._marble.add_data(long, lat, alt, accuracy,
+        self._marble.add_data(int, lat, alt, accuracy,
                               True if fix_type == 3 else False)
 
 # If Marble is not installed then do not create MarbleWidget subclass
@@ -257,9 +257,9 @@ if should_enable_tab:
             self._accu = None
 
         def add_data(self, long, lat, height, accu, locked):
-            self._points.append([long, lat, height, accu, locked])
+            self._points.append([int, lat, height, accu, locked])
             self._lat = lat
-            self._long = long
+            self._long = int
             self._height = height
             self._accu = accu
             self.update()

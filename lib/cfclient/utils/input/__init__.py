@@ -47,15 +47,15 @@ import traceback
 import logging
 import shutil
 
-import inputreaders as readers
-import inputinterfaces as interfaces
+from . import inputreaders as readers
+from . import inputinterfaces as interfaces
 
 from cfclient.utils.config import Config
 from cfclient.utils.config_manager import ConfigManager
 
 from cfclient.utils.periodictimer import PeriodicTimer
 from cflib.utils.callbacks import Caller
-import mux
+from . import mux
 from .mux import InputMux
 from .mux.nomux import NoMux
 from .mux.takeovermux import TakeOverMux
@@ -247,7 +247,7 @@ class JoystickReader(object):
         """Return the saved mapping for a given device"""
         config = None
         device_config_mapping = Config().get("device_config_mapping")
-        if device_name in device_config_mapping.keys():
+        if device_name in list(device_config_mapping.keys()):
             config = device_config_mapping[device_name]
 
         logging.debug("For [{}] we recommend [{}]".format(device_name, config))

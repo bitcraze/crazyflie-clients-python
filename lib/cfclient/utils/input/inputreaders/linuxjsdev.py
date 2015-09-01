@@ -104,7 +104,7 @@ class _JS():
             raise Exception("{} at {} is already "
                             "opened".format(self.name, self._f_name))
 
-        self._f = open("/dev/input/js{}".format(self.num), "r")
+        self._f = open("/dev/input/js{}".format(self.num), "rb")
         fcntl.fcntl(self._f.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
 
         # Get number of axis and button
@@ -172,6 +172,8 @@ class _JS():
                 self._f.close()
                 self._f = None
                 raise IOError("Device has been disconnected")
+        except TypeError:
+            pass
         except ValueError:
             # This will happen if I/O operations are done on a closed device,
             # which is the case when you first close and then open the device

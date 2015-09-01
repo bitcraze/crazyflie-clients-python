@@ -44,7 +44,7 @@ from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView
 from PyQt4.QtGui import QStyleOptionButton, QStyle
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread
-from PyQt4.QtCore import QAbstractItemModel, QModelIndex, QString, QVariant
+from PyQt4.QtCore import QAbstractItemModel, QModelIndex
 
 from cfclient.utils.logdatawriter import LogWriter
 
@@ -223,7 +223,7 @@ class LogBlockModel(QAbstractItemModel):
     def headerData(self, section, orientation, role):
         """Re-implemented method to get the headers"""
         if role == Qt.DisplayRole:
-            return QString(self._column_headers[section])
+            return self._column_headers[section]
 
     def rowCount(self, parent):
         """Re-implemented method to get the number of rows for a given index"""
@@ -267,7 +267,7 @@ class LogBlockModel(QAbstractItemModel):
                 (index.column() == 4 or index.column() == 3):
             return Qt.AlignHCenter | Qt.AlignVCenter
 
-        return QVariant()
+        return None
 
     def reset(self):
         """Reset the model"""

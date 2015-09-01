@@ -40,7 +40,7 @@ from cflib.crtp.crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket
 from .exceptions import WrongUriType
 import threading
-import Queue
+import queue
 import re
 import array
 import binascii
@@ -126,9 +126,9 @@ class RadioDriver(CRTPDriver):
             self.cradio.set_address(new_addr)
 
         # Prepare the inter-thread communication queue
-        self.in_queue = Queue.Queue()
+        self.in_queue = queue.Queue()
         # Limited size out queue to avoid "ReadBack" effect
-        self.out_queue = Queue.Queue(1)
+        self.out_queue = queue.Queue(1)
 
         # Launch the comm thread
         self._thread = _RadioDriverThread(self.cradio, self.in_queue,
@@ -147,17 +147,17 @@ class RadioDriver(CRTPDriver):
         if time == 0:
             try:
                 return self.in_queue.get(False)
-            except Queue.Empty:
+            except queue.Empty:
                 return None
         elif time < 0:
             try:
                 return self.in_queue.get(True)
-            except Queue.Empty:
+            except queue.Empty:
                 return None
         else:
             try:
                 return self.in_queue.get(True, time)
-            except Queue.Empty:
+            except queue.Empty:
                 return None
 
     def send_packet(self, pk):
@@ -169,7 +169,7 @@ class RadioDriver(CRTPDriver):
 
         try:
             self.out_queue.put(pk, True, 2)
-        except Queue.Full:
+        except queue.Full:
             if self.link_error_callback:
                 self.link_error_callback("RadioDriver: Could not send packet"
                                          " to copter")
@@ -275,26 +275,23 @@ class RadioDriver(CRTPDriver):
         self.cradio.set_data_rate(self.cradio.DR_250KPS)
 
         if address is None or address == 0xE7E7E7E7E7:
-            found += map(lambda c: ["radio://0/{}/250K".format(c), ""],
-                         self._scan_radio_channels())
+            found += [["radio://0/{}/250K".format(c), ""]
+                      for c in self._scan_radio_channels()]
             self.cradio.set_data_rate(self.cradio.DR_1MPS)
-            found += map(lambda c: ["radio://0/{}/1M".format(c), ""],
-                         self._scan_radio_channels())
+            found += [["radio://0/{}/1M".format(c), ""]
+                      for c in self._scan_radio_channels()]
             self.cradio.set_data_rate(self.cradio.DR_2MPS)
-            found += map(lambda c: ["radio://0/{}/2M".format(c), ""],
-                         self._scan_radio_channels())
+            found += [["radio://0/{}/2M".format(c), ""]
+                      for c in self._scan_radio_channels()]
         else:
-            found += map(
-                lambda c: ["radio://0/{}/250K/{:X}".format(c, address), ""],
-                self._scan_radio_channels())
+            found += [["radio://0/{}/250K/{:X}".format(c, address), ""]
+                      for c in self._scan_radio_channels()]
             self.cradio.set_data_rate(self.cradio.DR_1MPS)
-            found += map(
-                lambda c: ["radio://0/{}/1M/{:X}".format(c, address), ""],
-                self._scan_radio_channels())
+            found += [["radio://0/{}/1M/{:X}".format(c, address), ""]
+                      for c in self._scan_radio_channels()]
             self.cradio.set_data_rate(self.cradio.DR_2MPS)
-            found += map(
-                lambda c: ["radio://0/{}/2M/{:X}".format(c, address), ""],
-                self._scan_radio_channels())
+            found += [["radio://0/{}/2M/{:X}".format(c, address), ""]
+                      for c in self._scan_radio_channels()]
 
         self.cradio.close()
         self.cradio = None
@@ -420,7 +417,7 @@ class _RadioDriverThread(threading.Thread):
             outPacket = None
             try:
                 outPacket = self.out_queue.get(True, waitTime)
-            except Queue.Empty:
+            except queue.Empty:
                 outPacket = None
 
             dataOut = array.array('B')

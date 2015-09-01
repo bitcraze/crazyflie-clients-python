@@ -58,7 +58,7 @@ class MotorRampExample:
 
         self._cf.open_link(link_uri)
 
-        print "Connecting to %s" % link_uri
+        print("Connecting to %s" % link_uri)
 
     def _connected(self, link_uri):
         """ This callback is called form the Crazyflie API when a Crazyflie
@@ -71,16 +71,16 @@ class MotorRampExample:
     def _connection_failed(self, link_uri, msg):
         """Callback when connection initial connection fails (i.e no Crazyflie
         at the specified address)"""
-        print "Connection to %s failed: %s" % (link_uri, msg)
+        print("Connection to %s failed: %s" % (link_uri, msg))
 
     def _connection_lost(self, link_uri, msg):
         """Callback when disconnected after a connection has been made (i.e
         Crazyflie moves out of range)"""
-        print "Connection to %s lost: %s" % (link_uri, msg)
+        print("Connection to %s lost: %s" % (link_uri, msg))
 
     def _disconnected(self, link_uri):
         """Callback when the Crazyflie is disconnected (called in all cases)"""
-        print "Disconnected from %s" % link_uri
+        print("Disconnected from %s" % link_uri)
 
     def _ramp_motors(self):
         thrust_mult = 1
@@ -110,13 +110,13 @@ if __name__ == '__main__':
     # Initialize the low-level drivers (don't list the debug drivers)
     cflib.crtp.init_drivers(enable_debug_driver=False)
     # Scan for Crazyflies and use the first one found
-    print "Scanning interfaces for Crazyflies..."
+    print("Scanning interfaces for Crazyflies...")
     available = cflib.crtp.scan_interfaces()
-    print "Crazyflies found:"
+    print("Crazyflies found:")
     for i in available:
-        print i[0]
+        print(i[0])
 
     if len(available) > 0:
         le = MotorRampExample(available[0][0])
     else:
-        print "No Crazyflies found, cannot run example"
+        print("No Crazyflies found, cannot run example")

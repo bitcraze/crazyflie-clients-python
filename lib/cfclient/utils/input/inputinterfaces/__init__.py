@@ -55,7 +55,7 @@ available_interfaces = []
 
 for interface in found_interfaces:
     try:
-        module = __import__(interface, globals(), locals(), [interface], -1)
+        module = __import__(interface, globals(), locals(), [interface], 1)
         main_name = getattr(module, "MODULE_MAIN")
         initialized_interfaces.append(getattr(module, main_name)())
         logger.info("Successfully initialized [{}]".format(interface))
@@ -96,7 +96,7 @@ class InputInterface(InputReaderInterface):
     def read(self, include_raw=False):
         mydata = self._reader.read(self.id)
         # Merge interface returned data into InputReader Data Item
-        for key in mydata.keys():
+        for key in list(mydata.keys()):
             self.data.set(key, mydata[key])
 
         return self.data

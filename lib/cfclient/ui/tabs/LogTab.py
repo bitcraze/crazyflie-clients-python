@@ -82,10 +82,10 @@ class LogTab(Tab, param_tab_class):
 
         toc = self.cf.log.toc
 
-        for group in toc.toc.keys():
+        for group in list(toc.toc.keys()):
             groupItem = QtGui.QTreeWidgetItem()
             groupItem.setData(0, Qt.DisplayRole, group)
-            for param in toc.toc[group].keys():
+            for param in list(toc.toc[group].keys()):
                 item = QtGui.QTreeWidgetItem()
                 item.setData(0, Qt.DisplayRole, param)
                 item.setData(1, Qt.DisplayRole, toc.toc[group][param].ident)

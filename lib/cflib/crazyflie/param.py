@@ -40,7 +40,7 @@ from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from .toc import Toc, TocFetcher
 from threading import Thread, Lock
 
-from Queue import Queue
+from queue import Queue
 
 import logging
 
@@ -88,16 +88,20 @@ class ParamTocElement:
         """TocElement creator. Data is the binary payload of the element."""
         if (data):
             strs = struct.unpack("s" * len(data[2:]), data[2:])
-            strs = ("{}" * len(strs)).format(*strs).split("\0")
+
+            s = ""
+            for ch in strs:
+                s += ch.decode('ISO-8859-1')
+            strs = s.split("\x00")
             self.group = strs[0]
             self.name = strs[1]
 
-            self.ident = ord(data[0])
+            self.ident = data[0]
 
-            self.ctype = self.types[ord(data[1]) & 0x0F][0]
-            self.pytype = self.types[ord(data[1]) & 0x0F][1]
+            self.ctype = self.types[data[1] & 0x0F][0]
+            self.pytype = self.types[data[1] & 0x0F][1]
 
-            if ((ord(data[1]) & 0x40) != 0):
+            if ((data[1] & 0x40) != 0):
                 self.access = ParamTocElement.RO_ACCESS
             else:
                 self.access = ParamTocElement.RW_ACCESS

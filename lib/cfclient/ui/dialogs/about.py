@@ -77,7 +77,7 @@ IMU_SENSORS_FORMAT = "{}: {}<br>"
 SENSOR_TESTS_FORMAT = "{}: {}<br>"
 FIRMWARE_FORMAT = "{:x}{:x} ({})"
 
-CREDITS_FORMAT = U"""
+CREDITS_FORMAT = """
 <b>Contributions</b><br>
 {contribs}
 <br><br>
@@ -125,13 +125,13 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         helper.cf.disconnected.add_callback(self._disconnected_signal.emit)
 
         # Open the Credits file and show it in the UI
-        credits = U""
+        credits = ""
         try:
             with open("CREDITS.txt", 'r') as f:
                 for line in f:
-                    credits += U"{}<br>".format(line.decode("UTF-8"))
+                    credits += "{}<br>".format(line)
         except IOError:
-            credits = U""
+            credits = ""
 
         self._credits.setHtml(
             CREDITS_FORMAT.format(contribs=credits)
@@ -141,7 +141,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         """Event when the about box is shown"""
         self._interface_text = ""
         interface_status = cflib.crtp.get_interfaces_status()
-        for key in interface_status.keys():
+        for key in list(interface_status.keys()):
             self._interface_text += INTERFACE_FORMAT.format(
                 key, interface_status[key])
         firmware = None

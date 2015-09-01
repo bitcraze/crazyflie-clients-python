@@ -20,9 +20,6 @@
 Flash the DS28E05 EEPROM via CRTP.
 """
 
-from __future__ import print_function, division, absolute_import, \
-    unicode_literals
-
 import os
 import sys
 import time
@@ -122,7 +119,7 @@ def choose(items, title_text, question_text):
         print('%d) %s' % (i, item))
     print('%d) Abort' % (i + 1))
 
-    selected = raw_input(question_text)
+    selected = input(question_text)
     try:
         index = int(selected)
     except ValueError:
@@ -203,7 +200,7 @@ if __name__ == '__main__':
           "the value will not be changed.")
 
     # Vendor ID
-    vid_input = raw_input('New vendor ID: ')
+    vid_input = input('New vendor ID: ')
     if vid_input != '':
         try:
             vid = int(vid_input, 0)
@@ -217,7 +214,7 @@ if __name__ == '__main__':
             mem.vid = vid
 
     # Memory ID
-    pid_input = raw_input('New memory ID: ')
+    pid_input = input('New memory ID: ')
     if pid_input != '':
         try:
             pid = int(pid_input, 0)
@@ -240,7 +237,7 @@ if __name__ == '__main__':
         os.kill(os.getpid(), SIGTERM)
 
     # Write data
-    sure = raw_input('Are you sure? [y/n] ')
+    sure = input('Are you sure? [y/n] ')
     if sure != 'y':
         print('Better safe than sorry!')
         abort()

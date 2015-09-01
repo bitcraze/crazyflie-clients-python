@@ -237,7 +237,7 @@ class Cloader:
                 if self.protocol_version != 1:
                     return True
                 # Set radio link to a random address
-                addr = [0xbc] + map(lambda x: random.randint(0, 255), range(4))
+                addr = [0xbc] + [random.randint(0, 255) for x in range(4)]
                 return self._set_address(addr)
         return False
 
@@ -333,7 +333,7 @@ class Cloader:
 
             self.mapping = []
             page = 0
-            for i in range(len(m) / 2):
+            for i in range(int(len(m) / 2)):
                 for j in range(m[2 * i]):
                     self.mapping.append(page)
                     page += m[(2 * i) + 1]
@@ -347,7 +347,7 @@ class Cloader:
         pk.data = struct.pack("=BBHH", target_id, 0x14, page, address)
 
         for i in range(0, len(buff)):
-            pk.data += buff[i]
+            pk.data.append(buff[i])
 
             count += 1
 
@@ -410,9 +410,9 @@ class Cloader:
             self.error_code = -1
             return False
 
-        self.error_code = ord(pk.data[3])
+        self.error_code = pk.data[3]
 
-        return ord(pk.data[2]) == 1
+        return pk.data[2] == 1
 
     def decode_cpu_id(self, cpuid):
         """Decode the CPU id into a string"""

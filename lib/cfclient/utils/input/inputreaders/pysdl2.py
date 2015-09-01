@@ -33,7 +33,7 @@ input data.
 
 import sys
 from threading import Thread
-from Queue import Queue
+from queue import Queue
 import time
 import logging
 

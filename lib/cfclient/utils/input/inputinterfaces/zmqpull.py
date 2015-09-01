@@ -98,7 +98,7 @@ class ZMQReader:
         self._receiver_thread.start()
 
     def _cmd_callback(self, cmd):
-        for k in cmd["ctrl"].keys():
+        for k in list(cmd["ctrl"].keys()):
             self.data[k] = cmd["ctrl"][k]
 
     def open(self, device_id):

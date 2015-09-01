@@ -58,7 +58,7 @@ receiver.connect(bind_addr)
 receiver.send_json(zmess)
 
 response = receiver.recv_json()
-print response
+print(response)
 
 zmess = {
     "version": 1,
@@ -68,7 +68,7 @@ zmess = {
 }
 receiver.send_json(zmess)
 response = receiver.recv_json()
-print response
+print(response)
 
 zmess = {
     "version": 1,
@@ -78,7 +78,7 @@ zmess = {
 }
 receiver.send_json(zmess)
 response = receiver.recv_json()
-print response
+print(response)
 
 zmess = {
     "version": 1,
@@ -88,7 +88,7 @@ zmess = {
 }
 receiver.send_json(zmess)
 response = receiver.recv_json()
-print response
+print(response)
 
 time.sleep(3)
 
@@ -100,4 +100,4 @@ zmess = {
 }
 receiver.send_json(zmess)
 response = receiver.recv_json()
-print response
+print(response)

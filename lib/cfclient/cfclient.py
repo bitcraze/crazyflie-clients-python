@@ -130,7 +130,7 @@ def main():
                         "application name")
 
     # Start up the main user-interface
-    from ui.main import MainUI
+    from .ui.main import MainUI
     from PyQt4.QtGui import QApplication, QIcon
 
     app = QApplication(sys.argv)

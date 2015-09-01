@@ -33,7 +33,7 @@ cmdmess = {
         "thrust": 30
     }
 }
-print "starting to send control commands!"
+print("starting to send control commands!")
 
 # Unlocking thrust protection
 cmdmess["ctrl"]["thrust"] = 0

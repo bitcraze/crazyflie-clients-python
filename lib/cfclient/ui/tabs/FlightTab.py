@@ -36,7 +36,7 @@ import logging
 from time import time
 
 from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QVariant
+from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt4.QtGui import QMessageBox
 
 from cflib.crazyflie import Crazyflie
@@ -545,7 +545,7 @@ class FlightTab(Tab, flight_tab_class):
                 name += hardcoded_names[i]
             else:
                 name += "N/A"
-            self._led_ring_effect.addItem(name, QVariant(i))
+            self._led_ring_effect.addItem(name, i)
 
         self._led_ring_effect.setCurrentIndex(current)
         self._led_ring_effect.currentIndexChanged.connect(
@@ -555,7 +555,7 @@ class FlightTab(Tab, flight_tab_class):
                                                  cb=self._ring_effect_updated)
 
     def _ring_effect_changed(self, index):
-        i = self._led_ring_effect.itemData(index).toInt()[0]
+        i = self._led_ring_effect.itemData(index)[0]
         logger.info("Changed effect to {}".format(i))
         if i != self.helper.cf.param.values["ring"]["effect"]:
             self.helper.cf.param.set_value("ring.effect", str(i))

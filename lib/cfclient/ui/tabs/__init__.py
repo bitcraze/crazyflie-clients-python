@@ -53,5 +53,5 @@ logger.debug("Found tabs: %s", found_tabs)
 available = []
 
 for tab in found_tabs:
-    tabModule = __import__(tab, globals(), locals(), [tab], -1)
+    tabModule = __import__(tab, globals(), locals(), [tab], 1)
     available.append(getattr(tabModule, tab))

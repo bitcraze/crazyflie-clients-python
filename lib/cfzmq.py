@@ -34,14 +34,14 @@ import os
 import logging
 import signal
 import zmq
-import Queue
+import queue
 from threading import Thread
 import cflib.crtp
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.log import LogConfig
 
 if os.name == 'posix':
-    print 'Disabling standard output for libraries!'
+    print('Disabling standard output for libraries!')
     stdout = os.dup(1)
     os.dup2(os.open('/dev/null', os.O_WRONLY), 1)
     sys.stdout = os.fdopen(stdout, 'w')
@@ -89,10 +89,10 @@ class _SrvThread(Thread):
         self._cf.param.all_updated.add_callback(self._tocs_updated)
         self._cf.param.all_update_callback.add_callback(self._all_param_update)
 
-        self._conn_queue = Queue.Queue(1)
-        self._param_queue = Queue.Queue(1)
-        self._log_started_queue = Queue.Queue(1)
-        self._log_added_queue = Queue.Queue(1)
+        self._conn_queue = queue.Queue(1)
+        self._param_queue = queue.Queue(1)
+        self._log_started_queue = queue.Queue(1)
+        self._log_added_queue = queue.Queue(1)
 
         self._logging_configs = {}
 
@@ -193,7 +193,7 @@ class _SrvThread(Thread):
             except AttributeError as e:
                 resp["status"] = 2
                 resp["msg"] = str(e)
-            except Queue.Empty:
+            except queue.Empty:
                 resp["status"] = 3
                 resp["msg"] = "Log configuration did not start"
         if data["action"] == "start":
@@ -204,7 +204,7 @@ class _SrvThread(Thread):
             except KeyError as e:
                 resp["status"] = 1
                 resp["msg"] = "{} config not found".format(str(e))
-            except Queue.Empty:
+            except queue.Empty:
                 resp["status"] = 2
                 resp["msg"] = "Log configuration did not stop"
         if data["action"] == "stop":
@@ -215,7 +215,7 @@ class _SrvThread(Thread):
             except KeyError as e:
                 resp["status"] = 1
                 resp["msg"] = "{} config not found".format(str(e))
-            except Queue.Empty:
+            except queue.Empty:
                 resp["status"] = 2
                 resp["msg"] = "Log configuration did not stop"
         if data["action"] == "delete":
@@ -226,7 +226,7 @@ class _SrvThread(Thread):
             except KeyError as e:
                 resp["status"] = 1
                 resp["msg"] = "{} config not found".format(str(e))
-            except Queue.Empty:
+            except queue.Empty:
                 resp["status"] = 2
                 resp["msg"] = "Log configuration did not stop"
 
@@ -250,7 +250,7 @@ class _SrvThread(Thread):
         except AttributeError as e:
             resp["status"] = 2
             resp["msg"] = str(e)
-        except Queue.Empty:
+        except queue.Empty:
             resp["status"] = 3
             resp["msg"] = "Timeout when setting parameter" \
                           "{}".format(data["name"])

@@ -58,23 +58,23 @@ class InputMux(object):
         self._devs[role].open()
 
     def supported_roles(self):
-        return self._devs.keys()
+        return list(self._devs.keys())
 
     def add_device(self, dev, role):
         logger.info("Adding device {} to MUX {}".format(dev.name, self.name))
         self._open_new_device(dev, role)
 
     def pause(self):
-        for d in [key for key in self._devs.keys() if self._devs[key]]:
+        for d in [key for key in list(self._devs.keys()) if self._devs[key]]:
             self._devs[d].close()
 
     def resume(self):
-        for d in [key for key in self._devs.keys() if self._devs[key]]:
+        for d in [key for key in list(self._devs.keys()) if self._devs[key]]:
             self._devs[d].open()
 
     def close(self):
         """Close down the MUX and close all it's devices"""
-        for d in [key for key in self._devs.keys() if self._devs[key]]:
+        for d in [key for key in list(self._devs.keys()) if self._devs[key]]:
             self._devs[d].close()
             self._devs[d] = None
 

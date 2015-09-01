@@ -40,7 +40,7 @@ from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread, Qt
 from PyQt4.QtGui import QMessageBox
 from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView
-from PyQt4.QtCore import QAbstractItemModel, QModelIndex, QString, QVariant
+from PyQt4.QtCore import QAbstractItemModel, QModelIndex
 
 from pprint import pprint
 import datetime
@@ -108,10 +108,10 @@ class LogConfigModel(QAbstractItemModel):
         """Re-implemented method to get the data for a given index and role"""
         node = index.internalPointer()
         if not index.isValid() or not 0 <= index.row() < len(self._nodes):
-            return QVariant()
+            return None
         if role == Qt.DisplayRole:
             return self._nodes[index.row()].name
-        return QVariant()
+        return None
 
     def reset(self):
         """Reset the model"""

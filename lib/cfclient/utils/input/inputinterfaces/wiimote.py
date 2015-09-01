@@ -127,7 +127,7 @@ class WiimoteReader(_Reader):
         self.limit_thrust = False
         self.limit_yaw = False
 
-        print "Press 1 + 2 to connect wii"
+        print("Press 1 + 2 to connect wii")
         time.sleep(1)
         self.wm = cwiid.Wiimote()
         self.wm.rpt_mode = cwiid.RPT_BTN

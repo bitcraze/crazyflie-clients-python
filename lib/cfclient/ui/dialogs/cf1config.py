@@ -40,6 +40,7 @@ from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
 from cfclient.utils.config import Config
+from functools import reduce
 
 __author__ = 'Bitcraze AB'
 __all__ = ['Cf1ConfigDialog']
@@ -222,7 +223,7 @@ class CrazyloadThread(QThread):
             self.failed_signal.emit("{}".format(e))
 
     def checksum256(self, st):
-        return reduce(lambda x, y: x + y, map(ord, st)) % 256
+        return reduce(lambda x, y: x + y, list(map(ord, st))) % 256
 
     def writeConfigAction(self, channel, speed, rollTrim, pitchTrim):
         data = (0x00, channel, speed, pitchTrim, rollTrim)

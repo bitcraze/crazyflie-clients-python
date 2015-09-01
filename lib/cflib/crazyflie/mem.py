@@ -33,13 +33,14 @@ Enables flash access to the Crazyflie.
 
 import struct
 import errno
-from Queue import Queue
+from queue import Queue
 from threading import Lock
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from cflib.utils.callbacks import Caller
 from binascii import crc32
 import binascii
 import logging
+from functools import reduce
 
 __author__ = 'Bitcraze AB'
 __all__ = ['Memory', 'MemoryElement']
@@ -150,7 +151,7 @@ class LEDDriverMemory(MemoryElement):
                   led.intensity / 100)
             B5 = ((int)((((int(led.b) & 0xFF) * 249 + 1014) >> 11) & 0x1F) *
                   led.intensity / 100)
-            tmp = (R5 << 11) | (G6 << 5) | (B5 << 0)
+            tmp = (int(R5) << 11) | (int(G6) << 5) | (int(B5) << 0)
             data += (tmp >> 8, tmp & 0xFF)
         self.mem_handler.write(self, 0x00, data, flush_queue=True)
 
@@ -214,15 +215,15 @@ class I2CElement(MemoryElement):
                 done = True
 
             if done:
-                if self._checksum256(data[:len(data) - 1]) == ord(
-                        data[len(data) - 1]):
+                if self._checksum256(data[:len(data) - 1]) == \
+                        data[len(data) - 1]:
                     self.valid = True
                 if self._update_finished_cb:
                     self._update_finished_cb(self)
                     self._update_finished_cb = None
 
     def _checksum256(self, st):
-        return reduce(lambda x, y: x + y, map(ord, st)) % 256
+        return reduce(lambda x, y: x + y, list(map(ord, st))) % 256
 
     def write_data(self, write_finished_cb):
         if self.elements["version"] == 0:
@@ -294,7 +295,7 @@ class OWElement(MemoryElement):
         self._write_finished_cb = None
 
         self._rev_element_mapping = {}
-        for key in OWElement.element_mapping.keys():
+        for key in list(OWElement.element_mapping.keys()):
             self._rev_element_mapping[OWElement.element_mapping[key]] = key
 
     def new_data(self, mem, addr, data):
@@ -358,8 +359,8 @@ class OWElement(MemoryElement):
 
         # Now generate the elements part
         elem = ""
-        logger.info(self.elements.keys())
-        for element in reversed(self.elements.keys()):
+        logger.info(list(self.elements.keys()))
+        for element in reversed(list(self.elements.keys())):
             elem_string = self.elements[element]
             # logger.info(">>>> {}".format(elem_string))
             key_encoding = self._rev_element_mapping[element]
@@ -376,7 +377,7 @@ class OWElement(MemoryElement):
         # Write data
         p = ""
         for s in data:
-            p += "0x{:02X} ".format(ord(s))
+            p += "0x{:02X} ".format(s)
         logger.info(p)
 
         self.mem_handler.write(self, 0x00,
@@ -425,7 +426,7 @@ class _ReadRequest:
         self.mem = mem
         self.addr = addr
         self._bytes_left = length
-        self.data = ""
+        self.data = b""
         self.cf = cf
 
         self._current_addr = addr
@@ -701,7 +702,7 @@ class Memory():
 
         if chan == CHAN_INFO:
             if cmd == CMD_INFO_NBR:
-                self.nbr_of_mems = ord(payload[0])
+                self.nbr_of_mems = payload[0]
                 logger.info("{} memories found".format(self.nbr_of_mems))
 
                 # Start requesting information about the memories,
@@ -736,9 +737,9 @@ class Memory():
 
                 # Create information about a new memory
                 # Id - 1 byte
-                mem_id = ord(payload[0])
+                mem_id = payload[0]
                 # Type - 1 byte
-                mem_type = ord(payload[1])
+                mem_type = payload[1]
                 # Size 4 bytes (as addr)
                 mem_size = struct.unpack("I", payload[2:6])[0]
                 # Addr (only valid for 1-wire?)

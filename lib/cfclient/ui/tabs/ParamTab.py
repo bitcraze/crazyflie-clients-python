@@ -35,7 +35,7 @@ import logging
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
-from PyQt4.QtCore import QAbstractItemModel, QModelIndex, QString, QVariant
+from PyQt4.QtCore import QAbstractItemModel, QModelIndex
 from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView, \
     QBrush, QColor
 from PyQt4.QtGui import QSortFilterProxyModel
@@ -149,7 +149,7 @@ class ParamBlockModel(QAbstractItemModel):
     def headerData(self, section, orientation, role):
         """Re-implemented method to get the headers"""
         if role == Qt.DisplayRole:
-            return QString(self._column_headers[section])
+            return self._column_headers[section]
 
     def rowCount(self, parent):
         """Re-implemented method to get the number of rows for a given index"""
@@ -195,13 +195,13 @@ class ParamBlockModel(QAbstractItemModel):
               node.is_updating):
             return self._red_brush
 
-        return QVariant()
+        return None
 
     def setData(self, index, value, role):
         """Re-implemented function called when a value has been edited"""
         node = index.internalPointer()
         if role == Qt.EditRole:
-            new_val = str(value.toString())
+            new_val = str(value)
             # This will not update the value, only trigger a setting and
             # reading of the parameter from the Crazyflie
             node.set_value(new_val)

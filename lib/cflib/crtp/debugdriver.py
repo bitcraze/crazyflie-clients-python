@@ -41,7 +41,7 @@ from threading import Thread
 from .crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket, CRTPPort
 from .exceptions import WrongUriType
-import Queue
+import queue
 import re
 import time
 import struct
@@ -271,7 +271,7 @@ class DebugDriver(CRTPDriver):
 
         self.fakeflash = {}
         self._random_answer_delay = True
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self._packet_handler = _PacketHandlingThread(self.queue,
                                                      self.fakeLogToc,
                                                      self.fakeParamToc,
@@ -354,17 +354,17 @@ class DebugDriver(CRTPDriver):
         if time == 0:
             try:
                 return self.queue.get(False)
-            except Queue.Empty:
+            except queue.Empty:
                 return None
         elif time < 0:
             try:
                 return self.queue.get(True)
-            except Queue.Empty:
+            except queue.Empty:
                 return None
         else:
             try:
                 return self.queue.get(True, time)
-            except Queue.Empty:
+            except queue.Empty:
                 return None
 
     def send_packet(self, pk):
@@ -388,7 +388,7 @@ class _PacketHandlingThread(Thread):
         self.fakeLogToc = fake_log_toc
         self.fakeParamToc = fake_param_toc
         self._fake_mems = fake_mems
-        self._in_queue = Queue.Queue()
+        self._in_queue = queue.Queue()
 
         self.inhibitAnswers = False
         self.doIncompleteLogTOC = False
@@ -448,7 +448,7 @@ class _PacketHandlingThread(Thread):
             if cmd == 1:  # Request number of memories
                 p_out.data = (1, len(self._fake_mems))
             if cmd == 2:
-                id = ord(payload[0])
+                id = payload[0]
                 logger.info("Getting mem {}".format(id))
                 m = self._fake_mems[id]
                 p_out.data = struct.pack(
@@ -458,7 +458,7 @@ class _PacketHandlingThread(Thread):
         if chan == 1:  # Read channel
             id = cmd
             addr = struct.unpack("I", payload[0:4])[0]
-            length = ord(payload[4])
+            length = payload[4]
             status = 0
             logger.info("MEM: Read {}bytes at 0x{:X} from memory {}".format(
                 length, addr, id))
@@ -479,7 +479,7 @@ class _PacketHandlingThread(Thread):
             m = self._fake_mems[id]
 
             for i in range(len(data)):
-                m.data[addr + i] = ord(data[i])
+                m.data[addr + i] = data[i]
 
             status = 0
 
@@ -632,7 +632,7 @@ class _PacketHandlingThread(Thread):
             self._handle_toc_access(pk)
         elif (chan == 1):  # Settings access
             if (cmd == 0):
-                blockId = ord(pk.data[1])
+                blockId = pk.data[1]
                 if blockId not in self._added_blocks:
                     self._added_blocks.append(blockId)
                     logger.info("LOG:Adding block id=%d", blockId)
@@ -655,7 +655,7 @@ class _PacketHandlingThread(Thread):
             if (cmd == 1):
                 logger.warning("LOG: Appending block not implemented!")
             if (cmd == 2):
-                blockId = ord(pk.data[1])
+                blockId = pk.data[1]
                 logger.info("LOG: Should delete block %d", blockId)
                 success = False
                 for fb in self.fakeLoggingThreads:
@@ -675,8 +675,8 @@ class _PacketHandlingThread(Thread):
                     # TODO: Send back error code
 
             if (cmd == 3):
-                blockId = ord(pk.data[1])
-                period = ord(pk.data[2]) * 10  # Sent as multiple of 10 ms
+                blockId = pk.data[1]
+                period = pk.data[2] * 10  # Sent as multiple of 10 ms
                 logger.info("LOG:Starting block %d", blockId)
                 success = False
                 for fb in self.fakeLoggingThreads:
@@ -694,7 +694,7 @@ class _PacketHandlingThread(Thread):
                                 blockId)
                     # TODO: Send back error code
             if (cmd == 4):
-                blockId = ord(pk.data[1])
+                blockId = pk.data[1]
                 logger.info("LOG:Pausing block %d", blockId)
                 success = False
                 for fb in self.fakeLoggingThreads:
@@ -755,7 +755,7 @@ class _FakeLoggingDataThread(Thread):
         logging.info("FakeDataLoggingThread created for blockid=%d", blockId)
         i = 0
         while (i < len(listofvars)):
-            varType = ord(listofvars[i])
+            varType = listofvars[i]
             var_stored_as = (varType >> 8)
             var_fetch_as = (varType & 0xFF)
             if (var_stored_as > 0):
@@ -767,7 +767,7 @@ class _FakeLoggingDataThread(Thread):
                                              1])
                 i = i + 5
             else:
-                varId = ord(listofvars[i])
+                varId = listofvars[i]
                 logger.debug("FakeLoggingThread: We should log variable from"
                              " TOC: id=%d, type=0x%02X", varId, varType)
                 for t in self.fakeLogToc:

@@ -14,8 +14,8 @@ for root, dirs, files in os.walk("."):
         INSTALL_FILES += [os.path.join(root[2:], f)]
     INSTALL_DIRS += [root[2:]]
 
-print "Found {} files in {} folders to install.".format(len(INSTALL_FILES),
-                                                        len(INSTALL_DIRS))
+print("Found {} files in {} folders to install.".format(len(INSTALL_FILES),
+                                                        len(INSTALL_DIRS)))
 
 
 # Get git tag or VERSION
@@ -28,7 +28,7 @@ except OSError:
 
 VERSION = output.strip()
 
-print "Cfclient version {}".format(VERSION)
+print("Cfclient version {}".format(VERSION))
 
 os.chdir(os.path.dirname(__file__))
 
