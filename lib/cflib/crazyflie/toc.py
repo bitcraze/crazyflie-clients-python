@@ -163,7 +163,6 @@ class TocFetcher:
         if (chan != 0):
             return
         payload = struct.pack("B" * (len(packet.datal) - 1), *packet.datal[1:])
-        #payload = packet.datal[1:]
 
         if (self.state == GET_TOC_INFO):
             [self.nbr_of_items, self._crc] = struct.unpack("<BI", payload[:5])

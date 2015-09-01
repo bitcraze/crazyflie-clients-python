@@ -222,7 +222,8 @@ class LogConfig(object):
             if (var.is_toc_variable() is False):  # Memory location
                 logger.debug("Logging to raw memory %d, 0x%04X",
                              var.get_storage_and_fetch_byte(), var.address)
-                pk.data.append(struct.pack('<B', var.get_storage_and_fetch_byte()))
+                pk.data.append(struct.pack('<B',
+                                           var.get_storage_and_fetch_byte()))
                 pk.data.append(struct.pack('<I', var.address))
             else:  # Item in TOC
                 logger.debug("Adding %s with id=%d and type=0x%02X",
