@@ -62,9 +62,9 @@ they might or might not affected of this.
 
 1. [Install Homebrew](https://gist.github.com/derhuerst/1b15ff4652a867391f03#2--install-homebrew).
 
-1. Install Homebrew's Python
+1. Install Homebrew's Python3
     ```
-    brew install python
+    brew install python3
     ```
 
     This will also pull [pip3](https://pip.pypa.io/en/latest/), which we will use later to install some Python modules that are not distributed through Homebrew.
