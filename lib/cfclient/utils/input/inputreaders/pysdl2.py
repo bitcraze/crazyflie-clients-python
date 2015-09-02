@@ -152,7 +152,7 @@ class PySDL2Reader():
     def __init__(self):
         sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO | sdl2.SDL_INIT_JOYSTICK)
         sdl2.SDL_SetHint(sdl2.hints.SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS,
-                         "1")
+                         b"1")
         sdl2.ext.init()
         self._js = {}
         self.name = MODULE_NAME
@@ -187,7 +187,7 @@ class PySDL2Reader():
             logger.info("Found {} devices".format(nbrOfInputs))
             for sdl_index in range(0, nbrOfInputs):
                 j = sdl2.joystick.SDL_JoystickOpen(sdl_index)
-                name = sdl2.joystick.SDL_JoystickName(j)
+                name = sdl2.joystick.SDL_JoystickName(j).decode("UTF-8")
                 if names.count(name) > 0:
                     name = "{0} #{1}".format(name, names.count(name) + 1)
                 sdl_id = sdl2.joystick.SDL_JoystickInstanceID(j)
