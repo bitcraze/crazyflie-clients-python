@@ -67,26 +67,27 @@ they might or might not affected of this.
     brew install python
     ```
 
-    This will also pull [pip](https://pip.pypa.io/en/latest/), which we will use later to install some Python modules that are not distributed through Homebrew.
-
-1. Make sure the homebrew Python version is used system-wide
-    To do this we need to prepend this installation to our PYTHONPATH:
-
-    ```
-    echo 'export PYTHONPATH=/usr/local/lib/python3.4/site-packages:$PYTHONPATH' >> ~/.bashrc
-    source ~/.bashrc
-    ```
+    This will also pull [pip3](https://pip.pypa.io/en/latest/), which we will use later to install some Python modules that are not distributed through Homebrew.
 
 1. Install SDL for Python
     ```
     brew install sdl sdl2 sdl_image sdl_mixer sdl_ttf portmidi
     ```
 
+1. Install PyQt
+
+    If you already have pyqt installed for python2 you need to uninstall it first
+
+    ```
+    brew uninstall pyqt
+    brew install pyqt --with-python3
+    ```
+
 1. Install remaining dependencies
 
     ```
-    brew install pyqt libusb
-    pip install --pre pysdl2 pyusb pyqtgraph
+    brew install libusb
+    pip3 install pysdl2 pyusb pyqtgraph
     ```
 
 1. You now have all the dependencies needed to run the client. From the source folder, run it with the following command:
