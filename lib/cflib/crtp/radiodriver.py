@@ -207,6 +207,9 @@ class RadioDriver(CRTPDriver):
             pass
         self.cradio = None
 
+        while not self.out_queue.empty():
+            self.out_queue.get()
+
         # Clear callbacks
         self.link_error_callback = None
         self.link_quality_callback = None
