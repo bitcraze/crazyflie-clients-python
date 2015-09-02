@@ -91,7 +91,7 @@ class LEDTab(Tab, led_tab_class):
                       self._u11,
                       self._u12]
 
-        self._intensity = 1
+        self._intensity = self._intensity_slider.value()
 
         self._u1.clicked.connect(lambda: self._select(0))
         self._u2.clicked.connect(lambda: self._select(1))
