@@ -332,8 +332,7 @@ class OWElement(MemoryElement):
         """
         Parse and check the CRC and length of the elements part of the memory
         """
-        (elem_ver, elem_len, crc) = struct.unpack(
-            "<BBB", data[0] + data[1] + data[-1])
+        (elem_ver, elem_len, crc) = (data[0], data[1], data[-1])
         test_crc = crc32(data[:-1]) & 0x0ff
         elem_data = data[2:-1]
         if test_crc == crc:
@@ -804,7 +803,7 @@ class Memory():
 
         if chan == CHAN_WRITE:
             id = cmd
-            (addr, status) = struct.unpack("<IB", payload[0:5])
+            (addr, status) = struct.unpack("<IB", raw_payload[0:5])
             logger.info(
                 "WRITE: Mem={}, addr=0x{:X}, status=0x{}".format(
                     id, addr, status))
