@@ -33,6 +33,7 @@ Enables flash access to the Crazyflie.
 
 import struct
 import errno
+import sys
 from threading import Lock
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from cflib.utils.callbacks import Caller
@@ -57,6 +58,10 @@ CMD_INFO_DETAILS = 2
 # The max size of a CRTP packet payload
 MAX_LOG_DATA_PACKET_SIZE = 30
 
+if sys.version_info < (3,):
+    EEPROM_TOKEN = "0xBC"
+else:
+    EEPROM_TOKEN = b"0xBC"
 
 logger = logging.getLogger(__name__)
 
@@ -189,7 +194,7 @@ class I2CElement(MemoryElement):
             if addr == 0:
                 done = False
                 # Check for header
-                if data[0:4] == "0xBC":
+                if data[0:4] == EEPROM_TOKEN:
                     logger.info("Got new data: {}".format(data))
                     [self.elements["version"],
                      self.elements["radio_channel"],
@@ -205,7 +210,7 @@ class I2CElement(MemoryElement):
 
             if addr == 16:
                 [radio_address_upper, radio_address_lower] = struct.unpack(
-                    "<BI", self.datav0[15] + data[0:4])
+                    "<BI", self.datav0[15:16] + data[0:4])
                 self.elements["radio_address"] = int(
                     radio_address_upper) << 32 | radio_address_lower
 
@@ -222,7 +227,10 @@ class I2CElement(MemoryElement):
                     self._update_finished_cb = None
 
     def _checksum256(self, st):
-        return reduce(lambda x, y: x + y, list(map(ord, st))) % 256
+        if sys.version_info < (3,):
+            return reduce(lambda x, y: x + y, list(map(ord, st))) % 256
+        else:
+            return reduce(lambda x, y: x + y, list(st)) % 256
 
     def write_data(self, write_finished_cb):
         if self.elements["version"] == 0:
@@ -240,7 +248,7 @@ class I2CElement(MemoryElement):
                 self.elements["radio_address"] & 0xFFFFFFFF)
             image = struct.pack("<BBBffBI", *data)
         # Adding some magic:
-        image = "0xBC" + image
+        image = EEPROM_TOKEN + image
         image += struct.pack("B", self._checksum256(image))
 
         self._write_finished_cb = write_finished_cb
