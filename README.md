@@ -33,9 +33,9 @@ Running from source
 ## Windows
 
 Install dependencies. With Windows installers (tested with 32Bit versions):
- - Python 2.7 (https://www.python.org/downloads/windows/)
- - PyQT4 for Python 2.7 (http://www.riverbankcomputing.com/software/pyqt/download)
- - Scipy for Python 2.7 (http://sourceforge.net/projects/scipy/files/scipy/)
+ - Python 3.4 (https://www.python.org/downloads/windows/)
+ - PyQT4 for Python 3.4 (http://www.riverbankcomputing.com/software/pyqt/download)
+ - Scipy for Python 3.4 (http://sourceforge.net/projects/scipy/files/scipy/)
  - PyQTGraph (http://www.pyqtgraph.org/)
 
 Python libs (to be install by running 'setup.py install'):
@@ -47,7 +47,7 @@ crazyflie-clients-python folder.
 
 Run with:
 ```
-C:\Python27\python bin\cfclient
+C:\Python34\python bin\cfclient
 ```
 
 ## Mac OSX
@@ -73,7 +73,7 @@ they might or might not affected of this.
     To do this we need to prepend this installation to our PYTHONPATH:
 
     ```
-    echo 'export PYTHONPATH=/usr/local/lib/python2.7/site-packages:$PYTHONPATH' >> ~/.bashrc
+    echo 'export PYTHONPATH=/usr/local/lib/python3.4/site-packages:$PYTHONPATH' >> ~/.bashrc
     source ~/.bashrc
     ```
 
@@ -103,15 +103,15 @@ they might or might not affected of this.
 
 1. Install dependencies. Note that there are quite a few, so this could take a while:
     ```
-    sudo port install libusb python27 py27-pyusb py27-SDL2 py27-pyqt4
+    sudo port install libusb python34 py34-pyusb py34-SDL2 py34-pyqt4
     ```
     To enable the plotter tab install pyqtgraph, this takes a lot of time:
     ```
-    sudo port install py27-pyqtgraph
+    sudo port install py34-pyqtgraph
     ```
     You can now run the client from source with
     ```
-    /opt/local/bin/python2.7 bin/cfclient
+    /opt/local/bin/python3.4 bin/cfclient
     ```
 
 1. To make it easier to run MacPorts, add ```/opt/local/bin``` to your PATH variable.
@@ -142,7 +142,7 @@ To launch the GUI after a systemwide installation, execute ```cfclient```.
 
 The Crazyflie PC client has the following dependencies:
 
-* Python 2.7
+* Python 3.4
 * PySdl2
 * PyUSB
 * libusb
