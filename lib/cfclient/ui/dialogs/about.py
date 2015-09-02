@@ -51,6 +51,7 @@ DEBUG_INFO_FORMAT = """
 <b>Cfclient</b><br>
 Cfclient version: {version}<br>
 System: {system}<br>
+Python: {pmajor}.{pminor}.{pmicro}<br>
 <br>
 <b>Interface status</b><br>
 {interface_status}
@@ -171,6 +172,9 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
             DEBUG_INFO_FORMAT.format(
                 version=cfclient.VERSION,
                 system=sys.platform,
+                pmajor=sys.version_info.major,
+                pminor=sys.version_info.minor,
+                pmicro=sys.version_info.micro,
                 interface_status=self._interface_text,
                 input_devices=self._device_text,
                 input_readers=self._input_readers_text,

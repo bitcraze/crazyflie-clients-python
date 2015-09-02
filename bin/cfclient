@@ -100,6 +100,13 @@ def init_paths():
 
 
 if __name__ == '__main__':
+    if sys.version_info < (3,):
+        print("The Crazyflie Python client only works with Python 3+, and "
+              "you are running it using version {}.{}.{}".format(
+                  sys.version_info.major, sys.version_info.minor,
+                  sys.version_info.micro))
+        print("Exiting!")
+        sys.exit(1)
     init_paths()
     import cfclient
 
