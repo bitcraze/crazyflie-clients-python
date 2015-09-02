@@ -8,6 +8,7 @@ When reporting issues the more information you can supply the better. Since the 
 ```
 Host OS and version of OS:
 Crazyflie/Crazyradio version:
+Python version:
 ```
  - **How to reproduce the issue:** Step-by-step guide on how the issue can be reproduced (or at least how you reproduce it). Include everything you think might be useful, the more information the better.
 
