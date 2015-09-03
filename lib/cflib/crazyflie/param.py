@@ -140,10 +140,10 @@ class Param():
         self.param_updater = _ParamUpdater(self.cf, self._param_updated)
         self.param_updater.start()
 
-        self.cf.disconnected.add_callback(self.param_updater.close)
+        self.cf.disconnected.add_callback(self._disconnected)
 
         self.all_updated = Caller()
-        self._have_updated = False
+        self.is_updated = False
 
         self.values = {}
 
@@ -180,11 +180,6 @@ class Param():
                 self.values[element.group] = {}
             self.values[element.group][element.name] = s
 
-            # This will only be called once
-            if self._check_if_all_updated() and not self._have_updated:
-                self._have_updated = True
-                self.all_updated.call()
-
             logger.debug("Updated parameter [%s]" % complete_name)
             if complete_name in self.param_update_callbacks:
                 self.param_update_callbacks[complete_name].call(
@@ -193,6 +188,13 @@ class Param():
                 self.group_update_callbacks[element.group].call(
                     complete_name, s)
             self.all_update_callback.call(complete_name, s)
+
+            # Once all the parameters are updated call the
+            # callback for "everything updated" (after all the param
+            # updated callbacks)
+            if self._check_if_all_updated() and not self.is_updated:
+                self.is_updated = True
+                self.all_updated.call()
         else:
             logger.debug("Variable id [%d] not found in TOC", var_id)
 
@@ -230,16 +232,18 @@ class Param():
         """
         Initiate a refresh of the parameter TOC.
         """
-        self.toc = Toc()
         toc_fetcher = TocFetcher(self.cf, ParamTocElement,
                                  CRTPPort.PARAM, self.toc,
                                  refresh_done_callback, toc_cache)
         toc_fetcher.start()
 
-    def disconnected(self, uri):
+    def _disconnected(self, uri):
         """Disconnected callback from Crazyflie API"""
         self.param_updater.close()
-        self._have_updated = False
+        self.is_updated = False
+        # Clear all values from the previous Crazyflie
+        self.toc = Toc()
+        self.values = {}
 
     def request_param_update(self, complete_name):
         """
@@ -287,7 +291,7 @@ class _ParamUpdater(Thread):
         self._should_close = False
         self._req_param = -1
 
-    def close(self, uri):
+    def close(self):
         # First empty the queue from all packets
         while not self.request_queue.empty():
             self.request_queue.get()

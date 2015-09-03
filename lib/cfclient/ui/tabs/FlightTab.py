@@ -186,8 +186,8 @@ class FlightTab(Tab, flight_tab_class):
 
         self.helper.cf.param.add_update_callback(
             group="ring",
-            name="neffect",
-            cb=(lambda name, value: self._set_neffect(eval(value))))
+            name="effect",
+            cb=self._ring_effect_updated)
 
         self.helper.cf.param.add_update_callback(
             group="imu_sensors",
@@ -236,9 +236,6 @@ class FlightTab(Tab, flight_tab_class):
         self.minThrust.setEnabled(thrust_limiting_enabled)
         self.slewEnableLimit.setEnabled(thrust_limiting_enabled)
         self.thrustLoweringSlewRateLimit.setEnabled(thrust_limiting_enabled)
-
-    def _set_neffect(self, n):
-        self._ledring_nbr_effects = n
 
     def thrustToPercentage(self, thrust):
         return ((thrust / MAX_THRUST) * 100.0)
@@ -330,10 +327,6 @@ class FlightTab(Tab, flight_tab_class):
         except AttributeError as e:
             logger.warning(str(e))
 
-        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x01):
-            self._led_ring_effect.setEnabled(True)
-            self._led_ring_headlight.setEnabled(True)
-
     def _set_available_sensors(self, name, available):
         logger.info("[%s]: %s", name, available)
         available = eval(available)
@@ -393,6 +386,10 @@ class FlightTab(Tab, flight_tab_class):
         self.logBaro = None
         self.logAltHold = None
         self._led_ring_effect.setEnabled(False)
+        self._led_ring_effect.clear()
+        self._led_ring_effect.currentIndexChanged.disconnect(
+            self._ring_effect_changed)
+        self._led_ring_effect.setCurrentIndex(-1)
         self._led_ring_headlight.setEnabled(False)
 
     def minMaxThrustChanged(self):
@@ -547,18 +544,21 @@ class FlightTab(Tab, flight_tab_class):
                 name += "N/A"
             self._led_ring_effect.addItem(name, i)
 
-        self._led_ring_effect.setCurrentIndex(current)
         self._led_ring_effect.currentIndexChanged.connect(
             self._ring_effect_changed)
-        self.helper.cf.param.add_update_callback(group="ring",
-                                                 name="effect",
-                                                 cb=self._ring_effect_updated)
+
+        self._led_ring_effect.setCurrentIndex(current)
+        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x01):
+            self._led_ring_effect.setEnabled(True)
+            self._led_ring_headlight.setEnabled(True)
 
     def _ring_effect_changed(self, index):
-        i = self._led_ring_effect.itemData(index)[0]
-        logger.info("Changed effect to {}".format(i))
-        if i != self.helper.cf.param.values["ring"]["effect"]:
-            self.helper.cf.param.set_value("ring.effect", str(i))
+        if index > -1:
+            i = self._led_ring_effect.itemData(index)
+            logger.info("Changed effect to {}".format(i))
+            if i != int(self.helper.cf.param.values["ring"]["effect"]):
+                self.helper.cf.param.set_value("ring.effect", str(i))
 
     def _ring_effect_updated(self, name, value):
-        self._led_ring_effect.setCurrentIndex(int(value))
+        if self.helper.cf.param.is_updated:
+            self._led_ring_effect.setCurrentIndex(int(value))
