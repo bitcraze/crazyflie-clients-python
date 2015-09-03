@@ -85,6 +85,7 @@ class EEPROMExample:
         print("Updated id={}".format(mem.id))
         print("\tType      : {}".format(mem.type))
         print("\tSize      : {}".format(mem.size))
+        print("\tValid     : {}".format(mem.valid))
         print("\tElements  : ")
         for key in mem.elements:
             print("\t\t{}={}".format(key, mem.elements[key]))

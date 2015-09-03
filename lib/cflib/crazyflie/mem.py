@@ -228,7 +228,8 @@ class I2CElement(MemoryElement):
 
     def _checksum256(self, st):
         if sys.version_info < (3,):
-            return reduce(lambda x, y: x + y, list(map(ord, st))) % 256
+            return struct.pack("<B", reduce(lambda x, y: x + y,
+                                            map(ord, st)) % 256)
         else:
             return reduce(lambda x, y: x + y, list(st)) % 256
 
