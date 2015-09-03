@@ -311,7 +311,6 @@ class OWElement(MemoryElement):
         if mem.id == self.id:
             if addr == 0:
                 if self._parse_and_check_header(data[0:8]):
-                    logger.info("--> HEADER OK")
                     if self._parse_and_check_elements(data[9:11]):
                         self.valid = True
                         self._update_finished_cb(self)
@@ -321,7 +320,6 @@ class OWElement(MemoryElement):
                         (elem_ver, elem_len) = struct.unpack("BB", data[8:10])
                         self.mem_handler.read(self, 8, elem_len + 3)
                 else:
-                    logger.info("--> HEADER NOT OK")
                     # Call the update if the CRC check of the header fails,
                     # we're done here
                     if self._update_finished_cb:
@@ -329,10 +327,7 @@ class OWElement(MemoryElement):
                         self._update_finished_cb = None
             elif addr == 0x08:
                 if self._parse_and_check_elements(data):
-                    logger.info("--> ELEMENT OK")
                     self.valid = True
-                else:
-                    logger.info("--> ELEMENT NOT OK")
                 if self._update_finished_cb:
                     self._update_finished_cb(self)
                     self._update_finished_cb = None
