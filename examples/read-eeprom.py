@@ -128,7 +128,7 @@ if __name__ == '__main__':
         print(i[0])
 
     if len(available) > 0:
-        le = EEPROMExample("usb://0")
+        le = EEPROMExample(available[0][0])
     else:
         print("No Crazyflies found, cannot run example")
 
