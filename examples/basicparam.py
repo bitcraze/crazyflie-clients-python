@@ -41,7 +41,7 @@ import cflib.crtp  # noqa
 from cflib.crazyflie import Crazyflie  # noqa
 
 # Only output errors from the logging framework
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.ERROR)
 
 
 class ParamExample:
@@ -138,7 +138,6 @@ class ParamExample:
     def _a_pitch_kd_callback(self, name, value):
         """Callback for pid_attitude.pitch_kd"""
         print("Readback: {0}={1}".format(name, value))
-        print()
 
         # End the example by closing the link (will cause the app to quit)
         self._cf.close_link()
@@ -171,8 +170,7 @@ if __name__ == '__main__':
         print(i[0])
 
     if len(available) > 0:
-        # pe = ParamExample(available[0][0])
-        pe = ParamExample("radio://0/90/250K")
+        pe = ParamExample(available[0][0])
         # The Crazyflie lib doesn't contain anything to keep the application
         # alive, so this is where your application should do something. In our
         # case we are just waiting until we are disconnected.

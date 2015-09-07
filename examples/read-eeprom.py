@@ -77,6 +77,7 @@ class EEPROMExample:
 
         mems = self._cf.mem.get_mems(MemoryElement.TYPE_I2C)
         print("Found {} EEPOM(s)".format(len(mems)))
+        self._mems_to_update = len(mems)
         for m in mems:
             print("Updating id={}".format(m.id))
             m.update(self._data_updated)
@@ -90,7 +91,9 @@ class EEPROMExample:
         for key in mem.elements:
             print("\t\t{}={}".format(key, mem.elements[key]))
 
-        self._cf.close_link()
+        self._mems_to_update -= 1
+        if self._mems_to_update == 0:
+            self._cf.close_link()
 
     def _stab_log_error(self, logconf, msg):
         """Callback from the log API when an error occurs"""
