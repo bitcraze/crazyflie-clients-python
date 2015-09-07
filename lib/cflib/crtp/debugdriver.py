@@ -97,6 +97,7 @@ class DebugDriver(CRTPDriver):
     def __init__(self):
         self.fakeLoggingThreads = []
         self._fake_mems = []
+        self.needs_resending = False
         # Fill up the fake logging TOC with values and data
         self.fakeLogToc = []
         self.fakeLogToc.append({"varid": 0, "vartype": 5, "vargroup": "imu",
@@ -209,8 +210,9 @@ class DebugDriver(CRTPDriver):
                                   "vargroup": "rpid", "varname": "iyaw",
                                   "writable": True, "value": 4.5})
         self.fakeParamToc.append({"varid": 6, "vartype": 0x06,
-                                  "vargroup": "rpid", "varname": "drp",
-                                  "writable": True, "value": 5.5})
+                                  "vargroup": "pid_attitude",
+                                  "varname": "pitch_kd", "writable": True,
+                                  "value": 5.5})
         self.fakeParamToc.append({"varid": 7, "vartype": 0x06,
                                   "vargroup": "rpid", "varname": "dyaw",
                                   "writable": True, "value": 6.5})
@@ -329,8 +331,14 @@ class DebugDriver(CRTPDriver):
             self._packet_handler._random_toc_crcs = True
 
         if len(self._fake_mems) == 0:
-            # Insert some data here
+            # Add empty EEPROM
             self._fake_mems.append(FakeMemory(type=0, size=100, addr=0))
+            # Add EEPROM with settings
+            self._fake_mems.append(
+                FakeMemory(type=0, size=100, addr=0,
+                           data=[48, 120, 66, 67, 1, 8, 0, 0, 0, 0,
+                                 0, 0, 0, 0, 0, 231, 8, 231, 231, 231, 218]))
+            # Add 1-wire memory with settings for LED-ring
             self._fake_mems.append(
                 FakeMemory(type=1, size=112, addr=0x1234567890ABCDEF,
                            data=[0xeb, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01,
@@ -338,6 +346,18 @@ class DebugDriver(CRTPDriver):
                                  0x01, 0x09, 0x62, 0x63, 0x4c, 0x65, 0x64,
                                  0x52, 0x69, 0x6e,
                                  0x67, 0x02, 0x01, 0x62, 0x55]))
+            # Add 1-wire memory with settings for LED-ring but bad CRC
+            self._fake_mems.append(
+                FakeMemory(type=1, size=112, addr=0x1234567890ABCDEF,
+                           data=[0xeb, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01,
+                                 0x44, 0x00, 0x0e,
+                                 0x01, 0x09, 0x62, 0x63, 0x4c, 0x65, 0x64,
+                                 0x52, 0x69, 0x6e,
+                                 0x67, 0x02, 0x01, 0x62, 0x56]))
+            # Add empty 1-wire memory
+            self._fake_mems.append(
+                FakeMemory(type=1, size=112, addr=0x1234567890ABCDEE,
+                           data=[0x00 for a in range(112)]))
 
         if (re.search("^debug://.*/6\Z", uri)):
             logger.info("------------->Erasing memories on connect")
@@ -443,8 +463,8 @@ class _PacketHandlingThread(Thread):
 
     def _handle_mem_access(self, pk):
         chan = pk.channel
-        cmd = struct.unpack("B", pk.data[0])[0]
-        payload = struct.pack("B" * (len(pk.datal) - 1), *pk.datal[1:])
+        cmd = pk.data[0]
+        payload = pk.data[1:]
 
         if chan == 0:  # Info channel
             p_out = CRTPPacket()
@@ -493,7 +513,7 @@ class _PacketHandlingThread(Thread):
             self._send_packet(p_out)
 
     def _handle_bootloader(self, pk):
-        cmd = pk.datal[1]
+        cmd = pk.data[1]
         if (cmd == 0x10):  # Request info about copter
             p = CRTPPacket()
             p.set_header(0xFF, 0xFF)
@@ -535,16 +555,16 @@ class _PacketHandlingThread(Thread):
 
     def _handle_toc_access(self, pk):
         chan = pk.channel
-        cmd = struct.unpack("B", pk.data[0])[0]
+        cmd = pk.data[0]
         logger.info("TOC access on port %d", pk.port)
         if (chan == 0):  # TOC Access
-            cmd = struct.unpack("B", pk.data[0])[0]
+            cmd = pk.data[0]
             if (cmd == 0):  # Reqest variable info
                 p = CRTPPacket()
                 p.set_header(pk.port, 0)
                 varIndex = 0
                 if (len(pk.data) > 1):
-                    varIndex = struct.unpack("B", pk.data[1])[0]
+                    varIndex = pk.data[1]
                     logger.debug("TOC[%d]: Requesting ID=%d", pk.port,
                                  varIndex)
                 else:
@@ -562,11 +582,11 @@ class _PacketHandlingThread(Thread):
 
                 p.data = struct.pack("<BBB", cmd, l["varid"], vartype)
                 for ch in l["vargroup"]:
-                    p.data += ch
-                p.data += '\0'
+                    p.data.append(ord(ch))
+                p.data.append(0)
                 for ch in l["varname"]:
-                    p.data += ch
-                p.data += '\0'
+                    p.data.append(ord(ch))
+                p.data.append(0)
                 if (self.doIncompleteLogTOC is False):
                     self._send_packet(p)
                 elif (varIndex < 5):
@@ -598,13 +618,13 @@ class _PacketHandlingThread(Thread):
 
     def handleParam(self, pk):
         chan = pk.channel
-        cmd = struct.unpack("B", pk.data[0])[0]
+        cmd = pk.data[0]
         logger.debug("PARAM: Port=%d, Chan=%d, cmd=%d", pk.port,
                      chan, cmd)
         if (chan == 0):  # TOC Access
             self._handle_toc_access(pk)
         elif (chan == 2):  # Settings access
-            varId = pk.datal[0]
+            varId = pk.data[0]
             formatStr = ParamTocElement.types[
                 self.fakeParamToc[varId]["vartype"]][1]
             newvalue = struct.unpack(formatStr, pk.data[1:])[0]
@@ -621,7 +641,7 @@ class _PacketHandlingThread(Thread):
             p = CRTPPacket()
             p.set_header(pk.port, 1)
             varId = cmd
-            p.data += struct.pack("<B", varId)
+            p.data.append(varId)
             formatStr = ParamTocElement.types[
                 self.fakeParamToc[varId]["vartype"]][1]
             p.data += struct.pack(formatStr, self.fakeParamToc[varId]["value"])
@@ -630,7 +650,7 @@ class _PacketHandlingThread(Thread):
 
     def _handle_logging(self, pk):
         chan = pk.channel
-        cmd = struct.unpack("B", pk.data[0])[0]
+        cmd = pk.data[0]
         logger.debug("LOG: Chan=%d, cmd=%d", chan, cmd)
         if (chan == 0):  # TOC Access
             self._handle_toc_access(pk)
@@ -720,9 +740,7 @@ class _PacketHandlingThread(Thread):
                 p.set_header(5, 1)
                 p.data = struct.pack('<BBB', cmd, 0x00, 0x00)
                 self._send_packet(p)
-                import traceback
 
-                logger.info(traceback.format_exc())
         elif (chan > 1):
             logger.warning("LOG: Uplink packets with channels > 1 not"
                            " supported!")
@@ -875,6 +893,6 @@ class FakeConsoleThread(Thread):
 
         us = "%is" % len(message)
         # This might be done prettier ;-)
-        p.data = struct.pack(us, message)
+        p.data = message
 
         self.outQueue.put(p)
