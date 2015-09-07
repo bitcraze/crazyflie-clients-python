@@ -142,7 +142,7 @@ class LEDDriverMemory(MemoryElement):
     def write_data(self, write_finished_cb):
         """Write the saved LED-ring data to the Crazyflie"""
         self._write_finished_cb = write_finished_cb
-        data = ()
+        data = bytearray()
         for led in self.leds:
             # In order to fit all the LEDs in one radio packet RGB565 is used
             # to compress the colors. The calculations below converts 3 bytes
@@ -156,7 +156,7 @@ class LEDDriverMemory(MemoryElement):
             B5 = ((int)((((int(led.b) & 0xFF) * 249 + 1014) >> 11) & 0x1F) *
                   led.intensity / 100)
             tmp = (int(R5) << 11) | (int(G6) << 5) | (int(B5) << 0)
-            data += (tmp >> 8, tmp & 0xFF)
+            data += bytearray((tmp >> 8, tmp & 0xFF))
         self.mem_handler.write(self, 0x00, data, flush_queue=True)
 
     def update(self, update_finished_cb):
