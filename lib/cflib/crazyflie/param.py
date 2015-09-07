@@ -168,7 +168,7 @@ class Param():
 
     def _param_updated(self, pk):
         """Callback with data for an updated parameter"""
-        var_id = pk.datal[0]
+        var_id = pk.data[0]
         element = self.toc.get_element_by_id(var_id)
         if element:
             s = struct.unpack(element.pytype, pk.data[1:])[0]
@@ -310,7 +310,7 @@ class _ParamUpdater(Thread):
     def _new_packet_cb(self, pk):
         """Callback for newly arrived packets"""
         if pk.channel == READ_CHANNEL or pk.channel == WRITE_CHANNEL:
-            var_id = pk.datal[0]
+            var_id = pk.data[0]
             if (pk.channel != TOC_CHANNEL and self._req_param == var_id and
                     pk is not None):
                 self.updated_callback(pk)
@@ -333,7 +333,7 @@ class _ParamUpdater(Thread):
             pk = self.request_queue.get()  # Wait for request update
             self.wait_lock.acquire()
             if self.cf.link:
-                self._req_param = pk.datal[0]
-                self.cf.send_packet(pk, expected_reply=(pk.datat[0:2]))
+                self._req_param = pk.data[0]
+                self.cf.send_packet(pk, expected_reply=(tuple(pk.data[0:2])))
             else:
                 self.wait_lock.release()

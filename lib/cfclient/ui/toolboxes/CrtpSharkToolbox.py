@@ -77,10 +77,10 @@ class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
             line.setData(0, Qt.DisplayRole, "%d" % ms_diff)
             line.setData(1, Qt.DisplayRole, "%s" % dir)
             line.setData(2, Qt.DisplayRole, "%d/%d" % (pk.port, pk.channel))
-            line.setData(3, Qt.DisplayRole, pk.datal.__str__())
+            line.setData(3, Qt.DisplayRole, pk.data.decode("UTF-8"))
 
             s = "%d, %s, %d/%d, %s" % (ms_diff, dir, pk.port, pk.channel,
-                                       pk.datal.__str__())
+                                       pk.data.decode("UTF-8"))
             self._data.append(s)
 
             self.logTree.addTopLevelItem(line)

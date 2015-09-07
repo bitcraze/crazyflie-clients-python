@@ -162,7 +162,7 @@ class TocFetcher:
         chan = packet.channel
         if (chan != 0):
             return
-        payload = struct.pack("B" * (len(packet.datal) - 1), *packet.datal[1:])
+        payload = packet.data[1:]
 
         if (self.state == GET_TOC_INFO):
             [self.nbr_of_items, self._crc] = struct.unpack("<BI", payload[:5])
@@ -182,7 +182,7 @@ class TocFetcher:
         elif (self.state == GET_TOC_ELEMENT):
             # Always add new element, but only request new if it's not the
             # last one.
-            if self.requested_index != struct.unpack("<B", payload[0:1])[0]:
+            if self.requested_index != payload[0]:
                 return
             self.toc.add_element(self.element_class(payload))
             logger.debug("Added element [%s]",

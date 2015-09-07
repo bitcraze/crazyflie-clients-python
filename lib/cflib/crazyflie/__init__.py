@@ -264,7 +264,7 @@ class Crazyflie():
 
     def _no_answer_do_retry(self, pk, pattern):
         """Resend packets that we have not gotten answers to"""
-        logger.debug("Resending for pattern %s", pattern)
+        logger.info("Resending for pattern %s", pattern)
         # Set the timer to None before trying to send again
         self.send_packet(pk, expected_reply=pattern, resend=True)
 
@@ -276,7 +276,7 @@ class Crazyflie():
         """
         longest_match = ()
         if len(self._answer_patterns) > 0:
-            data = (pk.header,) + pk.datat
+            data = (pk.header,) + tuple(pk.data)
             for p in list(self._answer_patterns.keys()):
                 logger.debug("Looking for pattern match on %s vs %s", p, data)
                 if len(p) <= len(data):

@@ -317,10 +317,7 @@ class LogTocElement:
     def get_cstring_from_id(ident):
         """Return the C-storage name given the variable type id"""
         try:
-            if type(ident) == str:
-                return LogTocElement.types[ord(ident)][0]
-            else:
-                return LogTocElement.types[ident][0]
+            return LogTocElement.types[ident][0]
         except KeyError:
             raise KeyError("Type [%d] not found in LogTocElement.types"
                            "!" % ident)
@@ -329,10 +326,7 @@ class LogTocElement:
     def get_size_from_id(ident):
         """Return the size in bytes given the variable type id"""
         try:
-            if type(ident) == str:
-                return LogTocElement.types[ord(ident)][2]
-            else:
-                return LogTocElement.types[ident][2]
+            return LogTocElement.types[ident][2]
         except KeyError:
             raise KeyError("Type [%d] not found in LogTocElement.types"
                            "!" % ident)
@@ -341,10 +335,7 @@ class LogTocElement:
     def get_unpack_string_from_id(ident):
         """Return the Python unpack string given the variable type id"""
         try:
-            if type(ident) == str:
-                return LogTocElement.types[ord(ident)][1]
-            else:
-                return LogTocElement.types[ident][1]
+            return LogTocElement.types[ident][1]
         except KeyError:
             raise KeyError(
                 "Type [%d] not found in LogTocElement.types!" % ident)
@@ -353,26 +344,17 @@ class LogTocElement:
         """TocElement creator. Data is the binary payload of the element."""
 
         if (data):
-            strs = struct.unpack("s" * len(data[2:]), data[2:])
-            if sys.version_info < (3,):
-                strs = ("{}" * len(strs)).format(*strs).split("\0")
-            else:
-                s = ""
-                for ch in strs:
-                    s += ch.decode('ISO-8859-1')
-                strs = s.split("\x00")
-            self.group = strs[0]
-            self.name = strs[1]
+            naming = data[2:]
+            zt = bytearray((0, ))
+            self.group = naming[:naming.find(zt)].decode("ISO-8859-1")
+            self.name = naming[naming.find(zt)+1:-1].decode("ISO-8859-1")
 
             self.ident = data[0]
 
             self.ctype = LogTocElement.get_cstring_from_id(data[1])
             self.pytype = LogTocElement.get_unpack_string_from_id(data[1])
 
-            if type(data[1]) == str:
-                self.access = ord(data[1]) & 0x10
-            else:
-                self.access = data[1] & 0x10
+            self.access = data[1] & 0x10
 
 
 class Log():
@@ -483,8 +465,8 @@ class Log():
     def _new_packet_cb(self, packet):
         """Callback for newly arrived packets with TOC information"""
         chan = packet.channel
-        cmd = packet.datal[0]
-        payload = packet.datal[1:]
+        cmd = packet.data[0]
+        payload = packet.data[1:]
 
         if (chan == CHAN_SETTINGS):
             id = payload[0]
@@ -525,7 +507,7 @@ class Log():
                                    error_status, id, msg)
                     if block:
                         block.err_no = error_status
-                        block.started_cb.call(False)
+                        block.started_cb.call(self, False)
                         # This is a temporary fix, we are adding a new issue
                         # for this. For some reason we get an error back after
                         # the block has been started and added. This will show
@@ -563,7 +545,7 @@ class Log():
 
         if (chan == CHAN_LOGDATA):
             chan = packet.channel
-            id = packet.datal[0]
+            id = packet.data[0]
             block = self._find_block(id)
             timestamps = struct.unpack("<BBB", packet.data[1:4])
             timestamp = (

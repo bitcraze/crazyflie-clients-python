@@ -63,7 +63,7 @@ class CRTPPacket(object):
         Create an empty packet with default values.
         """
         self.size = 0
-        self._data = ""
+        self._data = bytearray()
         # The two bits in position 3 and 4 needs to be set for legacy
         # support of the bootloader
         self.header = header | 0x3 << 2
@@ -129,7 +129,8 @@ class CRTPPacket(object):
         elif sys.version_info >= (3,) and type(data) == bytes:
             self._data = bytearray(data)
         else:
-            raise Exception("Data shall be of str, tupple or list type")
+            raise Exception("Data must be bytearray, string, list or tuple,"
+                            " not {}".format(type(data)))
 
     def _get_data_l(self):
         """Get the data in the packet as a list"""

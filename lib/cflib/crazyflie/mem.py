@@ -207,6 +207,11 @@ class I2CElement(MemoryElement):
                     elif self.elements["version"] == 1:
                         self.datav0 = data
                         self.mem_handler.read(self, 16, 5)
+                else:
+                    valid = False
+                    if self._update_finished_cb:
+                        self._update_finished_cb(self)
+                        self._update_finished_cb = None
 
             if addr == 16:
                 [radio_address_upper, radio_address_lower] = struct.unpack(
@@ -227,19 +232,16 @@ class I2CElement(MemoryElement):
                     self._update_finished_cb = None
 
     def _checksum256(self, st):
-        if sys.version_info < (3,):
-            return struct.pack("<B", reduce(lambda x, y: x + y,
-                                            map(ord, st)) % 256)
-        else:
-            return reduce(lambda x, y: x + y, list(st)) % 256
+        return reduce(lambda x, y: x + y, list(st)) % 256
 
     def write_data(self, write_finished_cb):
+        image = bytearray()
         if self.elements["version"] == 0:
             data = (
                 0x00, self.elements["radio_channel"],
                 self.elements["radio_speed"],
                 self.elements["pitch_trim"], self.elements["roll_trim"])
-            image = struct.pack("<BBBff", *data)
+            image += struct.pack("<BBBff", *data)
         elif self.elements["version"] == 1:
             data = (
                 0x01, self.elements["radio_channel"],
@@ -247,7 +249,7 @@ class I2CElement(MemoryElement):
                 self.elements["pitch_trim"], self.elements["roll_trim"],
                 self.elements["radio_address"] >> 32,
                 self.elements["radio_address"] & 0xFFFFFFFF)
-            image = struct.pack("<BBBffBI", *data)
+            image += struct.pack("<BBBffBI", *data)
         # Adding some magic:
         image = EEPROM_TOKEN + image
         image += struct.pack("B", self._checksum256(image))
@@ -342,8 +344,8 @@ class OWElement(MemoryElement):
         if test_crc == crc:
             while len(elem_data) > 0:
                 (eid, elen) = struct.unpack("BB", elem_data[:2])
-                self.elements[self.element_mapping[eid]] = elem_data[
-                    2:2 + elen]
+                self.elements[self.element_mapping[eid]] = \
+                    elem_data[2:2 + elen].decode("ISO-8859-1")
                 elem_data = elem_data[2 + elen:]
             return True
         return False
@@ -360,14 +362,14 @@ class OWElement(MemoryElement):
         header_data += struct.pack("B", header_crc)
 
         # Now generate the elements part
-        elem = ""
+        elem = bytearray()
         logger.info(list(self.elements.keys()))
         for element in reversed(list(self.elements.keys())):
             elem_string = self.elements[element]
             # logger.info(">>>> {}".format(elem_string))
             key_encoding = self._rev_element_mapping[element]
             elem += struct.pack("BB", key_encoding, len(elem_string))
-            elem += elem_string
+            elem += bytearray(elem_string.encode("ISO-8859-1"))
 
         elem_data = struct.pack("BB", 0x00, len(elem))
         elem_data += elem
@@ -375,12 +377,6 @@ class OWElement(MemoryElement):
         elem_data += struct.pack("B", elem_crc)
 
         data = header_data + elem_data
-
-        # Write data
-        p = ""
-        for s in data:
-            p += "0x{:02X} ".format(s)
-        logger.info(p)
 
         self.mem_handler.write(self, 0x00,
                                struct.unpack("B" * len(data), data))
@@ -428,7 +424,7 @@ class _ReadRequest:
         self.mem = mem
         self.addr = addr
         self._bytes_left = length
-        self.data = b""
+        self.data = bytearray()
         self.cf = cf
 
         self._current_addr = addr
@@ -493,7 +489,7 @@ class _WriteRequest:
         self.addr = addr
         self._bytes_left = len(data)
         self._data = data
-        self.data = ""
+        self.data = bytearray()
         self.cf = cf
 
         self._current_addr = addr
@@ -697,13 +693,8 @@ class Memory():
     def _new_packet_cb(self, packet):
         """Callback for newly arrived packets for the memory port"""
         chan = packet.channel
-        cmd = packet.datal[0]
-        raw_payload = struct.pack("B" * (len(packet.datal) - 1),
-                                  *packet.datal[1:])
-        payload = packet.datal[1:]
-
-        # logger.info("--------------->CHAN:{}=>{}".format(chan,
-        # struct.unpack("B"*len(payload), payload)))
+        cmd = packet.data[0]
+        payload = packet.data[1:]
 
         if chan == CHAN_INFO:
             if cmd == CMD_INFO_NBR:
@@ -746,9 +737,9 @@ class Memory():
                 # Type - 1 byte
                 mem_type = payload[1]
                 # Size 4 bytes (as addr)
-                mem_size = struct.unpack("I", raw_payload[2:6])[0]
+                mem_size = struct.unpack("I", payload[2:6])[0]
                 # Addr (only valid for 1-wire?)
-                mem_addr_raw = struct.unpack("B" * 8, raw_payload[6:14])
+                mem_addr_raw = struct.unpack("B" * 8, payload[6:14])
                 mem_addr = ""
                 for m in mem_addr_raw:
                     mem_addr += "{:02X}".format(m)
@@ -807,7 +798,7 @@ class Memory():
 
         if chan == CHAN_WRITE:
             id = cmd
-            (addr, status) = struct.unpack("<IB", raw_payload[0:5])
+            (addr, status) = struct.unpack("<IB", payload[0:5])
             logger.info(
                 "WRITE: Mem={}, addr=0x{:X}, status=0x{}".format(
                     id, addr, status))
@@ -833,8 +824,8 @@ class Memory():
 
         if chan == CHAN_READ:
             id = cmd
-            (addr, status) = struct.unpack("<IB", raw_payload[0:5])
-            data = struct.unpack("B" * len(raw_payload[5:]), raw_payload[5:])
+            (addr, status) = struct.unpack("<IB", payload[0:5])
+            data = struct.unpack("B" * len(payload[5:]), payload[5:])
             logger.info("READ: Mem={}, addr=0x{:X}, status=0x{}, "
                         "data={}".format(id, addr, status, data))
             # Find the read request
@@ -844,7 +835,7 @@ class Memory():
                     "mem {}".format(id))
                 rreq = self._read_requests[id]
                 if status == 0:
-                    if rreq.add_data(addr, raw_payload[5:]):
+                    if rreq.add_data(addr, payload[5:]):
                         self._read_requests.pop(id, None)
                         self.mem_read_cb.call(rreq.mem, rreq.addr, rreq.data)
                 else:
