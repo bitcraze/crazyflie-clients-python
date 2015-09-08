@@ -40,8 +40,8 @@ import logging
 import time
 import datetime
 from threading import Thread
-
 from threading import Timer, Lock
+from collections import namedtuple
 
 from .commander import Commander
 from .console import Console
@@ -331,6 +331,10 @@ class Crazyflie():
         self._send_lock.release()
 
 
+_CallbackContainer = namedtuple("CallbackConstainer",
+                                "port port_mask channel channel_mask callback")
+
+
 class _IncomingPacketHandler(Thread):
     """Handles incoming packets and sends the data to the correct receivers"""
 
@@ -348,7 +352,7 @@ class _IncomingPacketHandler(Thread):
         """Remove a callback for data that comes on a specific port"""
         logger.debug("Removing callback on port [%d] to [%s]", port, cb)
         for port_callback in self.cb:
-            if (port_callback[0] == port and port_callback[4] == cb):
+            if port_callback.port == port and port_callback.callback == cb:
                 self.cb.remove(port_callback)
 
     def add_header_callback(self, cb, port, channel, port_mask=0xFF,
@@ -358,10 +362,11 @@ class _IncomingPacketHandler(Thread):
         possibility to add a mask for channel and port for multiple
         hits for same callback.
         """
-        self.cb.append([port, port_mask, channel, channel_mask, cb])
+        self.cb.append(_CallbackContainer(port, port_mask,
+                                          channel, channel_mask, cb))
 
     def run(self):
-        while (True):
+        while True:
             if self.cf.link is None:
                 time.sleep(1)
                 continue
@@ -374,22 +379,22 @@ class _IncomingPacketHandler(Thread):
             self.cf.packet_received.call(pk)
 
             found = False
-            for cb in self.cb:
-                if (cb[0] == pk.port & cb[1] and cb[2] == pk.channel & cb[3]):
-                    try:
-                        cb[4](pk)
-                    except Exception:  # pylint: disable=W0703
-                        # Disregard pylint warning since we want to catch all
-                        # exceptions and we can't know what will happen in
-                        # the callbacks.
-                        import traceback
+            for cb in (cb for cb in self.cb
+                       if cb.port == (pk.port & cb.port_mask) and
+                       cb.channel == (pk.channel & cb.channel_mask)):
+                try:
+                    cb.callback(pk)
+                except Exception:  # pylint: disable=W0703
+                    # Disregard pylint warning since we want to catch all
+                    # exceptions and we can't know what will happen in
+                    # the callbacks.
+                    import traceback
 
-                        logger.warning("Exception while doing callback on port"
-                                       " [%d]\n\n%s", pk.port,
-                                       traceback.format_exc())
-                    if (cb[0] != 0xFF):
-                        found = True
+                    logger.warning("Exception while doing callback on port"
+                                   " [%d]\n\n%s", pk.port,
+                                   traceback.format_exc())
+                if cb.port != 0xFF:
+                    found = True
 
             if not found:
-                logger.warning("Got packet on header (%d,%d) but no callback "
-                               "to handle it", pk.port, pk.channel)
+                pass
