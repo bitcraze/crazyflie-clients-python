@@ -387,8 +387,12 @@ class FlightTab(Tab, flight_tab_class):
         self.logAltHold = None
         self._led_ring_effect.setEnabled(False)
         self._led_ring_effect.clear()
-        self._led_ring_effect.currentIndexChanged.disconnect(
-            self._ring_effect_changed)
+        try:
+            self._led_ring_effect.currentIndexChanged.disconnect(
+                self._ring_effect_changed)
+        except TypeError:
+            # Signal was not connected
+            pass
         self._led_ring_effect.setCurrentIndex(-1)
         self._led_ring_headlight.setEnabled(False)
 
