@@ -73,6 +73,7 @@ class RadioDriver(CRTPDriver):
         self.in_queue = None
         self.out_queue = None
         self._thread = None
+        self.needs_resending = True
 
     def connect(self, uri, link_quality_callback, link_error_callback):
         """
@@ -139,7 +140,8 @@ class RadioDriver(CRTPDriver):
         self._thread = _RadioDriverThread(self.cradio, self.in_queue,
                                           self.out_queue,
                                           link_quality_callback,
-                                          link_error_callback)
+                                          link_error_callback,
+                                          self)
         self._thread.start()
 
         self.link_error_callback = link_error_callback
@@ -335,7 +337,7 @@ class _RadioDriverThread(threading.Thread):
     RETRYCOUNT_BEFORE_DISCONNECT = 10
 
     def __init__(self, cradio, inQueue, outQueue, link_quality_callback,
-                 link_error_callback):
+                 link_error_callback, link):
         """ Create the object """
         threading.Thread.__init__(self)
         self.cradio = cradio
@@ -348,6 +350,12 @@ class _RadioDriverThread(threading.Thread):
         self.retries = collections.deque()
         self.retry_sum = 0
 
+        self.curr_up = 0
+        self.curr_down = 1
+
+        self.has_safelink = False
+        self._link = link
+
     def stop(self):
         """ Stop the thread """
         self.sp = True
@@ -356,18 +364,51 @@ class _RadioDriverThread(threading.Thread):
         except Exception:
             pass
 
+    def _send_packet_safe(self, cr, packet):
+        """
+        Adds 1bit counter to CRTP header to guarantee that no ack (downlink)
+        payload are lost and no uplink packet are duplicated.
+        The caller should resend packet if not acked (ie. same as with a
+        direct call to crazyradio.send_packet)
+        """
+        packet = bytearray(packet)
+        packet[0] &= 0xF3
+        packet[0] |= self.curr_up << 3 | self.curr_down << 2
+        resp = cr.send_packet(packet)
+        if resp and resp.ack and len(resp.data) and \
+           (resp.data[0] & 0x04) == (self.curr_down << 2):
+            self.curr_down = 1 - self.curr_down
+        if resp and resp.ack:
+            self.curr_up = 1 - self.curr_up
+
+        return resp
+
     def run(self):
         """ Run the receiver thread """
         dataOut = array.array('B', [0xFF])
         waitTime = 0
         emptyCtr = 0
 
+        # Try up to 10 times to enable the safelink mode
+        for _ in range(10):
+            resp = self.cradio.send_packet((0xff, 0x05, 0x01))
+            if resp and resp.data and tuple(resp.data) == (0xff, 0x05, 0x01):
+                self.has_safelink = True
+                self.curr_up = 0
+                self.curr_down = 0
+                break
+        logging.info("Has safelink: {}".format(self.has_safelink))
+        self._link.needs_resending = not self.has_safelink
+
         while (True):
             if (self.sp):
                 break
 
             try:
-                ackStatus = self.cradio.send_packet(dataOut)
+                if self.has_safelink:
+                    ackStatus = self._send_packet_safe(self.cradio, dataOut)
+                else:
+                    ackStatus = self.cradio.send_packet(dataOut)
             except Exception as e:
                 import traceback
 
