@@ -49,13 +49,18 @@ class InputMux(object):
         for r in self._devs:
             if self._devs[r]:
                 if self._devs[r] == dev:
-                    self._devs[r].close()
                     self._devs[r] = None
+                    dev.close()
 
-        if self._devs[role]:
-            self._devs[role].close()
+        # First set role to None to stop reading
+        old_dev = self._devs[role]
+        self._devs[role] = None
+        if old_dev:
+            old_dev.close()
+
+        # Open the new device before attaching it to a role
+        dev.open()
         self._devs[role] = dev
-        self._devs[role].open()
 
     def supported_roles(self):
         return list(self._devs.keys())
