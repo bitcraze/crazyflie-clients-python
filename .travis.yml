@@ -5,4 +5,4 @@ python:
 services:
   - docker
 script:
-  - docker run --rm -v ${PWD}:/module bitcraze/builder ./tools/build/build.sh
+  - docker run --rm -v ${PWD}:/module bitcraze/builder ./tools/build/build

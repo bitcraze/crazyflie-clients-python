@@ -1,4 +1,4 @@
 {
-  "artifactType": "python",
-  "buildScript": "tools/build/build.sh"
+  "version": "1.0",
+  "environmentReq": ["python2"]
 }
