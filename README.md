@@ -22,33 +22,33 @@ instructions on how to run from source see bellow.
 
 ## Windows
 
-To install the Crazyflie PC client in Windows, download the installation
-program from the [binary download
-page](http://wiki.bitcraze.se/projects:crazyflie:binaries:index)."Crazyflie
-client" will be added to the start menu.
+Follow these steps to install the binary distribution on Windows 7/8/10.
+ - Download the latest release [here](https://github.com/bitcraze/crazyflie-clients-python/releases) (named cfclient-win32-install-*.exe)
+ - Execute the installer. After the install the application will be added to the Start menu.
+ - Install the Crazyradio drivers by following [these instructions](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
 
 Running from source
 -------------------
 
-## Windows
+## Windows (7/8/10)
 
-Install dependencies. With Windows installers (tested with 32Bit versions):
- - Python 3.4 (https://www.python.org/downloads/windows/)
- - PyQT4 for Python 3.4 (http://www.riverbankcomputing.com/software/pyqt/download)
- - Scipy for Python 3.4 (http://sourceforge.net/projects/scipy/files/scipy/)
- - PyQTGraph (http://www.pyqtgraph.org/)
+Install dependencies. With Windows installers (tested using only 32-bit installs on 64-bit OS):
+ - [Python 3.4](https://www.python.org/downloads/windows/) (make sure the pip component is selected when installing)
+ - [PyQT4 for Python 3.4](http://www.riverbankcomputing.com/software/pyqt/download)
+ - [NumPy for Python 3.4](http://sourceforge.net/projects/numpy/files/NumPy)
+ - [SDL2](https://www.libsdl.org/download-2.0.php) (copy SDL2.dll into the client source folder)
 
-Python libs (to be install by running 'setup.py install'):
- - PyUSB **1.0.0a3** (https://github.com/walac/pyusb/releases)
- - pysdl2 (https://bitbucket.org/marcusva/py-sdl2/downloads)
-
-Download SDL2 from http://libsdl.org/download-2.0.php and copy SDL2.dll in the
-crazyflie-clients-python folder.
-
-Run with:
+Then install PyUSB, PyZMQ, PySDL2 and PyQtGraph using pip
 ```
-C:\Python34\python bin\cfclient
+C:\Users\bitcraze>\Python34\python.exe -m pip install pyusb==1.0.0b2 pyzmq pysdl2 pyqtgraph
 ```
+
+Finally you run the client using the following command
+```
+\Python34\python bin\cfclient
+```
+
+**NOTE**: To use the Crazyradio you will have to [install the drivers](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
 
 ## Mac OSX
 
