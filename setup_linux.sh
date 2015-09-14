@@ -15,5 +15,5 @@ echo SUBSYSTEM==\"usb\", ATTRS{idVendor}==\"1915\", ATTRS{idProduct}==\"7777\", 
 MODE=\"0664\", GROUP=\"plugdev\" > /etc/udev/rules.d/99-crazyradio.rules
 
 # Install Crazyflie PC client
-python setup.py install
+python3 setup.py install
 
