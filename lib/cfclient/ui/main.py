@@ -114,27 +114,28 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         if platform.system() == 'Darwin':
         
             (Version,junk,machine) =  platform.mac_ver()
-            logger.info("This is a MAC - checking if we can apply Progress Bar Stylesheet for Yosemite Skinny Bars ")
+            logger.info("This is a Mac - checking if we can apply QProgressBar "
+                "stylesheet for Yosemite skinny bars...")
             yosemite = (10,10,0)
             tVersion = tuple(map(int, (Version.split("."))))
             
             if tVersion >= yosemite:
-                logger.info( "Found Yosemite:")
+                logger.info( "Found Yosemite - applying stylesheet")
         
                 tcss = """
                     QProgressBar {
-                    border: 2px solid grey;
+                    border: 1px solid grey;
                     border-radius: 5px;
                     text-align: center;
                 }
                 QProgressBar::chunk {
-                     background-color: #05B8CC;
+                     background-color: #0000FF;
                  }
                  """
                 self.setStyleSheet(tcss)
                 
             else:
-                logger.info( "Pre-Yosemite")
+                logger.info( "Pre-Yosemite - skinny bar stylesheet not applied")
         
         ######################################################
         
