@@ -1,3 +1,6 @@
+Warning: Generating windows executable is not working yet with Python3. This is
+work in progress in issue #207. Any help is apreciated!
+
 Howto generate cfclient Windows installer
 =========================================
 
