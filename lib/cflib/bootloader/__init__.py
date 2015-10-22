@@ -138,6 +138,7 @@ class Bootloader:
         self._internal_flash(target=to_flash)
 
     def flash(self, filename, targets):
+        platform_id = self._get_platform_id()
         for target in targets:
             if TargetTypes.from_string(target) not in self._cload.targets:
                 print("Target {} not found by bootloader".format(target))
@@ -154,24 +155,26 @@ class Bootloader:
                 if len(targets) == 0:
                     # No targets specified, just flash everything
                     for file in files:
-                        if files[file]["target"] in targets:
-                            targets[files[file]["target"]] += (
-                                files[file]["type"],)
-                        else:
-                            targets[files[file]["target"]] = (
-                                files[file]["type"],)
+                        if platform_id == files[file]["platform"]:
+                            if files[file]["target"] in targets:
+                                targets[files[file]["target"]] += (
+                                    files[file]["type"],)
+                            else:
+                                targets[files[file]["target"]] = (
+                                    files[file]["type"],)
 
                 zip_targets = {}
                 for file in files:
                     file_name = file
                     file_info = files[file]
-                    if file_info["target"] in zip_targets:
-                        zip_targets[file_info["target"]][file_info["type"]] = {
-                            "filename": file_name}
-                    else:
-                        zip_targets[file_info["target"]] = {}
-                        zip_targets[file_info["target"]][file_info["type"]] = {
-                            "filename": file_name}
+                    if platform_id == file_info["platform"]:
+                        if file_info["target"] in zip_targets:
+                            zip_targets[file_info["target"]][file_info["type"]] = {
+                                "filename": file_name}
+                        else:
+                            zip_targets[file_info["target"]] = {}
+                            zip_targets[file_info["target"]][file_info["type"]] = {
+                                "filename": file_name}
             except KeyError as e:
                 print(e)
                 print("No manifest.json in {}".format(filename))
@@ -357,3 +360,12 @@ class Bootloader:
                 int(100))
         else:
             print("")
+
+    def _get_platform_id(self):
+        """Get platform identifier used in the zip manifest for curr copter"""
+        identifier = "cf1"
+        if (BootVersion.is_cf2(self.protocol_version)):
+            identifier = "cf2"
+
+        return identifier
+
