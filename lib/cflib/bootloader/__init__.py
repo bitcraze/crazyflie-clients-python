@@ -151,27 +151,13 @@ class Bootloader:
                 js = zf.read("manifest.json").decode("UTF-8")
                 j = json.loads(js)
                 files = j["files"]
+                platform_id = self._get_platform_id()
+                files_for_platform = self._filter_platform(files, platform_id)
                 if len(targets) == 0:
-                    # No targets specified, just flash everything
-                    for file in files:
-                        if files[file]["target"] in targets:
-                            targets[files[file]["target"]] += (
-                                files[file]["type"],)
-                        else:
-                            targets[files[file]["target"]] = (
-                                files[file]["type"],)
+                    targets = self._extract_targets_from_manifest_files(
+                        files_for_platform)
 
-                zip_targets = {}
-                for file in files:
-                    file_name = file
-                    file_info = files[file]
-                    if file_info["target"] in zip_targets:
-                        zip_targets[file_info["target"]][file_info["type"]] = {
-                            "filename": file_name}
-                    else:
-                        zip_targets[file_info["target"]] = {}
-                        zip_targets[file_info["target"]][file_info["type"]] = {
-                            "filename": file_name}
+                zip_targets = self._extract_zip_targets(files_for_platform)
             except KeyError as e:
                 print(e)
                 print("No manifest.json in {}".format(filename))
@@ -222,6 +208,41 @@ class Bootloader:
         for target in files_to_flash:
             file_counter += 1
             self._internal_flash(target, file_counter, len(files_to_flash))
+
+    def _filter_platform(self, files, platform_id):
+        result = {}
+        for file in files:
+            file_info = files[file]
+            file_platform = file_info["platform"]
+            if platform_id == file_platform:
+                result[file] = file_info
+        return result
+
+    def _extract_zip_targets(self, files):
+        zip_targets = {}
+        for file in files:
+            file_name = file
+            file_info = files[file]
+            file_target = file_info["target"]
+            file_type = file_info["type"]
+            if file_target not in zip_targets:
+                zip_targets[file_target] = {}
+            zip_targets[file_target][file_type] = {
+                "filename": file_name}
+        return zip_targets
+
+    def _extract_targets_from_manifest_files(self, files):
+        targets = {}
+        for file in files:
+            file_info = files[file]
+            file_target = file_info["target"]
+            file_type = file_info["type"]
+            if file_target in targets:
+                targets[file_target] += (file_type,)
+            else:
+                targets[file_target] = (file_type,)
+
+        return targets
 
     def reset_to_firmware(self):
         if self._cload.protocol_version == BootVersion.CF2_PROTO_VER:
@@ -357,3 +378,11 @@ class Bootloader:
                 int(100))
         else:
             print("")
+
+    def _get_platform_id(self):
+        """Get platform identifier used in the zip manifest for curr copter"""
+        identifier = "cf1"
+        if (BootVersion.is_cf2(self.protocol_version)):
+            identifier = "cf2"
+
+        return identifier

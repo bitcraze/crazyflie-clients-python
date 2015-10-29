@@ -48,6 +48,10 @@ class BootVersion:
             return "Crazyflie 2.0"
         return "Unknown"
 
+    @staticmethod
+    def is_cf2(ver):
+        return ver == BootVersion.CF2_PROTO_VER
+
 
 class TargetTypes:
     STM32 = 0xFF
