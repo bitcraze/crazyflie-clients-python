@@ -99,8 +99,6 @@ class UsbDriver(CRTPDriver):
             self.cfusb = CfUsb(devid=int(uri_data.group(1)))
             if self.cfusb.dev:
                 self.cfusb.set_crtp_to_usb(True)
-                # Wait for the blocking queues in the firmware to time out
-                time.sleep(1)
             else:
                 self.cfusb = None
                 raise Exception("Could not open {}".format(self.uri))
