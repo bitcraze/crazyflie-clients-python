@@ -18,7 +18,7 @@ To install the Crazyflie PC client in Linux, you can run the setup script with:
 This will install the Crazyflie PC client systemwide, create a udev entry for
 the Crazyradio and setup the permissions so that the current user can use the
 radio without root permissions after restarting the computer. For further
-instructions on how to run from source see bellow.
+instructions on how to run from source and [install dependencies](https://github.com/SteveClement/crazyflie-clients-python#dependencies) see bellow.
 
 ## Windows
 
@@ -159,6 +159,7 @@ Example commands to install these dependencies:
 * Ubuntu (15.04):
 
     ```sudo apt-get install python3 python3-pip python3-pyqt4 python3-zmq python3-pyqtgraph
+    
     sudo pip3 install pyusb==1.0.0b2```
 
 * OpenSUSE (tested for 11.3):
