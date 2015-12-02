@@ -23,7 +23,8 @@
 
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+# USA.
 
 """
 This tab plots different logging data defined by configurations that has been
@@ -46,7 +47,8 @@ from cflib.crazyflie.log import LogConfig
 from cfclient.ui.tab import Tab
 
 gps_tab_class = uic.loadUiType(sys.path[0] +
-                                "/cfclient/ui/tabs/gpsTab.ui")[0]
+                               "/cfclient/ui/tabs/gpsTab.ui")[0]
+
 
 class GpsTab(Tab, gps_tab_class):
     """Tab for plotting logging data"""
@@ -57,7 +59,6 @@ class GpsTab(Tab, gps_tab_class):
     _disconnected_signal = pyqtSignal(str)
     _connected_signal = pyqtSignal(str)
     _console_signal = pyqtSignal(str)
-
 
     def __init__(self, tabWidget, helper, *args):
         super(GpsTab, self).__init__(*args)
@@ -112,7 +113,8 @@ class GpsTab(Tab, gps_tab_class):
 
     def panMap(self, lng, lat):
         frame = self.view.page().mainFrame()
-        frame.evaluateJavaScript('map.panTo(L.latLng({}, {}));'.format(lat, lng))
+        frame.evaluateJavaScript('map.panTo(L.latLng({}, {}));'.format(lat,
+                                                                       lng))
 
     def _place_cf(self, lng, lat, acc):
         frame = self.view.page().mainFrame()
@@ -141,7 +143,7 @@ class GpsTab(Tab, gps_tab_class):
     def _logging_error(self, log_conf, msg):
         """Callback from the log layer when an error occurs"""
         QMessageBox.about(self, "Plot error", "Error when starting log config"
-                " [%s]: %s" % (log_conf.name, msg))
+                          " [%s]: %s" % (log_conf.name, msg))
 
     def _reset_max(self):
         """Callback from reset button"""
