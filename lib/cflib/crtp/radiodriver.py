@@ -192,7 +192,8 @@ class RadioDriver(CRTPDriver):
         self._thread = _RadioDriverThread(self.cradio, self.in_queue,
                                           self.out_queue,
                                           self.link_quality_callback,
-                                          self.link_error_callback)
+                                          self.link_error_callback,
+                                          self)
         self._thread.start()
 
     def close(self):

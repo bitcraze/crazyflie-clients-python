@@ -145,22 +145,22 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             tVersion = tuple(map(int, (Version.split("."))))
 
             if tVersion >= yosemite:
-                logger.info("Found Yosemite:")
+                logger.info("Found Yosemite - applying stylesheet")
 
                 tcss = """
                     QProgressBar {
-                    border: 2px solid grey;
-                    border-radius: 5px;
-                    text-align: center;
-                }
-                QProgressBar::chunk {
-                     background-color: #05B8CC;
-                 }
+                        border: 1px solid grey;
+                        border-radius: 5px;
+                        text-align: center;
+                    }
+                    QProgressBar::chunk {
+                        background-color: """ + COLOR_BLUE + """;
+                    }
                  """
                 self.setStyleSheet(tcss)
 
             else:
-                logger.info("Pre-Yosemite")
+                logger.info("Pre-Yosemite - skinny bar stylesheet not applied")
 
         ######################################################
 
