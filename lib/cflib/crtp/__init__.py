@@ -56,14 +56,14 @@ def init_drivers(enable_debug_driver=False):
             continue
 
 
-def scan_interfaces():
+def scan_interfaces(address = None):
     """ Scan all the interfaces for available Crazyflies """
     available = []
     found = []
     for instance in INSTANCES:
         logger.debug("Scanning: %s", instance)
         try:
-            found = instance.scan_interface()
+            found = instance.scan_interface(address)
             available += found
         except Exception:
             raise

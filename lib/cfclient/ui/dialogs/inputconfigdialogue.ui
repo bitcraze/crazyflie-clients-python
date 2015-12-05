@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>957</width>
-    <height>492</height>
+    <height>512</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -132,13 +132,13 @@
               </size>
              </property>
              <property name="minimum">
-              <number>0</number>
+              <number>-100</number>
              </property>
              <property name="maximum">
               <number>100</number>
              </property>
              <property name="sliderPosition">
-              <number>0</number>
+              <number>5</number>
              </property>
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
@@ -199,7 +199,7 @@
               <enum>Qt::LeftToRight</enum>
              </property>
              <property name="minimum">
-              <number>0</number>
+              <number>-100</number>
              </property>
              <property name="maximum">
               <number>100</number>
@@ -335,7 +335,7 @@
               </size>
              </property>
              <property name="minimum">
-              <number>1</number>
+              <number>-100</number>
              </property>
              <property name="maximum">
               <number>100</number>
@@ -505,12 +505,35 @@
           <property name="geometry">
            <rect>
             <x>600</x>
-            <y>200</y>
+            <y>158</y>
             <width>292</width>
-            <height>123</height>
+            <height>194</height>
            </rect>
           </property>
           <layout class="QGridLayout" name="gridLayout_5">
+           <item row="5" column="1">
+            <widget class="QPushButton" name="detectAlt2">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Detect</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QCheckBox" name="alt1">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Alt 1</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
            <item row="3" column="1">
             <widget class="QPushButton" name="detectExitapp">
              <property name="enabled">
@@ -537,7 +560,7 @@
               <bool>false</bool>
              </property>
              <property name="text">
-              <string>Killswtich</string>
+              <string>Killswitch</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -572,6 +595,52 @@
            </item>
            <item row="1" column="1">
             <widget class="QPushButton" name="detectAltHold">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Detect</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QCheckBox" name="alt2">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Alt 2</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QPushButton" name="detectAlt1">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Detect</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QCheckBox" name="muxswitch">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Mux switch</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="1">
+            <widget class="QPushButton" name="detectMuxswitch">
              <property name="enabled">
               <bool>false</bool>
              </property>

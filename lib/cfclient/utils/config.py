@@ -78,7 +78,7 @@ class Config():
         elif (key in self._readonly):
             value = self._readonly[key]
         else:
-            raise KeyError("Could not get the paramter [%s]" % key)
+            raise KeyError("Could not get the parameter [%s]" % key)
 
         if (isinstance(value, unicode)):
             value = str(value)

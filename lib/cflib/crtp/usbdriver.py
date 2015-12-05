@@ -62,6 +62,7 @@ class UsbDriver(CRTPDriver):
         self.in_queue = None
         self.out_queue = None
         self._thread = None
+        self.needs_resending = False
 
     def connect(self, uri, link_quality_callback, link_error_callback):
         """
@@ -179,7 +180,7 @@ class UsbDriver(CRTPDriver):
             pass
         self.cfusb = None
 
-    def scan_interface(self):
+    def scan_interface(self, address):
         """ Scan interface for Crazyflies """
         if self.cfusb is None:
             try:

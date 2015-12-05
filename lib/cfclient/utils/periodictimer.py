@@ -53,6 +53,9 @@ class PeriodicTimer:
 
     def start(self):
         """Start the timer"""
+        if self._thread:
+            logger.warning("Timer already started, not restarting")
+            return
         self._thread = _PeriodicTimerThread(self._period, self._callbacks)
         self._thread.setDaemon(True)
         self._thread.start()

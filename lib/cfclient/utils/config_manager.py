@@ -80,15 +80,15 @@ class ConfigManager():
             configs = [os.path.basename(f) for f in
                        glob.glob(self.configs_dir + "/[A-Za-z]*.json")]
             self._input_config = []
-	    self._input_settings = []
+            self._input_settings = []
             self._list_of_configs = []
             for conf in configs:
-                logger.info("Parsing [%s]", conf)
+                logger.debug("Parsing [%s]", conf)
                 json_data = open(self.configs_dir + "/%s" % conf)
                 data = json.load(json_data)
                 new_input_device = {}
-		new_input_settings = {"updateperiod":10, "springythrottle":True}
-		for s in data["inputconfig"]["inputdevice"]:
+                new_input_settings = {"updateperiod":10, "springythrottle":True}
+                for s in data["inputconfig"]["inputdevice"]:
                     if s == "axis":
                         for a in data["inputconfig"]["inputdevice"]["axis"]:
                             axis = {}
@@ -113,7 +113,7 @@ class ConfigManager():
                     else:
                         new_input_settings[s] = data["inputconfig"]["inputdevice"][s]
                 self._input_config.append(new_input_device)
-		self._input_settings.append(new_input_settings)
+                self._input_settings.append(new_input_settings)
                 json_data.close()
                 self._list_of_configs.append(conf[:-5])
         except Exception as e:

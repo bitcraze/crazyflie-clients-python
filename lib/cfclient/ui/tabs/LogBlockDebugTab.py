@@ -49,7 +49,7 @@ class LogBlockDebugTab(Tab, logblock_tab_class):
     Used to show debug-information about log status.
     """
 
-    _blocks_updated_signal = pyqtSignal(bool)
+    _blocks_updated_signal = pyqtSignal(object, bool)
     _disconnected_signal = pyqtSignal(str)
 
     def __init__(self, tabWidget, helper, *args):
@@ -75,7 +75,7 @@ class LogBlockDebugTab(Tab, logblock_tab_class):
         block.added_cb.add_callback(self._blocks_updated_signal.emit)
         block.started_cb.add_callback(self._blocks_updated_signal.emit)
 
-    def _update_tree(self):
+    def _update_tree(self, conf, value):
         """Update the block tree"""
         self._block_tree.clear()
         for block in self._helper.cf.log.log_blocks:

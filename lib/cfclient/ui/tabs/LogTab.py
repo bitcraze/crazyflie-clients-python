@@ -26,7 +26,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-Showns the Log TOC of available variables in the Crazyflie.
+Shows the Log TOC of available variables in the Crazyflie.
 """
 
 __author__ = 'Bitcraze AB'
@@ -80,7 +80,7 @@ class LogTab(Tab, param_tab_class):
     def connected(self, linkURI):
         self.logTree.clear()
 
-        toc = self.cf.log._toc
+        toc = self.cf.log.toc
 
         for group in toc.toc.keys():
             groupItem = QtGui.QTreeWidgetItem()

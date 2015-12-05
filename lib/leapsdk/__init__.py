@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __
@@ -21,10 +20,19 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc., 51
+#  Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-Various utilities used by the user interface.
+In order to use the Leap Motion as an input device reader the libraries from
+the Leap Motion SDK has to be placed in this directory. This can be done by
+downloading the SDK from the http://developer.leapmotion.com website, unpacking
+it and copying the following files:
+
+  * LeapSDK\lib\Leap.py                     -> leapsdk\Leap.py
+  * LeapSDK\lib\<your_arch>\LeapPython.so   -> leapsdk\LeapPython.so
+  * LeapSDK\lib\<your_arch>\libLeap.so      -> leapsdk\libLeap.so
 """
+
+

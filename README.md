@@ -13,7 +13,7 @@ Installation
 
 To install the Crazyflie PC client in Linux, you can run the setup script with:
 
-```sudo setup.sh```
+```sudo setup_linux.sh```
 
 This will install the Crazyflie PC client systemwide, create a udev entry for
 the Crazyradio and setup the permissions so that the current user can use the
@@ -39,7 +39,7 @@ Install dependencies. With Windows installers (tested with 32Bit versions):
  - PyQTGraph (http://www.pyqtgraph.org/)
 
 Python libs (to be install by running 'setup.py install'):
- - PyUSB (https://github.com/walac/pyusb/releases)
+ - PyUSB **1.0.0a3** (https://github.com/walac/pyusb/releases)
  - pysdl2 (https://bitbucket.org/marcusva/py-sdl2/downloads)
 
 Download SDL2 from http://libsdl.org/download-2.0.php and copy SDL2.dll in the
@@ -60,87 +60,85 @@ they might or might not affected of this.
 
 1. [Install the Command Line Tools](https://gist.github.com/derhuerst/1b15ff4652a867391f03#1--install-the-command-line-tools).
 
-2. [Install Homebrew](https://gist.github.com/derhuerst/1b15ff4652a867391f03#2--install-homebrew).
+1. [Install Homebrew](https://gist.github.com/derhuerst/1b15ff4652a867391f03#2--install-homebrew).
 
-3. Install Homebrew's Python
-```
-brew install python
-```
-This will also pull [pip](https://pip.pypa.io/en/latest/), which we
-will use later to install some Python modules that are not distributed through
-Homebrew.
+1. Install Homebrew's Python
+    ```
+    brew install python
+    ```
 
-3. Make sure the homebrew Python version is used system-wide
-To do this we need to prepend this installation to our PYTHONPATH:
-```
-echo 'export PYTHONPATH=/usr/local/lib/python2.7/site-packages:$PYTHONPATH' >> ~/.bashrc
-source ~/.bashrc
-```
+    This will also pull [pip](https://pip.pypa.io/en/latest/), which we will use later to install some Python modules that are not distributed through Homebrew.
 
-4. Install SDL for Python
-```
-brew install sdl sdl2 sdl_image sdl_mixer sdl_ttf portmidi
-```
+1. Make sure the homebrew Python version is used system-wide
+    To do this we need to prepend this installation to our PYTHONPATH:
 
-5. Install remaining dependencies
-```
-brew install pyqt libusb mercurial
-pip install --pre pysdl2 pyusb pyqtgraph
-```
+    ```
+    echo 'export PYTHONPATH=/usr/local/lib/python2.7/site-packages:$PYTHONPATH' >> ~/.bashrc
+    source ~/.bashrc
+    ```
 
-6. You now have all the dependencies needed to run the client. From the source
-folder, run it with the following command:
-```
-python bin/cfclient
-```
+1. Install SDL for Python
+    ```
+    brew install sdl sdl2 sdl_image sdl_mixer sdl_ttf portmidi
+    ```
+
+1. Install remaining dependencies
+
+    ```
+    brew install pyqt libusb
+    pip install --pre pysdl2 pyusb pyqtgraph
+    ```
+
+1. You now have all the dependencies needed to run the client. From the source folder, run it with the following command:
+    ```
+    python bin/cfclient
+    ```
 
 ### Using MacPorts
-1. [Install MacPorts if needed](http://www.macports.org/install.php). Otherwise
-update your installation with:
-```
-sudo port selfupdate
-sudo port upgrade outdated
-```
+1. [Install MacPorts if needed](http://www.macports.org/install.php). Otherwise update your installation with:
+    ```
+    sudo port selfupdate
+    sudo port upgrade outdated
+    ```
 
-2. Install dependencies. Note that there are quite a few, so this could take a
-while:
-```
-sudo port install libusb python27 py27-pyusb py27-SDL2 py27-pyqt4
-```
-To enable the plotter tab install pyqtgraph, this takes a lot of time:
-```
-sudo port install py27-pyqtgraph
-```
-You can now run the client from source with
-```
-/opt/local/bin/python2.7 bin/cfclient
-```
+1. Install dependencies. Note that there are quite a few, so this could take a while:
+    ```
+    sudo port install libusb python27 py27-pyusb py27-SDL2 py27-pyqt4
+    ```
+    To enable the plotter tab install pyqtgraph, this takes a lot of time:
+    ```
+    sudo port install py27-pyqtgraph
+    ```
+    You can now run the client from source with
+    ```
+    /opt/local/bin/python2.7 bin/cfclient
+    ```
 
-3. To make it easier to run MacPorts, add ```/opt/local/bin``` to your PATH variable.
-The MacPorts installer should take care of that, but take a look at
-```~/.profile``` to make sure. If you have any issues it could be due to the
-libraries not getting picked up correctly. Fix that by setting
-```DYLD_LIBRARY_PATH``` to ```/opt/local/lib``` in ```~/.profile```:
-```
-export DYLD_LIBRARY_PATH=/opt/local/lib
-```
+1. To make it easier to run MacPorts, add ```/opt/local/bin``` to your PATH variable.
+    The MacPorts installer should take care of that, but take a look at
+    ```~/.profile``` to make sure. If you have any issues it could be due to the
+    libraries not getting picked up correctly. Fix that by setting
+    ```DYLD_LIBRARY_PATH``` to ```/opt/local/lib``` in ```~/.profile```:
+    ```
+    export DYLD_LIBRARY_PATH=/opt/local/lib
+    ```
 
-4. Now you're good to go! Run the client from the source folder with the
-following command:
-```
-python2.7 bin/cfclient
-```
+1. Now you're good to go! Run the client from the source folder with the
+    following command:
+    ```
+    python2.7 bin/cfclient
+    ```
 
 ## Linux
 
-###Launching the GUI application
+### Launching the GUI application
 
 To launch the GUI application in the source folder type:
 ```python bin/cfclient```
 
 To launch the GUI after a systemwide installation, execute ```cfclient```. 
 
-###Dependencies
+### Dependencies
 
 The Crazyflie PC client has the following dependencies:
 
@@ -154,17 +152,17 @@ Example commands to install these dependencies:
 
 * Fedora (tested for 16 to 18):
 
-```sudo yum install pysdl2 pyusb PyQt4```
+    ```sudo yum install pysdl2 pyusb PyQt4```
 
 * Ubuntu (tested for 10.04 / 11.10 / 12.04):
 
-```sudo apt-get install python2.7 python-usb python-pysdl2 python-qt4```
+    ```sudo apt-get install python2.7 python-usb python-pysdl2 python-qt4```
 
 * OpenSUSE (tested for 11.3):
 
-```sudo zypper install python-pysdl2 libusb python-usb```
+    ```sudo zypper install python-pysdl2 libusb python-usb```
 
-###Setting udev permissions
+### Setting udev permissions
 
 The following steps make it possible to use the USB Radio without being root.
 

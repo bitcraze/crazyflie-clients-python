@@ -2,13 +2,13 @@
 <package>
   <!-- Changed the name to cfclient to avoid '_', as, when installed,
        python converts them to '-' which are not allowed in catkin pkgs.
-       This prevents get_distribution from working, and retriving version
+       This prevents get_distribution from working, and retrieving version
        as specified in setup.py -->
   <name>cfclient</name>
   <version>2014.04.9001</version>
   <description>Bitcraze Cazyflie nano quadcopter client</description>
 
-  <url type="website">https://github.com/mchenryc/crazyflie_clients_python</url>
+  <url type="website">https://github.com/bitcraze/crazyflie-clients-python</url>
   <license>GPL</license>
 
   <author email="contact@bitcraze.se">Bitcraze team</author>

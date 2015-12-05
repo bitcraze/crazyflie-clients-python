@@ -49,7 +49,6 @@ from cfclient.ui.tab import Tab
 import cflib.crtp
 
 from cflib.bootloader.cloader import Cloader
-from cfclient.utils.guiconfig import GuiConfig
 
 service_dialog_class = uic.loadUiType(sys.path[0] +
                                       "/cfclient/ui/dialogs/bootloader.ui")[0]

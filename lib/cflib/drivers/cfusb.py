@@ -137,7 +137,7 @@ class CfUsb:
         else:
             _send_vendor_setup(self.handle, 0x01, 0x01, 0, ())
 
-    ### Data transferts ###
+    ### Data transfers ###
     def send_packet(self, dataOut):
         """ Send a packet and receive the ack from the radio dongle
             The ack contains information about the packet transmition
@@ -159,7 +159,18 @@ class CfUsb:
             else:
                 dataIn = self.handle.read(0x81, 64, timeout=20)
         except usb.USBError as e:
-            pass
+            try:
+                if e.backend_error_code == -7 or e.backend_error_code == -116:
+                    # Normal, the read was empty
+                    pass
+                else:
+                    raise IOError("Crazyflie disconnected")
+            except AttributeError as e:
+                # pyusb < 1.0 doesn't implement getting the underlying error
+                # number and it seems as if it's not possible to detect
+                # if the cable is disconnected. So this detection is not
+                # supported, but the "normal" case will work.
+                pass
 
         return dataIn
 

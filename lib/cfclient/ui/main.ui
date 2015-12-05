@@ -200,20 +200,9 @@
     <property name="title">
      <string>Input device</string>
     </property>
-    <widget class="QMenu" name="_menu_mappings">
-     <property name="title">
-      <string>Mappings</string>
-     </property>
-    </widget>
-    <widget class="QMenu" name="_menu_devices">
-     <property name="title">
-      <string>Devices</string>
-     </property>
-    </widget>
     <addaction name="menuItemConfInputDevice"/>
-    <addaction name="_menu_devices"/>
-    <addaction name="_menu_mappings"/>
     <addaction name="_menuitem_rescandevices"/>
+    <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuCrazyflie"/>
@@ -344,6 +333,9 @@
    </property>
   </action>
   <action name="_menuitem_rescandevices">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Rescan devices</string>
    </property>

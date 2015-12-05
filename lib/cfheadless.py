@@ -64,6 +64,11 @@ class HeadlessClient():
 
         signal.signal(signal.SIGINT, signal.SIG_DFL) 
 
+        self._devs = []
+
+        for d in self._jr.available_devices():
+            self._devs.append(d.name)
+
     def setup_controller(self, input_config, input_device=0, xmode=False):
         """Set up the device reader""" 
         # Set up the joystick reader
@@ -72,19 +77,23 @@ class HeadlessClient():
         if (xmode):
             self._cf.commander.set_client_xmode(xmode)
 
-        devs = self._jr.getAvailableDevices()
-        print "Will use [%s] for input" % devs[input_device]["name"]
-        self._jr.start_input(devs[input_device]["name"],
-                             input_config)
+        devs = self._jr.available_devices()
+        print "Will use [%s] for input" % self._devs[input_device]
+        self._jr.start_input(self._devs[input_device])
+        self._jr.set_input_map(self._devs[input_device], input_config)
 
     def controller_connected(self):
         """ Return True if a controller is connected"""
-        return True if (len(self._jr.getAvailableDevices()) > 0) else False
+        return True if (len(self._jr.available_devices()) > 0) else False
 
     def list_controllers(self):
-        """List the available controllers"""
-        for dev in self._jr.getAvailableDevices():
-            print "Controller #{}: {}".format(dev["id"], dev["name"])
+        """List the available controllers and input mapping"""
+        print "\nAvailable controllers:"
+        for i, dev in enumerate(self._devs):
+            print " - Controller #{}: {}".format(i, dev)
+        print "\nAvailable input mapping:"
+        for map in os.listdir(sys.path[1] + '/input'):
+            print " - " + map.split(".json")[0]
 
     def connect_crazyflie(self, link_uri):
         """Connect to a Crazyflie on the given link uri"""
@@ -93,7 +102,7 @@ class HeadlessClient():
         self._cf.connected.add_callback(self._connected)
         self._cf.param.add_update_callback(group="imu_sensors", name="HMC5883L",
                 cb=(lambda name, found:
-                    self._jr.setAltHoldAvailable(eval(found))))
+                    self._jr.set_alt_hold_available(eval(found))))
         self._jr.althold_updated.add_callback(
                 lambda enabled: self._cf.param.set_value("flightmode.althold", enabled))
 
@@ -101,20 +110,12 @@ class HeadlessClient():
         self._jr.input_updated.add_callback(self._cf.commander.send_setpoint)
 
     def _connected(self, link):
-        """Callback for a successsful Crazyflie connection."""
-        # 2014-11-25 chad: When we are connected to the Crazyflie, request a
-        # parameter update for the following parameters...
-        param_list = ["imu_sensors.HMC5883L"]
-        for param in param_list:
-            try:
-                self._cf.param.request_param_update(param)
-            except Exception:
-                pass
+        """Callback for a successful Crazyflie connection."""
+        print "Connected to {}".format(link)
 
     def _connection_failed(self, link, message):
         """Callback for a failed Crazyflie connection"""
         print "Connection failed on {}: {}".format(link, message)
-        self._jr.stop_input()
         sys.exit(-1)
 
     def _input_dev_error(self, message):

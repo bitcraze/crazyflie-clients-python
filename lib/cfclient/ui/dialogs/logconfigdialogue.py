@@ -179,7 +179,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
     def showEvent(self, event):
         self.updateToc()
         self.populateDropDown()
-        toc = self.helper.cf.log._toc
+        toc = self.helper.cf.log.toc
         if (len(toc.toc.keys()) > 0):
             self.configNameCombo.setEnabled(True)
         else:
@@ -207,7 +207,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
     def updateToc(self):
         self.logTree.clear()
 
-        toc = self.helper.cf.log._toc
+        toc = self.helper.cf.log.toc
 
         for group in toc.toc.keys():
             groupItem = QtGui.QTreeWidgetItem()

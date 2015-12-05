@@ -101,7 +101,7 @@ if __name__ == "__main__":
     if (len(sys.argv) < 4 or
         (sys.argv[1] != "generate" and sys.argv[1] != "extract")):
         print "Configuration block compiler/decompiler."
-        print "  Usage: %s <generage|extract> <infile> <outfile>" % sys.argv[0]
+        print "  Usage: %s <generate|extract> <infile> <outfile>" % sys.argv[0]
 
     if sys.argv[1] == "generate":
         compileBlock(sys.argv[2], sys.argv[3])

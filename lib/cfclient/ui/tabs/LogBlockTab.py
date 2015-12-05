@@ -105,7 +105,7 @@ class LogBlockItem(object):
         # starting failed
         self._doing_transaction = False
 
-    def _set_started(self, started):
+    def _set_started(self, conf, started):
         """Callback when a block has been started in the Crazyflie"""
         logger.debug("%s started: %s", self.name, started)
         if started:
@@ -146,7 +146,7 @@ class LogBlockItem(object):
         been added/started/failed"""
         return self._doing_transaction
 
-    def _set_added(self, started):
+    def _set_added(self, conf, started):
         """Callback when a block has been added to the Crazyflie"""
         logger.debug("%s added: %s", self.name, started)
 

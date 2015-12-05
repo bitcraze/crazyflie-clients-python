@@ -139,11 +139,9 @@ class Crazyflie():
             lambda uri, errmsg: logger.info("Callback->Connected failed to"
                                             " [%s]: %s", uri, errmsg))
         self.connection_requested.add_callback(
-            lambda uri: logger.info("Callback->Connection initialized[%s]",
-                                    uri))
+            lambda uri: logger.info("Callback->Connection initialized[%s]", uri))
         self.connected.add_callback(
-            lambda uri: logger.info("Callback->Connection setup finished [%s]",
-                                    uri))
+            lambda uri: logger.info("Callback->Connection setup finished [%s]", uri))
 
     def _disconnected(self, link_uri):
         """ Callback when disconnected."""
@@ -160,18 +158,18 @@ class Crazyflie():
         logger.info("Param TOC finished updating")
         self.connected_ts = datetime.datetime.now()
         self.connected.call(self.link_uri)
+        # Trigger the update for all the parameters
+        self.param.request_update_of_all_params()
 
     def _mems_updated_cb(self):
-        """Called when the memroies has been identified"""
+        """Called when the memories have been identified"""
         logger.info("Memories finished updating")
         self.param.refresh_toc(self._param_toc_updated_cb, self._toc_cache)
 
     def _log_toc_updated_cb(self):
         """Called when the log TOC has been fully updated"""
         logger.info("Log TOC finished updating")
-        # Temporary workaround for CF1 connectivity
-        #self.mem.refresh(self._mems_updated_cb)
-        self.param.refresh_toc(self._param_toc_updated_cb, self._toc_cache)
+        self.mem.refresh(self._mems_updated_cb)
 
     def _link_error_cb(self, errmsg):
         """Called from the link driver when there's an error"""
@@ -222,7 +220,7 @@ class Crazyflie():
                 logger.warning(message)
                 self.connection_failed.call(link_uri, message)
             else:
-                # Add a callback so we can check that any data is comming
+                # Add a callback so we can check that any data is coming
                 # back from the copter
                 self.packet_received.add_callback(self._check_for_initial_packet_cb)
 
@@ -283,6 +281,7 @@ class Crazyflie():
                             logger.debug("Found new longest match %s", match)
                             longest_match = match
         if len(longest_match) > 0:
+            self._answer_patterns[longest_match].cancel()
             del self._answer_patterns[longest_match]
 
     def send_packet(self, pk, expected_reply=(), resend=False, timeout=0.2):
@@ -295,14 +294,13 @@ class Crazyflie():
 
         """
         self._send_lock.acquire()
-        if (self.link is not None):
-            self.link.send_packet(pk)
-            self.packet_sent.call(pk)
-            if len(expected_reply) > 0 and not resend:
+        if self.link is not None:
+            if len(expected_reply) > 0 and not resend and \
+                    self.link.needs_resending:
                 pattern = (pk.header,) + expected_reply
                 logger.debug("Sending packet and expecting the %s pattern back",
                              pattern)
-                new_timer = Timer(0.2,
+                new_timer = Timer(timeout,
                                   lambda: self._no_answer_do_retry(pk, pattern))
                 self._answer_patterns[pattern] = new_timer
                 new_timer.start()
@@ -312,7 +310,7 @@ class Crazyflie():
                 if pattern in self._answer_patterns:
                     logger.debug("We want to resend and the pattern is there")
                     if self._answer_patterns[pattern]:
-                        new_timer = Timer(0.2,
+                        new_timer = Timer(timeout,
                                           lambda:
                                           self._no_answer_do_retry(
                                               pk, pattern))
@@ -321,6 +319,8 @@ class Crazyflie():
                 else:
                     logger.debug("Resend requested, but no pattern found: %s",
                                  self._answer_patterns)
+            self.link.send_packet(pk)
+            self.packet_sent.call(pk)
         self._send_lock.release()
 
 class _IncomingPacketHandler(Thread):

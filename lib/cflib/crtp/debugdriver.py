@@ -276,7 +276,7 @@ class DebugDriver (CRTPDriver):
                                                      self._fake_mems)
         self._packet_handler.start()
 
-    def scan_interface(self):
+    def scan_interface(self, address):
         return [["debug://0/0", "Normal connection"],
                 ["debug://0/1", "Fail to connect"],
                 ["debug://0/2", "Incomplete log TOC download"],
@@ -434,7 +434,7 @@ class _PacketHandlingThread(Thread):
                 elif (pk.port == CRTPPort.MEM):
                     self._handle_mem_access(pk)
                 else:
-                    logger.warning("Not handling incomming packets on port [%d]",
+                    logger.warning("Not handling incoming packets on port [%d]",
                                pk.port)
 
     def _handle_mem_access(self, pk):
@@ -713,7 +713,7 @@ class _PacketHandlingThread(Thread):
                 import traceback
                 logger.info(traceback.format_exc())
         elif (chan > 1):
-            logger.warning("LOG: Uplink packets with channes > 1 not"
+            logger.warning("LOG: Uplink packets with channels > 1 not"
                            " supported!")
 
     def _send_packet(self, pk):
@@ -759,7 +759,7 @@ class _FakeLoggingDataThread (Thread):
                 i = i + 5
             else:
                 varId = ord(listofvars[i])
-                logger.debug("FakeLoggingThread: We sould log variable from"
+                logger.debug("FakeLoggingThread: We should log variable from"
                              " TOC: id=%d, type=0x%02X", varId, varType)
                 for t in self.fakeLogToc:
                     if (varId == t["varid"]):
@@ -819,8 +819,7 @@ class FakeConsoleThread (Thread):
         self._shoud_run = False
 
     def run(self):
-        # Temporary hack to test GPS from firmware by sending NMEA string on
-        # console
+        # Temporary hack to test GPS from firmware by sending NMEA string on console
         long_val = 0
         lat_val = 0
         alt_val = 0

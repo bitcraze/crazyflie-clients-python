@@ -55,6 +55,12 @@ System: {system}<br>
 <b>Interface status</b><br>
 {interface_status}
 <br>
+<b>Input readers</b><br>
+{input_readers}
+<br>
+<b>Input devices</b><br>
+{input_devices}
+<br>
 <b>Crazyflie</b><br>
 Connected: {uri}<br>
 Firmware: {firmware}<br>
@@ -65,6 +71,8 @@ Firmware: {firmware}<br>
 """
 
 INTERFACE_FORMAT = "{}: {}<br>"
+INPUT_READER_FORMAT = "{} ({} devices connected)<br>"
+DEVICE_FORMAT = "{}: ({}) {}<br>"
 IMU_SENSORS_FORMAT = "{}: {}<br>"
 SENSOR_TESTS_FORMAT = "{}: {}<br>"
 FIRMWARE_FORMAT = "{:x}{:x} ({})"
@@ -81,41 +89,6 @@ CREDITS_FORMAT = U"""
 <a href="http://marble.kde.org/">KDE Marble</a><br>
 <a href="http://sourceforge.net/projects/pyusb/">PyUSB</a><br>
 <a href="http://www.python.org/">Python</a><br>
-"""
-
-# This is temporary and will be fixed during the next release. It should
-# be picked up from the CREDITS.txt file
-CREDITS_NAMES = U"""
-We are very greatful for all the contributions we have received for this project
-and below is a list of users that have contributed to the crazyflie-pc-client.
-Thanks! <br><br>
-
-Allyn Bauer <br>
-Anton Krasovsky <br>
-Arnaud Taffanel <br>
-Chadwick McHenry <br>
-Daniel Lee <br>
-David Benes <br>
-Gina Häußge <br>
-Jannis Redmann <br>
-Marcus Eliasson <br>
-Marlon Petry <br>
-Mike Voytovich <br>
-Philipp A. Mohrenweiser <br>
-Surrender <br>
-Thomas DE BONA <br>
-Tobias Antonsson <br>
-Tyler Anderson <br>
-bitcraze <br>
-cstanke <br>
-danmark <br>
-erget <br>
-omwdunkley <br>
-
-<br>
-This list of names have been automatically generated using the following command
-in the crazyflie-clients-python repository:<br>
-git shortlog -s | cut -c8-
 """
 
 class AboutDialog(QtGui.QWidget, about_widget_class):
@@ -138,6 +111,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         self._fw_rev0 = None
         self._fw_rev1 = None
         self._fw_modified = None
+        self._helper = helper
 
         helper.cf.param.add_update_callback(group="imu_sensors",
                                             cb=self._imu_sensors_update)
@@ -150,8 +124,17 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         self._disconnected_signal.connect(self._disconnected)
         helper.cf.disconnected.add_callback(self._disconnected_signal.emit)
 
+        # Open the Credits file and show it in the UI
+        credits = U""
+        try:
+            with open("CREDITS.txt", 'r') as f:
+                for line in f:
+                    credits += U"{}<br>".format(line.decode("UTF-8"))
+        except IOError:
+            credits = U""
+
         self._credits.setHtml(
-            CREDITS_FORMAT.format(contribs=CREDITS_NAMES)
+            CREDITS_FORMAT.format(contribs=credits)
         )
 
     def showEvent(self, event):
@@ -162,6 +145,24 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
             self._interface_text += INTERFACE_FORMAT.format(key,
                                                     interface_status[key])
         firmware = None
+
+        self._device_text = ""
+        devs = self._helper.inputDeviceReader.available_devices()
+        for d in devs:
+            self._device_text += DEVICE_FORMAT.format(d.reader_name,
+                                                      d.id,
+                                                      d.name)
+        if len(self._device_text) == 0:
+            self._device_text = "None<br>"
+
+        self._input_readers_text = ""
+        #readers = self._helper.inputDeviceReader.getAvailableDevices()
+        for reader in cfclient.utils.input.inputreaders.initialized_readers:
+            self._input_readers_text += INPUT_READER_FORMAT.format(reader.name,
+                                                                   len(reader.devices()))
+        if len(self._input_readers_text) == 0:
+            self._input_readers_text = "None<br>"
+
         if self._uri:
             firmware = FIRMWARE_FORMAT.format(self._fw_rev0, self._fw_rev1,
                                 "MODIFIED" if self._fw_modified else "CLEAN")
@@ -169,6 +170,8 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
                 DEBUG_INFO_FORMAT.format(version=cfclient.VERSION,
                                          system=sys.platform,
                                          interface_status=self._interface_text,
+                                         input_devices=self._device_text,
+                                         input_readers=self._input_readers_text,
                                          uri = self._uri,
                                          firmware = firmware,
                                          imu_sensors=self._imu_sensors_text,
@@ -189,7 +192,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
             self._fw_modified = eval(value)
 
     def _imu_sensors_update(self, name, value):
-        """Callback for sensor found paramters"""
+        """Callback for sensor found parameters"""
         param = name[name.index('.') + 1:]
         if not param in self._imu_sensors_text:
             self._imu_sensors_text += IMU_SENSORS_FORMAT.format(param,

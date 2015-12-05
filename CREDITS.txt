@@ -1,22 +1,36 @@
-We are very greatful for all the contributions we have received for this project
-and below is a list of users that have contributed to the crazyflie-pc-client.
+We are very grateful for all the contributions we have received for this project and below is a list of users that have contributed to the crazyflie-pc-client.
 Thanks!
 
 Allyn Bauer
+Andrew Hobden
+Anton Krasovsky
 Arnaud Taffanel
+bitcraze
+Chadwick McHenry
+cstanke
 Daniel Lee
+Danilo Bargen
 danmark
 David Benes
 erget
+Fred G
 Gina Häußge
+Jannis Redmann
+Jesse Donkervliet
+Justin Hirsch
+Kristoffer Richardsson
+lxrocks
 Marcus Eliasson
 Marlon Petry
+matt
 Mike Voytovich
 omwdunkley
 Philipp A. Mohrenweiser
 Surrender
+Thomas DE BONA
 Tobias Antonsson
+Tyler Anderson
+Wolfgang Hoenig
 
-This list of names have been automatically generated using the following command
-in the crazyflie-pc-client repository:
-hg log --template "{author|person}\n" | sort | uniq
+This list of names have been automatically generated using the following command in the crazyflie-pc-client repository:
+git shortlog -sn | cut -f2 | sort -f

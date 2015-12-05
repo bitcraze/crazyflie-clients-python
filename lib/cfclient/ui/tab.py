@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
-from cfclient.utils.guiconfig import GuiConfig
+from cfclient.utils.config import Config
 
 
 class Tab(QtGui.QWidget):
@@ -57,7 +57,7 @@ class Tab(QtGui.QWidget):
             self.tabWidget.addTab(self, self.getTabName())
             s = ""
             try:
-                s = GuiConfig().get("open_tabs")
+                s = Config().get("open_tabs")
                 if (len(s) > 0):
                     s += ","
             except Exception as e:
@@ -66,12 +66,12 @@ class Tab(QtGui.QWidget):
             # Check this since tabs in config are opened when app is started
             if (self.tabName not in s):
                 s += "%s" % self.tabName
-                GuiConfig().set("open_tabs", s)
+                Config().set("open_tabs", str(s))
 
         if not checked:
             self.tabWidget.removeTab(self.tabWidget.indexOf(self))
             try:
-                parts = GuiConfig().get("open_tabs").split(",")
+                parts = Config().get("open_tabs").split(",")
             except Exception as e:
                 logger.warning("Exception while removing tab from config and "
                                "reading tab config")
@@ -81,7 +81,7 @@ class Tab(QtGui.QWidget):
                 if (self.tabName != p):
                     s += "%s," % p
             s = s[0:len(s) - 1]  # Remove last comma
-            GuiConfig().set("open_tabs", s)
+            Config().set("open_tabs", str(s))
 
     def getMenuName(self):
         """Return the name of the tab that will be shown in the menu"""

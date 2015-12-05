@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __
@@ -51,7 +51,7 @@ except Exception as e:
     sys.exit(-1)
 
 #Set the default parameters
-#Default to the arnaud's copter
+#Default to Arnaud's copter
 cpu_id = "32:00:6e:06:58:37:35:32:60:58:01:43"
 clink = None
 action = "info"
@@ -169,7 +169,7 @@ try:
 
 
     ######################################
-    # Doing something (hopefully) usefull
+    # Doing something (hopefully) useful
     ######################################
 
     # Print information about the targets

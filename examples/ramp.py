@@ -68,7 +68,7 @@ class MotorRampExample:
 
     def _connection_failed(self, link_uri, msg):
         """Callback when connection initial connection fails (i.e no Crazyflie
-        at the speficied address)"""
+        at the specified address)"""
         print "Connection to %s failed: %s" % (link_uri, msg)
 
     def _connection_lost(self, link_uri, msg):
@@ -87,6 +87,10 @@ class MotorRampExample:
         pitch = 0
         roll = 0
         yawrate = 0
+
+        #Unlock startup thrust protection
+        self._cf.commander.send_setpoint(0, 0, 0, 0)
+
         while thrust >= 20000:
             self._cf.commander.send_setpoint(roll, pitch, yawrate, thrust)
             time.sleep(0.1)

@@ -27,7 +27,7 @@
        <item>
         <widget class="QGroupBox" name="groupBox_2">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -40,7 +40,7 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>320</width>
+           <width>16777215</width>
            <height>16777215</height>
           </size>
          </property>
@@ -190,6 +190,9 @@
             </item>
             <item row="5" column="0">
              <widget class="QCheckBox" name="clientXModeCheckbox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>Client X-mode</string>
               </property>
@@ -201,7 +204,7 @@
                <bool>false</bool>
               </property>
               <property name="text">
-               <string>Attitide control</string>
+               <string>Attitude control</string>
               </property>
               <property name="checked">
                <bool>true</bool>
@@ -226,7 +229,7 @@
        <item>
         <widget class="QGroupBox" name="groupBox_3">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -239,7 +242,7 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>320</width>
+           <width>16777215</width>
            <height>16777215</height>
           </size>
          </property>
@@ -341,6 +344,49 @@
         </widget>
        </item>
        <item>
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="minimumSize">
+          <size>
+           <width>320</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Expansion boards</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_6">
+          <item row="0" column="0">
+           <layout class="QGridLayout" name="gridLayout_2">
+            <item row="0" column="1">
+             <widget class="QComboBox" name="_led_ring_effect">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_8">
+              <property name="text">
+               <string>LED-ring effect</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QCheckBox" name="_led_ring_headlight">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>LED-ring headlight</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -348,7 +394,7 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>403</height>
+           <height>40</height>
           </size>
          </property>
         </spacer>

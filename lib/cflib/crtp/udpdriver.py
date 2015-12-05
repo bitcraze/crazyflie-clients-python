@@ -95,11 +95,11 @@ class UdpDriver(CRTPDriver):
         self.socket.sendto(data, self.addr)
 
     def close(self):
-        #Remove this to the server clients list
+        #Remove this from the server clients list
         self.socket.sendto("\xFF\x01\x02\x02", self.addr)
 
     def get_name(self):
         return "udp"
 
-    def scan_interface(self):
+    def scan_interface(self, address):
         return []

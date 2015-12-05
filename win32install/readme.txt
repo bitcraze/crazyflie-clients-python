@@ -8,7 +8,7 @@ to generate the distribution are:
  - Generate the installer script
  - Build the installer
 
-All the procedure has to be run on Windows. Tested on Windows 7. A realease
+All the procedure has to be run on Windows. Tested on Windows 7. A release
 version should have the right version written to setup.py (ie. not a
 development version).
 
@@ -35,11 +35,11 @@ Run in a command line window:
 Test and validate the new executable by running:
 > dist\cfclient
 
-Generate the intaller configuration:
+Generate the installer configuration:
 > cd win32install
 > generate_nsis.py
  Found 516 files in 41 folders to install.
- Cfclient vertion 2013.4.1
+ Cfclient version 2013.4.1
 
 Finally open the win32install folder in the file explorer. Right click on
 cfclient.nsi, chose "Compile NSIS script (choose compressor)". The NSIS

@@ -164,13 +164,15 @@ class GpsTab(Tab, gps_tab_class):
         lg.add_variable("gps.gSpeed")
         lg.add_variable("gps.hAcc")
         lg.add_variable("gps.fixType")
-        self._cf.log.add_config(lg)
-        if lg.valid:
+        try:
+            self._cf.log.add_config(lg)
             lg.data_received_cb.add_callback(self._log_data_signal.emit)
             lg.error_cb.add_callback(self._log_error_signal.emit)
             lg.start()
-        else:
-            logger.warning("Could not setup logging block for GPS!")
+        except KeyError as e:
+            logger.warning(str(e))
+        except AttributeError as e:
+            logger.warning(str(e))
         self._max_speed = 0.0
 
     def _disconnected(self, link_uri):

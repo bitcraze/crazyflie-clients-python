@@ -26,7 +26,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-The flight control tab shows telimitry data and flight settings.
+The flight control tab shows telemetry data and flight settings.
 """
 
 __author__ = 'Bitcraze AB'
@@ -40,17 +40,19 @@ logger = logging.getLogger(__name__)
 from time import time
 
 from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
+from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QVariant
 from PyQt4.QtGui import QMessageBox
 
 from cflib.crazyflie import Crazyflie
 
 from cfclient.ui.widgets.ai import AttitudeIndicator
 
-from cfclient.utils.guiconfig import GuiConfig
+from cfclient.utils.config import Config
 from cflib.crazyflie.log import Log, LogVariable, LogConfig
 
 from cfclient.ui.tab import Tab
+
+from cflib.crazyflie.mem import MemoryElement
 
 flight_tab_class = uic.loadUiType(sys.path[0] +
                                   "/cfclient/ui/tabs/flightTab.ui")[0]
@@ -77,6 +79,8 @@ class FlightTab(Tab, flight_tab_class):
 
     connectionFinishedSignal = pyqtSignal(str)
     disconnectedSignal = pyqtSignal(str)
+
+    _limiting_updated = pyqtSignal(bool, bool, bool)
 
     def __init__(self, tabWidget, helper, *args):
         super(FlightTab, self).__init__(*args)
@@ -132,7 +136,7 @@ class FlightTab(Tab, flight_tab_class):
         self.isInCrazyFlightmode = False
         self.uiSetupReady()
 
-        self.clientXModeCheckbox.setChecked(GuiConfig().get("client_side_xmode"))
+        self.clientXModeCheckbox.setChecked(Config().get("client_side_xmode"))
 
         self.crazyflieXModeCheckbox.clicked.connect(
                              lambda enabled:
@@ -142,28 +146,54 @@ class FlightTab(Tab, flight_tab_class):
                         group="flightmode", name="xmode",
                         cb=( lambda name, checked:
                         self.crazyflieXModeCheckbox.setChecked(eval(checked))))
+
         self.ratePidRadioButton.clicked.connect(
                     lambda enabled:
                     self.helper.cf.param.set_value("flightmode.ratepid",
                                                    str(enabled)))
+
         self.angularPidRadioButton.clicked.connect(
                     lambda enabled:
                     self.helper.cf.param.set_value("flightmode.ratepid",
                                                    str(not enabled)))
+
+        self._led_ring_headlight.clicked.connect(
+                    lambda enabled:
+                    self.helper.cf.param.set_value("ring.headlightEnable",
+                                                   str(enabled)))
+
         self.helper.cf.param.add_update_callback(
                     group="flightmode", name="ratepid",
                     cb=(lambda name, checked:
                     self.ratePidRadioButton.setChecked(eval(checked))))
-        
+
+        self.helper.cf.param.add_update_callback(
+                    group="cpu", name="flash",
+                    cb=self._set_enable_client_xmode)
+
+        self.helper.cf.param.add_update_callback(
+                    group="ring", name="headlightEnable",
+                    cb=(lambda name, checked:
+                    self._led_ring_headlight.setChecked(eval(checked))))
+
         self.helper.cf.param.add_update_callback(
                     group="flightmode", name="althold",
                     cb=(lambda name, enabled:
-                    self.helper.inputDeviceReader.setAltHold(eval(enabled))))
+                    self.helper.inputDeviceReader.enable_alt_hold(eval(enabled))))
+
+        self._ledring_nbr_effects = 0
+
+        self.helper.cf.param.add_update_callback(
+                        group="ring",
+                        name="neffect",
+                        cb=(lambda name, value: self._set_neffect(eval(value))))
 
         self.helper.cf.param.add_update_callback(
                         group="imu_sensors",
                         cb=self._set_available_sensors)
-                
+
+        self.helper.cf.param.all_updated.add_callback(self._ring_populate_dropdown)
+
         self.logBaro = None
         self.logAltHold = None
 
@@ -171,15 +201,47 @@ class FlightTab(Tab, flight_tab_class):
         self.verticalLayout_4.addWidget(self.ai)
         self.splitter.setSizes([1000,1])
 
-        self.targetCalPitch.setValue(GuiConfig().get("trim_pitch"))
-        self.targetCalRoll.setValue(GuiConfig().get("trim_roll"))
+        self.targetCalPitch.setValue(Config().get("trim_pitch"))
+        self.targetCalRoll.setValue(Config().get("trim_roll"))
+
+        self.helper.inputDeviceReader.alt1_updated.add_callback(self.alt1_updated)
+        self.helper.inputDeviceReader.alt2_updated.add_callback(self.alt2_updated)
+        self._tf_state = 0
+        self._ring_effect = 0
+
+        # Connect callbacks for input device limiting of rpöö/pitch/yaw/thust
+        self.helper.inputDeviceReader.limiting_updated.add_callback(
+            self._limiting_updated.emit)
+        self._limiting_updated.connect(self._set_limiting_enabled)
+
+    def _set_enable_client_xmode(self, name, value):
+        if eval(value) <= 128:
+            self.clientXModeCheckbox.setEnabled(True)
+        else:
+            self.clientXModeCheckbox.setEnabled(False)
+            self.clientXModeCheckbox.setChecked(False)
+
+    def _set_limiting_enabled(self, rp_limiting_enabled,
+                                    yaw_limiting_enabled,
+                                    thrust_limiting_enabled):
+        self.maxAngle.setEnabled(rp_limiting_enabled)
+        self.targetCalRoll.setEnabled(rp_limiting_enabled)
+        self.targetCalPitch.setEnabled(rp_limiting_enabled)
+        self.maxYawRate.setEnabled(yaw_limiting_enabled)
+        self.maxThrust.setEnabled(thrust_limiting_enabled)
+        self.minThrust.setEnabled(thrust_limiting_enabled)
+        self.slewEnableLimit.setEnabled(thrust_limiting_enabled)
+        self.thrustLoweringSlewRateLimit.setEnabled(thrust_limiting_enabled)
+
+    def _set_neffect(self, n):
+        self._ledring_nbr_effects = n
 
     def thrustToPercentage(self, thrust):
         return ((thrust / MAX_THRUST) * 100.0)
 
     def uiSetupReady(self):
         flightComboIndex = self.flightModeCombo.findText(
-                             GuiConfig().get("flightmode"), Qt.MatchFixedString)
+                             Config().get("flightmode"), Qt.MatchFixedString)
         if (flightComboIndex < 0):
             self.flightModeCombo.setCurrentIndex(0)
             self.flightModeCombo.currentIndexChanged.emit(0)
@@ -230,37 +292,43 @@ class FlightTab(Tab, flight_tab_class):
 
     def connected(self, linkURI):
         # IMU & THRUST
-        lg = LogConfig("Stabalizer", GuiConfig().get("ui_update_period"))
+        lg = LogConfig("Stabilizer", Config().get("ui_update_period"))
         lg.add_variable("stabilizer.roll", "float")
         lg.add_variable("stabilizer.pitch", "float")
         lg.add_variable("stabilizer.yaw", "float")
         lg.add_variable("stabilizer.thrust", "uint16_t")
 
-        self.helper.cf.log.add_config(lg)
-        if (lg.valid):
+        try:
+            self.helper.cf.log.add_config(lg)
             lg.data_received_cb.add_callback(self._imu_data_signal.emit)
             lg.error_cb.add_callback(self._log_error_signal.emit)
             lg.start()
-        else:
-            logger.warning("Could not setup logconfiguration after "
-                           "connection!")
+        except KeyError as e:
+            logger.warning(str(e))
+        except AttributeError as e:
+            logger.warning(str(e))
 
         # MOTOR
-        lg = LogConfig("Motors", GuiConfig().get("ui_update_period"))
+        lg = LogConfig("Motors", Config().get("ui_update_period"))
         lg.add_variable("motor.m1")
         lg.add_variable("motor.m2")
         lg.add_variable("motor.m3")
         lg.add_variable("motor.m4")
 
-        self.helper.cf.log.add_config(lg)
-        if lg.valid:
+        try:
+            self.helper.cf.log.add_config(lg)
             lg.data_received_cb.add_callback(self._motor_data_signal.emit)
             lg.error_cb.add_callback(self._log_error_signal.emit)
             lg.start()
-        else:
-            logger.warning("Could not setup logconfiguration after "
-                           "connection!")
-            
+        except KeyError as e:
+            logger.warning(str(e))
+        except AttributeError as e:
+            logger.warning(str(e))
+
+        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x01):
+            self._led_ring_effect.setEnabled(True)
+            self._led_ring_headlight.setEnabled(True)
+
     def _set_available_sensors(self, name, available):
         logger.info("[%s]: %s", name, available)
         available = eval(available)
@@ -270,35 +338,37 @@ class FlightTab(Tab, flight_tab_class):
                 self.actualASL.setEnabled(False)
             else:
                 self.actualASL.setEnabled(True)
-                self.helper.inputDeviceReader.setAltHoldAvailable(available)
+                self.helper.inputDeviceReader.set_alt_hold_available(available)
                 if (not self.logBaro and not self.logAltHold):
                     # The sensor is available, set up the logging
                     self.logBaro = LogConfig("Baro", 200)
                     self.logBaro.add_variable("baro.aslLong", "float")
 
-                    self.helper.cf.log.add_config(self.logBaro)
-                    if self.logBaro.valid:
+                    try:
+                        self.helper.cf.log.add_config(self.logBaro)
                         self.logBaro.data_received_cb.add_callback(
-                            self._baro_data_signal.emit)
+                                self._baro_data_signal.emit)
                         self.logBaro.error_cb.add_callback(
-                            self._log_error_signal.emit)
+                                self._log_error_signal.emit)
                         self.logBaro.start()
-                    else:
-                        logger.warning("Could not setup logconfiguration after "
-                                       "connection!")            
+                    except KeyError as e:
+                        logger.warning(str(e))
+                    except AttributeError as e:
+                        logger.warning(str(e))
                     self.logAltHold = LogConfig("AltHold", 200)
                     self.logAltHold.add_variable("altHold.target", "float")
 
-                    self.helper.cf.log.add_config(self.logAltHold)
-                    if self.logAltHold.valid:
+                    try:
+                        self.helper.cf.log.add_config(self.logAltHold)
                         self.logAltHold.data_received_cb.add_callback(
                             self._althold_data_signal.emit)
                         self.logAltHold.error_cb.add_callback(
                             self._log_error_signal.emit)
                         self.logAltHold.start()
-                    else:
-                        logger.warning("Could not setup logconfiguration after "
-                                       "connection!")                        
+                    except KeyError as e:
+                        logger.warning(str(e))
+                    except AttributeError:
+                        logger.warning(str(e))
 
     def disconnected(self, linkURI):
         self.ai.setRollPitch(0, 0)
@@ -314,45 +384,48 @@ class FlightTab(Tab, flight_tab_class):
         self.targetASL.setText("Not Set")
         self.targetASL.setEnabled(False)
         self.actualASL.setEnabled(False)
+        self.clientXModeCheckbox.setEnabled(False)
         self.logBaro = None
         self.logAltHold = None
+        self._led_ring_effect.setEnabled(False)
+        self._led_ring_headlight.setEnabled(False)
+
 
     def minMaxThrustChanged(self):
-        self.helper.inputDeviceReader.set_thrust_limits(
-                            self.minThrust.value(), self.maxThrust.value())
+        self.helper.inputDeviceReader.min_thrust = self.minThrust.value()
+        self.helper.inputDeviceReader.max_thrust = self.maxThrust.value()
         if (self.isInCrazyFlightmode == True):
-            GuiConfig().set("min_thrust", self.minThrust.value())
-            GuiConfig().set("max_thrust", self.maxThrust.value())
+            Config().set("min_thrust", self.minThrust.value())
+            Config().set("max_thrust", self.maxThrust.value())
 
     def thrustLoweringSlewRateLimitChanged(self):
-        self.helper.inputDeviceReader.set_thrust_slew_limiting(
-                            self.thrustLoweringSlewRateLimit.value(),
-                            self.slewEnableLimit.value())
+        self.helper.inputDeviceReader.thrust_slew_rate = self.thrustLoweringSlewRateLimit.value()
+        self.helper.inputDeviceReader.thrust_slew_limit = self.slewEnableLimit.value()
         if (self.isInCrazyFlightmode == True):
-            GuiConfig().set("slew_limit", self.slewEnableLimit.value())
-            GuiConfig().set("slew_rate", self.thrustLoweringSlewRateLimit.value())
+            Config().set("slew_limit", self.slewEnableLimit.value())
+            Config().set("slew_rate", self.thrustLoweringSlewRateLimit.value())
 
     def maxYawRateChanged(self):
         logger.debug("MaxYawrate changed to %d", self.maxYawRate.value())
-        self.helper.inputDeviceReader.set_yaw_limit(self.maxYawRate.value())
+        self.helper.inputDeviceReader.max_yaw_rate = self.maxYawRate.value()
         if (self.isInCrazyFlightmode == True):
-            GuiConfig().set("max_yaw", self.maxYawRate.value())
+            Config().set("max_yaw", self.maxYawRate.value())
 
     def maxAngleChanged(self):
         logger.debug("MaxAngle changed to %d", self.maxAngle.value())
-        self.helper.inputDeviceReader.set_rp_limit(self.maxAngle.value())
+        self.helper.inputDeviceReader.max_rp_angle = self.maxAngle.value()
         if (self.isInCrazyFlightmode == True):
-            GuiConfig().set("max_rp", self.maxAngle.value())
+            Config().set("max_rp", self.maxAngle.value())
 
     def _trim_pitch_changed(self, value):
         logger.debug("Pitch trim updated to [%f]" % value)
-        self.helper.inputDeviceReader.set_trim_pitch(value)
-        GuiConfig().set("trim_pitch", value)
+        self.helper.inputDeviceReader.trim_pitch = value
+        Config().set("trim_pitch", value)
 
     def _trim_roll_changed(self, value):
         logger.debug("Roll trim updated to [%f]" % value)
-        self.helper.inputDeviceReader.set_trim_roll(value)
-        GuiConfig().set("trim_roll", value)
+        self.helper.inputDeviceReader.trim_roll = value
+        Config().set("trim_roll", value)
 
     def calUpdateFromInput(self, rollCal, pitchCal):
         logger.debug("Trim changed on joystick: roll=%.2f, pitch=%.2f",
@@ -389,26 +462,26 @@ class FlightTab(Tab, flight_tab_class):
             self.emergency_stop_label.setText("")
 
     def flightmodeChange(self, item):
-        GuiConfig().set("flightmode", self.flightModeCombo.itemText(item))
-        logger.info("Changed flightmode to %s",
+        Config().set("flightmode", str(self.flightModeCombo.itemText(item)))
+        logger.debug("Changed flightmode to %s",
                     self.flightModeCombo.itemText(item))
         self.isInCrazyFlightmode = False
         if (item == 0):  # Normal
-            self.maxAngle.setValue(GuiConfig().get("normal_max_rp"))
-            self.maxThrust.setValue(GuiConfig().get("normal_max_thrust"))
-            self.minThrust.setValue(GuiConfig().get("normal_min_thrust"))
-            self.slewEnableLimit.setValue(GuiConfig().get("normal_slew_limit"))
+            self.maxAngle.setValue(Config().get("normal_max_rp"))
+            self.maxThrust.setValue(Config().get("normal_max_thrust"))
+            self.minThrust.setValue(Config().get("normal_min_thrust"))
+            self.slewEnableLimit.setValue(Config().get("normal_slew_limit"))
             self.thrustLoweringSlewRateLimit.setValue(
-                                              GuiConfig().get("normal_slew_rate"))
-            self.maxYawRate.setValue(GuiConfig().get("normal_max_yaw"))
+                                              Config().get("normal_slew_rate"))
+            self.maxYawRate.setValue(Config().get("normal_max_yaw"))
         if (item == 1):  # Advanced
-            self.maxAngle.setValue(GuiConfig().get("max_rp"))
-            self.maxThrust.setValue(GuiConfig().get("max_thrust"))
-            self.minThrust.setValue(GuiConfig().get("min_thrust"))
-            self.slewEnableLimit.setValue(GuiConfig().get("slew_limit"))
+            self.maxAngle.setValue(Config().get("max_rp"))
+            self.maxThrust.setValue(Config().get("max_thrust"))
+            self.minThrust.setValue(Config().get("min_thrust"))
+            self.slewEnableLimit.setValue(Config().get("slew_limit"))
             self.thrustLoweringSlewRateLimit.setValue(
-                                                  GuiConfig().get("slew_rate"))
-            self.maxYawRate.setValue(GuiConfig().get("max_yaw"))
+                                                  Config().get("slew_rate"))
+            self.maxYawRate.setValue(Config().get("max_yaw"))
             self.isInCrazyFlightmode = True
 
         if (item == 0):
@@ -425,5 +498,59 @@ class FlightTab(Tab, flight_tab_class):
     @pyqtSlot(bool)
     def changeXmode(self, checked):
         self.helper.cf.commander.set_client_xmode(checked)
-        GuiConfig().set("client_side_xmode", checked)
+        Config().set("client_side_xmode", checked)
         logger.info("Clientside X-mode enabled: %s", checked)
+
+    def alt1_updated(self, state):
+        if state:
+            self._ring_effect += 1
+            if self._ring_effect > self._ledring_nbr_effects:
+                self._ring_effect = 0
+            self.helper.cf.param.set_value("ring.effect", str(self._ring_effect))
+
+    def alt2_updated(self, state):
+        self.helper.cf.param.set_value("ring.headlightEnable", str(state))
+
+    def _ring_populate_dropdown(self):
+        try:
+            nbr = int(self.helper.cf.param.values["ring"]["neffect"])
+            current = int(self.helper.cf.param.values["ring"]["effect"])
+        except KeyError:
+            return
+
+        hardcoded_names = {0: "Off",
+                           1: "White spinner",
+                           2: "Color spinner",
+                           3: "Tilt effect",
+                           4: "Brightness effect",
+                           5: "Color spinner 2",
+                           6: "Double spinner",
+                           7: "Solid color effect",
+                           8: "Factory test",
+                           9: "Battery status",
+                           10: "Boat lights",
+                           11: "Alert",
+                           12: "Gravity"}
+
+        for i in range(nbr+1):
+            name = "{}: ".format(i)
+            if i in hardcoded_names:
+                name += hardcoded_names[i]
+            else:
+                name += "N/A"
+            self._led_ring_effect.addItem(name, QVariant(i))
+
+        self._led_ring_effect.setCurrentIndex(current)
+        self._led_ring_effect.currentIndexChanged.connect(self._ring_effect_changed)
+        self.helper.cf.param.add_update_callback(group="ring",
+                                         name="effect",
+                                         cb=self._ring_effect_updated)
+
+    def _ring_effect_changed(self, index):
+        i = self._led_ring_effect.itemData(index).toInt()[0]
+        logger.info("Changed effect to {}".format(i))
+        if i != self.helper.cf.param.values["ring"]["effect"]:
+            self.helper.cf.param.set_value("ring.effect", str(i))
+
+    def _ring_effect_updated(self, name, value):
+        self._led_ring_effect.setCurrentIndex(int(value))

@@ -117,12 +117,6 @@ class ParamBlockModel(QAbstractItemModel):
                 new_group.children.append(new_param)
             self._nodes.append(new_group)
 
-        # Request updates for all of the parameters
-        for group in self._nodes:
-            for param in group.children:
-                complete_name = "%s.%s" % (group.name, param.name)
-                crazyflie.param.request_param_update(complete_name)
-
         self.layoutChanged.emit()
 
     def refresh(self):
@@ -220,6 +214,7 @@ class ParamBlockModel(QAbstractItemModel):
     def reset(self):
         """Reset the model"""
         self._nodes = []
+        super(ParamBlockModel, self).reset()
         self.layoutChanged.emit()
 
 

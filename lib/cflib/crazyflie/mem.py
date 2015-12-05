@@ -36,6 +36,8 @@ __all__ = ['Memory', 'MemoryElement']
 
 import struct
 import errno
+from Queue import Queue
+from threading import Lock
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from cflib.utils.callbacks import Caller
 from binascii import crc32
@@ -62,6 +64,7 @@ class MemoryElement(object):
 
     TYPE_I2C = 0
     TYPE_1W = 1
+    TYPE_DRIVER_LED = 0x10
 
     def __init__(self, id, type, size, mem_handler):
         """Initialize the element with default values"""
@@ -77,6 +80,8 @@ class MemoryElement(object):
             return "I2C"
         if t == MemoryElement.TYPE_1W:
             return "1-wire"
+        if t == MemoryElement.TYPE_DRIVER_LED:
+            return "LED driver"
         return "Unknown"
 
     def new_data(self, mem, addr, data):
@@ -86,6 +91,80 @@ class MemoryElement(object):
         """Generate debug string for memory"""
         return ("Memory: id={}, type={}, size={}".format(
                 self.id, MemoryElement.type_to_string(self.type), self.size))
+
+
+class LED:
+    """Used to set color/intensity of one LED in the LED-ring"""
+    def __init__(self):
+        """Initialize to off"""
+        self.r = 0
+        self.g = 0
+        self.b = 0
+        self.intensity = 100
+
+    def set(self, r, g, b, intensity=None):
+        """Set the R/G/B and optionally intensity in one call"""
+        self.r = r
+        self.g = g
+        self.b = b
+        if intensity:
+            self.intensity = intensity
+
+class LEDDriverMemory(MemoryElement):
+    """Memory interface for using the LED-ring mapped memory for setting RGB
+       values for all the LEDs in the ring"""
+    def __init__(self, id, type, size, mem_handler):
+        """Initialize with 12 LEDs"""
+        super(LEDDriverMemory, self).__init__(id=id, type=type, size=size,
+                                              mem_handler=mem_handler)
+        self._update_finished_cb = None
+        self._write_finished_cb = None
+
+        self.leds = []
+        for i in range(12):
+            self.leds.append(LED())
+
+    def new_data(self, mem, addr, data):
+        """Callback for when new memory data has been fetched"""
+        if mem.id == self.id:
+            logger.info("Got new data from the LED driver, but we don't care.")
+
+    def write_data(self, write_finished_cb):
+        """Write the saved LED-ring data to the Crazyflie"""
+        self._write_finished_cb = write_finished_cb
+        data = ()
+        for led in self.leds:
+            # In order to fit all the LEDs in one radio packet RGB565 is used
+            # to compress the colors. The calculations below converts 3 bytes
+            # RGB into 2 bytes RGB565. Then shifts the value of each color to
+            # LSB, applies the intensity  and shifts them back for correct
+            # alignment on 2 bytes.
+            R5 = (int)((((int(led.r) & 0xFF) * 249 + 1014) >> 11) & 0x1F) * led.intensity/100
+            G6 = (int)((((int(led.g) & 0xFF) * 253 + 505) >> 10) & 0x3F) * led.intensity/100
+            B5 = (int)((((int(led.b) & 0xFF) * 249 + 1014) >> 11) & 0x1F) * led.intensity/100
+            tmp = (R5 << 11) | (G6 << 5) | (B5 << 0)
+            data += (tmp >> 8, tmp & 0xFF)
+        self.mem_handler.write(self, 0x00, data, flush_queue=True)
+
+    def update(self, update_finished_cb):
+        """Request an update of the memory content"""
+        if not self._update_finished_cb:
+            self._update_finished_cb = update_finished_cb
+            self.valid = False
+            logger.info("Updating content of memory {}".format(self.id))
+            # Start reading the header
+            self.mem_handler.read(self, 0, 16)
+
+    def write_done(self, mem, addr):
+        if self._write_finished_cb and mem.id == self.id:
+            logger.info("Write to LED driver done")
+            self._write_finished_cb(self, addr)
+            self._write_finished_cb = None
+
+    def disconnect(self):
+        self._update_finished_cb = None
+        self._write_finished_cb = None
+
 
 class I2CElement(MemoryElement):
     def __init__(self, id, type, size, mem_handler):
@@ -99,17 +178,33 @@ class I2CElement(MemoryElement):
         """Callback for when new memory data has been fetched"""
         if mem.id == self.id:
             if addr == 0:
+                done = False
                 # Check for header
                 if data[0:4] == "0xBC":
                     logger.info("Got new data: {}".format(data))
-                    [self.elements["radio_channel"],
+                    [self.elements["version"],
+                     self.elements["radio_channel"],
                      self.elements["radio_speed"],
                      self.elements["pitch_trim"],
-                     self.elements["roll_trim"]] = struct.unpack("<BBff", data[5:15])
-                    logger.info(self.elements)
-                    if self._checksum256(data[:15]) == ord(data[15]):
-                        self.valid = True
+                     self.elements["roll_trim"]] = struct.unpack("<BBBff", data[4:15])
+                    if self.elements["version"] == 0:
+                        done = True
+                    elif self.elements["version"] == 1:
+                        self.datav0 = data
+                        self.mem_handler.read(self, 16, 5)
 
+            if addr == 16:
+                [radio_address_upper,
+                 radio_address_lower] = struct.unpack("<BI", self.datav0[15] + data[0:4])
+                self.elements["radio_address"] = int(radio_address_upper) << 32 | radio_address_lower
+
+                logger.info(self.elements)
+                data = self.datav0 + data
+                done = True
+
+            if done:
+                if self._checksum256(data[:len(data)-1]) == ord(data[len(data)-1]):
+                    self.valid = True
                 if self._update_finished_cb:
                     self._update_finished_cb(self)
                     self._update_finished_cb = None
@@ -118,9 +213,15 @@ class I2CElement(MemoryElement):
         return reduce(lambda x, y: x + y, map(ord, st)) % 256
 
     def write_data(self, write_finished_cb):
-        data = (0x00, self.elements["radio_channel"], self.elements["radio_speed"],
-                self.elements["pitch_trim"], self.elements["roll_trim"])
-        image = struct.pack("<BBBff", *data)
+        if self.elements["version"] == 0:
+            data = (0x00, self.elements["radio_channel"], self.elements["radio_speed"],
+                    self.elements["pitch_trim"], self.elements["roll_trim"])
+            image = struct.pack("<BBBff", *data)
+        elif self.elements["version"] == 1:
+            data = (0x01, self.elements["radio_channel"], self.elements["radio_speed"],
+                    self.elements["pitch_trim"], self.elements["roll_trim"],
+                    self.elements["radio_address"] >> 32, self.elements["radio_address"] & 0xFFFFFFFF)
+            image = struct.pack("<BBBffBI", *data)
         # Adding some magic:
         image = "0xBC" + image
         image += struct.pack("B", self._checksum256(image))
@@ -349,7 +450,7 @@ class _ReadRequest:
 
 class _WriteRequest:
     """Class used to handle memory reads that will split up the read in multiple packets in necessary"""
-    MAX_DATA_LENGTH = 20
+    MAX_DATA_LENGTH = 25
 
     def __init__(self, mem, addr, data, cf):
         """Initialize the object with good defaults"""
@@ -373,7 +474,7 @@ class _WriteRequest:
 
     def resend(self):
         logger.info("Sending write again...")
-        self.cf.send_packet(self._sent_packet, expected_reply=self._sent_reply, timeout=3)
+        self.cf.send_packet(self._sent_packet, expected_reply=self._sent_reply, timeout=1)
 
     def _write_new_chunk(self):
         """Called to request a new chunk of data to be read from the Crazyflie"""
@@ -396,7 +497,7 @@ class _WriteRequest:
         # Add the data
         pk.data += struct.pack("B"*len(data), *data)
         self._sent_packet = pk
-        self.cf.send_packet(pk, expected_reply=reply, timeout=3)
+        self.cf.send_packet(pk, expected_reply=reply, timeout=1)
 
         self._addr_add = len(data)
 
@@ -418,7 +519,7 @@ class Memory():
     """Access memories on the Crazyflie"""
 
     # These codes can be decoded using os.stderror, but
-    # some of the text messages will look very stange
+    # some of the text messages will look very strange
     # in the UI, so they are redefined here
     _err_codes = {
             errno.ENOMEM: "No more memory available",
@@ -447,7 +548,9 @@ class Memory():
         self._ow_mem_fetch_index = 0
         self._elem_data = ()
         self._read_requests = {}
+        self._read_requests_lock = Lock()
         self._write_requests = {}
+        self._write_requests_lock = Lock()
         self._ow_mems_left_to_update = []
 
         self._getting_count = False
@@ -481,17 +584,29 @@ class Memory():
 
         return ret
 
+    def ow_search(self, vid=0xBC, pid=None, name=None):
+        """Search for specific memory id/name and return it"""
+        for m in self.get_mems(MemoryElement.TYPE_1W):
+            if pid and m.pid == pid or name and m.name == name:
+                return m
 
-    def write(self, memory, addr, data):
+        return None
+
+    def write(self, memory, addr, data, flush_queue=False):
         """Write the specified data to the given memory at the given address"""
-        if memory.id in self._write_requests:
-            logger.warning("There is already a write operation ongoing for memory id {}".format(memory.id))
-            return False
-
         wreq = _WriteRequest(memory, addr, data, self.cf)
-        self._write_requests[memory.id] = wreq
+        if not memory.id in self._write_requests:
+            self._write_requests[memory.id] = []
 
-        wreq.start()
+        # Workaround until we secure the uplink and change messages for
+        # mems to non-blocking
+        self._write_requests_lock.acquire()
+        if flush_queue:
+            self._write_requests[memory.id] = self._write_requests[memory.id][:1]
+        self._write_requests[memory.id].insert(len(self._write_requests), wreq)
+        if len(self._write_requests[memory.id]) == 1:
+            wreq.start()
+        self._write_requests_lock.release()
 
         return True
 
@@ -583,12 +698,19 @@ class Memory():
 
                 if (not self.get_mem(mem_id)):
                     if mem_type == MemoryElement.TYPE_1W:
-                        mem = OWElement(id=mem_id, type=mem_type, size=mem_size, addr=mem_addr, mem_handler=self)
+                        mem = OWElement(id=mem_id, type=mem_type, size=mem_size,
+                                        addr=mem_addr, mem_handler=self)
                         self.mem_read_cb.add_callback(mem.new_data)
                         self.mem_write_cb.add_callback(mem.write_done)
                         self._ow_mems_left_to_update.append(mem.id)
                     elif mem_type == MemoryElement.TYPE_I2C:
-                        mem = I2CElement(id=mem_id, type=mem_type, size=mem_size, mem_handler=self)
+                        mem = I2CElement(id=mem_id, type=mem_type, size=mem_size,
+                                         mem_handler=self)
+                        self.mem_read_cb.add_callback(mem.new_data)
+                        self.mem_write_cb.add_callback(mem.write_done)
+                    elif mem_type == MemoryElement.TYPE_DRIVER_LED:
+                        mem = LEDDriverMemory(id=mem_id, type=mem_type,
+                                              size=mem_size, mem_handler=self)
                         logger.info(mem)
                         self.mem_read_cb.add_callback(mem.new_data)
                         self.mem_write_cb.add_callback(mem.write_done)
@@ -624,13 +746,23 @@ class Memory():
             logger.info("WRITE: Mem={}, addr=0x{:X}, status=0x{}".format(id, addr, status))
             # Find the read request
             if id in self._write_requests:
-                wreq = self._write_requests[id]
+                self._write_requests_lock.acquire()
+                wreq = self._write_requests[id][0]
                 if status == 0:
                     if wreq.write_done(addr):
-                        self._write_requests.pop(id, None)
+                        #self._write_requests.pop(id, None)
+                        # Remove the first item
+                        self._write_requests[id].pop(0)
                         self.mem_write_cb.call(wreq.mem, wreq.addr)
+
+                        # Get a new one to start (if there are any)
+                        if len(self._write_requests[id]) > 0:
+                            self._write_requests[id][0].start()
+
                 else:
+                    logger.info("Status {}: write resending...".format(status))
                     wreq.resend()
+                self._write_requests_lock.release()
 
         if chan == CHAN_READ:
             id = cmd
@@ -646,4 +778,5 @@ class Memory():
                         self._read_requests.pop(id, None)
                         self.mem_read_cb.call(rreq.mem, rreq.addr, rreq.data)
                 else:
+                    logger.info("Status {}: resending...".format(status))
                     rreq.resend()

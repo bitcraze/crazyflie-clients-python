@@ -47,8 +47,8 @@ class Bootloader:
 
     """Bootloader utility for the Crazyflie"""
     def __init__(self, clink=None):
-        """Init the communication class by starting to comunicate with the
-        link given. clink is the link address used after reseting to the
+        """Init the communication class by starting to communicate with the
+        link given. clink is the link address used after resetting to the
         bootloader.
 
         The device is actually considered in firmware mode.
