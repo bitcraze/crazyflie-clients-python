@@ -30,11 +30,7 @@
 Crazyflie radio bootloader for flashing firmware.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Cloader']
-
 import logging
-logger = logging.getLogger(__name__)
 
 import time
 import struct
@@ -46,9 +42,15 @@ from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 
 from .boottypes import TargetTypes, Target
 
+__author__ = 'Bitcraze AB'
+__all__ = ['Cloader']
+
+logger = logging.getLogger(__name__)
+
 
 class Cloader:
     """Bootloader utility for the Crazyflie"""
+
     def __init__(self, link, info_cb=None, in_boot_cb=None):
         """Init the communication class by starting to communicate with the
         link given. clink is the link address used after resetting to the
@@ -103,31 +105,30 @@ class Cloader:
         pk = self.link.receive_packet(1)
 
         while ((not pk or pk.header != 0xFF or
-                struct.unpack("<BB", pk.data[0:2]) != (target_id, 0xFF)) and
-                retry_counter >= 0 ):
-
+                struct.unpack("<BB", pk.data[0:2]) != (target_id, 0xFF)
+                ) and retry_counter >= 0):
             pk = self.link.receive_packet(1)
             retry_counter -= 1
 
         if pk:
-            new_address = (0xb1, ) + struct.unpack("<BBBB", pk.data[2:6][::-1])
+            new_address = (0xb1,) + struct.unpack("<BBBB", pk.data[2:6][::-1])
 
             pk = CRTPPacket()
             pk.set_header(0xFF, 0xFF)
             pk.data = (target_id, 0xF0, 0x00)
             self.link.send_packet(pk)
 
-            addr = int(struct.pack("B"*5, *new_address).encode('hex'), 16)
+            addr = int(struct.pack("B" * 5, *new_address).encode('hex'), 16)
 
             time.sleep(0.2)
             self.link.close()
             time.sleep(0.2)
-            self.link = cflib.crtp.get_link_driver("radio://0/0/2M/{}".format(addr))
+            self.link = cflib.crtp.get_link_driver(
+                "radio://0/0/2M/{}".format(addr))
 
             return True
         else:
             return False
-
 
     def reset_to_bootloader1(self, cpu_id):
         """ Reset to the bootloader
@@ -136,9 +137,9 @@ class Cloader:
         Return true if the reset has been done and the contact with the
         bootloader is established.
         """
-        #Send an echo request and wait for the answer
-        #Mainly aim to bypass a bug of the crazyflie firmware that prevents
-        #reset before normal CRTP communication
+        # Send an echo request and wait for the answer
+        # Mainly aim to bypass a bug of the crazyflie firmware that prevents
+        # reset before normal CRTP communication
         pk = CRTPPacket()
         pk.port = CRTPPort.LINKCTRL
         pk.data = (1, 2, 3) + cpu_id
@@ -153,13 +154,13 @@ class Cloader:
             if pk.port == CRTPPort.LINKCTRL:
                 break
 
-        #Send the reset to bootloader request
+        # Send the reset to bootloader request
         pk = CRTPPacket()
         pk.set_header(0xFF, 0xFF)
         pk.data = (0xFF, 0xFE) + cpu_id
         self.link.send_packet(pk)
 
-        #Wait to ack the reset ...
+        # Wait to ack the reset ...
         pk = None
         while True:
             pk = self.link.receive_packet(2)
@@ -174,7 +175,7 @@ class Cloader:
         time.sleep(0.1)
         self.link.close()
         self.link = cflib.crtp.get_link_driver(self.clink_address)
-        #time.sleep(0.1)
+        # time.sleep(0.1)
 
         return self._update_info()
 
@@ -190,22 +191,21 @@ class Cloader:
         # still in the bootloader. So to work around this bug so
         # some extra data needs to be sent.
         fake_cpu_id = (1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12)
-        #Send the reset to bootloader request
+        # Send the reset to bootloader request
         pk = CRTPPacket()
         pk.set_header(0xFF, 0xFF)
         pk.data = (target_id, 0xFF) + fake_cpu_id
         self.link.send_packet(pk)
 
-        #Wait to ack the reset ...
+        # Wait to ack the reset ...
         pk = None
         while True:
             pk = self.link.receive_packet(2)
             if not pk:
                 return False
 
-            if (pk.header == 0xFF and
-                struct.unpack("B" * len(pk.data),
-                              pk.data)[:2] == (target_id, 0xFF)):
+            if (pk.header == 0xFF and struct.unpack(
+                    "B" * len(pk.data), pk.data)[:2] == (target_id, 0xFF)):
                 # Difference in CF1 and CF2 (CPU ID)
                 if target_id == 0xFE:
                     pk.data = (target_id, 0xF0, 0x01)
@@ -230,13 +230,14 @@ class Cloader:
         for _ in range(0, 5):
             if self._update_info(target_id):
                 if self._in_boot_cb:
-                    self._in_boot_cb.call(True, self.targets[target_id].protocol_version)
+                    self._in_boot_cb.call(True, self.targets[
+                        target_id].protocol_version)
                 if self._info_cb:
                     self._info_cb.call(self.targets[target_id])
                 if self.protocol_version != 1:
                     return True
                 # Set radio link to a random address
-                addr = [0xbc] + map(lambda x: random.randint(0, 255), range(4))
+                addr = [0xbc] + [random.randint(0, 255) for x in range(4)]
                 return self._set_address(addr)
         return False
 
@@ -280,20 +281,20 @@ class Cloader:
         the fields of the object
         """
 
-        #Call getInfo ...
+        # Call getInfo ...
         pk = CRTPPacket()
         pk.set_header(0xFF, 0xFF)
         pk.data = (target_id, 0x10)
         self.link.send_packet(pk)
 
-        #Wait for the answer
+        # Wait for the answer
         pk = self.link.receive_packet(2)
 
-        if (pk and pk.header == 0xFF and
-                struct.unpack("<BB", pk.data[0:2]) == (target_id, 0x10)):
+        if (pk and pk.header == 0xFF and struct.unpack("<BB", pk.data[0:2]) ==
+                (target_id, 0x10)):
             tab = struct.unpack("BBHHHH", pk.data[0:10])
             cpuid = struct.unpack("B" * 12, pk.data[10:22])
-            if not target_id in self.targets:
+            if target_id not in self.targets:
                 self.targets[target_id] = Target(target_id)
             self.targets[target_id].addr = target_id
             if len(pk.data) > 22:
@@ -307,7 +308,8 @@ class Cloader:
             for i in cpuid[1:]:
                 self.targets[target_id].cpuid += ":%02X" % i
 
-            if self.protocol_version == 0x10 and target_id == TargetTypes.STM32:
+            if (self.protocol_version == 0x10 and
+                    target_id == TargetTypes.STM32):
                 self._update_mapping(target_id)
 
             return True
@@ -322,30 +324,30 @@ class Cloader:
 
         pk = self.link.receive_packet(2)
 
-        if (pk and pk.header == 0xFF and
-                struct.unpack("<BB", pk.data[0:2]) == (target_id, 0x12)):
+        if (pk and pk.header == 0xFF and struct.unpack("<BB", pk.data[0:2]) ==
+                (target_id, 0x12)):
             m = pk.datat[2:]
 
-            if (len(m)%2)!=0:
+            if (len(m) % 2) != 0:
                 raise Exception("Malformed flash mapping packet")
 
             self.mapping = []
             page = 0
-            for i in range(len(m)/2):
-                for j in range(m[2*i]):
+            for i in range(int(len(m) / 2)):
+                for j in range(m[2 * i]):
                     self.mapping.append(page)
-                    page += m[(2*i)+1]
+                    page += m[(2 * i) + 1]
 
     def upload_buffer(self, target_id, page, address, buff):
         """Upload data into a buffer on the Crazyflie"""
-        #print len(buff)
+        # print len(buff)
         count = 0
         pk = CRTPPacket()
         pk.set_header(0xFF, 0xFF)
         pk.data = struct.pack("=BBHH", target_id, 0x14, page, address)
 
         for i in range(0, len(buff)):
-            pk.data += buff[i]
+            pk.data.append(buff[i])
 
             count += 1
 
@@ -369,8 +371,8 @@ class Cloader:
             pk = None
             retry_counter = 5
             while ((not pk or pk.header != 0xFF or
-                    struct.unpack("<BB", pk.data[0:2]) != (addr, 0x1C))
-                    and retry_counter >= 0):
+                    struct.unpack("<BB", pk.data[0:2]) != (addr, 0x1C)) and
+                    retry_counter >= 0):
                 pk = CRTPPacket()
                 pk.set_header(0xFF, 0xFF)
                 pk.data = struct.pack("<BBHH", addr, 0x1C, page, (i * 25))
@@ -383,18 +385,19 @@ class Cloader:
             else:
                 buff += pk.data[6:]
 
-        return buff[0:page_size]  # For some reason we get one byte extra here...
+        # For some reason we get one byte extra here...
+        return buff[0:page_size]
 
     def write_flash(self, addr, page_buffer, target_page, page_count):
         """Initiate flashing of data in the buffer to flash."""
-        #print "Write page", flashPage
-        #print "Writing page [%d] and [%d] forward" % (flashPage, nPage)
+        # print "Write page", flashPage
+        # print "Writing page [%d] and [%d] forward" % (flashPage, nPage)
         pk = None
         retry_counter = 5
-        #print "Flasing to 0x{:X}".format(addr)
+        # print "Flasing to 0x{:X}".format(addr)
         while ((not pk or pk.header != 0xFF or
-                struct.unpack("<BB", pk.data[0:2]) != (addr, 0x18))
-                and retry_counter >= 0):
+                struct.unpack("<BB", pk.data[0:2]) != (addr, 0x18)) and
+               retry_counter >= 0):
             pk = CRTPPacket()
             pk.set_header(0xFF, 0xFF)
             pk.data = struct.pack("<BBHHH", addr, 0x18, page_buffer,
@@ -407,14 +410,14 @@ class Cloader:
             self.error_code = -1
             return False
 
-        self.error_code = ord(pk.data[3])
+        self.error_code = pk.data[3]
 
-        return ord(pk.data[2]) == 1
+        return pk.data[2] == 1
 
     def decode_cpu_id(self, cpuid):
         """Decode the CPU id into a string"""
         ret = ()
         for i in cpuid.split(':'):
-            ret += (eval("0x" + i), )
+            ret += (eval("0x" + i),)
 
         return ret

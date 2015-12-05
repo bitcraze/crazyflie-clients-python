@@ -76,7 +76,7 @@ class CRTPDriver:
         Return a human readable name of the interface.
         """
 
-    def scan_interface(self, address = None):
+    def scan_interface(self, address=None):
         """
         Scan interface for available Crazyflie quadcopters and return a list
         with them.

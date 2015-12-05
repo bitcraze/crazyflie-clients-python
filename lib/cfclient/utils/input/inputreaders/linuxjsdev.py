@@ -31,20 +31,24 @@ This module is very linux specific but should work on any CPU platform
 """
 
 import sys
-if not sys.platform.startswith('linux'):
-    raise Exception("Only supported on Linux")
-
 import struct
 import glob
 import os
 import ctypes
-import fcntl
 import logging
 
-logger = logging.getLogger(__name__)
+if not sys.platform.startswith('linux'):
+    raise Exception("Only supported on Linux")
+
+try:
+    import fcntl
+except ImportError as e:
+    raise Exception("fcntl library probably not installed ({})".format(e))
 
 __author__ = 'Bitcraze AB'
 __all__ = ['Joystick']
+
+logger = logging.getLogger(__name__)
 
 JS_EVENT_FMT = "@IhBB"
 JE_TIME = 0
@@ -56,29 +60,32 @@ JS_EVENT_BUTTON = 0x001
 JS_EVENT_AXIS = 0x002
 JS_EVENT_INIT = 0x080
 
-#ioctls
+# ioctls
 JSIOCGAXES = 0x80016a11
 JSIOCGBUTTONS = 0x80016a12
 
 MODULE_MAIN = "Joystick"
 MODULE_NAME = "linuxjsdev"
 
+
 class JEvent(object):
     """
     Joystick event class. Encapsulate single joystick event.
     """
+
     def __init__(self, evt_type, number, value):
         self.type = evt_type
         self.number = number
         self.value = value
 
     def __repr__(self):
-        return "JEvent(type={}, number={}, value={})".format(self.type,
-                   self.number, self.value)
+        return "JEvent(type={}, number={}, value={})".format(
+            self.type, self.number, self.value)
 
-#Constants
+# Constants
 TYPE_BUTTON = 1
 TYPE_AXIS = 2
+
 
 class _JS():
     def __init__(self, num, name):
@@ -97,10 +104,10 @@ class _JS():
             raise Exception("{} at {} is already "
                             "opened".format(self.name, self._f_name))
 
-        self._f = open("/dev/input/js{}".format(self.num), "r")
+        self._f = open("/dev/input/js{}".format(self.num), "rb")
         fcntl.fcntl(self._f.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
 
-        #Get number of axis and button
+        # Get number of axis and button
         val = ctypes.c_int()
         if fcntl.ioctl(self._f.fileno(), JSIOCGAXES, val) != 0:
             self._f.close()
@@ -142,7 +149,7 @@ class _JS():
 
     def __decode_event(self, jsdata):
         """ Decode a jsdev event into a dict """
-        #TODO: Add timestamp?
+        # TODO: Add timestamp?
         if jsdata[JE_TYPE] & JS_EVENT_AXIS != 0:
             return JEvent(evt_type=TYPE_AXIS,
                           number=jsdata[JE_NUMBER],
@@ -165,6 +172,8 @@ class _JS():
                 self._f.close()
                 self._f = None
                 raise IOError("Device has been disconnected")
+        except TypeError:
+            pass
         except ValueError:
             # This will happen if I/O operations are done on a closed device,
             # which is the case when you first close and then open the device

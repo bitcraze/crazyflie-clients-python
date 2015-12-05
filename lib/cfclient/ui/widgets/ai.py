@@ -21,23 +21,24 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 Attitude indicator widget.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['AttitudeIndicator']
-
 import sys
 from PyQt4 import QtGui, QtCore
+
+__author__ = 'Bitcraze AB'
+__all__ = ['AttitudeIndicator']
 
 
 class AttitudeIndicator(QtGui.QWidget):
     """Widget for showing attitude"""
+
     def __init__(self):
         super(AttitudeIndicator, self).__init__()
 
@@ -57,14 +58,14 @@ class AttitudeIndicator(QtGui.QWidget):
     def setPitch(self, pitch):
         self.pitch = pitch
         self.repaint()
-        
-    def setHover(self, target):        
+
+    def setHover(self, target):
         self.hoverTargetASL = target
-        self.hover = target>0
+        self.hover = target > 0
         self.repaint()
-        
+
     def setBaro(self, asl):
-        self.hoverASL = asl;
+        self.hoverASL = asl
         self.repaint()
 
     def setRollPitch(self, roll, pitch):
@@ -103,7 +104,7 @@ class AttitudeIndicator(QtGui.QWidget):
         qp.drawRect(-w, h / 2, 3 * w, 3 * h)
 
         pen = QtGui.QPen(QtGui.QColor(255, 255, 255), 1.5,
-            QtCore.Qt.SolidLine)
+                         QtCore.Qt.SolidLine)
         qp.setPen(pen)
         qp.drawLine(-w, h / 2, 3 * w, h / 2)
 
@@ -135,53 +136,52 @@ class AttitudeIndicator(QtGui.QWidget):
         qp.setWorldMatrixEnabled(False)
 
         pen = QtGui.QPen(QtGui.QColor(0, 0, 0), 2,
-            QtCore.Qt.SolidLine)
+                         QtCore.Qt.SolidLine)
         qp.setBrush(QtGui.QColor(0, 0, 0))
         qp.setPen(pen)
         qp.drawLine(0, h / 2, w, h / 2)
-        
-        
-        
+
         # Draw Hover vs Target
-        
+
         qp.setWorldMatrixEnabled(False)
-        
+
         pen = QtGui.QPen(QtGui.QColor(255, 255, 255), 2,
                          QtCore.Qt.SolidLine)
         qp.setBrush(QtGui.QColor(255, 255, 255))
         qp.setPen(pen)
-        fh = max(7,h/50)
+        fh = max(7, h / 50)
         font = QtGui.QFont('Sans', fh, QtGui.QFont.Light)
         qp.setFont(font)
         qp.resetTransform()
-      
-        
 
-        
-        qp.translate(0,h/2)      
-        if not self.hover:  
-            qp.drawText(w-fh*10, fh/2, str(round(self.hoverASL,2)))  # asl
-               
-        
+        qp.translate(0, h / 2)
+        if not self.hover:
+            # asl
+            qp.drawText(w - fh * 10, fh / 2, str(round(self.hoverASL, 2)))
+
         if self.hover:
-            qp.drawText(w-fh*10, fh/2, str(round(self.hoverTargetASL,2)))  # target asl (center)    
-            diff = round(self.hoverASL-self.hoverTargetASL,2)
-            pos_y = -h/6*diff
-            
+            # target asl (center)
+            qp.drawText(
+                w - fh * 10, fh / 2, str(round(self.hoverTargetASL, 2)))
+            diff = round(self.hoverASL - self.hoverTargetASL, 2)
+            pos_y = -h / 6 * diff
+
             # cap to +- 2.8m
-            if diff<-2.8:
-                pos_y = -h/6*-2.8
-            elif diff>2.8:
-                pos_y= -h/6*2.8
+            if diff < -2.8:
+                pos_y = -h / 6 * -2.8
+            elif diff > 2.8:
+                pos_y = -h / 6 * 2.8
             else:
-                pos_y = -h/6*diff
-            qp.drawText(w-fh*3.8, pos_y+fh/2, str(diff)) # difference from target (moves up and down +- 2.8m)        
-            qp.drawLine(w-fh*4.5,0,w-fh*4.5,pos_y) # vertical line     
-            qp.drawLine(w-fh*4.7,0,w-fh*4.5,0) # left horizontal line
-            qp.drawLine(w-fh*4.2,pos_y,w-fh*4.5,pos_y) #right horizontal line
-        
-        
-        
+                pos_y = -h / 6 * diff
+
+            # difference from target (moves up and down +- 2.8m)
+            qp.drawText(w - fh * 3.8, pos_y + fh / 2, str(diff))
+            # vertical line
+            qp.drawLine(w - fh * 4.5, 0, w - fh * 4.5, pos_y)
+            # left horizontal line
+            qp.drawLine(w - fh * 4.7, 0, w - fh * 4.5, 0)
+            # right horizontal line
+            qp.drawLine(w - fh * 4.2, pos_y, w - fh * 4.5, pos_y)
 
 
 if __name__ == "__main__":
@@ -197,15 +197,14 @@ if __name__ == "__main__":
 
         def updateRoll(self, roll):
             self.wid.setRoll((roll / 10.0) - 180.0)
-        
-        def updateTarget(self, target):
-            self.wid.setHover(500+target/10.)
-        def updateBaro(self, asl):
-            self.wid.setBaro(500+asl/10.)           
-        
-        
-        def initUI(self):
 
+        def updateTarget(self, target):
+            self.wid.setHover(500 + target / 10.)
+
+        def updateBaro(self, asl):
+            self.wid.setBaro(500 + asl / 10.)
+
+        def initUI(self):
             vbox = QtGui.QVBoxLayout()
 
             sld = QtGui.QSlider(QtCore.Qt.Horizontal, self)
@@ -213,8 +212,7 @@ if __name__ == "__main__":
             sld.setRange(0, 3600)
             sld.setValue(1800)
             vbox.addWidget(sld)
-            
-            
+
             self.wid = AttitudeIndicator()
 
             sld.valueChanged[int].connect(self.updateRoll)
@@ -229,22 +227,21 @@ if __name__ == "__main__":
             sldPitch.setValue(90)
             sldPitch.valueChanged[int].connect(self.updatePitch)
             hbox.addWidget(sldPitch)
-            
+
             sldASL = QtGui.QSlider(QtCore.Qt.Vertical, self)
             sldASL.setFocusPolicy(QtCore.Qt.NoFocus)
             sldASL.setRange(-200, 200)
             sldASL.setValue(0)
             sldASL.valueChanged[int].connect(self.updateBaro)
-            
+
             sldT = QtGui.QSlider(QtCore.Qt.Vertical, self)
             sldT.setFocusPolicy(QtCore.Qt.NoFocus)
             sldT.setRange(-200, 200)
             sldT.setValue(0)
             sldT.valueChanged[int].connect(self.updateTarget)
-            
-            hbox.addWidget(sldT)  
+
+            hbox.addWidget(sldT)
             hbox.addWidget(sldASL)
-                      
 
             self.setLayout(hbox)
 
@@ -253,7 +250,6 @@ if __name__ == "__main__":
             self.show()
 
         def changeValue(self, value):
-
             self.c.updateBW.emit(value)
             self.wid.repaint()
 
@@ -262,7 +258,6 @@ if __name__ == "__main__":
         app = QtGui.QApplication(sys.argv)
         ex = Example()
         sys.exit(app.exec_())
-
 
     if __name__ == '__main__':
         main()

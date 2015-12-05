@@ -30,12 +30,12 @@ Crazyflie console is used to receive characters printed using printf
 from the firmware.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Console']
-
 import struct
 from cflib.utils.callbacks import Caller
 from cflib.crtp.crtpstack import CRTPPort
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Console']
 
 
 class Console:
@@ -58,6 +58,6 @@ class Console:
         Callback for data received from the copter.
         """
         # This might be done prettier ;-)
-        console_text = "%s" % struct.unpack("%is" % len(packet.data), packet.data)
+        console_text = packet.data.decode("UTF-8")
 
         self.receivedChar.call(console_text)

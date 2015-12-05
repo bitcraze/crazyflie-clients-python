@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -32,28 +32,34 @@ input data.
 """
 
 import sys
+from threading import Thread
+from queue import Queue
+import time
+import logging
+
 if sys.platform.startswith('linux'):
     raise Exception("No SDL2 support on Linux")
 
+try:
+    import sdl2
+    import sdl2.ext
+    import sdl2.hints
+except ImportError as e:
+    raise Exception("sdl2 library probably not installed ({})".format(e))
+
 __author__ = 'Bitcraze AB'
 __all__ = ['PySDL2Reader']
-
-import sdl2
-import sdl2.ext
-import sdl2.hints
-from threading import Thread
-from Queue import Queue
-import time
-import logging
 
 logger = logging.getLogger(__name__)
 
 MODULE_MAIN = "PySDL2Reader"
 MODULE_NAME = "PySDL2"
 
+
 class _SDLEventDispatcher(Thread):
     """Wrapper to read all SDL2 events from the global queue and distribute
     them to the different devices"""
+
     def __init__(self, callback):
         Thread.__init__(self)
         self._callback = callback
@@ -77,6 +83,7 @@ class _SDLEventDispatcher(Thread):
 
 class _JS():
     """Wrapper for one input device"""
+
     def __init__(self, sdl_index, sdl_id, name):
         self.axes = []
         self.buttons = []
@@ -103,12 +110,12 @@ class _JS():
 
     def _set_fake_hat_button(self, btn=None):
         self.buttons[self._btn_count] = 0
-        self.buttons[self._btn_count+1] = 0
-        self.buttons[self._btn_count+2] = 0
-        self.buttons[self._btn_count+3] = 0
+        self.buttons[self._btn_count + 1] = 0
+        self.buttons[self._btn_count + 2] = 0
+        self.buttons[self._btn_count + 3] = 0
 
         if btn:
-            self.buttons[self._btn_count+btn] = 1
+            self.buttons[self._btn_count + btn] = 1
 
     def add_event(self, event):
         self._event_queue.put(event)
@@ -138,12 +145,14 @@ class _JS():
                     self._set_fake_hat_button(3)
         return [self.axes, self.buttons]
 
+
 class PySDL2Reader():
     """Used for reading data from input devices using the PySDL2 API."""
+
     def __init__(self):
         sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO | sdl2.SDL_INIT_JOYSTICK)
         sdl2.SDL_SetHint(sdl2.hints.SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS,
-                         "1")
+                         b"1")
         sdl2.ext.init()
         self._js = {}
         self.name = MODULE_NAME
@@ -178,7 +187,7 @@ class PySDL2Reader():
             logger.info("Found {} devices".format(nbrOfInputs))
             for sdl_index in range(0, nbrOfInputs):
                 j = sdl2.joystick.SDL_JoystickOpen(sdl_index)
-                name = sdl2.joystick.SDL_JoystickName(j)
+                name = sdl2.joystick.SDL_JoystickName(j).decode("UTF-8")
                 if names.count(name) > 0:
                     name = "{0} #{1}".format(name, names.count(name) + 1)
                 sdl_id = sdl2.joystick.SDL_JoystickInstanceID(j)

@@ -33,12 +33,14 @@ Singleton class.
 __author__ = 'Bitcraze AB'
 __all__ = ['Singleton']
 
+
 class Singleton(type):
     """Class for making singletons"""
     _instances = {}
-    
+
     def __call__(cls, *args, **kwargs):
         """Called when creating new class"""
         if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super(Singleton, cls).__call__(
+                *args, **kwargs)
         return cls._instances[cls]

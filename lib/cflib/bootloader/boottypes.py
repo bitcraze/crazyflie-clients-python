@@ -33,6 +33,7 @@ Bootloading utilities for the Crazyflie.
 __author__ = 'Bitcraze AB'
 __all__ = ['BootVersion', 'TargetTypes', 'Target']
 
+
 class BootVersion:
     CF1_PROTO_VER_0 = 0x00
     CF1_PROTO_VER_1 = 0x01
@@ -40,11 +41,17 @@ class BootVersion:
 
     @staticmethod
     def to_ver_string(ver):
-        if ver == BootVersion.CF1_PROTO_VER_0 or ver == BootVersion.CF1_PROTO_VER_1:
+        if (ver == BootVersion.CF1_PROTO_VER_0 or ver == BootVersion.
+                CF1_PROTO_VER_1):
             return "Crazyflie Nano Quadcopter (1.0)"
         if ver == BootVersion.CF2_PROTO_VER:
             return "Crazyflie 2.0"
         return "Unknown"
+
+    @staticmethod
+    def is_cf2(ver):
+        return ver == BootVersion.CF2_PROTO_VER
+
 
 class TargetTypes:
     STM32 = 0xFF
@@ -66,8 +73,8 @@ class TargetTypes:
             return TargetTypes.NRF51
         return 0
 
-class Target:
 
+class Target:
     def __init__(self, id):
         self.id = id
         self.protocol_version = 0xFF
@@ -80,10 +87,11 @@ class Target:
 
     def __str__(self):
         ret = ""
-        ret += "Target info: {} (0x{:X})\n".format(TargetTypes.to_string(self.id), self.id)
-        ret += "Flash pages: %d | Page size: %d | Buffer pages: %d |"\
+        ret += "Target info: {} (0x{:X})\n".format(
+            TargetTypes.to_string(self.id), self.id)
+        ret += "Flash pages: %d | Page size: %d | Buffer pages: %d |" \
                " Start page: %d\n" % (self.flash_pages, self.page_size,
-                               self.buffer_pages, self.start_page)
+                                      self.buffer_pages, self.start_page)
         ret += "%d KBytes of flash available for firmware image." % (
-                            (self.flash_pages - self.start_page) * self.page_size / 1024)
+            (self.flash_pages - self.start_page) * self.page_size / 1024)
         return ret

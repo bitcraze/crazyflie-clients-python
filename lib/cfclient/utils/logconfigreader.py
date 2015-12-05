@@ -35,9 +35,6 @@ Currently it can just use the PySdl2 driver but in the future there will be a
 Linux and Windows driver that can bypass PySdl2.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['LogVariable', 'LogConfigReader', 'LogConfigRemoveThis']
-
 import glob
 import json
 import logging
@@ -45,12 +42,15 @@ import os
 import shutil
 import sys
 
-logger = logging.getLogger(__name__)
-
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import pyqtSlot, pyqtSignal
 
 from cflib.crazyflie.log import LogVariable, LogConfig
+
+__author__ = 'Bitcraze AB'
+__all__ = ['LogVariable', 'LogConfigReader', 'LogConfigRemoveThis']
+
+logger = logging.getLogger(__name__)
 
 
 class LogConfigReader():
@@ -62,8 +62,8 @@ class LogConfigReader():
         if (not os.path.exists(sys.path[1] + "/log")):
             logger.info("No user config found, copying dist files")
             os.makedirs(sys.path[1] + "/log")
-            for f in glob.glob(sys.path[0] +
-                               "/cfclient/configs/log/[A-Za-z]*.json"):
+            for f in glob.glob(
+                    sys.path[0] + "/cfclient/configs/log/[A-Za-z]*.json"):
                 shutil.copy2(f, sys.path[1] + "/log")
         self._cf = crazyflie
         self._cf.connected.add_callback(self._connected)

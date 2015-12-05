@@ -34,21 +34,25 @@ the parameters that can be written/read.
 
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Param', 'ParamTocElement']
-
 from cflib.utils.callbacks import Caller
 import struct
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from .toc import Toc, TocFetcher
 from threading import Thread, Lock
-
-from Queue import Queue
+import sys
+if sys.version_info < (3,):
+    from Queue import Queue
+else:
+    from queue import Queue
 
 import logging
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Param', 'ParamTocElement']
+
 logger = logging.getLogger(__name__)
 
-#Possible states
+# Possible states
 IDLE = 0
 WAIT_TOC = 1
 WAIT_READ = 2
@@ -71,32 +75,44 @@ class ParamTocElement:
     RW_ACCESS = 0
     RO_ACCESS = 1
 
-    types = {0x08: ("uint8_t",  '<B'),
+    types = {0x08: ("uint8_t", '<B'),
              0x09: ("uint16_t", '<H'),
              0x0A: ("uint32_t", '<L'),
              0x0B: ("uint64_t", '<Q'),
-             0x00: ("int8_t",   '<b'),
-             0x01: ("int16_t",  '<h'),
-             0x02: ("int32_t",  '<i'),
-             0x03: ("int64_t",  '<q'),
-             0x05: ("FP16",     ''),
-             0x06: ("float",    '<f'),
-             0x07: ("double",   '<d')}
+             0x00: ("int8_t", '<b'),
+             0x01: ("int16_t", '<h'),
+             0x02: ("int32_t", '<i'),
+             0x03: ("int64_t", '<q'),
+             0x05: ("FP16", ''),
+             0x06: ("float", '<f'),
+             0x07: ("double", '<d')}
 
     def __init__(self, data=None):
         """TocElement creator. Data is the binary payload of the element."""
         if (data):
             strs = struct.unpack("s" * len(data[2:]), data[2:])
-            strs = ("{}" * len(strs)).format(*strs).split("\0")
+            if sys.version_info < (3,):
+                strs = ("{}" * len(strs)).format(*strs).split("\0")
+            else:
+                s = ""
+                for ch in strs:
+                    s += ch.decode('ISO-8859-1')
+                strs = s.split("\x00")
             self.group = strs[0]
             self.name = strs[1]
 
-            self.ident = ord(data[0])
+            if type(data[0]) == str:
+                self.ident = ord(data[0])
+            else:
+                self.ident = data[0]
 
-            self.ctype = self.types[ord(data[1]) & 0x0F][0]
-            self.pytype = self.types[ord(data[1]) & 0x0F][1]
+            metadata = data[1]
+            if type(metadata) == str:
+                metadata = ord(metadata)
 
-            if ((ord(data[1]) & 0x40) != 0):
+            self.ctype = self.types[metadata & 0x0F][0]
+            self.pytype = self.types[metadata & 0x0F][1]
+            if ((metadata & 0x40) != 0):
                 self.access = ParamTocElement.RO_ACCESS
             else:
                 self.access = ParamTocElement.RW_ACCESS
@@ -124,10 +140,10 @@ class Param():
         self.param_updater = _ParamUpdater(self.cf, self._param_updated)
         self.param_updater.start()
 
-        self.cf.disconnected.add_callback(self.param_updater.close)
+        self.cf.disconnected.add_callback(self._disconnected)
 
         self.all_updated = Caller()
-        self._have_updated = False
+        self.is_updated = False
 
         self.values = {}
 
@@ -142,17 +158,17 @@ class Param():
         """Check if all parameters from the TOC has at least been fetched
         once"""
         for g in self.toc.toc:
-            if not g in self.values:
+            if g not in self.values:
                 return False
             for n in self.toc.toc[g]:
-                if not n in self.values[g]:
+                if n not in self.values[g]:
                     return False
 
         return True
 
     def _param_updated(self, pk):
         """Callback with data for an updated parameter"""
-        var_id = pk.datal[0]
+        var_id = pk.data[0]
         element = self.toc.get_element_by_id(var_id)
         if element:
             s = struct.unpack(element.pytype, pk.data[1:])[0]
@@ -160,21 +176,25 @@ class Param():
             complete_name = "%s.%s" % (element.group, element.name)
 
             # Save the value for synchronous access
-            if not element.group in self.values:
+            if element.group not in self.values:
                 self.values[element.group] = {}
             self.values[element.group][element.name] = s
 
-            # This will only be called once
-            if self._check_if_all_updated() and not self._have_updated:
-                self._have_updated = True
-                self.all_updated.call()
-
             logger.debug("Updated parameter [%s]" % complete_name)
             if complete_name in self.param_update_callbacks:
-                self.param_update_callbacks[complete_name].call(complete_name, s)
+                self.param_update_callbacks[complete_name].call(
+                    complete_name, s)
             if element.group in self.group_update_callbacks:
-                self.group_update_callbacks[element.group].call(complete_name, s)
+                self.group_update_callbacks[element.group].call(
+                    complete_name, s)
             self.all_update_callback.call(complete_name, s)
+
+            # Once all the parameters are updated call the
+            # callback for "everything updated" (after all the param
+            # updated callbacks)
+            if self._check_if_all_updated() and not self.is_updated:
+                self.is_updated = True
+                self.all_updated.call()
         else:
             logger.debug("Variable id [%d] not found in TOC", var_id)
 
@@ -199,12 +219,12 @@ class Param():
         if not group and not name:
             self.all_update_callback.add_callback(cb)
         elif not name:
-            if not group in self.group_update_callbacks:
+            if group not in self.group_update_callbacks:
                 self.group_update_callbacks[group] = Caller()
             self.group_update_callbacks[group].add_callback(cb)
         else:
             paramname = "{}.{}".format(group, name)
-            if not paramname in self.param_update_callbacks:
+            if paramname not in self.param_update_callbacks:
                 self.param_update_callbacks[paramname] = Caller()
             self.param_update_callbacks[paramname].add_callback(cb)
 
@@ -212,16 +232,18 @@ class Param():
         """
         Initiate a refresh of the parameter TOC.
         """
-        self.toc = Toc()
         toc_fetcher = TocFetcher(self.cf, ParamTocElement,
-                                CRTPPort.PARAM, self.toc,
-                                refresh_done_callback, toc_cache)
+                                 CRTPPort.PARAM, self.toc,
+                                 refresh_done_callback, toc_cache)
         toc_fetcher.start()
 
-    def disconnected(self, uri):
+    def _disconnected(self, uri):
         """Disconnected callback from Crazyflie API"""
         self.param_updater.close()
-        self._have_updated = False
+        self.is_updated = False
+        # Clear all values from the previous Crazyflie
+        self.toc = Toc()
+        self.values = {}
 
     def request_param_update(self, complete_name):
         """
@@ -241,7 +263,8 @@ class Param():
                            complete_name)
             raise KeyError("{} not in param TOC".format(complete_name))
         elif element.access == ParamTocElement.RO_ACCESS:
-            logger.debug("[%s] is read only, no trying to set value", complete_name)
+            logger.debug("[%s] is read only, no trying to set value",
+                         complete_name)
             raise AttributeError("{} is read-only!".format(complete_name))
         else:
             varid = element.ident
@@ -255,6 +278,7 @@ class Param():
 class _ParamUpdater(Thread):
     """This thread will update params through a queue to make sure that we
     get back values"""
+
     def __init__(self, cf, updated_callback):
         """Initialize the thread"""
         Thread.__init__(self)
@@ -267,7 +291,7 @@ class _ParamUpdater(Thread):
         self._should_close = False
         self._req_param = -1
 
-    def close(self, uri):
+    def close(self):
         # First empty the queue from all packets
         while not self.request_queue.empty():
             self.request_queue.get()
@@ -286,9 +310,9 @@ class _ParamUpdater(Thread):
     def _new_packet_cb(self, pk):
         """Callback for newly arrived packets"""
         if pk.channel == READ_CHANNEL or pk.channel == WRITE_CHANNEL:
-            var_id = pk.datal[0]
-            if (pk.channel != TOC_CHANNEL and self._req_param == var_id
-                and pk is not None):
+            var_id = pk.data[0]
+            if (pk.channel != TOC_CHANNEL and self._req_param == var_id and
+                    pk is not None):
                 self.updated_callback(pk)
                 self._req_param = -1
                 try:
@@ -309,7 +333,7 @@ class _ParamUpdater(Thread):
             pk = self.request_queue.get()  # Wait for request update
             self.wait_lock.acquire()
             if self.cf.link:
-                self._req_param = pk.datal[0]
-                self.cf.send_packet(pk, expected_reply=(pk.datat[0:2]))
+                self._req_param = pk.data[0]
+                self.cf.send_packet(pk, expected_reply=(tuple(pk.data[0:2])))
             else:
                 self.wait_lock.release()

@@ -21,9 +21,9 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 Container for the simple plot with functionality for data legend, saving data
@@ -32,18 +32,14 @@ and manipulating the plot.
 For more advanced plotting save the data and use an external application.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['PlotWidget']
-
 from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, QLine, QPoint, QPointF, QSize, QRectF
+from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, QLine, QPoint, \
+    QPointF, QSize, QRectF
 
 from time import time
 import math
 
 import logging
-
-logger = logging.getLogger(__name__)
 
 import sys
 
@@ -54,9 +50,13 @@ from PyQt4.QtGui import *
 from PyQt4.Qt import *
 from time import time
 
-(plot_widget_class,
-connect_widget_base_class) = (uic.loadUiType(
-                             sys.path[0] + '/cfclient/ui/widgets/plotter.ui'))
+__author__ = 'Bitcraze AB'
+__all__ = ['PlotWidget']
+
+logger = logging.getLogger(__name__)
+
+(plot_widget_class, connect_widget_base_class) = (
+    uic.loadUiType(sys.path[0] + '/cfclient/ui/widgets/plotter.ui'))
 
 # Try the imports for PyQtGraph to see if it is installed
 try:
@@ -65,10 +65,11 @@ try:
     from pyqtgraph.Qt import QtCore, QtGui
     import pyqtgraph.console
     import numpy as np
-    
+
     _pyqtgraph_found = True
 except Exception:
     import traceback
+
     logger.warning("PyQtGraph (or dependency) failed to import:\n%s",
                    traceback.format_exc())
     _pyqtgraph_found = False
@@ -83,8 +84,10 @@ try:
 except Exception:
     pass
 
+
 class PlotItemWrapper:
     """Wrapper for PlotDataItem to handle what data is shown"""
+
     def __init__(self, curve):
         """Initialize"""
         self.data = []
@@ -102,11 +105,14 @@ class PlotItemWrapper:
         self.ts.append(ts)
 
     def show_data(self, start, stop):
-        """Set what data should be shown from the curve. This is done to keep performance when many
-        points have been added."""
+        """
+        Set what data should be shown from the curve. This is done to keep
+        performance when many points have been added.
+        """
         limit = min(stop, len(self.data))
         self.curve.setData(y=self.data[start:limit], x=self.ts[start:limit])
-        return [self.ts[start], self.ts[limit-1]]
+        return [self.ts[start], self.ts[limit - 1]]
+
 
 class PlotWidget(QtGui.QWidget, plot_widget_class):
     """Wrapper widget for PyQtGraph adding some extra buttons"""
@@ -130,8 +136,8 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         self._last_item = 0
 
         self.setSizePolicy(QtGui.QSizePolicy(
-                                         QtGui.QSizePolicy.MinimumExpanding,
-                                         QtGui.QSizePolicy.MinimumExpanding))
+            QtGui.QSizePolicy.MinimumExpanding,
+            QtGui.QSizePolicy.MinimumExpanding))
 
         self.setMinimumSize(self.minimumSizeHint())
         self.parent = parent
@@ -143,13 +149,14 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         self._plot_widget.setLabel('bottom', "Time", "ms")
         self._plot_widget.addLegend()
         self._plot_widget.getViewBox().disableAutoRange(ViewBox.XAxis)
-        self._plot_widget.getViewBox().sigRangeChangedManually.connect(self._manual_range_change)
+        self._plot_widget.getViewBox().sigRangeChangedManually.connect(
+            self._manual_range_change)
         self._plot_widget.getViewBox().setMouseEnabled(x=False, y=True)
         self._plot_widget.getViewBox().setMouseMode(ViewBox.PanMode)
 
         self.plotLayout.addWidget(self._plot_widget)
 
-        #self.saveToFile.clicked.connect(self.saveToFileSignal)
+        # self.saveToFile.clicked.connect(self.saveToFileSignal)
         self._x_min = 0
         self._x_max = 500
         self._enable_auto_y.setChecked(True)
@@ -157,7 +164,8 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         self._last_ts = None
         self._dtime = None
 
-        self._x_range = (float(self._range_x_min.text()), float(self._range_x_max.text()))
+        self._x_range = (
+            float(self._range_x_min.text()), float(self._range_x_max.text()))
         self._nbr_samples = int(self._nbr_of_samples_x.text())
 
         self._nbr_of_samples_x.valueChanged.connect(self._nbr_samples_changed)
@@ -192,7 +200,9 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         """Callback when user changes the X-axis mode"""
         if box == self._enable_range_x:
             logger.info("Enable range x")
-            self._x_range = (float(self._range_x_min.text()), float(self._range_x_max.text()))
+            self._x_range = (
+                float(self._range_x_min.text()),
+                float(self._range_x_max.text()))
         else:
             self._range_x_min.setEnabled(False)
             self._range_x_max.setEnabled(False)
@@ -202,7 +212,9 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         if box == self._enable_range_y:
             self._range_y_min.setEnabled(True)
             self._range_y_max.setEnabled(True)
-            y_range = (float(self._range_y_min.value()), float(self._range_y_max.value()))
+            y_range = (
+                float(self._range_y_min.value()),
+                float(self._range_y_max.value()))
             self._plot_widget.getViewBox().setRange(yRange=y_range)
         else:
             self._range_y_min.setEnabled(False)
@@ -212,8 +224,12 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
             self._plot_widget.getViewBox().enableAutoRange(ViewBox.YAxis)
 
     def _manual_range_change(self, obj):
-        """Callback from pyqtplot when users changes the range of the plot using the mouse"""
-        [[x_min,x_max],[y_min,y_max]] = self._plot_widget.getViewBox().viewRange()
+        """
+        Callback from pyqtplot when users changes the range of the plot using
+        the mouse
+        """
+        [[x_min, x_max],
+         [y_min, y_max]] = self._plot_widget.getViewBox().viewRange()
         self._range_y_min.setValue(y_min)
         self._range_y_max.setValue(y_max)
         self._range_y_min.setEnabled(True)
@@ -222,7 +238,9 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
 
     def _y_range_changed(self, val):
         """Callback when user changes Y range manually"""
-        _y_range = (float(self._range_y_min.value()), float(self._range_y_max.value()))
+        _y_range = (
+            float(self._range_y_min.value()),
+            float(self._range_y_max.value()))
         self._plot_widget.getViewBox().setRange(yRange=_y_range, padding=0)
 
     def _nbr_samples_changed(self, val):
@@ -244,13 +262,15 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         title - the name of the data
         pen - color of curve (using r for red and so on..)
         """
-        self._items[title] = PlotItemWrapper(self._plot_widget.plot(name=title, pen=pen))
+        self._items[title] = PlotItemWrapper(
+            self._plot_widget.plot(name=title, pen=pen))
 
     def add_data(self, data, ts):
         """
         Add new data to the plot.
 
-        data - dictionary sent from logging layer containing variable/value pairs
+        data - dictionary sent from logging layer containing variable/value
+               pairs
         ts - timestamp of the data in ms
         """
         if not self._last_ts:
@@ -263,20 +283,23 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         x_max_limit = 0
         # We are adding new datasets, calculate what we should show.
         if self._enable_samples_x.isChecked():
-            x_min_limit = max(0, self._last_item-self._nbr_samples)
+            x_min_limit = max(0, self._last_item - self._nbr_samples)
             x_max_limit = max(self._last_item, self._nbr_samples)
 
         for name in self._items:
             self._items[name].add_point(data[name], ts)
             if self._draw_graph and time() > self._ts + self._delay:
-                [self._x_min, self._x_max] = self._items[name].show_data(x_min_limit, x_max_limit)
+                [self._x_min, self._x_max] = self._items[name].show_data(
+                    x_min_limit, x_max_limit)
         if time() > self._ts + self._delay:
             self._ts = time()
-        if self._enable_samples_x.isChecked() and self._dtime and self._last_item < self._nbr_samples:
+        if (self._enable_samples_x.isChecked() and self._dtime and
+                self._last_item < self._nbr_samples):
             self._x_max = self._x_min + self._nbr_samples * self._dtime
 
         self._last_item = self._last_item + 1
-        self._plot_widget.getViewBox().setRange(xRange=(self._x_min, self._x_max))
+        self._plot_widget.getViewBox().setRange(
+            xRange=(self._x_min, self._x_max))
 
     def removeAllDatasets(self):
         """Reset the plot by removing all the datasets"""
@@ -288,4 +311,3 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         self._last_ts = None
         self._dtime = None
         self._plot_widget.clear()
-

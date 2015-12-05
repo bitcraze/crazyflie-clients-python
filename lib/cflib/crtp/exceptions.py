@@ -37,11 +37,11 @@ __author__ = 'Bitcraze AB'
 __all__ = ['WrongUriType', 'CommunicationException']
 
 
-class WrongUriType (Exception):
+class WrongUriType(Exception):
     """ Wrong type of URI for this interface """
     pass
 
 
-class CommunicationException (Exception):
+class CommunicationException(Exception):
     """ Communication problem when communicating with a Crazyflie """
     pass

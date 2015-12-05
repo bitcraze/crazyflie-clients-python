@@ -34,5 +34,3 @@ it and copying the following files:
   * LeapSDK\lib\<your_arch>\LeapPython.so   -> leapsdk\LeapPython.so
   * LeapSDK\lib\<your_arch>\libLeap.so      -> leapsdk\libLeap.so
 """
-
-

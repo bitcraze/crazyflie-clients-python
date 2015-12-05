@@ -1,3 +1,6 @@
+Warning: Generating windows executable is not working yet with Python3. This is
+work in progress in issue #207. Any help is apreciated!
+
 Howto generate cfclient Windows installer
 =========================================
 
@@ -14,10 +17,15 @@ development version).
 
 Prerequisites
 -------------
-Nsis 2.46 (http://nsis.sourceforge.net/Download)
-Python 2.7
-py2exe (http://sourceforge.net/projects/py2exe/files/py2exe/0.6.9/)
-Jinja2 python module
+Should be all from source install + the following:
+ - [Python 3.4](https://www.python.org/downloads/windows/) (make sure the pip component is selected when installing)
+ - [Nsis 2.46](http://nsis.sourceforge.net/Download)
+ - [GIT](https://git-scm.com/download/win)
+
+Install the following with pip:
+```
+\Python34\python.exe -m pip install jinja2 py2exe
+```
 
 Procedure
 ---------

@@ -31,26 +31,25 @@ and prints it to the console. After 10s the application disconnects and exits.
 """
 
 import sys
-sys.path.append("../lib")
-
-import cflib.crtp
-
 import logging
 import time
 from threading import Timer
 
-import cflib.crtp
-from cfclient.utils.logconfigreader import LogConfig
-from cflib.crazyflie import Crazyflie
+sys.path.append("../lib")
+import cflib.crtp  # noqa
+from cfclient.utils.logconfigreader import LogConfig  # noqa
+from cflib.crazyflie import Crazyflie  # noqa
 
 # Only output errors from the logging framework
 logging.basicConfig(level=logging.ERROR)
+
 
 class LoggingExample:
     """
     Simple logging example class that logs the Stabilizer from a supplied
     link uri and disconnects after 5s.
     """
+
     def __init__(self, link_uri):
         """ Initialize and run the example with the specified link_uri """
 
@@ -63,7 +62,7 @@ class LoggingExample:
         self._cf.connection_failed.add_callback(self._connection_failed)
         self._cf.connection_lost.add_callback(self._connection_lost)
 
-        print "Connecting to %s" % link_uri
+        print("Connecting to %s" % link_uri)
 
         # Try to connect to the Crazyflie
         self._cf.open_link(link_uri)
@@ -74,7 +73,7 @@ class LoggingExample:
     def _connected(self, link_uri):
         """ This callback is called form the Crazyflie API when a Crazyflie
         has been connected and the TOCs have been downloaded."""
-        print "Connected to %s" % link_uri
+        print("Connected to %s" % link_uri)
 
         # The definition of the logconfig can be made before connecting
         self._lg_stab = LogConfig(name="Stabilizer", period_in_ms=10)
@@ -94,10 +93,10 @@ class LoggingExample:
             # Start the logging
             self._lg_stab.start()
         except KeyError as e:
-            print "Could not start log configuration," \
-                  "{} not found in TOC".format(str(e))
+            print("Could not start log configuration,"
+                  "{} not found in TOC".format(str(e)))
         except AttributeError:
-            print "Could not add Stabilizer log config, bad configuration."
+            print("Could not add Stabilizer log config, bad configuration.")
 
         # Start a timer to disconnect in 10s
         t = Timer(5, self._cf.close_link)
@@ -105,42 +104,43 @@ class LoggingExample:
 
     def _stab_log_error(self, logconf, msg):
         """Callback from the log API when an error occurs"""
-        print "Error when logging %s: %s" % (logconf.name, msg)
+        print("Error when logging %s: %s" % (logconf.name, msg))
 
     def _stab_log_data(self, timestamp, data, logconf):
         """Callback froma the log API when data arrives"""
-        print "[%d][%s]: %s" % (timestamp, logconf.name, data)
+        print("[%d][%s]: %s" % (timestamp, logconf.name, data))
 
     def _connection_failed(self, link_uri, msg):
         """Callback when connection initial connection fails (i.e no Crazyflie
         at the speficied address)"""
-        print "Connection to %s failed: %s" % (link_uri, msg)
+        print("Connection to %s failed: %s" % (link_uri, msg))
         self.is_connected = False
 
     def _connection_lost(self, link_uri, msg):
         """Callback when disconnected after a connection has been made (i.e
         Crazyflie moves out of range)"""
-        print "Connection to %s lost: %s" % (link_uri, msg)
+        print("Connection to %s lost: %s" % (link_uri, msg))
 
     def _disconnected(self, link_uri):
         """Callback when the Crazyflie is disconnected (called in all cases)"""
-        print "Disconnected from %s" % link_uri
+        print("Disconnected from %s" % link_uri)
         self.is_connected = False
+
 
 if __name__ == '__main__':
     # Initialize the low-level drivers (don't list the debug drivers)
     cflib.crtp.init_drivers(enable_debug_driver=False)
     # Scan for Crazyflies and use the first one found
-    print "Scanning interfaces for Crazyflies..."
+    print("Scanning interfaces for Crazyflies...")
     available = cflib.crtp.scan_interfaces()
-    print "Crazyflies found:"
+    print("Crazyflies found:")
     for i in available:
-        print i[0]
+        print(i[0])
 
     if len(available) > 0:
         le = LoggingExample(available[0][0])
     else:
-        print "No Crazyflies found, cannot run example"
+        print("No Crazyflies found, cannot run example")
 
     # The Crazyflie lib doesn't contain anything to keep the application alive,
     # so this is where your application should do something. In our case we

@@ -46,7 +46,7 @@ class _ToggleState(dict):
 
 class InputData:
     def __init__(self):
-        #self._toggled = {}
+        # self._toggled = {}
         self._axes = ("roll", "pitch", "yaw", "thrust")
         self._buttons = ("alt1", "alt2", "estop", "exit", "pitchNeg",
                          "pitchPos", "rollNeg", "rollPos", "althold",
@@ -64,7 +64,7 @@ class InputData:
         return self._axes + self._buttons
 
     def _check_toggle(self, key, data):
-        if not key in self._prev_btn_values:
+        if key not in self._prev_btn_values:
             self._prev_btn_values[key] = data
         elif self._prev_btn_values[key] != data:
             self._prev_btn_values[key] = data
@@ -159,14 +159,15 @@ class InputReaderInterface(object):
         return [self._cap_rp(roll), self._cap_rp(pitch)]
 
     def _scale_and_deadband_yaw(self, yaw):
-        return InputReaderInterface.deadband(yaw, 0.2) * self.input.max_yaw_rate
+        return (InputReaderInterface.deadband(yaw, 0.2) *
+                self.input.max_yaw_rate)
 
     def _limit_thrust(self, thrust, althold, emergency_stop):
         # Thust limiting (slew, minimum and emergency stop)
         if self.input.springy_throttle:
             if althold and self.input.has_pressure_sensor:
-                thrust = int(round(InputReaderInterface.deadband(thrust, 0.2)
-                                   * 32767 + 32767))  # Convert to uint16
+                thrust = int(round(InputReaderInterface.deadband(thrust, 0.2) *
+                                   32767 + 32767))  # Convert to uint16
             else:
                 # Scale the thrust to percent (it's between 0 and 1)
                 thrust *= 100
@@ -190,8 +191,8 @@ class InputReaderInterface(object):
                         else:
                             # If we are "inside" the limit, then lower
                             # according to the rate we have set each iteration
-                            lowering = (time() - self._last_time) * \
-                                self.input.thrust_slew_rate
+                            lowering = ((time() - self._last_time) *
+                                        self.input.thrust_slew_rate)
                             limited_thrust = self._prev_thrust - lowering
                 elif emergency_stop or thrust < self.thrust_stop_limit:
                     # If the thrust have been pulled down or the
@@ -224,14 +225,14 @@ class InputReaderInterface(object):
                         self.input.max_thrust -
                         self.input.min_thrust)
                 if (self.input.thrust_slew_enabled and
-                            self.input.thrust_slew_limit > thrust and not
-                emergency_stop):
+                    self.input.thrust_slew_limit > thrust and not
+                        emergency_stop):
                     if self._old_thrust > self.input.thrust_slew_limit:
                         self._old_thrust = self.input.thrust_slew_limit
                     if thrust < (self._old_thrust -
-                                     (self.input.thrust_slew_rate / 100)):
-                        thrust = self._old_thrust - \
-                                 self.input.thrust_slew_rate / 100
+                                 self.input.thrust_slew_rate / 100):
+                        thrust = (self._old_thrust -
+                                  self.input.thrust_slew_rate / 100)
                     if thrust < -1 or thrust < self.input.min_thrust:
                         thrust = 0
 

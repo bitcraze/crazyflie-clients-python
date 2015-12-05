@@ -21,32 +21,35 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 The bootloader dialog is used to update the Crazyflie firmware and to
 read/write the configuration block in the Crazyflie flash.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Cf1ConfigDialog']
-
 import struct
 import sys
 from cflib.bootloader import Bootloader
 
 import logging
-logger = logging.getLogger(__name__)
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
 from cfclient.utils.config import Config
+from functools import reduce
+
+__author__ = 'Bitcraze AB'
+__all__ = ['Cf1ConfigDialog']
+
+logger = logging.getLogger(__name__)
 
 service_dialog_class = uic.loadUiType(sys.path[0] +
                                       "/cfclient/ui/dialogs/cf1config.ui")[0]
+
 
 class UIState:
     DISCONNECTED = 0
@@ -60,6 +63,7 @@ class UIState:
 class Cf1ConfigDialog(QtGui.QWidget, service_dialog_class):
     """Tab for update the Crazyflie firmware and for reading/writing the config
     block in flash"""
+
     def __init__(self, helper, *args):
         super(Cf1ConfigDialog, self).__init__(*args)
         self.setupUi(self)
@@ -80,13 +84,13 @@ class Cf1ConfigDialog(QtGui.QWidget, service_dialog_class):
         self._cancel_bootloading.clicked.connect(self.close)
 
         self.clt.statusChanged.connect(self.statusUpdate)
-        self.clt.connectingSignal.connect(lambda:
-                                          self.setUiState(UIState.CONNECTING))
-        self.clt.connectedSignal.connect(lambda:
-                                         self.setUiState(UIState.COLD_CONNECT))
+        self.clt.connectingSignal.connect(
+            lambda: self.setUiState(UIState.CONNECTING))
+        self.clt.connectedSignal.connect(
+            lambda: self.setUiState(UIState.COLD_CONNECT))
         self.clt.failed_signal.connect(lambda m: self._ui_connection_fail(m))
-        self.clt.disconnectedSignal.connect(lambda:
-                                        self.setUiState(UIState.DISCONNECTED))
+        self.clt.disconnectedSignal.connect(
+            lambda: self.setUiState(UIState.DISCONNECTED))
         self.clt.updateConfigSignal.connect(self.updateConfig)
 
         self.clt.start()
@@ -219,7 +223,7 @@ class CrazyloadThread(QThread):
             self.failed_signal.emit("{}".format(e))
 
     def checksum256(self, st):
-        return reduce(lambda x, y: x + y, map(ord, st)) % 256
+        return reduce(lambda x, y: x + y, list(map(ord, st))) % 256
 
     def writeConfigAction(self, channel, speed, rollTrim, pitchTrim):
         data = (0x00, channel, speed, pitchTrim, rollTrim)
@@ -246,7 +250,8 @@ class CrazyloadThread(QThread):
                 speed = Config().get("default_cf_speed")
                 pitchTrim = Config().get("default_cf_trim")
                 rollTrim = Config().get("default_cf_trim")
-                self.statusChanged.emit("Could not find config block, showing defaults", 100)
+                self.statusChanged.emit(
+                    "Could not find config block, showing defaults", 100)
             self.updateConfigSignal.emit(channel, speed, rollTrim, pitchTrim)
         else:
             self.statusChanged.emit("Reading config block failed!", 0)

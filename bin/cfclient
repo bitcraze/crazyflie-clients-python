@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from __future__ import absolute_import
 
@@ -36,12 +36,12 @@ def init_config_path(isInSource):
         elif sys.platform == "darwin":
             from AppKit import NSSearchPathForDirectoriesInDomains
             # FIXME: Copy-pasted from StackOverflow, not tested!
-            # http://developer.apple.com/DOCUMENTATION/Cocoa/Reference/Foundation/Miscellaneous/Foundation_Functions/Reference/reference.html#//apple_ref/c/func/NSSearchPathForDirectoriesInDomains @IgnorePep8
+            # http://developer.apple.com/DOCUMENTATION/Cocoa/Reference/Foundation/Miscellaneous/Foundation_Functions/Reference/reference.html#//apple_ref/c/func/NSSearchPathForDirectoriesInDomains
             # NSApplicationSupportDirectory = 14
             # NSUserDomainMask = 1
             # True for expanding the tilde into a fully qualified path
             configPath = _path.join(NSSearchPathForDirectoriesInDomains(
-                             14, 1, True)[0], APP_NAME)
+                14, 1, True)[0], APP_NAME)
         else:
             # Unknown OS, I hope this is good enough
             configPath = _path.join(prefix, "." + APP_NAME)
@@ -65,17 +65,17 @@ def init_paths():
     if hasattr(sys, "frozen"):
         if sys.frozen in ('dll', 'console_exe', 'windows_exe'):
             sys.path[0] = _path.normpath(
-                              _path.dirname(_path.realpath(sys.executable)))
+                _path.dirname(_path.realpath(sys.executable)))
         elif sys.frozen in ('macosx_app',):
             # FIXME: Copy-pasted from StackOverflow, not tested!
             # py2app:
             # Notes on how to find stuff on MAC, by an expert (Bob Ippolito):
-            # http://mail.python.org/pipermail/pythonmac-sig/2004-November/012121.html @IgnorePep8
+            # http://mail.python.org/pipermail/pythonmac-sig/2004-November/012121.html
             approot = os.environ['RESOURCEPATH']
     else:
         prefix = _path.normpath(
-                      _path.join(
-                          _path.dirname(_path.realpath(__file__)), '..'))
+            _path.join(
+                _path.dirname(_path.realpath(__file__)), '..'))
 
         src_lib = _path.join(prefix, 'lib')
         share_lib = prefix
@@ -90,16 +90,24 @@ def init_paths():
 
     if sys.path[0] == "":
         raise Exception("Cannot find cfclient install folder!")
-    
+
     if inSource:
-        os.environ["PYSDL2_DLL_PATH"] = os.path.abspath(sys.path[0]+"\..")
+        os.environ["PYSDL2_DLL_PATH"] = os.path.abspath(sys.path[0] + "\..")
     else:
         os.environ["PYSDL2_DLL_PATH"] = sys.path[0]
-    
+
     sys.path.insert(1, init_config_path(inSource))
 
 
 if __name__ == '__main__':
+    if sys.version_info < (3,):
+        print("The Crazyflie Python client only works with Python 3+, and "
+              "you are running it using version {}.{}.{}".format(
+                  sys.version_info.major, sys.version_info.minor,
+                  sys.version_info.micro))
+        print("Exiting!")
+        sys.exit(1)
     init_paths()
     import cfclient
+
     cfclient.main()

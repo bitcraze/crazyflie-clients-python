@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -32,25 +32,27 @@ the Leap Motion SDK to be manually copied. See lib/leapsdk/__init__.py for
 more info.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['LeapmotionReader']
-
 try:
     import leapsdk.Leap as Leap
-    from leapsdk.Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
+    from leapsdk.Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, \
+        SwipeGesture
 except Exception as e:
-    raise Exception("Leap Motion library probably not installed ({})".format(e))
+    raise Exception(
+        "Leap Motion library probably not installed ({})".format(e))
 
 import logging
 import time
+
+__author__ = 'Bitcraze AB'
+__all__ = ['LeapmotionReader']
 
 logger = logging.getLogger(__name__)
 
 MODULE_MAIN = "LeapmotionReader"
 MODULE_NAME = "Leap Motion"
 
-class LeapListener(Leap.Listener):
 
+class LeapListener(Leap.Listener):
     def set_data_callback(self, callback):
         self._dcb = callback
         self._nbr_of_fingers = 0
@@ -75,8 +77,6 @@ class LeapListener(Leap.Listener):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
         data = {"roll": 0, "pitch": 0, "yaw": 0, "thrust": 0}
-        #logger.info("Frame id: %d, timestamp: %d, hands: %d, fingers: %d, tools: %d, gestures: %d" % (
-        #                              frame.id, frame.timestamp, len(frame.hands), len(frame.fingers), len(frame.tools), len(frame.gestures())))
         if not frame.hands.is_empty:
             # Get the first hand
             hand = frame.hands[0]
@@ -89,7 +89,8 @@ class LeapListener(Leap.Listener):
                 data["roll"] = -direction.pitch * Leap.RAD_TO_DEG / 30.0
                 data["pitch"] = -normal.roll * Leap.RAD_TO_DEG / 30.0
                 data["yaw"] = direction.yaw * Leap.RAD_TO_DEG / 70.0
-                data["thrust"] = (hand.palm_position[1] - 80)/150.0 # Use the elevation of the hand for thrust
+                # Use the elevation of the hand for thrust
+                data["thrust"] = (hand.palm_position[1] - 80) / 150.0
 
             if data["thrust"] < 0.0:
                 data["thrust"] = 0.0
@@ -98,10 +99,12 @@ class LeapListener(Leap.Listener):
 
         self._dcb(data)
 
+
 class LeapmotionReader:
     """Used for reading data from input devices using the PyGame API."""
+
     def __init__(self):
-        #pygame.init()
+        # pygame.init()
         self._ts = 0
         self._listener = LeapListener()
         self._listener.set_data_callback(self.leap_callback)
@@ -121,12 +124,14 @@ class LeapmotionReader:
         logger.info("Initialized Leap")
 
     def open(self, deviceId):
-        """Initialize the reading and open the device with deviceId and set the mapping for axis/buttons using the
-        inputMap"""
+        """
+        Initialize the reading and open the device with deviceId and set the
+        mapping for axis/buttons using the inputMap
+        """
         return
 
     def leap_callback(self, data):
-        for k in data.keys():
+        for k in list(data.keys()):
             self.data[k] = data[k]
 
     def read(self, id):
@@ -141,9 +146,8 @@ class LeapmotionReader:
         dev = []
 
         # According to API doc only 0 or 1 devices is supported
-        #logger.info("Devs: {}".format(self._controller.is_connected))
+        # logger.info("Devs: {}".format(self._controller.is_connected))
         if self._controller.is_connected:
             dev.append({"id": 0, "name": "Leapmotion"})
-        
-        return dev
 
+        return dev

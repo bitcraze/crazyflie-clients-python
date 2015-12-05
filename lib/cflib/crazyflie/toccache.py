@@ -31,19 +31,19 @@ Access the TOC cache for reading/writing. It supports both user
 cache and dist cache.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['TocCache']
-
 import os
 import json
 from glob import glob
 
 import logging
-logger = logging.getLogger(__name__)
 
 from .log import LogTocElement  # pylint: disable=W0611
 from .param import ParamTocElement  # pylint: disable=W0611
- 
+
+__author__ = 'Bitcraze AB'
+__all__ = ['TocCache']
+
+logger = logging.getLogger(__name__)
 
 
 class TocCache():
@@ -51,6 +51,7 @@ class TocCache():
     Access to TOC cache. To turn of the cache functionality
     don't supply any directories.
     """
+
     def __init__(self, ro_cache=None, rw_cache=None):
         self._cache_files = []
         if (ro_cache):
@@ -91,7 +92,7 @@ class TocCache():
                 filename = "%s/%08X.json" % (self._rw_cache, crc)
                 cache = open(filename, 'w')
                 cache.write(json.dumps(toc, indent=2,
-                            default=self._encoder))
+                                       default=self._encoder))
                 cache.close()
                 logger.info("Saved cache to [%s]", filename)
                 self._cache_files += [filename]

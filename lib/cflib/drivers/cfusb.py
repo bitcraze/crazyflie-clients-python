@@ -30,10 +30,6 @@
 USB driver for the Crazyflie.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['CfUsb']
-
-
 import os
 import usb
 import logging
@@ -42,6 +38,9 @@ import time
 import array
 import binascii
 
+__author__ = 'Bitcraze AB'
+__all__ = ['CfUsb']
+
 logger = logging.getLogger(__name__)
 
 USB_VID = 0x0483
@@ -49,9 +48,11 @@ USB_PID = 0x5740
 
 try:
     import usb.core
+
     pyusb_backend = None
     if os.name == "nt":
         import usb.backend.libusb0 as libusb0
+
         pyusb_backend = libusb0.get_backend()
     pyusb1 = True
 except:
@@ -67,7 +68,8 @@ def _find_devices():
     logger.info("Looking for devices....")
 
     if pyusb1:
-        for d in usb.core.find(idVendor=USB_VID, idProduct=USB_PID, find_all=1, backend=pyusb_backend):
+        for d in usb.core.find(idVendor=USB_VID, idProduct=USB_PID, find_all=1,
+                               backend=pyusb_backend):
             ret.append(d)
     else:
         busses = usb.busses()
@@ -97,13 +99,13 @@ class CfUsb:
             except Exception:
                 self.dev = None
 
-
         if self.dev:
             if (pyusb1 is True):
                 self.dev.set_configuration(1)
                 self.handle = self.dev
-                self.version = float("{0:x}.{1:x}".format(self.dev.bcdDevice >> 8,
-                                     self.dev.bcdDevice & 0x0FF))
+                self.version = float(
+                    "{0:x}.{1:x}".format(self.dev.bcdDevice >> 8,
+                                         self.dev.bcdDevice & 0x0FF))
             else:
                 self.handle = self.dev.open()
                 self.handle.setConfiguration(1)
@@ -128,7 +130,7 @@ class CfUsb:
     def scan(self):
         # TODO: Currently only supports one device
         if self.dev:
-            return [("usb://0","")]
+            return [("usb://0", "")]
         return []
 
     def set_crtp_to_usb(self, crtp_to_usb):
@@ -137,7 +139,7 @@ class CfUsb:
         else:
             _send_vendor_setup(self.handle, 0x01, 0x01, 0, ())
 
-    ### Data transfers ###
+    # Data transfers
     def send_packet(self, dataOut):
         """ Send a packet and receive the ack from the radio dongle
             The ack contains information about the packet transmition
@@ -149,7 +151,6 @@ class CfUsb:
                 count = self.handle.write(endpoint=1, data=dataOut, timeout=20)
         except usb.USBError as e:
             pass
-
 
     def receive_packet(self):
         dataIn = ()
@@ -175,8 +176,7 @@ class CfUsb:
         return dataIn
 
 
-
-#Private utility functions
+# Private utility functions
 def _send_vendor_setup(handle, request, value, index, data):
     if pyusb1:
         handle.ctrl_transfer(usb.TYPE_VENDOR, request, wValue=value,

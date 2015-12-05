@@ -21,35 +21,39 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 Shows all the parameters available in the Crazyflie and also gives the ability
 to edit them.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['ParamTab']
-
 import sys
+import logging
+
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
-from PyQt4.QtCore import QAbstractItemModel, QModelIndex, QString, QVariant
-from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView, QBrush, QColor
+from PyQt4.QtCore import QAbstractItemModel, QModelIndex
+from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView, \
+    QBrush, QColor
 from PyQt4.QtGui import QSortFilterProxyModel
 
 from cfclient.ui.tab import Tab
 
-param_tab_class = uic.loadUiType(sys.path[0] +
-                                 "/cfclient/ui/tabs/paramTab.ui")[0]
+__author__ = 'Bitcraze AB'
+__all__ = ['ParamTab']
 
-import logging
+param_tab_class = uic.loadUiType(
+    sys.path[0] + "/cfclient/ui/tabs/paramTab.ui")[0]
+
 logger = logging.getLogger(__name__)
+
 
 class ParamChildItem(object):
     """Represents a leaf-node in the tree-view (one parameter)"""
+
     def __init__(self, parent, name, crazyflie):
         """Initialize the node"""
         self.parent = parent
@@ -81,6 +85,7 @@ class ParamChildItem(object):
 
 class ParamGroupItem(object):
     """Represents a parameter group in the tree-view"""
+
     def __init__(self, name, model):
         """Initialize the parent node"""
         super(ParamGroupItem, self).__init__()
@@ -93,8 +98,10 @@ class ParamGroupItem(object):
         """Return the number of children this node has"""
         return len(self.children)
 
+
 class ParamBlockModel(QAbstractItemModel):
     """Model for handling the parameters in the tree-view"""
+
     def __init__(self, parent):
         """Create the empty model"""
         super(ParamBlockModel, self).__init__(parent)
@@ -142,7 +149,7 @@ class ParamBlockModel(QAbstractItemModel):
     def headerData(self, section, orientation, role):
         """Re-implemented method to get the headers"""
         if role == Qt.DisplayRole:
-            return QString(self._column_headers[section])
+            return self._column_headers[section]
 
     def rowCount(self, parent):
         """Re-implemented method to get the number of rows for a given index"""
@@ -184,32 +191,30 @@ class ParamBlockModel(QAbstractItemModel):
                 return node.value
         elif role == Qt.EditRole and index.column() == 3:
             return node.value
-        elif (role == Qt.BackgroundRole and index.column() == 3
-                and node.is_updating):
+        elif (role == Qt.BackgroundRole and index.column() == 3 and
+              node.is_updating):
             return self._red_brush
 
-        return QVariant()
+        return None
 
     def setData(self, index, value, role):
         """Re-implemented function called when a value has been edited"""
         node = index.internalPointer()
         if role == Qt.EditRole:
-            new_val = str(value.toString())
+            new_val = str(value)
             # This will not update the value, only trigger a setting and
             # reading of the parameter from the Crazyflie
             node.set_value(new_val)
             return True
         return False
 
-
     def flags(self, index):
         """Re-implemented function for getting the flags for a certain index"""
         flag = super(ParamBlockModel, self).flags(index)
         node = index.internalPointer()
-        if index.column() == 3 and node.parent and node.access=="RW":
+        if index.column() == 3 and node.parent and node.access == "RW":
             flag |= Qt.ItemIsEditable
         return flag
-
 
     def reset(self):
         """Reset the model"""

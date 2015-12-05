@@ -31,12 +31,12 @@ from a second device (master/teacher) with the possibility to take over
 roll/pitch as well.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['TakeOverSelectiveMux']
-
 import logging
 
 from . import InputMux
+
+__author__ = 'Bitcraze AB'
+__all__ = ['TakeOverSelectiveMux']
 
 logger = logging.getLogger(__name__)
 
@@ -49,9 +49,10 @@ class TakeOverSelectiveMux(InputMux):
         self.name = "Teacher (RP)"
         self._devs = {self._master: None, self._slave: None}
 
-        self._muxing = {self._master: ("thrust", "yaw", "estop", "alt1", "alt2",
-                                       "althold", "exit"),
-                        self._slave: ("roll", "pitch")}
+        self._muxing = {
+            self._master: ("thrust", "yaw", "estop", "alt1", "alt2",
+                           "althold", "exit"), self._slave: ("roll", "pitch")
+        }
 
     def read(self):
         try:

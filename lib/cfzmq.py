@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -14,7 +14,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -34,19 +34,19 @@ import os
 import logging
 import signal
 import zmq
-import Queue
+import queue
 from threading import Thread
 import cflib.crtp
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.log import LogConfig
 
 if os.name == 'posix':
-    print 'Disabling standard output for libraries!'
+    print('Disabling standard output for libraries!')
     stdout = os.dup(1)
     os.dup2(os.open('/dev/null', os.O_WRONLY), 1)
     sys.stdout = os.fdopen(stdout, 'w')
 
-# set SDL to use the dummy NULL video driver, 
+# set SDL to use the dummy NULL video driver,
 #   so it doesn't need a windowing system.
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
@@ -70,9 +70,10 @@ LOG_TIMEOUT = 10
 
 logger = logging.getLogger(__name__)
 
-class _SrvThread(Thread):
 
-    def __init__(self, socket, log_socket, param_socket, conn_socket, cf, *args):
+class _SrvThread(Thread):
+    def __init__(self, socket, log_socket, param_socket, conn_socket, cf,
+                 *args):
         super(_SrvThread, self).__init__(*args)
         self._socket = socket
         self._log_socket = log_socket
@@ -88,10 +89,10 @@ class _SrvThread(Thread):
         self._cf.param.all_updated.add_callback(self._tocs_updated)
         self._cf.param.all_update_callback.add_callback(self._all_param_update)
 
-        self._conn_queue = Queue.Queue(1)
-        self._param_queue = Queue.Queue(1)
-        self._log_started_queue = Queue.Queue(1)
-        self._log_added_queue = Queue.Queue(1)
+        self._conn_queue = queue.Queue(1)
+        self._param_queue = queue.Queue(1)
+        self._log_started_queue = queue.Queue(1)
+        self._log_added_queue = queue.Queue(1)
 
         self._logging_configs = {}
 
@@ -134,7 +135,8 @@ class _SrvThread(Thread):
             for name in param_toc[group]:
                 param[group][name] = {
                     "type": param_toc[group][name].ctype,
-                    "access": "RW" if param_toc[group][name].access == 0 else "RO",
+                    "access": "RW" if param_toc[group][
+                        name].access == 0 else "RO",
                     "value": self._cf.param.values[group][name]}
 
         resp = {"version": 1, "status": 0, "log": log, "param": param}
@@ -191,7 +193,7 @@ class _SrvThread(Thread):
             except AttributeError as e:
                 resp["status"] = 2
                 resp["msg"] = str(e)
-            except Queue.Empty:
+            except queue.Empty:
                 resp["status"] = 3
                 resp["msg"] = "Log configuration did not start"
         if data["action"] == "start":
@@ -202,7 +204,7 @@ class _SrvThread(Thread):
             except KeyError as e:
                 resp["status"] = 1
                 resp["msg"] = "{} config not found".format(str(e))
-            except Queue.Empty:
+            except queue.Empty:
                 resp["status"] = 2
                 resp["msg"] = "Log configuration did not stop"
         if data["action"] == "stop":
@@ -213,7 +215,7 @@ class _SrvThread(Thread):
             except KeyError as e:
                 resp["status"] = 1
                 resp["msg"] = "{} config not found".format(str(e))
-            except Queue.Empty:
+            except queue.Empty:
                 resp["status"] = 2
                 resp["msg"] = "Log configuration did not stop"
         if data["action"] == "delete":
@@ -224,7 +226,7 @@ class _SrvThread(Thread):
             except KeyError as e:
                 resp["status"] = 1
                 resp["msg"] = "{} config not found".format(str(e))
-            except Queue.Empty:
+            except queue.Empty:
                 resp["status"] = 2
                 resp["msg"] = "Log configuration did not stop"
 
@@ -248,7 +250,7 @@ class _SrvThread(Thread):
         except AttributeError as e:
             resp["status"] = 2
             resp["msg"] = str(e)
-        except Queue.Empty:
+        except queue.Empty:
             resp["status"] = 3
             resp["msg"] = "Timeout when setting parameter" \
                           "{}".format(data["name"])
@@ -314,8 +316,8 @@ class ZMQServer():
     def __init__(self, base_url):
         """Start threads and bind ports"""
         cflib.crtp.init_drivers(enable_debug_driver=True)
-        self._cf = Crazyflie(ro_cache=sys.path[0]+"/cflib/cache",
-                             rw_cache=sys.path[1]+"/cache")
+        self._cf = Crazyflie(ro_cache=sys.path[0] + "/cflib/cache",
+                             rw_cache=sys.path[1] + "/cache")
 
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 

@@ -30,20 +30,20 @@
 Used to write log data to files.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['LogWriter']
-
 import os
 import sys
 import datetime
 
 import logging
 
-logger = logging.getLogger(__name__)
-
 from cflib.crazyflie.log import LogConfig
 
 import traceback
+
+__author__ = 'Bitcraze AB'
+__all__ = ['LogWriter']
+
+logger = logging.getLogger(__name__)
 
 
 class LogWriter():

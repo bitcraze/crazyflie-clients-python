@@ -21,17 +21,14 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 Shows all the parameters available in the Crazyflie and also gives the ability
 to edit them.
 """
-
-__author__ = 'Bitcraze AB'
-__all__ = ['LogBlockTab']
 
 import time
 import sys
@@ -41,8 +38,12 @@ from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
 from cfclient.ui.tab import Tab
 
+__author__ = 'Bitcraze AB'
+__all__ = ['LogBlockTab']
+
 logblock_tab_class = uic.loadUiType(sys.path[0] +
-                                 "/cfclient/ui/tabs/logBlockDebugTab.ui")[0]
+                                    "/cfclient/ui/tabs/logBlockDebugTab.ui")[0]
+
 
 class LogBlockDebugTab(Tab, logblock_tab_class):
     """
@@ -64,10 +65,13 @@ class LogBlockDebugTab(Tab, logblock_tab_class):
 
         self._helper.cf.log.block_added_cb.add_callback(self._block_added)
         self._disconnected_signal.connect(self._disconnected)
-        self._helper.cf.disconnected.add_callback(self._disconnected_signal.emit)
+        self._helper.cf.disconnected.add_callback(
+            self._disconnected_signal.emit)
         self._blocks_updated_signal.connect(self._update_tree)
 
-        self._block_tree.setHeaderLabels(['Id', 'Name', 'Period (ms)', 'Added', 'Started', 'Error', 'Contents'])
+        self._block_tree.setHeaderLabels(
+            ['Id', 'Name', 'Period (ms)', 'Added', 'Started', 'Error',
+             'Contents'])
         self._block_tree.sortItems(0, QtCore.Qt.AscendingOrder)
 
     def _block_added(self, block):
@@ -91,9 +95,9 @@ class LogBlockDebugTab(Tab, logblock_tab_class):
             for var in block.variables:
                 subItem = QtGui.QTreeWidgetItem()
                 subItem.setFlags(Qt.ItemIsEnabled |
-                              Qt.ItemIsSelectable)
+                                 Qt.ItemIsSelectable)
                 subItem.setData(6, Qt.EditRole, var.name)
-                item.addChild(subItem)                
+                item.addChild(subItem)
 
             self._block_tree.addTopLevelItem(item)
             self._block_tree.expandItem(item)

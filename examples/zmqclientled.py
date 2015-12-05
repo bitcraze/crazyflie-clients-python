@@ -37,7 +37,7 @@ LED lit up, until all of them are lit up in the last message.
 
 try:
     import zmq
-except Exception as e:
+except ImportError as e:
     raise Exception("ZMQ library probably not installed ({})".format(e))
 
 zmess = {
@@ -60,7 +60,7 @@ zmess = {
 
 context = zmq.Context()
 receiver = context.socket(zmq.PUSH)
-bind_addr = "tcp://127.0.0.1:{}".format(1024+190)
+bind_addr = "tcp://127.0.0.1:{}".format(1024 + 190)
 receiver.connect(bind_addr)
 
 for i in range(12):

@@ -33,13 +33,13 @@ To create a new input device reader drop a .py file into this
 directory and it will be picked up automatically.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['InputDevice']
-
 import os
 import glob
 import logging
 from ..inputreaderinterface import InputReaderInterface
+
+__author__ = 'Bitcraze AB'
+__all__ = ['InputDevice']
 
 logger = logging.getLogger(__name__)
 
@@ -57,12 +57,13 @@ available_devices = []
 
 for reader in found_readers:
     try:
-        module = __import__(reader, globals(), locals(), [reader], -1)
+        module = __import__(reader, globals(), locals(), [reader], 1)
         main_name = getattr(module, "MODULE_MAIN")
         initialized_readers.append(getattr(module, main_name)())
         logger.info("Successfully initialized [{}]".format(reader))
     except Exception as e:
         logger.info("Could not initialize [{}]: {}".format(reader, e))
+
 
 def devices():
     # Todo: Support rescanning and adding/removing devices

@@ -36,19 +36,23 @@ from cflib.crazyflie.mem import MemoryElement
 
 import logging
 from threading import Thread, Lock
+
 ZMQ_PULL_PORT = 1024 + 190
 logger = logging.getLogger(__name__)
 
 enabled = False
 try:
     import zmq
+
     enabled = True
 except Exception as e:
     logger.warning("Not enabling ZMQ LED driver access,"
                    "import failed ({})".format(e))
 
+
 class _PullReader(Thread):
     """Blocking thread for reading from ZMQ socket"""
+
     def __init__(self, receiver, callback, *args):
         """Initialize"""
         super(_PullReader, self).__init__(*args)
@@ -59,12 +63,13 @@ class _PullReader(Thread):
 
     def run(self):
         while True:
-            #self.lock.acquire()
+            # self.lock.acquire()
             self._cb(self._receiver.recv_json())
 
 
 class ZMQLEDDriver:
     """Used for reading data from input devices using the PyGame API."""
+
     def __init__(self, crazyflie):
 
         if enabled:

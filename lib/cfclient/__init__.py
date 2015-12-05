@@ -31,13 +31,16 @@ try:
 except:
     try:
         import subprocess
-        VERSION = subprocess.check_output(["git", "describe"])
+
+        VERSION = subprocess.check_output(["git", "describe"]).encode('utf-8')
     except:
         VERSION = "dev"
 
     try:
         import subprocess
-        ret = subprocess.call(["git", "diff", "--quiet", "HEAD"])
+
+        ret = subprocess.call(["git", "diff", "--quiet", "HEAD"]
+                              ).encode('utf-8')
         if ret > 0:
             VERSION += "+"
     except:

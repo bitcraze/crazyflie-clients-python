@@ -29,17 +29,20 @@
 """ CRTP UDP Driver. Work either with the UDP server or with an UDP device
 See udpserver.py for the protocol"""
 
-__author__ = 'Bitcraze AB'
-__all__ = ['UdpDriver']
-
-
 from .crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket
 from .exceptions import WrongUriType
-import Queue
+import sys
+if sys.version_info < (3,):
+    import Queue as queue
+else:
+    import queue
 import re
 import struct
 from socket import socket
+
+__author__ = 'Bitcraze AB'
+__all__ = ['UdpDriver']
 
 
 class UdpDriver(CRTPDriver):
@@ -47,16 +50,16 @@ class UdpDriver(CRTPDriver):
         None
 
     def connect(self, uri, linkQualityCallback, linkErrorCallback):
-        #check if the URI is a radio URI
+        # check if the URI is a radio URI
         if not re.search("^udp://", uri):
             raise WrongUriType("Not an UDP URI")
 
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.socket = socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.addr = ("localhost", 7777)
         self.socket.connect(self.addr)
 
-        #Add this to the server clients list
+        # Add this to the server clients list
         self.socket.sendto("\xFF\x01\x01\x01", self.addr)
 
     def receive_packet(self, time=0):
@@ -77,11 +80,11 @@ class UdpDriver(CRTPDriver):
                     return self.rxqueue.get(True, 10)
             else:
                 return self.rxqueue.get(True, time)
-        except Queue.Empty:
+        except queue.Empty:
             return None
 
     def send_packet(self, pk):
-        raw = (pk.port,) + struct.unpack("B"* len(pk.data), pk.data)
+        raw = (pk.port,) + struct.unpack("B" * len(pk.data), pk.data)
 
         cksum = 0
         for i in raw:
@@ -91,11 +94,11 @@ class UdpDriver(CRTPDriver):
 
         data = ''.join(chr(v) for v in (raw + (cksum,)))
 
-        #print tuple(data)
+        # print tuple(data)
         self.socket.sendto(data, self.addr)
 
     def close(self):
-        #Remove this from the server clients list
+        # Remove this from the server clients list
         self.socket.sendto("\xFF\x01\x02\x02", self.addr)
 
     def get_name(self):

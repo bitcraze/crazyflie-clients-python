@@ -39,13 +39,13 @@ import time
 
 try:
     import zmq
-except Exception as e:
+except ImportError as e:
     raise Exception("ZMQ library probably not installed ({})".format(e))
 
 zmess = {
     "version": 1,
     "cmd": "",
-    "name" : "",
+    "name": "",
     "value": ""
 }
 
@@ -53,51 +53,51 @@ zmess["cmd"] = "toc"
 
 context = zmq.Context()
 receiver = context.socket(zmq.REQ)
-bind_addr = "tcp://127.0.0.1:{}".format(1024+189)
+bind_addr = "tcp://127.0.0.1:{}".format(1024 + 189)
 receiver.connect(bind_addr)
 receiver.send_json(zmess)
 
 response = receiver.recv_json()
-print response
+print(response)
 
 zmess = {
     "version": 1,
     "cmd": "set",
-    "name" : "buzzer.effect",
+    "name": "buzzer.effect",
     "value": "0"
 }
 receiver.send_json(zmess)
 response = receiver.recv_json()
-print response
+print(response)
 
 zmess = {
     "version": 1,
     "cmd": "set",
-    "name" : "buzzer.ratio",
+    "name": "buzzer.ratio",
     "value": "127"
 }
 receiver.send_json(zmess)
 response = receiver.recv_json()
-print response
+print(response)
 
 zmess = {
     "version": 1,
     "cmd": "set",
-    "name" : "buzzer.freq",
+    "name": "buzzer.freq",
     "value": "4000"
 }
 receiver.send_json(zmess)
 response = receiver.recv_json()
-print response
+print(response)
 
 time.sleep(3)
 
 zmess = {
     "version": 1,
     "cmd": "set",
-    "name" : "buzzer.ratio",
+    "name": "buzzer.ratio",
     "value": "0"
 }
 receiver.send_json(zmess)
 response = receiver.recv_json()
-print response
+print(response)

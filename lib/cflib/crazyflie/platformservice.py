@@ -30,11 +30,11 @@
 Used for sending control setpoints to the Crazyflie
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['PlatformService']
-
 from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 import struct
+
+__author__ = 'Bitcraze AB'
+__all__ = ['PlatformService']
 
 
 class PlatformService():
@@ -57,4 +57,3 @@ class PlatformService():
         pk.set_header(CRTPPort.PLATFORM, 0)
         pk.data = (0, enabled)
         self._cf.send_packet(pk)
-

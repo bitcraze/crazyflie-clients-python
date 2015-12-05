@@ -31,13 +31,14 @@ A generic TableOfContents module that is used to fetch, store and minipulate
 a TOC for logging or parameters.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['TocElement', 'Toc', 'TocFetcher']
-
 from cflib.crtp.crtpstack import CRTPPacket
 import struct
 
 import logging
+
+__author__ = 'Bitcraze AB'
+__all__ = ['TocElement', 'Toc', 'TocFetcher']
+
 logger = logging.getLogger(__name__)
 
 TOC_CHANNEL = 0
@@ -114,8 +115,8 @@ class Toc:
     def get_element_by_id(self, ident):
         """Get a TocElement element identified by index number from the
         container."""
-        for group in self.toc.keys():
-            for name in self.toc[group].keys():
+        for group in list(self.toc.keys()):
+            for name in list(self.toc[group].keys()):
                 if self.toc[group][name].ident == ident:
                     return self.toc[group][name]
         return None
@@ -123,6 +124,7 @@ class Toc:
 
 class TocFetcher:
     """Fetches TOC entries from the Crazyflie"""
+
     def __init__(self, crazyflie, element_class, port, toc_holder,
                  finished_callback, toc_cache):
         self.cf = crazyflie
@@ -146,7 +148,7 @@ class TocFetcher:
         self.state = GET_TOC_INFO
         pk = CRTPPacket()
         pk.set_header(self.port, TOC_CHANNEL)
-        pk.data = (CMD_TOC_INFO, )
+        pk.data = (CMD_TOC_INFO,)
         self.cf.send_packet(pk, expected_reply=(CMD_TOC_INFO,))
 
     def _toc_fetch_finished(self):
@@ -160,7 +162,7 @@ class TocFetcher:
         chan = packet.channel
         if (chan != 0):
             return
-        payload = struct.pack("B" * (len(packet.datal) - 1), *packet.datal[1:])
+        payload = packet.data[1:]
 
         if (self.state == GET_TOC_INFO):
             [self.nbr_of_items, self._crc] = struct.unpack("<BI", payload[:5])
@@ -180,7 +182,7 @@ class TocFetcher:
         elif (self.state == GET_TOC_ELEMENT):
             # Always add new element, but only request new if it's not the
             # last one.
-            if self.requested_index != ord(payload[0]):
+            if self.requested_index != payload[0]:
                 return
             self.toc.add_element(self.element_class(payload))
             logger.debug("Added element [%s]",

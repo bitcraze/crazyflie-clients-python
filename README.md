@@ -1,4 +1,4 @@
-# Crazyflie PC client
+# Crazyflie PC client [![Build Status](https://api.travis-ci.org/bitcraze/crazyflie-clients-python.svg)](https://travis-ci.org/bitcraze/crazyflie-clients-python)
 
 The Crazyflie PC client enables flashing and controlling the Crazyflie.
 There's also a Python library that can be integrated into other applications
@@ -18,37 +18,37 @@ To install the Crazyflie PC client in Linux, you can run the setup script with:
 This will install the Crazyflie PC client systemwide, create a udev entry for
 the Crazyradio and setup the permissions so that the current user can use the
 radio without root permissions after restarting the computer. For further
-instructions on how to run from source see bellow.
+instructions on how to run from source and [install dependencies](https://github.com/SteveClement/crazyflie-clients-python#dependencies) see bellow.
 
 ## Windows
 
-To install the Crazyflie PC client in Windows, download the installation
-program from the [binary download
-page](http://wiki.bitcraze.se/projects:crazyflie:binaries:index)."Crazyflie
-client" will be added to the start menu.
+Follow these steps to install the binary distribution on Windows 7/8/10.
+ - Download the latest release [here](https://github.com/bitcraze/crazyflie-clients-python/releases) (named cfclient-win32-install-*.exe)
+ - Execute the installer. After the install the application will be added to the Start menu.
+ - Install the Crazyradio drivers by following [these instructions](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
 
 Running from source
 -------------------
 
-## Windows
+## Windows (7/8/10)
 
-Install dependencies. With Windows installers (tested with 32Bit versions):
- - Python 2.7 (https://www.python.org/downloads/windows/)
- - PyQT4 for Python 2.7 (http://www.riverbankcomputing.com/software/pyqt/download)
- - Scipy for Python 2.7 (http://sourceforge.net/projects/scipy/files/scipy/)
- - PyQTGraph (http://www.pyqtgraph.org/)
+Install dependencies. With Windows installers (tested using only 32-bit installs on 64-bit OS):
+ - [Python 3.4](https://www.python.org/downloads/windows/) (make sure the pip component is selected when installing)
+ - [PyQT4 for Python 3.4](http://www.riverbankcomputing.com/software/pyqt/download)
+ - [NumPy for Python 3.4](http://sourceforge.net/projects/numpy/files/NumPy)
+ - [SDL2](https://www.libsdl.org/download-2.0.php) (copy SDL2.dll into the client source folder)
 
-Python libs (to be install by running 'setup.py install'):
- - PyUSB **1.0.0a3** (https://github.com/walac/pyusb/releases)
- - pysdl2 (https://bitbucket.org/marcusva/py-sdl2/downloads)
-
-Download SDL2 from http://libsdl.org/download-2.0.php and copy SDL2.dll in the
-crazyflie-clients-python folder.
-
-Run with:
+Then install PyUSB, PyZMQ, PySDL2 and PyQtGraph using pip
 ```
-C:\Python27\python bin\cfclient
+C:\Users\bitcraze>\Python34\python.exe -m pip install pyusb==1.0.0b2 pyzmq pysdl2 pyqtgraph
 ```
+
+Finally you run the client using the following command
+```
+\Python34\python bin\cfclient
+```
+
+**NOTE**: To use the Crazyradio you will have to [install the drivers](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
 
 ## Mac OSX
 
@@ -62,31 +62,32 @@ they might or might not affected of this.
 
 1. [Install Homebrew](https://gist.github.com/derhuerst/1b15ff4652a867391f03#2--install-homebrew).
 
-1. Install Homebrew's Python
+1. Install Homebrew's Python3
     ```
-    brew install python
+    brew install python3
     ```
 
-    This will also pull [pip](https://pip.pypa.io/en/latest/), which we will use later to install some Python modules that are not distributed through Homebrew.
-
-1. Make sure the homebrew Python version is used system-wide
-    To do this we need to prepend this installation to our PYTHONPATH:
-
-    ```
-    echo 'export PYTHONPATH=/usr/local/lib/python2.7/site-packages:$PYTHONPATH' >> ~/.bashrc
-    source ~/.bashrc
-    ```
+    This will also pull [pip3](https://pip.pypa.io/en/latest/), which we will use later to install some Python modules that are not distributed through Homebrew.
 
 1. Install SDL for Python
     ```
     brew install sdl sdl2 sdl_image sdl_mixer sdl_ttf portmidi
     ```
 
+1. Install PyQt
+
+    If you already have pyqt installed for python2 you need to uninstall it first
+
+    ```
+    brew uninstall pyqt
+    brew install pyqt --with-python3
+    ```
+
 1. Install remaining dependencies
 
     ```
-    brew install pyqt libusb
-    pip install --pre pysdl2 pyusb pyqtgraph
+    brew install libusb
+    pip3 install pysdl2 pyusb pyqtgraph
     ```
 
 1. You now have all the dependencies needed to run the client. From the source folder, run it with the following command:
@@ -117,7 +118,7 @@ they might or might not affected of this.
     ```
     To enable the plotter tab install pyqtgraph, this takes a lot of time:
     ```
-    sudo port install py27-pyqtgraph
+    sudo port install py34-pyqtgraph
     ```
     You can now run the client from the source folder with
     ```
@@ -150,10 +151,11 @@ To launch the GUI after a systemwide installation, execute ```cfclient```.
 
 The Crazyflie PC client has the following dependencies:
 
-* Python 2.7
-* PySdl2
+* Python 3.4
 * PyUSB
-* libusb
+* libusb 1.X (works with 0.X as well)
+* PyQtGraph
+* ZMQ
 * PyQt4
 
 Example commands to install these dependencies:
@@ -162,9 +164,12 @@ Example commands to install these dependencies:
 
     ```sudo yum install pysdl2 pyusb PyQt4```
 
-* Ubuntu (tested for 10.04 / 11.10 / 12.04):
+* Ubuntu (15.04):
 
-    ```sudo apt-get install python2.7 python-usb python-pysdl2 python-qt4```
+    ```
+    sudo apt-get install python3 python3-pip python3-pyqt4 python3-zmq python3-pyqtgraph
+    sudo pip3 install pyusb==1.0.0b2
+    ```
 
 * OpenSUSE (tested for 11.3):
 
@@ -193,6 +198,11 @@ Create a file named ```/etc/udev/rules.d/99-crazyradio.rules``` and add the
 following:
 ```
 SUBSYSTEM=="usb", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="7777", MODE="0664", GROUP="plugdev"
+```
+
+To connect Crazyflie 2.0 via usb, create a file name ```/etc/udev/rules.d/99-crazyflie.rules``` and add the following:
+```
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE="0664", GROUP="plugdev"
 ```
 
 Restart the computer and you are now able to access the USB radio dongle

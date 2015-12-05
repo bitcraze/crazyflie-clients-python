@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 # Configuration block compiler/decompiler
 # Fully static version (to be considered as a prototype...)!
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 import struct
 import sys
+from functools import reduce
 
 # Radio speed enum type
 speeds = ["250K", "1M", "2M"]
@@ -37,7 +38,7 @@ structFormat = "<BBBff"
 
 
 def checksum256(st):
-    return reduce(lambda x, y: x + y, map(ord, st)) % 256
+    return reduce(lambda x, y: x + y, list(map(ord, st))) % 256
 
 
 def compileBlock(configFile, binFile):
@@ -66,7 +67,7 @@ def compileBlock(configFile, binFile):
     bfile.write(bin)
     bfile.close()
 
-    print "Config block compiled successfully to", binFile
+    print("Config block compiled successfully to", binFile)
 
 
 def decompileBlock(binFile, configFile):
@@ -74,10 +75,9 @@ def decompileBlock(binFile, configFile):
     bin = bfile.read()
     bfile.close()
 
-    if (bin[0:4] != "0xBC" or
-        len(bin) < (struct.calcsize(structFormat) + 5) or
-        checksum256(bin[0:struct.calcsize(structFormat) + 5]) != 0):
-        print "Config block erased of altered, generating default file"
+    if (bin[0:4] != "0xBC" or len(bin) < (struct.calcsize(structFormat) + 5) or
+            checksum256(bin[0:struct.calcsize(structFormat) + 5]) != 0):
+        print("Config block erased of altered, generating default file")
         cfile = open(configFile, "w")
         cfile.write(defaultConfig)
         cfile.close()
@@ -95,13 +95,15 @@ def decompileBlock(binFile, configFile):
         cfile = open(configFile, "w")
         cfile.write(config % block)
         cfile.close()
-        print "Config block successfully extracted to", configFile
+        print("Config block successfully extracted to", configFile)
+
 
 if __name__ == "__main__":
     if (len(sys.argv) < 4 or
-        (sys.argv[1] != "generate" and sys.argv[1] != "extract")):
-        print "Configuration block compiler/decompiler."
-        print "  Usage: %s <generate|extract> <infile> <outfile>" % sys.argv[0]
+            (sys.argv[1] != "generate" and sys.argv[1] != "extract")):
+        print("Configuration block compiler/decompiler.")
+        print("  Usage: %s <generate|extract> <infile> <outfile>"
+              % sys.argv[0])
 
     if sys.argv[1] == "generate":
         compileBlock(sys.argv[2], sys.argv[3])

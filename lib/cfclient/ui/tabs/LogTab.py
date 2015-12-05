@@ -21,16 +21,13 @@
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  You should have received a copy of the GNU General Public License along with
+#  this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
 Shows the Log TOC of available variables in the Crazyflie.
 """
-
-__author__ = 'Bitcraze AB'
-__all__ = ['LogTab']
 
 import time
 import sys
@@ -41,6 +38,9 @@ from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 from cflib.crazyflie import Crazyflie
 
 from cfclient.ui.tab import Tab
+
+__author__ = 'Bitcraze AB'
+__all__ = ['LogTab']
 
 param_tab_class = uic.loadUiType(sys.path[0] +
                                  "/cfclient/ui/tabs/logTab.ui")[0]
@@ -82,10 +82,10 @@ class LogTab(Tab, param_tab_class):
 
         toc = self.cf.log.toc
 
-        for group in toc.toc.keys():
+        for group in list(toc.toc.keys()):
             groupItem = QtGui.QTreeWidgetItem()
             groupItem.setData(0, Qt.DisplayRole, group)
-            for param in toc.toc[group].keys():
+            for param in list(toc.toc[group].keys()):
                 item = QtGui.QTreeWidgetItem()
                 item.setData(0, Qt.DisplayRole, param)
                 item.setData(1, Qt.DisplayRole, toc.toc[group][param].ident)

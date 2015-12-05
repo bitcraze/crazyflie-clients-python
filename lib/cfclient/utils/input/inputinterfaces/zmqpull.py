@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#     ||          ____  _ __                           
-#  +------+      / __ )(_) /_______________ _____  ___ 
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
@@ -15,7 +15,7 @@
 #  modify it under the terms of the GNU General Public License
 #  as published by the Free Software Foundation; either version 2
 #  of the License, or (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -30,22 +30,23 @@
 Input interface that supports receiving commands via ZMQ.
 """
 
-__author__ = 'Bitcraze AB'
-__all__ = ['ZMQReader']
+import logging
+import time
+import pprint
+from threading import Thread
+
+from cfclient.utils.config import Config
 
 try:
     import zmq
 except Exception as e:
     raise Exception("ZMQ library probably not installed ({})".format(e))
 
-from cfclient.utils.config import Config
 if not Config().get("enable_zmq_input"):
     raise Exception("ZMQ input disabled in config file")
 
-import logging
-import time
-import pprint
-from threading import Thread
+__author__ = 'Bitcraze AB'
+__all__ = ['ZMQReader']
 
 ZMQ_PULL_PORT = 1024 + 188
 
@@ -54,8 +55,8 @@ logger = logging.getLogger(__name__)
 MODULE_MAIN = "ZMQReader"
 MODULE_NAME = "ZMQ"
 
-class _PullReader(Thread):
 
+class _PullReader(Thread):
     def __init__(self, receiver, callback, *args):
         super(_PullReader, self).__init__(*args)
         self._receiver = receiver
@@ -66,8 +67,10 @@ class _PullReader(Thread):
         while True:
             self._cb(self._receiver.recv_json())
 
+
 class ZMQReader:
     """Used for reading data from input devices using the PyGame API."""
+
     def __init__(self):
         context = zmq.Context()
         receiver = context.socket(zmq.PULL)
@@ -95,12 +98,14 @@ class ZMQReader:
         self._receiver_thread.start()
 
     def _cmd_callback(self, cmd):
-        for k in cmd["ctrl"].keys():
+        for k in list(cmd["ctrl"].keys()):
             self.data[k] = cmd["ctrl"][k]
 
     def open(self, device_id):
-        """Initialize the reading and open the device with deviceId and set the mapping for axis/buttons using the
-        inputMap"""
+        """
+        Initialize the reading and open the device with deviceId and set the
+        mapping for axis/buttons using the inputMap
+        """
         return
 
     def read(self, device_id):
@@ -116,4 +121,3 @@ class ZMQReader:
         # As a temporary workaround we always say we have ZMQ
         # connected. If it's not connected, there's just no data.
         return [{"id": 0, "name": "ZMQ@{}".format(self._bind_addr)}]
-
