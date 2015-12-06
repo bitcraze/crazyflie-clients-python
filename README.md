@@ -104,13 +104,27 @@ they might or might not affected of this.
 
 1. Install dependencies. Note that there are quite a few, so this could take a while:
     ```
-    sudo port install libusb python34 py34-pyusb py34-SDL2 py34-pyqt4
+    sudo port install libusb python34 py34-SDL2 py34-pyqt4 py34-pip
+    ```
+    To make the MacPorts ```python``` and ```pip``` the default commands:
+    ```
+    sudo port select --set python python34
+    sudo port select --set python3 python34
+    sudo port select --set pip pip34
+    ```
+    To install ```pyusb``` from ```pip```, use:
+    ```
+    sudo pip install pyusb
     ```
     To enable the plotter tab install pyqtgraph, this takes a lot of time:
     ```
     sudo port install py34-pyqtgraph
     ```
-    You can now run the client from source with
+    You can now run the client from the source folder with
+    ```
+    python bin/cfclient
+    ```
+    Or, if you did not run the ```port select``` command to set the MacPorts ```python``` as the default, use:
     ```
     /opt/local/bin/python3.4 bin/cfclient
     ```
@@ -122,12 +136,6 @@ they might or might not affected of this.
     ```DYLD_LIBRARY_PATH``` to ```/opt/local/lib``` in ```~/.profile```:
     ```
     export DYLD_LIBRARY_PATH=/opt/local/lib
-    ```
-
-1. Now you're good to go! Run the client from the source folder with the
-    following command:
-    ```
-    python2.7 bin/cfclient
     ```
 
 ## Linux
