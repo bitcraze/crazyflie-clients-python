@@ -78,10 +78,9 @@ class Cf2ConfigDialog(QtGui.QWidget, service_dialog_class):
         self._radio_speed.setCurrentIndex(mem.elements["radio_speed"])
         if "radio_address" in mem.elements:
             self._radio_address.setValue(mem.elements["radio_address"])
-            self._radio_address.setEnabled(True)
         else:
             self._radio_address.setValue(int("0xE7E7E7E7E7", 0))
-            self._radio_address.setEnabled(False)
+        self._radio_address.setEnabled(True)
         self._write_data_btn.setEnabled(True)
 
     def _set_ui_connected(self, link_uri):
