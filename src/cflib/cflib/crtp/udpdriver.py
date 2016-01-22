@@ -33,13 +33,13 @@ from .crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket
 from .exceptions import WrongUriType
 import sys
+import re
+import struct
+from socket import socket
 if sys.version_info < (3,):
     import Queue as queue
 else:
     import queue
-import re
-import struct
-from socket import socket
 
 __author__ = 'Bitcraze AB'
 __all__ = ['UdpDriver']

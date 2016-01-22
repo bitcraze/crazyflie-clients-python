@@ -32,19 +32,19 @@ pre-configured.
 """
 import math
 
-__author__ = 'Bitcraze AB'
-__all__ = ['GpsTab']
-
 import logging
 import sys
-
-logger = logging.getLogger(__name__)
 
 from PyQt4 import QtCore, QtGui, uic, QtWebKit, QtNetwork
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from cflib.crazyflie.log import LogConfig
 from cfclient.ui.tab import Tab
+
+__author__ = 'Bitcraze AB'
+__all__ = ['GpsTab']
+
+logger = logging.getLogger(__name__)
 
 gps_tab_class = uic.loadUiType(sys.path[0] +
                                "/cfclient/ui/tabs/gpsTab.ui")[0]

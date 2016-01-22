@@ -37,7 +37,7 @@ from threading import Timer
 
 sys.path.append("../src/cflib")
 import cflib.crtp  # noqa
-from cflib.crazyflie.mem import MemoryElement
+from cflib.crazyflie.mem import MemoryElement  # noqa
 from cflib.crazyflie import Crazyflie  # noqa
 
 # Only output errors from the logging framework

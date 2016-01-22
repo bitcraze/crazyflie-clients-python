@@ -40,12 +40,12 @@ from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
 from .toc import Toc, TocFetcher
 from threading import Thread, Lock
 import sys
+import logging
 if sys.version_info < (3,):
     from Queue import Queue
 else:
     from queue import Queue
 
-import logging
 
 __author__ = 'Bitcraze AB'
 __all__ = ['Param', 'ParamTocElement']

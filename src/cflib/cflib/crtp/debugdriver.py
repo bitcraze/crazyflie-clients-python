@@ -42,10 +42,6 @@ from .crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket, CRTPPort
 from .exceptions import WrongUriType
 import sys
-if sys.version_info < (3,):
-    import Queue as queue
-else:
-    import queue
 import re
 import time
 import struct
@@ -57,6 +53,10 @@ import string
 import errno
 
 import logging
+if sys.version_info < (3,):
+    import Queue as queue
+else:
+    import queue
 
 __author__ = 'Bitcraze AB'
 __all__ = ['DebugDriver']
