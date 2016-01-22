@@ -28,7 +28,7 @@
 
 """
 Leap Motion reader for controlling the Crazyflie. Note that this reader needs
-the Leap Motion SDK to be manually copied. See lib/leapsdk/__init__.py for
+the Leap Motion SDK to be manually copied. See src/leapsdk/__init__.py for
 more info.
 """
 

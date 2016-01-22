@@ -25,7 +25,7 @@ import sys
 import time
 import datetime
 
-sys.path.append("../lib")
+sys.path.append("../src")
 import cflib.crtp  # noqa
 from cflib.crazyflie import Crazyflie  # noqa
 from cflib.crazyflie.mem import MemoryElement  # noqa

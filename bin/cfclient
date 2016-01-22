@@ -77,7 +77,7 @@ def init_paths():
             _path.join(
                 _path.dirname(_path.realpath(__file__)), '..'))
 
-        src_lib = _path.join(prefix, 'lib')
+        src_lib = _path.join(prefix, 'src')
         share_lib = prefix
         inSource = False
         for location in [src_lib, share_lib] + sys.path:

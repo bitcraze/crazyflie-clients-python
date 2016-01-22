@@ -35,7 +35,7 @@ import sys
 from threading import Thread
 import logging
 
-sys.path.append("../lib")
+sys.path.append("../src")
 import cflib  # noqa
 from cflib.crazyflie import Crazyflie  # noqa
 
