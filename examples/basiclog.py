@@ -36,6 +36,7 @@ import time
 from threading import Timer
 
 sys.path.append("../src")
+sys.path.append("../src/cflib")
 import cflib.crtp  # noqa
 from cfclient.utils.logconfigreader import LogConfig  # noqa
 from cflib.crazyflie import Crazyflie  # noqa

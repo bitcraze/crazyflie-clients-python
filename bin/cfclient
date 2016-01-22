@@ -98,6 +98,9 @@ def init_paths():
 
     sys.path.insert(1, init_config_path(inSource))
 
+    # Add paths to modules.
+    sys.path.append(_path.join(src_lib, 'cflib'))
+
 
 if __name__ == '__main__':
     if sys.version_info < (3,):

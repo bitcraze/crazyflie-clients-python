@@ -36,7 +36,7 @@ import logging
 import time
 import random
 
-sys.path.append("../src")
+sys.path.append("../src/cflib")
 import cflib.crtp  # noqa
 from cflib.crazyflie import Crazyflie  # noqa
 

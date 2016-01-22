@@ -5,3 +5,4 @@ import subprocess
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
 subprocess.check_call([script_dir + "/pep8"])
+subprocess.check_call([script_dir + "/test"])

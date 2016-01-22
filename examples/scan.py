@@ -31,7 +31,7 @@ Simple example that scans for available Crazyflies and lists them.
 
 import sys
 
-sys.path.append("../src")
+sys.path.append("../src/cflib")
 import cflib.crtp  # noqa
 
 # Initiate the low level drivers

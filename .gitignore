@@ -4,6 +4,8 @@ syntax: glob
 config.json
 dist/*
 build/*
+cache
+
 # PC client settings
 conf/*
 
