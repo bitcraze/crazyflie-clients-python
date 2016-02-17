@@ -223,13 +223,13 @@ class CrazyloadThread(QThread):
             self.failed_signal.emit("{}".format(e))
 
     def checksum256(self, st):
-        return reduce(lambda x, y: x + y, list(map(ord, st))) % 256
+        return reduce(lambda x, y: x + y, list(st)) % 256
 
     def writeConfigAction(self, channel, speed, rollTrim, pitchTrim):
         data = (0x00, channel, speed, pitchTrim, rollTrim)
         image = struct.pack("<BBBff", *data)
         # Adding some magic:
-        image = "0xBC" + image
+        image = bytearray("0xBC".encode('ISO-8859-1')) + image
         image += struct.pack("B", 256 - self.checksum256(image))
 
         self._bl.write_cf1_config(image)
@@ -238,7 +238,7 @@ class CrazyloadThread(QThread):
         self.statusChanged.emit("Reading config block...", 0)
         data = self._bl.read_cf1_config()
         if (data is not None):
-            if data[0:4] == "0xBC":
+            if data[0:4] == bytearray("0xBC".encode('ISO-8859-1')):
                 # Skip 0xBC and version at the beginning
                 [channel,
                  speed,

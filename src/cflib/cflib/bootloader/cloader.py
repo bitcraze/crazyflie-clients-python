@@ -363,7 +363,7 @@ class Cloader:
 
     def read_flash(self, addr=0xFF, page=0x00):
         """Read back a flash page from the Crazyflie and return it"""
-        buff = ""
+        buff = bytearray()
 
         page_size = self.targets[addr].page_size
 
