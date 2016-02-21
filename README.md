@@ -18,13 +18,13 @@ To install the Crazyflie PC client in Linux, you can run the setup script with:
 This will install the Crazyflie PC client systemwide, create a udev entry for
 the Crazyradio and setup the permissions so that the current user can use the
 radio without root permissions after restarting the computer. For further
-instructions on how to run from source and [install dependencies](https://github.com/SteveClement/crazyflie-clients-python#dependencies) see bellow.
+instructions on how to run from source and [install dependencies](https://github.com/SteveClement/crazyflie-clients-python#dependencies) see below.
 
 ## Windows
 
 Follow these steps to install the binary distribution on Windows 7/8/10.
  - Download the latest release [here](https://github.com/bitcraze/crazyflie-clients-python/releases) (named cfclient-win32-install-*.exe)
- - Execute the installer. After the install the application will be added to the Start menu.
+ - Execute the installer. After the install the application will be added to the start menu.
  - Install the Crazyradio drivers by following [these instructions](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
 
 Running from source
@@ -56,7 +56,7 @@ Finally you run the client using the following command
 **IMPORTANT NOTE**: The following will use
 [Homebrew](http://brew.sh/) and its own Python distribution. If
 you have a lot of other 3rd party python stuff already running on your system
-they might or might not affected of this.
+they might or might not be affected by this.
 
 1. [Install the Command Line Tools](https://gist.github.com/derhuerst/1b15ff4652a867391f03#1--install-the-command-line-tools).
 
@@ -163,6 +163,14 @@ Example commands to install these dependencies:
 * Fedora (tested for 16 to 18):
 
     ```sudo yum install pysdl2 pyusb PyQt4```
+
+* Ubuntu (14.04):
+
+    ```
+    sudo apt-get install python3 python3-pip python3-pyqt4 python3-zmq
+    pip3 install pyusb==1.0.0b2
+    pip3 install pyqtgraph
+    ```
 
 * Ubuntu (15.04):
 
