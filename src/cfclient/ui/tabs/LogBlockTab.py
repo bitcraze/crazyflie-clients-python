@@ -167,6 +167,7 @@ class LogBlockItem(object):
 
 
 class LogBlockModel(QAbstractItemModel):
+
     def __init__(self, view, parent=None):
         super(LogBlockModel, self).__init__(parent)
         self._nodes = []

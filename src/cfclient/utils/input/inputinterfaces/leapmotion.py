@@ -53,6 +53,7 @@ MODULE_NAME = "Leap Motion"
 
 
 class LeapListener(Leap.Listener):
+
     def set_data_callback(self, callback):
         self._dcb = callback
         self._nbr_of_fingers = 0

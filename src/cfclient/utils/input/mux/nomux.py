@@ -20,7 +20,6 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -28,9 +27,9 @@
 """
 This mux will only use one device and not mix it with any other input.
 """
+import logging
 
 from . import InputMux
-import logging
 
 __author__ = 'Bitcraze AB'
 __all__ = ['NoMux']
@@ -39,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 class NoMux(InputMux):
+
     def __init__(self, *args):
         super(NoMux, self).__init__(*args)
         self.name = "Normal"

@@ -14,7 +14,7 @@ OutFile "cfclient-win32-install-{{version}}.exe"
 ; The default installation directory
 InstallDir "$PROGRAMFILES\Crazyflie client"
 
-; Registry key to check for directory (so if you install again, it will 
+; Registry key to check for directory (so if you install again, it will
 ; overwrite the old one automatically)
 InstallDirRegKey HKLM "Software\Crazyflie_client" "Install_Dir"
 
@@ -49,10 +49,10 @@ CreateFont $1 "Courier New" "$(^FontSize)"
 GetDlgItem $0 $0 1000
 SendMessage $0 ${WM_SETFONT} $1 1
 FunctionEnd
-  
+
 ;--------------------------------
 ;Languages
- 
+
   !insertmacro MUI_LANGUAGE "English"
 
 ;--------------------------------
@@ -61,35 +61,35 @@ FunctionEnd
 Section "Crazyflie Client" SecCfclient
 
   SectionIn RO
-  
+
   ; Set output path to the installation directory.
   SetOutPath $INSTDIR
-  
+
   ; Create folders
   {% for dir in dirs %}
     CreateDirectory "$INSTDIR\{{dir}}"
   {% endfor %}
-  
+
   ; Files to install
   {% for file in files %}
     File "/oname=$INSTDIR\{{file}}" "..\dist\{{file}}"
   {% endfor %}
-  
+
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\Crazyflie_client "Install_Dir" "$INSTDIR"
-  
+
   ;Write Start menu items
   CreateDirectory "$SMPROGRAMS\Crazyflie client"
   CreateShortCut "$SMPROGRAMS\Crazyflie client\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
   CreateShortCut "$SMPROGRAMS\Crazyflie client\Crazyflie PC client.lnk" "$INSTDIR\cfclient.exe" "" "$INSTDIR\cfclient.exe" 0
-  
+
   ; Write the uninstall keys for Windows
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cfclient" "DisplayName" "Crazyflie Client"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cfclient" "UninstallString" '"$INSTDIR\uninstall.exe"'
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cfclient" "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cfclient" "NoRepair" 1
   WriteUninstaller "uninstall.exe"
-  
+
 SectionEnd
 
 ; Optional section (can be disabled by the user)
@@ -113,7 +113,7 @@ SectionEnd
 ; Uninstaller
 
 Section "Uninstall"
-  
+
   ; Remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Cfclient"
   DeleteRegKey HKLM SOFTWARE\Crazyflie_client

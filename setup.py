@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-
-from distutils.core import setup
+# -*- coding: utf-8 -*-
 import glob
 import os
 import sys
-from subprocess import Popen, PIPE
+from distutils.core import setup
+from subprocess import PIPE
+from subprocess import Popen
 
 
 # Recover version from Git

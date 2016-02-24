@@ -180,6 +180,7 @@ class LEDDriverMemory(MemoryElement):
 
 
 class I2CElement(MemoryElement):
+
     def __init__(self, id, type, size, mem_handler):
         super(I2CElement, self).__init__(id=id, type=type, size=size,
                                          mem_handler=mem_handler)

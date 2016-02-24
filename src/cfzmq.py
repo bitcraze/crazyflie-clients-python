@@ -72,6 +72,7 @@ logger = logging.getLogger(__name__)
 
 
 class _SrvThread(Thread):
+
     def __init__(self, socket, log_socket, param_socket, conn_socket, cf,
                  *args):
         super(_SrvThread, self).__init__(*args)
@@ -298,6 +299,7 @@ class _SrvThread(Thread):
 
 
 class _CtrlThread(Thread):
+
     def __init__(self, socket, cf, *args):
         super(_CtrlThread, self).__init__(*args)
         self._socket = socket

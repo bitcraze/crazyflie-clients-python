@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 #     ||
 #  +------+      / __ )(_) /_______________ _____  ___
 #  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
@@ -22,20 +22,18 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 """
 Linux joystick driver using the Linux input_joystick subsystem. Requires sysfs
 to be mounted on /sys and /dev/input/js* to be readable.
 
 This module is very linux specific but should work on any CPU platform
 """
-
-import sys
-import struct
-import glob
-import os
 import ctypes
+import glob
 import logging
+import os
+import struct
+import sys
 
 if not sys.platform.startswith('linux'):
     raise Exception("Only supported on Linux")
@@ -88,6 +86,7 @@ TYPE_AXIS = 2
 
 
 class _JS():
+
     def __init__(self, num, name):
         self.num = num
         self.name = name

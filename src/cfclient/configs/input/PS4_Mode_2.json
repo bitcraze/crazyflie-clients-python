@@ -1,84 +1,84 @@
 {
   "inputconfig": {
     "inputdevice": {
-      "updateperiod": 10, 
-      "name": "PS4_Mode_2", 
+      "updateperiod": 10,
+      "name": "PS4_Mode_2",
       "axis": [
         {
-          "scale": -1.0, 
-          "type": "Input.AXIS", 
-          "id": 1, 
-          "key": "thrust", 
+          "scale": -1.0,
+          "type": "Input.AXIS",
+          "id": 1,
+          "key": "thrust",
           "name": "thrust"
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.AXIS", 
-          "id": 0, 
-          "key": "yaw", 
+          "scale": 1.0,
+          "type": "Input.AXIS",
+          "id": 0,
+          "key": "yaw",
           "name": "yaw"
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.AXIS", 
-          "id": 2, 
-          "key": "roll", 
+          "scale": 1.0,
+          "type": "Input.AXIS",
+          "id": 2,
+          "key": "roll",
           "name": "roll"
-        }, 
+        },
         {
-          "scale": -1.0, 
-          "type": "Input.AXIS", 
-          "id": 5, 
-          "key": "pitch", 
+          "scale": -1.0,
+          "type": "Input.AXIS",
+          "id": 5,
+          "key": "pitch",
           "name": "pitch"
-        }, 
+        },
         {
-          "scale": -1.0, 
-          "type": "Input.BUTTON", 
-          "id": 1, 
+          "scale": -1.0,
+          "type": "Input.BUTTON",
+          "id": 1,
           "key": "pitchNeg",
           "name": "pitchNeg"
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.BUTTON", 
-          "id": 3, 
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": 3,
           "key": "pitchPos",
           "name": "pitchPos"
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.BUTTON", 
-          "id": 7, 
-          "key": "estop", 
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": 7,
+          "key": "estop",
           "name": "killswitch"
-        }, 
+        },
         {
-          "scale": -1.0, 
-          "type": "Input.BUTTON", 
-          "id": 0, 
+          "scale": -1.0,
+          "type": "Input.BUTTON",
+          "id": 0,
           "key": "rollNeg",
           "name": "rollNeg"
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.BUTTON", 
-          "id": 2, 
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": 2,
           "key": "rollPos",
           "name": "rollPos"
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.BUTTON", 
-          "id": 4, 
-          "key": "althold", 
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": 4,
+          "key": "althold",
           "name": "althold"
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.BUTTON", 
-          "id": 8, 
-          "key": "exit", 
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": 8,
+          "key": "exit",
           "name": "exitapp"
         }
       ]

@@ -57,6 +57,7 @@ CTYPE_FIELD = 3
 
 
 class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
+
     def __init__(self, helper, *args):
         super(LogConfigDialogue, self).__init__(*args)
         self.setupUi(self)

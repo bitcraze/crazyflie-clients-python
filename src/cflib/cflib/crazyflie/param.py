@@ -20,12 +20,10 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA  02110-1301, USA.
-
 """
 Enables reading/writing of parameter values to/from the Crazyflie.
 
@@ -33,14 +31,18 @@ When a Crazyflie is connected it's possible to download a TableOfContent of all
 the parameters that can be written/read.
 
 """
-
-from cflib.utils.callbacks import Caller
-import struct
-from cflib.crtp.crtpstack import CRTPPacket, CRTPPort
-from .toc import Toc, TocFetcher
-from threading import Thread, Lock
-import sys
 import logging
+import struct
+import sys
+from threading import Lock
+from threading import Thread
+
+from cflib.crtp.crtpstack import CRTPPacket
+from cflib.crtp.crtpstack import CRTPPort
+from cflib.utils.callbacks import Caller
+
+from .toc import Toc
+from .toc import TocFetcher
 if sys.version_info < (3,):
     from Queue import Queue
 else:

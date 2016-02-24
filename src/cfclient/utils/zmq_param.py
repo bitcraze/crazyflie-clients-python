@@ -47,6 +47,7 @@ except Exception as e:
 
 
 class _PullReader(Thread):
+
     def __init__(self, receiver, callback, *args):
         super(_PullReader, self).__init__(*args)
         self._receiver = receiver

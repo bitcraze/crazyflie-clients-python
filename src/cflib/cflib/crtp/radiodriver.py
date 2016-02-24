@@ -20,33 +20,31 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA  02110-1301, USA.
-
 """
 Crazyradio CRTP link driver.
 
 This driver is used to communicate with the Crazyflie using the Crazyradio
 USB dongle.
 """
-
-import collections
-import logging
-import sys
-from cflib.crtp.crtpdriver import CRTPDriver
-from .crtpstack import CRTPPacket
-from .exceptions import WrongUriType
-import threading
-import re
 import array
 import binascii
+import collections
+import logging
+import re
 import struct
+import sys
+import threading
 
+from cflib.crtp.crtpdriver import CRTPDriver
 from cflib.drivers.crazyradio import Crazyradio
 from usb import USBError
+
+from .crtpstack import CRTPPacket
+from .exceptions import WrongUriType
 
 if sys.version_info < (3,):
     import Queue as queue

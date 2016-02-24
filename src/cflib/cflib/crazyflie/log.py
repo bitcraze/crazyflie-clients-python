@@ -347,7 +347,7 @@ class LogTocElement:
             naming = data[2:]
             zt = bytearray((0, ))
             self.group = naming[:naming.find(zt)].decode("ISO-8859-1")
-            self.name = naming[naming.find(zt)+1:-1].decode("ISO-8859-1")
+            self.name = naming[naming.find(zt) + 1:-1].decode("ISO-8859-1")
 
             self.ident = data[0]
 
