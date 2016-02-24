@@ -29,8 +29,6 @@
 The flight control tab shows telemetry data and flight settings.
 """
 
-import sys
-
 import logging
 
 from time import time
@@ -41,6 +39,7 @@ from PyQt4.QtGui import QMessageBox
 
 from cflib.crazyflie import Crazyflie
 
+import cfclient
 from cfclient.ui.widgets.ai import AttitudeIndicator
 
 from cfclient.utils.config import Config
@@ -55,8 +54,8 @@ __all__ = ['FlightTab']
 
 logger = logging.getLogger(__name__)
 
-flight_tab_class = uic.loadUiType(sys.path[0] +
-                                  "/cfclient/ui/tabs/flightTab.ui")[0]
+flight_tab_class = uic.loadUiType(cfclient.module_path +
+                                  "/ui/tabs/flightTab.ui")[0]
 
 MAX_THRUST = 65365.0
 

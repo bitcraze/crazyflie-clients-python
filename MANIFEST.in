@@ -1,2 +1,3 @@
 recursive-include src/cfclient/configs *.json
 recursive-include src/cfclient/ui *.ui
+recursive-include src/cfclient/resources *

@@ -28,7 +28,6 @@ Toolbox for showing packets that is sent via the communication link when
 debugging.
 """
 import os
-import sys
 from time import time
 
 from PyQt4 import QtCore
@@ -40,11 +39,13 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtCore import QThread
 from PyQt4.QtCore import SIGNAL
 
+import cfclient
+
 __author__ = 'Bitcraze AB'
 __all__ = ['CrtpSharkBoolbox']
 
 param_tab_class = uic.loadUiType(
-    sys.path[0] + "/cfclient/ui/toolboxes/crtpSharkToolbox.ui")[0]
+    cfclient.module_path + "/ui/toolboxes/crtpSharkToolbox.ui")[0]
 
 
 class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
@@ -116,7 +117,7 @@ class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
         return Qt.RightDockWidgetArea
 
     def _save_data(self):
-        dir = os.path.join(sys.path[1], "logdata")
+        dir = os.path.join(cfclient.config_path, "logdata")
         fname = os.path.join(dir, "shark_data.csv")
         if not os.path.exists(dir):
             os.makedirs(dir)

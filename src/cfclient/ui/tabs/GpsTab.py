@@ -30,8 +30,8 @@ pre-configured.
 """
 import logging
 import math
-import sys
 
+import cfclient
 from cfclient.ui.tab import Tab
 from cflib.crazyflie.log import LogConfig
 from PyQt4 import QtCore
@@ -47,8 +47,8 @@ __all__ = ['GpsTab']
 
 logger = logging.getLogger(__name__)
 
-gps_tab_class = uic.loadUiType(sys.path[0] +
-                               "/cfclient/ui/tabs/gpsTab.ui")[0]
+gps_tab_class = uic.loadUiType(cfclient.module_path +
+                               "/ui/tabs/gpsTab.ui")[0]
 
 
 class GpsTab(Tab, gps_tab_class):
@@ -81,7 +81,7 @@ class GpsTab(Tab, gps_tab_class):
 
         view.page().mainFrame().addToJavaScriptWindowObject("MainWindow", self)
         view.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
-        view.load(QtCore.QUrl(sys.path[0] + "/cfclient/resources/map.html"))
+        view.load(QtCore.QUrl(cfclient.module_path + "/resources/map.html"))
         view.loadFinished.connect(self.onLoadFinished)
         view.linkClicked.connect(QtGui.QDesktopServices.openUrl)
 
@@ -104,7 +104,7 @@ class GpsTab(Tab, gps_tab_class):
         self._max_speed = 0.0
 
     def onLoadFinished(self):
-        with open(sys.path[0] + "/cfclient/resources/map.js", 'r') as f:
+        with open(cfclient.module_path + "/resources/map.js", 'r') as f:
             frame = self.view.page().mainFrame()
             frame.evaluateJavaScript(f.read())
 

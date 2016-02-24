@@ -31,10 +31,10 @@ enable logging of data from the Crazyflie. These can then be used in different
 views in the UI.
 """
 
-import sys
 import os
 import logging
 
+import cfclient
 from PyQt4 import Qt, QtCore, QtGui, uic
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -48,7 +48,7 @@ __all__ = ['LogConfigDialogue']
 logger = logging.getLogger(__name__)
 
 (logconfig_widget_class, connect_widget_base_class) = (
-    uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/logconfigdialogue.ui'))
+    uic.loadUiType(cfclient.module_path + '/ui/dialogs/logconfigdialogue.ui'))
 
 NAME_FIELD = 0
 ID_FIELD = 1

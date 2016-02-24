@@ -33,6 +33,8 @@ import datetime
 
 import logging
 
+import cfclient
+
 __author__ = 'Bitcraze AB'
 __all__ = ['']
 
@@ -80,7 +82,7 @@ def main():
 
     logger = logging.getLogger(__name__)
 
-    logger.debug("Using config path {}".format(sys.path[1]))
+    logger.debug("Using config path {}".format(cfclient.config_path))
     logger.debug("sys.path={}".format(sys.path))
 
     # Try all the imports used in the project here to control what happens....
@@ -135,7 +137,7 @@ def main():
 
     app = QApplication(sys.argv)
 
-    app.setWindowIcon(QIcon(sys.path[0] + "/cfclient/icon-256.png"))
+    app.setWindowIcon(QIcon(cfclient.module_path + "/icon-256.png"))
     # Make sure the right icon is set in Windows 7+ taskbar
     if os.name == 'nt':
         import ctypes
@@ -150,3 +152,6 @@ def main():
     main_window = MainUI()
     main_window.show()
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    main()

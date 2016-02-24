@@ -31,7 +31,6 @@ read/write the configuration block in the Crazyflie flash.
 """
 
 import struct
-import sys
 from cflib.bootloader import Bootloader
 
 import logging
@@ -39,6 +38,7 @@ import logging
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
+import cfclient
 from cfclient.utils.config import Config
 from functools import reduce
 
@@ -47,8 +47,8 @@ __all__ = ['Cf1ConfigDialog']
 
 logger = logging.getLogger(__name__)
 
-service_dialog_class = uic.loadUiType(sys.path[0] +
-                                      "/cfclient/ui/dialogs/cf1config.ui")[0]
+service_dialog_class = uic.loadUiType(cfclient.module_path +
+                                      "/ui/dialogs/cf1config.ui")[0]
 
 
 class UIState:

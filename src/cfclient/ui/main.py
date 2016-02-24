@@ -29,6 +29,7 @@ The main file for the Crazyflie control application.
 import logging
 import sys
 
+import cfclient
 import cfclient.ui.tabs
 import cfclient.ui.toolboxes
 import cflib.crtp
@@ -74,8 +75,8 @@ logger = logging.getLogger(__name__)
 INTERFACE_PROMPT_TEXT = 'Select an interface'
 
 (main_window_class,
- main_windows_base_class) = (uic.loadUiType(sys.path[0] +
-                                            '/cfclient/ui/main.ui'))
+ main_windows_base_class) = (uic.loadUiType(cfclient.module_path +
+                                            '/ui/main.ui'))
 
 
 class MyDockWidget(QtGui.QDockWidget):
@@ -168,8 +169,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         ######################################################
 
-        self.cf = Crazyflie(ro_cache=sys.path[0] + "/cflib/cache",
-                            rw_cache=sys.path[1] + "/cache")
+        self.cf = Crazyflie(ro_cache=None,
+                            rw_cache=cfclient.config_path + "/cache")
 
         cflib.crtp.init_drivers(enable_debug_driver=Config()
                                 .get("enable_debug_driver"))
@@ -789,8 +790,9 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._update_input_device_footer()
 
     def _open_config_folder(self):
-        QDesktopServices.openUrl(QUrl("file:///" +
-                                      QDir.toNativeSeparators(sys.path[1])))
+        QDesktopServices.openUrl(
+            QUrl("file:///" +
+                 QDir.toNativeSeparators(cfclient.config_path)))
 
     def closeAppRequest(self):
         self.close()

@@ -41,8 +41,6 @@ import math
 
 import logging
 
-import sys
-
 from PyQt4 import Qt, QtCore, QtGui, uic
 from PyQt4.QtGui import QButtonGroup
 from PyQt4.QtCore import *
@@ -50,13 +48,15 @@ from PyQt4.QtGui import *
 from PyQt4.Qt import *
 from time import time
 
+import cfclient
+
 __author__ = 'Bitcraze AB'
 __all__ = ['PlotWidget']
 
 logger = logging.getLogger(__name__)
 
 (plot_widget_class, connect_widget_base_class) = (
-    uic.loadUiType(sys.path[0] + '/cfclient/ui/widgets/plotter.ui'))
+    uic.loadUiType(cfclient.module_path + '/ui/widgets/plotter.ui'))
 
 # Try the imports for PyQtGraph to see if it is installed
 try:

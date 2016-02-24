@@ -30,13 +30,13 @@ The console tab is used as a console for printouts from the Crazyflie.
 """
 
 import time
-import sys
 
 import logging
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import pyqtSlot, pyqtSignal
 
+import cfclient
 from cfclient.ui.tab import Tab
 
 __author__ = 'Bitcraze AB'
@@ -44,8 +44,8 @@ __all__ = ['ConsoleTab']
 
 logger = logging.getLogger(__name__)
 
-console_tab_class = uic.loadUiType(sys.path[0] +
-                                   "/cfclient/ui/tabs/consoleTab.ui")[0]
+console_tab_class = uic.loadUiType(cfclient.module_path +
+                                   "/ui/tabs/consoleTab.ui")[0]
 
 
 class ConsoleTab(Tab, console_tab_class):

@@ -52,13 +52,15 @@ from PyQt4.QtGui import QApplication
 from PyQt4.QtGui import QMessageBox
 from PyQt4.QtGui import QStyledItemDelegate
 
+import cfclient
+
 __author__ = 'Bitcraze AB'
 __all__ = ['PlotTab']
 
 logger = logging.getLogger(__name__)
 
-plot_tab_class = uic.loadUiType(sys.path[0] +
-                                "/cfclient/ui/tabs/plotTab.ui")[0]
+plot_tab_class = uic.loadUiType(cfclient.module_path +
+                                "/ui/tabs/plotTab.ui")[0]
 
 
 class LogConfigModel(QAbstractItemModel):

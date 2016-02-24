@@ -29,8 +29,8 @@ buttons and axis to match controls for the Crazyflie.
 """
 import json
 import logging
-import sys
 
+import cfclient
 from cfclient.utils.config_manager import ConfigManager
 from cfclient.utils.input import JoystickReader
 from cflib.crtp.exceptions import CommunicationException
@@ -48,7 +48,7 @@ __all__ = ['InputConfigDialogue']
 logger = logging.getLogger(__name__)
 
 (inputconfig_widget_class, connect_widget_base_class) = (
-    uic.loadUiType(sys.path[0] + '/cfclient/ui/dialogs/inputconfigdialogue.ui')
+    uic.loadUiType(cfclient.module_path + '/ui/dialogs/inputconfigdialogue.ui')
 )
 
 

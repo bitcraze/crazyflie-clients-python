@@ -28,7 +28,6 @@ Toolbox used to interact with the DebugDriver using a designated port. It's
 intended to be used for debugging.
 """
 import struct
-import sys
 import time
 
 from cflib.crtp.crtpstack import CRTPPacket
@@ -42,12 +41,14 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtCore import QThread
 from PyQt4.QtCore import SIGNAL
 
+import cfclient
+
 __author__ = 'Bitcraze AB'
 __all__ = ['DebugDriverToolbox']
 
 debugdriver_tab_class = uic.loadUiType(
-    sys.path[0] +
-    "/cfclient/ui/toolboxes/debugDriverToolbox.ui")[0]
+    cfclient.module_path +
+    "/ui/toolboxes/debugDriverToolbox.ui")[0]
 
 
 class DebugDriverToolbox(QtGui.QWidget, debugdriver_tab_class):

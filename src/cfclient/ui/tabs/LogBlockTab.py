@@ -31,11 +31,10 @@ This tab shows all log blocks that are registered and can be used to start the
 logging and also to write the logging data to file.
 """
 
-import sys
-
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
+import cfclient
 from cfclient.ui.tab import Tab
 
 import logging
@@ -52,7 +51,7 @@ __author__ = 'Bitcraze AB'
 __all__ = ['LogBlockTab']
 
 logblock_tab_class = uic.loadUiType(
-    sys.path[0] + "/cfclient/ui/tabs/logBlockTab.ui")[0]
+    cfclient.module_path + "/ui/tabs/logBlockTab.ui")[0]
 
 logger = logging.getLogger(__name__)
 

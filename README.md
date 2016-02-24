@@ -6,29 +6,15 @@ where you would like to use the Crazyflie.
 
 For more info see our [wiki](http://wiki.bitcraze.se/ "Bitcraze Wiki").
 
-Installation
-------------
-
-## Linux
-
-To install the Crazyflie PC client in Linux, you can run the setup script with:
-
-```sudo setup_linux.sh```
-
-This will install the Crazyflie PC client systemwide, create a udev entry for
-the Crazyradio and setup the permissions so that the current user can use the
-radio without root permissions after restarting the computer. For further
-instructions on how to run from source and [install dependencies](https://github.com/SteveClement/crazyflie-clients-python#dependencies) see below.
-
-## Windows
-
-Follow these steps to install the binary distribution on Windows 7/8/10.
- - Download the latest release [here](https://github.com/bitcraze/crazyflie-clients-python/releases) (named cfclient-win32-install-*.exe)
- - Execute the installer. After the install the application will be added to the start menu.
- - Install the Crazyradio drivers by following [these instructions](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
+Note. The project is currently being reorganized, which means that This
+documentation might become inacurate. You can track the reorganisation work in
+the ticket #227.
 
 Running from source
 -------------------
+
+The Crazyflie client requires [cflib](https://github.com/bitcraze/crazyflie-lib-python).
+Follow the cflib readme to install it.
 
 ## Windows (7/8/10)
 
@@ -43,7 +29,14 @@ Then install PyUSB, PyZMQ, PySDL2 and PyQtGraph using pip
 C:\Users\bitcraze>\Python34\python.exe -m pip install pyusb==1.0.0b2 pyzmq pysdl2 pyqtgraph
 ```
 
-Finally you run the client using the following command
+Install cflib from https://github.com/bitcraze/crazyflie-lib-python.
+
+Install cfclient to run it from source
+```
+C:\Users\bitcraze>\Python34\python.exe -m pip install -e .
+```
+
+Finally you can run the client using the following command
 ```
 \Python34\python bin\cfclient
 ```
@@ -90,6 +83,13 @@ they might or might not be affected by this.
     pip3 install pysdl2 pyusb pyqtgraph
     ```
 
+1. Install cflib from https://github.com/bitcraze/crazyflie-lib-python
+
+1. Install cfclient to run it from source. From the source folder run:
+    ```
+    pip3 install -e .
+    ```
+
 1. You now have all the dependencies needed to run the client. From the source folder, run it with the following command:
     ```
     python bin/cfclient
@@ -120,6 +120,12 @@ they might or might not be affected by this.
     ```
     sudo port install py34-pyqtgraph
     ```
+    Install cflib from https://github.com/bitcraze/crazyflie-lib-python
+
+    Install cfclient to run it from source. From the source folder run:
+    ```
+    pip3 install -e .
+    ```
     You can now run the client from the source folder with
     ```
     python bin/cfclient
@@ -142,6 +148,13 @@ they might or might not be affected by this.
 
 ### Launching the GUI application
 
+Install cflib from https://github.com/bitcraze/crazyflie-lib-python
+
+Install cfclient to run it from source. From the source folder run (to install
+for your user only you can add ```--user``` to the command):
+```
+pip3 install -e .
+```
 To launch the GUI application in the source folder type:
 ```python bin/cfclient```
 
@@ -185,33 +198,6 @@ Example commands to install these dependencies:
 
 ### Setting udev permissions
 
-The following steps make it possible to use the USB Radio without being root.
-
-Note: If using a fresh Debian install, you may need to install sudo first
-(executing exit command to exit from root shell first):
-
-```
-su -
-apt-get install sudo
-```
-
-Now, with sudo installed, you should be able to do the following commands
-
-```
-sudo groupadd plugdev
-sudo usermod -a -G plugdev <username>
-```
-
-Create a file named ```/etc/udev/rules.d/99-crazyradio.rules``` and add the
-following:
-```
-SUBSYSTEM=="usb", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="7777", MODE="0664", GROUP="plugdev"
-```
-
-To connect Crazyflie 2.0 via usb, create a file name ```/etc/udev/rules.d/99-crazyflie.rules``` and add the following:
-```
-SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE="0664", GROUP="plugdev"
-```
-
-Restart the computer and you are now able to access the USB radio dongle
-without being root.
+Using Crazyradio on Linux requires that you set udev permissions. See the cflib
+[readme](https://github.com/bitcraze/crazyflie-lib-python#setting-udev-permissions)
+for more information.

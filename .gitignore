@@ -5,6 +5,7 @@ config.json
 dist/*
 build/*
 cache
+src/cfclient.egg-info/*
 
 # PC client settings
 conf/*

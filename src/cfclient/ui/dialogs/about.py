@@ -26,6 +26,7 @@
 """
 The about dialog.
 """
+
 import sys
 
 import cfclient
@@ -42,8 +43,8 @@ __author__ = 'Bitcraze AB'
 __all__ = ['AboutDialog']
 
 (about_widget_class,
- about_widget_base_class) = (uic.loadUiType(sys.path[0] +
-                                            '/cfclient/ui/dialogs/about.ui'))
+ about_widget_base_class) = (uic.loadUiType(cfclient.module_path +
+                                            '/ui/dialogs/about.ui'))
 
 DEBUG_INFO_FORMAT = """
 <b>Cfclient</b><br>

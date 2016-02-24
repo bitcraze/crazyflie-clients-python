@@ -24,24 +24,50 @@
 #  this program; if not, write to the Free Software Foundation, Inc., 51
 #  Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from .cfclient import main
+import os
+import pkg_resources
+
+
+def _init_config_path():
+    import sys
+    import os
+    import os.path as _path
+    from os.path import expanduser
+
+    prefix = expanduser("~")
+
+    if sys.platform == "linux2":
+        if _path.exists(_path.join(prefix, ".local")):
+            configPath = _path.join(prefix, ".local", __name__)
+        else:
+            configPath = _path.join(prefix, "." + __name__)
+    elif sys.platform == "win32":
+        configPath = _path.join(os.environ['APPDATA'], __name__)
+    elif sys.platform == "darwin":
+        from AppKit import NSSearchPathForDirectoriesInDomains
+        # FIXME: Copy-pasted from StackOverflow, not tested!
+        # http://developer.apple.com/DOCUMENTATION/Cocoa/Reference/Foundation/Miscellaneous/Foundation_Functions/Reference/reference.html#//apple_ref/c/func/NSSearchPathForDirectoriesInDomains # noqa
+        # NSApplicationSupportDirectory = 14
+        # NSUserDomainMask = 1
+        # True for expanding the tilde into a fully qualified path
+        configPath = _path.join(
+            NSSearchPathForDirectoriesInDomains(14, 1, True)[0], __name__)
+    else:
+        # Unknown OS, I hope this is good enough
+        configPath = _path.join(prefix, "." + __name__)
+
+    if not _path.exists(configPath):
+        os.makedirs(configPath)
+
+    return configPath
+
+# Path used all over the application
+# FIXME: module_path is missused: it should not be used to load ressources if
+#        we want to be able to follow PEP302 and run from zip!
+module_path = os.path.dirname(__file__)
+config_path = _init_config_path()
 
 try:
-    from .version import VERSION
-except:
-    try:
-        import subprocess
-
-        VERSION = subprocess.check_output(["git", "describe"]).encode('utf-8')
-    except:
-        VERSION = "dev"
-
-    try:
-        import subprocess
-
-        ret = subprocess.call(["git", "diff", "--quiet", "HEAD"]
-                              ).encode('utf-8')
-        if ret > 0:
-            VERSION += "+"
-    except:
-        VERSION += "+"
+    VERSION = pkg_resources.require("cfclient")[0].version
+except pkg_resources.DistributionNotFound:
+    VERSION = "dev"

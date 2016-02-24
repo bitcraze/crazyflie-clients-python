@@ -57,8 +57,8 @@ class HeadlessClient():
 
         self._jr = JoystickReader(do_device_discovery=False)
 
-        self._cf = Crazyflie(ro_cache=sys.path[0] + "/cflib/cache",
-                             rw_cache=sys.path[1] + "/cache")
+        self._cf = Crazyflie(ro_cache=None,
+                             rw_cache=cfclient.config_path + "/cache")
 
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -90,7 +90,7 @@ class HeadlessClient():
         for i, dev in enumerate(self._devs):
             print(" - Controller #{}: {}".format(i, dev))
         print("\nAvailable input mapping:")
-        for map in os.listdir(sys.path[1] + '/input'):
+        for map in os.listdir(cfclient.config_path + '/input'):
             print(" - " + map.split(".json")[0])
 
     def connect_crazyflie(self, link_uri):
@@ -168,3 +168,6 @@ def main():
             headless.connect_crazyflie(link_uri=args.uri)
         else:
             print("No input-device connected, exiting!")
+
+if __name__ == "__main__":
+    main()

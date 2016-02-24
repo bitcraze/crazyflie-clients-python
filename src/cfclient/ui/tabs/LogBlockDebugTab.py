@@ -31,18 +31,18 @@ to edit them.
 """
 
 import time
-import sys
 
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 
+import cfclient
 from cfclient.ui.tab import Tab
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LogBlockTab']
 
-logblock_tab_class = uic.loadUiType(sys.path[0] +
-                                    "/cfclient/ui/tabs/logBlockDebugTab.ui")[0]
+logblock_tab_class = uic.loadUiType(cfclient.module_path +
+                                    "/ui/tabs/logBlockDebugTab.ui")[0]
 
 
 class LogBlockDebugTab(Tab, logblock_tab_class):

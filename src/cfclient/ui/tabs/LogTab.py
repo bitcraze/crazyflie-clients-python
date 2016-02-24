@@ -26,9 +26,9 @@
 """
 Shows the Log TOC of available variables in the Crazyflie.
 """
-import sys
 import time
 
+import cfclient
 from cfclient.ui.tab import Tab
 from cflib.crazyflie import Crazyflie
 from PyQt4 import QtCore
@@ -43,8 +43,8 @@ from PyQt4.QtCore import SIGNAL
 __author__ = 'Bitcraze AB'
 __all__ = ['LogTab']
 
-param_tab_class = uic.loadUiType(sys.path[0] +
-                                 "/cfclient/ui/tabs/logTab.ui")[0]
+param_tab_class = uic.loadUiType(cfclient.module_path +
+                                 "/ui/tabs/logTab.ui")[0]
 
 
 class LogTab(Tab, param_tab_class):

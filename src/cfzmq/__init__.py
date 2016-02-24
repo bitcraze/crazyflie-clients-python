@@ -40,6 +40,8 @@ import cflib.crtp
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.log import LogConfig
 
+import cfclient
+
 if os.name == 'posix':
     print('Disabling standard output for libraries!')
     stdout = os.dup(1)
@@ -318,8 +320,8 @@ class ZMQServer():
     def __init__(self, base_url):
         """Start threads and bind ports"""
         cflib.crtp.init_drivers(enable_debug_driver=True)
-        self._cf = Crazyflie(ro_cache=sys.path[0] + "/cflib/cache",
-                             rw_cache=sys.path[1] + "/cache")
+        self._cf = Crazyflie(ro_cache=None,
+                             rw_cache=cfclient.config_path + "/cache")
 
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -368,3 +370,6 @@ def main():
     ZMQServer(args.url)
 
     # CRTL-C to exit
+
+if __name__ == "__main__":
+    main()
