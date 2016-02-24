@@ -92,8 +92,8 @@ class EEPROMExample:
             mems[0].write_data(self._data_written)
 
     def _data_written(self, mem, addr):
-            print("Data written, reading back...")
-            mem.update(self._data_updated)
+        print("Data written, reading back...")
+        mem.update(self._data_updated)
 
     def _data_updated(self, mem):
         print("Updated id={}".format(mem.id))

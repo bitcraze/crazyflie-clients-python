@@ -75,6 +75,7 @@ class TargetTypes:
 
 
 class Target:
+
     def __init__(self, id):
         self.id = id
         self.protocol_version = 0xFF

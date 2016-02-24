@@ -1,6 +1,9 @@
-import jinja2
+# -*- coding: utf-8 -*-
 import os
-from subprocess import Popen, PIPE
+from subprocess import PIPE
+from subprocess import Popen
+
+import jinja2
 
 DIST_PATH = "..\dist"
 

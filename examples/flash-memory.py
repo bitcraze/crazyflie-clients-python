@@ -39,6 +39,7 @@ class Flasher(object):
     """
     A class that can flash the DS28E05 EEPROM via CRTP.
     """
+
     def __init__(self, link_uri):
         self._cf = Crazyflie()
         self._link_uri = link_uri

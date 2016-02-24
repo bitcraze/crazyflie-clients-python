@@ -20,12 +20,10 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA  02110-1301, USA.
-
 """
 Fake link driver used to debug the UI without using the Crazyflie.
 
@@ -36,23 +34,24 @@ though CRTP once connected.
 For normal connections a console thread is also started that will send
 generated console output via CRTP.
 """
-
-from threading import Thread
-from .crtpdriver import CRTPDriver
-from .crtpstack import CRTPPacket, CRTPPort
-from .exceptions import WrongUriType
-import sys
+import errno
+import logging
+import random
 import re
-import time
+import string
 import struct
+import sys
+import time
 from datetime import datetime
+from threading import Thread
+
 from cflib.crazyflie.log import LogTocElement
 from cflib.crazyflie.param import ParamTocElement
-import random
-import string
-import errno
 
-import logging
+from .crtpdriver import CRTPDriver
+from .crtpstack import CRTPPacket
+from .crtpstack import CRTPPort
+from .exceptions import WrongUriType
 if sys.version_info < (3,):
     import Queue as queue
 else:

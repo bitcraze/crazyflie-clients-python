@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 class TakeOverSelectiveMux(InputMux):
+
     def __init__(self, *args):
         super(TakeOverSelectiveMux, self).__init__(*args)
         self._master = "Teacher"

@@ -68,6 +68,7 @@ class PeriodicTimer:
 
 
 class _PeriodicTimerThread(Thread):
+
     def __init__(self, period, caller):
         super(_PeriodicTimerThread, self).__init__()
         self._period = period

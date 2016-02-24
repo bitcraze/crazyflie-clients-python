@@ -145,7 +145,7 @@ they might or might not be affected by this.
 To launch the GUI application in the source folder type:
 ```python bin/cfclient```
 
-To launch the GUI after a systemwide installation, execute ```cfclient```. 
+To launch the GUI after a systemwide installation, execute ```cfclient```.
 
 ### Dependencies
 

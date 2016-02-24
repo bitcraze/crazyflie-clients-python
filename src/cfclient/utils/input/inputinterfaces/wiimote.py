@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 from threading import Thread
 import time
@@ -20,6 +21,7 @@ class _Reader(object):
     # - limit_thrust
     # - limit_yaw
     # - open
+
     def devices(self):
         """List all the available connections"""
         raise NotImplemented()
@@ -53,6 +55,7 @@ PLUS = 4096
 
 
 class HandleWiimote(Thread):
+
     def __init__(self, reader, wii, *args):
         super(HandleWiimote, self).__init__(*args)
         self.reader = reader

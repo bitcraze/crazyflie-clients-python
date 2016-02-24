@@ -20,29 +20,27 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License along with
 #  this program; if not, write to the Free Software Foundation, Inc.,
 #  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 """
 Dialogue used to select and configure an inputdevice. This includes mapping
 buttons and axis to match controls for the Crazyflie.
 """
-
-import sys
 import json
 import logging
+import sys
 
 from cfclient.utils.config_manager import ConfigManager
+from cfclient.utils.input import JoystickReader
 from cflib.crtp.exceptions import CommunicationException
-
-from PyQt4 import Qt, QtCore, QtGui, uic
+from PyQt4 import Qt
+from PyQt4 import QtCore
+from PyQt4 import QtGui
+from PyQt4 import uic
+from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from PyQt4.Qt import *
-
-from cfclient.utils.input import JoystickReader
 
 __author__ = 'Bitcraze AB'
 __all__ = ['InputConfigDialogue']
@@ -55,6 +53,7 @@ logger = logging.getLogger(__name__)
 
 
 class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
+
     def __init__(self, joystickReader, *args):
         super(InputConfigDialogue, self).__init__(*args)
         self.setupUi(self)

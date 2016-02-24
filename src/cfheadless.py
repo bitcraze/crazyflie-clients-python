@@ -19,26 +19,23 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA  02110-1301, USA.
-
 """
 Headless client for the Crazyflie.
 """
-
-import sys
-import os
 import logging
+import os
 import signal
+import sys
 
-import cflib.crtp
-from cflib.crazyflie import Crazyflie
 import cfclient.utils
-from cfclient.utils.input import JoystickReader
+import cflib.crtp
 from cfclient.utils.config import Config
+from cfclient.utils.input import JoystickReader
+from cflib.crazyflie import Crazyflie
 
 if os.name == 'posix':
     print('Disabling standard output for libraries!')

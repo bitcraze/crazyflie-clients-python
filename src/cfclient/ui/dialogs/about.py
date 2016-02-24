@@ -20,25 +20,23 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License along with
 #  this program; if not, write to the Free Software Foundation, Inc.,
 #  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 """
 The about dialog.
 """
-
 import sys
 
-from PyQt4 import Qt, QtCore, QtGui, uic
+import cfclient
+import cflib.crtp
+from PyQt4 import Qt
+from PyQt4 import QtCore
+from PyQt4 import QtGui
+from PyQt4 import uic
+from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from PyQt4.Qt import *
-
-import cfclient
-
-import cflib.crtp
 
 __author__ = 'Bitcraze AB'
 __all__ = ['AboutDialog']

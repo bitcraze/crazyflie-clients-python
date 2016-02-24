@@ -38,6 +38,7 @@ __all__ = ['HexSpinBox']
 
 
 class HexSpinBox(QAbstractSpinBox):
+
     def __init__(self, *args):
         QAbstractSpinBox.__init__(self, *args)
         regexp = QtCore.QRegExp('^0x[0-9A-Fa-f]{1,10}$')

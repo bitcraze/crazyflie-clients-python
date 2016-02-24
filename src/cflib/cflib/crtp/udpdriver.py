@@ -20,22 +20,20 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA  02110-1301, USA.
-
 """ CRTP UDP Driver. Work either with the UDP server or with an UDP device
 See udpserver.py for the protocol"""
+import re
+import struct
+import sys
+from socket import socket
 
 from .crtpdriver import CRTPDriver
 from .crtpstack import CRTPPacket
 from .exceptions import WrongUriType
-import sys
-import re
-import struct
-from socket import socket
 if sys.version_info < (3,):
     import Queue as queue
 else:
@@ -46,6 +44,7 @@ __all__ = ['UdpDriver']
 
 
 class UdpDriver(CRTPDriver):
+
     def __init__(self):
         None
 

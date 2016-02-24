@@ -20,36 +20,37 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License along with
 #  this program; if not, write to the Free Software Foundation, Inc.,
 #  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 """
 This tab plots different logging data defined by configurations that has been
 pre-configured.
 """
-
+import datetime
 import glob
 import json
 import logging
 import os
 import sys
-
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread, Qt
-from PyQt4.QtGui import QMessageBox
-from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView
-from PyQt4.QtCore import QAbstractItemModel, QModelIndex
-
 from pprint import pprint
-import datetime
-
-from cfclient.ui.widgets.plotwidget import PlotWidget
-
-from cflib.crazyflie.log import Log
 
 from cfclient.ui.tab import Tab
+from cfclient.ui.widgets.plotwidget import PlotWidget
+from cflib.crazyflie.log import Log
+from PyQt4 import QtCore
+from PyQt4 import QtGui
+from PyQt4 import uic
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtCore import pyqtSlot
+from PyQt4.QtCore import QAbstractItemModel
+from PyQt4.QtCore import QModelIndex
+from PyQt4.QtCore import Qt
+from PyQt4.QtCore import QThread
+from PyQt4.QtGui import QAbstractItemView
+from PyQt4.QtGui import QApplication
+from PyQt4.QtGui import QMessageBox
+from PyQt4.QtGui import QStyledItemDelegate
 
 __author__ = 'Bitcraze AB'
 __all__ = ['PlotTab']

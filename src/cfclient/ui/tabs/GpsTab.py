@@ -20,26 +20,27 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
 # USA.
-
 """
 This tab plots different logging data defined by configurations that has been
 pre-configured.
 """
-import math
-
 import logging
+import math
 import sys
 
-from PyQt4 import QtCore, QtGui, uic, QtWebKit, QtNetwork
+from cfclient.ui.tab import Tab
+from cflib.crazyflie.log import LogConfig
+from PyQt4 import QtCore
+from PyQt4 import QtGui
+from PyQt4 import QtNetwork
+from PyQt4 import QtWebKit
+from PyQt4 import uic
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from cflib.crazyflie.log import LogConfig
-from cfclient.ui.tab import Tab
 
 __author__ = 'Bitcraze AB'
 __all__ = ['GpsTab']
@@ -159,8 +160,8 @@ class GpsTab(Tab, gps_tab_class):
 
     def _log_data_received(self, timestamp, data, logconf):
         """Callback when the log layer receives new data"""
-        long = float(data["gps.lon"])/10000000.0
-        lat = float(data["gps.lat"])/10000000.0
+        long = float(data["gps.lon"]) / 10000000.0
+        lat = float(data["gps.lat"]) / 10000000.0
         self._long.setText("{:.6f}".format(long))
         self._lat.setText("{:.6f}".format(lat))
         self._nbr_locked_sats.setText(str(data["gps.nsat"]))
