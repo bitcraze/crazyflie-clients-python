@@ -40,6 +40,8 @@ from cflib.crazyflie.log import LogConfig
 
 import traceback
 
+import cfclient
+
 __author__ = 'Bitcraze AB'
 __all__ = ['LogWriter']
 
