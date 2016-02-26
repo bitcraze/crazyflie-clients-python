@@ -24,9 +24,9 @@ Install dependencies. With Windows installers (tested using only 32-bit installs
  - [NumPy for Python 3.4](http://sourceforge.net/projects/numpy/files/NumPy)
  - [SDL2](https://www.libsdl.org/download-2.0.php) (copy SDL2.dll into the client source folder)
 
-Then install PyUSB, PyZMQ, PySDL2 and PyQtGraph using pip
+Then install PyUSB, PyZMQ, PySDL2, appdirs and PyQtGraph using pip
 ```
-C:\Users\bitcraze>\Python34\python.exe -m pip install pyusb==1.0.0b2 pyzmq pysdl2 pyqtgraph
+C:\Users\bitcraze>\Python34\python.exe -m pip install pyusb==1.0.0b2 pyzmq pysdl2 pyqtgraph appdirs
 ```
 
 Install cflib from https://github.com/bitcraze/crazyflie-lib-python.
@@ -80,7 +80,7 @@ they might or might not be affected by this.
 
     ```
     brew install libusb
-    pip3 install pysdl2 pyusb pyqtgraph
+    pip3 install pysdl2 pyusb pyqtgraph appdirs
     ```
 
 1. Install cflib from https://github.com/bitcraze/crazyflie-lib-python
@@ -114,7 +114,7 @@ they might or might not be affected by this.
     ```
     To install ```pyusb``` from ```pip```, use:
     ```
-    sudo pip install pyusb
+    sudo pip install pyusb appdirs
     ```
     To enable the plotter tab install pyqtgraph, this takes a lot of time:
     ```
@@ -124,7 +124,7 @@ they might or might not be affected by this.
 
     Install cfclient to run it from source. From the source folder run:
     ```
-    pip3 install -e .
+    pip install -e .
     ```
     You can now run the client from the source folder with
     ```
@@ -170,19 +170,23 @@ The Crazyflie PC client has the following dependencies:
 * PyQtGraph
 * ZMQ
 * PyQt4
+* appdirs
 
 Example commands to install these dependencies:
 
-* Fedora (tested for 16 to 18):
+* Fedora:
 
-    ```sudo yum install pysdl2 pyusb PyQt4```
+    ```
+    TODO Please contribute
+    ```
+   
 
 * Ubuntu (14.04):
 
     ```
     sudo apt-get install python3 python3-pip python3-pyqt4 python3-zmq
     pip3 install pyusb==1.0.0b2
-    pip3 install pyqtgraph
+    pip3 install pyqtgraph appdirs
     ```
 
 * Ubuntu (15.04):
@@ -190,11 +194,14 @@ Example commands to install these dependencies:
     ```
     sudo apt-get install python3 python3-pip python3-pyqt4 python3-zmq python3-pyqtgraph
     sudo pip3 install pyusb==1.0.0b2
+    sudo pip3 install appdirs
     ```
 
-* OpenSUSE (tested for 11.3):
+* OpenSUSE:
 
-    ```sudo zypper install python-pysdl2 libusb python-usb```
+    ```
+    TODO Please contribute
+    ```
 
 ### Setting udev permissions
 
