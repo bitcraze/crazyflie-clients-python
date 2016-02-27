@@ -29,26 +29,28 @@ Find all the available tabs so they can be loaded.
 Dropping a new .py file into this directory will automatically list and load
 it into the UI when it is started.
 """
-import glob
-import logging
-import os
+
+from .ConsoleTab import ConsoleTab
+# from .ExampleTab import ExampleTab
+from .FlightTab import FlightTab
+from .GpsTab import GpsTab
+from .LEDTab import LEDTab
+from .LogBlockTab import LogBlockTab
+from .LogTab import LogTab
+from .ParamTab import ParamTab
+from .PlotTab import PlotTab
 
 __author__ = 'Bitcraze AB'
 __all__ = []
 
-logger = logging.getLogger(__name__)
-
-found_tabs = [os.path.splitext(os.path.basename(f))[0] for
-              f in glob.glob(os.path.dirname(__file__) + "/[A-Za-z]*Tab.py")]
-if len(found_tabs) == 0:
-    found_tabs = [os.path.splitext(os.path.basename(f))[0] for
-                  f in glob.glob(os.path.dirname(__file__) +
-                                 "/[A-Za-z]*Tab.pyc")]
-
-logger.debug("Found tabs: %s", found_tabs)
-
-available = []
-
-for tab in found_tabs:
-    tabModule = __import__(tab, globals(), locals(), [tab], 1)
-    available.append(getattr(tabModule, tab))
+available = [
+    ConsoleTab,
+    # ExampleTab,
+    FlightTab,
+    GpsTab,
+    LEDTab,
+    LogBlockTab,
+    LogTab,
+    ParamTab,
+    PlotTab,
+]

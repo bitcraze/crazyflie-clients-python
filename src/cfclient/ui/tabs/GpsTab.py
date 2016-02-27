@@ -75,7 +75,7 @@ class GpsTab(Tab, gps_tab_class):
         view = self.view = QtWebKit.QWebView()
 
         cache = QtNetwork.QNetworkDiskCache()
-        cache.setCacheDirectory("cache")
+        cache.setCacheDirectory(cfclient.config_path + "/cache")
         view.page().networkAccessManager().setCache(cache)
         view.page().networkAccessManager()
 

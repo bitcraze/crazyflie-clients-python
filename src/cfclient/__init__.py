@@ -25,14 +25,27 @@
 #  Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import os
-import pkg_resources
 from appdirs import AppDirs
+import sys
 
 # Path used all over the application
-module_path = os.path.dirname(__file__)
+if not hasattr(sys, 'frozen'):
+    module_path = os.path.dirname(__file__)
+else:
+    module_path = os.path.dirname(sys.executable)
 config_path = AppDirs("cfclient", "Bitcraze").user_config_dir
 
-try:
-    VERSION = pkg_resources.require("cfclient")[0].version
-except pkg_resources.DistributionNotFound:
-    VERSION = "dev"
+# Locate the sdl2 lib on Windows (should be in cfclient/thirst_party/)
+if os.name == 'nt':
+    os.environ["PYSDL2_DLL_PATH"] = os.path.join(module_path, "third_party")
+
+if not hasattr(sys, 'frozen'):
+    import pkg_resources
+    try:
+        VERSION = pkg_resources.require("cfclient")[0].version
+    except pkg_resources.DistributionNotFound:
+        VERSION = "dev"
+else:
+    import json
+    with open(os.path.join(module_path, "version.json")) as f:
+        VERSION = json.load(f)['version']

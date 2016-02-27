@@ -6,6 +6,8 @@ dist/*
 build/*
 cache
 src/cfclient.egg-info/*
+src/cfclient/third_party/*
+version.json
 
 # PC client settings
 conf/*
