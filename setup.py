@@ -39,6 +39,14 @@ VERSION = get_version()
 with codecs.open('version.json', 'w', encoding='utf8') as f:
     f.write(json.dumps({'version': VERSION}))
 
+platform_requires = []
+platform_dev_requires = []
+if sys.platform == 'win32' or sys.platform == 'darwin':
+    platform_requires = ['pysdl2']
+if sys.platform == 'win32':
+    platform_dev_requires = ['py2exe', 'jinja2']
+
+
 # Initial parameters
 setup(
     name='cfclient',
@@ -67,6 +75,15 @@ setup(
             'cfloader=cfloader:main',
             'cfzmq=cfzmq:main'
         ],
+    },
+
+    install_requires=platform_requires + ['cflib', 'appdirs'],
+
+    # List of dev dependencies
+    # You can install them by running
+    # $ pip install -e .[dev]
+    extras_require={
+        'dev': platform_dev_requires + []
     },
 
     # Py2exe options
