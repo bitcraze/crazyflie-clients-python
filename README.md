@@ -1,4 +1,5 @@
-# Crazyflie PC client [![Build Status](https://api.travis-ci.org/bitcraze/crazyflie-clients-python.svg)](https://travis-ci.org/bitcraze/crazyflie-clients-python)
+# Crazyflie PC client [![Build Status](https://api.travis-ci.org/bitcraze/crazyflie-clients-python.svg)](https://travis-ci.org/bitcraze/crazyflie-clients-python) [![Build status](https://ci.appveyor.com/api/projects/status/u2kejdbc9wrexo31?svg=true)](https://ci.appveyor.com/project/bitcraze/crazyflie-clients-python)
+
 
 The Crazyflie PC client enables flashing and controlling the Crazyflie.
 There's also a Python library that can be integrated into other applications
@@ -179,7 +180,7 @@ Example commands to install these dependencies:
     ```
     TODO Please contribute
     ```
-   
+
 
 * Ubuntu (14.04):
 
