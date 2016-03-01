@@ -21,7 +21,6 @@ build_script:
     python win32install\generate_nsis.py
 
     makensis win32install\cfclient.nsi
-
-    appveyor PushArtifact win32install\*.exe
 artifacts:
 - path: dist\
+- path: win32install\*.exe
