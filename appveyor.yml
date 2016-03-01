@@ -3,7 +3,7 @@ init:
 - cmd: set PATH=C:\Miniconda35;C:\Miniconda35\scripts;%PATH%
 install:
 - cmd: >-
-    conda create -y -q -n cfclient python=3.4 pyqt pyqtgraph
+    conda create -y -q -n cfclient python=3.4 numpy=1.10.1 pyqt pyqtgraph
 
     activate cfclient
 

@@ -95,6 +95,7 @@ setup(
     ],
     py2exe={
         'includes': ['cfclient.ui.widgets.hexspinbox'],
+        'bundle_files': 2
     },
 
     data_files=[
