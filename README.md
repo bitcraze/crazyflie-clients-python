@@ -19,28 +19,37 @@ Follow the cflib readme to install it.
 
 ## Windows (7/8/10)
 
-Install dependencies. With Windows installers (tested using only 32-bit installs on 64-bit OS):
- - [Python 3.4](https://www.python.org/downloads/windows/) (make sure the pip component is selected when installing)
- - [PyQT4 for Python 3.4](http://www.riverbankcomputing.com/software/pyqt/download)
- - [NumPy for Python 3.4](http://sourceforge.net/projects/numpy/files/NumPy)
- - [SDL2](https://www.libsdl.org/download-2.0.php) (copy SDL2.dll into the client source folder)
+Running from source on Windows is tested using the [miniconda](http://conda.pydata.org/miniconda.html) python distribution. It is possible to run from any distribution as long as the required packages are installed. Building the windows installer requires Python 3.4 (because ```py2exe``` is not distributed for Python 3.5 yet). The following instructions assumes *Miniconda 32-bit* is installed.
 
-Then install PyUSB, PyZMQ, PySDL2, appdirs and PyQtGraph using pip
+Open a command line windows and move to the crazyflie clients folder (the exact command depends of where the project is cloned):
 ```
-C:\Users\bitcraze>\Python34\python.exe -m pip install pyusb==1.0.0b2 pyzmq pysdl2 pyqtgraph appdirs
+cd crazyflie-clients-python
 ```
 
-Install cflib from https://github.com/bitcraze/crazyflie-lib-python.
+Create and activate a Python 3.4 environment with numpy pyqt and pyqtgraph from conda (it is the packages we cannot easily install with pip):
+```
+conda create -y -n cfclient python=3.4 numpy=1.10.1 pyqt pyqtgraph
+activate cfclient
+```
 
-Install cfclient to run it from source
+Download the SDL2.dll windows library:
 ```
-C:\Users\bitcraze>\Python34\python.exe -m pip install -e .
+python tools\build\prep_windows
 ```
 
-Finally you can run the client using the following command
+Install the client in development mode:
 ```
-\Python34\python bin\cfclient
+pip install -e .[dev]
 ```
+
+You can now run the clients:
+```
+cfclient
+cfheadless
+cfloader
+cfzmq
+```
+
 
 **NOTE**: To use the Crazyradio you will have to [install the drivers](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
 
