@@ -87,7 +87,12 @@ setup(
     },
 
     # Py2exe options
-    console=['bin/cfclient'],
+    console=[
+        {
+            'script': 'bin/cfclient',
+            'icon_resources': [(0, 'bitcraze.ico')]
+        }
+    ],
     py2exe={
         'includes': ['cfclient.ui.widgets.hexspinbox'],
     },

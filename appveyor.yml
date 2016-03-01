@@ -12,7 +12,16 @@ install:
     rmdir /Q /S C:\Miniconda35\envs\cfclient\lib\site-packages\PyQt4\uic\port_v2
 
     python tools\build\prep_windows
+
+    choco install -y nsis.portable -version 2.50
 build_script:
-- cmd: python setup.py py2exe
+- cmd: >-
+    python setup.py py2exe
+
+    python win32install\generate_nsis.py
+
+    makensis win32install\cfclient.nsi
+
+    appveyor PushArtifact win32install\*.exe
 artifacts:
 - path: dist\
