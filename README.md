@@ -19,7 +19,7 @@ Follow the cflib readme to install it.
 
 ## Windows (7/8/10)
 
-Running from source on Windows is tested using the [miniconda](http://conda.pydata.org/miniconda.html) python distribution. It is possible to run from any distribution as long as the required packages are installed. Building the windows installer requires Python 3.4 (because ```py2exe``` is not distributed for Python 3.5 yet). The following instructions assumes *Miniconda 32-bit* is installed.
+Running from source on Windows is tested using the [miniconda](http://conda.pydata.org/miniconda.html) python distribution. It is possible to run from any distribution as long as the required packages are installed. Building the windows installer requires Python 3.4 (because ```py2exe``` is not distributed for Python 3.5 yet). The following instructions assumes **Miniconda 32-bit** is installed.
 
 Open a command line windows and move to the crazyflie clients folder (the exact command depends of where the project is cloned):
 ```
@@ -50,8 +50,32 @@ cfloader
 cfzmq
 ```
 
+**NOTE:** To use the Crazyradio you will have to [install the drivers](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
 
-**NOTE**: To use the Crazyradio you will have to [install the drivers](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
+### Creating Windows installer
+
+When you are able to run from source, you can build the windows executable and installer.
+
+First build the executable
+```
+python setup.py py2exe
+```
+**NOTE:** The first time the previous command will fail complaining about a ```PyQt4\uic\port_v2```
+folder. Remove this folder with ```rmdir \Q \S path\to\PyQt4\uic\port_v2```,
+you can copy-paste the folder path from the py2exe error message.
+
+
+Now you can run the client with ```dist\cfclient.exe```.
+
+To generate the installer you need [nsis](http://nsis.sourceforge.net/) installed and in the path. If you
+are a user of [chocolatey](https://chocolatey.org/) you can install it with ```choco install nsis.portable -version 2.50```,
+otherwise you can just download it and install it manually.
+
+To create the installer:
+```
+python win32install\generate_nsis.py
+makensis win32install\cfclient.nsi
+```
 
 ## Mac OSX
 
