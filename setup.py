@@ -7,6 +7,7 @@ from glob import glob
 import json
 import codecs
 import sys
+import os
 
 try:
     import py2exe  # noqa
@@ -47,6 +48,9 @@ if sys.platform == 'win32':
     platform_dev_requires = ['py2exe', 'jinja2']
 
 
+def relative(lst, base=''):
+    return list(map(lambda x: base + os.path.basename(x), lst))
+
 # Initial parameters
 setup(
     name='cfclient',
@@ -86,6 +90,19 @@ setup(
         'dev': platform_dev_requires + []
     },
 
+    package_data={
+        'cfclient.ui':  relative(glob('src/cfclient/ui/*.ui')),
+        'cfclient.ui.tabs': relative(glob('src/cfclient/ui/tabs/*.ui')),
+        'cfclient.ui.widgets':  relative(glob('src/cfclient/ui/widgets/*.ui')),
+        'cfclient.ui.toolboxes':  relative(glob('src/cfclient/ui/toolboxes/*.ui')),  # noqa
+        'cfclient.ui.dialogs':  relative(glob('src/cfclient/ui/dialogs/*.ui')),
+        'cfclient':  relative(glob('src/cfclient/configs/*.json'), 'configs/') +  # noqa
+                     relative(glob('src/cfclient/configs/input/*.json'), 'configs/input/') +  # noqa
+                     relative(glob('src/cfclient/configs/log/*.json'), 'configs/log/') +  # noqa
+                     relative(glob('src/cfclient/resources/*'), 'resources/') +
+                     relative(glob('src/cfclient/*.png')),
+    },
+
     # Py2exe options
     console=[
         {
@@ -95,21 +112,12 @@ setup(
     ],
     py2exe={
         'includes': ['cfclient.ui.widgets.hexspinbox'],
-        'bundle_files': 2
+        'bundle_files': 3,
+        'skip_archive': True,
     },
 
     data_files=[
         ('', ['README.md', 'version.json']),
-        ('ui', glob('src/cfclient/ui/*.ui')),
-        ('ui/tabs', glob('src/cfclient/ui/tabs/*.ui')),
-        ('ui/widgets', glob('src/cfclient/ui/widgets/*.ui')),
-        ('ui/toolboxes', glob('src/cfclient/ui/toolboxes/*.ui')),
-        ('ui/dialogs', glob('src/cfclient/ui/dialogs/*.ui')),
-        ('configs', glob('src/cfclient/configs/*.json')),
-        ('configs/input', glob('src/cfclient/configs/input/*.json')),
-        ('configs/log', glob('src/cfclient/configs/log/*.json')),
-        ('', glob('src/cfclient/*.png')),
-        ('resources', glob('src/cfclient/resources/*')),
         ('third_party', glob('src/cfclient/third_party/*')),
     ],
 )
