@@ -114,13 +114,13 @@ class LEDTab(Tab, led_tab_class):
             self._intensity_slider.setValue)
 
     def _select(self, nbr):
-        col = QtGui.QColor() # default to invalid
+        col = QtGui.QColor()  # default to invalid
 
         if self._mem:
             led = self._mem.leds[nbr]
-            col = QtGui.QColor.fromRgb( led.r, led.g, led.b )
+            col = QtGui.QColor.fromRgb(led.r, led.g, led.b)
 
-        col = QtGui.QColorDialog.getColor( col )
+        col = QtGui.QColorDialog.getColor(col)
 
         if col.isValid() and self._mem:
             logger.info(col.red())
