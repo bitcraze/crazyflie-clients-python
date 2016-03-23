@@ -30,7 +30,6 @@ EEPROM memories and writes the default values in it.
 import logging
 import sys
 import time
-from threading import Timer
 
 sys.path.append("../src/cflib")
 import cflib.crtp  # noqa

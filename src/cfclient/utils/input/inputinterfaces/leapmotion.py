@@ -34,14 +34,11 @@ more info.
 
 try:
     import leapsdk.Leap as Leap
-    from leapsdk.Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, \
-        SwipeGesture
 except Exception as e:
     raise Exception(
         "Leap Motion library probably not installed ({})".format(e))
 
 import logging
-import time
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LeapmotionReader']

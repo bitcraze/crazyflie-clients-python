@@ -30,16 +30,14 @@ Shows all the parameters available in the Crazyflie and also gives the ability
 to edit them.
 """
 
-import time
-
 from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
+from PyQt4.QtCore import Qt, pyqtSignal
 
 import cfclient
 from cfclient.ui.tab import Tab
 
 __author__ = 'Bitcraze AB'
-__all__ = ['LogBlockTab']
+__all__ = ['LogBlockDebugTab']
 
 logblock_tab_class = uic.loadUiType(cfclient.module_path +
                                     "/ui/tabs/logBlockDebugTab.ui")[0]

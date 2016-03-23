@@ -37,7 +37,7 @@ from PyQt4 import uic
 from PyQt4.QtCore import pyqtSignal
 
 __author__ = 'Bitcraze AB'
-__all__ = ['CfConfig']
+__all__ = ['Cf2ConfigDialog']
 
 logger = logging.getLogger(__name__)
 

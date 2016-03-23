@@ -28,18 +28,13 @@ Toolbox used to interact with the DebugDriver using a designated port. It's
 intended to be used for debugging.
 """
 import struct
-import time
 
 from cflib.crtp.crtpstack import CRTPPacket
 from cflib.crtp.crtpstack import CRTPPort
-from PyQt4 import QtCore
 from PyQt4 import QtGui
 from PyQt4 import uic
 from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtCore import Qt
-from PyQt4.QtCore import QThread
-from PyQt4.QtCore import SIGNAL
 
 import cfclient
 

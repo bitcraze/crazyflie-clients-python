@@ -30,11 +30,10 @@
 # Can reset bootload and reset back the bootloader
 
 import sys
-import os
 
 import cflib.crtp
 from cflib.bootloader import Bootloader
-from cflib.bootloader.boottypes import BootVersion, TargetTypes, Target
+from cflib.bootloader.boottypes import BootVersion, TargetTypes
 
 
 def main():
@@ -50,8 +49,6 @@ def main():
         sys.exit(-1)
 
     # Set the default parameters
-    # Default to Arnaud's copter
-    cpu_id = "32:00:6e:06:58:37:35:32:60:58:01:43"
     clink = None
     action = "info"
     boot = "cold"
@@ -85,14 +82,9 @@ def main():
     sys.argv = sys.argv[1:]
     argv = []
 
-    warm_uri = None
-
     i = 0
     while i < len(sys.argv):
-        if sys.argv[i] == "-i":
-            i += 1
-            cpu_id = sys.argv[i]
-        elif sys.argv[i] == "--cold-boot" or sys.argv[i] == "-c":
+        if sys.argv[i] == "--cold-boot" or sys.argv[i] == "-c":
             boot = "cold"
         elif sys.argv[i] == "--warm-boot" or sys.argv[i] == "-w":
             boot = "reset"

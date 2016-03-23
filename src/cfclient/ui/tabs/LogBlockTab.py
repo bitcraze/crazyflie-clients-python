@@ -31,8 +31,8 @@ This tab shows all log blocks that are registered and can be used to start the
 logging and also to write the logging data to file.
 """
 
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
+from PyQt4 import uic
+from PyQt4.QtCore import Qt, pyqtSignal
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -41,8 +41,6 @@ import logging
 
 from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView
 from PyQt4.QtGui import QStyleOptionButton, QStyle
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread
 from PyQt4.QtCore import QAbstractItemModel, QModelIndex
 
 from cfclient.utils.logdatawriter import LogWriter

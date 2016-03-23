@@ -31,16 +31,15 @@ enable logging of data from the Crazyflie. These can then be used in different
 views in the UI.
 """
 
-import os
 import logging
 
 import cfclient
-from PyQt4 import Qt, QtCore, QtGui, uic
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.Qt import *
+from PyQt4 import Qt, QtGui, uic
+from PyQt4.QtCore import *  # noqa
+from PyQt4.QtGui import *  # noqa
+from PyQt4.Qt import *  # noqa
 
-from cflib.crazyflie.log import Log, LogVariable, LogConfig
+from cflib.crazyflie.log import LogConfig
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LogConfigDialogue']

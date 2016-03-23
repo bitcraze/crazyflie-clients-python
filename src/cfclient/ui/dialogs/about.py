@@ -31,13 +31,11 @@ import sys
 
 import cfclient
 import cflib.crtp
-from PyQt4 import Qt
-from PyQt4 import QtCore
 from PyQt4 import QtGui
 from PyQt4 import uic
-from PyQt4.Qt import *
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt4.Qt import *  # noqa
+from PyQt4.QtCore import *  # noqa
+from PyQt4.QtGui import *  # noqa
 
 __author__ = 'Bitcraze AB'
 __all__ = ['AboutDialog']

@@ -26,11 +26,9 @@
 """
 A detachable toolbox for showing console printouts from the Crazyflie
 """
-from PyQt4 import QtCore
 from PyQt4 import QtGui
 from PyQt4 import uic
 from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtCore import Qt
 
 import cfclient

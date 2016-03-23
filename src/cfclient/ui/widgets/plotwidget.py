@@ -32,21 +32,16 @@ and manipulating the plot.
 For more advanced plotting save the data and use an external application.
 """
 
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, QLine, QPoint, \
-    QPointF, QSize, QRectF
+from PyQt4 import QtGui, uic
 
 from time import time
-import math
 
 import logging
 
-from PyQt4 import Qt, QtCore, QtGui, uic
 from PyQt4.QtGui import QButtonGroup
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.Qt import *
-from time import time
+from PyQt4.QtCore import *  # noqa
+from PyQt4.QtGui import *  # noqa
+from PyQt4.Qt import *  # noqa
 
 import cfclient
 
@@ -62,9 +57,8 @@ logger = logging.getLogger(__name__)
 try:
     import pyqtgraph as pg
     from pyqtgraph import ViewBox
-    from pyqtgraph.Qt import QtCore, QtGui
-    import pyqtgraph.console
-    import numpy as np
+    import pyqtgraph.console  # noqa
+    import numpy as np  # noqa
 
     _pyqtgraph_found = True
 except Exception:
@@ -78,9 +72,9 @@ except Exception:
 # Windows. But for Linux this is not required and might not be installed with
 # the PyQtGraph package.
 try:
-    from scipy.stats import futil
-    from scipy.sparse.csgraph import _validation
-    from scipy.special import _ufuncs_cxx
+    from scipy.stats import futil  # noqa
+    from scipy.sparse.csgraph import _validation  # noqa
+    from scipy.special import _ufuncs_cxx  # noqa
 except Exception:
     pass
 

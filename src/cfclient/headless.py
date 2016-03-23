@@ -33,7 +33,6 @@ import sys
 
 import cfclient.utils
 import cflib.crtp
-from cfclient.utils.config import Config
 from cfclient.utils.input import JoystickReader
 from cflib.crazyflie import Crazyflie
 
@@ -75,7 +74,7 @@ class HeadlessClient():
         if (xmode):
             self._cf.commander.set_client_xmode(xmode)
 
-        devs = self._jr.available_devices()
+        devs = self._jr.available_devices()  # noqa, is this a bug?
         print("Will use [%s] for input" % self._devs[input_device])
         self._jr.start_input(self._devs[input_device])
         self._jr.set_input_map(self._devs[input_device], input_config)

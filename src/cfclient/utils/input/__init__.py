@@ -54,8 +54,6 @@ from cfclient.utils.config_manager import ConfigManager
 
 from cfclient.utils.periodictimer import PeriodicTimer
 from cflib.utils.callbacks import Caller
-from . import mux
-from .mux import InputMux
 from .mux.nomux import NoMux
 from .mux.takeovermux import TakeOverMux
 from .mux.takeoverselectivemux import TakeOverSelectiveMux

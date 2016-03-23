@@ -36,7 +36,7 @@ import logging
 import cfclient
 
 __author__ = 'Bitcraze AB'
-__all__ = ['']
+__all__ = []
 
 
 def main():
@@ -58,7 +58,7 @@ def main():
                         help="set debug level "
                              "[minimal, info, debug, debugfile]")
     args = parser.parse_args()
-    globals().update(vars(args))
+    debug = args.debug
 
     cflogger = logging.getLogger('')
 
@@ -87,20 +87,20 @@ def main():
 
     # Try all the imports used in the project here to control what happens....
     try:
-        import usb
+        import usb  # noqa
     except ImportError:
         logger.critical("No pyusb installation found, exiting!")
         sys.exit(1)
 
     if not sys.platform.startswith('linux'):
         try:
-            import sdl2
+            import sdl2  # noqa
         except ImportError:
             logger.critical("No pysdl2 installation found, exiting!")
             sys.exit(1)
 
     try:
-        import PyQt4
+        import PyQt4  # noqa
     except ImportError:
         logger.critical("No PyQT4 installation found, exiting!")
         sys.exit(1)

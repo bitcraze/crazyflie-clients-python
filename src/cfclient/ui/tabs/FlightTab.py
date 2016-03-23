@@ -31,23 +31,17 @@ The flight control tab shows telemetry data and flight settings.
 
 import logging
 
-from time import time
-
-from PyQt4 import QtCore, QtGui, uic
+from PyQt4 import uic
 from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt4.QtGui import QMessageBox
-
-from cflib.crazyflie import Crazyflie
 
 import cfclient
 from cfclient.ui.widgets.ai import AttitudeIndicator
 
 from cfclient.utils.config import Config
-from cflib.crazyflie.log import Log, LogVariable, LogConfig
+from cflib.crazyflie.log import LogConfig
 
 from cfclient.ui.tab import Tab
-
-from cflib.crazyflie.mem import MemoryElement
 
 __author__ = 'Bitcraze AB'
 __all__ = ['FlightTab']

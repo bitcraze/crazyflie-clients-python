@@ -31,14 +31,9 @@ Used to write log data to files.
 """
 
 import os
-import sys
 import datetime
 
 import logging
-
-from cflib.crazyflie.log import LogConfig
-
-import traceback
 
 import cfclient
 

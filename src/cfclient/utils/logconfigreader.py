@@ -41,9 +41,6 @@ import logging
 import os
 import shutil
 
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import pyqtSlot, pyqtSignal
-
 import cfclient
 from cflib.crazyflie.log import LogVariable, LogConfig
 

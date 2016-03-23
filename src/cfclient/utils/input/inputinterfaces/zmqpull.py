@@ -31,8 +31,6 @@ Input interface that supports receiving commands via ZMQ.
 """
 
 import logging
-import time
-import pprint
 from threading import Thread
 
 from cfclient.utils.config import Config

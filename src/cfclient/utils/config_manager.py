@@ -31,7 +31,6 @@
 Manager for loading/accesing input device mappings.
 """
 
-import sys
 import json
 import logging
 import glob

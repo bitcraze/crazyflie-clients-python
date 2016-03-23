@@ -30,8 +30,6 @@
 Give access to the LED driver memory via ZMQ.
 """
 
-import cflib
-import cflib.crazyflie
 from cflib.crazyflie.mem import MemoryElement
 
 import logging

@@ -33,7 +33,6 @@ EEPROM memories and lists its contents.
 import sys
 import logging
 import time
-from threading import Timer
 
 sys.path.append("../src/cflib")
 import cflib.crtp  # noqa

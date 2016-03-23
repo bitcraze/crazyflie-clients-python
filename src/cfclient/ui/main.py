@@ -33,7 +33,6 @@ import cfclient
 import cfclient.ui.tabs
 import cfclient.ui.toolboxes
 import cflib.crtp
-import PyQt4
 from cfclient.ui.dialogs.about import AboutDialog
 from cfclient.ui.dialogs.bootloader import BootloaderDialog
 from cfclient.utils.config import Config
@@ -43,16 +42,13 @@ from cfclient.utils.logconfigreader import LogConfigReader
 from cfclient.utils.zmq_led_driver import ZMQLEDDriver
 from cfclient.utils.zmq_param import ZMQParamAccess
 from cflib.crazyflie import Crazyflie
-from cflib.crazyflie.log import Log
 from cflib.crazyflie.log import LogConfig
-from cflib.crazyflie.log import LogVariable
 from cflib.crazyflie.mem import MemoryElement
 from PyQt4 import QtGui
 from PyQt4 import uic
 from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtCore import QDir
-from PyQt4.QtCore import Qt
 from PyQt4.QtCore import QThread
 from PyQt4.QtCore import QUrl
 from PyQt4.QtGui import QAction

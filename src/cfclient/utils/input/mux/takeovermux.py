@@ -34,7 +34,7 @@ import logging
 from .takeoverselectivemux import TakeOverSelectiveMux
 
 __author__ = 'Bitcraze AB'
-__all__ = ['SelectiveMux']
+__all__ = ['TakeOverMux']
 
 logger = logging.getLogger(__name__)
 

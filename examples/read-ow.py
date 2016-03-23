@@ -33,7 +33,6 @@ Simple example that connects to the first Crazyflie found, looks for
 import sys
 import logging
 import time
-from threading import Timer
 
 sys.path.append("../src/cflib")
 import cflib.crtp  # noqa

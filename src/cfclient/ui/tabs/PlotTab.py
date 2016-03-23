@@ -27,30 +27,17 @@
 This tab plots different logging data defined by configurations that has been
 pre-configured.
 """
-import datetime
-import glob
-import json
+
 import logging
-import os
-import sys
-from pprint import pprint
 
 from cfclient.ui.tab import Tab
 from cfclient.ui.widgets.plotwidget import PlotWidget
-from cflib.crazyflie.log import Log
-from PyQt4 import QtCore
-from PyQt4 import QtGui
 from PyQt4 import uic
 from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtCore import QAbstractItemModel
 from PyQt4.QtCore import QModelIndex
 from PyQt4.QtCore import Qt
-from PyQt4.QtCore import QThread
-from PyQt4.QtGui import QAbstractItemView
-from PyQt4.QtGui import QApplication
 from PyQt4.QtGui import QMessageBox
-from PyQt4.QtGui import QStyledItemDelegate
 
 import cfclient
 
@@ -90,7 +77,7 @@ class LogConfigModel(QAbstractItemModel):
         """Re-implemented method to get the number of rows for a given index"""
         parent_item = parent.internalPointer()
         if parent.isValid():
-            parent_item = parent.internalPointer()
+            parent_item = parent.internalPointer()  # noqa
             return 0
         else:
             return len(self._nodes)
@@ -109,7 +96,7 @@ class LogConfigModel(QAbstractItemModel):
 
     def data(self, index, role):
         """Re-implemented method to get the data for a given index and role"""
-        node = index.internalPointer()
+        node = index.internalPointer()  # noqa
         if not index.isValid() or not 0 <= index.row() < len(self._nodes):
             return None
         if role == Qt.DisplayRole:

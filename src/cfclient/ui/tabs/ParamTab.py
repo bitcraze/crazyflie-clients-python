@@ -32,12 +32,10 @@ to edit them.
 
 import logging
 
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
+from PyQt4 import uic
+from PyQt4.QtCore import Qt, pyqtSignal
 from PyQt4.QtCore import QAbstractItemModel, QModelIndex
-from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView, \
-    QBrush, QColor
-from PyQt4.QtGui import QSortFilterProxyModel
+from PyQt4.QtGui import QBrush, QColor
 
 import cfclient
 from cfclient.ui.tab import Tab

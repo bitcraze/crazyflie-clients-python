@@ -29,7 +29,6 @@ This tab plots different logging data defined by configurations that has been
 pre-configured.
 """
 import logging
-import math
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -39,8 +38,8 @@ from PyQt4 import QtGui
 from PyQt4 import QtNetwork
 from PyQt4 import QtWebKit
 from PyQt4 import uic
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt4.QtCore import *  # noqa
+from PyQt4.QtGui import *  # noqa
 
 __author__ = 'Bitcraze AB'
 __all__ = ['GpsTab']

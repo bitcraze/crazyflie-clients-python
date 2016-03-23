@@ -35,8 +35,8 @@ from cflib.bootloader import Bootloader
 
 import logging
 
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
+from PyQt4 import QtGui, uic
+from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread
 
 import cfclient
 from cfclient.utils.config import Config

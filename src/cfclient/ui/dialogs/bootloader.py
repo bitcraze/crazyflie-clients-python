@@ -31,20 +31,12 @@ read/write the configuration block in the Crazyflie flash.
 """
 from cflib.bootloader import Bootloader
 
-import struct
-import time
-
 import logging
 
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
+from PyQt4 import QtGui, uic
+from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread
 
 import cfclient
-from cfclient.ui.tab import Tab
-
-import cflib.crtp
-
-from cflib.bootloader.cloader import Cloader
 
 __author__ = 'Bitcraze AB'
 __all__ = ['BootloaderDialog']

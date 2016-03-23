@@ -30,19 +30,16 @@ debugging.
 import os
 from time import time
 
-from PyQt4 import QtCore
 from PyQt4 import QtGui
 from PyQt4 import uic
 from PyQt4.QtCore import pyqtSignal
 from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtCore import Qt
-from PyQt4.QtCore import QThread
-from PyQt4.QtCore import SIGNAL
 
 import cfclient
 
 __author__ = 'Bitcraze AB'
-__all__ = ['CrtpSharkBoolbox']
+__all__ = ['CrtpSharkToolbox']
 
 param_tab_class = uic.loadUiType(
     cfclient.module_path + "/ui/toolboxes/crtpSharkToolbox.ui")[0]
