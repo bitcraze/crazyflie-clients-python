@@ -127,7 +127,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         # Open the Credits file and show it in the UI
         credits = ""
         try:
-            with open("CREDITS.txt", 'r') as f:
+            with open("CREDITS.txt", encoding='utf-8', mode='r') as f:
                 for line in f:
                     credits += "{}<br>".format(line)
         except IOError:
