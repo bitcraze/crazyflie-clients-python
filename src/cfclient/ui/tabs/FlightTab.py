@@ -503,7 +503,7 @@ class FlightTab(Tab, flight_tab_class):
 
     def alt1_updated(self, state):
         if state:
-            new_index = (self._ring_effect+1)%(self._ledring_nbr_effects+1)
+            new_index = (self._ring_effect+1) % (self._ledring_nbr_effects+1)
             self.helper.cf.param.set_value("ring.effect",
                                            str(new_index))
 
