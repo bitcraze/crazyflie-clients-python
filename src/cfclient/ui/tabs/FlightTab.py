@@ -537,7 +537,8 @@ class FlightTab(Tab, flight_tab_class):
                            9: "Battery status",
                            10: "Boat lights",
                            11: "Alert",
-                           12: "Gravity"}
+                           12: "Gravity",
+                           13: "LED tab"}
 
         for i in range(nbr + 1):
             name = "{}: ".format(i)
