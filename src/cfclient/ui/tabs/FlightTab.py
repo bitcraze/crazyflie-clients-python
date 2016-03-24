@@ -503,11 +503,9 @@ class FlightTab(Tab, flight_tab_class):
 
     def alt1_updated(self, state):
         if state:
-            self._ring_effect += 1
-            if self._ring_effect > self._ledring_nbr_effects:
-                self._ring_effect = 0
+            new_index = (self._ring_effect+1) % (self._ledring_nbr_effects+1)
             self.helper.cf.param.set_value("ring.effect",
-                                           str(self._ring_effect))
+                                           str(new_index))
 
     def alt2_updated(self, state):
         self.helper.cf.param.set_value("ring.headlightEnable", str(state))
@@ -518,6 +516,10 @@ class FlightTab(Tab, flight_tab_class):
             current = int(self.helper.cf.param.values["ring"]["effect"])
         except KeyError:
             return
+
+        # Used only in alt1_updated function
+        self._ring_effect = current
+        self._ledring_nbr_effects = nbr
 
         hardcoded_names = {0: "Off",
                            1: "White spinner",
@@ -551,6 +553,7 @@ class FlightTab(Tab, flight_tab_class):
             self._led_ring_headlight.setEnabled(True)
 
     def _ring_effect_changed(self, index):
+        self._ring_effect = index
         if index > -1:
             i = self._led_ring_effect.itemData(index)
             logger.info("Changed effect to {}".format(i))
