@@ -81,7 +81,7 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib', 'appdirs'],
+    install_requires=platform_requires + ['cflib==0.1.0', 'appdirs==1.4.0'],
 
     # List of dev dependencies
     # You can install them by running
