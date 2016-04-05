@@ -43,6 +43,9 @@ from cflib.crazyflie.log import LogConfig
 
 from cfclient.ui.tab import Tab
 
+PARAM_NAME_ALT_HOLD_TARGET = "posCtlAlt.targetZ"
+PARAM_NAME_ESTIMATED_Z = "posEstimatorAlt.estimatedZ"
+
 __author__ = 'Bitcraze AB'
 __all__ = ['FlightTab']
 
@@ -257,12 +260,13 @@ class FlightTab(Tab, flight_tab_class):
 
     def _baro_data_received(self, timestamp, data, logconf):
         if self.isVisible():
-            self.actualASL.setText(("%.2f" % data["baro.aslLong"]))
-            self.ai.setBaro(data["baro.aslLong"])
+            estimated_z = data[PARAM_NAME_ESTIMATED_Z]
+            self.actualASL.setText(("%.2f" % estimated_z))
+            self.ai.setBaro(estimated_z)
 
     def _althold_data_received(self, timestamp, data, logconf):
         if self.isVisible():
-            target = data["altHold.target"]
+            target = data[PARAM_NAME_ALT_HOLD_TARGET]
             if target > 0:
                 if not self.targetASL.isEnabled():
                     self.targetASL.setEnabled(True)
@@ -333,7 +337,7 @@ class FlightTab(Tab, flight_tab_class):
                 if (not self.logBaro and not self.logAltHold):
                     # The sensor is available, set up the logging
                     self.logBaro = LogConfig("Baro", 200)
-                    self.logBaro.add_variable("baro.aslLong", "float")
+                    self.logBaro.add_variable(PARAM_NAME_ESTIMATED_Z, "float")
 
                     try:
                         self.helper.cf.log.add_config(self.logBaro)
@@ -347,7 +351,8 @@ class FlightTab(Tab, flight_tab_class):
                     except AttributeError as e:
                         logger.warning(str(e))
                     self.logAltHold = LogConfig("AltHold", 200)
-                    self.logAltHold.add_variable("altHold.target", "float")
+                    self.logAltHold.add_variable(PARAM_NAME_ALT_HOLD_TARGET,
+                                                 "float")
 
                     try:
                         self.helper.cf.log.add_config(self.logAltHold)
