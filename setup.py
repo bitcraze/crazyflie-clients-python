@@ -18,15 +18,19 @@ if sys.version_info < (3, 4):
     raise "must use python 3.4 or greater"
 
 
-# Recover version from Git
+# Recover version from Git.
+# Returns None if git is not installed or if we are running outside of the git
+# tree
 def get_version():
     try:
         process = Popen(["git", "describe", "--tags"], stdout=PIPE)
         (output, err) = process.communicate()
         process.wait()
     except OSError:
-        raise Exception("Cannot run git: " +
-                        "Git is required to generate packages!")
+        return None
+
+    if process.returncode != 0:
+        return None
 
     version = output.strip().decode("UTF-8")
 
@@ -37,8 +41,18 @@ def get_version():
 
 VERSION = get_version()
 
-with codecs.open('version.json', 'w', encoding='utf8') as f:
-    f.write(json.dumps({'version': VERSION}))
+if not VERSION and not os.path.isfile('src/cfclient/version.json'):
+    sys.stderr.write("Git is required to install from source.\n" +
+                     "Please clone the project with Git or use one of the\n" +
+                     "release pachages (either from pip or a binary build).\n")
+    raise Exception("Git required.")
+
+if not VERSION:
+    versionfile = open('src/cfclient/version.json', 'r', encoding='utf8')
+    VERSION = json.loads(versionfile.read())['version']
+else:
+    with codecs.open('src/cfclient/version.json', 'w', encoding='utf8') as f:
+        f.write(json.dumps({'version': VERSION}))
 
 platform_requires = []
 platform_dev_requires = []
@@ -81,7 +95,8 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib==0.1.0', 'appdirs==1.4.0'],
+    install_requires=platform_requires + ['cflib==0.1.0', 'appdirs==1.4.0',
+                                          'pyzmq'],
 
     # List of dev dependencies
     # You can install them by running
@@ -101,6 +116,7 @@ setup(
                      relative(glob('src/cfclient/configs/log/*.json'), 'configs/log/') +  # noqa
                      relative(glob('src/cfclient/resources/*'), 'resources/') +
                      relative(glob('src/cfclient/*.png')),
+        '': ['README.md']
     },
 
     # Py2exe options
@@ -117,7 +133,7 @@ setup(
     },
 
     data_files=[
-        ('', ['README.md', 'version.json']),
+        # ('', ['README.md']),
         ('third_party', glob('src/cfclient/third_party/*')),
     ],
 )
