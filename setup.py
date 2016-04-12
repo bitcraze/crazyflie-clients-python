@@ -69,7 +69,7 @@ if sys.platform == 'win32':
 if sys.platform == 'win32' and sys.argv[1] == 'py2exe':
     package_data = {}
     data_files = [
-        ('', ['README.md', 'version.json']),
+        ('', ['README.md', 'src/cfclient/version.json']),
         ('ui', glob('src/cfclient/ui/*.ui')),
         ('ui/tabs', glob('src/cfclient/ui/tabs/*.ui')),
         ('ui/widgets', glob('src/cfclient/ui/widgets/*.ui')),
@@ -98,7 +98,7 @@ else:
     }
     data_files = [
         ('third_party', glob('src/cfclient/third_party/*')),
-    ],
+    ]
 
 
 # Initial parameters
