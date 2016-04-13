@@ -111,7 +111,7 @@ setup(
     url='http://www.bitcraze.io',
 
     classifiers=[
-        'License :: OSI Approved :: GPLv2 License',
+        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
 
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
