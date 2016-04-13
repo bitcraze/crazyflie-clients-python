@@ -1,4 +1,5 @@
-# Crazyflie PC client [![Build Status](https://api.travis-ci.org/bitcraze/crazyflie-clients-python.svg)](https://travis-ci.org/bitcraze/crazyflie-clients-python)
+# Crazyflie PC client [![Build Status](https://api.travis-ci.org/bitcraze/crazyflie-clients-python.svg)](https://travis-ci.org/bitcraze/crazyflie-clients-python) [![Build status](https://ci.appveyor.com/api/projects/status/u2kejdbc9wrexo31?svg=true)](https://ci.appveyor.com/project/bitcraze/crazyflie-clients-python)
+
 
 The Crazyflie PC client enables flashing and controlling the Crazyflie.
 There's also a Python library that can be integrated into other applications
@@ -6,49 +7,75 @@ where you would like to use the Crazyflie.
 
 For more info see our [wiki](http://wiki.bitcraze.se/ "Bitcraze Wiki").
 
-Installation
-------------
-
-## Linux
-
-To install the Crazyflie PC client in Linux, you can run the setup script with:
-
-```sudo setup_linux.sh```
-
-This will install the Crazyflie PC client systemwide, create a udev entry for
-the Crazyradio and setup the permissions so that the current user can use the
-radio without root permissions after restarting the computer. For further
-instructions on how to run from source and [install dependencies](https://github.com/SteveClement/crazyflie-clients-python#dependencies) see bellow.
-
-## Windows
-
-Follow these steps to install the binary distribution on Windows 7/8/10.
- - Download the latest release [here](https://github.com/bitcraze/crazyflie-clients-python/releases) (named cfclient-win32-install-*.exe)
- - Execute the installer. After the install the application will be added to the Start menu.
- - Install the Crazyradio drivers by following [these instructions](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
+Note. The project is currently being reorganized, which means that This
+documentation might become inacurate. You can track the reorganisation work in
+the ticket #227.
 
 Running from source
 -------------------
 
+The Crazyflie client requires [cflib](https://github.com/bitcraze/crazyflie-lib-python).
+Follow the cflib readme to install it.
+
 ## Windows (7/8/10)
 
-Install dependencies. With Windows installers (tested using only 32-bit installs on 64-bit OS):
- - [Python 3.4](https://www.python.org/downloads/windows/) (make sure the pip component is selected when installing)
- - [PyQT4 for Python 3.4](http://www.riverbankcomputing.com/software/pyqt/download)
- - [NumPy for Python 3.4](http://sourceforge.net/projects/numpy/files/NumPy)
- - [SDL2](https://www.libsdl.org/download-2.0.php) (copy SDL2.dll into the client source folder)
+Running from source on Windows is tested using the [miniconda](http://conda.pydata.org/miniconda.html) python distribution. It is possible to run from any distribution as long as the required packages are installed. Building the windows installer requires Python 3.4 (because ```py2exe``` is not distributed for Python 3.5 yet). The following instructions assumes **Miniconda 32-bit** is installed.
 
-Then install PyUSB, PyZMQ, PySDL2 and PyQtGraph using pip
+Open a command line windows and move to the crazyflie clients folder (the exact command depends of where the project is cloned):
 ```
-C:\Users\bitcraze>\Python34\python.exe -m pip install pyusb==1.0.0b2 pyzmq pysdl2 pyqtgraph
+cd crazyflie-clients-python
 ```
 
-Finally you run the client using the following command
+Create and activate a Python 3.4 environment with numpy pyqt and pyqtgraph from conda (it is the packages we cannot easily install with pip):
 ```
-\Python34\python bin\cfclient
+conda create -y -n cfclient python=3.4 numpy=1.10.1 pyqt pyqtgraph
+activate cfclient
 ```
 
-**NOTE**: To use the Crazyradio you will have to [install the drivers](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
+Download the SDL2.dll windows library:
+```
+python tools\build\prep_windows
+```
+
+Install the client in development mode:
+```
+pip install -e .[dev]
+```
+
+You can now run the clients:
+```
+cfclient
+cfheadless
+cfloader
+cfzmq
+```
+
+**NOTE:** To use the Crazyradio you will have to [install the drivers](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
+
+### Creating Windows installer
+
+When you are able to run from source, you can build the windows executable and installer.
+
+First build the executable
+```
+python setup.py py2exe
+```
+**NOTE:** The first time the previous command will fail complaining about a ```PyQt4\uic\port_v2```
+folder. Remove this folder with ```rmdir \Q \S path\to\PyQt4\uic\port_v2```,
+you can copy-paste the folder path from the py2exe error message.
+
+
+Now you can run the client with ```dist\cfclient.exe```.
+
+To generate the installer you need [nsis](http://nsis.sourceforge.net/) installed and in the path. If you
+are a user of [chocolatey](https://chocolatey.org/) you can install it with ```choco install nsis.portable -version 2.50```,
+otherwise you can just download it and install it manually.
+
+To create the installer:
+```
+python win32install\generate_nsis.py
+makensis win32install\cfclient.nsi
+```
 
 ## Mac OSX
 
@@ -56,7 +83,7 @@ Finally you run the client using the following command
 **IMPORTANT NOTE**: The following will use
 [Homebrew](http://brew.sh/) and its own Python distribution. If
 you have a lot of other 3rd party python stuff already running on your system
-they might or might not affected of this.
+they might or might not be affected by this.
 
 1. [Install the Command Line Tools](https://gist.github.com/derhuerst/1b15ff4652a867391f03#1--install-the-command-line-tools).
 
@@ -87,7 +114,14 @@ they might or might not affected of this.
 
     ```
     brew install libusb
-    pip3 install pysdl2 pyusb pyqtgraph
+    pip3 install pysdl2 pyusb pyqtgraph appdirs
+    ```
+
+1. Install cflib from https://github.com/bitcraze/crazyflie-lib-python
+
+1. Install cfclient to run it from source. From the source folder run:
+    ```
+    pip3 install -e .
     ```
 
 1. You now have all the dependencies needed to run the client. From the source folder, run it with the following command:
@@ -114,11 +148,17 @@ they might or might not affected of this.
     ```
     To install ```pyusb``` from ```pip```, use:
     ```
-    sudo pip install pyusb
+    sudo pip install pyusb appdirs
     ```
     To enable the plotter tab install pyqtgraph, this takes a lot of time:
     ```
     sudo port install py34-pyqtgraph
+    ```
+    Install cflib from https://github.com/bitcraze/crazyflie-lib-python
+
+    Install cfclient to run it from source. From the source folder run:
+    ```
+    pip install -e .
     ```
     You can now run the client from the source folder with
     ```
@@ -142,10 +182,17 @@ they might or might not affected of this.
 
 ### Launching the GUI application
 
+Install cflib from https://github.com/bitcraze/crazyflie-lib-python
+
+Install cfclient to run it from source. From the source folder run (to install
+for your user only you can add ```--user``` to the command):
+```
+pip3 install -e .
+```
 To launch the GUI application in the source folder type:
 ```python bin/cfclient```
 
-To launch the GUI after a systemwide installation, execute ```cfclient```. 
+To launch the GUI after a systemwide installation, execute ```cfclient```.
 
 ### Dependencies
 
@@ -157,53 +204,41 @@ The Crazyflie PC client has the following dependencies:
 * PyQtGraph
 * ZMQ
 * PyQt4
+* appdirs
 
 Example commands to install these dependencies:
 
-* Fedora (tested for 16 to 18):
+* Fedora:
 
-    ```sudo yum install pysdl2 pyusb PyQt4```
+    ```
+    TODO Please contribute
+    ```
+
+
+* Ubuntu (14.04):
+
+    ```
+    sudo apt-get install python3 python3-pip python3-pyqt4 python3-zmq
+    pip3 install pyusb==1.0.0b2
+    pip3 install pyqtgraph appdirs
+    ```
 
 * Ubuntu (15.04):
 
     ```
     sudo apt-get install python3 python3-pip python3-pyqt4 python3-zmq python3-pyqtgraph
     sudo pip3 install pyusb==1.0.0b2
+    sudo pip3 install appdirs
     ```
 
-* OpenSUSE (tested for 11.3):
+* OpenSUSE:
 
-    ```sudo zypper install python-pysdl2 libusb python-usb```
+    ```
+    TODO Please contribute
+    ```
 
 ### Setting udev permissions
 
-The following steps make it possible to use the USB Radio without being root.
-
-Note: If using a fresh Debian install, you may need to install sudo first
-(executing exit command to exit from root shell first):
-
-```
-su -
-apt-get install sudo
-```
-
-Now, with sudo installed, you should be able to do the following commands
-
-```
-sudo groupadd plugdev
-sudo usermod -a -G plugdev <username>
-```
-
-Create a file named ```/etc/udev/rules.d/99-crazyradio.rules``` and add the
-following:
-```
-SUBSYSTEM=="usb", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="7777", MODE="0664", GROUP="plugdev"
-```
-
-To connect Crazyflie 2.0 via usb, create a file name ```/etc/udev/rules.d/99-crazyflie.rules``` and add the following:
-```
-SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE="0664", GROUP="plugdev"
-```
-
-Restart the computer and you are now able to access the USB radio dongle
-without being root.
+Using Crazyradio on Linux requires that you set udev permissions. See the cflib
+[readme](https://github.com/bitcraze/crazyflie-lib-python#setting-udev-permissions)
+for more information.

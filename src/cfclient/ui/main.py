@@ -20,47 +20,48 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License along with
 #  this program; if not, write to the Free Software Foundation, Inc., 51
 #  Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 """
 The main file for the Crazyflie control application.
 """
-
-import sys
 import logging
+import sys
 
-import PyQt4
-from PyQt4 import QtGui, uic
-from PyQt4.QtCore import pyqtSignal, Qt, pyqtSlot, QDir, QUrl, QThread
-from PyQt4.QtGui import QLabel, QActionGroup, QMessageBox, QAction, \
-    QDesktopServices, QMenu
-
-from .dialogs.inputconfigdialogue import InputConfigDialogue
-from .dialogs.cf2config import Cf2ConfigDialog
-from .dialogs.cf1config import Cf1ConfigDialog
-from cflib.crazyflie import Crazyflie
-from .dialogs.logconfigdialogue import LogConfigDialogue
-
-from cfclient.utils.input import JoystickReader
-from cfclient.utils.zmq_param import ZMQParamAccess
-from cfclient.utils.zmq_led_driver import ZMQLEDDriver
-from cfclient.utils.config import Config
-from cfclient.utils.logconfigreader import LogConfigReader
-from cfclient.utils.config_manager import ConfigManager
-
-import cfclient.ui.toolboxes
+import cfclient
 import cfclient.ui.tabs
+import cfclient.ui.toolboxes
 import cflib.crtp
-
-from cflib.crazyflie.log import Log, LogVariable, LogConfig
-
-from cfclient.ui.dialogs.bootloader import BootloaderDialog
 from cfclient.ui.dialogs.about import AboutDialog
-
+from cfclient.ui.dialogs.bootloader import BootloaderDialog
+from cfclient.utils.config import Config
+from cfclient.utils.config_manager import ConfigManager
+from cfclient.utils.input import JoystickReader
+from cfclient.utils.logconfigreader import LogConfigReader
+from cfclient.utils.zmq_led_driver import ZMQLEDDriver
+from cfclient.utils.zmq_param import ZMQParamAccess
+from cflib.crazyflie import Crazyflie
+from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import MemoryElement
+from PyQt4 import QtGui
+from PyQt4 import uic
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtCore import pyqtSlot
+from PyQt4.QtCore import QDir
+from PyQt4.QtCore import QThread
+from PyQt4.QtCore import QUrl
+from PyQt4.QtGui import QAction
+from PyQt4.QtGui import QActionGroup
+from PyQt4.QtGui import QDesktopServices
+from PyQt4.QtGui import QLabel
+from PyQt4.QtGui import QMenu
+from PyQt4.QtGui import QMessageBox
+
+from .dialogs.cf1config import Cf1ConfigDialog
+from .dialogs.cf2config import Cf2ConfigDialog
+from .dialogs.inputconfigdialogue import InputConfigDialogue
+from .dialogs.logconfigdialogue import LogConfigDialogue
 
 __author__ = 'Bitcraze AB'
 __all__ = ['MainUI']
@@ -70,8 +71,8 @@ logger = logging.getLogger(__name__)
 INTERFACE_PROMPT_TEXT = 'Select an interface'
 
 (main_window_class,
- main_windows_base_class) = (uic.loadUiType(sys.path[0] +
-                                            '/cfclient/ui/main.ui'))
+ main_windows_base_class) = (uic.loadUiType(cfclient.module_path +
+                                            '/ui/main.ui'))
 
 
 class MyDockWidget(QtGui.QDockWidget):
@@ -164,8 +165,8 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         ######################################################
 
-        self.cf = Crazyflie(ro_cache=sys.path[0] + "/cflib/cache",
-                            rw_cache=sys.path[1] + "/cache")
+        self.cf = Crazyflie(ro_cache=None,
+                            rw_cache=cfclient.config_path + "/cache")
 
         cflib.crtp.init_drivers(enable_debug_driver=Config()
                                 .get("enable_debug_driver"))
@@ -785,8 +786,9 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._update_input_device_footer()
 
     def _open_config_folder(self):
-        QDesktopServices.openUrl(QUrl("file:///" +
-                                      QDir.toNativeSeparators(sys.path[1])))
+        QDesktopServices.openUrl(
+            QUrl("file:///" +
+                 QDir.toNativeSeparators(cfclient.config_path)))
 
     def closeAppRequest(self):
         self.close()

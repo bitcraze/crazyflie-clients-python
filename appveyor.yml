@@ -1,0 +1,26 @@
+version: 1.0.{build}
+init:
+- cmd: set PATH=C:\Miniconda35;C:\Miniconda35\scripts;%PATH%
+install:
+- cmd: >-
+    conda create -y -q -n cfclient python=3.4 numpy=1.10.1 pyqt pyqtgraph
+
+    activate cfclient
+
+    pip install -e .[dev]
+
+    rmdir /Q /S C:\Miniconda35\envs\cfclient\lib\site-packages\PyQt4\uic\port_v2
+
+    python tools\build\prep_windows
+
+    choco install -y nsis.portable -version 2.50
+build_script:
+- cmd: >-
+    python setup.py py2exe
+
+    python win32install\generate_nsis.py
+
+    makensis win32install\cfclient.nsi
+artifacts:
+- path: dist\
+- path: win32install\*.exe

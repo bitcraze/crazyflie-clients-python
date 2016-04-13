@@ -20,32 +20,29 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License along with
 #  this program; if not, write to the Free Software Foundation, Inc.,
 #  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 """
 The about dialog.
 """
 
 import sys
 
-from PyQt4 import Qt, QtCore, QtGui, uic
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from PyQt4.Qt import *
-
 import cfclient
-
 import cflib.crtp
+from PyQt4 import QtGui
+from PyQt4 import uic
+from PyQt4.Qt import *  # noqa
+from PyQt4.QtCore import *  # noqa
+from PyQt4.QtGui import *  # noqa
 
 __author__ = 'Bitcraze AB'
 __all__ = ['AboutDialog']
 
 (about_widget_class,
- about_widget_base_class) = (uic.loadUiType(sys.path[0] +
-                                            '/cfclient/ui/dialogs/about.ui'))
+ about_widget_base_class) = (uic.loadUiType(cfclient.module_path +
+                                            '/ui/dialogs/about.ui'))
 
 DEBUG_INFO_FORMAT = """
 <b>Cfclient</b><br>
@@ -128,7 +125,7 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
         # Open the Credits file and show it in the UI
         credits = ""
         try:
-            with open("CREDITS.txt", 'r') as f:
+            with open("CREDITS.txt", encoding='utf-8', mode='r') as f:
                 for line in f:
                     credits += "{}<br>".format(line)
         except IOError:

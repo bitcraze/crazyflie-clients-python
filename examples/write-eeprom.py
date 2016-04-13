@@ -19,21 +19,17 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA  02110-1301, USA.
-
 """
 Simple example that connects to the first Crazyflie found, looks for
 EEPROM memories and writes the default values in it.
 """
-
-import sys
 import logging
+import sys
 import time
-from threading import Timer
 
 sys.path.append("../src/cflib")
 import cflib.crtp  # noqa
@@ -92,8 +88,8 @@ class EEPROMExample:
             mems[0].write_data(self._data_written)
 
     def _data_written(self, mem, addr):
-            print("Data written, reading back...")
-            mem.update(self._data_updated)
+        print("Data written, reading back...")
+        mem.update(self._data_updated)
 
     def _data_updated(self, mem):
         print("Updated id={}".format(mem.id))

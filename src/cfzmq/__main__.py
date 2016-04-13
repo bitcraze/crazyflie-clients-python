@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from cfzmq import main
 
 if __name__ == "__main__":

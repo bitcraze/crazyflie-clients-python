@@ -1,122 +1,169 @@
 #!/usr/bin/env python3
-
-from distutils.core import setup
-import glob
-import os
+# -*- coding: utf-8 -*-
+import subprocess
+from subprocess import PIPE, Popen
+from setuptools import setup, find_packages
+from glob import glob
+import json
+import codecs
 import sys
-from subprocess import Popen, PIPE
+import os
 
-
-# Recover version from Git
 try:
-    process = Popen(["git", "describe", "--tags"], stdout=PIPE)
-    (output, err) = process.communicate()
-    exit_code = process.wait()
-except OSError:
-    raise Exception("Cannot run git: Git is required to generate packages!")
+    import py2exe  # noqa
+except:
+    pass
 
-VERSION = output.strip().decode("UTF-8")
+if sys.version_info < (3, 4):
+    raise "must use python 3.4 or greater"
 
-toplevel_data_files = ['README.md', 'LICENSE.txt']
 
-# Platform specific settings
-if sys.platform.startswith('win32'):
+# Recover version from Git.
+# Returns None if git is not installed or if we are running outside of the git
+# tree
+def get_version():
     try:
-        import py2exe
-    except ImportError:
-        print("Warning: py2exe not usable")
+        process = Popen(["git", "describe", "--tags"], stdout=PIPE)
+        (output, err) = process.communicate()
+        process.wait()
+    except OSError:
+        return None
 
-    setup_args = dict(
-        console=[{
-            "script": 'bin/cfclient',
-            "icon_resources": [(1, "bitcraze.ico")]
-        }],
-        options={"py2exe": {
-            "includes": [
-                "sip", "PyQt4",
-                "cfclient.ui.widgets",
-                "cflib.bootloader.cloader",
-                "cfclient.ui.toolboxes.*",
-                "cfclient.ui.*",
-                "cfclient.ui.tabs.*",
-                "cfclient.ui.widgets.*",
-                "cfclient.ui.dialogs.*",
-                "cfclient.utils.input.inputreaders.*",
-                "cfclient.utils.input.inputinterfaces.*",
-                'zmq.backend.cython'],
-            "excludes": [
-                "AppKit",
-                'zmq.libzmq'],
-            'dll_excludes': [
-                'libzmq.pyd'],
-            "skip_archive": True}})
+    if process.returncode != 0:
+        return None
 
-    toplevel_data_files.append('SDL2.dll')
+    version = output.strip().decode("UTF-8")
+
+    if subprocess.call(["git", "diff-index", "--quiet", "HEAD"]) != 0:
+        version += "_modified"
+
+    return version
+
+
+def relative(lst, base=''):
+    return list(map(lambda x: base + os.path.basename(x), lst))
+
+VERSION = get_version()
+
+if not VERSION and not os.path.isfile('src/cfclient/version.json'):
+    sys.stderr.write("Git is required to install from source.\n" +
+                     "Please clone the project with Git or use one of the\n" +
+                     "release pachages (either from pip or a binary build).\n")
+    raise Exception("Git required.")
+
+if not VERSION:
+    versionfile = open('src/cfclient/version.json', 'r', encoding='utf8')
+    VERSION = json.loads(versionfile.read())['version']
 else:
-    setup_args = dict(
-        scripts=['bin/cfclient', 'bin/cfheadless'])
+    with codecs.open('src/cfclient/version.json', 'w', encoding='utf8') as f:
+        f.write(json.dumps({'version': VERSION}))
+
+platform_requires = []
+platform_dev_requires = []
+if sys.platform == 'win32' or sys.platform == 'darwin':
+    platform_requires = ['pysdl2']
+if sys.platform == 'win32':
+    platform_dev_requires = ['py2exe', 'jinja2']
+
+# Make a special case when running py2exe to be able to access resources
+if sys.platform == 'win32' and sys.argv[1] == 'py2exe':
+    package_data = {}
+    data_files = [
+        ('', ['README.md', 'src/cfclient/version.json']),
+        ('ui', glob('src/cfclient/ui/*.ui')),
+        ('ui/tabs', glob('src/cfclient/ui/tabs/*.ui')),
+        ('ui/widgets', glob('src/cfclient/ui/widgets/*.ui')),
+        ('ui/toolboxes', glob('src/cfclient/ui/toolboxes/*.ui')),
+        ('ui/dialogs', glob('src/cfclient/ui/dialogs/*.ui')),
+        ('configs', glob('src/cfclient/configs/*.json')),
+        ('configs/input', glob('src/cfclient/configs/input/*.json')),
+        ('configs/log', glob('src/cfclient/configs/log/*.json')),
+        ('', glob('src/cfclient/*.png')),
+        ('resources', glob('src/cfclient/resources/*')),
+        ('third_party', glob('src/cfclient/third_party/*')),
+    ]
+else:
+    package_data = {
+        'cfclient.ui':  relative(glob('src/cfclient/ui/*.ui')),
+        'cfclient.ui.tabs': relative(glob('src/cfclient/ui/tabs/*.ui')),
+        'cfclient.ui.widgets':  relative(glob('src/cfclient/ui/widgets/*.ui')),
+        'cfclient.ui.toolboxes':  relative(glob('src/cfclient/ui/toolboxes/*.ui')),  # noqa
+        'cfclient.ui.dialogs':  relative(glob('src/cfclient/ui/dialogs/*.ui')),
+        'cfclient':  relative(glob('src/cfclient/configs/*.json'), 'configs/') +  # noqa
+                     relative(glob('src/cfclient/configs/input/*.json'), 'configs/input/') +  # noqa
+                     relative(glob('src/cfclient/configs/log/*.json'), 'configs/log/') +  # noqa
+                     relative(glob('src/cfclient/resources/*'), 'resources/') +
+                     relative(glob('src/cfclient/*.png')),
+        '': ['README.md']
+    }
+    data_files = [
+        ('third_party', glob('src/cfclient/third_party/*')),
+    ]
+
 
 # Initial parameters
-setup_args = dict(name='cfclient',
-                  description='Bitcraze Cazyflie nano quadcopter client',
-                  version=VERSION,
-                  author='Bitcraze team',
-                  author_email='contact@bitcraze.se',
-                  url='http://www.bitcraze.se',
-                  package_dir={'': 'lib'},
-                  packages=['cfclient', 'cfclient.ui', 'cfclient.ui.tabs',
-                            'cfclient.ui.toolboxes', 'cfclient.ui.widgets',
-                            'cfclient.utils', 'cfclient.ui.dialogs', 'cflib',
-                            'cflib.bootloader', 'cflib.crazyflie',
-                            'cflib.drivers',
-                            'cflib.utils', 'cflib.crtp',
-                            'cfclient.utils.input',
-                            'cfclient.utils.input.inputinterfaces',
-                            'cfclient.utils.input.mux',
-                            'cfclient.utils.input.inputreaders'],
-                  data_files=[('', toplevel_data_files),
-                              ('cfclient/ui',
-                               glob.glob('src/cfclient/ui/*.ui')),
-                              ('cfclient/ui/tabs',
-                               glob.glob('src/cfclient/ui/tabs/*.ui')),
-                              ('cfclient/ui/widgets',
-                               glob.glob('src/cfclient/ui/widgets/*.ui')),
-                              ('cfclient/ui/toolboxes',
-                               glob.glob('src/cfclient/ui/toolboxes/*.ui')),
-                              ('cfclient/ui/dialogs',
-                               glob.glob('src/cfclient/ui/dialogs/*.ui')),
-                              ('cfclient/configs',
-                               glob.glob('src/cfclient/configs/*.json')),
-                              ('cflib/cache',
-                               glob.glob('src/cflib/cache/*.json')),
-                              ('cfclient/configs/input',
-                               glob.glob('src/cfclient/configs/input/*.json')),
-                              ('cfclient/configs/log',
-                               glob.glob('src/cfclient/configs/log/*.json')),
-                              ('cfclient',
-                               glob.glob('src/cfclient/*.png'))],
-                  **setup_args)
+setup(
+    name='cfclient',
+    description='Bitcraze Cazyflie quadcopter client',
+    version=VERSION,
+    author='Bitcraze team',
+    author_email='contact@bitcraze.se',
+    url='http://www.bitcraze.io',
 
+    classifiers=[
+        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',  # noqa
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+    ],
 
-# Fetch values from package.xml when using catkin
-if os.getenv('CATKIN_TEST_RESULTS_DIR'):
-    from catkin_pkg.python_setup import generate_distutils_setup
-    # Delete keys which should not match catkin packaged variant
-    for k in ('version', 'url'):
-        setup_args.pop(k, None)
-    setup_args = generate_distutils_setup(**setup_args)
+    keywords='quadcopter crazyflie',
 
+    package_dir={'': 'src'},
+    packages=find_packages('src'),
 
-# Write a temp file to pass verision into script
-version_file = os.path.join(os.path.dirname(__file__),
-                            "lib", "cfclient", "version.py")
-try:
-    with open(version_file, "w") as versionpy:
-        versionpy.write("VERSION='{}'".format(VERSION))
-except:
-    print("Warning: Version file cannot be written.")
+    entry_points={
+        'console_scripts': [
+            'cfclient=cfclient.gui:main',
+            'cfheadless=cfclient.headless:main',
+            'cfloader=cfloader:main',
+            'cfzmq=cfzmq:main'
+        ],
+    },
 
-setup(**setup_args)
+    install_requires=platform_requires + ['cflib==0.1.0', 'appdirs==1.4.0',
+                                          'pyzmq'],
 
-if (os.path.isfile(version_file)):
-    os.remove(version_file)
+    # List of dev dependencies
+    # You can install them by running
+    # $ pip install -e .[dev]
+    extras_require={
+        'dev': platform_dev_requires + []
+    },
+
+    package_data=package_data,
+
+    # Py2exe options
+    console=[
+        {
+            'script': 'bin/cfclient',
+            'icon_resources': [(0, 'bitcraze.ico')]
+        }
+    ],
+    options={
+        "py2exe": {
+            'includes': ['cfclient.ui.widgets.hexspinbox',
+                         'zmq.backend.cython'],
+            'bundle_files': 3,
+            'skip_archive': True,
+        },
+    },
+
+    data_files=data_files
+)
+
+# Fixing the zmq lib in the windows binary dist folder
+if sys.platform == 'win32' and sys.argv[1] == 'py2exe':
+    print("Renaming zmq dll")
+    if os.path.isfile('dist/zmq.libzmq.pyd') and \
+       not os.path.isfile('dist/libzmq.pyd'):
+        os.rename('dist/zmq.libzmq.pyd', 'dist/libzmq.pyd')

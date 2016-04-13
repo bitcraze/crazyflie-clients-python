@@ -1,0 +1,27 @@
+# Download and decompress SDL2 for Windows
+import urllib.request
+import os
+from zipfile import ZipFile
+
+url = 'https://www.libsdl.org/release/SDL2-2.0.4-win32-x86.zip'
+dllpath = os.path.join("src", 'cfclient', 'third_party')
+
+
+def main():
+    print("Downloading SDL2 from {} ...".format(url))
+    response = urllib.request.urlopen(url)
+    zipdata = response.read()
+    if not os.path.exists('build'):
+        os.makedirs('build')
+    with open(os.path.join('build', 'sdl.zip'), 'wb') as f:
+        f.write(zipdata)
+
+    print("Unziping SDL2.dll in src/cfclient/third_party")
+    if not os.path.exists(dllpath):
+        os.makedirs(dllpath)
+    with ZipFile(os.path.join('build', 'sdl.zip'), 'r') as z:
+        z.extract('SDL2.dll', dllpath)
+        z.extract('README-SDL.txt', dllpath)
+
+if __name__ == '__main__':
+    main()

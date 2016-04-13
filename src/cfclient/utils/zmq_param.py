@@ -47,6 +47,7 @@ except Exception as e:
 
 
 class _PullReader(Thread):
+
     def __init__(self, receiver, callback, *args):
         super(_PullReader, self).__init__(*args)
         self._receiver = receiver
@@ -89,7 +90,7 @@ class ZMQParamAccess:
             self._receiver.send_json(response)
             self._receiver_thread.lock.release()
         if data["cmd"] == "set":
-            resp = {"version": 1}
+            resp = {"version": 1}  # noqa
             group = data["name"].split(".")[0]
             name = data["name"].split(".")[1]
             self._cf.param.add_update_callback(group=group, name=name,

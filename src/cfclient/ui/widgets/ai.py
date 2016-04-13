@@ -254,9 +254,8 @@ if __name__ == "__main__":
             self.wid.repaint()
 
     def main():
-
         app = QtGui.QApplication(sys.argv)
-        ex = Example()
+        Example()
         sys.exit(app.exec_())
 
     if __name__ == '__main__':

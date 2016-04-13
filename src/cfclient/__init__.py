@@ -24,24 +24,28 @@
 #  this program; if not, write to the Free Software Foundation, Inc., 51
 #  Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from .cfclient import main
+import os
+from appdirs import AppDirs
+import sys
 
-try:
-    from .version import VERSION
-except:
+# Path used all over the application
+if not hasattr(sys, 'frozen'):
+    module_path = os.path.dirname(__file__)
+else:
+    module_path = os.path.dirname(sys.executable)
+config_path = AppDirs("cfclient", "Bitcraze").user_config_dir
+
+# Locate the sdl2 lib on Windows (should be in cfclient/thirst_party/)
+if os.name == 'nt':
+    os.environ["PYSDL2_DLL_PATH"] = os.path.join(module_path, "third_party")
+
+if not hasattr(sys, 'frozen'):
+    import pkg_resources
     try:
-        import subprocess
-
-        VERSION = subprocess.check_output(["git", "describe"]).encode('utf-8')
-    except:
+        VERSION = pkg_resources.require("cfclient")[0].version
+    except pkg_resources.DistributionNotFound:
         VERSION = "dev"
-
-    try:
-        import subprocess
-
-        ret = subprocess.call(["git", "diff", "--quiet", "HEAD"]
-                              ).encode('utf-8')
-        if ret > 0:
-            VERSION += "+"
-    except:
-        VERSION += "+"
+else:
+    import json
+    with open(os.path.join(module_path, "version.json")) as f:
+        VERSION = json.load(f)['version']

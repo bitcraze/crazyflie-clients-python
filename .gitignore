@@ -5,6 +5,11 @@ config.json
 dist/*
 build/*
 cache
+src/cfclient.egg-info/*
+src/cfclient/third_party/*
+version.json
+win32install/*.exe
+win32install/cfclient.nsi
 
 # PC client settings
 conf/*

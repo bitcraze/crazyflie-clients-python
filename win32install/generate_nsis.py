@@ -1,8 +1,11 @@
-import jinja2
+# -*- coding: utf-8 -*-
 import os
-from subprocess import Popen, PIPE
+from subprocess import PIPE
+from subprocess import Popen
 
-DIST_PATH = "..\dist"
+import jinja2
+
+DIST_PATH = "..\\dist"
 
 # Get list of files and directory to install/uninstall
 INSTALL_FILES = []
@@ -26,11 +29,11 @@ try:
 except OSError:
     raise Exception("Cannot run git: Git is required to generate installer!")
 
-VERSION = output.strip()
+VERSION = output.strip().decode("utf-8")
 
 print("Cfclient version {}".format(VERSION))
 
-os.chdir(os.path.dirname(__file__))
+os.chdir("..\\win32install")
 
 with open("cfclient.nsi.tmpl", "r") as template_file:
     TEMPLATE = template_file.read()

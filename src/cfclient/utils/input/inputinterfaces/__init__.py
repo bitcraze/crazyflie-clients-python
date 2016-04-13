@@ -75,6 +75,7 @@ def devices():
 
 
 class InputInterface(InputReaderInterface):
+
     def __init__(self, dev_name, dev_id, dev_reader):
         super(InputInterface, self).__init__(dev_name, dev_id, dev_reader)
 

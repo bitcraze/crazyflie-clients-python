@@ -38,8 +38,6 @@ Windows drivers.
 The input device's axes and buttons are mapped to software inputs using a
 configuration file.
 """
-
-import sys
 import os
 import re
 import glob
@@ -50,13 +48,12 @@ import shutil
 from . import inputreaders as readers
 from . import inputinterfaces as interfaces
 
+import cfclient
 from cfclient.utils.config import Config
 from cfclient.utils.config_manager import ConfigManager
 
 from cfclient.utils.periodictimer import PeriodicTimer
 from cflib.utils.callbacks import Caller
-from . import mux
-from .mux import InputMux
 from .mux.nomux import NoMux
 from .mux.takeovermux import TakeOverMux
 from .mux.takeoverselectivemux import TakeOverSelectiveMux
@@ -144,7 +141,7 @@ class JoystickReader(object):
             os.makedirs(ConfigManager().configs_dir)
 
         for f in glob.glob(
-                sys.path[0] + "/cfclient/configs/input/[A-Za-z]*.json"):
+                cfclient.module_path + "/configs/input/[A-Za-z]*.json"):
             dest = os.path.join(ConfigManager().
                                 configs_dir, os.path.basename(f))
             if not os.path.isfile(dest):

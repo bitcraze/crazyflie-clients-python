@@ -31,28 +31,15 @@ List all the available toolboxes so they can be used by the UI.
 Dropping a new .py file into this directory will automatically list and load
 it into the UI when it is started.
 """
-
-import os
-import glob
-import logging
+from .ConsoleToolbox import ConsoleToolbox
+from .CrtpSharkToolbox import CrtpSharkToolbox
+from .DebugDriverToolbox import DebugDriverToolbox
 
 __author__ = 'Bitcraze AB'
 __all__ = []
 
-logger = logging.getLogger(__name__)
-
-foundToolboxes = [os.path.splitext(os.path.basename(f))[0] for f in
-                  glob.glob(os.path.dirname(__file__) +
-                            "/[A-Za-z]*Toolbox.py")]
-if len(foundToolboxes) == 0:
-    foundToolboxes = [os.path.splitext(os.path.basename(f))[0] for f in
-                      glob.glob(os.path.dirname(__file__) +
-                                "/[A-Za-z]*Toolbox.pyc")]
-
-logger.debug("Found toolboxes: %s", foundToolboxes)
-
-toolboxes = []
-
-for tb in foundToolboxes:
-    tbModule = __import__(tb, globals(), locals(), [tb], 1)
-    toolboxes.append(getattr(tbModule, tb))
+toolboxes = [
+    ConsoleToolbox,
+    CrtpSharkToolbox,
+    DebugDriverToolbox
+]

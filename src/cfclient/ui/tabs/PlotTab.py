@@ -20,44 +20,34 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License along with
 #  this program; if not, write to the Free Software Foundation, Inc.,
 #  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 """
 This tab plots different logging data defined by configurations that has been
 pre-configured.
 """
 
-import glob
-import json
 import logging
-import os
-import sys
-
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread, Qt
-from PyQt4.QtGui import QMessageBox
-from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView
-from PyQt4.QtCore import QAbstractItemModel, QModelIndex
-
-from pprint import pprint
-import datetime
-
-from cfclient.ui.widgets.plotwidget import PlotWidget
-
-from cflib.crazyflie.log import Log
 
 from cfclient.ui.tab import Tab
+from cfclient.ui.widgets.plotwidget import PlotWidget
+from PyQt4 import uic
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtCore import QAbstractItemModel
+from PyQt4.QtCore import QModelIndex
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QMessageBox
+
+import cfclient
 
 __author__ = 'Bitcraze AB'
 __all__ = ['PlotTab']
 
 logger = logging.getLogger(__name__)
 
-plot_tab_class = uic.loadUiType(sys.path[0] +
-                                "/cfclient/ui/tabs/plotTab.ui")[0]
+plot_tab_class = uic.loadUiType(cfclient.module_path +
+                                "/ui/tabs/plotTab.ui")[0]
 
 
 class LogConfigModel(QAbstractItemModel):
@@ -87,7 +77,7 @@ class LogConfigModel(QAbstractItemModel):
         """Re-implemented method to get the number of rows for a given index"""
         parent_item = parent.internalPointer()
         if parent.isValid():
-            parent_item = parent.internalPointer()
+            parent_item = parent.internalPointer()  # noqa
             return 0
         else:
             return len(self._nodes)
@@ -106,7 +96,7 @@ class LogConfigModel(QAbstractItemModel):
 
     def data(self, index, role):
         """Re-implemented method to get the data for a given index and role"""
-        node = index.internalPointer()
+        node = index.internalPointer()  # noqa
         if not index.isValid() or not 0 <= index.row() < len(self._nodes):
             return None
         if role == Qt.DisplayRole:

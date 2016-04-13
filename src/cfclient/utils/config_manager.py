@@ -31,7 +31,6 @@
 Manager for loading/accesing input device mappings.
 """
 
-import sys
 import json
 import logging
 import glob
@@ -40,6 +39,8 @@ import copy
 
 from .singleton import Singleton
 from cflib.utils.callbacks import Caller
+
+import cfclient
 
 __author__ = 'Bitcraze AB/Allyn Bauer'
 __all__ = ['ConfigManager']
@@ -50,7 +51,7 @@ logger = logging.getLogger(__name__)
 class ConfigManager(metaclass=Singleton):
     """ Singleton class for managing input processing """
     conf_needs_reload = Caller()
-    configs_dir = sys.path[1] + "/input"
+    configs_dir = cfclient.config_path + "/input"
 
     def __init__(self):
         """Initialize and create empty config list"""

@@ -20,12 +20,10 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
 #  USA.
-
 """
 Test script to show how to use the ZMQ param backend for the Crazyflie
 Python Client. The backend is started automatically in the client if ZMQ
@@ -34,7 +32,6 @@ is available.
 The example will use the buzzer parameters (still testing firmware) and first
 set the buzzer to on (at 4 kHz) for 3 seconds and then turn it off again.
 """
-
 import time
 
 try:

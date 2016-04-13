@@ -31,8 +31,8 @@ Superclass for all tabs that implements common functions.
 
 import logging
 
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
+from PyQt4 import QtGui
+from PyQt4.QtCore import pyqtSlot
 
 from cfclient.utils.config import Config
 
@@ -61,7 +61,7 @@ class Tab(QtGui.QWidget):
                 s = Config().get("open_tabs")
                 if (len(s) > 0):
                     s += ","
-            except Exception as e:
+            except Exception:
                 logger.warning("Exception while adding tab to config and "
                                "reading tab config")
             # Check this since tabs in config are opened when app is started
@@ -73,7 +73,7 @@ class Tab(QtGui.QWidget):
             self.tabWidget.removeTab(self.tabWidget.indexOf(self))
             try:
                 parts = Config().get("open_tabs").split(",")
-            except Exception as e:
+            except Exception:
                 logger.warning("Exception while removing tab from config and "
                                "reading tab config")
                 parts = []

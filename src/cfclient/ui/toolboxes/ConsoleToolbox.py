@@ -20,25 +20,24 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License along with
 #  this program; if not, write to the Free Software Foundation, Inc.,
 #  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 """
 A detachable toolbox for showing console printouts from the Crazyflie
 """
+from PyQt4 import QtGui
+from PyQt4 import uic
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtCore import Qt
 
-import sys
-
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal
+import cfclient
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ConsoleToolbox']
 
 console_class = uic.loadUiType(
-    sys.path[0] + "/cfclient/ui/toolboxes/consoleToolbox.ui")[0]
+    cfclient.module_path + "/ui/toolboxes/consoleToolbox.ui")[0]
 
 
 class ConsoleToolbox(QtGui.QWidget, console_class):

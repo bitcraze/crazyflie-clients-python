@@ -31,12 +31,11 @@ Basic tab to be able to set (and test) colors in the LED-ring.
 """
 
 import logging
-import sys
 
 from PyQt4 import QtGui, uic
 from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QColorDialog
 
+import cfclient
 from cfclient.ui.tab import Tab
 
 from cflib.crazyflie.mem import MemoryElement
@@ -46,8 +45,8 @@ __all__ = ['LEDTab']
 
 logger = logging.getLogger(__name__)
 
-led_tab_class = uic.loadUiType(sys.path[0] +
-                               "/cfclient/ui/tabs/ledTab.ui")[0]
+led_tab_class = uic.loadUiType(cfclient.module_path +
+                               "/ui/tabs/ledTab.ui")[0]
 
 
 class LEDTab(Tab, led_tab_class):
@@ -115,8 +114,14 @@ class LEDTab(Tab, led_tab_class):
             self._intensity_slider.setValue)
 
     def _select(self, nbr):
-        col = QColorDialog()
-        col = QtGui.QColorDialog.getColor()
+        col = QtGui.QColor()  # default to invalid
+
+        if self._mem:
+            led = self._mem.leds[nbr]
+            col = QtGui.QColor.fromRgb(led.r, led.g, led.b)
+
+        col = QtGui.QColorDialog.getColor(col)
+
         if col.isValid() and self._mem:
             logger.info(col.red())
             self._mem.leds[nbr].set(r=col.red(), g=col.green(), b=col.blue())

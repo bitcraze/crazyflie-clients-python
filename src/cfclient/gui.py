@@ -33,8 +33,10 @@ import datetime
 
 import logging
 
+import cfclient
+
 __author__ = 'Bitcraze AB'
-__all__ = ['']
+__all__ = []
 
 
 def main():
@@ -56,7 +58,7 @@ def main():
                         help="set debug level "
                              "[minimal, info, debug, debugfile]")
     args = parser.parse_args()
-    globals().update(vars(args))
+    debug = args.debug
 
     cflogger = logging.getLogger('')
 
@@ -80,25 +82,25 @@ def main():
 
     logger = logging.getLogger(__name__)
 
-    logger.debug("Using config path {}".format(sys.path[1]))
+    logger.debug("Using config path {}".format(cfclient.config_path))
     logger.debug("sys.path={}".format(sys.path))
 
     # Try all the imports used in the project here to control what happens....
     try:
-        import usb
+        import usb  # noqa
     except ImportError:
         logger.critical("No pyusb installation found, exiting!")
         sys.exit(1)
 
     if not sys.platform.startswith('linux'):
         try:
-            import sdl2
+            import sdl2  # noqa
         except ImportError:
             logger.critical("No pysdl2 installation found, exiting!")
             sys.exit(1)
 
     try:
-        import PyQt4
+        import PyQt4  # noqa
     except ImportError:
         logger.critical("No PyQT4 installation found, exiting!")
         sys.exit(1)
@@ -135,7 +137,7 @@ def main():
 
     app = QApplication(sys.argv)
 
-    app.setWindowIcon(QIcon(sys.path[0] + "/cfclient/icon-256.png"))
+    app.setWindowIcon(QIcon(cfclient.module_path + "/icon-256.png"))
     # Make sure the right icon is set in Windows 7+ taskbar
     if os.name == 'nt':
         import ctypes
@@ -150,3 +152,6 @@ def main():
     main_window = MainUI()
     main_window.show()
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    main()

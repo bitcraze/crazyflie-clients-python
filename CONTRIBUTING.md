@@ -23,8 +23,8 @@ The development in this repository aims to follow the [Git flow](http://nvie.com
  - Test your changes and note what OS/version you have tested on
  - Describe the change
  - Refer to any issues it effects
-
-Out goal is to comply with PEP-8, but there's lots of code that's not up to standard. We try our best to comply but since we slack sometimes we can't really enforce it, but at least there's a few things we want to stick to:
+ 
+In your code 
 
  - Don't include name, date or information about the change in the code. That's what Git is for.
  - CamelCase classes, but not functions and variables
@@ -32,8 +32,8 @@ Out goal is to comply with PEP-8, but there's lots of code that's not up to stan
  - 4 spaces indentation
  - When catching exceptions try to make it as specific as possible, it makes it harder for bugs to hide
  - Short variable and function names are ok if the scope is small
+ - PEP8/flake8 compliant
 
 ## CI-server
 
 We use https://travis-ci.org/bitcraze/crazyflie-clients-python for continuous integration.
-Initially we only check some PEP-8 properties, but the goal is to also add unit testing and integration testing. This is an ongoing effort.

@@ -45,6 +45,7 @@ except ImportError as e:
 
 
 class _LogThread(Thread):
+
     def __init__(self, socket, *args):
         super(_LogThread, self).__init__(*args)
         self._socket = socket
@@ -65,6 +66,7 @@ class _LogThread(Thread):
 
 
 class _ParamThread(Thread):
+
     def __init__(self, socket, *args):
         super(_ParamThread, self).__init__(*args)
         self._socket = socket
@@ -76,6 +78,7 @@ class _ParamThread(Thread):
 
 
 class _ConnThread(Thread):
+
     def __init__(self, socket, *args):
         super(_ConnThread, self).__init__(*args)
         self._socket = socket
@@ -87,6 +90,7 @@ class _ConnThread(Thread):
 
 
 class _CtrlThread(Thread):
+
     def __init__(self, socket, *args):
         super(_CtrlThread, self).__init__(*args)
         self._socket = socket

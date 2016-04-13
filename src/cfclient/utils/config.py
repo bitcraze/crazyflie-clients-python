@@ -29,11 +29,11 @@
 """
 Gives access for reading and writing application configuration parameters
 """
-
-import sys
 import json
 import logging
 from .singleton import Singleton
+
+import cfclient
 
 __author__ = 'Bitcraze AB'
 __all__ = ['Config']
@@ -46,8 +46,8 @@ class Config(metaclass=Singleton):
 
     def __init__(self):
         """ Initializes the singleton and reads the config files """
-        self._dist_config = sys.path[0] + "/cfclient/configs/config.json"
-        self._config = sys.path[1] + "/config.json"
+        self._dist_config = cfclient.module_path + "/configs/config.json"
+        self._config = cfclient.config_path + "/config.json"
 
         [self._readonly, self._data] = self._read_distfile()
 

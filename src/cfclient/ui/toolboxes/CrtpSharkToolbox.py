@@ -20,28 +20,29 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License along with
 #  this program; if not, write to the Free Software Foundation, Inc.,
 #  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 """
 Toolbox for showing packets that is sent via the communication link when
 debugging.
 """
-
-import sys
 import os
-
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
 from time import time
 
+from PyQt4 import QtGui
+from PyQt4 import uic
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtCore import pyqtSlot
+from PyQt4.QtCore import Qt
+
+import cfclient
+
 __author__ = 'Bitcraze AB'
-__all__ = ['CrtpSharkBoolbox']
+__all__ = ['CrtpSharkToolbox']
 
 param_tab_class = uic.loadUiType(
-    sys.path[0] + "/cfclient/ui/toolboxes/crtpSharkToolbox.ui")[0]
+    cfclient.module_path + "/ui/toolboxes/crtpSharkToolbox.ui")[0]
 
 
 class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
@@ -113,7 +114,7 @@ class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
         return Qt.RightDockWidgetArea
 
     def _save_data(self):
-        dir = os.path.join(sys.path[1], "logdata")
+        dir = os.path.join(cfclient.config_path, "logdata")
         fname = os.path.join(dir, "shark_data.csv")
         if not os.path.exists(dir):
             os.makedirs(dir)

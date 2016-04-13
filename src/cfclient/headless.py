@@ -19,26 +19,22 @@
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA  02110-1301, USA.
-
 """
 Headless client for the Crazyflie.
 """
-
-import sys
-import os
 import logging
+import os
 import signal
+import sys
 
-import cflib.crtp
-from cflib.crazyflie import Crazyflie
 import cfclient.utils
+import cflib.crtp
 from cfclient.utils.input import JoystickReader
-from cfclient.utils.config import Config
+from cflib.crazyflie import Crazyflie
 
 if os.name == 'posix':
     print('Disabling standard output for libraries!')
@@ -60,8 +56,8 @@ class HeadlessClient():
 
         self._jr = JoystickReader(do_device_discovery=False)
 
-        self._cf = Crazyflie(ro_cache=sys.path[0] + "/cflib/cache",
-                             rw_cache=sys.path[1] + "/cache")
+        self._cf = Crazyflie(ro_cache=None,
+                             rw_cache=cfclient.config_path + "/cache")
 
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -78,7 +74,7 @@ class HeadlessClient():
         if (xmode):
             self._cf.commander.set_client_xmode(xmode)
 
-        devs = self._jr.available_devices()
+        devs = self._jr.available_devices()  # noqa, is this a bug?
         print("Will use [%s] for input" % self._devs[input_device])
         self._jr.start_input(self._devs[input_device])
         self._jr.set_input_map(self._devs[input_device], input_config)
@@ -93,7 +89,7 @@ class HeadlessClient():
         for i, dev in enumerate(self._devs):
             print(" - Controller #{}: {}".format(i, dev))
         print("\nAvailable input mapping:")
-        for map in os.listdir(sys.path[1] + '/input'):
+        for map in os.listdir(cfclient.config_path + '/input'):
             print(" - " + map.split(".json")[0])
 
     def connect_crazyflie(self, link_uri):
@@ -171,3 +167,6 @@ def main():
             headless.connect_crazyflie(link_uri=args.uri)
         else:
             print("No input-device connected, exiting!")
+
+if __name__ == "__main__":
+    main()

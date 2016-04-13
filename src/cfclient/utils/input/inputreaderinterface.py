@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 class _ToggleState(dict):
+
     def __getattr__(self, attr):
         return self.get(attr)
 
@@ -45,6 +46,7 @@ class _ToggleState(dict):
 
 
 class InputData:
+
     def __init__(self):
         # self._toggled = {}
         self._axes = ("roll", "pitch", "yaw", "thrust")
@@ -95,6 +97,7 @@ class InputData:
 
 
 class InputReaderInterface(object):
+
     def __init__(self, dev_name, dev_id, dev_reader):
         """Initialize the reader"""
         # Set if the device supports mapping and can be configured

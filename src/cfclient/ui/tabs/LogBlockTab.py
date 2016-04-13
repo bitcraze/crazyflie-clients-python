@@ -31,19 +31,16 @@ This tab shows all log blocks that are registered and can be used to start the
 logging and also to write the logging data to file.
 """
 
-import sys
+from PyQt4 import uic
+from PyQt4.QtCore import Qt, pyqtSignal
 
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal, QThread, SIGNAL
-
+import cfclient
 from cfclient.ui.tab import Tab
 
 import logging
 
 from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView
 from PyQt4.QtGui import QStyleOptionButton, QStyle
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread
 from PyQt4.QtCore import QAbstractItemModel, QModelIndex
 
 from cfclient.utils.logdatawriter import LogWriter
@@ -52,7 +49,7 @@ __author__ = 'Bitcraze AB'
 __all__ = ['LogBlockTab']
 
 logblock_tab_class = uic.loadUiType(
-    sys.path[0] + "/cfclient/ui/tabs/logBlockTab.ui")[0]
+    cfclient.module_path + "/ui/tabs/logBlockTab.ui")[0]
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +164,7 @@ class LogBlockItem(object):
 
 
 class LogBlockModel(QAbstractItemModel):
+
     def __init__(self, view, parent=None):
         super(LogBlockModel, self).__init__(parent)
         self._nodes = []
