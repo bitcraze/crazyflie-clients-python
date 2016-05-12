@@ -394,9 +394,18 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self._initial_scan = False
 
             try:
-                selected_interface = Config().get("link_uri")
+                if len(Config().get("link_uri")) > 0:
+                    formatted_interfaces.index(Config().get("link_uri"))
+                    selected_interface = Config().get("link_uri")
             except KeyError:
+                #  The configuration for link_uri was not found
                 pass
+            except ValueError:
+                #  The saved URI was not found while scanning
+                pass
+
+        if len(interfaces) == 1 and selected_interface is None:
+            selected_interface = interfaces[0][0]
 
         newIndex = 0
         if selected_interface is not None:
