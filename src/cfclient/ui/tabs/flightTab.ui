@@ -34,7 +34,7 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>320</width>
+           <width>160</width>
            <height>0</height>
           </size>
          </property>
@@ -54,14 +54,8 @@
              <widget class="QComboBox" name="flightModeCombo">
               <property name="minimumSize">
                <size>
-                <width>150</width>
+                <width>0</width>
                 <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>150</width>
-                <height>16777215</height>
                </size>
               </property>
               <property name="toolTip">
@@ -236,7 +230,7 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>320</width>
+           <width>160</width>
            <height>0</height>
           </size>
          </property>
@@ -347,7 +341,7 @@
         <widget class="QGroupBox" name="groupBox_4">
          <property name="minimumSize">
           <size>
-           <width>320</width>
+           <width>160</width>
            <height>0</height>
           </size>
          </property>
