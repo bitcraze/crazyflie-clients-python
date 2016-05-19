@@ -121,15 +121,15 @@ class PlotTab(Tab, plot_tab_class):
     _connected_signal = pyqtSignal(str)
 
     colors = [
-        ( 60, 200,  60), # green
-        ( 40, 120, 255), # blue
-        (255, 110, 240), # magenta
-        (255,  26,  28), # red
-        (255, 170,   0), # orange
-        ( 40, 180, 240), # cyan
-        (153, 153, 153), # grey
-        (176,  96,  50), # brown
-        (180,  60, 240), # purple
+        (60, 200, 60),    # green
+        (40, 100, 255),   # blue
+        (255, 130, 240),  # magenta
+        (255, 26, 28),    # red
+        (255, 170, 0),    # orange
+        (40, 180, 240),   # cyan
+        (153, 153, 153),  # grey
+        (176, 96, 50),    # brown
+        (180, 60, 240),   # purple
     ]
 
     def __init__(self, tabWidget, helper, *args):
