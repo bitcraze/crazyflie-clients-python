@@ -120,7 +120,17 @@ class PlotTab(Tab, plot_tab_class):
     _disconnected_signal = pyqtSignal(str)
     _connected_signal = pyqtSignal(str)
 
-    colors = ['g', 'b', 'm', 'r', 'y', 'c']
+    colors = [
+        (60, 200, 60),    # green
+        (40, 100, 255),   # blue
+        (255, 130, 240),  # magenta
+        (255, 26, 28),    # red
+        (255, 170, 0),    # orange
+        (40, 180, 240),   # cyan
+        (153, 153, 153),  # grey
+        (176, 96, 50),    # brown
+        (180, 60, 240),   # purple
+    ]
 
     def __init__(self, tabWidget, helper, *args):
         super(PlotTab, self).__init__(*args)
