@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>872</width>
-    <height>641</height>
+    <height>671</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,7 +26,7 @@
          <widget class="QComboBox" name="interfaceCombo">
           <property name="minimumSize">
            <size>
-            <width>140</width>
+            <width>80</width>
             <height>0</height>
            </size>
           </property>
@@ -191,7 +191,7 @@
          <bool>false</bool>
         </property>
         <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
+         <enum>QFrame::NoFrame</enum>
         </property>
         <property name="frameShadow">
          <enum>QFrame::Sunken</enum>
@@ -210,8 +210,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>848</width>
-           <height>495</height>
+           <width>852</width>
+           <height>529</height>
           </rect>
          </property>
          <property name="sizePolicy">
@@ -254,7 +254,7 @@
      <x>0</x>
      <y>0</y>
      <width>872</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
