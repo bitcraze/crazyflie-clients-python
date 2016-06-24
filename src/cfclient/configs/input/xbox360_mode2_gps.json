@@ -1,0 +1,73 @@
+{
+  "inputconfig": {
+    "inputdevice": {
+      "updateperiod": 10,
+      "axis": [
+        {
+          "id": 3,
+          "type": "Input.AXIS",
+          "name": "roll",
+          "scale": 1.0,
+          "key": "roll"
+        },
+        {
+          "id": 1,
+          "type": "Input.BUTTON",
+          "name": "vertButton",
+          "scale": 1.0,
+          "key": "vertButton"
+        },
+        {
+          "id": 5,
+          "type": "Input.BUTTON",
+          "name": "poshold",
+          "scale": 1.0,
+          "key": "poshold"
+        },
+        {
+          "id": 7,
+          "type": "Input.BUTTON",
+          "name": "calButton",
+          "scale": 1.0,
+          "key": "calButton"
+        },
+        {
+          "id": 0,
+          "type": "Input.BUTTON",
+          "name": "horzButton",
+          "scale": 1.0,
+          "key": "horzButton"
+        },
+        {
+          "id": 1,
+          "type": "Input.AXIS",
+          "name": "thrust",
+          "scale": -1.0,
+          "key": "thrust"
+        },
+        {
+          "id": 0,
+          "type": "Input.AXIS",
+          "name": "yaw",
+          "scale": 1.0,
+          "key": "yaw"
+        },
+        {
+          "id": 4,
+          "type": "Input.BUTTON",
+          "name": "althold",
+          "scale": 1.0,
+          "key": "althold"
+        },
+        {
+          "id": 4,
+          "type": "Input.AXIS",
+          "name": "pitch",
+          "scale": -1.0,
+          "key": "pitch"
+        }
+      ],
+      "name": "xbox360_mode2_gps"
+    }
+  }
+}

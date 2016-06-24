@@ -109,6 +109,22 @@ class FlightTab(Tab, flight_tab_class):
             lambda enabled: self.helper.cf.param.set_value(
                 "flightmode.althold", enabled))
 
+        self.helper.inputDeviceReader.poshold_updated.add_callback(
+            lambda enabled: self.helper.cf.param.set_value(
+                "flightmode.poshold", enabled))
+
+        self.helper.inputDeviceReader.calButton_updated.add_callback(
+            lambda enabled: self.helper.cf.param.set_value(
+                "compass.calSeqButton", enabled))
+
+        self.helper.inputDeviceReader.horzButton_updated.add_callback(
+            lambda enabled: self.helper.cf.param.set_value(
+                "compass.calHorzButton", enabled))
+
+        self.helper.inputDeviceReader.vertButton_updated.add_callback(
+            lambda enabled: self.helper.cf.param.set_value(
+                "compass.calVertButton", enabled))
+
         self._imu_data_signal.connect(self._imu_data_received)
         self._baro_data_signal.connect(self._baro_data_received)
         self._althold_data_signal.connect(self._althold_data_received)

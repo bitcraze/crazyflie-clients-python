@@ -156,6 +156,10 @@ class JoystickReader(object):
         self.device_discovery = Caller()
         self.device_error = Caller()
         self.althold_updated = Caller()
+        self.poshold_updated = Caller()
+        self.calButton_updated = Caller()
+        self.horzButton_updated = Caller()
+        self.vertButton_updated = Caller()
         self.alt1_updated = Caller()
         self.alt2_updated = Caller()
 
@@ -345,6 +349,38 @@ class JoystickReader(object):
                         logger.warning(
                             "Exception while doing callback from input-device "
                             "for althold: {}".format(e))
+
+                if data.toggled.poshold:
+                    try:
+                        self.poshold_updated.call(str(data.poshold))
+                    except Exception as e:
+                        logger.warning(
+                            "Exception while doing callback from input-device "
+                            "for poshold: {}".format(e))
+
+                if data.toggled.calButton:
+                    try:
+                        self.calButton_updated.call(str(data.calButton))
+                    except Exception as e:
+                        logger.warning(
+                            "Exception while doing callback from input-device "
+                            "for calButton: {}".format(e))
+
+                if data.toggled.horzButton:
+                    try:
+                        self.horzButton_updated.call(str(data.horzButton))
+                    except Exception as e:
+                        logger.warning(
+                            "Exception while doing callback from input-device "
+                            "for horzButton: {}".format(e))
+
+                if data.toggled.vertButton:
+                    try:
+                        self.vertButton_updated.call(str(data.vertButton))
+                    except Exception as e:
+                        logger.warning(
+                            "Exception while doing callback from input-device "
+                            "for vertButton: {}".format(e)) 
 
                 if data.toggled.estop:
                     try:
