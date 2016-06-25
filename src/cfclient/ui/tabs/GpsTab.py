@@ -88,8 +88,8 @@ class GpsTab(Tab, gps_tab_class):
         view.loadFinished.connect(self.onLoadFinished)
         view.linkClicked.connect(QtGui.QDesktopServices.openUrl)
 
-        self.lat0 = 33.7674
-        self.lon0 = -117.5008
+        self.lat0 = 55.607526
+        self.lon0 = 13.018219
 
         self.map_layout.addWidget(view)
 
