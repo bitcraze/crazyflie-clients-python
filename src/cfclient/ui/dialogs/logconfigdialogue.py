@@ -195,7 +195,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
             self.period = 0
 
     def showErrorPopup(self, caption, message):
-        self.box = QMessageBox()
+        self.box = QMessageBox()  # noqa
         self.box.setWindowTitle(caption)
         self.box.setText(message)
         # self.box.setButtonText(1, "Ok")

@@ -31,13 +31,14 @@ import json
 import logging
 
 import cfclient
+from PyQt4.QtCore import QThread, SIGNAL
+from PyQt4.QtCore import QTimer
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtGui import QMessageBox
 from cfclient.utils.config_manager import ConfigManager
 from PyQt4 import Qt
 from PyQt4 import QtGui
 from PyQt4 import uic
-from PyQt4.Qt import *  # noqa
-from PyQt4.QtCore import *  # noqa
-from PyQt4.QtGui import *  # noqa
 
 __author__ = 'Bitcraze AB'
 __all__ = ['InputConfigDialogue']

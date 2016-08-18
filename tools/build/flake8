@@ -6,12 +6,12 @@ __author__ = 'kristoffer'
 
 
 def _check_files_without_ext(path):
-    subprocess.check_call(["python3", "-m", "flake8.run", "--filename=*",
+    subprocess.check_call(["python3", "-m", "flake8", "--filename=*",
                            path])
 
 
 def _check_files_with_ext(path):
-    subprocess.check_call(["python3", "-m", "flake8.run", path])
+    subprocess.check_call(["python3", "-m", "flake8", path])
 
 
 try:
