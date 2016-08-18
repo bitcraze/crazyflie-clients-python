@@ -33,9 +33,7 @@ import cfclient
 import cflib.crtp
 from PyQt4 import QtGui
 from PyQt4 import uic
-from PyQt4.Qt import *  # noqa
-from PyQt4.QtCore import *  # noqa
-from PyQt4.QtGui import *  # noqa
+from PyQt4.QtCore import pyqtSignal
 
 __author__ = 'Bitcraze AB'
 __all__ = ['AboutDialog']
