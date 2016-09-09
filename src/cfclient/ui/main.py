@@ -51,6 +51,7 @@ from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtCore import QDir
 from PyQt4.QtCore import QThread
 from PyQt4.QtCore import QUrl
+from PyQt4.QtCore import QTimer
 from PyQt4.QtGui import QAction
 from PyQt4.QtGui import QActionGroup
 from PyQt4.QtGui import QDesktopServices
@@ -368,6 +369,14 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         self._mapping_support = True
 
+        self.timer_repaint = QTimer()
+        self.timer_repaint.timeout.connect(self._repaint_UI)
+        self.timer_repaint.start()  # Delay of 0ms = Execute as soon as the event loop is done processing (as often as possible)
+
+    @pyqtSlot()
+    def _repaint_UI(self):
+        self.update()  # Seems to be better than self.repaint(), PyQt optimizes performance better with update(). repaint() also works fine though
+
     def interfaceChanged(self, interface):
         if interface == INTERFACE_PROMPT_TEXT:
             self._selected_interface = None
@@ -595,6 +604,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self._connect()
 
     def closeEvent(self, event):
+        self.timer_repaint.stop()  # Not really necessary, but never a bad idea to stop it
         self.hide()
         self.cf.close_link()
         Config().save_file()
