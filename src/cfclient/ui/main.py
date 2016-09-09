@@ -371,11 +371,11 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         self.timer_repaint = QTimer()
         self.timer_repaint.timeout.connect(self._repaint_UI)
-        self.timer_repaint.start()  # Delay of 0ms = Execute as soon as the event loop is done processing (as often as possible)
+        self.timer_repaint.start()  # 0ms delay = Execute when event loop idle
 
     @pyqtSlot()
     def _repaint_UI(self):
-        self.update()  # Seems to be better than self.repaint(), PyQt optimizes performance better with update(). repaint() also works fine though
+        self.update()  # Qt optimizs performance better with update vs repaint
 
     def interfaceChanged(self, interface):
         if interface == INTERFACE_PROMPT_TEXT:
@@ -604,7 +604,7 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self._connect()
 
     def closeEvent(self, event):
-        self.timer_repaint.stop()  # Not really necessary, but never a bad idea to stop it
+        self.timer_repaint.stop()  # Not really necessary, but why not
         self.hide()
         self.cf.close_link()
         Config().save_file()
