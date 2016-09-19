@@ -51,6 +51,7 @@ from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtCore import QDir
 from PyQt4.QtCore import QThread
 from PyQt4.QtCore import QUrl
+from PyQt4.QtCore import QTimer
 from PyQt4.QtGui import QAction
 from PyQt4.QtGui import QActionGroup
 from PyQt4.QtGui import QDesktopServices
@@ -367,6 +368,20 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             node.setData((m, mux_subnodes))
 
         self._mapping_support = True
+
+        # Fix for issue #260: a long-known bug related to pyqtgraph on OSX
+        # caused UI repaint to fail sometimes (eg: after connecting to a CF).
+        # Uninstalling pyqtgraph would solve the issue, but this library may
+        # be needed for other functionality.
+        # As a workaround, we manually force a window repaint with a timer.
+        self.timer_repaint = QTimer()
+        self.timer_repaint.timeout.connect(self._repaint_UI)
+        if sys.platform == 'darwin':  # Bug has only been reported on OSX
+            self.timer_repaint.start(500)  # T=500ms, so CPU doesn't skyrocket
+
+    @pyqtSlot()
+    def _repaint_UI(self):
+        self.update()  # Qt optimizs performance better with update vs repaint
 
     def interfaceChanged(self, interface):
         if interface == INTERFACE_PROMPT_TEXT:
