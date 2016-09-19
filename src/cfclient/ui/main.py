@@ -369,9 +369,15 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
         self._mapping_support = True
 
+        # Fix for issue #260: a long-known bug related to pyqtgraph on OSX
+        # caused UI repaint to fail sometimes (eg: after connecting to a CF).
+        # Uninstalling pyqtgraph would solve the issue, but this library may
+        # be needed for other functionality.
+        # As a workaround, we manually force a window repaint with a timer.
         self.timer_repaint = QTimer()
         self.timer_repaint.timeout.connect(self._repaint_UI)
-        self.timer_repaint.start()  # 0ms delay = Execute when event loop idle
+        if sys.platform == 'darwin':  # Bug has only been reported on OSX
+            self.timer_repaint.start(500)  # T=500ms, so CPU doesn't skyrocket
 
     @pyqtSlot()
     def _repaint_UI(self):
@@ -604,7 +610,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self._connect()
 
     def closeEvent(self, event):
-        self.timer_repaint.stop()  # Not really necessary, but why not
         self.hide()
         self.cf.close_link()
         Config().save_file()
