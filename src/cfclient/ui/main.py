@@ -396,8 +396,12 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                             type(i) is QTreeWidget or \
                             type(i) is QWidget or \
                             type(i) is QTextEdit:
-                i.setVisible(False)
-                i.setVisible(True)
+                # i.hide() followed by a i.show() accomplishes the same effect
+                # however that way, the selected widget in the active tab
+                # loses focus (very annoying when manually setting the range
+                # in the Plotter tab through the QSpinBoxes, for example).
+                i.resize(i.width()-1, i.height()-1)  # Make slightly smaller
+                i.resize(i.width()+1, i.height()+1)  # & back to original size
 
     def interfaceChanged(self, interface):
         if interface == INTERFACE_PROMPT_TEXT:
