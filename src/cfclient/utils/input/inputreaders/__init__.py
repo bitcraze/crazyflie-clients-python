@@ -33,8 +33,6 @@ To create a new input device reader drop a .py file into this
 directory and it will be picked up automatically.
 """
 
-import os
-import glob
 import logging
 from ..inputreaderinterface import InputReaderInterface
 
@@ -52,7 +50,8 @@ except Exception:
     pass
 
 # Statically listing the available input readers
-input_readers = ["linuxjsdev", "pysdl2"]
+input_readers = ["linuxjsdev",
+                 "pysdl2"]
 
 logger.info("Input readers: {}".format(input_readers))
 

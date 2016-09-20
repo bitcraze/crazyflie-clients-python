@@ -31,8 +31,6 @@ Find all the available input interfaces and try to initialize them.
 
 """
 
-import os
-import glob
 import logging
 from ..inputreaderinterface import InputReaderInterface
 
@@ -51,8 +49,8 @@ except Exception:
 
 # Statically listing input interfaces
 input_interface = ["leapmotion",
-                    "wiimote",
-                    "zmqpull"]
+                   "wiimote",
+                   "zmqpull"]
 
 logger.info("Found interfaces: {}".format(input_interface))
 
