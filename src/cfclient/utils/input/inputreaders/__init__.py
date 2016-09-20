@@ -46,8 +46,8 @@ logger = logging.getLogger(__name__)
 
 # Forces py2exe to include the input readers in the windows build
 try:
-    from . import pysdl2
-    from . import linuxjsdev
+    from . import pysdl2  # noqa
+    from . import linuxjsdev  # noqa
 except Exception:
     pass
 

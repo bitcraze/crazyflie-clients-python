@@ -43,9 +43,9 @@ logger = logging.getLogger(__name__)
 
 # Force py2exe to include interfaces module in the build
 try:
-    from . import leapmotion
-    from . import wiimote
-    from . import zmqpull
+    from . import leapmotion  # noqa
+    from . import wiimote  # noqa
+    from . import zmqpull  # noqa
 except Exception:
     pass
 
