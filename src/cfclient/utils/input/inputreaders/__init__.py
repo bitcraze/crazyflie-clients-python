@@ -43,19 +43,23 @@ __all__ = ['InputDevice']
 
 logger = logging.getLogger(__name__)
 
-found_readers = [os.path.splitext(os.path.basename(f))[0] for
-                 f in glob.glob(os.path.dirname(__file__) + "/[A-Za-z]*.py")]
-if len(found_readers) == 0:
-    found_readers = [os.path.splitext(os.path.basename(f))[0] for
-                     f in glob.glob(os.path.dirname(__file__) +
-                                    "/[A-Za-z]*.pyc")]
 
-logger.info("Found readers: {}".format(found_readers))
+# Forces py2exe to include the input readers in the windows build
+try:
+    from . import pysdl2
+    from . import linuxjsdev
+except Exception:
+    pass
+
+# Statically listing the available input readers
+input_readers = ["linuxjsdev", "pysdl2"]
+
+logger.info("Input readers: {}".format(input_readers))
 
 initialized_readers = []
 available_devices = []
 
-for reader in found_readers:
+for reader in input_readers:
     try:
         module = __import__(reader, globals(), locals(), [reader], 1)
         main_name = getattr(module, "MODULE_MAIN")

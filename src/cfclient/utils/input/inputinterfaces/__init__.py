@@ -41,19 +41,25 @@ __all__ = ['InputInterface']
 
 logger = logging.getLogger(__name__)
 
-found_interfaces = [os.path.splitext(os.path.basename(f))[0] for f in
-                    glob.glob(os.path.dirname(__file__) + "/[A-Za-z]*.py")]
-if len(found_interfaces) == 0:
-    found_interfaces = [os.path.splitext(os.path.basename(f))[0] for
-                        f in glob.glob(os.path.dirname(__file__) +
-                                       "/[A-Za-z]*.pyc")]
+# Force py2exe to include interfaces module in the build
+try:
+    from . import leapmotion
+    from . import wiimote
+    from . import zmqpull
+except Exception:
+    pass
 
-logger.info("Found interfaces: {}".format(found_interfaces))
+# Statically listing input interfaces
+input_interface = ["leapmotion",
+                    "wiimote",
+                    "zmqpull"]
+
+logger.info("Found interfaces: {}".format(input_interface))
 
 initialized_interfaces = []
 available_interfaces = []
 
-for interface in found_interfaces:
+for interface in input_interface:
     try:
         module = __import__(interface, globals(), locals(), [interface], 1)
         main_name = getattr(module, "MODULE_MAIN")
