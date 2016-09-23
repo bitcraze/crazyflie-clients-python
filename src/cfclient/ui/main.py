@@ -35,6 +35,7 @@ import cfclient.ui.toolboxes
 import cflib.crtp
 from cfclient.ui.dialogs.about import AboutDialog
 from cfclient.ui.dialogs.bootloader import BootloaderDialog
+from cfclient.ui.widgets.plotwidget import PlotWidget
 from cfclient.utils.config import Config
 from cfclient.utils.config_manager import ConfigManager
 from cfclient.utils.input import JoystickReader
@@ -58,6 +59,7 @@ from PyQt4.QtGui import QDesktopServices
 from PyQt4.QtGui import QLabel
 from PyQt4.QtGui import QMenu
 from PyQt4.QtGui import QMessageBox
+from PyQt4.QtGui import QTreeView, QTreeWidget, QWidget, QTextEdit
 
 from .dialogs.cf1config import Cf1ConfigDialog
 from .dialogs.cf2config import Cf2ConfigDialog
@@ -382,6 +384,24 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     @pyqtSlot()
     def _repaint_UI(self):
         self.update()  # Qt optimizs performance better with update vs repaint
+
+        # (Fix for issue #260). For some reason, certain widgets (param list,
+        # plotter, log TOC, GPS widget, console output...) in the active tab
+        # still won't get repainted after calling self.update(). Even calling
+        # update() or repaint() on each individual widget doesn't work.
+        # However, toggling the widget visibility twice seems to do the trick!
+        for i in self.tabs.currentWidget().children():
+            if type(i) is QTreeView or \
+                            type(i) is PlotWidget or \
+                            type(i) is QTreeWidget or \
+                            type(i) is QWidget or \
+                            type(i) is QTextEdit:
+                # i.hide() followed by a i.show() accomplishes the same effect
+                # however that way, the selected widget in the active tab
+                # loses focus (very annoying when manually setting the range
+                # in the Plotter tab through the QSpinBoxes, for example).
+                i.resize(i.width()-1, i.height()-1)  # Make slightly smaller
+                i.resize(i.width()+1, i.height()+1)  # & back to original size
 
     def interfaceChanged(self, interface):
         if interface == INTERFACE_PROMPT_TEXT:
