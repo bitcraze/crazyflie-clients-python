@@ -75,7 +75,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
 
         self.loggingPeriod.textChanged.connect(self.periodChanged)
 
-        self.packetSize.setMaximum(30)
+        self.packetSize.setMaximum(26)
         self.currentSize = 0
         self.packetSize.setValue(0)
         self.period = 0
@@ -116,7 +116,14 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
             for leaf in self.getNodeChildren(node):
                 self.currentSize = (self.currentSize +
                                     self.decodeSize(leaf.text(CTYPE_FIELD)))
-        self.packetSize.setValue(self.currentSize)
+        if self.currentSize > 26:
+            self.packetSize.setMaximum(self.currentSize / 26.0 * 100.0)
+            self.packetSize.setFormat("%v%")
+            self.packetSize.setValue(self.currentSize / 26.0 * 100.0)
+        else:
+            self.packetSize.setMaximum(26)
+            self.packetSize.setFormat("%p%")
+            self.packetSize.setValue(self.currentSize)
 
     def addNewVar(self, logTreeItem, target):
         parentName = logTreeItem.parent().text(NAME_FIELD)
@@ -152,7 +159,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         self.checkAndEnableSaveButton()
 
     def checkAndEnableSaveButton(self):
-        if (self.currentSize > 0 and self.period > 0):
+        if self.currentSize > 0 and self.period > 0 and self.currentSize <= 26:
             self.saveButton.setEnabled(True)
         else:
             self.saveButton.setEnabled(False)
@@ -195,7 +202,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
             self.period = 0
 
     def showErrorPopup(self, caption, message):
-        self.box = QMessageBox()
+        self.box = QMessageBox()  # noqa
         self.box.setWindowTitle(caption)
         self.box.setText(message)
         # self.box.setButtonText(1, "Ok")

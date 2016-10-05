@@ -363,7 +363,7 @@ class FlightTab(Tab, flight_tab_class):
                         self.logAltHold.start()
                     except KeyError as e:
                         logger.warning(str(e))
-                    except AttributeError:
+                    except AttributeError as e:
                         logger.warning(str(e))
 
     def disconnected(self, linkURI):

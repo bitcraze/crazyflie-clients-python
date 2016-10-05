@@ -28,7 +28,7 @@ cd crazyflie-clients-python
 
 Create and activate a Python 3.4 environment with numpy pyqt and pyqtgraph from conda (it is the packages we cannot easily install with pip):
 ```
-conda create -y -n cfclient python=3.4 numpy=1.10.1 pyqt pyqtgraph
+conda create -y -n cfclient python=3.4 numpy=1.10.1 pyqt=4 pyqtgraph
 activate cfclient
 ```
 
