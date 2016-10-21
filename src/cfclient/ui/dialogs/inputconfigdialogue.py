@@ -39,6 +39,7 @@ from cfclient.utils.config_manager import ConfigManager
 from PyQt4 import Qt
 from PyQt4 import QtGui
 from PyQt4 import uic
+from PyQt4.Qt import *  # noqa
 
 __author__ = 'Bitcraze AB'
 __all__ = ['InputConfigDialogue']
