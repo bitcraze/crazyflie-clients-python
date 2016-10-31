@@ -139,6 +139,7 @@ if __name__ == '__main__':
         le = LoggingExample(available[0][0])
     else:
         print("No Crazyflies found, cannot run example")
+        sys.exit(1)
 
     # The Crazyflie lib doesn't contain anything to keep the application alive,
     # so this is where your application should do something. In our case we
