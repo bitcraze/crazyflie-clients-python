@@ -47,7 +47,7 @@ available = [
     ConsoleTab,
     # ExampleTab,
     FlightTab,
-#     GpsTab,
+    # GpsTab,
     LEDTab,
     LogBlockTab,
     LogTab,
