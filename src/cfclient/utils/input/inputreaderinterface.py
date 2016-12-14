@@ -52,7 +52,8 @@ class InputData:
         self._axes = ("roll", "pitch", "yaw", "thrust")
         self._buttons = ("alt1", "alt2", "estop", "exit", "pitchNeg",
                          "pitchPos", "rollNeg", "rollPos", "althold",
-                         "muxswitch")
+                         "calButton", "horzButton", "vertButton",
+                         "poshold", "muxswitch")
         for axis in self._axes:
             self.__dict__[axis] = 0.0
         self.toggled = _ToggleState()
@@ -159,6 +160,8 @@ class InputReaderInterface(object):
         return ret
 
     def _scale_rp(self, roll, pitch):
+        roll = InputReaderInterface.deadband(roll, 0.2)
+        pitch = InputReaderInterface.deadband(pitch, 0.2)
         return [self._cap_rp(roll), self._cap_rp(pitch)]
 
     def _scale_and_deadband_yaw(self, yaw):

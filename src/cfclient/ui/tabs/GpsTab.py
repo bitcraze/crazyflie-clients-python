@@ -28,7 +28,11 @@
 This tab plots different logging data defined by configurations that has been
 pre-configured.
 """
+
+import math
 import logging
+import datetime
+import functools
 
 import cfclient
 from PyQt4.QtCore import pyqtSignal
@@ -84,7 +88,15 @@ class GpsTab(Tab, gps_tab_class):
         view.loadFinished.connect(self.onLoadFinished)
         view.linkClicked.connect(QtGui.QDesktopServices.openUrl)
 
+        self.lat0 = 55.607526
+        self.lon0 = 13.018219
+
         self.map_layout.addWidget(view)
+
+        button = QtGui.QPushButton('Go to Home')
+        panToHome = functools.partial(self.panMap, self.lon0, self.lat0)
+        button.clicked.connect(panToHome)
+        self.map_layout.addWidget(button)
 
         self._reset_max_btn.clicked.connect(self._reset_max)
 
@@ -101,8 +113,19 @@ class GpsTab(Tab, gps_tab_class):
             self._connected_signal.emit)
 
         self._max_speed = 0.0
-        self._lat = 0
-        self._long = 0
+        self._gpslat = 0.0
+        self._gpslong = 0.0
+
+        self._fix_types = {
+            0: "No fix",
+            1: "Dead reckoning only",
+            2: "2D-fix",
+            3: "3D-fix",
+            4: "GNSS+dead",
+            5: "Time only fix",
+            6: "2D/DGPS-fix",
+            7: "3D/DGPS-fix" 
+        }        
 
     def onLoadFinished(self):
         with open(cfclient.module_path + "/resources/map.js", 'r') as f:
@@ -125,11 +148,18 @@ class GpsTab(Tab, gps_tab_class):
     def _connected(self, link_uri):
         lg = LogConfig("GPS", 1000)
         lg.add_variable("gps.lat")
-        lg.add_variable("gps.lon")
-        lg.add_variable("gps.hAcc")
+        lg.add_variable("gps.lon")      
         lg.add_variable("gps.hMSL")
+        lg.add_variable("gps.hAcc")
         lg.add_variable("gps.nsat")
+        lg.add_variable("gps.fixType") 
         self._cf.log.add_config(lg)
+
+        """When heading & speed are included in the above logging variables, """
+        """ the CF2 logging becomes overloaded and freezes up.               """
+#        lg.add_variable("gps.gSpeed")
+#        lg.add_variable("gps.heading")        
+
         if lg.valid:
             lg.data_received_cb.add_callback(self._log_data_signal.emit)
             lg.error_cb.add_callback(self._log_error_signal.emit)
@@ -149,7 +179,8 @@ class GpsTab(Tab, gps_tab_class):
 
     def _reset_max(self):
         """Callback from reset button"""
-        self._max_speed = 0.0
+#        self._max_speed = 0.0
+        self._max_speed.setText("") 
         self._speed_max.setText(str(self._max_speed))
         self._long.setText("")
         self._lat.setText("")
@@ -158,17 +189,27 @@ class GpsTab(Tab, gps_tab_class):
         self._heading.setText("")
         self._accuracy.setText("")
         self._fix_type.setText("")
+        self._nbr_locked_sats.setText("")
+
 
     def _log_data_received(self, timestamp, data, logconf):
         """Callback when the log layer receives new data"""
         long = float(data["gps.lon"]) / 10000000.0
         lat = float(data["gps.lat"]) / 10000000.0
 
-        if self._lat != lat or self._long != long:
+        if self._gpslat != lat or self._gpslong != long:              
             self._long.setText("{:.6f}".format(long))
             self._lat.setText("{:.6f}".format(lat))
-            self._nbr_locked_sats.setText(str(data["gps.nsat"]))
+            self._nbr_locked_sats.setText(str(data["gps.nsat"]))  
             self._height.setText("{:.2f}".format(float(data["gps.hMSL"])))
+            self._fix_type.setText(self._fix_types[data["gps.fixType"]])
+            self._accuracy.setText("{:.1f}".format(float(data["gps.hAcc"])))
+#            if speed > self._max_speed:
+#                self._max_speed = speed
+#            self._speed_max.setText(str(self._max_speed))
+#            self._heading.setText("{:.1f}".format(float(data["gps.heading"])))
+#            self._speed.setText("{:.1f}".format(float(data["gps.gSpeed"]))) 
+            self._gpslat = lat
+            self._gpslong = long
             self._place_cf(long, lat, 1)
-            self._lat = lat
-            self._long = long
+#            self.panMap(long, lat)
