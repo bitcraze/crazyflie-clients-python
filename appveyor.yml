@@ -1,6 +1,6 @@
 version: 1.0.{build}
 init:
-- cmd: set PATH=C:\Miniconda35;C:\Miniconda35\scripts;%PATH%
+- cmd: set PATH=C:\Miniconda35;C:\Miniconda35\scripts;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\
 install:
 - cmd: >-
     conda create -y -q -n cfclient python=3.4 numpy=1.10.1 pyqt=4 pyqtgraph
