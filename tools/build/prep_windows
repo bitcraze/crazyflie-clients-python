@@ -23,5 +23,6 @@ def main():
         z.extract('SDL2.dll', dllpath)
         z.extract('README-SDL.txt', dllpath)
 
+
 if __name__ == '__main__':
     main()

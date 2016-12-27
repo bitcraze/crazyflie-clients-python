@@ -168,5 +168,6 @@ def main():
         else:
             print("No input-device connected, exiting!")
 
+
 if __name__ == "__main__":
     main()

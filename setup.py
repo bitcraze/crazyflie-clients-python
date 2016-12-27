@@ -43,6 +43,7 @@ def get_version():
 def relative(lst, base=''):
     return list(map(lambda x: base + os.path.basename(x), lst))
 
+
 VERSION = get_version()
 
 if not VERSION and not os.path.isfile('src/cfclient/version.json'):

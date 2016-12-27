@@ -80,6 +80,7 @@ class JEvent(object):
         return "JEvent(type={}, number={}, value={})".format(
             self.type, self.number, self.value)
 
+
 # Constants
 TYPE_BUTTON = 1
 TYPE_AXIS = 2
