@@ -132,6 +132,13 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         super(MainUI, self).__init__(*args)
         self.setupUi(self)
 
+        # Restore window size if present in the config file
+        try:
+            size = Config().get("window_size")
+            self.resize(size[0], size[1])
+        except KeyError:
+            pass
+
         ######################################################
         # By lxrocks
         # 'Skinny Progress Bar' tweak for Yosemite
@@ -633,6 +640,10 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.hide()
         self.cf.close_link()
         Config().save_file()
+
+    def resizeEvent(self, event):
+        Config().set("window_size", [event.size().width(),
+                                     event.size().height()])
 
     def _connect(self):
         if self.uiState == UIState.CONNECTED:
