@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>872</width>
-    <height>641</height>
+    <height>671</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,7 +26,7 @@
          <widget class="QComboBox" name="interfaceCombo">
           <property name="minimumSize">
            <size>
-            <width>160</width>
+            <width>80</width>
             <height>0</height>
            </size>
           </property>
@@ -39,7 +39,7 @@
          <widget class="QPushButton" name="connectButton">
           <property name="minimumSize">
            <size>
-            <width>115</width>
+            <width>60</width>
             <height>0</height>
            </size>
           </property>
@@ -49,7 +49,7 @@
          <widget class="QPushButton" name="scanButton">
           <property name="minimumSize">
            <size>
-            <width>115</width>
+            <width>50</width>
             <height>0</height>
            </size>
           </property>
@@ -79,7 +79,7 @@
          <widget class="QProgressBar" name="linkQualityBar">
           <property name="minimumSize">
            <size>
-            <width>120</width>
+            <width>30</width>
             <height>0</height>
            </size>
           </property>
@@ -114,13 +114,13 @@
          <widget class="QProgressBar" name="batteryBar">
           <property name="minimumSize">
            <size>
-            <width>120</width>
+            <width>30</width>
             <height>0</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>150</width>
+            <width>100</width>
             <height>16777215</height>
            </size>
           </property>
@@ -150,23 +150,23 @@
        </layout>
       </item>
       <item>
-       <widget class="QGroupBox">
+       <widget class="QGroupBox" name="groupBox">
         <layout class="QHBoxLayout" stretch="0,0,1">
          <item>
           <widget class="QLabel" name="addressLabel">
            <property name="text">
-             <string>Address:</string>
+            <string>Address:</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="HexSpinBox" name="address">
-          <property name="minimumSize">
-           <size>
-            <width>120</width>
-            <height>0</height>
-           </size>
-          </property>
+           <property name="minimumSize">
+            <size>
+             <width>120</width>
+             <height>0</height>
+            </size>
+           </property>
           </widget>
          </item>
          <item>
@@ -186,10 +186,62 @@
        </widget>
       </item>
       <item>
-       <widget class="QTabWidget" name="tabs">
-        <property name="currentIndex">
-         <number>-1</number>
+       <widget class="QScrollArea" name="scrollArea">
+        <property name="autoFillBackground">
+         <bool>false</bool>
         </property>
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Sunken</enum>
+        </property>
+        <property name="lineWidth">
+         <number>1</number>
+        </property>
+        <property name="verticalScrollBarPolicy">
+         <enum>Qt::ScrollBarAsNeeded</enum>
+        </property>
+        <property name="widgetResizable">
+         <bool>true</bool>
+        </property>
+        <widget class="QWidget" name="scrollAreaWidgetContents">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>852</width>
+           <height>529</height>
+          </rect>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_3">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetNoConstraint</enum>
+          </property>
+          <property name="margin">
+           <number>0</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QTabWidget" name="tabs">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="currentIndex">
+             <number>-1</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </item>
      </layout>
@@ -202,7 +254,7 @@
      <x>0</x>
      <y>0</y>
      <width>872</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
