@@ -87,7 +87,6 @@ class _JS():
         self.buttons = []
         self.name = MODULE_NAME
         self._j = None
-        self._btn_count = 0
         self._id = sdl_id
         self._index = sdl_index
         self._name = name
@@ -95,25 +94,40 @@ class _JS():
 
     def open(self):
         self._j = sdl2.SDL_JoystickOpen(self._index)
-        self._btn_count = sdl2.SDL_JoystickNumButtons(self._j)
+        btn_count = sdl2.SDL_JoystickNumButtons(self._j)
 
         self.axes = list(0 for i in range(sdl2.SDL_JoystickNumAxes(self._j)))
-        self.buttons = list(0 for i in range(sdl2.SDL_JoystickNumButtons(
-            self._j) + 4))
+        self.buttons = list(0 for i in range(btn_count + 4))
 
     def close(self):
         if self._j:
             sdl2.joystick.SDL_JoystickClose(self._j)
         self._j = None
 
-    def _set_fake_hat_button(self, btn=None):
-        self.buttons[self._btn_count] = 0
-        self.buttons[self._btn_count + 1] = 0
-        self.buttons[self._btn_count + 2] = 0
-        self.buttons[self._btn_count + 3] = 0
+    def _set_virtual_dpad(self, position):
+        self.buttons[-4:] = [0, 0, 0, 0]
 
-        if btn:
-            self.buttons[self._btn_count + btn] = 1
+        # -4 UP -3 DOWN -2 LEFT -1 RIGHT
+        if position == sdl2.SDL_HAT_UP:
+            self.buttons[-4] = 1
+        elif position == sdl2.SDL_HAT_RIGHTUP:
+            self.buttons[-4] = 1
+            self.buttons[-1] = 1
+        elif position == sdl2.SDL_HAT_RIGHT:
+            self.buttons[-1] = 1
+        elif position == sdl2.SDL_HAT_RIGHTDOWN:
+            self.buttons[-1] = 1
+            self.buttons[-3] = 1
+        elif position == sdl2.SDL_HAT_DOWN:
+            self.buttons[-3] = 1
+        elif position == sdl2.SDL_HAT_LEFTDOWN:
+            self.buttons[-3] = 1
+            self.buttons[-2] = 1
+        elif position == sdl2.SDL_HAT_LEFT:
+            self.buttons[-2] = 1
+        elif position == sdl2.SDL_HAT_LEFTUP:
+            self.buttons[-2] = 1
+            self.buttons[-4] = 1
 
     def add_event(self, event):
         self._event_queue.put(event)
@@ -131,16 +145,8 @@ class _JS():
                 self.buttons[e.jbutton.button] = 0
 
             if e.type == sdl2.SDL_JOYHATMOTION:
-                if e.jhat.value == sdl2.SDL_HAT_CENTERED:
-                    self._set_fake_hat_button()
-                elif e.jhat.value == sdl2.SDL_HAT_UP:
-                    self._set_fake_hat_button(0)
-                elif e.jhat.value == sdl2.SDL_HAT_DOWN:
-                    self._set_fake_hat_button(1)
-                elif e.jhat.value == sdl2.SDL_HAT_LEFT:
-                    self._set_fake_hat_button(2)
-                elif e.jhat.value == sdl2.SDL_HAT_RIGHT:
-                    self._set_fake_hat_button(3)
+                self._set_virtual_dpad(e.jhat.value)
+
         return [self.axes, self.buttons]
 
 
