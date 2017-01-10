@@ -174,6 +174,7 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
         self.resetButton.setEnabled(False)
         self.programButton.setEnabled(False)
         self.imagePathBrowseButton.setEnabled(False)
+        self.verifyButton.setEnabled(False)
         if self.imagePathLine.text() != "":
             self.clt.program.emit(self.imagePathLine.text(),
                                   self.verifyCheckBox.isChecked())
