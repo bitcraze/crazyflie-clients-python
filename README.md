@@ -67,6 +67,10 @@ To work on the Crazyflie firmware with Pycharm, install pycharm comunity edition
  
 You are now able to edit and debug the python code. you can edit the .ui files for the GUI with QtDesigner. To can launch it type ```designer``` in the conda cfclient environment (ie. after typing ```activate cfclient`` in a cmd console).
 
+#### Mac OSX
+
+type ```open -a Designer``` in a terminal to open the Designer application.
+
 ### Creating Windows installer
 
 When you are able to run from source, you can build the windows executable and installer.
@@ -120,9 +124,13 @@ they might or might not be affected by this.
 
     If you already have pyqt installed for python2 you need to uninstall it first
 
+    PyQt4 has been replaced by PyQt5 in brew and PyQt4 has been moved to the boneyard. Until this project is upgraded
+    to use PyQt5 you will have to install from the boneyard. See issue #269.
+
+
     ```
     brew uninstall pyqt
-    brew install pyqt --with-python3
+    brew install homebrew/boneyard/pyqt --with-python3
     ```
 
 1. Install remaining dependencies
