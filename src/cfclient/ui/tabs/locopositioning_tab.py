@@ -51,10 +51,25 @@ locopositioning_tab_class = uic.loadUiType(
     cfclient.module_path + "/ui/tabs/locopositioning_tab.ui")[0]
 
 
+class Anchor:
+    def __init__(self, x=0.0, y=0.0, z=0.0, distance=0.0):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.distance = distance
+
+    def set_position(self, axis, value):
+        """Sets one coordinate of the position. axis is represented by the
+           characters 'x', 'y' or 'z'"""
+        if axis in {'x', 'y', 'z'}:
+            setattr(self, axis, value)
+        else:
+            raise ValueError('"{}" is an unknown axis'.format(axis))
+
+
 class LocoPositioningTab(Tab, locopositioning_tab_class):
     """Tab for plotting Loco Positioning data"""
 
-    # TODO krri make instance variables
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
     _log_error_signal = pyqtSignal(object, str)
@@ -69,6 +84,8 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self.tabWidget = tabWidget
 
         self._helper = helper
+
+        self._anchors = {}
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
@@ -87,44 +104,121 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         """Callback when the Crazyflie has been connected"""
         logger.debug("Crazyflie connected to {}".format(link_uri))
 
-        lg = LogConfig("LoPo", Config().get("ui_update_period"))
-        lg.add_variable("ranging.distance1", "float")
-        lg.add_variable("ranging.distance2", "float")
-        lg.add_variable("ranging.distance3", "float")
-        lg.add_variable("ranging.distance4", "float")
-        lg.add_variable("ranging.distance5", "float")
-        lg.add_variable("ranging.distance6", "float")
-        # lg.add_variable("ranging.distance7", "float")
-        # lg.add_variable("ranging.distance8", "float")
-
         try:
-            self._helper.cf.log.add_config(lg)
-            lg.data_received_cb.add_callback(self._anchor_range_signal.emit)
-            lg.error_cb.add_callback(self._log_error_signal.emit)
-            lg.start()
+            self._register_logblock(
+                "LoPo0",
+                [
+                    ("ranging.distance1", "float"),
+                    ("ranging.distance2", "float"),
+                    ("ranging.distance3", "float"),
+                    ("ranging.distance4", "float"),
+                ],
+                self._anchor_range_signal.emit,
+                self._log_error_signal.emit)
+
+            self._register_logblock(
+                "LoPo1",
+                [
+                    ("ranging.distance5", "float"),
+                    ("ranging.distance6", "float"),
+                    ("ranging.distance7", "float"),
+                    ("ranging.distance8", "float"),
+                ],
+                self._anchor_range_signal.emit,
+                self._log_error_signal.emit)
         except KeyError as e:
             logger.warning(str(e))
         except AttributeError as e:
             logger.warning(str(e))
 
+        self._subscribe_to_parameters(self._helper.cf)
+
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
-
         logger.debug("Crazyflie disconnected from {}".format(link_uri))
+        self._anchors = {}
+        self._update_graphics()
+
+    def _register_logblock(self, logblock_name, variables, data_cb, error_cb):
+        """Register log data to listen for. One logblock can contain a limited
+        number of parameters (6 for floats)."""
+        lg = LogConfig(logblock_name, Config().get("ui_update_period"))
+        for variable in variables:
+            lg.add_variable(variable[0], variable[1])
+
+        self._helper.cf.log.add_config(lg)
+        lg.data_received_cb.add_callback(data_cb)
+        lg.error_cb.add_callback(error_cb)
+        lg.start()
+        return lg
+
+    def _anchor_range_received(self, timestamp, data, logconf):
+        """Callback from the logging system when a range is updated."""
+        is_updated = False
+        for name, value in data.items():
+            valid, anchor_number = self._parse_param_name(name)
+            if valid:
+                self._get_anchor(anchor_number).distance = value
+                is_updated = True
+
+        if is_updated:
+            self._update_graphics()
 
     def _logging_error(self, log_conf, msg):
         """Callback from the log layer when an error occurs"""
-
         QMessageBox.about(self, "LocoPositioningTab error",
-                          "Error when using log config"
+                          "Error when using log config",
                           " [{0}]: {1}".format(log_conf.name, msg))
 
-    def _anchor_range_received(self, timestamp, data, logconf):
-        self.anchor1_distance.setValue(data['ranging.distance1'] * 10)
-        self.anchor2_distance.setValue(data['ranging.distance2'] * 10)
-        self.anchor3_distance.setValue(data['ranging.distance3'] * 10)
-        self.anchor4_distance.setValue(data['ranging.distance4'] * 10)
-        self.anchor5_distance.setValue(data['ranging.distance5'] * 10)
-        self.anchor6_distance.setValue(data['ranging.distance6'] * 10)
-        # self.anchor7_distance.setValue(data['ranging.distance7'] * 10)
-        # self.anchor8_distance.setValue(data['ranging.distance8'] * 10)
+    def _parse_param_name(self, name):
+        """Parse a parameter name for a ranging distance and return the number
+           of the anchor. The name is on the format 'ranging.distance4' """
+        valid = False
+        anchor = 0
+        if name.startswith('ranging.distance'):
+            anchor = int(name[-1])
+            valid = True
+        return (valid, anchor)
+
+    def _subscribe_to_parameters(self, crazyflie):
+        """Get anchor positions from the TOC and set up subscription for
+        changes in positions"""
+        group = 'anchorpos'
+        toc = crazyflie.param.toc.toc
+        anchor_group = toc[group]
+        for name in anchor_group.keys():
+            crazyflie.param.add_update_callback(
+                group=group, name=name, cb=self._anchor_parameter_updated)
+
+    def _anchor_parameter_updated(self, name, value):
+        """Callback from the param layer when a parameter has been updated"""
+        self.set_anchor_position(name, value)
+
+    def set_anchor_position(self, name, value):
+        """Set the position of an anchor. If the anchor does not exist yet in
+        the anchor dictionary, create it."""
+        valid, anchor_number, axis = self._parse_anchor_parameter_name(name)
+        if valid:
+            self._get_anchor(anchor_number).set_position(axis, value)
+            self._update_graphics()
+
+    def _parse_anchor_parameter_name(self, name):
+        """Parse an anchor position parameter name and extract anchor number
+           and axis. The format is 'anchorpos.anchor0y'."""
+        valid = False
+        anchor = 0
+        axis = 0
+        if name.startswith('anchorpos.anchor'):
+            anchor = int(name[16])
+            axis = name[17]
+            valid = True
+        return (valid, anchor, axis)
+
+    def _get_anchor(self, anchor_number):
+        if anchor_number not in self._anchors:
+            self._anchors[anchor_number] = Anchor()
+        return self._anchors[anchor_number]
+
+    def _update_graphics(self):
+        pass
+        # TODO krri Implement
