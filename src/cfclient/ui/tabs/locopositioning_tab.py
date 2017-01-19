@@ -70,10 +70,14 @@ class Anchor:
 class LocoPositioningTab(Tab, locopositioning_tab_class):
     """Tab for plotting Loco Positioning data"""
 
+    # Update period in ms
+    UPDATE_PERIOD = 100
+
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
     _log_error_signal = pyqtSignal(object, str)
     _anchor_range_signal = pyqtSignal(int, object, object)
+    _position_signal = pyqtSignal(int, object, object)
 
     def __init__(self, tabWidget, helper, *args):
         super(LocoPositioningTab, self).__init__(*args)
@@ -86,12 +90,15 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._helper = helper
 
         self._anchors = {}
+        self._position = []
+        self._clear_state()
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
         self._connected_signal.connect(self._connected)
         self._disconnected_signal.connect(self._disconnected)
         self._anchor_range_signal.connect(self._anchor_range_received)
+        self._position_signal.connect(self._position_received)
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
@@ -100,13 +107,19 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._helper.cf.disconnected.add_callback(
             self._disconnected_signal.emit)
 
+    def _clear_state(self):
+        self._anchors = {}
+        self._position = [0.0, 0.0, 0.0]
+
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
         logger.debug("Crazyflie connected to {}".format(link_uri))
 
+        self._clear_state()
+
         try:
             self._register_logblock(
-                "LoPo0",
+                "LoPoTab0",
                 [
                     ("ranging.distance1", "float"),
                     ("ranging.distance2", "float"),
@@ -117,7 +130,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
                 self._log_error_signal.emit)
 
             self._register_logblock(
-                "LoPo1",
+                "LoPoTab1",
                 [
                     ("ranging.distance5", "float"),
                     ("ranging.distance6", "float"),
@@ -125,7 +138,16 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
                     ("ranging.distance8", "float"),
                 ],
                 self._anchor_range_signal.emit,
-                self._log_error_signal.emit)
+                self._log_error_signal.emit),
+            self._register_logblock(
+                "LoPoTab2",
+                [
+                    ("kalman.stateX", "float"),
+                    ("kalman.stateY", "float"),
+                    ("kalman.stateZ", "float"),
+                ],
+                self._position_signal.emit,
+                self._log_error_signal.emit),
         except KeyError as e:
             logger.warning(str(e))
         except AttributeError as e:
@@ -136,13 +158,12 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
         logger.debug("Crazyflie disconnected from {}".format(link_uri))
-        self._anchors = {}
         self._update_graphics()
 
     def _register_logblock(self, logblock_name, variables, data_cb, error_cb):
         """Register log data to listen for. One logblock can contain a limited
         number of parameters (6 for floats)."""
-        lg = LogConfig(logblock_name, Config().get("ui_update_period"))
+        lg = LogConfig(logblock_name, self.UPDATE_PERIOD)
         for variable in variables:
             lg.add_variable(variable[0], variable[1])
 
@@ -156,9 +177,21 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         """Callback from the logging system when a range is updated."""
         is_updated = False
         for name, value in data.items():
-            valid, anchor_number = self._parse_param_name(name)
+            valid, anchor_number = self._parse_range_param_name(name)
             if valid:
                 self._get_anchor(anchor_number).distance = value
+                is_updated = True
+
+        if is_updated:
+            self._update_graphics()
+
+    def _position_received(self, timestamp, data, logconf):
+        """Callback from the logging system when the position is updated."""
+        is_updated = False
+        for name, value in data.items():
+            valid, axis = self._parse_position_param_name(name)
+            if valid:
+                self._position[axis] = value
                 is_updated = True
 
         if is_updated:
@@ -169,16 +202,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         QMessageBox.about(self, "LocoPositioningTab error",
                           "Error when using log config",
                           " [{0}]: {1}".format(log_conf.name, msg))
-
-    def _parse_param_name(self, name):
-        """Parse a parameter name for a ranging distance and return the number
-           of the anchor. The name is on the format 'ranging.distance4' """
-        valid = False
-        anchor = 0
-        if name.startswith('ranging.distance'):
-            anchor = int(name[-1])
-            valid = True
-        return (valid, anchor)
 
     def _subscribe_to_parameters(self, crazyflie):
         """Get anchor positions from the TOC and set up subscription for
@@ -201,6 +224,27 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         if valid:
             self._get_anchor(anchor_number).set_position(axis, value)
             self._update_graphics()
+
+    def _parse_range_param_name(self, name):
+        """Parse a parameter name for a ranging distance and return the number
+           of the anchor. The name is on the format 'ranging.distance4' """
+        valid = False
+        anchor = 0
+        if name.startswith('ranging.distance'):
+            anchor = int(name[-1])
+            valid = True
+        return (valid, anchor)
+
+    def _parse_position_param_name(self, name):
+        """Parse a parameter name for a position and return the
+           axis (0=x, 1=y, 2=z).
+           The param name is on the format 'kalman.stateY' """
+        valid = False
+        axis = 0
+        if name.startswith('kalman.state'):
+            axis = {'X': 0, 'Y': 1, 'Z': 2}[name[-1]]
+            valid = True
+        return (valid, axis)
 
     def _parse_anchor_parameter_name(self, name):
         """Parse an anchor position parameter name and extract anchor number
