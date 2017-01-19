@@ -39,7 +39,6 @@ from PyQt4.QtGui import QMessageBox
 import cfclient
 from cfclient.ui.tab import Tab
 
-from cfclient.utils.config import Config
 from cflib.crazyflie.log import LogConfig
 
 __author__ = 'Bitcraze AB'
