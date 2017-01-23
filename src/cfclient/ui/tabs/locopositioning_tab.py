@@ -31,15 +31,19 @@ Shows data for the Loco Positioning system
 """
 
 import logging
+from enum import Enum
 
 from PyQt4 import uic
-from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtCore import pyqtSignal, QTimer
 from PyQt4.QtGui import QMessageBox
 
 import cfclient
 from cfclient.ui.tab import Tab
 
 from cflib.crazyflie.log import LogConfig
+
+import threading
+import copy
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LocoPositioningTab']
@@ -48,6 +52,21 @@ logger = logging.getLogger(__name__)
 
 locopositioning_tab_class = uic.loadUiType(
     cfclient.module_path + "/ui/tabs/locopositioning_tab.ui")[0]
+
+# Try the imports for PyQtGraph to see if it is installed
+try:
+    import pyqtgraph as pg
+    from pyqtgraph import ViewBox  # noqa
+    import pyqtgraph.console  # noqa
+    import numpy as np  # noqa
+
+    _pyqtgraph_found = True
+except Exception:
+    import traceback
+
+    logger.warning("PyQtGraph (or dependency) failed to import:\n%s",
+                   traceback.format_exc())
+    _pyqtgraph_found = False
 
 
 class Anchor:
@@ -66,17 +85,107 @@ class Anchor:
             raise ValueError('"{}" is an unknown axis'.format(axis))
 
 
+class Link:
+    def __init__(self, from_view, from_axis, to_view, to_axis):
+        self.from_view = from_view
+        self.from_axis = from_axis
+        self.to_view = to_view
+        self.to_axis = to_axis
+
+
+class PlotWrapper:
+    XAxis = 0
+    YAxis = 1
+    _refs = []
+
+    axis_dict = {'x': 0, 'y': 1, 'z': 2}
+
+    ANCHOR_BRUSH = (0, 255, 0)
+    HIGHLIGHT_ANCHOR_BRUSH = (255, 0, 0)
+    POSITION_BRUSH = (0, 0, 255)
+
+    HIGHLIGHT_DISTANCE = 0.5
+
+    def __init__(self, title, horizontal, vertical):
+        self._horizontal = horizontal
+        self._vertical = vertical
+        self._title = title
+        self.widget = pg.PlotWidget(title=title)
+        self._links = []
+
+        self.widget.setLabel('left', self._vertical, units='m')
+        self.widget.setLabel('bottom', self._horizontal, units='m')
+        self.widget.setRange(xRange=(0, 10.0), yRange=(0, 10.0))
+        self.widget.getViewBox().sigRangeChanged.connect(self._view_changed)
+        self.view = self.widget.getViewBox()
+
+    def update(self, anchors, pos, display_mode):
+        self.widget.clear()
+        for (i, anchor) in anchors.items():
+            anchor_v = getattr(anchor, self._horizontal)
+            anchor_h = getattr(anchor, self._vertical)
+            self._plotAnchor(anchor_v, anchor_h, i, anchor.distance,
+                             display_mode)
+
+        if display_mode is DisplayMode.estimated_position:
+            cf_h = pos[PlotWrapper.axis_dict[self._horizontal]]
+            cf_v = pos[PlotWrapper.axis_dict[self._vertical]]
+            self.widget.plot([cf_h], [cf_v], pen=None,
+                             symbolBrush=PlotWrapper.POSITION_BRUSH)
+
+    def _plotAnchor(self, x, y, anchor_id, distance, display_mode):
+        brush = PlotWrapper.ANCHOR_BRUSH
+        if display_mode is DisplayMode.identify_anchor:
+            if distance < PlotWrapper.HIGHLIGHT_DISTANCE:
+                brush = PlotWrapper.HIGHLIGHT_ANCHOR_BRUSH
+
+        self.widget.plot([x], [y], pen=None, symbolBrush=brush)
+
+        text = pg.TextItem(text="{}".format(anchor_id))
+        self.widget.addItem(text)
+        text.setPos(x, y)
+
+    def _view_changed(self, view, settings):
+        logger.info(
+            "Range changed in {}".format(threading.current_thread().name))
+        for link in self._links:
+            if view == link.from_view:
+                if link.to_view in self._refs:
+                    return
+                self._refs.append(view)
+                # logger.info("Setting to target")
+                if link.to_axis == PlotWrapper.XAxis:
+                    link.to_view.setRange(xRange=settings[link.from_axis])
+                if link.to_axis == PlotWrapper.YAxis:
+                    link.to_view.setRange(yRange=settings[link.from_axis])
+
+        PlotWrapper._refs = []
+
+    def add_link(self, from_axis, to_plot, to_axis):
+        link = Link(self.view, from_axis, to_plot.view, to_axis)
+        self._links.append(link)
+
+
+class DisplayMode(Enum):
+    identify_anchor = 1
+    estimated_position = 2
+
+
 class LocoPositioningTab(Tab, locopositioning_tab_class):
     """Tab for plotting Loco Positioning data"""
 
-    # Update period in ms
+    # Update period of parameter data in ms
     UPDATE_PERIOD = 100
+
+    # Frame rate
+    FPS = 10
 
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
     _log_error_signal = pyqtSignal(object, str)
     _anchor_range_signal = pyqtSignal(int, object, object)
     _position_signal = pyqtSignal(int, object, object)
+    _anchor_position_signal = pyqtSignal(object, object)
 
     def __init__(self, tabWidget, helper, *args):
         super(LocoPositioningTab, self).__init__(*args)
@@ -91,6 +200,9 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._anchors = {}
         self._position = []
         self._clear_state()
+        self._refs = []
+
+        self._display_mode = DisplayMode.estimated_position
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
@@ -98,6 +210,17 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._disconnected_signal.connect(self._disconnected)
         self._anchor_range_signal.connect(self._anchor_range_received)
         self._position_signal.connect(self._position_received)
+        self._anchor_position_signal.connect(self._anchor_parameter_updated)
+
+        self._id_anchor_button.clicked.connect(
+            lambda enabled:
+            self._set_display_mode(DisplayMode.identify_anchor)
+        )
+
+        self._estimated_postion_button.clicked.connect(
+            lambda enabled:
+            self._set_display_mode(DisplayMode.estimated_position)
+        )
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
@@ -105,6 +228,39 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
         self._helper.cf.disconnected.add_callback(
             self._disconnected_signal.emit)
+
+        self._plot_yz = PlotWrapper("Y/Z", "y", "z")
+        self.plotLayout.addWidget(self._plot_yz.widget, 2, 2)
+
+        self._plot_xy = PlotWrapper("X/Y", "x", "y")
+        self.plotLayout.addWidget(self._plot_xy.widget, 1, 1)
+
+        self._plot_xz = PlotWrapper("X/Z", "x", "z")
+        self.plotLayout.addWidget(self._plot_xz.widget, 2, 1)
+
+        # Add links for plot axis
+        self._plot_yz.add_link(PlotWrapper.YAxis, self._plot_xz,
+                               PlotWrapper.YAxis)
+        self._plot_xz.add_link(PlotWrapper.YAxis, self._plot_yz,
+                               PlotWrapper.YAxis)
+
+        self._plot_yz.add_link(PlotWrapper.XAxis, self._plot_xy,
+                               PlotWrapper.YAxis)
+        self._plot_xy.add_link(PlotWrapper.YAxis, self._plot_yz,
+                               PlotWrapper.XAxis)
+
+        self._plot_xz.add_link(PlotWrapper.XAxis, self._plot_xy,
+                               PlotWrapper.XAxis)
+        self._plot_xy.add_link(PlotWrapper.XAxis, self._plot_xz,
+                               PlotWrapper.XAxis)
+
+        self._graph_timer = QTimer()
+        self._graph_timer.setInterval(1000 / self.FPS)
+        self._graph_timer.timeout.connect(self._update_graphics)
+        self._graph_timer.start()
+
+    def _set_display_mode(self, display_mode):
+        self._display_mode = display_mode
 
     def _clear_state(self):
         self._anchors = {}
@@ -120,10 +276,10 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             self._register_logblock(
                 "LoPoTab0",
                 [
+                    ("ranging.distance0", "float"),
                     ("ranging.distance1", "float"),
                     ("ranging.distance2", "float"),
                     ("ranging.distance3", "float"),
-                    ("ranging.distance4", "float"),
                 ],
                 self._anchor_range_signal.emit,
                 self._log_error_signal.emit)
@@ -131,10 +287,10 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             self._register_logblock(
                 "LoPoTab1",
                 [
+                    ("ranging.distance4", "float"),
                     ("ranging.distance5", "float"),
                     ("ranging.distance6", "float"),
                     ("ranging.distance7", "float"),
-                    ("ranging.distance8", "float"),
                 ],
                 self._anchor_range_signal.emit,
                 self._log_error_signal.emit),
@@ -157,7 +313,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
         logger.debug("Crazyflie disconnected from {}".format(link_uri))
-        self._update_graphics()
 
     def _register_logblock(self, logblock_name, variables, data_cb, error_cb):
         """Register log data to listen for. One logblock can contain a limited
@@ -174,27 +329,17 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
     def _anchor_range_received(self, timestamp, data, logconf):
         """Callback from the logging system when a range is updated."""
-        is_updated = False
         for name, value in data.items():
             valid, anchor_number = self._parse_range_param_name(name)
             if valid:
-                self._get_anchor(anchor_number).distance = value
-                is_updated = True
-
-        if is_updated:
-            self._update_graphics()
+                self._get_anchor(anchor_number).distance = float(value)
 
     def _position_received(self, timestamp, data, logconf):
         """Callback from the logging system when the position is updated."""
-        is_updated = False
         for name, value in data.items():
             valid, axis = self._parse_position_param_name(name)
             if valid:
-                self._position[axis] = value
-                is_updated = True
-
-        if is_updated:
-            self._update_graphics()
+                self._position[axis] = float(value)
 
     def _logging_error(self, log_conf, msg):
         """Callback from the log layer when an error occurs"""
@@ -210,7 +355,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         anchor_group = toc[group]
         for name in anchor_group.keys():
             crazyflie.param.add_update_callback(
-                group=group, name=name, cb=self._anchor_parameter_updated)
+                group=group, name=name, cb=self._anchor_position_signal.emit)
 
     def _anchor_parameter_updated(self, name, value):
         """Callback from the param layer when a parameter has been updated"""
@@ -221,8 +366,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         the anchor dictionary, create it."""
         valid, anchor_number, axis = self._parse_anchor_parameter_name(name)
         if valid:
-            self._get_anchor(anchor_number).set_position(axis, value)
-            self._update_graphics()
+            self._get_anchor(anchor_number).set_position(axis, float(value))
 
     def _parse_range_param_name(self, name):
         """Parse a parameter name for a ranging distance and return the number
@@ -263,5 +407,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         return self._anchors[anchor_number]
 
     def _update_graphics(self):
-        pass
-        # TODO krri Implement
+        anchors = copy.deepcopy(self._anchors)
+        self._plot_yz.update(anchors, self._position, self._display_mode)
+        self._plot_xy.update(anchors, self._position, self._display_mode)
+        self._plot_xz.update(anchors, self._position, self._display_mode)

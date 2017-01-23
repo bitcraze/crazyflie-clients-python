@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>545</width>
-    <height>506</height>
+    <width>575</width>
+    <height>535</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,65 +15,47 @@
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
-    <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,0,0,0" columnstretch="0" rowminimumheight="0,0,0,0,0,0,0,0">
+    <layout class="QGridLayout" name="gridLayout" rowstretch="0" columnstretch="0">
      <property name="leftMargin">
       <number>0</number>
      </property>
-     <item row="3" column="0">
-      <widget class="QProgressBar" name="anchor4_distance">
-       <property name="value">
-        <number>24</number>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QProgressBar" name="anchor6_distance">
-       <property name="value">
-        <number>24</number>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QProgressBar" name="anchor2_distance">
-       <property name="value">
-        <number>24</number>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="0">
-      <widget class="QProgressBar" name="anchor1_distance">
-       <property name="value">
-        <number>24</number>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QProgressBar" name="anchor3_distance">
-       <property name="value">
-        <number>24</number>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
-      <widget class="QProgressBar" name="anchor5_distance">
-       <property name="value">
-        <number>24</number>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
-      <widget class="QProgressBar" name="anchor7_distance">
-       <property name="value">
-        <number>24</number>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="0">
-      <widget class="QProgressBar" name="anchor8_distance">
-       <property name="value">
-        <number>24</number>
-       </property>
-      </widget>
+      <layout class="QGridLayout" name="plotLayout">
+       <item row="1" column="0">
+        <layout class="QVBoxLayout" name="_inputLayout">
+         <item>
+          <widget class="QRadioButton" name="_estimated_postion_button">
+           <property name="text">
+            <string>Position estimate</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="_id_anchor_button">
+           <property name="text">
+            <string>Anchor identification</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>
