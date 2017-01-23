@@ -42,7 +42,6 @@ from cfclient.ui.tab import Tab
 
 from cflib.crazyflie.log import LogConfig
 
-import threading
 import copy
 
 __author__ = 'Bitcraze AB'
@@ -104,6 +103,7 @@ class PlotWrapper:
     HIGHLIGHT_ANCHOR_BRUSH = (255, 0, 0)
     POSITION_BRUSH = (0, 0, 255)
 
+    VICINITY_DISTANCE = 2.0
     HIGHLIGHT_DISTANCE = 0.5
 
     def __init__(self, title, horizontal, vertical):
@@ -124,8 +124,8 @@ class PlotWrapper:
         for (i, anchor) in anchors.items():
             anchor_v = getattr(anchor, self._horizontal)
             anchor_h = getattr(anchor, self._vertical)
-            self._plotAnchor(anchor_v, anchor_h, i, anchor.distance,
-                             display_mode)
+            self._plot_anchor(anchor_v, anchor_h, i, anchor.distance,
+                              display_mode)
 
         if display_mode is DisplayMode.estimated_position:
             cf_h = pos[PlotWrapper.axis_dict[self._horizontal]]
@@ -133,9 +133,15 @@ class PlotWrapper:
             self.widget.plot([cf_h], [cf_v], pen=None,
                              symbolBrush=PlotWrapper.POSITION_BRUSH)
 
-    def _plotAnchor(self, x, y, anchor_id, distance, display_mode):
+    def _plot_anchor(self, x, y, anchor_id, distance, display_mode):
         brush = PlotWrapper.ANCHOR_BRUSH
         if display_mode is DisplayMode.identify_anchor:
+            if distance < PlotWrapper.VICINITY_DISTANCE:
+                brush = self._mix_brushes(
+                    brush,
+                    PlotWrapper.HIGHLIGHT_ANCHOR_BRUSH,
+                    distance / PlotWrapper.VICINITY_DISTANCE)
+
             if distance < PlotWrapper.HIGHLIGHT_DISTANCE:
                 brush = PlotWrapper.HIGHLIGHT_ANCHOR_BRUSH
 
@@ -145,15 +151,26 @@ class PlotWrapper:
         self.widget.addItem(text)
         text.setPos(x, y)
 
+    def _mix_brushes(self, brush1, brush2, mix):
+        if mix < 0.0:
+            return brush1
+        if mix > 1.0:
+            return brush2
+
+        b1 = mix
+        b2 = 1.0 - mix
+        return (
+            brush1[0] * b1 + brush2[0] * b2,
+            brush1[1] * b1 + brush2[1] * b2,
+            brush1[2] * b1 + brush2[2] * b2,
+        )
+
     def _view_changed(self, view, settings):
-        logger.info(
-            "Range changed in {}".format(threading.current_thread().name))
         for link in self._links:
             if view == link.from_view:
                 if link.to_view in self._refs:
                     return
                 self._refs.append(view)
-                # logger.info("Setting to target")
                 if link.to_axis == PlotWrapper.XAxis:
                     link.to_view.setRange(xRange=settings[link.from_axis])
                 if link.to_axis == PlotWrapper.YAxis:
