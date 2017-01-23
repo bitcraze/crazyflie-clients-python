@@ -106,6 +106,9 @@ class PlotWrapper:
     VICINITY_DISTANCE = 2.0
     HIGHLIGHT_DISTANCE = 0.5
 
+    ANCHOR_SIZE = 10
+    HIGHLIGHT_SIZE = 20
+
     def __init__(self, title, horizontal, vertical):
         self._horizontal = horizontal
         self._vertical = vertical
@@ -135,6 +138,7 @@ class PlotWrapper:
 
     def _plot_anchor(self, x, y, anchor_id, distance, display_mode):
         brush = PlotWrapper.ANCHOR_BRUSH
+        size = PlotWrapper.ANCHOR_SIZE
         if display_mode is DisplayMode.identify_anchor:
             if distance < PlotWrapper.VICINITY_DISTANCE:
                 brush = self._mix_brushes(
@@ -144,8 +148,10 @@ class PlotWrapper:
 
             if distance < PlotWrapper.HIGHLIGHT_DISTANCE:
                 brush = PlotWrapper.HIGHLIGHT_ANCHOR_BRUSH
+                size = PlotWrapper.HIGHLIGHT_SIZE
 
-        self.widget.plot([x], [y], pen=None, symbolBrush=brush)
+        self.widget.plot([x], [y], pen=None, symbolBrush=brush,
+                         symbolSize=size)
 
         text = pg.TextItem(text="{}".format(anchor_id))
         self.widget.addItem(text)
