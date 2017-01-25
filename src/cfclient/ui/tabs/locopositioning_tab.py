@@ -253,13 +253,13 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             self._disconnected_signal.emit)
 
         self._plot_yz = PlotWrapper("Y/Z", "y", "z")
-        self.plotLayout.addWidget(self._plot_yz.widget, 2, 2)
+        self._plot_yz_layout.addWidget(self._plot_yz.widget)
 
         self._plot_xy = PlotWrapper("X/Y", "x", "y")
-        self.plotLayout.addWidget(self._plot_xy.widget, 1, 1)
+        self._plot_xy_layout.addWidget(self._plot_xy.widget)
 
         self._plot_xz = PlotWrapper("X/Z", "x", "z")
-        self.plotLayout.addWidget(self._plot_xz.widget, 2, 1)
+        self._plot_xz_layout.addWidget(self._plot_xz.widget)
 
         # Add links for plot axis
         self._plot_yz.add_link(PlotWrapper.YAxis, self._plot_xz,
