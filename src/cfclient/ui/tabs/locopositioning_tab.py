@@ -130,7 +130,7 @@ class PlotWrapper:
     def update(self, anchors, pos, display_mode):
         self.widget.clear()
 
-        # Sort anchors in depth order to add the one closest last
+        # Sort anchors in depth order to add the one closes last
         for (i, anchor) in sorted(
                 anchors.items(),
                 key=lambda item: getattr(item[1], self._depth), reverse=True):
