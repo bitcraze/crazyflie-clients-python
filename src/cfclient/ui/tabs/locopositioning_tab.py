@@ -84,26 +84,29 @@ class Anchor:
             raise ValueError('"{}" is an unknown axis'.format(axis))
 
 
-class Link:
-    def __init__(self, from_view, from_axis, to_view, to_axis):
-        self.from_view = from_view
+class AxisScaleStep:
+    def __init__(self, from_view, from_axis, to_view, to_axis,
+                 center_only=False):
+        self.from_view = from_view.view
         self.from_axis = from_axis
-        self.to_view = to_view
+        self.to_view = to_view.view
         self.to_axis = to_axis
+        self.center_only = center_only
 
 
 class PlotWrapper:
     XAxis = 0
     YAxis = 1
     _refs = []
+    _change_lock = False
 
     axis_dict = {'x': 0, 'y': 1, 'z': 2}
 
-    ANCHOR_BRUSH = (0, 255, 0)
-    HIGHLIGHT_ANCHOR_BRUSH = (255, 0, 0)
+    ANCHOR_BRUSH = (60, 60, 60)
+    HIGHLIGHT_ANCHOR_BRUSH = (0, 255, 0)
     POSITION_BRUSH = (0, 0, 255)
 
-    VICINITY_DISTANCE = 2.0
+    VICINITY_DISTANCE = 2.5
     HIGHLIGHT_DISTANCE = 0.5
 
     ANCHOR_SIZE = 10
@@ -112,19 +115,25 @@ class PlotWrapper:
     def __init__(self, title, horizontal, vertical):
         self._horizontal = horizontal
         self._vertical = vertical
+        self._depth = self._find_missing_axis(horizontal, vertical)
         self._title = title
         self.widget = pg.PlotWidget(title=title)
-        self._links = []
+        self._axis_scale_steps = []
 
         self.widget.setLabel('left', self._vertical, units='m')
         self.widget.setLabel('bottom', self._horizontal, units='m')
-        self.widget.setRange(xRange=(0, 10.0), yRange=(0, 10.0))
+
+        self.widget.setAspectLocked(True, 1)
         self.widget.getViewBox().sigRangeChanged.connect(self._view_changed)
         self.view = self.widget.getViewBox()
 
     def update(self, anchors, pos, display_mode):
         self.widget.clear()
-        for (i, anchor) in anchors.items():
+
+        # Sort anchors in depth order to add the one closest last
+        for (i, anchor) in sorted(
+                anchors.items(),
+                key=lambda item: getattr(item[1], self._depth), reverse=True):
             anchor_v = getattr(anchor, self._horizontal)
             anchor_h = getattr(anchor, self._vertical)
             self._plot_anchor(anchor_v, anchor_h, i, anchor.distance,
@@ -135,6 +144,13 @@ class PlotWrapper:
             cf_v = pos[PlotWrapper.axis_dict[self._vertical]]
             self.widget.plot([cf_h], [cf_v], pen=None,
                              symbolBrush=PlotWrapper.POSITION_BRUSH)
+
+    def _find_missing_axis(self, axis1, axis2):
+        all = set(self.axis_dict.keys())
+        all.remove(axis1)
+        all.remove(axis2)
+
+        return list(all)[0]
 
     def _plot_anchor(self, x, y, anchor_id, distance, display_mode):
         brush = PlotWrapper.ANCHOR_BRUSH
@@ -172,21 +188,34 @@ class PlotWrapper:
         )
 
     def _view_changed(self, view, settings):
-        for link in self._links:
-            if view == link.from_view:
-                if link.to_view in self._refs:
-                    return
-                self._refs.append(view)
-                if link.to_axis == PlotWrapper.XAxis:
-                    link.to_view.setRange(xRange=settings[link.from_axis])
-                if link.to_axis == PlotWrapper.YAxis:
-                    link.to_view.setRange(yRange=settings[link.from_axis])
+        # Ignore all callbacks until this change is processed
+        if PlotWrapper._change_lock:
+            return
+        PlotWrapper._change_lock = True
 
-        PlotWrapper._refs = []
+        for step in self._axis_scale_steps:
+            range = step.from_view.viewRange()[step.from_axis]
+            new_range = range
 
-    def add_link(self, from_axis, to_plot, to_axis):
-        link = Link(self.view, from_axis, to_plot.view, to_axis)
-        self._links.append(link)
+            if step.center_only:
+                center = (range[0] + range[1]) / 2
+                current_range = step.to_view.viewRange()[step.to_axis]
+                current_center = (current_range[0] + current_range[1]) / 2
+                delta = center - current_center
+                new_range = [current_range[0] + delta,
+                             current_range[1] + delta]
+
+            if step.to_axis is PlotWrapper.XAxis:
+                step.to_view.setRange(xRange=new_range, padding=0.0,
+                                      update=True)
+            else:
+                step.to_view.setRange(yRange=new_range, padding=0.0,
+                                      update=True)
+
+        PlotWrapper._change_lock = False
+
+    def set_scale_steps(self, steps):
+        self._axis_scale_steps = steps
 
 
 class DisplayMode(Enum):
@@ -252,30 +281,43 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._helper.cf.disconnected.add_callback(
             self._disconnected_signal.emit)
 
-        self._plot_yz = PlotWrapper("Y/Z", "y", "z")
-        self._plot_yz_layout.addWidget(self._plot_yz.widget)
+        self._plot_xy = PlotWrapper("Top view (X/Y)", "x", "y")
+        self._plot_top_left_layout.addWidget(self._plot_xy.widget)
 
-        self._plot_xy = PlotWrapper("X/Y", "x", "y")
-        self._plot_xy_layout.addWidget(self._plot_xy.widget)
+        self._plot_xz = PlotWrapper("Front view (X/Z)", "x", "z")
+        self._plot_bottom_left_layout.addWidget(self._plot_xz.widget)
 
-        self._plot_xz = PlotWrapper("X/Z", "x", "z")
-        self._plot_xz_layout.addWidget(self._plot_xz.widget)
+        self._plot_yz = PlotWrapper("Left view (Y/Z)", "y", "z")
+        self._plot_bottom_right_layout.addWidget(self._plot_yz.widget)
 
-        # Add links for plot axis
-        self._plot_yz.add_link(PlotWrapper.YAxis, self._plot_xz,
-                               PlotWrapper.YAxis)
-        self._plot_xz.add_link(PlotWrapper.YAxis, self._plot_yz,
-                               PlotWrapper.YAxis)
+        self._plot_xy.set_scale_steps([
+            AxisScaleStep(self._plot_xy, PlotWrapper.XAxis,
+                          self._plot_xz, PlotWrapper.XAxis),
+            AxisScaleStep(self._plot_xz, PlotWrapper.YAxis,
+                          self._plot_yz, PlotWrapper.YAxis),
+            AxisScaleStep(self._plot_xy, PlotWrapper.YAxis,
+                          self._plot_yz, PlotWrapper.XAxis, center_only=True)
+        ])
 
-        self._plot_yz.add_link(PlotWrapper.XAxis, self._plot_xy,
-                               PlotWrapper.YAxis)
-        self._plot_xy.add_link(PlotWrapper.YAxis, self._plot_yz,
-                               PlotWrapper.XAxis)
+        self._plot_xz.set_scale_steps([
+            AxisScaleStep(self._plot_xz, PlotWrapper.XAxis,
+                          self._plot_xy, PlotWrapper.XAxis),
+            AxisScaleStep(self._plot_xz, PlotWrapper.YAxis,
+                          self._plot_yz, PlotWrapper.YAxis),
+            AxisScaleStep(self._plot_xy, PlotWrapper.YAxis,
+                          self._plot_yz, PlotWrapper.XAxis, center_only=True)
+        ])
 
-        self._plot_xz.add_link(PlotWrapper.XAxis, self._plot_xy,
-                               PlotWrapper.XAxis)
-        self._plot_xy.add_link(PlotWrapper.XAxis, self._plot_xz,
-                               PlotWrapper.XAxis)
+        self._plot_yz.set_scale_steps([
+            AxisScaleStep(self._plot_yz, PlotWrapper.YAxis,
+                          self._plot_xz, PlotWrapper.YAxis),
+            AxisScaleStep(self._plot_xz, PlotWrapper.XAxis,
+                          self._plot_xy, PlotWrapper.XAxis),
+            AxisScaleStep(self._plot_yz, PlotWrapper.XAxis,
+                          self._plot_xy, PlotWrapper.YAxis, center_only=True)
+        ])
+
+        self._plot_xy.view.setRange(xRange=(0.0, 5.0))
 
         self._graph_timer = QTimer()
         self._graph_timer.setInterval(1000 / self.FPS)
@@ -299,10 +341,10 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             self._register_logblock(
                 "LoPoTab0",
                 [
-                    ("ranging.distance0", "float"),
-                    ("ranging.distance1", "float"),
-                    ("ranging.distance2", "float"),
-                    ("ranging.distance3", "float"),
+                    ("ranging", "distance0", "float"),
+                    ("ranging", "distance1", "float"),
+                    ("ranging", "distance2", "float"),
+                    ("ranging", "distance3", "float"),
                 ],
                 self._anchor_range_signal.emit,
                 self._log_error_signal.emit)
@@ -310,19 +352,20 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             self._register_logblock(
                 "LoPoTab1",
                 [
-                    ("ranging.distance4", "float"),
-                    ("ranging.distance5", "float"),
-                    ("ranging.distance6", "float"),
-                    ("ranging.distance7", "float"),
+                    ("ranging", "distance4", "float"),
+                    ("ranging", "distance5", "float"),
+                    ("ranging", "distance6", "float"),
+                    ("ranging", "distance7", "float"),
                 ],
                 self._anchor_range_signal.emit,
                 self._log_error_signal.emit),
+
             self._register_logblock(
                 "LoPoTab2",
                 [
-                    ("kalman.stateX", "float"),
-                    ("kalman.stateY", "float"),
-                    ("kalman.stateZ", "float"),
+                    ("kalman", "stateX", "float"),
+                    ("kalman", "stateY", "float"),
+                    ("kalman", "stateZ", "float"),
                 ],
                 self._position_signal.emit,
                 self._log_error_signal.emit),
@@ -342,13 +385,21 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         number of parameters (6 for floats)."""
         lg = LogConfig(logblock_name, self.UPDATE_PERIOD)
         for variable in variables:
-            lg.add_variable(variable[0], variable[1])
+            if self._is_in_toc(variable):
+                lg.add_variable('{}.{}'.format(variable[0], variable[1]),
+                                variable[2])
 
         self._helper.cf.log.add_config(lg)
         lg.data_received_cb.add_callback(data_cb)
         lg.error_cb.add_callback(error_cb)
         lg.start()
         return lg
+
+    def _is_in_toc(self, variable):
+        toc = self._helper.cf.log.toc
+        group = variable[0]
+        param = variable[1]
+        return group in toc.toc and param in toc.toc[group]
 
     def _anchor_range_received(self, timestamp, data, logconf):
         """Callback from the logging system when a range is updated."""
