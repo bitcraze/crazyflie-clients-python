@@ -122,3 +122,43 @@ class ConfigManager(metaclass=Singleton):
         except Exception as e:
             logger.warning("Exception while parsing inputconfig file: %s ", e)
         return self._list_of_configs
+
+    def save_config(self, input_map, config_name):
+        """Save a configuration to file"""
+        mapping = {'inputconfig': {'inputdevice': {'axis': []}}}
+
+        # Create intermediate structure for the configuration file
+        funcs = {}
+        for m in input_map:
+            key = input_map[m]["key"]
+            if key not in funcs:
+                funcs[key] = []
+            funcs[key].append(input_map[m])
+
+        # Create a mapping for each axis, take care to handle
+        # split axis configurations
+        for a in funcs:
+            func = funcs[a]
+            axis = {}
+            # Check for split axis
+            if len(func) > 1:
+                axis["ids"] = [func[0]["id"], func[1]["id"]]
+                axis["scale"] = func[1]["scale"]
+            else:
+                axis["id"] = func[0]["id"]
+                axis["scale"] = func[0]["scale"]
+            axis["key"] = func[0]["key"]
+            axis["name"] = func[0]["key"]  # Name isn't used...
+            axis["type"] = func[0]["type"]
+            mapping["inputconfig"]["inputdevice"]["axis"].append(axis)
+
+        mapping["inputconfig"]['inputdevice']['name'] = config_name
+        mapping["inputconfig"]['inputdevice']['updateperiod'] = 10
+
+        filename = ConfigManager().configs_dir + "/%s.json" % config_name
+        logger.info("Saving config to [%s]", filename)
+        json_data = open(filename, 'w')
+        json_data.write(json.dumps(mapping, indent=2))
+        json_data.close()
+
+        self.conf_needs_reload.call(config_name)

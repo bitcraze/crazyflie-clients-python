@@ -27,7 +27,6 @@
 Dialogue used to select and configure an inputdevice. This includes mapping
 buttons and axis to match controls for the Crazyflie.
 """
-import json
 import logging
 
 import cfclient
@@ -380,46 +379,8 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         logger.warning("deleteConfig not implemented")
 
     def _save_config(self):
-        configName = str(self.profileCombo.currentText())
-
-        mapping = {'inputconfig': {'inputdevice': {'axis': []}}}
-
-        # Create intermediate structure for the configuration file
-        funcs = {}
-        for m in self._map:
-            key = self._map[m]["key"]
-            if key not in funcs:
-                funcs[key] = []
-            funcs[key].append(self._map[m])
-
-        # Create a mapping for each axis, take care to handle
-        # split axis configurations
-        for a in funcs:
-            func = funcs[a]
-            axis = {}
-            # Check for split axis
-            if len(func) > 1:
-                axis["ids"] = [func[0]["id"], func[1]["id"]]
-                axis["scale"] = func[1]["scale"]
-            else:
-                axis["id"] = func[0]["id"]
-                axis["scale"] = func[0]["scale"]
-            axis["key"] = func[0]["key"]
-            axis["name"] = func[0]["key"]  # Name isn't used...
-            axis["type"] = func[0]["type"]
-            mapping["inputconfig"]["inputdevice"]["axis"].append(axis)
-
-        mapping["inputconfig"]['inputdevice']['name'] = configName
-        mapping["inputconfig"]['inputdevice']['updateperiod'] = 10
-
-        config_name = self.profileCombo.currentText()
-        filename = ConfigManager().configs_dir + "/%s.json" % config_name
-        logger.info("Saving config to [%s]", filename)
-        json_data = open(filename, 'w')
-        json_data.write(json.dumps(mapping, indent=2))
-        json_data.close()
-
-        ConfigManager().conf_needs_reload.call(config_name)
+        config_name = str(self.profileCombo.currentText())
+        ConfigManager().save_config(self._map, config_name)
         self.close()
 
     def showEvent(self, event):
