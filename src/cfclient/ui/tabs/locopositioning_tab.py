@@ -287,7 +287,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._plot_xz = PlotWrapper("Front view (X/Z)", "x", "z")
         self._plot_bottom_left_layout.addWidget(self._plot_xz.widget)
 
-        self._plot_yz = PlotWrapper("Left view (Y/Z)", "y", "z")
+        self._plot_yz = PlotWrapper("Right view (Y/Z)", "y", "z")
         self._plot_bottom_right_layout.addWidget(self._plot_yz.widget)
 
         self._plot_xy.set_scale_steps([
