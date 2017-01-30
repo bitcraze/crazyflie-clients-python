@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2013 Bitcraze AB
+#  Copyright (C) 2013-2017 Bitcraze AB
 #  Copyright (C) 2013 Allyn Bauer
 #
 #  Crazyflie Nano Quadcopter Client
@@ -98,6 +98,9 @@ class ConfigManager(metaclass=Singleton):
                             axis["type"] = a["type"]
                             axis["key"] = a["key"]
                             axis["name"] = a["name"]
+
+                            self._translate_for_backwards_compatibility(axis)
+
                             try:
                                 ids = a["ids"]
                             except:
@@ -162,3 +165,17 @@ class ConfigManager(metaclass=Singleton):
         json_data.close()
 
         self.conf_needs_reload.call(config_name)
+
+    def _translate_for_backwards_compatibility(self, axis):
+        """Handle changes in the config file format"""
+
+        # The parameter that used to be called 'althold' has been renamed to
+        # 'assistedControl'
+        althold = 'althold'
+        assistedControl = 'assistedControl'
+
+        if axis['key'] == althold:
+            axis['key'] = assistedControl
+
+        if axis['name'] == althold:
+            axis['name'] = assistedControl

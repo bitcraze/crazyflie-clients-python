@@ -173,11 +173,6 @@ class FlightTab(Tab, flight_tab_class):
             cb=(lambda name, checked:
                 self._led_ring_headlight.setChecked(eval(checked))))
 
-        self.helper.cf.param.add_update_callback(
-            group="flightmode", name="althold",
-            cb=(lambda name, enabled:
-                self.helper.inputDeviceReader.enable_alt_hold(eval(enabled))))
-
         self._ledring_nbr_effects = 0
 
         self.helper.cf.param.add_update_callback(

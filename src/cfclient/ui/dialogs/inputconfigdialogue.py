@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2017 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -88,8 +88,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self.detectThrust.clicked.connect(
             lambda: self._axis_detect(
                 "thrust", "Thrust axis",
-                "Center the thrust axis, and then do max thrust (also used to "
-                "adjust target altitude in altitude hold mode)"))
+                "Center the thrust axis, and then do max thrust"))
         self.detectPitchPos.clicked.connect(
             lambda: self._button_detect(
                 "pitchPos", "Pitch Cal Positive",
@@ -122,10 +121,10 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             lambda: self._button_detect(
                 "exitapp", "Exit application",
                 "Press the button for exiting the application"))
-        self.detectAltHold.clicked.connect(
+        self._detect_assisted_control.clicked.connect(
             lambda: self._button_detect(
-                "althold", "Altitude hold",
-                "Press the button for altitude hold mode activation "
+                "assistedControl", "Assisted control",
+                "Press the button for assisted control mode activation "
                 "(releasing returns to manual mode)"))
         self.detectMuxswitch.clicked.connect(
             lambda: self._button_detect(
@@ -144,7 +143,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             self.detectPitchPos, self.detectPitchNeg,
             self.detectRollPos, self.detectRollNeg,
             self.detectKillswitch, self.detectExitapp,
-            self.detectAltHold, self.detectAlt1,
+            self._detect_assisted_control, self.detectAlt1,
             self.detectAlt2, self.detectMuxswitch]
 
         self._button_to_detect = ""
@@ -183,7 +182,7 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
             "alt1": self.alt1,
             "alt2": self.alt2,
             "exitapp": self.exitapp,
-            "althold": self.althold,
+            "assistedControl": self._assisted_control,
             "muxswitch": self.muxswitch,
         }
 

@@ -51,7 +51,7 @@ class InputData:
         # self._toggled = {}
         self._axes = ("roll", "pitch", "yaw", "thrust")
         self._buttons = ("alt1", "alt2", "estop", "exit", "pitchNeg",
-                         "pitchPos", "rollNeg", "rollPos", "althold",
+                         "pitchPos", "rollNeg", "rollPos", "assistedControl",
                          "muxswitch")
         for axis in self._axes:
             self.__dict__[axis] = 0.0
@@ -125,7 +125,6 @@ class InputReaderInterface(object):
         # Stateful things
         self._old_thrust = 0
         self._old_raw_thrust = 0
-        self._old_alt_hold = False
 
         self._prev_thrust = 0
         self._last_time = 0
@@ -242,14 +241,6 @@ class InputReaderInterface(object):
         self._old_thrust = thrust
         self._old_raw_thrust = thrust
         return thrust
-
-    def set_alt_hold_available(self, available):
-        """Set if altitude hold is available or not (depending on HW)"""
-        self.input._has_pressure_sensor = available
-
-    def enable_alt_hold(self, althold):
-        """Enable or disable altitude hold"""
-        self._old_alt_hold = althold
 
     @staticmethod
     def deadband(value, threshold):

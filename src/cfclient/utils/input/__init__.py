@@ -88,7 +88,6 @@ class JoystickReader(object):
 
         self._old_thrust = 0
         self._old_raw_thrust = 0
-        self._old_alt_hold = False
         self.springy_throttle = True
 
         self.trim_roll = Config().get("trim_roll")
@@ -172,10 +171,6 @@ class JoystickReader(object):
     def set_alt_hold_available(self, available):
         """Set if altitude hold is available or not (depending on HW)"""
         self.has_pressure_sensor = available
-
-    def enable_alt_hold(self, althold):
-        """Enable or disable altitude hold"""
-        self._old_alt_hold = althold
 
     def _do_device_discovery(self):
         devs = self.available_devices()
@@ -338,9 +333,9 @@ class JoystickReader(object):
             data = self._selected_mux.read()
 
             if data:
-                if data.toggled.althold:
+                if data.toggled.assistedControl:
                     try:
-                        self.althold_updated.call(str(data.althold))
+                        self.althold_updated.call(str(data.assistedControl))
                     except Exception as e:
                         logger.warning(
                             "Exception while doing callback from input-device "
@@ -388,7 +383,7 @@ class JoystickReader(object):
                     data.thrust = 0xFFFF
 
                 # If we are using alt hold the data is not in a percentage
-                if not data.althold:
+                if not data.assistedControl:
                     data.thrust = JoystickReader.p2t(data.thrust)
 
                 self.input_updated.call(data.roll + self.trim_roll,
