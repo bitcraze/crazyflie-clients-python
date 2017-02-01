@@ -164,10 +164,10 @@ class InputReaderInterface(object):
         return (InputReaderInterface.deadband(yaw, 0.2) *
                 self.input.max_yaw_rate)
 
-    def _limit_thrust(self, thrust, althold, emergency_stop):
+    def _limit_thrust(self, thrust, assisted_control, emergency_stop):
         # Thust limiting (slew, minimum and emergency stop)
         if self.input.springy_throttle:
-            if althold and self.input.has_pressure_sensor:
+            if assisted_control and self.input.has_pressure_sensor:
                 thrust = int(round(InputReaderInterface.deadband(thrust, 0.2) *
                                    32767 + 32767))  # Convert to uint16
             else:
@@ -217,7 +217,7 @@ class InputReaderInterface(object):
                 thrust = limited_thrust
         else:
             thrust = thrust / 2 + 0.5
-            if althold and self.input.has_pressure_sensor:
+            if assisted_control and self.input.has_pressure_sensor:
                 thrust = 32767
             else:
                 if thrust < -0.90 or emergency_stop:

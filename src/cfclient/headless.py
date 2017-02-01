@@ -101,7 +101,7 @@ class HeadlessClient():
             group="imu_sensors", name="HMC5883L", cb=(
                 lambda name, found: self._jr.set_alt_hold_available(
                     eval(found))))
-        self._jr.althold_updated.add_callback(
+        self._jr.assisted_control_updated.add_callback(
             lambda enabled: self._cf.param.set_value("flightmode.althold",
                                                      enabled))
 

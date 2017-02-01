@@ -73,8 +73,8 @@ class JoystickReader(object):
     """
     inputConfig = []
 
-    ASSIST_MODE_ALTHOLD = 0
-    ASSIST_MODE_POSHOLD = 1
+    ASSISTED_CONTROL_ALTHOLD = 0
+    ASSISTED_CONTROL_POSHOLD = 1
 
     def __init__(self, do_device_discovery=True):
         self._input_device = None
@@ -89,9 +89,9 @@ class JoystickReader(object):
         self.max_rp_angle = 0
         self.max_yaw_rate = 0
         try:
-            self.assisted_mode = Config().get("assistmode")
+            self.assisted_control = Config().get("assistedControl")
         except KeyError:
-            self.assisted_mode = JoystickReader.ASSIST_MODE_ALTHOLD
+            self.assisted_control = JoystickReader.ASSISTED_CONTROL_ALTHOLD
 
         self._old_thrust = 0
         self._old_raw_thrust = 0
@@ -161,7 +161,7 @@ class JoystickReader(object):
         self.emergency_stop_updated = Caller()
         self.device_discovery = Caller()
         self.device_error = Caller()
-        self.althold_updated = Caller()
+        self.assisted_control_updated = Caller()
         self.alt1_updated = Caller()
         self.alt2_updated = Caller()
 
@@ -342,11 +342,12 @@ class JoystickReader(object):
             if data:
                 if data.toggled.assistedControl:
                     try:
-                        self.althold_updated.call(str(data.assistedControl))
+                        self.assisted_control_updated.call(
+                                            str(data.assistedControl))
                     except Exception as e:
                         logger.warning(
                             "Exception while doing callback from input-device "
-                            "for althold: {}".format(e))
+                            "for assited control: {}".format(e))
 
                 if data.toggled.estop:
                     try:
