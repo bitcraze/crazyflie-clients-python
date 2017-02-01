@@ -73,6 +73,9 @@ class JoystickReader(object):
     """
     inputConfig = []
 
+    ASSIST_MODE_ALTHOLD = 0
+    ASSIST_MODE_POSHOLD = 1
+
     def __init__(self, do_device_discovery=True):
         self._input_device = None
 
@@ -85,6 +88,10 @@ class JoystickReader(object):
 
         self.max_rp_angle = 0
         self.max_yaw_rate = 0
+        try:
+            self.assisted_mode = Config().get("assistmode")
+        except KeyError:
+            self.assisted_mode = JoystickReader.ASSIST_MODE_ALTHOLD
 
         self._old_thrust = 0
         self._old_raw_thrust = 0

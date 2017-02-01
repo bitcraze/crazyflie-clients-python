@@ -41,6 +41,8 @@ from cfclient.ui.widgets.ai import AttitudeIndicator
 from cfclient.utils.config import Config
 from cflib.crazyflie.log import LogConfig
 
+from cfclient.utils.input import JoystickReader
+
 from cfclient.ui.tab import Tab
 
 PARAM_NAME_ALT_HOLD_TARGET = "posCtlAlt.targetZ"
@@ -118,6 +120,8 @@ class FlightTab(Tab, flight_tab_class):
 
         # Connect UI signals that are in this tab
         self.flightModeCombo.currentIndexChanged.connect(self.flightmodeChange)
+        self._assist_mode_combo.currentIndexChanged.connect(
+                                            self._assist_mode_changed)
         self.minThrust.valueChanged.connect(self.minMaxThrustChanged)
         self.maxThrust.valueChanged.connect(self.minMaxThrustChanged)
         self.thrustLoweringSlewRateLimit.valueChanged.connect(
@@ -240,6 +244,19 @@ class FlightTab(Tab, flight_tab_class):
         else:
             self.flightModeCombo.setCurrentIndex(flightComboIndex)
             self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)
+
+        try:
+            assistmodeComboIndex = self._assist_mode_combo.findText(
+                Config().get("assistmode"), Qt.MatchFixedString)
+        except KeyError:
+            assistmodeComboIndex = 0
+        if (flightComboIndex < 0):
+            self._assist_mode_combo.setCurrentIndex(0)
+            self._assist_mode_combo.currentIndexChanged.emit(0)
+        else:
+            self._assist_mode_combo.setCurrentIndex(assistmodeComboIndex)
+            self._assist_mode_combo.currentIndexChanged.emit(
+                                                assistmodeComboIndex)
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error",
@@ -494,6 +511,15 @@ class FlightTab(Tab, flight_tab_class):
         self.thrustLoweringSlewRateLimit.setEnabled(newState)
         self.slewEnableLimit.setEnabled(newState)
         self.maxYawRate.setEnabled(newState)
+
+    def _assist_mode_changed(self, item):
+        Config().set("assistmode", str(self._assist_mode_combo.itemText(item)))
+        if (item == 0):  # Altitude hold
+            self.helper.inputDeviceReader.assisted_mode = \
+                    JoystickReader.ASSIST_MODE_ALTHOLD
+        if (item == 1):  # Position hold
+            self.helper.inputDeviceReader.assisted_mode = \
+                    JoystickReader.ASSIST_MODE_POSHOLD
 
     @pyqtSlot(bool)
     def changeXmode(self, checked):
