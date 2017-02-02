@@ -70,6 +70,7 @@ class FlightTab(Tab, flight_tab_class):
     _input_updated_signal = pyqtSignal(float, float, float, float)
     _rp_trim_updated_signal = pyqtSignal(float, float)
     _emergency_stop_updated_signal = pyqtSignal(bool)
+    _assisted_control_updated_signal = pyqtSignal(bool)
 
     _log_error_signal = pyqtSignal(object, str)
 
@@ -108,8 +109,10 @@ class FlightTab(Tab, flight_tab_class):
             self._emergency_stop_updated_signal.emit)
 
         self.helper.inputDeviceReader.assisted_control_updated.add_callback(
-            lambda enabled: self.helper.cf.param.set_value(
-                "flightmode.althold", enabled))
+            self._assisted_control_updated_signal.emit)
+
+        self._assisted_control_updated_signal.connect(
+            self._assisted_control_updated)
 
         self._imu_data_signal.connect(self._imu_data_received)
         self._baro_data_signal.connect(self._baro_data_received)
@@ -246,17 +249,13 @@ class FlightTab(Tab, flight_tab_class):
             self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)
 
         try:
-            assistmodeComboIndex = self._assist_mode_combo.findText(
-                Config().get("assistedControl"), Qt.MatchFixedString)
-        except KeyError:
-            assistmodeComboIndex = 0
-        if (flightComboIndex < 0):
-            self._assist_mode_combo.setCurrentIndex(0)
-            self._assist_mode_combo.currentIndexChanged.emit(0)
-        else:
+            assistmodeComboIndex = Config().get("assistedControl")
             self._assist_mode_combo.setCurrentIndex(assistmodeComboIndex)
             self._assist_mode_combo.currentIndexChanged.emit(
                                                 assistmodeComboIndex)
+        except KeyError:
+            self._assist_mode_combo.setCurrentIndex(0)
+            self._assist_mode_combo.currentIndexChanged.emit(0)
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error",
@@ -513,14 +512,24 @@ class FlightTab(Tab, flight_tab_class):
         self.maxYawRate.setEnabled(newState)
 
     def _assist_mode_changed(self, item):
-        Config().set("assistedControl", str(self._assist_mode_combo.
-                                            itemText(item)))
+        mode = None
+
         if (item == 0):  # Altitude hold
-            self.helper.inputDeviceReader.assisted_control = \
-                    JoystickReader.ASSISTED_CONTROL_ALTHOLD
+            mode = JoystickReader.ASSISTED_CONTROL_ALTHOLD
         if (item == 1):  # Position hold
-            self.helper.inputDeviceReader.assisted_control = \
-                    JoystickReader.ASSISTED_CONTROL_POSHOLD
+            mode = JoystickReader.ASSISTED_CONTROL_POSHOLD
+
+        self.helper.inputDeviceReader.set_assisted_control(mode)
+        Config().set("assistedControl", mode)
+
+    def _assisted_control_updated(self, enabled):
+        if self.helper.inputDeviceReader.get_assisted_control() == \
+                    JoystickReader.ASSISTED_CONTROL_POSHOLD:
+            self.targetThrust.setEnabled(not enabled)
+            self.targetRoll.setEnabled(not enabled)
+            self.targetPitch.setEnabled(not enabled)
+        else:
+            self.helper.cf.param.set_value("flightmode.althold", str(enabled))
 
     @pyqtSlot(bool)
     def changeXmode(self, checked):

@@ -247,6 +247,9 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.joystickReader.input_updated.add_callback(
             self.cf.commander.send_setpoint)
 
+        self.joystickReader.assisted_input_updated.add_callback(
+            self.cf.commander.send_velocity_world_setpoint)
+
         # Connection callbacks and signal wrappers for UI protection
         self.cf.connected.add_callback(self.connectionDoneSignal.emit)
         self.connectionDoneSignal.connect(self._connected)

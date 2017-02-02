@@ -79,6 +79,11 @@ class JoystickReader(object):
     def __init__(self, do_device_discovery=True):
         self._input_device = None
 
+        self._mux = [NoMux(self), TakeOverSelectiveMux(self),
+                     TakeOverMux(self)]
+        # Set NoMux as default
+        self._selected_mux = self._mux[0]
+
         self.min_thrust = 0
         self.max_thrust = 0
         self._thrust_slew_rate = 0
@@ -89,9 +94,9 @@ class JoystickReader(object):
         self.max_rp_angle = 0
         self.max_yaw_rate = 0
         try:
-            self.assisted_control = Config().get("assistedControl")
+            self.set_assisted_control(Config().get("assistedControl"))
         except KeyError:
-            self.assisted_control = JoystickReader.ASSISTED_CONTROL_ALTHOLD
+            self.set_assisted_control(JoystickReader.ASSISTED_CONTROL_ALTHOLD)
 
         self._old_thrust = 0
         self._old_raw_thrust = 0
@@ -101,11 +106,6 @@ class JoystickReader(object):
         self.trim_pitch = Config().get("trim_pitch")
 
         self._input_map = None
-
-        self._mux = [NoMux(self), TakeOverSelectiveMux(self),
-                     TakeOverMux(self)]
-        # Set NoMux as default
-        self._selected_mux = self._mux[0]
 
         if Config().get("flightmode") is "Normal":
             self.max_yaw_rate = Config().get("normal_max_yaw")
@@ -157,6 +157,7 @@ class JoystickReader(object):
         ConfigManager().get_list_of_configs()
 
         self.input_updated = Caller()
+        self.assisted_input_updated = Caller()
         self.rp_trim_updated = Caller()
         self.emergency_stop_updated = Caller()
         self.device_discovery = Caller()
@@ -206,6 +207,12 @@ class JoystickReader(object):
         old_mux.close()
 
         logger.info("Selected MUX: {}".format(self._selected_mux.name))
+
+    def set_assisted_control(self, mode):
+        self._assisted_control = mode
+
+    def get_assisted_control(self):
+        return self._assisted_control
 
     def available_devices(self):
         """List all available and approved input devices.
@@ -341,9 +348,19 @@ class JoystickReader(object):
 
             if data:
                 if data.toggled.assistedControl:
+                    if self._assisted_control == \
+                            JoystickReader.ASSISTED_CONTROL_POSHOLD:
+                        if data.assistedControl:
+                            for d in self._selected_mux.devices():
+                                d.limit_thrust = False
+                                d.limit_rp = False
+                        else:
+                            for d in self._selected_mux.devices():
+                                d.limit_thrust = True
+                                d.limit_rp = True
                     try:
                         self.assisted_control_updated.call(
-                                            str(data.assistedControl))
+                                            data.assistedControl)
                     except Exception as e:
                         logger.warning(
                             "Exception while doing callback from input-device "
@@ -394,9 +411,20 @@ class JoystickReader(object):
                 if not data.assistedControl:
                     data.thrust = JoystickReader.p2t(data.thrust)
 
-                self.input_updated.call(data.roll + self.trim_roll,
-                                        data.pitch + self.trim_pitch,
-                                        data.yaw, data.thrust)
+                if self._assisted_control == \
+                        JoystickReader.ASSISTED_CONTROL_POSHOLD \
+                        and data.assistedControl:
+                    vx = data.roll
+                    vy = data.pitch
+                    vz = data.thrust
+                    yawrate = data.yaw
+                    logger.info("vx={}, vy={}, vz={}, yaw={}".format(
+                                                        vx, vy, vz, yawrate))
+                    self.assisted_input_updated.call(vx, vy, vz, yawrate)
+                else:
+                    self.input_updated.call(data.roll + self.trim_roll,
+                                            data.pitch + self.trim_pitch,
+                                            data.yaw, data.thrust)
             else:
                 self.input_updated.call(0, 0, 0, 0)
         except Exception:
