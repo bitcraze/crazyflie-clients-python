@@ -386,31 +386,6 @@ class JoystickReader(object):
                         logger.warning("Exception while doing callback from"
                                        "input-device for alt2: {}".format(e))
 
-                # Update the user roll/pitch trim from device
-                if data.toggled.pitchNeg and data.pitchNeg:
-                    self.trim_pitch -= 1
-                if data.toggled.pitchPos and data.pitchPos:
-                    self.trim_pitch += 1
-                if data.toggled.rollNeg and data.rollNeg:
-                    self.trim_roll -= 1
-                if data.toggled.rollPos and data.rollPos:
-                    self.trim_roll += 1
-
-                if data.toggled.pitchNeg or data.toggled.pitchPos or \
-                        data.toggled.rollNeg or data.toggled.rollPos:
-                    self.rp_trim_updated.call(self.trim_roll, self.trim_pitch)
-
-                # Thrust might be <0 here, make sure it's not otherwise we'll
-                # get an error.
-                if data.thrust < 0:
-                    data.thrust = 0
-                if data.thrust > 0xFFFF:
-                    data.thrust = 0xFFFF
-
-                # If we are using alt hold the data is not in a percentage
-                if not data.assistedControl:
-                    data.thrust = JoystickReader.p2t(data.thrust)
-
                 if self._assisted_control == \
                         JoystickReader.ASSISTED_CONTROL_POSHOLD \
                         and data.assistedControl:
@@ -418,10 +393,36 @@ class JoystickReader(object):
                     vy = data.pitch
                     vz = data.thrust
                     yawrate = data.yaw
-                    logger.info("vx={}, vy={}, vz={}, yaw={}".format(
-                                                        vx, vy, vz, yawrate))
-                    self.assisted_input_updated.call(vx, vy, vz, yawrate)
+                    # The odd use of vx and vy is to map forward on the
+                    # physical joystick to positiv X-axis
+                    self.assisted_input_updated.call(vy, -vx, vz, yawrate)
                 else:
+                    # Update the user roll/pitch trim from device
+                    if data.toggled.pitchNeg and data.pitchNeg:
+                        self.trim_pitch -= 1
+                    if data.toggled.pitchPos and data.pitchPos:
+                        self.trim_pitch += 1
+                    if data.toggled.rollNeg and data.rollNeg:
+                        self.trim_roll -= 1
+                    if data.toggled.rollPos and data.rollPos:
+                        self.trim_roll += 1
+
+                    if data.toggled.pitchNeg or data.toggled.pitchPos or \
+                            data.toggled.rollNeg or data.toggled.rollPos:
+                        self.rp_trim_updated.call(self.trim_roll,
+                                                  self.trim_pitch)
+
+                    # If we are using alt hold the data is not in a percentage
+                    if not data.assistedControl:
+                        data.thrust = JoystickReader.p2t(data.thrust)
+
+                    # Thrust might be <0 here, make sure it's not otherwise
+                    # we'll get an error.
+                    if data.thrust < 0:
+                        data.thrust = 0
+                    if data.thrust > 0xFFFF:
+                        data.thrust = 0xFFFF
+
                     self.input_updated.call(data.roll + self.trim_roll,
                                             data.pitch + self.trim_pitch,
                                             data.yaw, data.thrust)
