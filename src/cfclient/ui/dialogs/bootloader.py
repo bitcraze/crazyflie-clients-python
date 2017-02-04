@@ -203,7 +203,6 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
 
             msgBox.exec_()
 
-
     @pyqtSlot(bool)
     def programDone(self, success):
         if success:
@@ -297,10 +296,10 @@ class CrazyloadThread(QThread):
         if str(filename).endswith("bin"):
             targets["stm32"] = ("fw",)
         # try:
-        self._bl.flash(str(filename), targets, verify)
-            # self.programmed.emit(True)
-        # except Exception:
-            # self.programmed.emit(False)
+        if self._bl.flash(str(filename), targets, verify):
+            self.programmed.emit(True)
+        else:
+            self.programmed.emit(False)
 
     def verifyAction(self, filename):
         targets = {}
