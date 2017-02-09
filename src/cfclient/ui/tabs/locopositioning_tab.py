@@ -41,6 +41,7 @@ import cfclient
 from cfclient.ui.tab import Tab
 
 from cflib.crazyflie.log import LogConfig
+from lpslib.lopoanchor import LoPoAnchor
 
 import copy
 
@@ -82,6 +83,10 @@ class Anchor:
             setattr(self, axis, value)
         else:
             raise ValueError('"{}" is an unknown axis'.format(axis))
+
+    def get_position(self):
+        """Returns the position as a vector"""
+        return (self.x, self.y, self.z)
 
 
 class AxisScaleStep:
@@ -223,6 +228,30 @@ class DisplayMode(Enum):
     estimated_position = 2
 
 
+class AnchorPosWrapper():
+    """Wraps the UI elements of one anchor position"""
+    def __init__(self, x, y, z):
+        self._x = x
+        self._y = y
+        self._z = z
+
+    def get_position(self):
+        """Get the position from the UI elements"""
+        return (self._x.value(), self._y.value(), self._z.value())
+
+    def set_position(self, position):
+        """Set the position in the UI elements"""
+        self._x.setValue(position[0])
+        self._y.setValue(position[1])
+        self._z.setValue(position[2])
+
+    def enable(self, enabled):
+        """Enable/disable all UI elements for the position"""
+        self._x.setEnabled(enabled)
+        self._y.setEnabled(enabled)
+        self._z.setEnabled(enabled)
+
+
 class LocoPositioningTab(Tab, locopositioning_tab_class):
     """Tab for plotting Loco Positioning data"""
 
@@ -274,6 +303,20 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             self._set_display_mode(DisplayMode.estimated_position)
         )
 
+        self._anchor_pos_ui = {}
+        for anchor_nr in range(0, 8):
+            self._register_anchor_pos_ui(anchor_nr)
+
+        self._write_pos_to_anhors_button.clicked.connect(
+            lambda enabled:
+            self._write_positions_to_anchors()
+        )
+
+        self._read_pos_from_anhors_button.clicked.connect(
+            lambda enabled:
+            self._read_positions_from_anchors()
+        )
+
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
             self._connected_signal.emit)
@@ -281,15 +324,47 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._helper.cf.disconnected.add_callback(
             self._disconnected_signal.emit)
 
+        self._set_up_plots()
+
+        self._graph_timer = QTimer()
+        self._graph_timer.setInterval(1000 / self.FPS)
+        self._graph_timer.timeout.connect(self._update_graphics)
+        self._graph_timer.start()
+
+    def _register_anchor_pos_ui(self, nr):
+        x_spin = getattr(self, 'spin_a{}x'.format(nr))
+        y_spin = getattr(self, 'spin_a{}y'.format(nr))
+        z_spin = getattr(self, 'spin_a{}z'.format(nr))
+        self._anchor_pos_ui[nr] = AnchorPosWrapper(x_spin, y_spin, z_spin)
+
+    def _write_positions_to_anchors(self):
+        lopo = LoPoAnchor(self._helper.cf)
+
+        for id, anchor_pos in self._anchor_pos_ui.items():
+            if id in self._anchors:
+                position = anchor_pos.get_position()
+                lopo.set_position(id, position)
+
+    def _read_positions_from_anchors(self):
+        for id, anchor_pos in self._anchor_pos_ui.items():
+            position = (0.0, 0.0, 0.0)
+            if id in self._anchors:
+                position = self._anchors[id].get_position()
+
+            anchor_pos.set_position(position)
+
+    def _enable_anchor_pos_ui(self):
+        for id, anchor_pos in self._anchor_pos_ui.items():
+            exists = id in self._anchors
+            anchor_pos.enable(exists)
+
+    def _set_up_plots(self):
         self._plot_xy = PlotWrapper("Top view (X/Y)", "x", "y")
         self._plot_top_left_layout.addWidget(self._plot_xy.widget)
-
         self._plot_xz = PlotWrapper("Front view (X/Z)", "x", "z")
         self._plot_bottom_left_layout.addWidget(self._plot_xz.widget)
-
         self._plot_yz = PlotWrapper("Right view (Y/Z)", "y", "z")
         self._plot_bottom_right_layout.addWidget(self._plot_yz.widget)
-
         self._plot_xy.set_scale_steps([
             AxisScaleStep(self._plot_xy, PlotWrapper.XAxis,
                           self._plot_xz, PlotWrapper.XAxis),
@@ -298,7 +373,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             AxisScaleStep(self._plot_xy, PlotWrapper.YAxis,
                           self._plot_yz, PlotWrapper.XAxis, center_only=True)
         ])
-
         self._plot_xz.set_scale_steps([
             AxisScaleStep(self._plot_xz, PlotWrapper.XAxis,
                           self._plot_xy, PlotWrapper.XAxis),
@@ -307,7 +381,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             AxisScaleStep(self._plot_xy, PlotWrapper.YAxis,
                           self._plot_yz, PlotWrapper.XAxis, center_only=True)
         ])
-
         self._plot_yz.set_scale_steps([
             AxisScaleStep(self._plot_yz, PlotWrapper.YAxis,
                           self._plot_xz, PlotWrapper.YAxis),
@@ -318,11 +391,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         ])
 
         self._plot_xy.view.setRange(xRange=(0.0, 5.0))
-
-        self._graph_timer = QTimer()
-        self._graph_timer.setInterval(1000 / self.FPS)
-        self._graph_timer.timeout.connect(self._update_graphics)
-        self._graph_timer.start()
 
     def _set_display_mode(self, display_mode):
         self._display_mode = display_mode
@@ -485,3 +553,4 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._plot_yz.update(anchors, self._position, self._display_mode)
         self._plot_xy.update(anchors, self._position, self._display_mode)
         self._plot_xz.update(anchors, self._position, self._display_mode)
+        self._enable_anchor_pos_ui()
