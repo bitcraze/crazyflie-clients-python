@@ -34,10 +34,10 @@ views in the UI.
 import logging
 
 import cfclient
-from PyQt4 import Qt, QtGui, uic
-from PyQt4.QtCore import *  # noqa
-from PyQt4.QtGui import *  # noqa
-from PyQt4.Qt import *  # noqa
+from PyQt5 import Qt, QtWidgets, uic
+from PyQt5.QtCore import *  # noqa
+from PyQt5.QtWidgets import *  # noqa
+from PyQt5.Qt import *  # noqa
 
 from cflib.crazyflie.log import LogConfig
 
@@ -55,7 +55,7 @@ PTYPE_FIELD = 2
 CTYPE_FIELD = 3
 
 
-class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
+class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
     def __init__(self, helper, *args):
         super(LogConfigDialogue, self).__init__(*args)
@@ -132,7 +132,7 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         item = logTreeItem.clone()
 
         if (len(varParent) == 0):
-            newParent = QtGui.QTreeWidgetItem()
+            newParent = QtWidgets.QTreeWidgetItem()
             newParent.setData(0, Qt.DisplayRole, parentName)
             newParent.addChild(item)
             target.addTopLevelItem(newParent)
@@ -215,10 +215,10 @@ class LogConfigDialogue(QtGui.QWidget, logconfig_widget_class):
         toc = self.helper.cf.log.toc
 
         for group in list(toc.toc.keys()):
-            groupItem = QtGui.QTreeWidgetItem()
+            groupItem = QtWidgets.QTreeWidgetItem()
             groupItem.setData(NAME_FIELD, Qt.DisplayRole, group)
             for param in list(toc.toc[group].keys()):
-                item = QtGui.QTreeWidgetItem()
+                item = QtWidgets.QTreeWidgetItem()
                 item.setData(NAME_FIELD, Qt.DisplayRole, param)
                 item.setData(ID_FIELD, Qt.DisplayRole,
                              toc.toc[group][param].ident)

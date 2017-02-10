@@ -34,9 +34,9 @@ connects the connected/disconnected callbacks.
 
 import logging
 
-from PyQt4 import uic
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QMessageBox
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QMessageBox
 
 import cfclient
 from cfclient.ui.tab import Tab

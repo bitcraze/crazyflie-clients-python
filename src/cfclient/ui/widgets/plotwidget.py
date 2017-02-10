@@ -32,16 +32,16 @@ and manipulating the plot.
 For more advanced plotting save the data and use an external application.
 """
 
-from PyQt4 import QtGui, uic
+from PyQt5 import QtWidgets, uic
 
 from time import time
 
 import logging
 
-from PyQt4.QtGui import QButtonGroup
-from PyQt4.QtCore import *  # noqa
-from PyQt4.QtGui import *  # noqa
-from PyQt4.Qt import *  # noqa
+from PyQt5.QtWidgets import QButtonGroup
+from PyQt5.QtCore import *  # noqa
+from PyQt5.QtWidgets import *  # noqa
+from PyQt5.Qt import *  # noqa
 
 import cfclient
 
@@ -55,6 +55,7 @@ logger = logging.getLogger(__name__)
 
 # Try the imports for PyQtGraph to see if it is installed
 try:
+    raise Exception
     import pyqtgraph as pg
     from pyqtgraph import ViewBox
     import pyqtgraph.console  # noqa
@@ -108,7 +109,7 @@ class PlotItemWrapper:
         return [self.ts[start], self.ts[limit - 1]]
 
 
-class PlotWidget(QtGui.QWidget, plot_widget_class):
+class PlotWidget(QtWidgets.QWidget, plot_widget_class):
     """Wrapper widget for PyQtGraph adding some extra buttons"""
 
     def __init__(self, parent=None, fps=100, title="", *args):
@@ -129,9 +130,9 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         self._items = {}
         self._last_item = 0
 
-        self.setSizePolicy(QtGui.QSizePolicy(
-            QtGui.QSizePolicy.MinimumExpanding,
-            QtGui.QSizePolicy.MinimumExpanding))
+        self.setSizePolicy(QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.MinimumExpanding,
+            QtWidgets.QSizePolicy.MinimumExpanding))
 
         self.setMinimumSize(self.minimumSizeHint())
         self.parent = parent

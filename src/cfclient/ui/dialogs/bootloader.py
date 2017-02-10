@@ -33,8 +33,8 @@ from cflib.bootloader import Bootloader
 
 import logging
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtCore import pyqtSlot, pyqtSignal, QThread
+from PyQt5 import QtWidgets, uic
+from PyQt5.QtCore import pyqtSlot, pyqtSignal, QThread
 
 import cfclient
 
@@ -56,7 +56,7 @@ class UIState:
     RESET = 4
 
 
-class BootloaderDialog(QtGui.QWidget, service_dialog_class):
+class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     """Tab for update the Crazyflie firmware and for reading/writing the config
     block in flash"""
 
@@ -159,7 +159,7 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
     def pathBrowse(self):
         filename = ""
         # Fix for crash in X on Ubuntu 14.04
-        filename = QtGui.QFileDialog.getOpenFileName()
+        filename = QtWidgets.QFileDialog.getOpenFileName()
         if filename != "":
             self.imagePathLine.setText(filename)
         pass
@@ -174,7 +174,7 @@ class BootloaderDialog(QtGui.QWidget, service_dialog_class):
             self.clt.program.emit(self.imagePathLine.text(),
                                   self.verifyCheckBox.isChecked())
         else:
-            msgBox = QtGui.QMessageBox()
+            msgBox = QtWidgets.QMessageBox()
             msgBox.setText("Please choose an image file to program.")
 
             msgBox.exec_()

@@ -31,15 +31,15 @@ pre-configured.
 import logging
 
 import cfclient
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QMessageBox
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QMessageBox
 from cfclient.ui.tab import Tab
 from cflib.crazyflie.log import LogConfig
-from PyQt4 import QtCore
-from PyQt4 import QtGui
-from PyQt4 import QtNetwork
-from PyQt4 import QtWebKit
-from PyQt4 import uic
+from PyQt5 import QtCore
+from PyQt5 import QtGui
+from PyQt5 import QtNetwork
+from PyQt5 import QtWebKit
+from PyQt5 import uic
 
 __author__ = 'Bitcraze AB'
 __all__ = ['GpsTab']

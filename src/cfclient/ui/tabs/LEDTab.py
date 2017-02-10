@@ -32,8 +32,8 @@ Basic tab to be able to set (and test) colors in the LED-ring.
 
 import logging
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtCore import pyqtSignal
+from PyQt5 import QtGui, uic
+from PyQt5.QtCore import pyqtSignal
 
 import cfclient
 from cfclient.ui.tab import Tab

@@ -30,15 +30,15 @@ buttons and axis to match controls for the Crazyflie.
 import logging
 
 import cfclient
-from PyQt4.QtCore import QThread, SIGNAL
-from PyQt4.QtCore import QTimer
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QMessageBox
+from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QMessageBox
 from cfclient.utils.config_manager import ConfigManager
-from PyQt4 import Qt
-from PyQt4 import QtGui
-from PyQt4 import uic
-from PyQt4.Qt import *  # noqa
+from PyQt5 import Qt
+from PyQt5 import QtWidgets
+from PyQt5 import uic
+from PyQt5.Qt import *  # noqa
 
 __author__ = 'Bitcraze AB'
 __all__ = ['InputConfigDialogue']
@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 )
 
 
-class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
+class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
 
     def __init__(self, joystickReader, *args):
         super(InputConfigDialogue, self).__init__(*args)
@@ -202,8 +202,8 @@ class InputConfigDialogue(QtGui.QWidget, inputconfig_widget_class):
         self._mined_axis = []
         self._popup = QMessageBox()
         self._popup.directions = directions
-        self._combined_button = QtGui.QPushButton('Combined Axis Detection')
-        self.cancelButton = QtGui.QPushButton('Cancel')
+        self._combined_button = QtWidgets.QPushButton('Combined Axis Detection')
+        self.cancelButton = QtWidgets.QPushButton('Cancel')
         self._popup.addButton(self.cancelButton, QMessageBox.DestructiveRole)
         self._popup.setWindowTitle(caption)
         self._popup.setWindowFlags(Qt.Dialog | Qt.MSWindowsFixedSizeDialogHint)
@@ -409,7 +409,9 @@ class DeviceReader(QThread):
         self._read_timer = QTimer()
         self._read_timer.setInterval(25)
 
-        self.connect(self._read_timer, SIGNAL("timeout()"), self._read_input)
+        self._read_timer.timeout.connect(self._read_input())
+
+        # self.connect(self._read_timer, SIGNAL("timeout()"), self._read_input)
 
     def stop_reading(self):
         """Stop polling data"""

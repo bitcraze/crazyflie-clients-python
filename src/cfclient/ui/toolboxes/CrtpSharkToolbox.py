@@ -30,11 +30,11 @@ debugging.
 import os
 from time import time
 
-from PyQt4 import QtGui
-from PyQt4 import uic
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtCore import pyqtSlot
-from PyQt4.QtCore import Qt
+from PyQt5 import QtWidgets
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import Qt
 
 import cfclient
 
@@ -45,7 +45,7 @@ param_tab_class = uic.loadUiType(
     cfclient.module_path + "/ui/toolboxes/crtpSharkToolbox.ui")[0]
 
 
-class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
+class CrtpSharkToolbox(QtWidgets.QWidget, param_tab_class):
     """Show packets that is sent vie the communication link"""
     nameModified = pyqtSignal()
     _incoming_packet_signal = pyqtSignal(object)
@@ -72,7 +72,7 @@ class CrtpSharkToolbox(QtGui.QWidget, param_tab_class):
 
     def _packet(self, dir, pk):
         if self.masterCheck.isChecked():
-            line = QtGui.QTreeWidgetItem()
+            line = QtWidgets.QTreeWidgetItem()
 
             ms_diff = int(round(time() * 1000)) - self._ms_offset
             line.setData(0, Qt.DisplayRole, "%d" % ms_diff)

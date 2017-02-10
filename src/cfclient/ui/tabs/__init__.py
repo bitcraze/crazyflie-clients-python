@@ -37,8 +37,8 @@ from .LEDTab import LEDTab
 from .LogBlockTab import LogBlockTab
 from .LogTab import LogTab
 from .ParamTab import ParamTab
-from .PlotTab import PlotTab
-from .locopositioning_tab import LocoPositioningTab
+# from .PlotTab import PlotTab
+# from .locopositioning_tab import LocoPositioningTab
 
 __author__ = 'Bitcraze AB'
 __all__ = []
@@ -52,6 +52,6 @@ available = [
     LogBlockTab,
     LogTab,
     ParamTab,
-    PlotTab,
-    LocoPositioningTab,
+    # PlotTab,
+    # LocoPositioningTab,
 ]

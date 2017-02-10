@@ -30,13 +30,15 @@ Attitude indicator widget.
 """
 
 import sys
-from PyQt4 import QtGui, QtCore
+
+from PyQt5 import QtGui
+from PyQt5 import QtWidgets, QtCore
 
 __author__ = 'Bitcraze AB'
 __all__ = ['AttitudeIndicator']
 
 
-class AttitudeIndicator(QtGui.QWidget):
+class AttitudeIndicator(QtWidgets.QWidget):
     """Widget for showing attitude"""
 
     def __init__(self):
@@ -185,7 +187,7 @@ class AttitudeIndicator(QtGui.QWidget):
 
 
 if __name__ == "__main__":
-    class Example(QtGui.QWidget):
+    class Example(QtWidgets.QWidget):
 
         def __init__(self):
             super(Example, self).__init__()
@@ -205,9 +207,9 @@ if __name__ == "__main__":
             self.wid.setBaro(500 + asl / 10.)
 
         def initUI(self):
-            vbox = QtGui.QVBoxLayout()
+            vbox = QtWidgets.QVBoxLayout()
 
-            sld = QtGui.QSlider(QtCore.Qt.Horizontal, self)
+            sld = QtWidgets.QSlider(QtCore.Qt.Horizontal, self)
             sld.setFocusPolicy(QtCore.Qt.NoFocus)
             sld.setRange(0, 3600)
             sld.setValue(1800)
@@ -218,23 +220,23 @@ if __name__ == "__main__":
             sld.valueChanged[int].connect(self.updateRoll)
             vbox.addWidget(self.wid)
 
-            hbox = QtGui.QHBoxLayout()
+            hbox = QtWidgets.QHBoxLayout()
             hbox.addLayout(vbox)
 
-            sldPitch = QtGui.QSlider(QtCore.Qt.Vertical, self)
+            sldPitch = QtWidgets.QSlider(QtCore.Qt.Vertical, self)
             sldPitch.setFocusPolicy(QtCore.Qt.NoFocus)
             sldPitch.setRange(0, 180)
             sldPitch.setValue(90)
             sldPitch.valueChanged[int].connect(self.updatePitch)
             hbox.addWidget(sldPitch)
 
-            sldASL = QtGui.QSlider(QtCore.Qt.Vertical, self)
+            sldASL = QtWidgets.QSlider(QtCore.Qt.Vertical, self)
             sldASL.setFocusPolicy(QtCore.Qt.NoFocus)
             sldASL.setRange(-200, 200)
             sldASL.setValue(0)
             sldASL.valueChanged[int].connect(self.updateBaro)
 
-            sldT = QtGui.QSlider(QtCore.Qt.Vertical, self)
+            sldT = QtWidgets.QSlider(QtCore.Qt.Vertical, self)
             sldT.setFocusPolicy(QtCore.Qt.NoFocus)
             sldT.setRange(-200, 200)
             sldT.setValue(0)
@@ -254,7 +256,7 @@ if __name__ == "__main__":
             self.wid.repaint()
 
     def main():
-        app = QtGui.QApplication(sys.argv)
+        app = QtWidgets.QApplication(sys.argv)
         Example()
         sys.exit(app.exec_())
 

@@ -30,8 +30,8 @@ Shows all the parameters available in the Crazyflie and also gives the ability
 to edit them.
 """
 
-from PyQt4 import QtCore, QtGui, uic
-from PyQt4.QtCore import Qt, pyqtSignal
+from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5.QtCore import Qt, pyqtSignal
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -81,7 +81,7 @@ class LogBlockDebugTab(Tab, logblock_tab_class):
         """Update the block tree"""
         self._block_tree.clear()
         for block in self._helper.cf.log.log_blocks:
-            item = QtGui.QTreeWidgetItem()
+            item = QtWidgets.QTreeWidgetItem()
             item.setFlags(Qt.ItemIsEnabled |
                           Qt.ItemIsSelectable)
             item.setData(0, Qt.DisplayRole, block.id)
@@ -91,7 +91,7 @@ class LogBlockDebugTab(Tab, logblock_tab_class):
             item.setData(4, Qt.EditRole, block.started)
             item.setData(5, Qt.EditRole, block.err_no)
             for var in block.variables:
-                subItem = QtGui.QTreeWidgetItem()
+                subItem = QtWidgets.QTreeWidgetItem()
                 subItem.setFlags(Qt.ItemIsEnabled |
                                  Qt.ItemIsSelectable)
                 subItem.setData(6, Qt.EditRole, var.name)

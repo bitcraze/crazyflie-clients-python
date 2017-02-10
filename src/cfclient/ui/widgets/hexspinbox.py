@@ -30,8 +30,8 @@ This class provides a spin box with hexadecimal numbers and arbitrarily length
 (i.e. not limited by 32 bit).
 """
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QAbstractSpinBox
+from PyQt5 import QtGui, QtCore
+from PyQt5.QtWidgets import QAbstractSpinBox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['HexSpinBox']

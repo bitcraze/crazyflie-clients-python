@@ -31,8 +31,8 @@ The console tab is used as a console for printouts from the Crazyflie.
 
 import logging
 
-from PyQt4 import uic
-from PyQt4.QtCore import pyqtSignal
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
 
 import cfclient
 from cfclient.ui.tab import Tab

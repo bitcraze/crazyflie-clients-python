@@ -29,11 +29,11 @@ Shows the Log TOC of available variables in the Crazyflie.
 
 import cfclient
 from cfclient.ui.tab import Tab
-from PyQt4 import QtGui
-from PyQt4 import uic
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtCore import pyqtSlot
-from PyQt4.QtCore import Qt
+from PyQt5 import QtWidgets
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import Qt
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LogTab']
@@ -79,10 +79,10 @@ class LogTab(Tab, param_tab_class):
         toc = self.cf.log.toc
 
         for group in list(toc.toc.keys()):
-            groupItem = QtGui.QTreeWidgetItem()
+            groupItem = QtWidgets.QTreeWidgetItem()
             groupItem.setData(0, Qt.DisplayRole, group)
             for param in list(toc.toc[group].keys()):
-                item = QtGui.QTreeWidgetItem()
+                item = QtWidgets.QTreeWidgetItem()
                 item.setData(0, Qt.DisplayRole, param)
                 item.setData(1, Qt.DisplayRole, toc.toc[group][param].ident)
                 item.setData(2, Qt.DisplayRole, toc.toc[group][param].pytype)

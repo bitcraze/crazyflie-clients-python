@@ -49,7 +49,7 @@ def main():
     """
 
     # Set ERROR level for PyQt4 logger
-    qtlogger = logging.getLogger('PyQt4')
+    qtlogger = logging.getLogger('PyQt5')
     qtlogger.setLevel(logging.ERROR)
 
     parser = argparse.ArgumentParser(
@@ -100,7 +100,7 @@ def main():
             sys.exit(1)
 
     try:
-        import PyQt4  # noqa
+        import PyQt5  # noqa
     except ImportError:
         logger.critical("No PyQT4 installation found, exiting!")
         sys.exit(1)
@@ -133,7 +133,8 @@ def main():
 
     # Start up the main user-interface
     from .ui.main import MainUI
-    from PyQt4.QtGui import QApplication, QIcon
+    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtGui import QIcon
 
     app = QApplication(sys.argv)
 

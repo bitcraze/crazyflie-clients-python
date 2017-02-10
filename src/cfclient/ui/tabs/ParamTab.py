@@ -32,10 +32,10 @@ to edit them.
 
 import logging
 
-from PyQt4 import uic
-from PyQt4.QtCore import Qt, pyqtSignal
-from PyQt4.QtCore import QAbstractItemModel, QModelIndex
-from PyQt4.QtGui import QBrush, QColor
+from PyQt5 import uic
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import QAbstractItemModel, QModelIndex
+from PyQt5.QtGui import QBrush, QColor
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -217,7 +217,8 @@ class ParamBlockModel(QAbstractItemModel):
     def reset(self):
         """Reset the model"""
         self._nodes = []
-        super(ParamBlockModel, self).reset()
+        super(ParamBlockModel, self).beginResetModel()
+        super(ParamBlockModel, self).endResetModel()
         self.layoutChanged.emit()
 
 
@@ -255,4 +256,5 @@ class ParamTab(Tab, param_tab_class):
         self.paramTree.expandAll()
 
     def _disconnected(self, link_uri):
-        self._model.reset()
+        self._model.beginResetModel()
+        self._model.endResetModel()
