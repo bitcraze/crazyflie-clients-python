@@ -409,9 +409,7 @@ class DeviceReader(QThread):
         self._read_timer = QTimer()
         self._read_timer.setInterval(25)
 
-        self._read_timer.timeout.connect(self._read_input())
-
-        # self.connect(self._read_timer, SIGNAL("timeout()"), self._read_input)
+        self._read_timer.timeout.connect(self._read_input)
 
     def stop_reading(self):
         """Stop polling data"""
