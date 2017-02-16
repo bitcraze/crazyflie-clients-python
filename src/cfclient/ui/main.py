@@ -591,13 +591,9 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         except KeyError as e:
             logger.warning(str(e))
 
-        mem = self.cf.mem.get_mems(MemoryElement.TYPE_DRIVER_LED)[0]
-        mem.write_data(self._led_write_done)
-
-        # self._led_write_test = 0
-
-        # mem.leds[self._led_write_test] = [10, 20, 30]
-        # mem.write_data(self._led_write_done)
+        mems = self.cf.mem.get_mems(MemoryElement.TYPE_DRIVER_LED)
+        if len(mems) > 0:
+            mems[0].write_data(self._led_write_done)
 
     def _disconnected(self):
         self.uiState = UIState.DISCONNECTED
@@ -609,9 +605,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
     def _led_write_done(self, mem, addr):
         logger.info("LED write done callback")
-        # self._led_write_test += 1
-        # mem.leds[self._led_write_test] = [10, 20, 30]
-        # mem.write_data(self._led_write_done)
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error", "Error when starting log config"

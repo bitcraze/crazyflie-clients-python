@@ -505,8 +505,9 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._anchor_pos_timer.stop()
 
     def _poll_anchor_positions(self):
-        mem = self._helper.cf.mem.get_mems(MemoryElement.TYPE_LOCO)[0]
-        mem.update(self._anchor_position_signal.emit)
+        mems = self._helper.cf.mem.get_mems(MemoryElement.TYPE_LOCO)
+        if len(mems) > 0:
+            mems[0].update(self._anchor_position_signal.emit)
 
     def _anchor_positions_updated(self, mem):
         """Callback from the memory sub system when the anchor positions

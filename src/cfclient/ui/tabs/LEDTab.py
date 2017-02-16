@@ -147,9 +147,11 @@ class LEDTab(Tab, led_tab_class):
 
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
-        self._mem = self._helper.cf.mem.get_mems(
-            MemoryElement.TYPE_DRIVER_LED)[0]
-        logger.info(self._mem)
+        mems = self._helper.cf.mem.get_mems(MemoryElement.TYPE_DRIVER_LED)
+        if len(mems) > 0:
+            self._mem = mems[0]
+            logger.info(self._mem)
+
         if self._mem:
             for btn in self._btns:
                 btn.setEnabled(True)
