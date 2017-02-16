@@ -41,6 +41,7 @@ import cfclient
 from cfclient.ui.tab import Tab
 
 from cflib.crazyflie.log import LogConfig
+from cflib.crazyflie.mem import MemoryElement
 from lpslib.lopoanchor import LoPoAnchor
 
 import copy
@@ -76,13 +77,11 @@ class Anchor:
         self.z = z
         self.distance = distance
 
-    def set_position(self, axis, value):
-        """Sets one coordinate of the position. axis is represented by the
-           characters 'x', 'y' or 'z'"""
-        if axis in {'x', 'y', 'z'}:
-            setattr(self, axis, value)
-        else:
-            raise ValueError('"{}" is an unknown axis'.format(axis))
+    def set_position(self, position):
+        """Sets the position."""
+        self.x = position[0]
+        self.y = position[1]
+        self.z = position[2]
 
     def get_position(self):
         """Returns the position as a vector"""
@@ -255,18 +254,21 @@ class AnchorPosWrapper():
 class LocoPositioningTab(Tab, locopositioning_tab_class):
     """Tab for plotting Loco Positioning data"""
 
-    # Update period of parameter data in ms
-    UPDATE_PERIOD = 100
+    # Update period of log data in ms
+    UPDATE_PERIOD_LOG = 100
 
-    # Frame rate
-    FPS = 10
+    # Update period of anchor position data
+    UPDATE_PERIOD_ANCHOR_POS = 5000
+
+    # Frame rate (updates per second)
+    FPS = 2
 
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
     _log_error_signal = pyqtSignal(object, str)
     _anchor_range_signal = pyqtSignal(int, object, object)
     _position_signal = pyqtSignal(int, object, object)
-    _anchor_position_signal = pyqtSignal(object, object)
+    _anchor_position_signal = pyqtSignal(object)
 
     def __init__(self, tabWidget, helper, *args):
         super(LocoPositioningTab, self).__init__(*args)
@@ -291,7 +293,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._disconnected_signal.connect(self._disconnected)
         self._anchor_range_signal.connect(self._anchor_range_received)
         self._position_signal.connect(self._position_received)
-        self._anchor_position_signal.connect(self._anchor_parameter_updated)
+        self._anchor_position_signal.connect(self._anchor_positions_updated)
 
         self._id_anchor_button.clicked.connect(
             lambda enabled:
@@ -330,6 +332,10 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._graph_timer.setInterval(1000 / self.FPS)
         self._graph_timer.timeout.connect(self._update_graphics)
         self._graph_timer.start()
+
+        self._anchor_pos_timer = QTimer()
+        self._anchor_pos_timer.setInterval(self.UPDATE_PERIOD_ANCHOR_POS)
+        self._anchor_pos_timer.timeout.connect(self._poll_anchor_positions)
 
     def _register_anchor_pos_ui(self, nr):
         x_spin = getattr(self, 'spin_a{}x'.format(nr))
@@ -442,16 +448,17 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         except AttributeError as e:
             logger.warning(str(e))
 
-        self._subscribe_to_parameters(self._helper.cf)
+        self._start_polling_anchor_pos(self._helper.cf)
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
         logger.debug("Crazyflie disconnected from {}".format(link_uri))
+        self._stop_polling_anchor_pos()
 
     def _register_logblock(self, logblock_name, variables, data_cb, error_cb):
         """Register log data to listen for. One logblock can contain a limited
         number of parameters (6 for floats)."""
-        lg = LogConfig(logblock_name, self.UPDATE_PERIOD)
+        lg = LogConfig(logblock_name, self.UPDATE_PERIOD_LOG)
         for variable in variables:
             if self._is_in_toc(variable):
                 lg.add_variable('{}.{}'.format(variable[0], variable[1]),
@@ -489,26 +496,25 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
                           "Error when using log config",
                           " [{0}]: {1}".format(log_conf.name, msg))
 
-    def _subscribe_to_parameters(self, crazyflie):
-        """Get anchor positions from the TOC and set up subscription for
-        changes in positions"""
-        group = 'anchorpos'
-        toc = crazyflie.param.toc.toc
-        anchor_group = toc[group]
-        for name in anchor_group.keys():
-            crazyflie.param.add_update_callback(
-                group=group, name=name, cb=self._anchor_position_signal.emit)
+    def _start_polling_anchor_pos(self, crazyflie):
+        """Set up a timer to poll anchor positions from the memory sub
+        system"""
+        self._anchor_pos_timer.start()
 
-    def _anchor_parameter_updated(self, name, value):
-        """Callback from the param layer when a parameter has been updated"""
-        self.set_anchor_position(name, value)
+    def _stop_polling_anchor_pos(self):
+        self._anchor_pos_timer.stop()
 
-    def set_anchor_position(self, name, value):
-        """Set the position of an anchor. If the anchor does not exist yet in
-        the anchor dictionary, create it."""
-        valid, anchor_number, axis = self._parse_anchor_parameter_name(name)
-        if valid:
-            self._get_anchor(anchor_number).set_position(axis, float(value))
+    def _poll_anchor_positions(self):
+        mem = self._helper.cf.mem.get_mems(MemoryElement.TYPE_LOCO)[0]
+        mem.update(self._anchor_position_signal.emit)
+
+    def _anchor_positions_updated(self, mem):
+        """Callback from the memory sub system when the anchor positions
+         are updated"""
+        for anchor_number, anchor_data in enumerate(mem.anchor_data):
+            if anchor_data.is_valid:
+                anchor = self._get_anchor(anchor_number)
+                anchor.set_position(anchor_data.position)
 
     def _parse_range_param_name(self, name):
         """Parse a parameter name for a ranging distance and return the number
@@ -530,18 +536,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             axis = {'X': 0, 'Y': 1, 'Z': 2}[name[-1]]
             valid = True
         return (valid, axis)
-
-    def _parse_anchor_parameter_name(self, name):
-        """Parse an anchor position parameter name and extract anchor number
-           and axis. The format is 'anchorpos.anchor0y'."""
-        valid = False
-        anchor = 0
-        axis = 0
-        if name.startswith('anchorpos.anchor'):
-            anchor = int(name[16])
-            axis = name[17]
-            valid = True
-        return (valid, anchor, axis)
 
     def _get_anchor(self, anchor_number):
         if anchor_number not in self._anchors:
