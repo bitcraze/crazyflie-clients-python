@@ -202,7 +202,8 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
         self._mined_axis = []
         self._popup = QMessageBox()
         self._popup.directions = directions
-        self._combined_button = QtWidgets.QPushButton('Combined Axis Detection')
+        self._combined_button = QtWidgets.QPushButton('Combined Axis ' +
+                                                      'Detection')
         self.cancelButton = QtWidgets.QPushButton('Cancel')
         self._popup.addButton(self.cancelButton, QMessageBox.DestructiveRole)
         self._popup.setWindowTitle(caption)

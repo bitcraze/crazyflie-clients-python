@@ -39,8 +39,8 @@ from cfclient.ui.tab import Tab
 
 import logging
 
-from PyQt5.QtWidgets import QApplication, QStyledItemDelegate, QAbstractItemView
-from PyQt5.QtWidgets import QStyleOptionButton, QStyle
+from PyQt5.QtWidgets import QApplication, QStyledItemDelegate
+from PyQt5.QtWidgets import QAbstractItemView, QStyleOptionButton, QStyle
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex
 
 from cfclient.utils.logdatawriter import LogWriter
