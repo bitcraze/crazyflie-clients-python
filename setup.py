@@ -130,7 +130,7 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib==0.1.0', 'appdirs==1.4.0',
+    install_requires=platform_requires + ['cflib>=0.1.1', 'appdirs==1.4.0',
                                           'pyzmq'],
 
     # List of dev dependencies
