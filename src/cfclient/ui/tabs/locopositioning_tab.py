@@ -56,7 +56,6 @@ locopositioning_tab_class = uic.loadUiType(
 
 # Try the imports for PyQtGraph to see if it is installed
 try:
-    raise Exception
     import pyqtgraph as pg
     from pyqtgraph import ViewBox  # noqa
     import pyqtgraph.console  # noqa

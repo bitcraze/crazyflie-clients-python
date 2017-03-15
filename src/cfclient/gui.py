@@ -48,7 +48,7 @@ def main():
     to stdout and start the GUI.
     """
 
-    # Set ERROR level for PyQt4 logger
+    # Set ERROR level for PyQt5 logger
     qtlogger = logging.getLogger('PyQt5')
     qtlogger.setLevel(logging.ERROR)
 
