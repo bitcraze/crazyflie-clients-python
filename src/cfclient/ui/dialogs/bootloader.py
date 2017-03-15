@@ -159,7 +159,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     def pathBrowse(self):
         filename = ""
         # Fix for crash in X on Ubuntu 14.04
-        filename = QtWidgets.QFileDialog.getOpenFileName()
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName()
         if filename != "":
             self.imagePathLine.setText(filename)
         pass
