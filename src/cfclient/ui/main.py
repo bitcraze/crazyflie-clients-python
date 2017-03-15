@@ -58,6 +58,10 @@ from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QMenu
 from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QTreeView
+from PyQt5.QtWidgets import QTreeWidget
+from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QTextEdit
 from PyQt5.QtCore import QTimer
 
 from .dialogs.cf1config import Cf1ConfigDialog
