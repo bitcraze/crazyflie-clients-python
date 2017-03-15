@@ -33,9 +33,9 @@ Shows data for the Loco Positioning system
 import logging
 from enum import Enum
 
-from PyQt4 import uic
-from PyQt4.QtCore import pyqtSignal, QTimer
-from PyQt4.QtGui import QMessageBox
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal, QTimer
+from PyQt5.QtGui import QMessageBox
 
 import cfclient
 from cfclient.ui.tab import Tab
