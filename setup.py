@@ -69,8 +69,11 @@ if sys.platform == 'win32':
 # Make a special case when running py2exe to be able to access resources
 if sys.platform == 'win32' and sys.argv[1] == 'py2exe':
     package_data = {}
+    qwindows = os.path.join(os.path.dirname(sys.executable),
+                            "Library\\plugins\\platforms\\qwindows.dll")
     data_files = [
         ('', ['README.md', 'src/cfclient/version.json']),
+        ('platforms', [qwindows]),
         ('ui', glob('src/cfclient/ui/*.ui')),
         ('ui/tabs', glob('src/cfclient/ui/tabs/*.ui')),
         ('ui/widgets', glob('src/cfclient/ui/widgets/*.ui')),

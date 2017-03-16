@@ -3,13 +3,13 @@ install:
 - cmd: >-
     set PATH=C:\Miniconda35;C:\Miniconda35\scripts;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin
 
-    conda create -y -q -n cfclient python=3.4 numpy=1.10.1 pyqt=4 pyqtgraph
+    conda create -y -q -n cfclient python=3.4 pyqt=5
 
     activate cfclient
 
     pip install -e .[dev]
 
-    rmdir /Q /S C:\Miniconda35\envs\cfclient\lib\site-packages\PyQt4\uic\port_v2
+    rmdir /Q /S C:\Miniconda35\envs\cfclient\lib\site-packages\PyQt5\uic\port_v2
 
     python tools\build\prep_windows
 

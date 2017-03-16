@@ -26,9 +26,9 @@ Open a command line windows and move to the crazyflie clients folder (the exact 
 cd crazyflie-clients-python
 ```
 
-Create and activate a Python 3.4 environment with numpy pyqt and pyqtgraph from conda (it is the packages we cannot easily install with pip):
+Create and activate a Python 3.4 environment with numpy pyqt:
 ```
-conda create -y -n cfclient python=3.4 numpy=1.10.1 pyqt=4 pyqtgraph
+conda create -y -n cfclient python=3.4 pyqt=5
 activate cfclient
 ```
 
@@ -64,7 +64,7 @@ To work on the Crazyflie firmware with Pycharm, install pycharm comunity edition
  - Locate the interpreter under \<miniconda_root\>\env\cfclient\python.exe (for example C:\Miniconda3\envs\cfclient\python.exe, see [screenshoot](https://wiki.bitcraze.io/_media/doc:crazyflie:client:pycfclient:cfclient_pycharm_windows_miniconda.png?t=1483971038&w=500&h=358&tok=9e4a0c))
  - Validate with OK two times
  - Open the bin/cfclient file in the pycharm editor and then "Run>Run 'cfclient'" will start the client
- 
+
 You are now able to edit and debug the python code. you can edit the .ui files for the GUI with QtDesigner. To can launch it type ```designer``` in the conda cfclient environment (ie. after typing ```activate cfclient`` in a cmd console).
 
 #### Mac OSX
@@ -79,8 +79,8 @@ First build the executable
 ```
 python setup.py py2exe
 ```
-**NOTE:** The first time the previous command will fail complaining about a ```PyQt4\uic\port_v2```
-folder. Remove this folder with ```rmdir \Q \S path\to\PyQt4\uic\port_v2```,
+**NOTE:** The first time the previous command will fail complaining about a ```PyQt5\uic\port_v2```
+folder. Remove this folder with ```rmdir \Q \S path\to\PyQt5\uic\port_v2```,
 you can copy-paste the folder path from the py2exe error message.
 
 
