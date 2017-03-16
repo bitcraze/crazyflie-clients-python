@@ -298,39 +298,18 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._menu_cf2_config.triggered.connect(self._cf2config_dialog.show)
         self._menu_cf1_config.triggered.connect(self._cf1config_dialog.show)
 
-        # Loading toolboxes (A bit of magic for a lot of automatic)
-        self.toolboxes = []
-        self.toolboxesMenuItem.setMenu(QtWidgets.QMenu())
-        for t_class in cfclient.ui.toolboxes.toolboxes:
-            toolbox = t_class(cfclient.ui.pluginhelper)
-            dockToolbox = MyDockWidget(toolbox.getName())
-            dockToolbox.setWidget(toolbox)
-            self.toolboxes += [dockToolbox, ]
-
-            # Add menu item for the toolbox
-            item = QtWidgets.QAction(toolbox.getName(), self)
-            item.setCheckable(True)
-            item.triggered.connect(self.toggleToolbox)
-            self.toolboxesMenuItem.menu().addAction(item)
-
-            dockToolbox.closed.connect(lambda: self.toggleToolbox(False))
-
-            # Setup some introspection
-            item.dockToolbox = dockToolbox
-            item.menuItem = item
-            dockToolbox.dockToolbox = dockToolbox
-            dockToolbox.menuItem = item
-
         # Load and connect tabs
-        self.tabsMenuItem.setMenu(QtWidgets.QMenu())
+        self.tabsMenuItem = QMenu("Tabs", self.menuView, enabled=True)
+        self.menuView.addMenu(self.tabsMenuItem)
+
+        # self.tabsMenuItem.setMenu(QtWidgets.QMenu())
         tabItems = {}
         self.loadedTabs = []
         for tabClass in cfclient.ui.tabs.available:
             tab = tabClass(self.tabs, cfclient.ui.pluginhelper)
-            item = QtWidgets.QAction(tab.getMenuName(), self)
-            item.setCheckable(True)
+            item = QtWidgets.QAction(tab.getMenuName(), self, checkable=True)
             item.toggled.connect(tab.toggleVisibility)
-            self.tabsMenuItem.menu().addAction(item)
+            self.tabsMenuItem.addAction(item)
             tabItems[tab.getTabName()] = item
             self.loadedTabs.append(tab)
             if not tab.enabled:
@@ -345,6 +324,31 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                     t.toggle()
         except Exception as e:
             logger.warning("Exception while opening tabs [{}]".format(e))
+
+        # Loading toolboxes (A bit of magic for a lot of automatic)
+        self.toolboxesMenuItem = QMenu("Toolboxes", self.menuView, enabled=True)
+        self.menuView.addMenu(self.toolboxesMenuItem)
+
+        self.toolboxes = []
+        for t_class in cfclient.ui.toolboxes.toolboxes:
+            toolbox = t_class(cfclient.ui.pluginhelper)
+            dockToolbox = MyDockWidget(toolbox.getName())
+            dockToolbox.setWidget(toolbox)
+            self.toolboxes += [dockToolbox, ]
+
+            # Add menu item for the toolbox
+            item = QtWidgets.QAction(toolbox.getName(), self)
+            item.setCheckable(True)
+            item.triggered.connect(self.toggleToolbox)
+            self.toolboxesMenuItem.addAction(item)
+
+            dockToolbox.closed.connect(lambda: self.toggleToolbox(False))
+
+            # Setup some introspection
+            item.dockToolbox = dockToolbox
+            item.menuItem = item
+            dockToolbox.dockToolbox = dockToolbox
+            dockToolbox.menuItem = item
 
         # References to all the device sub-menus in the "Input device" menu
         self._all_role_menus = ()
