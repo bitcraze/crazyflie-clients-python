@@ -154,10 +154,9 @@ class PySDL2Reader():
     """Used for reading data from input devices using the PySDL2 API."""
 
     def __init__(self):
-        sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO | sdl2.SDL_INIT_JOYSTICK)
+        sdl2.SDL_Init(sdl2.SDL_INIT_JOYSTICK)
         sdl2.SDL_SetHint(sdl2.hints.SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS,
                          b"1")
-        sdl2.ext.init()
         self._js = {}
         self.name = MODULE_NAME
         self._event_dispatcher = _SDLEventDispatcher(self._dispatch_events)
