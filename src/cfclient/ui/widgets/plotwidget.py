@@ -299,9 +299,19 @@ class PlotWidget(QtWidgets.QWidget, plot_widget_class):
         """Reset the plot by removing all the datasets"""
         for item in self._items:
             self._plot_widget.removeItem(self._items[item])
-        self._plot_widget.plotItem.legend.items = []
+
+        self._clear_legend()
+
         self._items = {}
         self._last_item = 0
         self._last_ts = None
         self._dtime = None
         self._plot_widget.clear()
+
+    def _clear_legend(self):
+        legend = self._plot_widget.plotItem.legend
+
+        while legend.layout.count() > 0:
+            item = legend.items[0]
+            name = item[1].text
+            legend.removeItem(name)
