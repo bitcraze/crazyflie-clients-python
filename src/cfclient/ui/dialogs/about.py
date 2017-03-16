@@ -31,6 +31,8 @@ import sys
 
 import cfclient
 import cflib.crtp
+from PyQt5.QtCore import QT_VERSION_STR
+from PyQt5.QtCore import PYQT_VERSION_STR
 from PyQt5 import QtWidgets
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal
@@ -47,6 +49,8 @@ DEBUG_INFO_FORMAT = """
 Cfclient version: {version}<br>
 System: {system}<br>
 Python: {pmajor}.{pminor}.{pmicro}<br>
+Qt: {qt_version}<br>
+PyQt: {pyqt_version}<br>
 <br>
 <b>Interface status</b><br>
 {interface_status}
@@ -170,6 +174,8 @@ class AboutDialog(QtWidgets.QWidget, about_widget_class):
                 pmajor=sys.version_info.major,
                 pminor=sys.version_info.minor,
                 pmicro=sys.version_info.micro,
+                qt_version=QT_VERSION_STR,
+                pyqt_version=PYQT_VERSION_STR,
                 interface_status=self._interface_text,
                 input_devices=self._device_text,
                 input_readers=self._input_readers_text,
