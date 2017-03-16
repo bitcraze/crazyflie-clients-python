@@ -326,7 +326,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             logger.warning("Exception while opening tabs [{}]".format(e))
 
         # Loading toolboxes (A bit of magic for a lot of automatic)
-        self.toolboxesMenuItem = QMenu("Toolboxes", self.menuView, enabled=True)
+        self.toolboxesMenuItem = QMenu("Toolboxes", self.menuView,
+                                       enabled=True)
         self.menuView.addMenu(self.toolboxesMenuItem)
 
         self.toolboxes = []
