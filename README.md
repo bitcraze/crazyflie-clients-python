@@ -2,20 +2,16 @@
 
 
 The Crazyflie PC client enables flashing and controlling the Crazyflie.
-There's also a Python library that can be integrated into other applications
-where you would like to use the Crazyflie.
+It implement the user interface and high-level control (for example gamepad handling).
+The communication with Crazyflie and the implementation of the CRTP protocol to control the Crazflie is handled by the [cflib](https://github.com/bitcraze/crazyflie-lib-python) project.
 
 For more info see our [wiki](http://wiki.bitcraze.se/ "Bitcraze Wiki").
-
-Note. The project is currently being reorganized, which means that This
-documentation might become inacurate. You can track the reorganisation work in
-the ticket #227.
 
 Running from source
 -------------------
 
 The Crazyflie client requires [cflib](https://github.com/bitcraze/crazyflie-lib-python).
-Follow the cflib readme to install it.
+If you want to develop with the lib too, follow the cflib readme to install it.
 
 ## Windows (7/8/10)
 
@@ -26,13 +22,13 @@ Open a command line windows and move to the crazyflie clients folder (the exact 
 cd crazyflie-clients-python
 ```
 
-Create and activate a Python 3.4 environment with numpy pyqt:
+Create and activate a Python 3.4 environment with pyqt5:
 ```
 conda create -y -n cfclient python=3.4 pyqt=5
 activate cfclient
 ```
 
-Download the SDL2.dll windows library:
+Download the 32bits SDL2.dll windows library:
 ```
 python tools\build\prep_windows
 ```
@@ -42,7 +38,7 @@ Install the client in development mode:
 pip install -e .[dev]
 ```
 
-You can now run the clients:
+You can now run the clients with the following commands:
 ```
 cfclient
 cfheadless
@@ -50,7 +46,7 @@ cfloader
 cfzmq
 ```
 
-**NOTE:** To use the Crazyradio you will have to [install the drivers](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
+**NOTE:** To use Crazyradio you will have to [install the drivers](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
 
 ### Working on the client with PyCharm
 
@@ -65,11 +61,7 @@ To work on the Crazyflie firmware with Pycharm, install pycharm comunity edition
  - Validate with OK two times
  - Open the bin/cfclient file in the pycharm editor and then "Run>Run 'cfclient'" will start the client
 
-You are now able to edit and debug the python code. you can edit the .ui files for the GUI with QtDesigner. To can launch it type ```designer``` in the conda cfclient environment (ie. after typing ```activate cfclient`` in a cmd console).
-
-#### Mac OSX
-
-type ```open -a Designer``` in a terminal to open the Designer application.
+You are now able to edit and debug the python code. you can edit the .ui files for the GUI with QtCreator. You can the Qt development kit from the [Qt website](https://www.qt.io/download-open-source/) and open the .ui files in QtCreator.
 
 ### Creating Windows installer
 
@@ -122,25 +114,17 @@ they might or might not be affected by this.
 
 1. Install PyQt
 
-    If you already have pyqt installed for python2 you need to uninstall it first
-
-    PyQt4 has been replaced by PyQt5 in brew and PyQt4 has been moved to the boneyard. Until this project is upgraded
-    to use PyQt5 you will have to install from the boneyard. See issue #269.
-
-
     ```
-    brew uninstall pyqt
-    brew install homebrew/boneyard/pyqt --with-python3
+    brew install pyqt5
     ```
 
 1. Install remaining dependencies
 
     ```
     brew install libusb
-    pip3 install pysdl2 pyusb pyqtgraph appdirs
     ```
 
-1. Install cflib from https://github.com/bitcraze/crazyflie-lib-python
+1. If you want to develop on cflib as well, install cflib from https://github.com/bitcraze/crazyflie-lib-python
 
 1. Install cfclient to run it from source. From the source folder run:
     ```
@@ -149,63 +133,19 @@ they might or might not be affected by this.
 
 1. You now have all the dependencies needed to run the client. From the source folder, run it with the following command:
     ```
-    python bin/cfclient
-    ```
-
-### Using MacPorts
-1. [Install MacPorts if needed](http://www.macports.org/install.php). Otherwise update your installation with:
-    ```
-    sudo port selfupdate
-    sudo port upgrade outdated
-    ```
-
-1. Install dependencies. Note that there are quite a few, so this could take a while:
-    ```
-    sudo port install libusb python34 py34-SDL2 py34-pyqt4 py34-pip
-    ```
-    To make the MacPorts ```python``` and ```pip``` the default commands:
-    ```
-    sudo port select --set python python34
-    sudo port select --set python3 python34
-    sudo port select --set pip pip34
-    ```
-    To install ```pyusb``` from ```pip```, use:
-    ```
-    sudo pip install pyusb appdirs
-    ```
-    To enable the plotter tab install pyqtgraph, this takes a lot of time:
-    ```
-    sudo port install py34-pyqtgraph
-    ```
-    Install cflib from https://github.com/bitcraze/crazyflie-lib-python
-
-    Install cfclient to run it from source. From the source folder run:
-    ```
-    pip install -e .
-    ```
-    You can now run the client from the source folder with
-    ```
-    python bin/cfclient
-    ```
-    Or, if you did not run the ```port select``` command to set the MacPorts ```python``` as the default, use:
-    ```
-    /opt/local/bin/python3.4 bin/cfclient
-    ```
-
-1. To make it easier to run MacPorts, add ```/opt/local/bin``` to your PATH variable.
-    The MacPorts installer should take care of that, but take a look at
-    ```~/.profile``` to make sure. If you have any issues it could be due to the
-    libraries not getting picked up correctly. Fix that by setting
-    ```DYLD_LIBRARY_PATH``` to ```/opt/local/lib``` in ```~/.profile```:
-    ```
-    export DYLD_LIBRARY_PATH=/opt/local/lib
+    cfclient
     ```
 
 ## Linux
 
 ### Launching the GUI application
 
-Install cflib from https://github.com/bitcraze/crazyflie-lib-python
+If you want to develop with the lib, install cflib from https://github.com/bitcraze/crazyflie-lib-python
+
+Cfclient requires Python3, pip and pyqt5 to be installed using the system package manager. For example on Ubuntu/Debian:
+```
+sudo apt-get install python3 python3-pip python3-pyqt5
+```
 
 Install cfclient to run it from source. From the source folder run (to install
 for your user only you can add ```--user``` to the command):
@@ -221,44 +161,16 @@ To launch the GUI after a systemwide installation, execute ```cfclient```.
 
 The Crazyflie PC client has the following dependencies:
 
-* Python 3.4
-* PyUSB
-* libusb 1.X (works with 0.X as well)
-* PyQtGraph
-* ZMQ
-* PyQt4
-* appdirs
-
-Example commands to install these dependencies:
-
-* Fedora:
-
-    ```
-    TODO Please contribute
-    ```
-
-
-* Ubuntu (14.04):
-
-    ```
-    sudo apt-get install python3 python3-pip python3-pyqt4 python3-zmq
-    pip3 install pyusb==1.0.0b2
-    pip3 install pyqtgraph appdirs
-    ```
-
-* Ubuntu (15.04):
-
-    ```
-    sudo apt-get install python3 python3-pip python3-pyqt4 python3-zmq python3-pyqtgraph
-    sudo pip3 install pyusb==1.0.0b2
-    sudo pip3 install appdirs
-    ```
-
-* OpenSUSE:
-
-    ```
-    TODO Please contribute
-    ```
+* Installed from system packages
+  * Python 3.4+
+  * PyQt5
+  * A pyusb backend: libusb 0.X/1.X
+* Installed from PyPI using PIP:
+  * cflib
+  * PyUSB
+  * PyQtGraph
+  * ZMQ
+  * appdirs
 
 ### Setting udev permissions
 
