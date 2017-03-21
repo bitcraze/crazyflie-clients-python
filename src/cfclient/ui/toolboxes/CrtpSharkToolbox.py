@@ -82,8 +82,6 @@ class CrtpSharkToolbox(QtWidgets.QWidget, param_tab_class):
             line.setData(2, Qt.DisplayRole, "%d/%d" % (pk.port, pk.channel))
 
             line.setData(3, Qt.DisplayRole, hexlify(pk.data).decode('utf8'))
-            print(pk.data)
-            print(hexlify(pk.data))
 
             s = "%d, %s, %d/%d, %s" % (ms_diff, dir, pk.port, pk.channel,
                                        hexlify(pk.data).decode('utf8'))
