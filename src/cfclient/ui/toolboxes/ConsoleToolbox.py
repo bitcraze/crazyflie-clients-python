@@ -55,11 +55,15 @@ class ConsoleToolbox(QtWidgets.QWidget, console_class):
     def getName(self):
         return 'Console'
 
+    def _console_updated(self, data):
+        self.update.emit(data)
+
     def enable(self):
-        self.helper.cf.console.receivedChar.add_callback(self.update.emit)
+        self.helper.cf.console.receivedChar.add_callback(self._console_updated)
 
     def disable(self):
-        self.helper.cf.console.receivedChar.remove_callback(self.update.emit)
+        self.helper.cf.console.receivedChar.remove_callback(
+            self._console_updated)
 
     def preferedDockArea(self):
         return Qt.BottomDockWidgetArea
