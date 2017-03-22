@@ -1,5 +1,7 @@
 sudo: required
 language: python
+git:
+  depth: 150
 python:
   - "2.7"
 services:
