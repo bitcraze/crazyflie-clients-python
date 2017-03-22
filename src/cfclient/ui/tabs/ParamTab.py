@@ -216,8 +216,8 @@ class ParamBlockModel(QAbstractItemModel):
 
     def reset(self):
         """Reset the model"""
-        self._nodes = []
         super(ParamBlockModel, self).beginResetModel()
+        self._nodes = []
         super(ParamBlockModel, self).endResetModel()
         self.layoutChanged.emit()
 
@@ -257,4 +257,5 @@ class ParamTab(Tab, param_tab_class):
 
     def _disconnected(self, link_uri):
         self._model.beginResetModel()
+        self._model.reset()
         self._model.endResetModel()

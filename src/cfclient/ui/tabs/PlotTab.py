@@ -178,6 +178,7 @@ class PlotTab(Tab, plot_tab_class):
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
         self._model.beginResetModel()
+        self._model.reset()
         self._model.endResetModel()
         self.dataSelector.setCurrentIndex(-1)
         self._previous_config = None

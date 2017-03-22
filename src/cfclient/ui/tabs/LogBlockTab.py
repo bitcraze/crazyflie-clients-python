@@ -347,4 +347,5 @@ class LogBlockTab(Tab, logblock_tab_class):
     def _disconnected(self, link_uri):
         """Callback when the Crazyflie is disconnected"""
         self._model.beginResetModel()
+        self._model.reset()
         self._model.endResetModel()
