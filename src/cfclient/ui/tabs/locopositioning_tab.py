@@ -35,6 +35,7 @@ from enum import Enum
 
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, QTimer
+from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QMessageBox
 
 import cfclient
@@ -113,6 +114,9 @@ class PlotWrapper:
     VICINITY_DISTANCE = 2.5
     HIGHLIGHT_DISTANCE = 0.5
 
+    LABEL_SIZE = 15
+    LABEL_HIGHLIGHT_SIZE = 30
+
     ANCHOR_SIZE = 10
     HIGHLIGHT_SIZE = 20
 
@@ -159,6 +163,7 @@ class PlotWrapper:
     def _plot_anchor(self, x, y, anchor_id, distance, display_mode):
         brush = PlotWrapper.ANCHOR_BRUSH
         size = PlotWrapper.ANCHOR_SIZE
+        font_size = self.LABEL_SIZE
         if display_mode is DisplayMode.identify_anchor:
             if distance < PlotWrapper.VICINITY_DISTANCE:
                 brush = self._mix_brushes(
@@ -169,11 +174,14 @@ class PlotWrapper:
             if distance < PlotWrapper.HIGHLIGHT_DISTANCE:
                 brush = PlotWrapper.HIGHLIGHT_ANCHOR_BRUSH
                 size = PlotWrapper.HIGHLIGHT_SIZE
+                font_size = self.LABEL_HIGHLIGHT_SIZE
 
         self.widget.plot([x], [y], pen=None, symbolBrush=brush,
                          symbolSize=size)
 
         text = pg.TextItem(text="{}".format(anchor_id))
+        font = QFont("Helvetica", font_size)
+        text.setFont(font)
         self.widget.addItem(text)
         text.setPos(x, y)
 
