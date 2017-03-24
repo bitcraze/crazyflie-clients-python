@@ -15,7 +15,9 @@ If you want to develop with the lib too, follow the cflib readme to install it.
 
 ## Windows (7/8/10)
 
-Running from source on Windows is tested using the [miniconda](http://conda.pydata.org/miniconda.html) python distribution. It is possible to run from any distribution as long as the required packages are installed. Building the windows installer requires Python 3.4 (because ```py2exe``` is not distributed for Python 3.5 yet). The following instructions assumes **Miniconda 32-bit** is installed.
+Running from source on Windows is tested using the [miniconda](http://conda.pydata.org/miniconda.html) python distribution. It is possible to run from any distribution as long as the required packages are installed. Building the windows installer requires Python 3.4 (because ```py2exe``` is not distributed for Python 3.5+ yet). The following instructions assumes **Miniconda 32-bit** is installed.
+
+**Note on python version**: Building the windows executable and installer requires Python 3.4. The client has mostly been tested using Python 32Bit but should work on python 64Bits as well. If you are not interested about building the windows installer, just by running the client, you can run on more recent version of python.
 
 Open a command line windows and move to the crazyflie clients folder (the exact command depends of where the project is cloned):
 ```
