@@ -26,7 +26,7 @@
          <widget class="QComboBox" name="interfaceCombo">
           <property name="minimumSize">
            <size>
-            <width>80</width>
+            <width>160</width>
             <height>0</height>
            </size>
           </property>
@@ -163,7 +163,7 @@
           <widget class="HexSpinBox" name="address">
            <property name="minimumSize">
             <size>
-             <width>120</width>
+             <width>140</width>
              <height>0</height>
             </size>
            </property>
@@ -211,7 +211,7 @@
            <x>0</x>
            <y>0</y>
            <width>852</width>
-           <height>529</height>
+           <height>500</height>
           </rect>
          </property>
          <property name="sizePolicy">
@@ -254,7 +254,7 @@
      <x>0</x>
      <y>0</y>
      <width>872</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
