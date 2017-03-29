@@ -552,8 +552,9 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         return self._anchors[anchor_number]
 
     def _update_graphics(self):
-        anchors = copy.deepcopy(self._anchors)
-        self._plot_yz.update(anchors, self._position, self._display_mode)
-        self._plot_xy.update(anchors, self._position, self._display_mode)
-        self._plot_xz.update(anchors, self._position, self._display_mode)
-        self._enable_anchor_pos_ui()
+        if self.is_visible():
+            anchors = copy.deepcopy(self._anchors)
+            self._plot_yz.update(anchors, self._position, self._display_mode)
+            self._plot_xy.update(anchors, self._position, self._display_mode)
+            self._plot_xz.update(anchors, self._position, self._display_mode)
+            self._enable_anchor_pos_ui()

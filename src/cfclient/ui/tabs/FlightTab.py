@@ -273,7 +273,7 @@ class FlightTab(Tab, flight_tab_class):
         if self.isVisible():
             estimated_z = data[PARAM_NAME_ESTIMATED_Z]
             self.actualASL.setText(("%.2f" % estimated_z))
-            self.ai.setBaro(estimated_z)
+            self.ai.setBaro(estimated_z, self.is_visible())
 
     def _althold_data_received(self, timestamp, data, logconf):
         if self.isVisible():
@@ -282,11 +282,11 @@ class FlightTab(Tab, flight_tab_class):
                 if not self.targetASL.isEnabled():
                     self.targetASL.setEnabled(True)
                 self.targetASL.setText(("%.2f" % target))
-                self.ai.setHover(target)
+                self.ai.setHover(target, self.is_visible())
             elif self.targetASL.isEnabled():
                 self.targetASL.setEnabled(False)
                 self.targetASL.setText("Not set")
-                self.ai.setHover(0)
+                self.ai.setHover(0, self.is_visible())
 
     def _imu_data_received(self, timestamp, data, logconf):
         if self.isVisible():
@@ -298,7 +298,7 @@ class FlightTab(Tab, flight_tab_class):
                                           data["stabilizer.thrust"]))
 
             self.ai.setRollPitch(-data["stabilizer.roll"],
-                                 data["stabilizer.pitch"])
+                                 data["stabilizer.pitch"], self.is_visible())
 
     def connected(self, linkURI):
         # IMU & THRUST

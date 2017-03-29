@@ -91,3 +91,6 @@ class Tab(QtWidgets.QWidget):
     def getTabName(self):
         """Return the name of the tab that will be shown in the tab"""
         return self.tabName
+
+    def is_visible(self):
+        return self.tabWidget.currentWidget() == self

@@ -53,27 +53,32 @@ class AttitudeIndicator(QtWidgets.QWidget):
         self.setMinimumSize(30, 30)
         # self.setMaximumSize(240,240)
 
-    def setRoll(self, roll):
+    def setRoll(self, roll, repaint=True):
         self.roll = roll
-        self.repaint()
+        if repaint:
+            self.repaint()
 
-    def setPitch(self, pitch):
+    def setPitch(self, pitch, repaint=True):
         self.pitch = pitch
-        self.repaint()
+        if repaint:
+            self.repaint()
 
-    def setHover(self, target):
+    def setHover(self, target, repaint=True):
         self.hoverTargetASL = target
         self.hover = target > 0
-        self.repaint()
+        if repaint:
+            self.repaint()
 
-    def setBaro(self, asl):
+    def setBaro(self, asl, repaint=True):
         self.hoverASL = asl
-        self.repaint()
+        if repaint:
+            self.repaint()
 
-    def setRollPitch(self, roll, pitch):
+    def setRollPitch(self, roll, pitch, repaint=True):
         self.roll = roll
         self.pitch = pitch
-        self.repaint()
+        if repaint:
+            self.repaint()
 
     def paintEvent(self, e):
         qp = QtGui.QPainter()
