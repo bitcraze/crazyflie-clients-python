@@ -32,6 +32,7 @@ Shows data for the Loco Positioning system
 
 import logging
 from enum import Enum
+from collections import namedtuple
 
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, QTimer
@@ -46,6 +47,7 @@ from cflib.crazyflie.mem import MemoryElement
 from lpslib.lopoanchor import LoPoAnchor
 
 import copy
+import sys
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LocoPositioningTab']
@@ -125,7 +127,8 @@ class PlotWrapper:
         self._vertical = vertical
         self._depth = self._find_missing_axis(horizontal, vertical)
         self._title = title
-        self.widget = pg.PlotWidget(title=title)
+        self.widget = pg.PlotWidget(title=title, enableMenu=False)
+        self.widget.getPlotItem().hideButtons()
         self._axis_scale_steps = []
 
         self.widget.setLabel('left', self._vertical, units='m')
@@ -235,6 +238,9 @@ class DisplayMode(Enum):
     estimated_position = 2
 
 
+Range = namedtuple('Range', ['min', 'max'])
+
+
 class AnchorPosWrapper():
     """Wraps the UI elements of one anchor position"""
     def __init__(self, x, y, z):
@@ -327,6 +333,8 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             self._read_positions_from_anchors()
         )
 
+        self._show_all_button.clicked.connect(self._scale_and_center_graphs)
+
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
             self._connected_signal.emit)
@@ -412,6 +420,109 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     def _clear_state(self):
         self._anchors = {}
         self._position = [0.0, 0.0, 0.0]
+
+    def _scale_and_center_graphs(self):
+        start_bounds = Range(sys.float_info.max, -sys.float_info.max)
+        bounds = {"x": start_bounds, "y": start_bounds,
+                  "z": start_bounds}
+        for a in self._anchors.values():
+            bounds = self._find_min_max_data_range(bounds, [a.x, a.y, a.z])
+        bounds = self._find_min_max_data_range(bounds, self._position)
+
+        bounds = self._pad_bounds(bounds)
+        self._center_all_data_in_graphs(bounds)
+        self._rescale_to_fit_data(bounds)
+
+    def _rescale_to_fit_data(self, bounds):
+        [[xy_xmin, xy_xmax],
+            [xy_ymin, xy_ymax]] = self._plot_xy.view.viewRange()
+        [[yz_xmin, yz_xmax],
+            [yz_ymin, yz_ymax]] = self._plot_yz.view.viewRange()
+        if not self._is_data_visibile(bounds, self._position):
+            if self._will_new_range_zoom_in(Range(xy_xmin, xy_xmax),
+                                            bounds["x"]):
+                self._plot_xy.view.setRange(xRange=bounds["x"],
+                                            padding=0.0, update=True)
+
+        if not self._is_data_visibile(bounds, self._position):
+            if self._will_new_range_zoom_in(Range(xy_ymin, xy_ymax),
+                                            bounds["y"]):
+                self._plot_xy.view.setRange(yRange=bounds["y"],
+                                            padding=0.0, update=True)
+
+        if not self._is_data_visibile(bounds, self._position):
+            if self._will_new_range_zoom_in(Range(yz_xmin, yz_xmax),
+                                            bounds["y"]):
+                self._plot_yz.view.setRange(yRange=bounds["y"],
+                                            padding=0.0, update=True)
+
+        if not self._is_data_visibile(bounds, self._position):
+            if self._will_new_range_zoom_in(Range(yz_ymin, yz_ymax),
+                                            bounds["z"]):
+                self._plot_yz.view.setRange(yRange=bounds["z"], padding=0.0,
+                                            update=True)
+
+    def _pad_bounds(self, ranges):
+        new_ranges = ranges
+
+        new_ranges["x"] = Range(new_ranges["x"].min - 1.0,
+                                new_ranges["x"].max + 1.0)
+
+        new_ranges["y"] = Range(new_ranges["y"].min - 1.0,
+                                new_ranges["y"].max + 1.0)
+
+        new_ranges["z"] = Range(new_ranges["z"].min - 1.0,
+                                new_ranges["z"].max + 1.0)
+
+        return new_ranges
+
+    def _center_all_data_in_graphs(self, ranges):
+        # Will center data in graphs without taking care of scaling
+        self._plot_xy.view.setRange(xRange=ranges["x"], yRange=ranges["y"],
+                                    padding=0.0, update=True)
+        self._plot_yz.view.setRange(yRange=ranges["z"], padding=0.0,
+                                    update=True)
+
+    def _will_new_range_zoom_in(self, old_range, new_range):
+        return old_range.min > new_range.min
+
+    def _is_data_visibile(self, ranges, point):
+        [[xy_xmin, xy_xmax],
+            [xy_ymin, xy_ymax]] = self._plot_xy.view.viewRange()
+        [[yz_xmin, yz_xmax],
+            [yz_ymin, yz_ymax]] = self._plot_yz.view.viewRange()
+        [[xz_xmin, xz_xmax],
+            [xz_ymin, xz_ymax]] = self._plot_xz.view.viewRange()
+
+        allVisible = True
+
+        if ranges["x"].min < xy_xmin or ranges["x"].max > xy_xmax:
+            allVisible = False
+
+        if ranges["z"].min < yz_ymin or ranges["z"].max > yz_ymax:
+            allVisible = False
+
+        if ranges["y"].min < yz_xmin or ranges["y"].max > yz_xmax:
+            allVisible = False
+
+        if ranges["y"].min < xy_ymin or ranges["y"].max > xy_ymax:
+            allVisible = False
+
+        return allVisible
+
+    def _find_min_max_data_range(self, ranges, point):
+        result = ranges
+
+        result["x"] = Range(min(ranges["x"].min, point[0]),
+                            max(ranges["x"].max, point[0]))
+
+        result["y"] = Range(min(ranges["y"].min, point[1]),
+                            max(ranges["y"].max, point[1]))
+
+        result["z"] = Range(min(ranges["z"].min, point[2]),
+                            max(ranges["z"].max, point[2]))
+
+        return result
 
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
