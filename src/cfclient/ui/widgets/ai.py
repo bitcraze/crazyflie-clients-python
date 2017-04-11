@@ -47,8 +47,8 @@ class AttitudeIndicator(QtWidgets.QWidget):
         self.roll = 0
         self.pitch = 0
         self.hover = False
-        self.hoverASL = 0.0
-        self.hoverTargetASL = 0.0
+        self.hoverHeight = 0.0
+        self.hoverTargetHeight = 0.0
 
         self.setMinimumSize(30, 30)
         # self.setMaximumSize(240,240)
@@ -64,13 +64,13 @@ class AttitudeIndicator(QtWidgets.QWidget):
             self.repaint()
 
     def setHover(self, target, repaint=True):
-        self.hoverTargetASL = target
+        self.hoverTargetHeight = target
         self.hover = target > 0
         if repaint:
             self.repaint()
 
-    def setBaro(self, asl, repaint=True):
-        self.hoverASL = asl
+    def setBaro(self, height, repaint=True):
+        self.hoverHeight = height
         if repaint:
             self.repaint()
 
@@ -163,14 +163,14 @@ class AttitudeIndicator(QtWidgets.QWidget):
 
         qp.translate(0, h / 2)
         if not self.hover:
-            # asl
-            qp.drawText(w - fh * 10, fh / 2, str(round(self.hoverASL, 2)))
+            # height
+            qp.drawText(w - fh * 10, fh / 2, str(round(self.hoverHeight, 2)))
 
         if self.hover:
-            # target asl (center)
+            # target height (center)
             qp.drawText(
-                w - fh * 10, fh / 2, str(round(self.hoverTargetASL, 2)))
-            diff = round(self.hoverASL - self.hoverTargetASL, 2)
+                w - fh * 10, fh / 2, str(round(self.hoverTargetHeight, 2)))
+            diff = round(self.hoverHeight - self.hoverTargetHeight, 2)
             pos_y = -h / 6 * diff
 
             # cap to +- 2.8m
@@ -208,8 +208,8 @@ if __name__ == "__main__":
         def updateTarget(self, target):
             self.wid.setHover(500 + target / 10.)
 
-        def updateBaro(self, asl):
-            self.wid.setBaro(500 + asl / 10.)
+        def updateBaro(self, height):
+            self.wid.setBaro(500 + height / 10.)
 
         def initUI(self):
             vbox = QtWidgets.QVBoxLayout()
@@ -235,11 +235,11 @@ if __name__ == "__main__":
             sldPitch.valueChanged[int].connect(self.updatePitch)
             hbox.addWidget(sldPitch)
 
-            sldASL = QtWidgets.QSlider(QtCore.Qt.Vertical, self)
-            sldASL.setFocusPolicy(QtCore.Qt.NoFocus)
-            sldASL.setRange(-200, 200)
-            sldASL.setValue(0)
-            sldASL.valueChanged[int].connect(self.updateBaro)
+            sldHeight = QtWidgets.QSlider(QtCore.Qt.Vertical, self)
+            sldHeight.setFocusPolicy(QtCore.Qt.NoFocus)
+            sldHeight.setRange(-200, 200)
+            sldHeight.setValue(0)
+            sldHeight.valueChanged[int].connect(self.updateBaro)
 
             sldT = QtWidgets.QSlider(QtCore.Qt.Vertical, self)
             sldT.setFocusPolicy(QtCore.Qt.NoFocus)
@@ -248,7 +248,7 @@ if __name__ == "__main__":
             sldT.valueChanged[int].connect(self.updateTarget)
 
             hbox.addWidget(sldT)
-            hbox.addWidget(sldASL)
+            hbox.addWidget(sldHeight)
 
             self.setLayout(hbox)
 

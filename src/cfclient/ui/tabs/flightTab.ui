@@ -439,7 +439,7 @@
               <item row="5" column="0">
                <widget class="QLabel" name="label_17">
                 <property name="text">
-                 <string>ASL</string>
+                 <string>Height</string>
                 </property>
                </widget>
               </item>
@@ -483,7 +483,7 @@
                </widget>
               </item>
               <item row="5" column="4">
-               <widget class="QLineEdit" name="actualASL">
+               <widget class="QLineEdit" name="actualHeight">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
@@ -650,7 +650,7 @@
                <widget class="QLineEdit" name="actualRoll"/>
               </item>
               <item row="5" column="2">
-               <widget class="QLineEdit" name="targetASL">
+               <widget class="QLineEdit" name="targetHeight">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>

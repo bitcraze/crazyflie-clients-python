@@ -64,6 +64,10 @@ __all__ = ['JoystickReader']
 logger = logging.getLogger(__name__)
 
 MAX_THRUST = 65000
+INITAL_TAGET_HEIGHT = 0.4
+MAX_TARGET_HEIGHT = 1.0
+MIN_TARGET_HEIGHT = 0.03
+INPUT_READ_PERIOD = 0.01
 
 
 class JoystickReader(object):
@@ -75,7 +79,7 @@ class JoystickReader(object):
 
     ASSISTED_CONTROL_ALTHOLD = 0
     ASSISTED_CONTROL_POSHOLD = 1
-    ASSISTED_CONTROL_HEIGHTHOLD = 2    
+    ASSISTED_CONTROL_HEIGHTHOLD = 2
 
     def __init__(self, do_device_discovery=True):
         self._input_device = None
@@ -102,6 +106,7 @@ class JoystickReader(object):
         self._old_thrust = 0
         self._old_raw_thrust = 0
         self.springy_throttle = True
+        self._target_height = INITAL_TAGET_HEIGHT
 
         self.trim_roll = Config().get("trim_roll")
         self.trim_pitch = Config().get("trim_pitch")
@@ -135,7 +140,7 @@ class JoystickReader(object):
         self._available_devices = {}
 
         # TODO: The polling interval should be set from config file
-        self._read_timer = PeriodicTimer(0.01, self.read_input)
+        self._read_timer = PeriodicTimer(INPUT_READ_PERIOD, self.read_input)
 
         if do_device_discovery:
             self._discovery_timer = PeriodicTimer(1.0,
@@ -356,6 +361,7 @@ class JoystickReader(object):
                             for d in self._selected_mux.devices():
                                 d.limit_thrust = False
                                 d.limit_rp = False
+                            self._target_height = INITAL_TAGET_HEIGHT
                         else:
                             for d in self._selected_mux.devices():
                                 d.limit_thrust = True
@@ -420,21 +426,30 @@ class JoystickReader(object):
                         roll = data.roll + self.trim_roll
                         pitch = data.pitch + self.trim_pitch
                         yawrate = data.yaw
-                        zdist = 0.4
+                        # Scale thrust to a value between -1.0 to 1.0
+                        vz = (data.thrust - 32767) / 32767.0
+                        # Integrate velosity setpoint
+                        self._target_height += vz * INPUT_READ_PERIOD
+                        # Cap target height
+                        if self._target_height > MAX_TARGET_HEIGHT:
+                            self._target_height = MAX_TARGET_HEIGHT
+                        if self._target_height < MIN_TARGET_HEIGHT:
+                            self._target_height = MIN_TARGET_HEIGHT
                         self.heighthold_input_updated.call(roll, -pitch,
-                                                          yawrate, zdist)                                       
+                                                           yawrate,
+                                                           self._target_height)
                     else:
-                        # If we are using alt hold the data is not in a percentage
+                        # Using alt hold the data is not in a percentage
                         if not data.assistedControl:
                             data.thrust = JoystickReader.p2t(data.thrust)
-    
+
                         # Thrust might be <0 here, make sure it's not otherwise
                         # we'll get an error.
                         if data.thrust < 0:
                             data.thrust = 0
                         if data.thrust > 0xFFFF:
                             data.thrust = 0xFFFF
-    
+
                         self.input_updated.call(data.roll + self.trim_roll,
                                                 data.pitch + self.trim_pitch,
                                                 data.yaw, data.thrust)

@@ -45,8 +45,8 @@ from cfclient.utils.input import JoystickReader
 
 from cfclient.ui.tab import Tab
 
-PARAM_NAME_ALT_HOLD_TARGET = "posCtlAlt.targetZ"
-PARAM_NAME_ESTIMATED_Z = "posEstimatorAlt.estimatedZ"
+PARAM_NAME_ALT_HOLD_TARGET = "posCtl.targetZ"
+LOG_NAME_ESTIMATED_Z = "posEstimatorAlt.estimatedZ"
 
 __author__ = 'Bitcraze AB'
 __all__ = ['FlightTab']
@@ -56,7 +56,7 @@ logger = logging.getLogger(__name__)
 flight_tab_class = uic.loadUiType(cfclient.module_path +
                                   "/ui/tabs/flightTab.ui")[0]
 
-MAX_THRUST = 65365.0
+MAX_THRUST = 65536.0
 
 
 class FlightTab(Tab, flight_tab_class):
@@ -271,21 +271,21 @@ class FlightTab(Tab, flight_tab_class):
 
     def _baro_data_received(self, timestamp, data, logconf):
         if self.isVisible():
-            estimated_z = data[PARAM_NAME_ESTIMATED_Z]
-            self.actualASL.setText(("%.2f" % estimated_z))
+            estimated_z = data[LOG_NAME_ESTIMATED_Z]
+            self.actualHeight.setText(("%.2f" % estimated_z))
             self.ai.setBaro(estimated_z, self.is_visible())
 
     def _althold_data_received(self, timestamp, data, logconf):
         if self.isVisible():
             target = data[PARAM_NAME_ALT_HOLD_TARGET]
             if target > 0:
-                if not self.targetASL.isEnabled():
-                    self.targetASL.setEnabled(True)
-                self.targetASL.setText(("%.2f" % target))
+                if not self.targetHeight.isEnabled():
+                    self.targetHeight.setEnabled(True)
+                self.targetHeight.setText(("%.2f" % target))
                 self.ai.setHover(target, self.is_visible())
-            elif self.targetASL.isEnabled():
-                self.targetASL.setEnabled(False)
-                self.targetASL.setText("Not set")
+            elif self.targetHeight.isEnabled():
+                self.targetHeight.setEnabled(False)
+                self.targetHeight.setText("Not set")
                 self.ai.setHover(0, self.is_visible())
 
     def _imu_data_received(self, timestamp, data, logconf):
@@ -340,15 +340,15 @@ class FlightTab(Tab, flight_tab_class):
         available = eval(available)
         if ("HMC5883L" in name):
             if (not available):
-                self.actualASL.setText("N/A")
-                self.actualASL.setEnabled(False)
+                self.actualHeight.setText("N/A")
+                self.actualHeight.setEnabled(False)
             else:
-                self.actualASL.setEnabled(True)
+                self.actualHeight.setEnabled(True)
                 self.helper.inputDeviceReader.set_alt_hold_available(available)
                 if (not self.logBaro and not self.logAltHold):
                     # The sensor is available, set up the logging
                     self.logBaro = LogConfig("Baro", 200)
-                    self.logBaro.add_variable(PARAM_NAME_ESTIMATED_Z, "float")
+                    self.logBaro.add_variable(LOG_NAME_ESTIMATED_Z, "float")
 
                     try:
                         self.helper.cf.log.add_config(self.logBaro)
@@ -387,10 +387,10 @@ class FlightTab(Tab, flight_tab_class):
         self.actualPitch.setText("")
         self.actualYaw.setText("")
         self.actualThrust.setText("")
-        self.actualASL.setText("")
-        self.targetASL.setText("Not Set")
-        self.targetASL.setEnabled(False)
-        self.actualASL.setEnabled(False)
+        self.actualHeight.setText("")
+        self.targetHeight.setText("Not Set")
+        self.targetHeight.setEnabled(False)
+        self.actualHeight.setEnabled(False)
         self.clientXModeCheckbox.setEnabled(False)
         self.logBaro = None
         self.logAltHold = None
@@ -526,12 +526,12 @@ class FlightTab(Tab, flight_tab_class):
 
     def _assisted_control_updated(self, enabled):
         if self.helper.inputDeviceReader.get_assisted_control() == \
-                    JoystickReader.ASSISTED_CONTROL_POSHOLD:
+                JoystickReader.ASSISTED_CONTROL_POSHOLD:
             self.targetThrust.setEnabled(not enabled)
             self.targetRoll.setEnabled(not enabled)
             self.targetPitch.setEnabled(not enabled)
         elif self.helper.inputDeviceReader.get_assisted_control() == \
-                    JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD:
+                JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD:
             self.targetThrust.setEnabled(not enabled)
         else:
             self.helper.cf.param.set_value("flightmode.althold", str(enabled))

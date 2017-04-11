@@ -168,10 +168,10 @@ class InputReaderInterface(object):
         # Thust limiting (slew, minimum and emergency stop)
         if self.input.springy_throttle:
             if assisted_control and \
-                    (self.input.get_assisted_control() == \
-                    self.input.ASSISTED_CONTROL_ALTHOLD or \
-                    self.input.get_assisted_control() == \
-                    self.input.ASSISTED_CONTROL_HEIGHTHOLD):
+                    (self.input.get_assisted_control() ==
+                     self.input.ASSISTED_CONTROL_ALTHOLD or
+                     self.input.get_assisted_control() ==
+                     self.input.ASSISTED_CONTROL_HEIGHTHOLD):
                 thrust = int(round(InputReaderInterface.deadband(thrust, 0.2) *
                                    32767 + 32767))  # Convert to uint16
             else:
