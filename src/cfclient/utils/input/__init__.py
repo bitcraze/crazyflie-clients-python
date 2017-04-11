@@ -75,6 +75,7 @@ class JoystickReader(object):
 
     ASSISTED_CONTROL_ALTHOLD = 0
     ASSISTED_CONTROL_POSHOLD = 1
+    ASSISTED_CONTROL_HEIGHTHOLD = 2    
 
     def __init__(self, do_device_discovery=True):
         self._input_device = None
@@ -158,6 +159,7 @@ class JoystickReader(object):
 
         self.input_updated = Caller()
         self.assisted_input_updated = Caller()
+        self.heighthold_input_updated = Caller()
         self.rp_trim_updated = Caller()
         self.emergency_stop_updated = Caller()
         self.device_discovery = Caller()
@@ -412,20 +414,30 @@ class JoystickReader(object):
                         self.rp_trim_updated.call(self.trim_roll,
                                                   self.trim_pitch)
 
-                    # If we are using alt hold the data is not in a percentage
-                    if not data.assistedControl:
-                        data.thrust = JoystickReader.p2t(data.thrust)
-
-                    # Thrust might be <0 here, make sure it's not otherwise
-                    # we'll get an error.
-                    if data.thrust < 0:
-                        data.thrust = 0
-                    if data.thrust > 0xFFFF:
-                        data.thrust = 0xFFFF
-
-                    self.input_updated.call(data.roll + self.trim_roll,
-                                            data.pitch + self.trim_pitch,
-                                            data.yaw, data.thrust)
+                    if self._assisted_control == \
+                            JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD \
+                            and data.assistedControl:
+                        roll = data.roll + self.trim_roll
+                        pitch = data.pitch + self.trim_pitch
+                        yawrate = data.yaw
+                        zdist = 0.4
+                        self.heighthold_input_updated.call(roll, -pitch,
+                                                          yawrate, zdist)                                       
+                    else:
+                        # If we are using alt hold the data is not in a percentage
+                        if not data.assistedControl:
+                            data.thrust = JoystickReader.p2t(data.thrust)
+    
+                        # Thrust might be <0 here, make sure it's not otherwise
+                        # we'll get an error.
+                        if data.thrust < 0:
+                            data.thrust = 0
+                        if data.thrust > 0xFFFF:
+                            data.thrust = 0xFFFF
+    
+                        self.input_updated.call(data.roll + self.trim_roll,
+                                                data.pitch + self.trim_pitch,
+                                                data.yaw, data.thrust)
             else:
                 self.input_updated.call(0, 0, 0, 0)
         except Exception:

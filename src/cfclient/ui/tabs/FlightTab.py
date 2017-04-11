@@ -518,6 +518,8 @@ class FlightTab(Tab, flight_tab_class):
             mode = JoystickReader.ASSISTED_CONTROL_ALTHOLD
         if (item == 1):  # Position hold
             mode = JoystickReader.ASSISTED_CONTROL_POSHOLD
+        if (item == 2):  # Position hold
+            mode = JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD
 
         self.helper.inputDeviceReader.set_assisted_control(mode)
         Config().set("assistedControl", mode)
@@ -528,6 +530,9 @@ class FlightTab(Tab, flight_tab_class):
             self.targetThrust.setEnabled(not enabled)
             self.targetRoll.setEnabled(not enabled)
             self.targetPitch.setEnabled(not enabled)
+        elif self.helper.inputDeviceReader.get_assisted_control() == \
+                    JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD:
+            self.targetThrust.setEnabled(not enabled)
         else:
             self.helper.cf.param.set_value("flightmode.althold", str(enabled))
 
