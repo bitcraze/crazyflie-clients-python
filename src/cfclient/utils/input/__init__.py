@@ -361,7 +361,6 @@ class JoystickReader(object):
                             for d in self._selected_mux.devices():
                                 d.limit_thrust = False
                                 d.limit_rp = False
-                            self._target_height = INITAL_TAGET_HEIGHT
                         else:
                             for d in self._selected_mux.devices():
                                 d.limit_thrust = True
@@ -393,6 +392,11 @@ class JoystickReader(object):
                     except Exception as e:
                         logger.warning("Exception while doing callback from"
                                        "input-device for alt2: {}".format(e))
+
+                # Reset height target when height-hold is not selected
+                if not data.assistedControl or self._assisted_control != \
+                        JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD:
+                    self._target_height = INITAL_TAGET_HEIGHT
 
                 if self._assisted_control == \
                         JoystickReader.ASSISTED_CONTROL_POSHOLD \
