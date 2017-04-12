@@ -71,6 +71,7 @@ class FlightTab(Tab, flight_tab_class):
     _rp_trim_updated_signal = pyqtSignal(float, float)
     _emergency_stop_updated_signal = pyqtSignal(bool)
     _assisted_control_updated_signal = pyqtSignal(bool)
+    _heighthold_input_updated_signal = pyqtSignal(float, float, float, float)
 
     _log_error_signal = pyqtSignal(object, str)
 
@@ -107,6 +108,11 @@ class FlightTab(Tab, flight_tab_class):
         self._emergency_stop_updated_signal.connect(self.updateEmergencyStop)
         self.helper.inputDeviceReader.emergency_stop_updated.add_callback(
             self._emergency_stop_updated_signal.emit)
+
+        self.helper.inputDeviceReader.heighthold_input_updated.add_callback(
+            self._heighthold_input_updated_signal.emit)
+        self._heighthold_input_updated_signal.connect(
+            self._heighthold_input_updated)
 
         self.helper.inputDeviceReader.assisted_control_updated.add_callback(
             self._assisted_control_updated_signal.emit)
@@ -275,8 +281,17 @@ class FlightTab(Tab, flight_tab_class):
             self.actualHeight.setText(("%.2f" % estimated_z))
             self.ai.setBaro(estimated_z, self.is_visible())
 
+    def _heighthold_input_updated(self, roll, pitch, yaw, height):
+        if (self.isVisible() and
+                self.helper.inputDeviceReader.get_assisted_control() ==
+                self.helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD):
+            self.targetHeight.setText(("%.2f" % height))
+            self.ai.setHover(height, self.is_visible())
+
     def _althold_data_received(self, timestamp, data, logconf):
-        if self.isVisible():
+        if (self.isVisible() and
+                self.helper.inputDeviceReader.get_assisted_control() !=
+                self.helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD):
             target = data[PARAM_NAME_ALT_HOLD_TARGET]
             if target > 0:
                 if not self.targetHeight.isEnabled():
