@@ -373,9 +373,9 @@ class JoystickReader(object):
                             # height both in the UI and in the Crazyflie.
                             # TODO: Implement a proper state update of the
                             #       input layer
-                            self.heighthold_input_updated.call(0, 0,
-                                                               0,
-                                                               INITAL_TAGET_HEIGHT)
+                            self.heighthold_input_updated.\
+                                call(0, 0,
+                                     0, INITAL_TAGET_HEIGHT)
                     except Exception as e:
                         logger.warning(
                             "Exception while doing callback from input-device "
