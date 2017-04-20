@@ -630,7 +630,7 @@ class FlightTab(Tab, flight_tab_class):
         # By default the Height-hold mode should be disabled in the flight-mode
         # dropdown. This doesn't seem to be supported in QtDesigner.
         heightholdItems = (self._assist_mode_combo.model().
-                                            findItems("Height hold"))
+                           findItems("Height hold"))
         if len(heightholdItems) != 1:
             logger.waring("Could not find Height hold item in assistmode "
                           "combo box!")
