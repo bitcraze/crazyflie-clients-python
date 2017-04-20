@@ -92,8 +92,6 @@ class FlightTab(Tab, flight_tab_class):
         self.tabWidget = tabWidget
         self.helper = helper
 
-        self._enable_heighthold_assist_mode(False)
-
         self.disconnectedSignal.connect(self.disconnected)
         self.connectionFinishedSignal.connect(self.connected)
         # Incomming signals
@@ -131,8 +129,6 @@ class FlightTab(Tab, flight_tab_class):
 
         # Connect UI signals that are in this tab
         self.flightModeCombo.currentIndexChanged.connect(self.flightmodeChange)
-        self._assist_mode_combo.currentIndexChanged.connect(
-                                            self._assist_mode_changed)
         self.minThrust.valueChanged.connect(self.minMaxThrustChanged)
         self.maxThrust.valueChanged.connect(self.minMaxThrustChanged)
         self.thrustLoweringSlewRateLimit.valueChanged.connect(
@@ -256,15 +252,6 @@ class FlightTab(Tab, flight_tab_class):
             self.flightModeCombo.setCurrentIndex(flightComboIndex)
             self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)
 
-        try:
-            assistmodeComboIndex = Config().get("assistedControl")
-            self._assist_mode_combo.setCurrentIndex(assistmodeComboIndex)
-            self._assist_mode_combo.currentIndexChanged.emit(
-                                                assistmodeComboIndex)
-        except KeyError:
-            self._assist_mode_combo.setCurrentIndex(0)
-            self._assist_mode_combo.currentIndexChanged.emit(0)
-
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error",
                           "Error when starting log config [%s]: %s" % (
@@ -352,8 +339,7 @@ class FlightTab(Tab, flight_tab_class):
         except AttributeError as e:
             logger.warning(str(e))
 
-        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x09):
-            self._enable_heighthold_assist_mode(True)
+        self._populate_assisted_mode_dropdown()
 
     def _set_available_sensors(self, name, available):
         logger.info("[%s]: %s", name, available)
@@ -424,7 +410,15 @@ class FlightTab(Tab, flight_tab_class):
             pass
         self._led_ring_effect.setCurrentIndex(-1)
         self._led_ring_headlight.setEnabled(False)
-        self._enable_heighthold_assist_mode(False)
+
+        try:
+            self._assist_mode_combo.currentIndexChanged.disconnect(
+                self._assist_mode_changed)
+        except TypeError:
+            # Signal was not connected
+            pass
+        self._assist_mode_combo.setEnabled(False)
+        self._assist_mode_combo.clear()
 
     def minMaxThrustChanged(self):
         self.helper.inputDeviceReader.min_thrust = self.minThrust.value()
@@ -626,13 +620,30 @@ class FlightTab(Tab, flight_tab_class):
         if self.helper.cf.param.is_updated:
             self._led_ring_effect.setCurrentIndex(int(value))
 
-    def _enable_heighthold_assist_mode(self, enabled):
-        # By default the Height-hold mode should be disabled in the flight-mode
-        # dropdown. This doesn't seem to be supported in QtDesigner.
-        heightholdItems = (self._assist_mode_combo.model().
-                           findItems("Height hold"))
-        if len(heightholdItems) != 1:
-            logger.waring("Could not find Height hold item in assistmode "
-                          "combo box!")
-        else:
-            heightholdItems[0].setEnabled(enabled)
+    def _populate_assisted_mode_dropdown(self):
+        self._assist_mode_combo.addItem("Alt hold", 0)
+        self._assist_mode_combo.addItem("Pos hold", 1)
+        self._assist_mode_combo.addItem("Height hold", 2)
+        heightHoldPossible = False
+        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x09):
+            heightHoldPossible = True
+
+        if not heightHoldPossible:
+            self._assist_mode_combo.model().item(2).setEnabled(False)
+
+        self._assist_mode_combo.currentIndexChanged.connect(
+            self._assist_mode_changed)
+        self._assist_mode_combo.setEnabled(True)
+
+        try:
+            assistmodeComboIndex = Config().get("assistedControl")
+            if assistmodeComboIndex == 2 and not heightHoldPossible:
+                self._assist_mode_combo.setCurrentIndex(0)
+                self._assist_mode_combo.currentIndexChanged.emit(0)
+            else:
+                self._assist_mode_combo.setCurrentIndex(assistmodeComboIndex)
+                self._assist_mode_combo.currentIndexChanged.emit(
+                                                    assistmodeComboIndex)
+        except KeyError:
+            self._assist_mode_combo.setCurrentIndex(0)
+            self._assist_mode_combo.currentIndexChanged.emit(0)

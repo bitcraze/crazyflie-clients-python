@@ -105,23 +105,8 @@
             <item row="2" column="1">
              <widget class="QComboBox" name="_assist_mode_combo">
               <property name="enabled">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
-              <item>
-               <property name="text">
-                <string>Altitude hold</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Position hold</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string extracomment="height-hold">Height hold</string>
-               </property>
-              </item>
              </widget>
             </item>
             <item row="3" column="0">
