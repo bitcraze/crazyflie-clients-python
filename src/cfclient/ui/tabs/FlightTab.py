@@ -92,6 +92,8 @@ class FlightTab(Tab, flight_tab_class):
         self.tabWidget = tabWidget
         self.helper = helper
 
+        self._enable_heighthold_assist_mode(False)
+
         self.disconnectedSignal.connect(self.disconnected)
         self.connectionFinishedSignal.connect(self.connected)
         # Incomming signals
@@ -350,6 +352,9 @@ class FlightTab(Tab, flight_tab_class):
         except AttributeError as e:
             logger.warning(str(e))
 
+        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x09):
+            self._enable_heighthold_assist_mode(True)
+
     def _set_available_sensors(self, name, available):
         logger.info("[%s]: %s", name, available)
         available = eval(available)
@@ -419,6 +424,7 @@ class FlightTab(Tab, flight_tab_class):
             pass
         self._led_ring_effect.setCurrentIndex(-1)
         self._led_ring_headlight.setEnabled(False)
+        self._enable_heighthold_assist_mode(False)
 
     def minMaxThrustChanged(self):
         self.helper.inputDeviceReader.min_thrust = self.minThrust.value()
@@ -619,3 +625,14 @@ class FlightTab(Tab, flight_tab_class):
     def _ring_effect_updated(self, name, value):
         if self.helper.cf.param.is_updated:
             self._led_ring_effect.setCurrentIndex(int(value))
+
+    def _enable_heighthold_assist_mode(self, enabled):
+        # By default the Height-hold mode should be disabled in the flight-mode
+        # dropdown. This doesn't seem to be supported in QtDesigner.
+        heightholdItems = (self._assist_mode_combo.model().
+                                            findItems("Height hold"))
+        if len(heightholdItems) != 1:
+            logger.waring("Could not find Height hold item in assistmode "
+                          "combo box!")
+        else:
+            heightholdItems[0].setEnabled(enabled)

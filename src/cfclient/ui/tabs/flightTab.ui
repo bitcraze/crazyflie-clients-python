@@ -119,7 +119,7 @@
               </item>
               <item>
                <property name="text">
-                <string>Height hold</string>
+                <string extracomment="height-hold">Height hold</string>
                </property>
               </item>
              </widget>
