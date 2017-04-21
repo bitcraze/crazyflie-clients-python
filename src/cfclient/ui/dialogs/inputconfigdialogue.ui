@@ -92,7 +92,7 @@
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>350</height>
+           <height>365</height>
           </size>
          </property>
          <property name="maximumSize">
@@ -507,7 +507,7 @@
             <x>600</x>
             <y>158</y>
             <width>292</width>
-            <height>194</height>
+            <height>202</height>
            </rect>
           </property>
           <layout class="QGridLayout" name="gridLayout_5">
@@ -581,12 +581,12 @@
             </widget>
            </item>
            <item row="1" column="0">
-            <widget class="QCheckBox" name="althold">
+            <widget class="QCheckBox" name="_assisted_control">
              <property name="enabled">
               <bool>false</bool>
              </property>
              <property name="text">
-              <string>Altitude hold</string>
+              <string>Assisted control</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -594,7 +594,7 @@
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QPushButton" name="detectAltHold">
+            <widget class="QPushButton" name="_detect_assisted_control">
              <property name="enabled">
               <bool>false</bool>
              </property>

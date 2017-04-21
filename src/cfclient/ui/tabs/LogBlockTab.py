@@ -31,17 +31,17 @@ This tab shows all log blocks that are registered and can be used to start the
 logging and also to write the logging data to file.
 """
 
-from PyQt4 import uic
-from PyQt4.QtCore import Qt, pyqtSignal
+from PyQt5 import uic
+from PyQt5.QtCore import Qt, pyqtSignal
 
 import cfclient
 from cfclient.ui.tab import Tab
 
 import logging
 
-from PyQt4.QtGui import QApplication, QStyledItemDelegate, QAbstractItemView
-from PyQt4.QtGui import QStyleOptionButton, QStyle
-from PyQt4.QtCore import QAbstractItemModel, QModelIndex
+from PyQt5.QtWidgets import QApplication, QStyledItemDelegate
+from PyQt5.QtWidgets import QAbstractItemView, QStyleOptionButton, QStyle
+from PyQt5.QtCore import QAbstractItemModel, QModelIndex
 
 from cfclient.utils.logdatawriter import LogWriter
 
@@ -346,4 +346,6 @@ class LogBlockTab(Tab, logblock_tab_class):
 
     def _disconnected(self, link_uri):
         """Callback when the Crazyflie is disconnected"""
+        self._model.beginResetModel()
         self._model.reset()
+        self._model.endResetModel()

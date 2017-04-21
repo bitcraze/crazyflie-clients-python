@@ -48,8 +48,8 @@ def main():
     to stdout and start the GUI.
     """
 
-    # Set ERROR level for PyQt4 logger
-    qtlogger = logging.getLogger('PyQt4')
+    # Set ERROR level for PyQt5 logger
+    qtlogger = logging.getLogger('PyQt5')
     qtlogger.setLevel(logging.ERROR)
 
     parser = argparse.ArgumentParser(
@@ -100,9 +100,9 @@ def main():
             sys.exit(1)
 
     try:
-        import PyQt4  # noqa
+        import PyQt5  # noqa
     except ImportError:
-        logger.critical("No PyQT4 installation found, exiting!")
+        logger.critical("No PyQT5 installation found, exiting!")
         sys.exit(1)
 
     # Disable printouts from STL
@@ -133,7 +133,8 @@ def main():
 
     # Start up the main user-interface
     from .ui.main import MainUI
-    from PyQt4.QtGui import QApplication, QIcon
+    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtGui import QIcon
 
     app = QApplication(sys.argv)
 
@@ -152,6 +153,7 @@ def main():
     main_window = MainUI()
     main_window.show()
     sys.exit(app.exec_())
+
 
 if __name__ == "__main__":
     main()

@@ -26,10 +26,10 @@
 """
 A detachable toolbox for showing console printouts from the Crazyflie
 """
-from PyQt4 import QtGui
-from PyQt4 import uic
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtCore import Qt
+from PyQt5 import QtWidgets
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import Qt
 
 import cfclient
 
@@ -40,7 +40,7 @@ console_class = uic.loadUiType(
     cfclient.module_path + "/ui/toolboxes/consoleToolbox.ui")[0]
 
 
-class ConsoleToolbox(QtGui.QWidget, console_class):
+class ConsoleToolbox(QtWidgets.QWidget, console_class):
     """Console toolbox for showing printouts from the Crazyflie"""
     update = pyqtSignal(str)
 
@@ -55,11 +55,15 @@ class ConsoleToolbox(QtGui.QWidget, console_class):
     def getName(self):
         return 'Console'
 
+    def _console_updated(self, data):
+        self.update.emit(data)
+
     def enable(self):
-        self.helper.cf.console.receivedChar.add_callback(self.update.emit)
+        self.helper.cf.console.receivedChar.add_callback(self._console_updated)
 
     def disable(self):
-        self.helper.cf.console.receivedChar.remove_callback(self.update.emit)
+        self.helper.cf.console.receivedChar.remove_callback(
+            self._console_updated)
 
     def preferedDockArea(self):
         return Qt.BottomDockWidgetArea

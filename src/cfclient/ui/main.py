@@ -44,19 +44,19 @@ from cfclient.utils.zmq_param import ZMQParamAccess
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import MemoryElement
-from PyQt4 import QtGui
-from PyQt4 import uic
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtCore import pyqtSlot
-from PyQt4.QtCore import QDir
-from PyQt4.QtCore import QThread
-from PyQt4.QtCore import QUrl
-from PyQt4.QtGui import QAction
-from PyQt4.QtGui import QActionGroup
-from PyQt4.QtGui import QDesktopServices
-from PyQt4.QtGui import QLabel
-from PyQt4.QtGui import QMenu
-from PyQt4.QtGui import QMessageBox
+from PyQt5 import QtWidgets
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import QDir
+from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QUrl
+from PyQt5.QtWidgets import QAction
+from PyQt5.QtWidgets import QActionGroup
+from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWidgets import QMenu
+from PyQt5.QtWidgets import QMessageBox
 
 from .dialogs.cf1config import Cf1ConfigDialog
 from .dialogs.cf2config import Cf2ConfigDialog
@@ -75,7 +75,7 @@ INTERFACE_PROMPT_TEXT = 'Select an interface'
                                             '/ui/main.ui'))
 
 
-class MyDockWidget(QtGui.QDockWidget):
+class MyDockWidget(QtWidgets.QDockWidget):
     closed = pyqtSignal()
 
     def closeEvent(self, event):
@@ -112,7 +112,7 @@ def progressbar_stylesheet(color):
     """
 
 
-class MainUI(QtGui.QMainWindow, main_window_class):
+class MainUI(QtWidgets.QMainWindow, main_window_class):
     connectionLostSignal = pyqtSignal(str, str)
     connectionInitiatedSignal = pyqtSignal(str)
     batteryUpdatedSignal = pyqtSignal(int, object, object)
@@ -128,6 +128,13 @@ class MainUI(QtGui.QMainWindow, main_window_class):
     def __init__(self, *args):
         super(MainUI, self).__init__(*args)
         self.setupUi(self)
+
+        # Restore window size if present in the config file
+        try:
+            size = Config().get("window_size")
+            self.resize(size[0], size[1])
+        except KeyError:
+            pass
 
         ######################################################
         # By lxrocks
@@ -237,6 +244,12 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.joystickReader.input_updated.add_callback(
             self.cf.commander.send_setpoint)
 
+        self.joystickReader.assisted_input_updated.add_callback(
+            self.cf.commander.send_velocity_world_setpoint)
+
+        self.joystickReader.heighthold_input_updated.add_callback(
+            self.cf.commander.send_zdistance_setpoint)
+
         # Connection callbacks and signal wrappers for UI protection
         self.cf.connected.add_callback(self.connectionDoneSignal.emit)
         self.connectionDoneSignal.connect(self._connected)
@@ -288,39 +301,18 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self._menu_cf2_config.triggered.connect(self._cf2config_dialog.show)
         self._menu_cf1_config.triggered.connect(self._cf1config_dialog.show)
 
-        # Loading toolboxes (A bit of magic for a lot of automatic)
-        self.toolboxes = []
-        self.toolboxesMenuItem.setMenu(QtGui.QMenu())
-        for t_class in cfclient.ui.toolboxes.toolboxes:
-            toolbox = t_class(cfclient.ui.pluginhelper)
-            dockToolbox = MyDockWidget(toolbox.getName())
-            dockToolbox.setWidget(toolbox)
-            self.toolboxes += [dockToolbox, ]
-
-            # Add menu item for the toolbox
-            item = QtGui.QAction(toolbox.getName(), self)
-            item.setCheckable(True)
-            item.triggered.connect(self.toggleToolbox)
-            self.toolboxesMenuItem.menu().addAction(item)
-
-            dockToolbox.closed.connect(lambda: self.toggleToolbox(False))
-
-            # Setup some introspection
-            item.dockToolbox = dockToolbox
-            item.menuItem = item
-            dockToolbox.dockToolbox = dockToolbox
-            dockToolbox.menuItem = item
-
         # Load and connect tabs
-        self.tabsMenuItem.setMenu(QtGui.QMenu())
+        self.tabsMenuItem = QMenu("Tabs", self.menuView, enabled=True)
+        self.menuView.addMenu(self.tabsMenuItem)
+
+        # self.tabsMenuItem.setMenu(QtWidgets.QMenu())
         tabItems = {}
         self.loadedTabs = []
         for tabClass in cfclient.ui.tabs.available:
             tab = tabClass(self.tabs, cfclient.ui.pluginhelper)
-            item = QtGui.QAction(tab.getMenuName(), self)
-            item.setCheckable(True)
+            item = QtWidgets.QAction(tab.getMenuName(), self, checkable=True)
             item.toggled.connect(tab.toggleVisibility)
-            self.tabsMenuItem.menu().addAction(item)
+            self.tabsMenuItem.addAction(item)
             tabItems[tab.getTabName()] = item
             self.loadedTabs.append(tab)
             if not tab.enabled:
@@ -335,6 +327,32 @@ class MainUI(QtGui.QMainWindow, main_window_class):
                     t.toggle()
         except Exception as e:
             logger.warning("Exception while opening tabs [{}]".format(e))
+
+        # Loading toolboxes (A bit of magic for a lot of automatic)
+        self.toolboxesMenuItem = QMenu("Toolboxes", self.menuView,
+                                       enabled=True)
+        self.menuView.addMenu(self.toolboxesMenuItem)
+
+        self.toolboxes = []
+        for t_class in cfclient.ui.toolboxes.toolboxes:
+            toolbox = t_class(cfclient.ui.pluginhelper)
+            dockToolbox = MyDockWidget(toolbox.getName())
+            dockToolbox.setWidget(toolbox)
+            self.toolboxes += [dockToolbox, ]
+
+            # Add menu item for the toolbox
+            item = QtWidgets.QAction(toolbox.getName(), self)
+            item.setCheckable(True)
+            item.triggered.connect(self.toggleToolbox)
+            self.toolboxesMenuItem.addAction(item)
+
+            dockToolbox.closed.connect(lambda: self.toggleToolbox(False))
+
+            # Setup some introspection
+            item.dockToolbox = dockToolbox
+            item.menuItem = item
+            dockToolbox.dockToolbox = dockToolbox
+            dockToolbox.menuItem = item
 
         # References to all the device sub-menus in the "Input device" menu
         self._all_role_menus = ()
@@ -394,9 +412,18 @@ class MainUI(QtGui.QMainWindow, main_window_class):
             self._initial_scan = False
 
             try:
-                selected_interface = Config().get("link_uri")
+                if len(Config().get("link_uri")) > 0:
+                    formatted_interfaces.index(Config().get("link_uri"))
+                    selected_interface = Config().get("link_uri")
             except KeyError:
+                #  The configuration for link_uri was not found
                 pass
+            except ValueError:
+                #  The saved URI was not found while scanning
+                pass
+
+        if len(interfaces) == 1 and selected_interface is None:
+            selected_interface = interfaces[0][0]
 
         newIndex = 0
         if selected_interface is not None:
@@ -537,13 +564,9 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         except KeyError as e:
             logger.warning(str(e))
 
-        mem = self.cf.mem.get_mems(MemoryElement.TYPE_DRIVER_LED)[0]
-        mem.write_data(self._led_write_done)
-
-        # self._led_write_test = 0
-
-        # mem.leds[self._led_write_test] = [10, 20, 30]
-        # mem.write_data(self._led_write_done)
+        mems = self.cf.mem.get_mems(MemoryElement.TYPE_DRIVER_LED)
+        if len(mems) > 0:
+            mems[0].write_data(self._led_write_done)
 
     def _disconnected(self):
         self.uiState = UIState.DISCONNECTED
@@ -555,9 +578,6 @@ class MainUI(QtGui.QMainWindow, main_window_class):
 
     def _led_write_done(self, mem, addr):
         logger.info("LED write done callback")
-        # self._led_write_test += 1
-        # mem.leds[self._led_write_test] = [10, 20, 30]
-        # mem.write_data(self._led_write_done)
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error", "Error when starting log config"
@@ -589,6 +609,10 @@ class MainUI(QtGui.QMainWindow, main_window_class):
         self.hide()
         self.cf.close_link()
         Config().save_file()
+
+    def resizeEvent(self, event):
+        Config().set("window_size", [event.size().width(),
+                                     event.size().height()])
 
     def _connect(self):
         if self.uiState == UIState.CONNECTED:

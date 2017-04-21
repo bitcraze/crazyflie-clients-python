@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>850</width>
+    <height>595</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Plot</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <layout class="QGridLayout" name="gridLayout" rowstretch="0,0" columnstretch="0,0">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <item row="1" column="0">
+      <layout class="QVBoxLayout" name="_plot_bottom_left_layout"/>
+     </item>
+     <item row="0" column="0">
+      <layout class="QVBoxLayout" name="_plot_top_left_layout"/>
+     </item>
+     <item row="0" column="1">
+      <layout class="QVBoxLayout" name="_inputLayout">
+       <item>
+        <widget class="QGroupBox" name="groupBox_2">
+         <property name="title">
+          <string>Mode</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QRadioButton" name="_estimated_postion_button">
+            <property name="text">
+             <string>Position estimate</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="_id_anchor_button">
+            <property name="text">
+             <string>Anchor identification</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>13</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Anchor Positions</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <layout class="QHBoxLayout" name="anchor_block_0">
+            <item>
+             <layout class="QHBoxLayout" name="block_a0">
+              <item>
+               <widget class="QLabel" name="labela0">
+                <property name="text">
+                 <string>Anchor 0</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a0x"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a0y"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a0z"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="block_a1">
+              <item>
+               <widget class="QLabel" name="labela1">
+                <property name="text">
+                 <string>Anchor 1</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a1x"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a1y"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a1z"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="anchor_block_1">
+            <item>
+             <layout class="QHBoxLayout" name="block_a2">
+              <item>
+               <widget class="QLabel" name="labela2">
+                <property name="text">
+                 <string>Anchor 2</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a2x"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a2y"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a2z"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="block_a3">
+              <item>
+               <widget class="QLabel" name="labela3">
+                <property name="text">
+                 <string>Anchor 3</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a3x"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a3y"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a3z"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="anchor_block_2">
+            <item>
+             <layout class="QHBoxLayout" name="block_a4">
+              <item>
+               <widget class="QLabel" name="labela4">
+                <property name="text">
+                 <string>Anchor 4</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a4x"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a4y"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a4z"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="block_a5">
+              <item>
+               <widget class="QLabel" name="labela5">
+                <property name="text">
+                 <string>Anchor 5</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a5x"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a5y"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a5z"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="anchor_block_3">
+            <item>
+             <layout class="QHBoxLayout" name="block_a6">
+              <item>
+               <widget class="QLabel" name="labela6">
+                <property name="text">
+                 <string>Anchor 6</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a6x"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a6y"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a6z"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="block_a7">
+              <item>
+               <widget class="QLabel" name="labela7">
+                <property name="text">
+                 <string>Anchor 7</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a7x"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a7y"/>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="spin_a7z"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="_read_pos_from_anhors_button">
+              <property name="text">
+               <string>Get from anchors</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="_write_pos_to_anhors_button">
+              <property name="text">
+               <string>Write to anchors</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_3">
+         <property name="title">
+          <string>Graph settings</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QPushButton" name="_show_all_button">
+              <property name="text">
+               <string>Show all</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item row="1" column="1">
+      <layout class="QVBoxLayout" name="_plot_bottom_right_layout"/>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -31,9 +31,11 @@ import sys
 
 import cfclient
 import cflib.crtp
-from PyQt4 import QtGui
-from PyQt4 import uic
-from PyQt4.QtCore import pyqtSignal
+from PyQt5.QtCore import QT_VERSION_STR
+from PyQt5.QtCore import PYQT_VERSION_STR
+from PyQt5 import QtWidgets
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
 
 __author__ = 'Bitcraze AB'
 __all__ = ['AboutDialog']
@@ -47,6 +49,8 @@ DEBUG_INFO_FORMAT = """
 Cfclient version: {version}<br>
 System: {system}<br>
 Python: {pmajor}.{pminor}.{pmicro}<br>
+Qt: {qt_version}<br>
+PyQt: {pyqt_version}<br>
 <br>
 <b>Interface status</b><br>
 {interface_status}
@@ -88,7 +92,7 @@ CREDITS_FORMAT = """
 """
 
 
-class AboutDialog(QtGui.QWidget, about_widget_class):
+class AboutDialog(QtWidgets.QWidget, about_widget_class):
     _disconnected_signal = pyqtSignal(str)
 
     """Crazyflie client About box for debugging and information"""
@@ -170,6 +174,8 @@ class AboutDialog(QtGui.QWidget, about_widget_class):
                 pmajor=sys.version_info.major,
                 pminor=sys.version_info.minor,
                 pmicro=sys.version_info.micro,
+                qt_version=QT_VERSION_STR,
+                pyqt_version=PYQT_VERSION_STR,
                 interface_status=self._interface_text,
                 input_devices=self._device_text,
                 input_readers=self._input_readers_text,

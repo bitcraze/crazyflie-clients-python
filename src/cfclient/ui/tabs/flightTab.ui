@@ -34,7 +34,7 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>320</width>
+           <width>160</width>
            <height>0</height>
           </size>
          </property>
@@ -54,14 +54,8 @@
              <widget class="QComboBox" name="flightModeCombo">
               <property name="minimumSize">
                <size>
-                <width>150</width>
+                <width>0</width>
                 <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>150</width>
-                <height>16777215</height>
                </size>
               </property>
               <property name="toolTip">
@@ -104,25 +98,15 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_5">
               <property name="text">
-               <string>Thrust mode</string>
+               <string>Assist mode</string>
               </property>
              </widget>
             </item>
             <item row="2" column="1">
-             <widget class="QComboBox" name="thrustModeCombo">
+             <widget class="QComboBox" name="_assist_mode_combo">
               <property name="enabled">
                <bool>false</bool>
               </property>
-              <item>
-               <property name="text">
-                <string>Linear</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Quadratic</string>
-               </property>
-              </item>
              </widget>
             </item>
             <item row="3" column="0">
@@ -236,7 +220,7 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>320</width>
+           <width>160</width>
            <height>0</height>
           </size>
          </property>
@@ -347,7 +331,7 @@
         <widget class="QGroupBox" name="groupBox_4">
          <property name="minimumSize">
           <size>
-           <width>320</width>
+           <width>160</width>
            <height>0</height>
           </size>
          </property>
@@ -440,7 +424,7 @@
               <item row="5" column="0">
                <widget class="QLabel" name="label_17">
                 <property name="text">
-                 <string>ASL</string>
+                 <string>Height</string>
                 </property>
                </widget>
               </item>
@@ -484,7 +468,7 @@
                </widget>
               </item>
               <item row="5" column="4">
-               <widget class="QLineEdit" name="actualASL">
+               <widget class="QLineEdit" name="actualHeight">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
@@ -651,7 +635,7 @@
                <widget class="QLineEdit" name="actualRoll"/>
               </item>
               <item row="5" column="2">
-               <widget class="QLineEdit" name="targetASL">
+               <widget class="QLineEdit" name="targetHeight">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>

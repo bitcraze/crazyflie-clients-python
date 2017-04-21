@@ -116,7 +116,7 @@ class LeapmotionReader:
 
         self.data = {"roll": 0.0, "pitch": 0.0, "yaw": 0.0,
                      "thrust": -1.0, "estop": False, "exit": False,
-                     "althold": False, "alt1": False, "alt2": False,
+                     "assistedControl": False, "alt1": False, "alt2": False,
                      "pitchNeg": False, "rollNeg": False,
                      "pitchPos": False, "rollPos": False}
         logger.info("Initialized Leap")

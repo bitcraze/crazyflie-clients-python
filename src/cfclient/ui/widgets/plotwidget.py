@@ -32,16 +32,16 @@ and manipulating the plot.
 For more advanced plotting save the data and use an external application.
 """
 
-from PyQt4 import QtGui, uic
+from PyQt5 import QtWidgets, uic
 
 from time import time
 
 import logging
 
-from PyQt4.QtGui import QButtonGroup
-from PyQt4.QtCore import *  # noqa
-from PyQt4.QtGui import *  # noqa
-from PyQt4.Qt import *  # noqa
+from PyQt5.QtWidgets import QButtonGroup
+from PyQt5.QtCore import *  # noqa
+from PyQt5.QtWidgets import *  # noqa
+from PyQt5.Qt import *  # noqa
 
 import cfclient
 
@@ -108,7 +108,7 @@ class PlotItemWrapper:
         return [self.ts[start], self.ts[limit - 1]]
 
 
-class PlotWidget(QtGui.QWidget, plot_widget_class):
+class PlotWidget(QtWidgets.QWidget, plot_widget_class):
     """Wrapper widget for PyQtGraph adding some extra buttons"""
 
     def __init__(self, parent=None, fps=100, title="", *args):
@@ -129,9 +129,9 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         self._items = {}
         self._last_item = 0
 
-        self.setSizePolicy(QtGui.QSizePolicy(
-            QtGui.QSizePolicy.MinimumExpanding,
-            QtGui.QSizePolicy.MinimumExpanding))
+        self.setSizePolicy(QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.MinimumExpanding,
+            QtWidgets.QSizePolicy.MinimumExpanding))
 
         self.setMinimumSize(self.minimumSizeHint())
         self.parent = parent
@@ -299,9 +299,19 @@ class PlotWidget(QtGui.QWidget, plot_widget_class):
         """Reset the plot by removing all the datasets"""
         for item in self._items:
             self._plot_widget.removeItem(self._items[item])
-        self._plot_widget.plotItem.legend.items = []
+
+        self._clear_legend()
+
         self._items = {}
         self._last_item = 0
         self._last_ts = None
         self._dtime = None
         self._plot_widget.clear()
+
+    def _clear_legend(self):
+        legend = self._plot_widget.plotItem.legend
+
+        while legend.layout.count() > 0:
+            item = legend.items[0]
+            name = item[1].text
+            legend.removeItem(name)

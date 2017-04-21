@@ -51,7 +51,7 @@ class InputData:
         # self._toggled = {}
         self._axes = ("roll", "pitch", "yaw", "thrust")
         self._buttons = ("alt1", "alt2", "estop", "exit", "pitchNeg",
-                         "pitchPos", "rollNeg", "rollPos", "althold",
+                         "pitchPos", "rollNeg", "rollPos", "assistedControl",
                          "muxswitch")
         for axis in self._axes:
             self.__dict__[axis] = 0.0
@@ -125,7 +125,6 @@ class InputReaderInterface(object):
         # Stateful things
         self._old_thrust = 0
         self._old_raw_thrust = 0
-        self._old_alt_hold = False
 
         self._prev_thrust = 0
         self._last_time = 0
@@ -165,10 +164,14 @@ class InputReaderInterface(object):
         return (InputReaderInterface.deadband(yaw, 0.2) *
                 self.input.max_yaw_rate)
 
-    def _limit_thrust(self, thrust, althold, emergency_stop):
+    def _limit_thrust(self, thrust, assisted_control, emergency_stop):
         # Thust limiting (slew, minimum and emergency stop)
         if self.input.springy_throttle:
-            if althold and self.input.has_pressure_sensor:
+            if assisted_control and \
+                    (self.input.get_assisted_control() ==
+                     self.input.ASSISTED_CONTROL_ALTHOLD or
+                     self.input.get_assisted_control() ==
+                     self.input.ASSISTED_CONTROL_HEIGHTHOLD):
                 thrust = int(round(InputReaderInterface.deadband(thrust, 0.2) *
                                    32767 + 32767))  # Convert to uint16
             else:
@@ -218,7 +221,8 @@ class InputReaderInterface(object):
                 thrust = limited_thrust
         else:
             thrust = thrust / 2 + 0.5
-            if althold and self.input.has_pressure_sensor:
+            if assisted_control and self.input.get_assisted_control() == \
+                    self.input.ASSISTED_CONTROL_ALTHOLD:
                 thrust = 32767
             else:
                 if thrust < -0.90 or emergency_stop:
@@ -242,14 +246,6 @@ class InputReaderInterface(object):
         self._old_thrust = thrust
         self._old_raw_thrust = thrust
         return thrust
-
-    def set_alt_hold_available(self, available):
-        """Set if altitude hold is available or not (depending on HW)"""
-        self.input._has_pressure_sensor = available
-
-    def enable_alt_hold(self, althold):
-        """Enable or disable altitude hold"""
-        self._old_alt_hold = althold
 
     @staticmethod
     def deadband(value, threshold):

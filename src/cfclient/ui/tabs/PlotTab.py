@@ -32,12 +32,12 @@ import logging
 
 from cfclient.ui.tab import Tab
 from cfclient.ui.widgets.plotwidget import PlotWidget
-from PyQt4 import uic
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtCore import QAbstractItemModel
-from PyQt4.QtCore import QModelIndex
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QMessageBox
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import QAbstractItemModel
+from PyQt5.QtCore import QModelIndex
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMessageBox
 
 import cfclient
 
@@ -120,7 +120,17 @@ class PlotTab(Tab, plot_tab_class):
     _disconnected_signal = pyqtSignal(str)
     _connected_signal = pyqtSignal(str)
 
-    colors = ['g', 'b', 'm', 'r', 'y', 'c']
+    colors = [
+        (60, 200, 60),    # green
+        (40, 100, 255),   # blue
+        (255, 130, 240),  # magenta
+        (255, 26, 28),    # red
+        (255, 170, 0),    # orange
+        (40, 180, 240),   # cyan
+        (153, 153, 153),  # grey
+        (176, 96, 50),    # brown
+        (180, 60, 240),   # purple
+    ]
 
     def __init__(self, tabWidget, helper, *args):
         super(PlotTab, self).__init__(*args)
@@ -167,7 +177,9 @@ class PlotTab(Tab, plot_tab_class):
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
+        self._model.beginResetModel()
         self._model.reset()
+        self._model.endResetModel()
         self.dataSelector.setCurrentIndex(-1)
         self._previous_config = None
         self._started_previous = False

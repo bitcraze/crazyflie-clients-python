@@ -31,10 +31,10 @@ import struct
 
 from cflib.crtp.crtpstack import CRTPPacket
 from cflib.crtp.crtpstack import CRTPPort
-from PyQt4 import QtGui
-from PyQt4 import uic
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtCore import Qt
+from PyQt5 import QtWidgets
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import Qt
 
 import cfclient
 
@@ -46,7 +46,7 @@ debugdriver_tab_class = uic.loadUiType(
     "/ui/toolboxes/debugDriverToolbox.ui")[0]
 
 
-class DebugDriverToolbox(QtGui.QWidget, debugdriver_tab_class):
+class DebugDriverToolbox(QtWidgets.QWidget, debugdriver_tab_class):
     """Used to interact with the DebugDriver toolbox"""
     connectionDoneSignal = pyqtSignal(str)
     disconnectedSignal = pyqtSignal(str)

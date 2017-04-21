@@ -31,9 +31,9 @@ The flight control tab shows telemetry data and flight settings.
 
 import logging
 
-from PyQt4 import uic
-from PyQt4.QtCore import Qt, pyqtSlot, pyqtSignal
-from PyQt4.QtGui import QMessageBox
+from PyQt5 import uic
+from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
+from PyQt5.QtWidgets import QMessageBox
 
 import cfclient
 from cfclient.ui.widgets.ai import AttitudeIndicator
@@ -41,10 +41,12 @@ from cfclient.ui.widgets.ai import AttitudeIndicator
 from cfclient.utils.config import Config
 from cflib.crazyflie.log import LogConfig
 
+from cfclient.utils.input import JoystickReader
+
 from cfclient.ui.tab import Tab
 
-PARAM_NAME_ALT_HOLD_TARGET = "posCtlAlt.targetZ"
-PARAM_NAME_ESTIMATED_Z = "posEstimatorAlt.estimatedZ"
+PARAM_NAME_ALT_HOLD_TARGET = "posCtl.targetZ"
+LOG_NAME_ESTIMATED_Z = "posEstimatorAlt.estimatedZ"
 
 __author__ = 'Bitcraze AB'
 __all__ = ['FlightTab']
@@ -54,7 +56,7 @@ logger = logging.getLogger(__name__)
 flight_tab_class = uic.loadUiType(cfclient.module_path +
                                   "/ui/tabs/flightTab.ui")[0]
 
-MAX_THRUST = 65365.0
+MAX_THRUST = 65536.0
 
 
 class FlightTab(Tab, flight_tab_class):
@@ -68,6 +70,8 @@ class FlightTab(Tab, flight_tab_class):
     _input_updated_signal = pyqtSignal(float, float, float, float)
     _rp_trim_updated_signal = pyqtSignal(float, float)
     _emergency_stop_updated_signal = pyqtSignal(bool)
+    _assisted_control_updated_signal = pyqtSignal(bool)
+    _heighthold_input_updated_signal = pyqtSignal(float, float, float, float)
 
     _log_error_signal = pyqtSignal(object, str)
 
@@ -105,9 +109,16 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.inputDeviceReader.emergency_stop_updated.add_callback(
             self._emergency_stop_updated_signal.emit)
 
-        self.helper.inputDeviceReader.althold_updated.add_callback(
-            lambda enabled: self.helper.cf.param.set_value(
-                "flightmode.althold", enabled))
+        self.helper.inputDeviceReader.heighthold_input_updated.add_callback(
+            self._heighthold_input_updated_signal.emit)
+        self._heighthold_input_updated_signal.connect(
+            self._heighthold_input_updated)
+
+        self.helper.inputDeviceReader.assisted_control_updated.add_callback(
+            self._assisted_control_updated_signal.emit)
+
+        self._assisted_control_updated_signal.connect(
+            self._assisted_control_updated)
 
         self._imu_data_signal.connect(self._imu_data_received)
         self._baro_data_signal.connect(self._baro_data_received)
@@ -172,11 +183,6 @@ class FlightTab(Tab, flight_tab_class):
             group="ring", name="headlightEnable",
             cb=(lambda name, checked:
                 self._led_ring_headlight.setChecked(eval(checked))))
-
-        self.helper.cf.param.add_update_callback(
-            group="flightmode", name="althold",
-            cb=(lambda name, enabled:
-                self.helper.inputDeviceReader.enable_alt_hold(eval(enabled))))
 
         self._ledring_nbr_effects = 0
 
@@ -260,22 +266,31 @@ class FlightTab(Tab, flight_tab_class):
 
     def _baro_data_received(self, timestamp, data, logconf):
         if self.isVisible():
-            estimated_z = data[PARAM_NAME_ESTIMATED_Z]
-            self.actualASL.setText(("%.2f" % estimated_z))
-            self.ai.setBaro(estimated_z)
+            estimated_z = data[LOG_NAME_ESTIMATED_Z]
+            self.actualHeight.setText(("%.2f" % estimated_z))
+            self.ai.setBaro(estimated_z, self.is_visible())
+
+    def _heighthold_input_updated(self, roll, pitch, yaw, height):
+        if (self.isVisible() and
+                self.helper.inputDeviceReader.get_assisted_control() ==
+                self.helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD):
+            self.targetHeight.setText(("%.2f" % height))
+            self.ai.setHover(height, self.is_visible())
 
     def _althold_data_received(self, timestamp, data, logconf):
-        if self.isVisible():
+        if (self.isVisible() and
+                self.helper.inputDeviceReader.get_assisted_control() !=
+                self.helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD):
             target = data[PARAM_NAME_ALT_HOLD_TARGET]
             if target > 0:
-                if not self.targetASL.isEnabled():
-                    self.targetASL.setEnabled(True)
-                self.targetASL.setText(("%.2f" % target))
-                self.ai.setHover(target)
-            elif self.targetASL.isEnabled():
-                self.targetASL.setEnabled(False)
-                self.targetASL.setText("Not set")
-                self.ai.setHover(0)
+                if not self.targetHeight.isEnabled():
+                    self.targetHeight.setEnabled(True)
+                self.targetHeight.setText(("%.2f" % target))
+                self.ai.setHover(target, self.is_visible())
+            elif self.targetHeight.isEnabled():
+                self.targetHeight.setEnabled(False)
+                self.targetHeight.setText("Not set")
+                self.ai.setHover(0, self.is_visible())
 
     def _imu_data_received(self, timestamp, data, logconf):
         if self.isVisible():
@@ -287,7 +302,7 @@ class FlightTab(Tab, flight_tab_class):
                                           data["stabilizer.thrust"]))
 
             self.ai.setRollPitch(-data["stabilizer.roll"],
-                                 data["stabilizer.pitch"])
+                                 data["stabilizer.pitch"], self.is_visible())
 
     def connected(self, linkURI):
         # IMU & THRUST
@@ -324,20 +339,22 @@ class FlightTab(Tab, flight_tab_class):
         except AttributeError as e:
             logger.warning(str(e))
 
+        self._populate_assisted_mode_dropdown()
+
     def _set_available_sensors(self, name, available):
         logger.info("[%s]: %s", name, available)
         available = eval(available)
         if ("HMC5883L" in name):
             if (not available):
-                self.actualASL.setText("N/A")
-                self.actualASL.setEnabled(False)
+                self.actualHeight.setText("N/A")
+                self.actualHeight.setEnabled(False)
             else:
-                self.actualASL.setEnabled(True)
+                self.actualHeight.setEnabled(True)
                 self.helper.inputDeviceReader.set_alt_hold_available(available)
                 if (not self.logBaro and not self.logAltHold):
                     # The sensor is available, set up the logging
                     self.logBaro = LogConfig("Baro", 200)
-                    self.logBaro.add_variable(PARAM_NAME_ESTIMATED_Z, "float")
+                    self.logBaro.add_variable(LOG_NAME_ESTIMATED_Z, "float")
 
                     try:
                         self.helper.cf.log.add_config(self.logBaro)
@@ -376,10 +393,11 @@ class FlightTab(Tab, flight_tab_class):
         self.actualPitch.setText("")
         self.actualYaw.setText("")
         self.actualThrust.setText("")
-        self.actualASL.setText("")
-        self.targetASL.setText("Not Set")
-        self.targetASL.setEnabled(False)
-        self.actualASL.setEnabled(False)
+        self.actualHeight.setText("")
+        self.targetHeight.setText("Not Set")
+        self.ai.setHover(0, self.is_visible())
+        self.targetHeight.setEnabled(False)
+        self.actualHeight.setEnabled(False)
         self.clientXModeCheckbox.setEnabled(False)
         self.logBaro = None
         self.logAltHold = None
@@ -393,6 +411,15 @@ class FlightTab(Tab, flight_tab_class):
             pass
         self._led_ring_effect.setCurrentIndex(-1)
         self._led_ring_headlight.setEnabled(False)
+
+        try:
+            self._assist_mode_combo.currentIndexChanged.disconnect(
+                self._assist_mode_changed)
+        except TypeError:
+            # Signal was not connected
+            pass
+        self._assist_mode_combo.setEnabled(False)
+        self._assist_mode_combo.clear()
 
     def minMaxThrustChanged(self):
         self.helper.inputDeviceReader.min_thrust = self.minThrust.value()
@@ -500,6 +527,31 @@ class FlightTab(Tab, flight_tab_class):
         self.slewEnableLimit.setEnabled(newState)
         self.maxYawRate.setEnabled(newState)
 
+    def _assist_mode_changed(self, item):
+        mode = None
+
+        if (item == 0):  # Altitude hold
+            mode = JoystickReader.ASSISTED_CONTROL_ALTHOLD
+        if (item == 1):  # Position hold
+            mode = JoystickReader.ASSISTED_CONTROL_POSHOLD
+        if (item == 2):  # Position hold
+            mode = JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD
+
+        self.helper.inputDeviceReader.set_assisted_control(mode)
+        Config().set("assistedControl", mode)
+
+    def _assisted_control_updated(self, enabled):
+        if self.helper.inputDeviceReader.get_assisted_control() == \
+                JoystickReader.ASSISTED_CONTROL_POSHOLD:
+            self.targetThrust.setEnabled(not enabled)
+            self.targetRoll.setEnabled(not enabled)
+            self.targetPitch.setEnabled(not enabled)
+        elif self.helper.inputDeviceReader.get_assisted_control() == \
+                JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD:
+            self.targetThrust.setEnabled(not enabled)
+        else:
+            self.helper.cf.param.set_value("flightmode.althold", str(enabled))
+
     @pyqtSlot(bool)
     def changeXmode(self, checked):
         self.helper.cf.commander.set_client_xmode(checked)
@@ -568,3 +620,39 @@ class FlightTab(Tab, flight_tab_class):
     def _ring_effect_updated(self, name, value):
         if self.helper.cf.param.is_updated:
             self._led_ring_effect.setCurrentIndex(int(value))
+
+    def _populate_assisted_mode_dropdown(self):
+        self._assist_mode_combo.addItem("Altitude hold", 0)
+        self._assist_mode_combo.addItem("Position hold", 1)
+        self._assist_mode_combo.addItem("Height hold", 2)
+        heightHoldPossible = False
+        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x09):
+            heightHoldPossible = True
+
+        if not heightHoldPossible:
+            self._assist_mode_combo.model().item(2).setEnabled(False)
+        else:
+            self._assist_mode_combo.model().item(0).setEnabled(False)
+
+        self._assist_mode_combo.currentIndexChanged.connect(
+            self._assist_mode_changed)
+        self._assist_mode_combo.setEnabled(True)
+
+        try:
+            assistmodeComboIndex = Config().get("assistedControl")
+            if assistmodeComboIndex == 2 and not heightHoldPossible:
+                self._assist_mode_combo.setCurrentIndex(0)
+                self._assist_mode_combo.currentIndexChanged.emit(0)
+            elif assistmodeComboIndex == 0 and heightHoldPossible:
+                self._assist_mode_combo.setCurrentIndex(2)
+                self._assist_mode_combo.currentIndexChanged.emit(2)
+            else:
+                self._assist_mode_combo.setCurrentIndex(assistmodeComboIndex)
+                self._assist_mode_combo.currentIndexChanged.emit(
+                                                    assistmodeComboIndex)
+        except KeyError:
+            defaultOption = 0
+            if heightHoldPossible:
+                defaultOption = 2
+            self._assist_mode_combo.setCurrentIndex(defaultOption)
+            self._assist_mode_combo.currentIndexChanged.emit(defaultOption)

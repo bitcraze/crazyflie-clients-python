@@ -30,13 +30,15 @@ Attitude indicator widget.
 """
 
 import sys
-from PyQt4 import QtGui, QtCore
+
+from PyQt5 import QtGui
+from PyQt5 import QtWidgets, QtCore
 
 __author__ = 'Bitcraze AB'
 __all__ = ['AttitudeIndicator']
 
 
-class AttitudeIndicator(QtGui.QWidget):
+class AttitudeIndicator(QtWidgets.QWidget):
     """Widget for showing attitude"""
 
     def __init__(self):
@@ -45,33 +47,38 @@ class AttitudeIndicator(QtGui.QWidget):
         self.roll = 0
         self.pitch = 0
         self.hover = False
-        self.hoverASL = 0.0
-        self.hoverTargetASL = 0.0
+        self.hoverHeight = 0.0
+        self.hoverTargetHeight = 0.0
 
         self.setMinimumSize(30, 30)
         # self.setMaximumSize(240,240)
 
-    def setRoll(self, roll):
+    def setRoll(self, roll, repaint=True):
         self.roll = roll
-        self.repaint()
+        if repaint:
+            self.repaint()
 
-    def setPitch(self, pitch):
+    def setPitch(self, pitch, repaint=True):
         self.pitch = pitch
-        self.repaint()
+        if repaint:
+            self.repaint()
 
-    def setHover(self, target):
-        self.hoverTargetASL = target
+    def setHover(self, target, repaint=True):
+        self.hoverTargetHeight = target
         self.hover = target > 0
-        self.repaint()
+        if repaint:
+            self.repaint()
 
-    def setBaro(self, asl):
-        self.hoverASL = asl
-        self.repaint()
+    def setBaro(self, height, repaint=True):
+        self.hoverHeight = height
+        if repaint:
+            self.repaint()
 
-    def setRollPitch(self, roll, pitch):
+    def setRollPitch(self, roll, pitch, repaint=True):
         self.roll = roll
         self.pitch = pitch
-        self.repaint()
+        if repaint:
+            self.repaint()
 
     def paintEvent(self, e):
         qp = QtGui.QPainter()
@@ -156,14 +163,14 @@ class AttitudeIndicator(QtGui.QWidget):
 
         qp.translate(0, h / 2)
         if not self.hover:
-            # asl
-            qp.drawText(w - fh * 10, fh / 2, str(round(self.hoverASL, 2)))
+            # height
+            qp.drawText(w - fh * 10, fh / 2, str(round(self.hoverHeight, 2)))
 
         if self.hover:
-            # target asl (center)
+            # target height (center)
             qp.drawText(
-                w - fh * 10, fh / 2, str(round(self.hoverTargetASL, 2)))
-            diff = round(self.hoverASL - self.hoverTargetASL, 2)
+                w - fh * 10, fh / 2, str(round(self.hoverTargetHeight, 2)))
+            diff = round(self.hoverHeight - self.hoverTargetHeight, 2)
             pos_y = -h / 6 * diff
 
             # cap to +- 2.8m
@@ -185,7 +192,7 @@ class AttitudeIndicator(QtGui.QWidget):
 
 
 if __name__ == "__main__":
-    class Example(QtGui.QWidget):
+    class Example(QtWidgets.QWidget):
 
         def __init__(self):
             super(Example, self).__init__()
@@ -201,13 +208,13 @@ if __name__ == "__main__":
         def updateTarget(self, target):
             self.wid.setHover(500 + target / 10.)
 
-        def updateBaro(self, asl):
-            self.wid.setBaro(500 + asl / 10.)
+        def updateBaro(self, height):
+            self.wid.setBaro(500 + height / 10.)
 
         def initUI(self):
-            vbox = QtGui.QVBoxLayout()
+            vbox = QtWidgets.QVBoxLayout()
 
-            sld = QtGui.QSlider(QtCore.Qt.Horizontal, self)
+            sld = QtWidgets.QSlider(QtCore.Qt.Horizontal, self)
             sld.setFocusPolicy(QtCore.Qt.NoFocus)
             sld.setRange(0, 3600)
             sld.setValue(1800)
@@ -218,30 +225,30 @@ if __name__ == "__main__":
             sld.valueChanged[int].connect(self.updateRoll)
             vbox.addWidget(self.wid)
 
-            hbox = QtGui.QHBoxLayout()
+            hbox = QtWidgets.QHBoxLayout()
             hbox.addLayout(vbox)
 
-            sldPitch = QtGui.QSlider(QtCore.Qt.Vertical, self)
+            sldPitch = QtWidgets.QSlider(QtCore.Qt.Vertical, self)
             sldPitch.setFocusPolicy(QtCore.Qt.NoFocus)
             sldPitch.setRange(0, 180)
             sldPitch.setValue(90)
             sldPitch.valueChanged[int].connect(self.updatePitch)
             hbox.addWidget(sldPitch)
 
-            sldASL = QtGui.QSlider(QtCore.Qt.Vertical, self)
-            sldASL.setFocusPolicy(QtCore.Qt.NoFocus)
-            sldASL.setRange(-200, 200)
-            sldASL.setValue(0)
-            sldASL.valueChanged[int].connect(self.updateBaro)
+            sldHeight = QtWidgets.QSlider(QtCore.Qt.Vertical, self)
+            sldHeight.setFocusPolicy(QtCore.Qt.NoFocus)
+            sldHeight.setRange(-200, 200)
+            sldHeight.setValue(0)
+            sldHeight.valueChanged[int].connect(self.updateBaro)
 
-            sldT = QtGui.QSlider(QtCore.Qt.Vertical, self)
+            sldT = QtWidgets.QSlider(QtCore.Qt.Vertical, self)
             sldT.setFocusPolicy(QtCore.Qt.NoFocus)
             sldT.setRange(-200, 200)
             sldT.setValue(0)
             sldT.valueChanged[int].connect(self.updateTarget)
 
             hbox.addWidget(sldT)
-            hbox.addWidget(sldASL)
+            hbox.addWidget(sldHeight)
 
             self.setLayout(hbox)
 
@@ -254,7 +261,7 @@ if __name__ == "__main__":
             self.wid.repaint()
 
     def main():
-        app = QtGui.QApplication(sys.argv)
+        app = QtWidgets.QApplication(sys.argv)
         Example()
         sys.exit(app.exec_())
 

@@ -72,6 +72,13 @@ class InputMux(object):
         for d in [key for key in list(self._devs.keys()) if self._devs[key]]:
             self._devs[d].close()
 
+    def devices(self):
+        devs = ()
+        for d in self._devs:
+            if self._devs[d]:
+                devs += (self._devs[d], )
+        return devs
+
     def resume(self):
         for d in [key for key in list(self._devs.keys()) if self._devs[key]]:
             self._devs[d].open()

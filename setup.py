@@ -43,6 +43,7 @@ def get_version():
 def relative(lst, base=''):
     return list(map(lambda x: base + os.path.basename(x), lst))
 
+
 VERSION = get_version()
 
 if not VERSION and not os.path.isfile('src/cfclient/version.json'):
@@ -68,8 +69,11 @@ if sys.platform == 'win32':
 # Make a special case when running py2exe to be able to access resources
 if sys.platform == 'win32' and sys.argv[1] == 'py2exe':
     package_data = {}
+    qwindows = os.path.join(os.path.dirname(sys.executable),
+                            "Library\\plugins\\platforms\\qwindows.dll")
     data_files = [
         ('', ['README.md', 'src/cfclient/version.json']),
+        ('platforms', [qwindows]),
         ('ui', glob('src/cfclient/ui/*.ui')),
         ('ui/tabs', glob('src/cfclient/ui/tabs/*.ui')),
         ('ui/widgets', glob('src/cfclient/ui/widgets/*.ui')),
@@ -130,8 +134,8 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib==0.1.0', 'appdirs==1.4.0',
-                                          'pyzmq'],
+    install_requires=platform_requires + ['cflib>=0.1.1', 'appdirs==1.4.0',
+                                          'pyzmq', 'pyqtgraph>=0.10'],
 
     # List of dev dependencies
     # You can install them by running

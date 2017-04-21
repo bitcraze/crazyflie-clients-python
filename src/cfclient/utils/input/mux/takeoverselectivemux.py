@@ -52,7 +52,8 @@ class TakeOverSelectiveMux(InputMux):
 
         self._muxing = {
             self._master: ("thrust", "yaw", "estop", "alt1", "alt2",
-                           "althold", "exit"), self._slave: ("roll", "pitch")
+                           "assistedControl", "exit"),
+            self._slave: ("roll", "pitch")
         }
 
     def read(self):
