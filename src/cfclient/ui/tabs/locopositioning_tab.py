@@ -530,44 +530,45 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
         self._clear_state()
 
-        try:
-            self._register_logblock(
-                "LoPoTab0",
-                [
-                    ("ranging", "distance0", "float"),
-                    ("ranging", "distance1", "float"),
-                    ("ranging", "distance2", "float"),
-                    ("ranging", "distance3", "float"),
-                ],
-                self._anchor_range_signal.emit,
-                self._log_error_signal.emit)
+        if self._helper.cf.mem.ow_search(vid=0xBC, pid=0x06):
+            try:
+                self._register_logblock(
+                    "LoPoTab0",
+                    [
+                        ("ranging", "distance0", "float"),
+                        ("ranging", "distance1", "float"),
+                        ("ranging", "distance2", "float"),
+                        ("ranging", "distance3", "float"),
+                    ],
+                    self._anchor_range_signal.emit,
+                    self._log_error_signal.emit)
 
-            self._register_logblock(
-                "LoPoTab1",
-                [
-                    ("ranging", "distance4", "float"),
-                    ("ranging", "distance5", "float"),
-                    ("ranging", "distance6", "float"),
-                    ("ranging", "distance7", "float"),
-                ],
-                self._anchor_range_signal.emit,
-                self._log_error_signal.emit),
+                self._register_logblock(
+                    "LoPoTab1",
+                    [
+                        ("ranging", "distance4", "float"),
+                        ("ranging", "distance5", "float"),
+                        ("ranging", "distance6", "float"),
+                        ("ranging", "distance7", "float"),
+                    ],
+                    self._anchor_range_signal.emit,
+                    self._log_error_signal.emit),
 
-            self._register_logblock(
-                "LoPoTab2",
-                [
-                    ("kalman", "stateX", "float"),
-                    ("kalman", "stateY", "float"),
-                    ("kalman", "stateZ", "float"),
-                ],
-                self._position_signal.emit,
-                self._log_error_signal.emit),
-        except KeyError as e:
-            logger.warning(str(e))
-        except AttributeError as e:
-            logger.warning(str(e))
+                self._register_logblock(
+                    "LoPoTab2",
+                    [
+                        ("kalman", "stateX", "float"),
+                        ("kalman", "stateY", "float"),
+                        ("kalman", "stateZ", "float"),
+                    ],
+                    self._position_signal.emit,
+                    self._log_error_signal.emit),
+            except KeyError as e:
+                logger.warning(str(e))
+            except AttributeError as e:
+                logger.warning(str(e))
 
-        self._start_polling_anchor_pos(self._helper.cf)
+            self._start_polling_anchor_pos(self._helper.cf)
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
