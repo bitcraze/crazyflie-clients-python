@@ -395,6 +395,7 @@ class FlightTab(Tab, flight_tab_class):
         self.actualThrust.setText("")
         self.actualHeight.setText("")
         self.targetHeight.setText("Not Set")
+        self.ai.setHover(0, self.is_visible())
         self.targetHeight.setEnabled(False)
         self.actualHeight.setEnabled(False)
         self.clientXModeCheckbox.setEnabled(False)
@@ -621,8 +622,8 @@ class FlightTab(Tab, flight_tab_class):
             self._led_ring_effect.setCurrentIndex(int(value))
 
     def _populate_assisted_mode_dropdown(self):
-        self._assist_mode_combo.addItem("Alt hold", 0)
-        self._assist_mode_combo.addItem("Pos hold", 1)
+        self._assist_mode_combo.addItem("Altitude hold", 0)
+        self._assist_mode_combo.addItem("Position hold", 1)
         self._assist_mode_combo.addItem("Height hold", 2)
         heightHoldPossible = False
         if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x09):
@@ -630,6 +631,8 @@ class FlightTab(Tab, flight_tab_class):
 
         if not heightHoldPossible:
             self._assist_mode_combo.model().item(2).setEnabled(False)
+        else:
+            self._assist_mode_combo.model().item(0).setEnabled(False)
 
         self._assist_mode_combo.currentIndexChanged.connect(
             self._assist_mode_changed)
@@ -640,10 +643,16 @@ class FlightTab(Tab, flight_tab_class):
             if assistmodeComboIndex == 2 and not heightHoldPossible:
                 self._assist_mode_combo.setCurrentIndex(0)
                 self._assist_mode_combo.currentIndexChanged.emit(0)
+            elif assistmodeComboIndex == 0 and heightHoldPossible:
+                self._assist_mode_combo.setCurrentIndex(2)
+                self._assist_mode_combo.currentIndexChanged.emit(2)
             else:
                 self._assist_mode_combo.setCurrentIndex(assistmodeComboIndex)
                 self._assist_mode_combo.currentIndexChanged.emit(
                                                     assistmodeComboIndex)
         except KeyError:
-            self._assist_mode_combo.setCurrentIndex(0)
-            self._assist_mode_combo.currentIndexChanged.emit(0)
+            defaultOption = 0
+            if heightHoldPossible:
+                defaultOption = 2
+            self._assist_mode_combo.setCurrentIndex(defaultOption)
+            self._assist_mode_combo.currentIndexChanged.emit(defaultOption)

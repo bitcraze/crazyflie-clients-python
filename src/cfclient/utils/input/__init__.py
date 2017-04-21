@@ -365,21 +365,25 @@ class JoystickReader(object):
                             for d in self._selected_mux.devices():
                                 d.limit_thrust = True
                                 d.limit_rp = True
-                    try:
-                        self.assisted_control_updated.call(
-                                            data.assistedControl)
-                        if not data.assistedControl:
-                            # Reset height controller state to initial target
-                            # height both in the UI and in the Crazyflie.
-                            # TODO: Implement a proper state update of the
-                            #       input layer
-                            self.heighthold_input_updated.\
-                                call(0, 0,
-                                     0, INITAL_TAGET_HEIGHT)
-                    except Exception as e:
-                        logger.warning(
-                            "Exception while doing callback from input-device "
-                            "for assited control: {}".format(e))
+                    if self._assisted_control == \
+                            JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD:
+                        try:
+                            self.assisted_control_updated.call(
+                                                data.assistedControl)
+                            if not data.assistedControl:
+                                # Reset height controller state to initial
+                                # target height both in the UI and in the
+                                # Crazyflie.
+                                # TODO: Implement a proper state update of the
+                                #       input layer
+                                self.heighthold_input_updated.\
+                                    call(0, 0,
+                                         0, INITAL_TAGET_HEIGHT)
+                        except Exception as e:
+                            logger.warning(
+                                "Exception while doing callback from "
+                                "input-device for assited "
+                                "control: {}".format(e))
 
                 if data.toggled.estop:
                     try:
