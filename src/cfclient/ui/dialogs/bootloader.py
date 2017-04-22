@@ -104,6 +104,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     def setUiState(self, state):
         if (state == UIState.DISCONNECTED):
             self.resetButton.setEnabled(False)
+            self.verifyButton.setEnabled(False)
             self.programButton.setEnabled(False)
             self.setStatusLabel("Not connected")
             self.coldBootButton.setEnabled(True)
@@ -114,6 +115,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         elif (state == UIState.CONNECTING):
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
+            self.verifyButton.setEnabled(False)
             self.setStatusLabel("Trying to connect cold bootloader, restart "
                                 "the Crazyflie to connect")
             self.coldBootButton.setEnabled(False)
@@ -122,12 +124,14 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             self.coldBootButton.setEnabled(True)
         elif (state == UIState.COLD_CONNECT):
             self.resetButton.setEnabled(True)
+            self.verifyButton.setEnabled(True)
             self.programButton.setEnabled(True)
             self.setStatusLabel("Connected to bootloader")
             self.coldBootButton.setEnabled(False)
         elif (state == UIState.RESET):
             self.setStatusLabel("Resetting to firmware, disconnected")
             self.resetButton.setEnabled(False)
+            self.verifyButton.setEnabled(False)
             self.programButton.setEnabled(False)
             self.coldBootButton.setEnabled(False)
             self.imagePathLine.setText("")
@@ -170,19 +174,34 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.resetButton.setEnabled(False)
         self.programButton.setEnabled(False)
         self.imagePathBrowseButton.setEnabled(False)
+        self.verifyButton.setEnabled(False)
         if self.imagePathLine.text() != "":
             self.clt.program.emit(self.imagePathLine.text(),
                                   self.verifyCheckBox.isChecked())
         else:
             msgBox = QtWidgets.QMessageBox()
             msgBox.setText("Please choose an image file to program.")
-
+            self.programButton.setEnabled(True)
+            self.imagePathBrowseButton.setEnabled(True)
             msgBox.exec_()
 
     @pyqtSlot()
     def verifyAction(self):
         self.statusLabel.setText('Status: <b>Initiate verification</b>')
-        pass
+        self.resetButton.setEnabled(False)
+
+        self.verifyButton.setEnabled(False)
+        self.imagePathBrowseButton.setEnabled(False)
+        if self.imagePathLine.text() != "":
+            self.clt.verify.emit(self.imagePathLine.text())
+            print("Verifiying...")
+        else:
+            msgBox = QtGui.QMessageBox()
+            msgBox.setText("Please choose an image file to verify.")
+            self.verifyButton.setEnabled(True)
+            self.imagePathBrowseButton.setEnabled(True)
+
+            msgBox.exec_()
 
     @pyqtSlot(bool)
     def programDone(self, success):
@@ -194,11 +213,20 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.resetButton.setEnabled(True)
         self.programButton.setEnabled(True)
         self.imagePathBrowseButton.setEnabled(True)
+        self.verifyButton.setEnabled(True)
 
-    @pyqtSlot()
-    def verifyDone(self):
-        self.statusLabel.setText('Status: <b>Verification complete</b>')
-        pass
+    @pyqtSlot(bool)
+    def verifyDone(self, success):
+        msgBox = QtGui.QMessageBox()
+        if success:
+            msgBox.setText("The file is successfully flashed")
+        else:
+            msgBox.setText("The file is not successfully flashed")
+
+        self.resetButton.setEnabled(True)
+        self.verifyButton.setEnabled(True)
+        self.imagePathBrowseButton.setEnabled(True)
+        msgBox.exec_()
 
     @pyqtSlot(str, int)
     def statusUpdate(self, status, progress):
@@ -216,13 +244,13 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 class CrazyloadThread(QThread):
     # Input signals declaration (not sure it should be used like that...)
     program = pyqtSignal(str, bool)
-    verify = pyqtSignal()
+    verify = pyqtSignal(str)
     initiateColdBootSignal = pyqtSignal(str)
     resetCopterSignal = pyqtSignal()
     writeConfigSignal = pyqtSignal(int, int, float, float)
     # Output signals declaration
     programmed = pyqtSignal(bool)
-    verified = pyqtSignal()
+    verified = pyqtSignal(bool)
     statusChanged = pyqtSignal(str, int)
     connectedSignal = pyqtSignal()
     connectingSignal = pyqtSignal()
@@ -243,6 +271,7 @@ class CrazyloadThread(QThread):
         self.moveToThread(self)
 
         self.program.connect(self.programAction)
+        self.verify.connect(self.verifyAction)
         self.initiateColdBootSignal.connect(self.initiateColdBoot)
         self.resetCopterSignal.connect(self.resetCopter)
 
@@ -266,11 +295,22 @@ class CrazyloadThread(QThread):
         targets = {}
         if str(filename).endswith("bin"):
             targets["stm32"] = ("fw",)
-        try:
-            self._bl.flash(str(filename), targets)
+        # try:
+        if self._bl.flash(str(filename), targets, verify):
             self.programmed.emit(True)
-        except Exception:
+        else:
             self.programmed.emit(False)
+
+    def verifyAction(self, filename):
+        targets = {}
+        if str(filename).endswith("bin"):
+            targets["stm32"] = ("fw",)
+        if self._bl.verify(str(filename), targets):
+            self.verified.emit(True)
+            print("Success!")
+        else:
+            self.verified.emit(False)
+            print("Fail!")
 
     def resetCopter(self):
         try:
