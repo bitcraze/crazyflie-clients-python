@@ -155,7 +155,7 @@ for your user only you can add ```--user``` to the command):
 pip3 install -e .
 ```
 To launch the GUI application in the source folder type:
-```python bin/cfclient```
+```python3 bin/cfclient```
 
 To launch the GUI after a systemwide installation, execute ```cfclient```.
 
