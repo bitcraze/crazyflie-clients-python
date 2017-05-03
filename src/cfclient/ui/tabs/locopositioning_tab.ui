@@ -73,40 +73,108 @@
             <item>
              <layout class="QHBoxLayout" name="block_a0">
               <item>
-               <widget class="QLabel" name="labela0">
-                <property name="text">
-                 <string>Anchor 0</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="spin_a0x"/>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="spin_a0y"/>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="spin_a0z"/>
+               <layout class="QGridLayout" name="gridLayout_4">
+                <item row="1" column="0">
+                 <widget class="QLabel" name="labela0">
+                  <property name="text">
+                   <string>Anchor 0</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QDoubleSpinBox" name="spin_a0y"/>
+                </item>
+                <item row="1" column="3">
+                 <widget class="QDoubleSpinBox" name="spin_a0z"/>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QDoubleSpinBox" name="spin_a0x"/>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLabel" name="label">
+                  <property name="text">
+                   <string>X</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QLabel" name="label_2">
+                  <property name="text">
+                   <string>Y</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="3">
+                 <widget class="QLabel" name="label_3">
+                  <property name="text">
+                   <string>Z</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
              </layout>
             </item>
             <item>
              <layout class="QHBoxLayout" name="block_a1">
               <item>
-               <widget class="QLabel" name="labela1">
-                <property name="text">
-                 <string>Anchor 1</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="spin_a1x"/>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="spin_a1y"/>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="spin_a1z"/>
+               <layout class="QGridLayout" name="gridLayout_5">
+                <item row="1" column="2">
+                 <widget class="QDoubleSpinBox" name="spin_a1y"/>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="labela1">
+                  <property name="text">
+                   <string>Anchor 1</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QDoubleSpinBox" name="spin_a1x"/>
+                </item>
+                <item row="1" column="3">
+                 <widget class="QDoubleSpinBox" name="spin_a1z"/>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLabel" name="label_4">
+                  <property name="text">
+                   <string>X</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QLabel" name="label_5">
+                  <property name="text">
+                   <string>Y</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="3">
+                 <widget class="QLabel" name="label_6">
+                  <property name="text">
+                   <string>Z</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
              </layout>
             </item>
