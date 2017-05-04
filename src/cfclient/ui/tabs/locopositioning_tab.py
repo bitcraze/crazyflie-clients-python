@@ -73,6 +73,11 @@ except Exception:
     _pyqtgraph_found = False
 
 
+STYLE_RED_BACKGROUND = "background-color: lightpink;"
+STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
+STYLE_NO_BACKGROUND = "background-color: none;"
+
+
 class Anchor:
     def __init__(self, x=0.0, y=0.0, z=0.0, distance=0.0):
         self.x = x
@@ -259,10 +264,6 @@ class AnchorPosWrapper(QObject):
 
         self._has_ref_set = False
 
-        self._red_background_style = "background-color: lightpink;"
-        self._green_background_style = "background-color: lightgreen;"
-        self._no_background_style = "background-color: none;"
-
         self._spinbox_changed_signal.connect(self._compare_all_ref_positions)
         self._x.valueChanged.connect(self._spinbox_changed_signal)
         self._y.valueChanged.connect(self._spinbox_changed_signal)
@@ -274,9 +275,9 @@ class AnchorPosWrapper(QObject):
 
     def _compare_one_ref_position(self, spinner, ref):
         if (abs(spinner.value() - ref) < self._SPINNER_THRESHOLD):
-            spinner.setStyleSheet(self._green_background_style)
+            spinner.setStyleSheet(STYLE_GREEN_BACKGROUND)
         else:
-            spinner.setStyleSheet(self._red_background_style)
+            spinner.setStyleSheet(STYLE_RED_BACKGROUND)
 
     def _compare_all_ref_positions(self):
         if self._has_ref_set:
@@ -305,9 +306,9 @@ class AnchorPosWrapper(QObject):
         self._z.setEnabled(enabled)
         if not enabled:
             self._has_ref_set = False
-            self._x.setStyleSheet(self._no_background_style)
-            self._y.setStyleSheet(self._no_background_style)
-            self._z.setStyleSheet(self._no_background_style)
+            self._x.setStyleSheet(STYLE_NO_BACKGROUND)
+            self._y.setStyleSheet(STYLE_NO_BACKGROUND)
+            self._z.setStyleSheet(STYLE_NO_BACKGROUND)
 
 
 class LocoPositioningTab(Tab, locopositioning_tab_class):
@@ -465,6 +466,9 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     def _clear_state(self):
         self._anchors = {}
         self._position = [0.0, 0.0, 0.0]
+        for i in range(8):
+            label = getattr(self, '_status_a{}'.format(i))
+            label.setStyleSheet(STYLE_NO_BACKGROUND)
 
     def _scale_and_center_graphs(self):
         start_bounds = Range(sys.float_info.max, -sys.float_info.max)
@@ -603,6 +607,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
                         ("kalman", "stateX", "float"),
                         ("kalman", "stateY", "float"),
                         ("kalman", "stateZ", "float"),
+                        ("ranging", "state", "uint8_t")
                     ],
                     self._position_signal.emit,
                     self._log_error_signal.emit),
@@ -654,6 +659,17 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             valid, axis = self._parse_position_param_name(name)
             if valid:
                 self._position[axis] = float(value)
+        self._update_ranging_status_indicators(data["ranging.state"])
+
+    def _update_ranging_status_indicators(self, status):
+        for i in range(8):
+            label = getattr(self, '_status_a{}'.format(i))
+            ok = (status >> i) & 0x01
+            exists = i in self._anchors
+            if ok:
+                label.setStyleSheet(STYLE_GREEN_BACKGROUND)
+            elif exists:
+                label.setStyleSheet(STYLE_RED_BACKGROUND)
 
     def _logging_error(self, log_conf, msg):
         """Callback from the log layer when an error occurs"""
