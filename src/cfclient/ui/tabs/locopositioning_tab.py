@@ -681,7 +681,8 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             if anchor_data.is_valid:
                 anchor = self._get_anchor(anchor_number)
                 anchor.set_position(anchor_data.position)
-                self._anchor_pos_ui[anchor_number].set_ref_position(anchor_data.position)
+                self._anchor_pos_ui[anchor_number].\
+                    set_ref_position(anchor_data.position)
 
     def _parse_range_param_name(self, name):
         """Parse a parameter name for a ranging distance and return the number
