@@ -64,13 +64,6 @@
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_6">
               <item>
-               <widget class="QLabel" name="label_7">
-                <property name="text">
-                 <string>Answering:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
                <widget class="QLabel" name="_status_a0">
                 <property name="frameShape">
                  <enum>QFrame::Box</enum>
