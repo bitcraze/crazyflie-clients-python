@@ -79,6 +79,9 @@
                   <property name="text">
                    <string>Anchor 0</string>
                   </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
                  </widget>
                 </item>
                 <item row="1" column="2">
@@ -136,6 +139,9 @@
                   <property name="text">
                    <string>Anchor 1</string>
                   </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
                  </widget>
                 </item>
                 <item row="1" column="1">
@@ -189,6 +195,9 @@
                 <property name="text">
                  <string>Anchor 2</string>
                 </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
                </widget>
               </item>
               <item>
@@ -208,6 +217,9 @@
                <widget class="QLabel" name="labela3">
                 <property name="text">
                  <string>Anchor 3</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
                </widget>
               </item>
@@ -233,6 +245,9 @@
                 <property name="text">
                  <string>Anchor 4</string>
                 </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
                </widget>
               </item>
               <item>
@@ -252,6 +267,9 @@
                <widget class="QLabel" name="labela5">
                 <property name="text">
                  <string>Anchor 5</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
                </widget>
               </item>
@@ -277,6 +295,9 @@
                 <property name="text">
                  <string>Anchor 6</string>
                 </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
                </widget>
               </item>
               <item>
@@ -296,6 +317,9 @@
                <widget class="QLabel" name="labela7">
                 <property name="text">
                  <string>Anchor 7</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
                </widget>
               </item>

@@ -35,7 +35,7 @@ from enum import Enum
 from collections import namedtuple
 
 from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal, QTimer
+from PyQt5.QtCore import pyqtSignal, QTimer, QObject
 from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QMessageBox
 
@@ -241,16 +241,48 @@ class DisplayMode(Enum):
 Range = namedtuple('Range', ['min', 'max'])
 
 
-class AnchorPosWrapper():
+class AnchorPosWrapper(QObject):
     """Wraps the UI elements of one anchor position"""
+
+    _spinbox_changed_signal = pyqtSignal(float)
+    _SPINNER_THRESHOLD = 0.001
+
     def __init__(self, x, y, z):
+        super(AnchorPosWrapper, self).__init__()
         self._x = x
         self._y = y
         self._z = z
 
+        self._ref_x = 0
+        self._ref_y = 0
+        self._ref_z = 0
+
+        self._has_ref_set = False
+
+        self._red_background_style = "background-color: lightpink;"
+        self._green_background_style = "background-color: lightgreen;"
+        self._no_background_style = "background-color: none;"
+
+        self._spinbox_changed_signal.connect(self._compare_all_ref_positions)
+        self._x.valueChanged.connect(self._spinbox_changed_signal)
+        self._y.valueChanged.connect(self._spinbox_changed_signal)
+        self._z.valueChanged.connect(self._spinbox_changed_signal)
+
     def get_position(self):
         """Get the position from the UI elements"""
         return (self._x.value(), self._y.value(), self._z.value())
+
+    def _compare_one_ref_position(self, spinner, ref):
+        if (abs(spinner.value() - ref) < self._SPINNER_THRESHOLD):
+            spinner.setStyleSheet(self._green_background_style)
+        else:
+            spinner.setStyleSheet(self._red_background_style)
+
+    def _compare_all_ref_positions(self):
+        if self._has_ref_set:
+            self._compare_one_ref_position(self._x, self._ref_x)
+            self._compare_one_ref_position(self._y, self._ref_y)
+            self._compare_one_ref_position(self._z, self._ref_z)
 
     def set_position(self, position):
         """Set the position in the UI elements"""
@@ -258,11 +290,24 @@ class AnchorPosWrapper():
         self._y.setValue(position[1])
         self._z.setValue(position[2])
 
+    def set_ref_position(self, position):
+        """..."""
+        self._ref_x = position[0]
+        self._ref_y = position[1]
+        self._ref_z = position[2]
+        self._has_ref_set = True
+        self._compare_all_ref_positions()
+
     def enable(self, enabled):
         """Enable/disable all UI elements for the position"""
         self._x.setEnabled(enabled)
         self._y.setEnabled(enabled)
         self._z.setEnabled(enabled)
+        if not enabled:
+            self._has_ref_set = False
+            self._x.setStyleSheet(self._no_background_style)
+            self._y.setStyleSheet(self._no_background_style)
+            self._z.setStyleSheet(self._no_background_style)
 
 
 class LocoPositioningTab(Tab, locopositioning_tab_class):
@@ -528,8 +573,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         """Callback when the Crazyflie has been connected"""
         logger.debug("Crazyflie connected to {}".format(link_uri))
 
-        self._clear_state()
-
         if self._helper.cf.mem.ow_search(vid=0xBC, pid=0x06):
             try:
                 self._register_logblock(
@@ -574,6 +617,8 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         """Callback for when the Crazyflie has been disconnected"""
         logger.debug("Crazyflie disconnected from {}".format(link_uri))
         self._stop_polling_anchor_pos()
+        self._clear_state()
+        self._update_graphics()
 
     def _register_logblock(self, logblock_name, variables, data_cb, error_cb):
         """Register log data to listen for. One logblock can contain a limited
@@ -636,6 +681,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             if anchor_data.is_valid:
                 anchor = self._get_anchor(anchor_number)
                 anchor.set_position(anchor_data.position)
+                self._anchor_pos_ui[anchor_number].set_ref_position(anchor_data.position)
 
     def _parse_range_param_name(self, name):
         """Parse a parameter name for a ranging distance and return the number
