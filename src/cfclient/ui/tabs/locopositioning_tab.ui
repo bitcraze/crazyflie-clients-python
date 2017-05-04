@@ -530,7 +530,7 @@
             <item>
              <widget class="QPushButton" name="_show_all_button">
               <property name="text">
-               <string>Show all</string>
+               <string>Zoom to fit</string>
               </property>
              </widget>
             </item>
