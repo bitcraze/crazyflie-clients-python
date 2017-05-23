@@ -538,6 +538,37 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>_estimated_postion_button</tabstop>
+  <tabstop>_id_anchor_button</tabstop>
+  <tabstop>_show_all_button</tabstop>
+  <tabstop>spin_a0x</tabstop>
+  <tabstop>spin_a0y</tabstop>
+  <tabstop>spin_a0z</tabstop>
+  <tabstop>spin_a1x</tabstop>
+  <tabstop>spin_a1y</tabstop>
+  <tabstop>spin_a1z</tabstop>
+  <tabstop>spin_a2x</tabstop>
+  <tabstop>spin_a2y</tabstop>
+  <tabstop>spin_a2z</tabstop>
+  <tabstop>spin_a3x</tabstop>
+  <tabstop>spin_a3y</tabstop>
+  <tabstop>spin_a3z</tabstop>
+  <tabstop>spin_a4x</tabstop>
+  <tabstop>spin_a4y</tabstop>
+  <tabstop>spin_a4z</tabstop>
+  <tabstop>spin_a5x</tabstop>
+  <tabstop>spin_a5y</tabstop>
+  <tabstop>spin_a5z</tabstop>
+  <tabstop>spin_a6x</tabstop>
+  <tabstop>spin_a6y</tabstop>
+  <tabstop>spin_a6z</tabstop>
+  <tabstop>spin_a7x</tabstop>
+  <tabstop>spin_a7y</tabstop>
+  <tabstop>spin_a7z</tabstop>
+  <tabstop>_read_pos_from_anhors_button</tabstop>
+  <tabstop>_write_pos_to_anhors_button</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
