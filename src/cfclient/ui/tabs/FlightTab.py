@@ -344,44 +344,40 @@ class FlightTab(Tab, flight_tab_class):
     def _set_available_sensors(self, name, available):
         logger.info("[%s]: %s", name, available)
         available = eval(available)
-        if ("HMC5883L" in name):
-            if (not available):
-                self.actualHeight.setText("N/A")
-                self.actualHeight.setEnabled(False)
-            else:
-                self.actualHeight.setEnabled(True)
-                self.helper.inputDeviceReader.set_alt_hold_available(available)
-                if (not self.logBaro and not self.logAltHold):
-                    # The sensor is available, set up the logging
-                    self.logBaro = LogConfig("Baro", 200)
-                    self.logBaro.add_variable(LOG_NAME_ESTIMATED_Z, "float")
+        
+        self.actualHeight.setEnabled(True)
+        self.helper.inputDeviceReader.set_alt_hold_available(available)
+        if (not self.logBaro and not self.logAltHold):
+            # The sensor is available, set up the logging
+            self.logBaro = LogConfig("Baro", 200)
+            self.logBaro.add_variable(LOG_NAME_ESTIMATED_Z, "float")
 
-                    try:
-                        self.helper.cf.log.add_config(self.logBaro)
-                        self.logBaro.data_received_cb.add_callback(
-                            self._baro_data_signal.emit)
-                        self.logBaro.error_cb.add_callback(
-                            self._log_error_signal.emit)
-                        self.logBaro.start()
-                    except KeyError as e:
-                        logger.warning(str(e))
-                    except AttributeError as e:
-                        logger.warning(str(e))
-                    self.logAltHold = LogConfig("AltHold", 200)
-                    self.logAltHold.add_variable(PARAM_NAME_ALT_HOLD_TARGET,
-                                                 "float")
+            try:
+                self.helper.cf.log.add_config(self.logBaro)
+                self.logBaro.data_received_cb.add_callback(
+                    self._baro_data_signal.emit)
+                self.logBaro.error_cb.add_callback(
+                    self._log_error_signal.emit)
+                self.logBaro.start()
+            except KeyError as e:
+                logger.warning(str(e))
+            except AttributeError as e:
+                logger.warning(str(e))
+            self.logAltHold = LogConfig("AltHold", 200)
+            self.logAltHold.add_variable(PARAM_NAME_ALT_HOLD_TARGET,
+                                         "float")
 
-                    try:
-                        self.helper.cf.log.add_config(self.logAltHold)
-                        self.logAltHold.data_received_cb.add_callback(
-                            self._althold_data_signal.emit)
-                        self.logAltHold.error_cb.add_callback(
-                            self._log_error_signal.emit)
-                        self.logAltHold.start()
-                    except KeyError as e:
-                        logger.warning(str(e))
-                    except AttributeError as e:
-                        logger.warning(str(e))
+            try:
+                self.helper.cf.log.add_config(self.logAltHold)
+                self.logAltHold.data_received_cb.add_callback(
+                    self._althold_data_signal.emit)
+                self.logAltHold.error_cb.add_callback(
+                    self._log_error_signal.emit)
+                self.logAltHold.start()
+            except KeyError as e:
+                logger.warning(str(e))
+            except AttributeError as e:
+                logger.warning(str(e))
 
     def disconnected(self, linkURI):
         self.ai.setRollPitch(0, 0)
