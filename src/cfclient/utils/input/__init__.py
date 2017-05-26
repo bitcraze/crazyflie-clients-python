@@ -368,7 +368,7 @@ class JoystickReader(object):
                     if self._assisted_control == \
                             JoystickReader.ASSISTED_CONTROL_ALTHOLD:
                             self.assisted_control_updated.call(
-                                                data.assistedControl)                    
+                                                data.assistedControl)
                     if self._assisted_control == \
                             JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD:
                         try:

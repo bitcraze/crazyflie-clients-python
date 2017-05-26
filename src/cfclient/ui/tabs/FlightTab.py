@@ -344,7 +344,7 @@ class FlightTab(Tab, flight_tab_class):
     def _set_available_sensors(self, name, available):
         logger.info("[%s]: %s", name, available)
         available = eval(available)
-        
+
         self.actualHeight.setEnabled(True)
         self.helper.inputDeviceReader.set_alt_hold_available(available)
         if (not self.logBaro and not self.logAltHold):
