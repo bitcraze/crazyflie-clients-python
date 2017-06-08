@@ -40,17 +40,19 @@ from PyQt5.QtWidgets import QMessageBox
 
 import cfclient
 from cfclient.ui.tab import Tab
+from cfclient.utils.config import Config
+from cflib.crazyflie.log import LogConfig
 
 __author__ = 'Bitcraze AB'
-__all__ = ['ExampleTab']
+__all__ = ['QualisysTab']
 
 logger = logging.getLogger(__name__)
 
-example_tab_class = uic.loadUiType(cfclient.module_path +
-                                   "/ui/tabs/exampleTab.ui")[0]
+qualisys_tab_class = uic.loadUiType(cfclient.module_path +
+                                   "/ui/tabs/qualisysTab.ui")[0]
 
 
-class ExampleTab(Tab, example_tab_class):
+class QualisysTab(Tab, qualisys_tab_class):
     """Tab for plotting logging data"""
 
     _connected_signal = pyqtSignal(str)
@@ -59,15 +61,18 @@ class ExampleTab(Tab, example_tab_class):
     _log_error_signal = pyqtSignal(object, str)
     _param_updated_signal = pyqtSignal(str, str)
 
+    _imu_data_signal = pyqtSignal(int, object, object)
+
     def __init__(self, tabWidget, helper, *args):
-        super(ExampleTab, self).__init__(*args)
+        super(QualisysTab, self).__init__(*args)
         self.setupUi(self)
 
-        self.tabName = "Example"
-        self.menuName = "Example Tab"
+        self.tabName = "Qualisys"
+        self.menuName = "Qualisys Tab"
         self.tabWidget = tabWidget
 
         self._helper = helper
+
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
@@ -80,18 +85,55 @@ class ExampleTab(Tab, example_tab_class):
         self._helper.cf.connected.add_callback(
             self._connected_signal.emit)
 
+        self._imu_data_signal.connect(self._imu_data_received)
+
         self._helper.cf.disconnected.add_callback(
             self._disconnected_signal.emit)
+
+        self.thrustButton.clicked.connect(self._testThrust)
+
+    def _testThrust(self):
+
+        self.name.setText("Thrust")
+
+
+
+    def _imu_data_received(self, timestamp, data, logconf):
+        if self.isVisible():
+            self.qualisysRoll.setText(("%0.2f" % data["stabilizer.roll"]))
+            self.qualisysPitch.setText(("%0.2f" % data["stabilizer.pitch"]))
+            self.qualisysYaw.setText(("%0.2f" % data["stabilizer.yaw"]))
+
 
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
 
         logger.debug("Crazyflie connected to {}".format(link_uri))
 
+
+        # IMU & THRUST
+        lg = LogConfig("Stabilizer", Config().get("ui_update_period"))
+        lg.add_variable("stabilizer.roll", "float")
+        lg.add_variable("stabilizer.pitch", "float")
+        lg.add_variable("stabilizer.yaw", "float")
+        lg.add_variable("stabilizer.thrust", "uint16_t")
+
+        try:
+
+            self._helper.cf.log.add_config(lg)
+            lg.data_received_cb.add_callback(self._imu_data_signal.emit)
+            lg.error_cb.add_callback(self._log_error_signal.emit)
+            lg.start()
+        except KeyError as e:
+            logger.warning(str(e))
+        except AttributeError as e:
+            logger.warning(str(e))
+
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
 
         logger.debug("Crazyflie disconnected from {}".format(link_uri))
+        self.qualisysRoll.setText("hej")
 
     def _param_updated(self, name, value):
         """Callback when the registered parameter get's updated"""
