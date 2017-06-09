@@ -43,6 +43,7 @@ from cfclient.ui.tab import Tab
 from cfclient.utils.config import Config
 from cflib.crazyflie.log import LogConfig
 
+
 __author__ = 'Bitcraze AB'
 __all__ = ['QualisysTab']
 
@@ -63,6 +64,8 @@ class QualisysTab(Tab, qualisys_tab_class):
 
     _imu_data_signal = pyqtSignal(int, object, object)
 
+    qtmConnection = 0
+
     def __init__(self, tabWidget, helper, *args):
         super(QualisysTab, self).__init__(*args)
         self.setupUi(self)
@@ -72,6 +75,8 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.tabWidget = tabWidget
 
         self._helper = helper
+
+
 
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
@@ -90,19 +95,60 @@ class QualisysTab(Tab, qualisys_tab_class):
         self._helper.cf.disconnected.add_callback(
             self._disconnected_signal.emit)
 
-        self.thrustButton.clicked.connect(self._testThrust)
+        # Connect the UI elements
+        self.connectQtmButton.clicked.connect(self.qtmConnect)
 
-    def _testThrust(self):
+    def on_connect(self, connection, version):
 
-        self.name.setText("Thrust")
+
+        self.qtmConnection = connection
+        self.qtmConnection.stream_frames(frames='frequency:5' ,components=['6deuler'], on_packet=self.on_packet)
+
+        # enable UI
+        self.qtmDataBox.setEnabled(True)
+
+    def on_disconnect(self, reason):
+        self.qtmDataBox.setEnabled(False)
+        print(reason)
+
+    def on_event(self, event):
+       print(event)
+
+    def on_packet(self, packet):
+        header, bodies  = packet.get_6d_euler()
+
+        self.qualisysX.setText(("%0.2f" % bodies[0][0][0]))
+        self.qualisysY.setText(("%0.2f" % bodies[0][0][1]))
+        self.qualisysZ.setText(("%0.2f" % bodies[0][0][2]))
+
+        self.qualisysRoll.setText(("%0.2f" % bodies[0][1][0]))
+        self.qualisysPitch.setText(("%0.2f" % bodies[0][1][1]))
+        self.qualisysYaw.setText(("%0.2f" % bodies[0][1][2]))
+
+
+    def qtmConnect(self):
+        if self.qtmConnection is 0:
+
+            import qtm
+            self._qrt = qtm.QRT(self.qtmIp.text(), 22223)
+            self._qrt.connect(self.on_connect, on_disconnect=self.on_disconnect, on_event=self.on_event)
+
+            self.connectQtmButton.setText('Disconnect QTM')
+        else:
+            self.qtmConnection.disconnect()
+            self.connectQtmButton.setText('Connect QTM')
+
+            self.qtmConnection = 0
+
+
 
 
 
     def _imu_data_received(self, timestamp, data, logconf):
         if self.isVisible():
-            self.qualisysRoll.setText(("%0.2f" % data["stabilizer.roll"]))
-            self.qualisysPitch.setText(("%0.2f" % data["stabilizer.pitch"]))
-            self.qualisysYaw.setText(("%0.2f" % data["stabilizer.yaw"]))
+            self.cRoll.setText(("%0.2f" % data["stabilizer.roll"]))
+            self.cPitch.setText(("%0.2f" % data["stabilizer.pitch"]))
+            self.cYaw.setText(("%0.2f" % data["stabilizer.yaw"]))
 
 
     def _connected(self, link_uri):
@@ -133,7 +179,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         """Callback for when the Crazyflie has been disconnected"""
 
         logger.debug("Crazyflie disconnected from {}".format(link_uri))
-        self.qualisysRoll.setText("hej")
+
 
     def _param_updated(self, name, value):
         """Callback when the registered parameter get's updated"""
