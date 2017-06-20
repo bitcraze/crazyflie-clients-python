@@ -67,6 +67,7 @@ MAX_THRUST = 65000
 INITAL_TAGET_HEIGHT = 0.4
 MAX_TARGET_HEIGHT = 1.0
 MIN_TARGET_HEIGHT = 0.03
+MIN_HOVER_HEIGHT = 0.20
 INPUT_READ_PERIOD = 0.01
 
 
@@ -80,6 +81,7 @@ class JoystickReader(object):
     ASSISTED_CONTROL_ALTHOLD = 0
     ASSISTED_CONTROL_POSHOLD = 1
     ASSISTED_CONTROL_HEIGHTHOLD = 2
+    ASSISTED_CONTROL_HOVER = 3
 
     def __init__(self, do_device_discovery=True):
         self._input_device = None
@@ -165,6 +167,7 @@ class JoystickReader(object):
         self.input_updated = Caller()
         self.assisted_input_updated = Caller()
         self.heighthold_input_updated = Caller()
+        self.hover_input_updated = Caller()
         self.rp_trim_updated = Caller()
         self.emergency_stop_updated = Caller()
         self.device_discovery = Caller()
@@ -356,10 +359,17 @@ class JoystickReader(object):
             if data:
                 if data.toggled.assistedControl:
                     if self._assisted_control == \
-                            JoystickReader.ASSISTED_CONTROL_POSHOLD:
-                        if data.assistedControl:
+                            JoystickReader.ASSISTED_CONTROL_POSHOLD or \
+                            self._assisted_control == \
+                            JoystickReader.ASSISTED_CONTROL_HOVER:
+                        if data.assistedControl and self._assisted_control != \
+                                JoystickReader.ASSISTED_CONTROL_HOVER:
                             for d in self._selected_mux.devices():
                                 d.limit_thrust = False
+                                d.limit_rp = False
+                        elif data.assistedControl:
+                            for d in self._selected_mux.devices():
+                                d.limit_thrust = True
                                 d.limit_rp = False
                         else:
                             for d in self._selected_mux.devices():
@@ -381,6 +391,9 @@ class JoystickReader(object):
                                 # TODO: Implement a proper state update of the
                                 #       input layer
                                 self.heighthold_input_updated.\
+                                    call(0, 0,
+                                         0, INITAL_TAGET_HEIGHT)
+                                self.hover_input_updated.\
                                     call(0, 0,
                                          0, INITAL_TAGET_HEIGHT)
                         except Exception as e:
@@ -410,8 +423,11 @@ class JoystickReader(object):
                                        "input-device for alt2: {}".format(e))
 
                 # Reset height target when height-hold is not selected
-                if not data.assistedControl or self._assisted_control != \
-                        JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD:
+                if not data.assistedControl or \
+                        (self._assisted_control !=
+                         JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD and
+                         self._assisted_control !=
+                         JoystickReader.ASSISTED_CONTROL_HOVER):
                     self._target_height = INITAL_TAGET_HEIGHT
 
                 if self._assisted_control == \
@@ -424,6 +440,27 @@ class JoystickReader(object):
                     # The odd use of vx and vy is to map forward on the
                     # physical joystick to positiv X-axis
                     self.assisted_input_updated.call(vy, -vx, vz, yawrate)
+                elif self._assisted_control == \
+                        JoystickReader.ASSISTED_CONTROL_HOVER \
+                        and data.assistedControl:
+                    vx = data.roll
+                    vy = data.pitch
+
+                    # Scale thrust to a value between -1.0 to 1.0
+                    vz = (data.thrust - 32767) / 32767.0
+                    # Integrate velosity setpoint
+                    self._target_height += vz * INPUT_READ_PERIOD
+                    # Cap target height
+                    if self._target_height > MAX_TARGET_HEIGHT:
+                        self._target_height = MAX_TARGET_HEIGHT
+                    if self._target_height < MIN_HOVER_HEIGHT:
+                        self._target_height = MIN_HOVER_HEIGHT
+
+                    yawrate = data.yaw
+                    # The odd use of vx and vy is to map forward on the
+                    # physical joystick to positiv X-axis
+                    self.hover_input_updated.call(vy, -vx, yawrate,
+                                                  self._target_height)
                 else:
                     # Update the user roll/pitch trim from device
                     if data.toggled.pitchNeg and data.pitchNeg:

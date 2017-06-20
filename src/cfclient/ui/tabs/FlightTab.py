@@ -532,6 +532,8 @@ class FlightTab(Tab, flight_tab_class):
             mode = JoystickReader.ASSISTED_CONTROL_POSHOLD
         if (item == 2):  # Position hold
             mode = JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD
+        if (item == 3):  # Position hold
+            mode = JoystickReader.ASSISTED_CONTROL_HOVER
 
         self.helper.inputDeviceReader.set_assisted_control(mode)
         Config().set("assistedControl", mode)
@@ -621,12 +623,24 @@ class FlightTab(Tab, flight_tab_class):
         self._assist_mode_combo.addItem("Altitude hold", 0)
         self._assist_mode_combo.addItem("Position hold", 1)
         self._assist_mode_combo.addItem("Height hold", 2)
+        self._assist_mode_combo.addItem("Hover", 3)
         heightHoldPossible = False
+        hoverPossible = False
+
         if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x09):
             heightHoldPossible = True
 
+        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x0A):
+            heightHoldPossible = True
+            hoverPossible = True
+
         if not heightHoldPossible:
             self._assist_mode_combo.model().item(2).setEnabled(False)
+        else:
+            self._assist_mode_combo.model().item(0).setEnabled(False)
+
+        if not hoverPossible:
+            self._assist_mode_combo.model().item(3).setEnabled(False)
         else:
             self._assist_mode_combo.model().item(0).setEnabled(False)
 
