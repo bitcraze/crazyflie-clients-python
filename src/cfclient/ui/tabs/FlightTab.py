@@ -45,8 +45,8 @@ from cfclient.utils.input import JoystickReader
 
 from cfclient.ui.tab import Tab
 
-PARAM_NAME_ALT_HOLD_TARGET = "posCtl.targetZ"
-LOG_NAME_ESTIMATED_Z = "posEstimatorAlt.estimatedZ"
+LOG_NAME_ALT_HOLD_TARGET = "posCtl.targetZ"
+LOG_NAME_ESTIMATED_Z = "stateEstimate.z"
 
 __author__ = 'Bitcraze AB'
 __all__ = ['FlightTab']
@@ -272,25 +272,29 @@ class FlightTab(Tab, flight_tab_class):
 
     def _heighthold_input_updated(self, roll, pitch, yaw, height):
         if (self.isVisible() and
-                self.helper.inputDeviceReader.get_assisted_control() ==
-                self.helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD):
+                ((self.helper.inputDeviceReader.get_assisted_control() ==
+                self.helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD) or
+                (self.helper.inputDeviceReader.get_assisted_control() ==
+                 self.helper.inputDeviceReader.ASSISTED_CONTROL_HOVER))):
             self.targetHeight.setText(("%.2f" % height))
             self.ai.setHover(height, self.is_visible())
 
     def _althold_data_received(self, timestamp, data, logconf):
-        if (self.isVisible() and
-                self.helper.inputDeviceReader.get_assisted_control() !=
-                self.helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD):
-            target = data[PARAM_NAME_ALT_HOLD_TARGET]
-            if target > 0:
-                if not self.targetHeight.isEnabled():
-                    self.targetHeight.setEnabled(True)
-                self.targetHeight.setText(("%.2f" % target))
-                self.ai.setHover(target, self.is_visible())
-            elif self.targetHeight.isEnabled():
-                self.targetHeight.setEnabled(False)
-                self.targetHeight.setText("Not set")
-                self.ai.setHover(0, self.is_visible())
+        if self.isVisible():
+            if not ((self.helper.inputDeviceReader.get_assisted_control() ==
+                 self.helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD) or
+                (self.helper.inputDeviceReader.get_assisted_control() ==
+                 self.helper.inputDeviceReader.ASSISTED_CONTROL_HOVER)):
+                target = data[LOG_NAME_ALT_HOLD_TARGET]
+                if target > 0:
+                    if not self.targetHeight.isEnabled():
+                        self.targetHeight.setEnabled(True)
+                    self.targetHeight.setText(("%.2f" % target))
+                    self.ai.setHover(target, self.is_visible())
+                elif self.targetHeight.isEnabled():
+                    self.targetHeight.setEnabled(False)
+                    self.targetHeight.setText("Not set")
+                    self.ai.setHover(0, self.is_visible())
 
     def _imu_data_received(self, timestamp, data, logconf):
         if self.isVisible():
@@ -364,7 +368,7 @@ class FlightTab(Tab, flight_tab_class):
             except AttributeError as e:
                 logger.warning(str(e))
             self.logAltHold = LogConfig("AltHold", 200)
-            self.logAltHold.add_variable(PARAM_NAME_ALT_HOLD_TARGET,
+            self.logAltHold.add_variable(LOG_NAME_ALT_HOLD_TARGET,
                                          "float")
 
             try:
@@ -544,9 +548,12 @@ class FlightTab(Tab, flight_tab_class):
             self.targetThrust.setEnabled(not enabled)
             self.targetRoll.setEnabled(not enabled)
             self.targetPitch.setEnabled(not enabled)
-        elif self.helper.inputDeviceReader.get_assisted_control() == \
-                JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD:
+        elif ((self.helper.inputDeviceReader.get_assisted_control() ==
+                JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD) or
+                (self.helper.inputDeviceReader.get_assisted_control() ==
+                JoystickReader.ASSISTED_CONTROL_HOVER)):
             self.targetThrust.setEnabled(not enabled)
+            self.targetHeight.setEnabled(enabled)
         else:
             self.helper.cf.param.set_value("flightmode.althold", str(enabled))
 
@@ -651,6 +658,9 @@ class FlightTab(Tab, flight_tab_class):
         try:
             assistmodeComboIndex = Config().get("assistedControl")
             if assistmodeComboIndex == 2 and not heightHoldPossible:
+                self._assist_mode_combo.setCurrentIndex(0)
+                self._assist_mode_combo.currentIndexChanged.emit(0)
+            elif assistmodeComboIndex == 3 and hoverPossible:
                 self._assist_mode_combo.setCurrentIndex(0)
                 self._assist_mode_combo.currentIndexChanged.emit(0)
             elif assistmodeComboIndex == 0 and heightHoldPossible:
