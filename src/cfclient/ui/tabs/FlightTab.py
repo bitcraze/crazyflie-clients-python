@@ -273,18 +273,19 @@ class FlightTab(Tab, flight_tab_class):
     def _heighthold_input_updated(self, roll, pitch, yaw, height):
         if (self.isVisible() and
                 ((self.helper.inputDeviceReader.get_assisted_control() ==
-                self.helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD) or
-                (self.helper.inputDeviceReader.get_assisted_control() ==
-                 self.helper.inputDeviceReader.ASSISTED_CONTROL_HOVER))):
+                 self.helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD) or
+                 (self.helper.inputDeviceReader.get_assisted_control() ==
+                  self.helper.inputDeviceReader.ASSISTED_CONTROL_HOVER))):
             self.targetHeight.setText(("%.2f" % height))
             self.ai.setHover(height, self.is_visible())
 
     def _althold_data_received(self, timestamp, data, logconf):
         if self.isVisible():
-            if not ((self.helper.inputDeviceReader.get_assisted_control() ==
+            if not \
+                ((self.helper.inputDeviceReader.get_assisted_control() ==
                  self.helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD) or
-                (self.helper.inputDeviceReader.get_assisted_control() ==
-                 self.helper.inputDeviceReader.ASSISTED_CONTROL_HOVER)):
+                 (self.helper.inputDeviceReader.get_assisted_control() ==
+                  self.helper.inputDeviceReader.ASSISTED_CONTROL_HOVER)):
                 target = data[LOG_NAME_ALT_HOLD_TARGET]
                 if target > 0:
                     if not self.targetHeight.isEnabled():
@@ -551,7 +552,7 @@ class FlightTab(Tab, flight_tab_class):
         elif ((self.helper.inputDeviceReader.get_assisted_control() ==
                 JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD) or
                 (self.helper.inputDeviceReader.get_assisted_control() ==
-                JoystickReader.ASSISTED_CONTROL_HOVER)):
+                 JoystickReader.ASSISTED_CONTROL_HOVER)):
             self.targetThrust.setEnabled(not enabled)
             self.targetHeight.setEnabled(enabled)
         else:

@@ -379,10 +379,10 @@ class JoystickReader(object):
                             JoystickReader.ASSISTED_CONTROL_ALTHOLD:
                             self.assisted_control_updated.call(
                                                 data.assistedControl)
-                    if ((self._assisted_control == 
+                    if ((self._assisted_control ==
                             JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD) or
-                            (self._assisted_control == 
-                            JoystickReader.ASSISTED_CONTROL_HOVER)):
+                            (self._assisted_control ==
+                             JoystickReader.ASSISTED_CONTROL_HOVER)):
                         try:
                             self.assisted_control_updated.call(
                                                 data.assistedControl)
