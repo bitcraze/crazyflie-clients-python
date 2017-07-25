@@ -30,26 +30,17 @@
        <item>
         <widget class="QLabel" name="label_2">
          <property name="text">
-          <string>QTM IP Address:  </string>
+          <string>QTM</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="qtmIpBox">
+        <widget class="QComboBox" name="qtmIpBox">
          <property name="minimumSize">
           <size>
-           <width>90</width>
+           <width>173</width>
            <height>0</height>
           </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>90</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>127.0.0.1</string>
          </property>
         </widget>
        </item>
@@ -93,31 +84,65 @@
        <item>
         <widget class="QLabel" name="label">
          <property name="text">
-          <string>Crazyflie Address:</string>
+          <string>Crazyflie</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="cfUriBox">
+        <widget class="QSpinBox" name="cfChannelSpinner">
+         <property name="prefix">
+          <string>Ch. </string>
+         </property>
+         <property name="maximum">
+          <number>999</number>
+         </property>
+         <property name="value">
+          <number>80</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cfBandwitdhBox">
          <property name="minimumSize">
           <size>
-           <width>90</width>
+           <width>64</width>
            <height>0</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>90</width>
+           <width>64</width>
            <height>16777215</height>
           </size>
          </property>
-         <property name="text">
-          <string>radio://0/83/2M</string>
+         <property name="currentIndex">
+          <number>2</number>
          </property>
+         <item>
+          <property name="text">
+           <string>250 Kbit/s</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>1 MBit/s</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>2 Mbit/s</string>
+          </property>
+         </item>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="connectCrazyflieButton">
+         <property name="minimumSize">
+          <size>
+           <width>106</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="text">
           <string>Connect to Crazyflie</string>
          </property>
@@ -147,8 +172,15 @@
      </item>
      <item>
       <widget class="QLabel" name="statusLabel">
+       <property name="styleSheet">
+        <string notr="true">font: 11pt &quot;MS Shell Dlg 2&quot;;
+</string>
+       </property>
        <property name="text">
         <string>Status: disabled</string>
+       </property>
+       <property name="scaledContents">
+        <bool>true</bool>
        </property>
        <property name="alignment">
         <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
@@ -564,57 +596,6 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="FollowSettings">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>50</height>
-            </size>
-           </property>
-           <property name="title">
-            <string>Follow Settings</string>
-           </property>
-           <widget class="QWidget" name="horizontalLayoutWidget">
-            <property name="geometry">
-             <rect>
-              <x>10</x>
-              <y>20</y>
-              <width>281</width>
-              <height>22</height>
-             </rect>
-            </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_6">
-             <item>
-              <widget class="QLineEdit" name="lengthBox">
-               <property name="minimumSize">
-                <size>
-                 <width>30</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>30</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>1</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_6">
-               <property name="text">
-                <string>Length from wand (m)</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </widget>
-         </item>
-         <item>
           <spacer name="verticalSpacer_2">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -817,7 +798,7 @@
               <x>0</x>
               <y>120</y>
               <width>171</width>
-              <height>21</height>
+              <height>23</height>
              </rect>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -890,7 +871,7 @@
             </size>
            </property>
            <property name="title">
-            <string>Wand Positon</string>
+            <string>QStick Positon</string>
            </property>
            <widget class="QWidget" name="gridLayoutWidget_2">
             <property name="geometry">
