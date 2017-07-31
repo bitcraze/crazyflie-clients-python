@@ -27,7 +27,7 @@
 #  02110-1301, USA.
 
 """
-Tab for controlling the crazyflie using Qualisys Motion Capturing system
+Tab for controlling the Crazyflie using Qualisys Motion Capturing system
 """
 
 import logging
@@ -111,7 +111,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.tabName = "Qualisys"
         self.menuName = "Qualisys Tab"
         self.tabWidget = tabWidget
-        self.labels = "Empty"
+        self.qtm_6DoF_labels = "Empty"
         self._helper = helper
         self._qtm_connection = None
         self.scf = None
@@ -127,7 +127,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.circle_pos_threshold = 0.1
         self.circle_radius = 1.5
         self.circle_resolution = 15.0
-        self.position_hold_limit = 0.1
+        self.position_hold_timelimit = 0.1
         self.length_from_wand = 2.0
         self.circle_height = 1.2
         self.new_path = []
@@ -142,7 +142,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         # The regular cf_pos can a times due to lost tracing become Nan, this the latest known valid cf position
         self.latest_valid_cf_pos = Position(0,0,0)
 
-        self.sequence = Config().get("flight_paths")
+        self.flight_paths = Config().get("flight_paths")
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
@@ -155,8 +155,6 @@ class QualisysTab(Tab, qualisys_tab_class):
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
             self._connected_signal.emit)
-
-        self._imu_data_signal.connect(self._imu_data_received)
 
         self._helper.cf.disconnected.add_callback(
             self._disconnected_signal.emit)
@@ -173,15 +171,15 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.recordButton.clicked.connect(self.set_record_mode)
         self.removePathButton.clicked.connect(self.remove_current_path)
 
-        for i in range(len(self.sequence)):
-            self.pathSelector.addItem(self.sequence[i][0])
+        for i in range(len(self.flight_paths)):
+            self.pathSelector.addItem(self.flight_paths[i][0])
 
         self.pathSelector.currentIndexChanged.connect(self.path_changed)
 
         # Populate UI elements
-        self.posHoldPathBox.setText(str(self.position_hold_limit))
+        self.posHoldPathBox.setText(str(self.position_hold_timelimit))
         self.radiusBox.setText(str(self.circle_radius))
-        self.posHoldCircleBox.setText(str(self.position_hold_limit))
+        self.posHoldCircleBox.setText(str(self.position_hold_timelimit))
         self.resolutionBox.setText(str(self.circle_resolution))
         self.path_changed()
         self.batteryBar.setTextVisible(False)
@@ -190,7 +188,7 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         uri = str(Config().get("link_uri")).split("/")
         self.cfChannelSpinner.setValue(int(uri[3]))
-        self.cfBandwitdhBox.setCurrentIndex(int(uri[4][:1]if uri[4] != "250K" else 0))
+        self.cfBandwidthBox.setCurrentIndex(int(uri[4][:1]if uri[4] != "250K" else 0))
 
 
     def path_changed(self):
@@ -202,7 +200,6 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         self.model.clear()
 
-
         # Flight path ui table setup
         self.model = QStandardItemModel(10, 4)
         self.model.setHorizontalHeaderItem(0, QStandardItem('X (m)'))
@@ -211,13 +208,13 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.model.setHorizontalHeaderItem(3, QStandardItem('Yaw (deg)'))
 
         # Populate the table with data
-        if(len(self.sequence) == 0):
+        if(len(self.flight_paths) == 0):
             return
-        for i in range(1, len(self.sequence[self.pathSelector.currentIndex()])):
+        for i in range(1, len(self.flight_paths[self.pathSelector.currentIndex()])):
             for j in range(0, 4):
-                self.model.setItem(i-1, j, QStandardItem(str(self.sequence[self.pathSelector.currentIndex()][i][j])))
+                self.model.setItem(i - 1, j, QStandardItem(str(self.flight_paths[self.pathSelector.currentIndex()][i][j])))
         self.flightPathDataTable.setModel(self.model)
-        Config().set("flight_paths", self.sequence)
+        Config().set("flight_paths", self.flight_paths)
 
     def remove_current_path(self):
 
@@ -225,19 +222,19 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.current_flight_mode = FlightModeStates.HOVERING
             self.switch_flight_mode()
             time.sleep(0.1)
-        if len(self.sequence) == 0:
+        if len(self.flight_paths) == 0:
             return
 
         import ctypes
         current_index = self.pathSelector.currentIndex()
-        answer = ctypes.windll.user32.MessageBoxW(0, "Delete the flightpath: {}?".format(self.sequence[current_index][0]), "CFClient: Qualisystab", 4)
+        answer = ctypes.windll.user32.MessageBoxW(0, "Delete the flightpath: {}?".format(self.flight_paths[current_index][0]), "CFClient: Qualisystab", 4)
 
         if answer == 6:
-            self.sequence.pop(current_index)
+            self.flight_paths.pop(current_index)
             self.pathSelector.clear()
 
-            for j in range(len(self.sequence)):
-                self.pathSelector.addItem(self.sequence[j][0])
+            for j in range(len(self.flight_paths)):
+                self.pathSelector.addItem(self.flight_paths[j][0])
 
             if current_index == 0:
                 self.pathSelector.setCurrentIndex(0)
@@ -265,7 +262,7 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         else:
             try:
-                self.position_hold_limit = float(self.posHoldCircleBox.text())
+                self.position_hold_timelimit = float(self.posHoldCircleBox.text())
                 self.circle_radius = float(self.radiusBox.text())
                 self.circle_resolution = float(self.resolutionBox.text())
                 self.circle_pos_threshold = (2 * self.circle_radius * round(math.sin(math.radians((self.circle_resolution/2))),4)) * 2
@@ -324,7 +321,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         else:
 
             try:
-                self.position_hold_limit = float(self.posHoldPathBox.text())
+                self.position_hold_timelimit = float(self.posHoldPathBox.text())
             except ValueError as err:
                 logger.info("illegal character used: {}".format(str(err)))
                 self.statusLabel.setText("Status: illegal character used in path settings: {}".format(str(err)))
@@ -371,16 +368,13 @@ class QualisysTab(Tab, qualisys_tab_class):
                         self.statusLabel.setText("Flight Path: Missing value to create a valid flight path")
                         break
                     list = [list[i:i + 4] for i in range(0, len(list), 4)]
-                    list.insert(0,self.sequence[self.pathSelector.currentIndex()][0])
-                    self.sequence[self.pathSelector.currentIndex()] = list
-                    Config().set("flight_paths", self.sequence)
+                    list.insert(0, self.flight_paths[self.pathSelector.currentIndex()][0])
+                    self.flight_paths[self.pathSelector.currentIndex()] = list
+                    Config().set("flight_paths", self.flight_paths)
                     self.current_flight_mode = FlightModeStates.PATH
                     self.switch_flight_mode()
 
-
     def set_kill_engine(self):
-
-        #self.flying_enabled = False
         self.send_setpoint(self.scf, Position(0, 0, 0))
         self.current_flight_mode = FlightModeStates.GROUNDED
         self.switch_flight_mode()
@@ -414,7 +408,7 @@ class QualisysTab(Tab, qualisys_tab_class):
     def on_qtm_connect(self, connection, version):
         """Callback when QTM has been connected"""
 
-        logger.info('Connected to QTM with {}'.format(version))
+        logger.info('Connected to QTM with {}'.format(version.decode("UTF-8")))
         self._qtm_connection = connection
 
         self.setup_qtm_connection()
@@ -426,17 +420,15 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.qtmStatusLabel.setText(': connected : Waiting QTM to start sending data')
 
         try:
-
             result = yield self._qtm_connection.get_parameters(parameters=['6d'])
-
 
             # Parse the returned xml
             xml = ET.fromstring(result)
-            self.labels = [label.text for label in xml.iter('Name')]
+            self.qtm_6DoF_labels = [label.text for label in xml.iter('Name')]
 
             # Make all names lowercase
-            self.labels =[x.lower() for x in self.labels]
-            logger.info('6Dof bodies active in qtm: {}'.format(self.labels))
+            self.qtm_6DoF_labels =[x.lower() for x in self.qtm_6DoF_labels]
+            logger.info('6Dof bodies active in qtm: {}'.format(self.qtm_6DoF_labels))
 
             #Gui
             self.qtmStatusLabel.setText(': connected')
@@ -452,7 +444,6 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         except Exception as err:
             logger.info(err)
-
 
     def on_qtm_disconnect(self, reason):
         """Callback when QTM has been disconnected"""
@@ -479,6 +470,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.qtmStatusLabel.setText(': connected')
             self.qtmCfPositionBox.setEnabled(True)
             self.qtmWandPositionBox.setEnabled(True)
+
         elif event == QRTEvent.EventRTfromFileStopped:
             self.qtmStatusLabel.setText(': connected : Waiting QTM to start sending data')
             self.qtmCfPositionBox.setEnabled(False)
@@ -490,15 +482,14 @@ class QualisysTab(Tab, qualisys_tab_class):
         # The speed depends on QTM settings
         header, bodies = packet.get_6d_euler()
 
-        # Cf not found yet or no packet received due to various reasons like lost tracking...
+        # Cf not created yet or no packet received due to various reasons...
         # Wait for the two asynchronous calls in 'setup connection' to return with data
-        if bodies is None or self.labels == 'Empty':
-
+        if bodies is None or self.qtm_6DoF_labels == 'Empty':
             return
-        else:
 
+        else:
             try:
-                temp_cf_pos = bodies[self.labels.index("crazyflie")]
+                temp_cf_pos = bodies[self.qtm_6DoF_labels.index("crazyflie")]
                 # QTM returns in mm in the order x, y, z, the Crazyflie api need data in meters, divide by thousand
                 # QTM returns euler rotations in deg in the order yaw, pitch, roll, not Qualisys Standard!
                 self.cf_pos = Position(temp_cf_pos[0][0] / 1000, temp_cf_pos[0][1] / 1000,temp_cf_pos[0][2] / 1000,
@@ -508,7 +499,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                 self.qtmStatusLabel.setText(' : connected : No 6DoF body found called \'Crazyflie\'')
 
             try :
-                temp_wand_pos = bodies[self.labels.index("qstick")]
+                temp_wand_pos = bodies[self.qtm_6DoF_labels.index("qstick")]
                 self.wand_pos = Position(temp_wand_pos[0][0] / 1000, temp_wand_pos[0][1] / 1000,temp_wand_pos[0][2] / 1000,
                                          roll=temp_wand_pos[1][2], pitch=temp_wand_pos[1][1], yaw=temp_wand_pos[1][0])
 
@@ -516,15 +507,12 @@ class QualisysTab(Tab, qualisys_tab_class):
                 self.qtmStatusLabel.setText(' : connected : No 6DoF body found called \'QStick\'')
 
 
-
         if self.scf is not None and self.cf_pos.is_valid():
             # If a scf (syncronous Crazyflie) exists and the position is valid
-            # Feed the current position of the cf back to the cf it self to allow for correction
+            # Feed the current position of the cf back to the cf to allow for self correction
             self.scf.cf.extpos.send_extpos(self.cf_pos.x, self.cf_pos.y, self.cf_pos.z)
 
             #logger.info("\nExtPos data x: {} y: {} z: {}".format(self.cf_pos.x, self.cf_pos.y, self.cf_pos.z))
-
-
 
         # Update the data in the GUI
         self.qualisysX.setText(("%0.4f" % self.cf_pos.x))
@@ -548,15 +536,15 @@ class QualisysTab(Tab, qualisys_tab_class):
         if not self.flying_enabled:
             self.flying_enabled = True
             self.cfStatusLabel.setText(": connecting...")
-            self.uri = ("{}/{}".format(self.cfChannelSpinner.cleanText(), ("{}M".format(self.cfBandwitdhBox.currentIndex()) if self.cfBandwitdhBox.currentIndex() != 0 else "250K")))
+            self.uri = ("{}/{}".format(self.cfChannelSpinner.cleanText(), ("{}M".format(self.cfBandwidthBox.currentIndex()) if self.cfBandwidthBox.currentIndex() != 0 else "250K")))
             Config().set("link_uri", "radio://0/{}".format(self.uri))
-            t = threading.Thread(target=self.main_flight_controller)
+            t = threading.Thread(target=self.flight_controller)
             t.start()
         else:
             self.flying_enabled = False
             self._disconnected("radio://0/{}".format(self.uri))
 
-    def main_flight_controller(self):
+    def flight_controller(self):
         try:
             with SyncCrazyflie("radio://0/{}".format(self.uri)) as _scf:
 
@@ -565,15 +553,13 @@ class QualisysTab(Tab, qualisys_tab_class):
                 cf = self.scf.cf
                 self._connected(self.uri)
                 self.reset_estimator(self.scf)
+
                 cf.param.set_value('flightmode.posSet', '1')
 
                 time.sleep(0.1)
 
-                # The threshold used to accept the cf reaching a setpoint in meters
-
-
                 # The threshold for how many frames without tracking is allowed before the cf's motors are stopped
-                lost_tracking_threshold = 40
+                lost_tracking_threshold = 100
                 frames_without_tracking = 0
                 position_hold_timer = 0
                 circle_angle_deg = 0.0
@@ -607,20 +593,20 @@ class QualisysTab(Tab, qualisys_tab_class):
                     # Some of the flight modes needs an initial init when they are activated, which is done here
                     if self.flight_mode_switched:
                         if self.current_flight_mode == FlightModeStates.LAND:
-                                self.current_pos = self.latest_valid_cf_pos
-                                logger.info('Trying to land at: x: {} y: {}'.format(self.current_pos.x, self.current_pos.y))
+                                self.current_goal_pos = self.latest_valid_cf_pos
+                                logger.info('Trying to land at: x: {} y: {}'.format(self.current_goal_pos.x, self.current_goal_pos.y))
                                 land_rate_index = 1
 
                         elif self.current_flight_mode == FlightModeStates.PATH:
                             i = 1
 
-                            self.current_goal_pos = Position(self.sequence[self.pathSelector.currentIndex()][i][0], self.sequence[self.pathSelector.currentIndex()][i][1],
-                                                             self.sequence[self.pathSelector.currentIndex()][i][2], yaw=self.sequence[self.pathSelector.currentIndex()][i][3])
+                            self.current_goal_pos = Position(self.flight_paths[self.pathSelector.currentIndex()][i][0], self.flight_paths[self.pathSelector.currentIndex()][i][1],
+                                                             self.flight_paths[self.pathSelector.currentIndex()][i][2], yaw=self.flight_paths[self.pathSelector.currentIndex()][i][3])
                             logger.info(
                                 'Setting position {}'.format(self.current_goal_pos))
                             self.flightPathDataTable.selectRow(i-1)
+
                         elif self.current_flight_mode == FlightModeStates.CIRCLE:
-                            #circle_angle_deg = 0
 
                             self.current_goal_pos = Position(
                                 round(math.cos(math.radians(circle_angle_deg)), 8) * self.circle_radius,
@@ -637,14 +623,13 @@ class QualisysTab(Tab, qualisys_tab_class):
                         elif self.current_flight_mode == FlightModeStates.RECORD:
                             self.new_path = []
 
-
                         elif self.current_flight_mode == FlightModeStates.LIFT:
-                            self.current_pos = self.latest_valid_cf_pos
-                            logger.info('Trying to lift at: {}'.format(self.current_pos))
+                            self.current_goal_pos = self.latest_valid_cf_pos
+                            logger.info('Trying to lift at: {}'.format(self.current_goal_pos))
 
                         elif self.current_flight_mode == FlightModeStates.HOVERING:
-                            self.current_pos = self.latest_valid_cf_pos
-                            logger.info('Hovering at: {}'.format(self.current_pos))
+                            self.current_goal_pos = self.latest_valid_cf_pos
+                            logger.info('Hovering at: {}'.format(self.current_goal_pos))
 
                         elif self.current_flight_mode == FlightModeStates.GROUNDED:
                             pass
@@ -656,15 +641,15 @@ class QualisysTab(Tab, qualisys_tab_class):
 
                     if self.current_flight_mode == FlightModeStates.LAND:
 
-                        self.send_setpoint(self.scf, Position(self.current_pos.x, self.current_pos.y,
-                                                              (self.current_pos.z / land_rate_index), yaw=0))
+                        self.send_setpoint(self.scf, Position(self.current_goal_pos.x, self.current_goal_pos.y,
+                                                              (self.current_goal_pos.z / land_rate_index), yaw=0))
                         # Check if the cf has reached the  position, if it has set a new position
 
-                        if self.latest_valid_cf_pos.distance(Position(self.current_pos.x, self.current_pos.y, (self.current_pos.z /
+                        if self.latest_valid_cf_pos.distance_to(Position(self.current_goal_pos.x, self.current_goal_pos.y, (self.current_goal_pos.z /
                                                                                                         land_rate_index))) < self.path_pos_threshold:
-                            land_rate_index *= 1.4
+                            land_rate_index *= 1.1
 
-                        if land_rate_index > 200:
+                        if land_rate_index > 1000:
                             self.send_setpoint(self.scf, Position(0, 0, 0))
                             if self.land_for_recording:
                                 # Return the control to the recording mode after landing
@@ -680,17 +665,17 @@ class QualisysTab(Tab, qualisys_tab_class):
 
                         self.send_setpoint(self.scf, self.current_goal_pos)
                         # Check if the cf has reached the goal position, if it has set a new goal position
-                        if self.latest_valid_cf_pos.distance(self.current_goal_pos) < self.path_pos_threshold:
+                        if self.latest_valid_cf_pos.distance_to(self.current_goal_pos) < self.path_pos_threshold:
 
-                            #time.sleep(0.05)
-                            if position_hold_timer > self.position_hold_limit:
+
+                            if position_hold_timer > self.position_hold_timelimit:
 
                                 i = (i + 1)
-                                if i == (len(self.sequence[self.pathSelector.currentIndex()])):
+                                if i == (len(self.flight_paths[self.pathSelector.currentIndex()])):
                                     i = 1
                                 position_hold_timer = 0
-                                self.current_goal_pos = Position(self.sequence[self.pathSelector.currentIndex()][i][0], self.sequence[self.pathSelector.currentIndex()][i][1],
-                                                                 self.sequence[self.pathSelector.currentIndex()][i][2], yaw=self.sequence[self.pathSelector.currentIndex()][i][3])
+                                self.current_goal_pos = Position(self.flight_paths[self.pathSelector.currentIndex()][i][0], self.flight_paths[self.pathSelector.currentIndex()][i][1],
+                                                                 self.flight_paths[self.pathSelector.currentIndex()][i][2], yaw=self.flight_paths[self.pathSelector.currentIndex()][i][3])
 
 
                                 logger.info('Setting position {}'.format(self.current_goal_pos))
@@ -707,9 +692,9 @@ class QualisysTab(Tab, qualisys_tab_class):
                         self.send_setpoint(self.scf, self.current_goal_pos)
 
                         # Check if the cf has reached the goal position, if it has set a new goal position
-                        if self.latest_valid_cf_pos.distance(self.current_goal_pos) < self.circle_pos_threshold:
+                        if self.latest_valid_cf_pos.distance_to(self.current_goal_pos) < self.circle_pos_threshold:
 
-                            if position_hold_timer >= self.position_hold_limit:
+                            if position_hold_timer >= self.position_hold_timelimit:
 
                                 position_hold_timer = 0
 
@@ -727,7 +712,8 @@ class QualisysTab(Tab, qualisys_tab_class):
                             elif position_hold_timer == 0:
 
                                 time_of_pos_reach = time.time()
-                                # Add som time just to get going, it will be overwritten in the next step. Setting it higher than the imit will break hte code.
+                                # Add som time just to get going, it will be overwritten in the next step.
+                                # Setting it higher than the imit will break the code.
                                 position_hold_timer = 0.0001
                             else:
                                 position_hold_timer = time.time() - time_of_pos_reach
@@ -763,16 +749,18 @@ class QualisysTab(Tab, qualisys_tab_class):
 
                     elif self.current_flight_mode == FlightModeStates.LIFT:
 
-                        self.send_setpoint(self.scf, Position(self.current_pos.x, self.current_pos.y, 1))
+                        self.send_setpoint(self.scf, Position(self.current_goal_pos.x, self.current_goal_pos.y, 1))
 
-                        if self.latest_valid_cf_pos.distance(Position(self.current_pos.x, self.current_pos.y, 1)) < 0.05:
+                        if self.latest_valid_cf_pos.distance_to(Position(self.current_goal_pos.x, self.current_goal_pos.y, 1)) < 0.05:
+                            # Wait for hte crazyflie to reach the goal
                             self.current_flight_mode = FlightModeStates.HOVERING
                             self.switch_flight_mode()
 
                     elif self.current_flight_mode == FlightModeStates.HOVERING:
-                        self.send_setpoint(self.scf, self.current_pos)
+                        self.send_setpoint(self.scf, self.current_goal_pos)
 
                     elif self.current_flight_mode == FlightModeStates.RECORD:
+
                         if self.latest_valid_cf_pos.z > 1.0 and not self.recording_in_progress:
                             # Start recording when the cf is lifted
                             self.recording_in_progress = True
@@ -781,26 +769,32 @@ class QualisysTab(Tab, qualisys_tab_class):
                             # Gui
                             logger.info("Recording flightpath")
                             self.statusLabel.setText("Status: Recording Flightpath")
+
                         elif self.latest_valid_cf_pos.z < 0.03 and self.recording_in_progress:
                             # Stop the recording when the cf is put on the ground again
                             logger.info("Recording stopped")
                             self.recording_in_progress = False
 
-                            # Remove the last bit, containing setting the cf down
+                            # Remove the last bit (1s) of the recording, containing setting the cf down
                             for i in range(20):
                                 self.new_path.pop()
-                            # Add the new path to list and Gui
 
+                            # Add the new path to list and Gui
                             now = datetime.datetime.fromtimestamp(time.time())
 
-                            new_name = ("Recording {}/{}/{} {}:{}".format(now.year-2000, now.month if now.month > 9 else "0{}".format(now.month), now.day if now.day > 9 else "0{}".format(now.day), now.hour if now.hour > 9 else "0{}".format(now.hour), now.minute if now.minute > 9 else "0{}".format(now.minute)))
-                            self.new_path.insert(0,new_name)
-                            self.sequence.append(self.new_path)
-                            self.pathSelector.addItem(new_name)
-                            self.pathSelector.setCurrentIndex(len(self.sequence) - 1)
-                            self.path_changed()
-                            Config().set("flight_paths", self.sequence)
+                            new_name = ("Recording {}/{}/{} {}:{}".format(now.year-2000, now.month if now.month > 9
+                            else "0{}".format(now.month), now.day if now.day > 9 else "0{}".format(now.day), now.hour
+                            if now.hour > 9 else "0{}".format(now.hour), now.minute if now.minute > 9 else
+                            "0{}".format(now.minute)))
 
+                            self.new_path.insert(0, new_name)
+                            self.flight_paths.append(self.new_path)
+                            self.pathSelector.addItem(new_name)
+
+                            # Select the new path
+                            self.pathSelector.setCurrentIndex(len(self.flight_paths) - 1)
+                            self.path_changed()
+                            Config().set("flight_paths", self.flight_paths)
 
                             # Wait while the operator moves away
                             self.statusLabel.setText("Status: Replay in 3s")
@@ -824,8 +818,6 @@ class QualisysTab(Tab, qualisys_tab_class):
             logger.info(err)
             self.cfStatusLabel.setText(str(err))
 
-
-        logger.info("Exiting crazy run...")
         self._disconnected(self.uri)
 
     def save_current_position(self):
@@ -836,20 +828,13 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.new_path.append([self.latest_valid_cf_pos.x, self.latest_valid_cf_pos.y, self.latest_valid_cf_pos.z,
                                   self.latest_valid_cf_pos.yaw])
 
-
-    def _imu_data_received(self, timestamp, data, logconf):
-
-        if self.isVisible():
-            self.cRoll.setText(("%0.2f" % data["stabilizer.roll"]))
-            self.cPitch.setText(("%0.2f" % data["stabilizer.pitch"]))
-            self.cYaw.setText(("%0.2f" % data["stabilizer.yaw"]))
-
-
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
 
         self.uri = link_uri
         logger.debug("Crazyflie connected to {}".format(self.uri))
+
+        #Gui
         self.cfStatusLabel.setText(': connected')
         self.connectCrazyflieButton.setText('Disconnet Crazyflie')
         self.cf_ready_to_fly = True
@@ -866,8 +851,6 @@ class QualisysTab(Tab, qualisys_tab_class):
                 lg.start()
             except KeyError as e:
                 logger.warning(str(e))
-
-
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
@@ -914,7 +897,6 @@ class QualisysTab(Tab, qualisys_tab_class):
                           "Error when using log config"
                           " [{0}]: {1}".format(log_conf.name, msg))
 
-
     def wait_for_position_estimator(self, scf):
         logger.info('Waiting for estimator to find stable position...')
 
@@ -957,6 +939,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                             max_z - min_z) < threshold:
                     logger.info("Position found with error in, x: {}, y: {}, z: {}".
                           format(max_x - min_x, max_y - min_y, max_z - min_z))
+
                     self.cfStatusLabel.setText(": connected")
 
                     self.current_flight_mode = FlightModeStates.GROUNDED
@@ -966,6 +949,8 @@ class QualisysTab(Tab, qualisys_tab_class):
                     break
 
     def reset_estimator(self, scf):
+        # Reset the kalman filter
+
         cf = scf.cf
         cf.param.set_value('kalman.resetEstimation', '1')
         time.sleep(0.1)
@@ -973,14 +958,11 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         self.wait_for_position_estimator(cf)
 
-
     def switch_flight_mode(self):
         # Handles the behaviour of switching between flight modes
 
         # Set to true to indicate a flight mode switch
         self.flight_mode_switched = True
-
-        logger.info('Switching Flight Mode to: {}'.format(self.current_flight_mode))
 
         if self.current_flight_mode == FlightModeStates.HOVERING:
             self.statusLabel.setText("Status: Hovering...")
@@ -995,6 +977,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.liftButton.setEnabled(False)
             self.circleButton.setEnabled(True)
             self.recordButton.setEnabled(True)
+            logger.info('Switching Flight Mode to: Hovering')
 
         elif self.current_flight_mode == FlightModeStates.DISCONNECTED:
             self.statusLabel.setText("Status: Disabled")
@@ -1009,6 +992,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.pathButton.setEnabled(False)
             self.circleButton.setEnabled(False)
             self.recordButton.setEnabled(False)
+            logger.info('Switching Flight Mode to: Disconnected')
 
         elif self.current_flight_mode == FlightModeStates.GROUNDED:
             self.statusLabel.setText("Status: Landed")
@@ -1023,6 +1007,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.landButton.setEnabled(False)
             self.circleButton.setEnabled(True)
             self.recordButton.setEnabled(True)
+            logger.info('Switching Flight Mode to: Grounded')
 
         elif self.current_flight_mode == FlightModeStates.PATH:
             self.statusLabel.setText("Status: Path Mode")
@@ -1037,6 +1022,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.followButton.setEnabled(False)
             self.circleButton.setEnabled(False)
             self.recordButton.setEnabled(False)
+            logger.info('Switching Flight Mode to: Path Mode')
 
 
         elif self.current_flight_mode == FlightModeStates.FOLLOW:
@@ -1051,6 +1037,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.pathButton.setEnabled(False)
             self.circleButton.setEnabled(False)
             self.recordButton.setEnabled(False)
+            logger.info('Switching Flight Mode to: Follow Mode')
 
 
         elif self.current_flight_mode == FlightModeStates.LIFT:
@@ -1062,6 +1049,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.pathButton.setEnabled(False)
             self.circleButton.setEnabled(False)
             self.recordButton.setEnabled(False)
+            logger.info('Switching Flight Mode to: Lift Mode')
 
         elif self.current_flight_mode == FlightModeStates.LAND:
             self.statusLabel.setText("Status: Landing...")
@@ -1072,6 +1060,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.pathButton.setEnabled(False)
             self.circleButton.setEnabled(False)
             self.recordButton.setEnabled(False)
+            logger.info('Switching Flight Mode to: Land Mode')
 
         elif self.current_flight_mode == FlightModeStates.CIRCLE:
             self.statusLabel.setText("Status: Circle Mode")
@@ -1086,6 +1075,8 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.followButton.setEnabled(False)
             self.circleButton.setEnabled(True)
             self.recordButton.setEnabled(False)
+            logger.info('Switching Flight Mode to: Cricle Mode')
+
 
         elif self.current_flight_mode == FlightModeStates.RECORD:
             self.statusLabel.setText("Status: Record Mode")
@@ -1100,13 +1091,15 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.followButton.setEnabled(False)
             self.circleButton.setEnabled(False)
             self.recordButton.setEnabled(True)
+            logger.info('Switching Flight Mode to: Record Mode')
+
 
     def send_setpoint(self, scf_, pos):
-        # wraps the send command to the crazyflie
+        # Wraps the send command to the crazyflie
 
-        #scf_.cf.commander.send_setpoint(pos.y, pos.x, pos.yaw, int(pos.z *1000))
+        # The 'send_setpoint' function strangely takes the arguments in the order (Y, X, Yaw, Z)
+        # scf_.cf.commander.send_setpoint(pos.y, pos.x, pos.yaw, int(pos.z *1000))
         scf_.cf.commander.send_setpoint(pos.y, pos.x, 0, int(pos.z * 1000))
-        #logger.info("Sending setpoint {}".format(pos))
         pass
 
 
@@ -1120,14 +1113,14 @@ class Position:
         self.pitch = pitch
         self.yaw = yaw
 
-    def distance(self, other_point):
-        #logger.info("\nx: {} y: {} z: {} \nx: {} y: {} z: {}\nDist: {}".format(self.x,self.y,self.z, other_point.x, other_point.y, other_point.z,  math.sqrt(math.pow(self.x - other_point.x, 2) + math.pow(self.y - other_point.y, 2) + math.pow(self.z - other_point.z, 2))))
-        #return 0.005
-        return math.sqrt(math.pow(self.x - other_point.x, 2) + math.pow(self.y - other_point.y, 2) + math.pow(self.z - other_point.z, 2))
+    def distance_to(self, other_point):
+        return math.sqrt(math.pow(self.x - other_point.x, 2) + math.pow(self.y - other_point.y, 2) +
+                         math.pow(self.z - other_point.z, 2))
 
     def is_valid(self):
         # Checking if the respective values are nan
         return self.x == self.x and self.y == self.y and self.z == self.z
 
     def __str__(self):
-        return "x: {} y: {} z: {} Roll: {} Pitch: {} Yaw: {}".format(self.x, self.y, self. z, self.roll, self.pitch, self.yaw)
+        return "x: {} y: {} z: {} Roll: {} Pitch: {} Yaw: {}".format(self.x, self.y, self. z,
+                                                                     self.roll, self.pitch, self.yaw)

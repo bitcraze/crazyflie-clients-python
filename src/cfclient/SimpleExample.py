@@ -14,11 +14,11 @@ uri = "radio://0/83/2M"
 # The ip address of the computer running QTM
 qtm_ip = "127.0.0.1"
 
-# Syncronous Crazyflie
+# SyncronousCrazyflie
 scf = None
 
 # Coordinates of the path which the Crazyflie will follow (X, Y, Z, Yaw) set in (m)
-path = [
+flight_path = [
     (0, 0, 1.2, 0.0),
     (1, 0, 1.2, 0.0),
     (0, 1, 1.2, 0.0),
@@ -83,8 +83,9 @@ def flight_controller():
     global scf
     with SyncCrazyflie(uri) as _scf:
         scf = _scf
+        # reset the kalman filter and find a new estimated position
         reset_estimator(scf)
-        fly_along_path(scf, path)
+        fly_along_path(scf, flight_path)
 
 
 def reset_estimator(scf):
@@ -152,10 +153,9 @@ def fly_along_path(scf, path):
 
             # The 'send_setpoint' function takes the arguments in the order (Y, X, Yaw, Z)
             # The z-value has to be set as the actual 'thrust-value' sent to the Crazyflie and needs to be
-            # multiplyed by 1000
-            # cf.commander.send_setpoint(position[1], position[0],
-            #                           position[3],
-            #                            int(position[2] * 1000))
+            # multiplied by 1000
+            cf.commander.send_setpoint(position[1], position[0], position[3], int(position[2] * 1000))
+
             # The Crazyflie needs to be sent a setpoint at least twice a second or it will stop
             time.sleep(0.1)
 

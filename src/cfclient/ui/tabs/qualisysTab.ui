@@ -102,7 +102,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="cfBandwitdhBox">
+        <widget class="QComboBox" name="cfBandwidthBox">
          <property name="minimumSize">
           <size>
            <width>64</width>
