@@ -98,42 +98,29 @@ makensis win32install\cfclient.nsi
 you have a lot of other 3rd party python stuff already running on your system
 they might or might not be affected by this.
 
-1. [Install the Command Line Tools](https://gist.github.com/derhuerst/1b15ff4652a867391f03#1--install-the-command-line-tools).
+1. Install homebrew 
 
-1. [Install Homebrew](https://gist.github.com/derhuerst/1b15ff4652a867391f03#2--install-homebrew).
+    See [the Homebrew site](https://brew.sh/)
 
-1. Install Homebrew's Python3
+1. Install the brew bottles needed
     ```
-    brew install python3
-    ```
-
-    This will also pull [pip3](https://pip.pypa.io/en/latest/), which we will use later to install some Python modules that are not distributed through Homebrew.
-
-1. Install SDL for Python
-    ```
-    brew install sdl sdl2 sdl_image sdl_mixer sdl_ttf portmidi
+    brew install python3 sdl sdl2 sdl_image sdl_mixer sdl_ttf libusb portmidi pyqt5
     ```
 
-1. Install PyQt
-
+1. Install the client
+    
+    * If you only want to use the client to fly the Crazyflie and don't care about coding
     ```
-    brew install pyqt5
+    pip3 install cfclient
     ```
-
-1. Install remaining dependencies
-
-    ```
-    brew install libusb
-    ```
-
-1. If you want to develop on cflib as well, install cflib from https://github.com/bitcraze/crazyflie-lib-python
-
-1. Install cfclient to run it from source. From the source folder run:
+    
+    * If you want to develop the client and play with the source code. From the source folder run 
     ```
     pip3 install -e .
     ```
-
-1. You now have all the dependencies needed to run the client. From the source folder, run it with the following command:
+    If you want to develop on cflib as well, install cflib from <https://github.com/bitcraze/crazyflie-lib-python> 
+  
+1. You now have all the dependencies needed to run the client. The client can now be started from any location by:
     ```
     cfclient
     ```
