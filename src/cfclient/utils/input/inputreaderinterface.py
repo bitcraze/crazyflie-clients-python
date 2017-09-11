@@ -165,7 +165,9 @@ class InputReaderInterface(object):
                 self.input.max_yaw_rate)
 
     def _limit_thrust(self, thrust, assisted_control, emergency_stop):
-        # Thust limiting (slew, minimum and emergency stop)
+        # Thrust limiting (slew, minimum and emergency stop)
+
+        current_time = time()
         if self.input.springy_throttle:
             if assisted_control and \
                     (self.input.get_assisted_control() ==
@@ -176,6 +178,12 @@ class InputReaderInterface(object):
                      self.input.ASSISTED_CONTROL_HOVER):
                 thrust = int(round(InputReaderInterface.deadband(thrust, 0.2) *
                                    32767 + 32767))  # Convert to uint16
+
+                # do not drop thrust to 0 after switching hover mode off
+                # set previous values for slew limit logic
+                self._prev_thrust = self.input.thrust_slew_limit
+                self._last_time = current_time
+
             else:
                 # Scale the thrust to percent (it's between 0 and 1)
                 thrust *= 100
@@ -199,7 +207,7 @@ class InputReaderInterface(object):
                         else:
                             # If we are "inside" the limit, then lower
                             # according to the rate we have set each iteration
-                            lowering = ((time() - self._last_time) *
+                            lowering = ((current_time - self._last_time) *
                                         self.input.thrust_slew_rate)
                             limited_thrust = self._prev_thrust - lowering
                 elif emergency_stop or thrust < self.thrust_stop_limit:
@@ -218,7 +226,7 @@ class InputReaderInterface(object):
                     self._prev_thrust = 0
                     limited_thrust = 0
 
-                self._last_time = time()
+                self._last_time = current_time
 
                 thrust = limited_thrust
         else:
