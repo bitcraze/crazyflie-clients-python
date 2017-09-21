@@ -133,6 +133,37 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.new_path = []
         self.recording_in_progress = False
         self.land_for_recording = False
+        self.default_flight_paths = [
+            ["Path 1: Sandbox",
+             [0.0, -1.0, 1.0, 0.0],
+             [0.0, 1.0, 1.0, 0.0]
+             ],
+            ["Path 2: Height Test",
+             [0.0, 0.0, 0.5, 0.0],
+             [0.0, 0.0, 1.0, 0.0],
+             [0.0, 0.0, 1.5, 0.0],
+             [0.0, 0.0, 2.0, 0.0],
+             [0.0, 0.0, 2.3, 0.0],
+             [0.0, 0.0, 1.8, 0.0],
+             [0.0, 0.0, 0.5, 0.0],
+             [0.0, 0.0, 0.3, 0.0],
+             [0.0, 0.0, 0.15, 0.0]
+             ],
+            ["Path 3: 'Spiral'",
+             [0.0, 0.0, 1.0, 0.0],
+             [0.5, 0.5, 1.0, 0.0],
+             [0.0, 1.0, 1.0, 0.0],
+             [-0.5, 0.5, 1.0, 0.0],
+             [0.0, 0.0, 1.0, 0.0],
+             [0.5, 0.5, 1.2, 0.0],
+             [0.0, 1.0, 1.4, 0.0],
+             [-0.5, 0.5, 1.6, 0.0],
+             [0.0, 0.0, 1.8, 0.0],
+             [0.5, 0.5, 1.5, 0.0],
+             [0.0, 1.0, 1.0, 0.0],
+             [-0.5, 0.5, 0.5, 0.0],
+             [0.0, 0.0, 0.25, 0.0]
+             ]]
 
 
         # The position and rotation of the cf and wand obtained by the camera tracking, if it cant be tracked the position becomes Nan
@@ -142,7 +173,14 @@ class QualisysTab(Tab, qualisys_tab_class):
         # The regular cf_pos can a times due to lost tracing become Nan, this the latest known valid cf position
         self.latest_valid_cf_pos = Position(0,0,0)
 
-        self.flight_paths = Config().get("flight_paths")
+        try:
+            self.flight_paths = Config().get("flight_paths")
+        except Exception as err:
+            logger.debug("no fligt config")
+            self.flight_paths = self.default_flight_paths
+
+        if self.flight_paths == []:
+            self.flight_paths = self.default_flight_paths
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
