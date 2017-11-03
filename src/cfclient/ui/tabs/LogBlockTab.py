@@ -32,7 +32,7 @@ logging and also to write the logging data to file.
 """
 
 from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QSysInfo
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -303,11 +303,27 @@ class CheckboxDelegate(QStyledItemDelegate):
                 if item.writing_to_file():
                     s.state |= QStyle.State_On
 
-            QApplication.style().drawControl(
-                QStyle.CE_CheckBox, s, painter)
-
+            self._paint_checkbox(s, painter)
         else:
             super(CheckboxDelegate, self).paint(painter, option, index)
+
+    """There is a bug in QT5 on OS X that draws the checkboxes in the top
+    left corner. This is a workaround to fix the problem.
+    See https://bugreports.qt.io/browse/QTBUG-40833 """
+    def _paint_checkbox(self, style, painter):
+        if hasattr(QSysInfo, 'MacintoshVersion') and \
+                        QSysInfo.MacintoshVersion >= QSysInfo.MV_10_9 and \
+                        style.state & QStyle.State_Enabled:
+            self._paint_checkbox_osx_workaround(style, painter)
+        else:
+            QApplication.style().drawControl(
+                QStyle.CE_CheckBox, style, painter)
+
+    def _paint_checkbox_osx_workaround(self, style, painter):
+        painter.save()
+        painter.translate(style.rect.topLeft())
+        QApplication.style().drawControl(QStyle.CE_CheckBox, style, painter)
+        painter.restore()
 
 
 class LogBlockTab(Tab, logblock_tab_class):
