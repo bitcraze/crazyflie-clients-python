@@ -618,6 +618,13 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
+             <widget class="QPushButton" name="_pos_estimate_button">
+              <property name="text">
+               <string>Anchor pos estimator wizard (beta)</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="horizontalSpacer">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -632,6 +639,9 @@
             </item>
             <item>
              <widget class="QPushButton" name="_read_pos_from_anhors_button">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
               <property name="text">
                <string>Get from anchors</string>
               </property>

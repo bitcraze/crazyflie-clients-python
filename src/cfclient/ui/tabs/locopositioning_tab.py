@@ -49,6 +49,9 @@ from lpslib.lopoanchor import LoPoAnchor
 import copy
 import sys
 
+from cfclient.ui.dialogs.anchor_position_wizard_dialog import \
+    AnchorPositionWizardDialog
+
 __author__ = 'Bitcraze AB'
 __all__ = ['LocoPositioningTab']
 
@@ -348,10 +351,13 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
         self._anchors = {}
         self._position = []
+        self._anchor_status = [False] * 8
         self._clear_state()
         self._refs = []
 
         self._display_mode = DisplayMode.estimated_position
+
+        self._anchor_position_wizard_dialog = None
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
@@ -394,6 +400,11 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
         self._show_all_button.clicked.connect(self._scale_and_center_graphs)
 
+        self._pos_estimate_button.clicked.connect(
+            self._show_anchor_postion_wizard_dialog
+        )
+        self._pos_estimate_button.setEnabled(False)
+
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
             self._connected_signal.emit)
@@ -420,6 +431,11 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     def _do_when_checked(self, enabled, fkn, arg):
         if enabled:
             fkn(arg)
+
+    def _show_anchor_postion_wizard_dialog(self):
+        self._anchor_position_wizard_dialog = AnchorPositionWizardDialog(
+            self.UPDATE_PERIOD_LOG, self._anchor_status, self._anchor_pos_ui)
+        self._anchor_position_wizard_dialog.show()
 
     def _register_anchor_pos_ui(self, nr):
         x_spin = getattr(self, 'spin_a{}x'.format(nr))
@@ -488,9 +504,8 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     def _clear_state(self):
         self._anchors = {}
         self._position = [0.0, 0.0, 0.0]
-        for i in range(8):
-            label = getattr(self, '_status_a{}'.format(i))
-            label.setStyleSheet(STYLE_NO_BACKGROUND)
+        self._anchor_status = [False] * 8
+        self._disable_ranging_status_indicator()
         self._id_anchor_button.setEnabled(True)
 
     def _scale_and_center_graphs(self):
@@ -659,6 +674,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._clear_state()
         self._update_graphics()
         self.is_loco_deck_active = False
+        self._pos_estimate_button.setEnabled(False)
 
     def _register_logblock(self, logblock_name, variables, data_cb, error_cb,
                            update_period=UPDATE_PERIOD_LOG):
@@ -688,6 +704,9 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             valid, anchor_number = self._parse_range_param_name(name)
             if valid:
                 self._get_anchor(anchor_number).distance = float(value)
+                if self._anchor_position_wizard_dialog:
+                    self._anchor_position_wizard_dialog.range_received(
+                        anchor_number, float(value), timestamp)
 
     def _position_received(self, timestamp, data, logconf):
         """Callback from the logging system when the position is updated."""
@@ -695,7 +714,13 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             valid, axis = self._parse_position_param_name(name)
             if valid:
                 self._position[axis] = float(value)
-        self._update_ranging_status_indicators(data["ranging.state"])
+
+        for anchor in range(8):
+            bit_field = data["ranging.state"]
+            is_anchor_alive = bool((bit_field >> anchor) & 0x01)
+            self._anchor_status[anchor] = is_anchor_alive
+
+        self._update_ranging_status_indicators(self._anchor_status)
 
     def _loco_sys_received(self, timestamp, data, logconf):
         """Callback from the logging system when the loco pos sys config
@@ -705,19 +730,25 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
                 if self._id_anchor_button.isChecked():
                     self._estimated_postion_button.setChecked(True)
                 self._id_anchor_button.setEnabled(False)
+            self._pos_estimate_button.setEnabled(False)
         else:
             if not self._id_anchor_button.isEnabled():
                 self._id_anchor_button.setEnabled(True)
+            self._pos_estimate_button.setEnabled(self.is_loco_deck_active)
 
     def _update_ranging_status_indicators(self, status):
         for i in range(8):
             label = getattr(self, '_status_a{}'.format(i))
-            ok = (status >> i) & 0x01
             exists = i in self._anchors
-            if ok:
+            if status[i]:
                 label.setStyleSheet(STYLE_GREEN_BACKGROUND)
             elif exists:
                 label.setStyleSheet(STYLE_RED_BACKGROUND)
+
+    def _disable_ranging_status_indicator(self):
+        for i in range(8):
+            label = getattr(self, '_status_a{}'.format(i))
+            label.setStyleSheet(STYLE_NO_BACKGROUND)
 
     def _logging_error(self, log_conf, msg):
         """Callback from the log layer when an error occurs"""
