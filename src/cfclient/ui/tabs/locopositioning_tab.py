@@ -320,6 +320,8 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     # Update period of anchor position data
     UPDATE_PERIOD_ANCHOR_POS = 5000
 
+    UPDATE_PERIOD_LOCO_MODE = 1000
+
     LOCO_MODE_TWR = 0
     LOCO_MODE_TDOA = 1
 
@@ -401,6 +403,8 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
         self._set_up_plots()
 
+        self.is_loco_deck_active = False
+
         self._graph_timer = QTimer()
         self._graph_timer.setInterval(1000 / self.FPS)
         self._graph_timer.timeout.connect(self._update_graphics)
@@ -409,6 +413,8 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._anchor_pos_timer = QTimer()
         self._anchor_pos_timer.setInterval(self.UPDATE_PERIOD_ANCHOR_POS)
         self._anchor_pos_timer.timeout.connect(self._poll_anchor_positions)
+
+        self._enable_anchor_pos_ui()
 
     def _do_when_checked(self, enabled, fkn, arg):
         if enabled:
@@ -593,7 +599,9 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         """Callback when the Crazyflie has been connected"""
         logger.debug("Crazyflie connected to {}".format(link_uri))
 
-        if self._helper.cf.mem.ow_search(vid=0xBC, pid=0x06):
+        self.is_loco_deck_active = bool(
+            self._helper.cf.mem.ow_search(vid=0xBC, pid=0x06))
+        if self.is_loco_deck_active:
             try:
                 self._register_logblock(
                     "LoPoTab0",
@@ -635,7 +643,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
                     ],
                     self._loco_sys_signal.emit,
                     self._log_error_signal.emit,
-                    update_period=1000)
+                    update_period=self.UPDATE_PERIOD_LOCO_MODE)
             except KeyError as e:
                 logger.warning(str(e))
             except AttributeError as e:
@@ -649,6 +657,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._stop_polling_anchor_pos()
         self._clear_state()
         self._update_graphics()
+        self.is_loco_deck_active = False
 
     def _register_logblock(self, logblock_name, variables, data_cb, error_cb,
                            update_period=UPDATE_PERIOD_LOG):
@@ -724,9 +733,10 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._anchor_pos_timer.stop()
 
     def _poll_anchor_positions(self):
-        mems = self._helper.cf.mem.get_mems(MemoryElement.TYPE_LOCO)
-        if len(mems) > 0:
-            mems[0].update(self._anchor_position_signal.emit)
+        if self.is_loco_deck_active:
+            mems = self._helper.cf.mem.get_mems(MemoryElement.TYPE_LOCO)
+            if len(mems) > 0:
+                mems[0].update(self._anchor_position_signal.emit)
 
     def _anchor_positions_updated(self, mem):
         """Callback from the memory sub system when the anchor positions
@@ -765,7 +775,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         return self._anchors[anchor_number]
 
     def _update_graphics(self):
-        if self.is_visible():
+        if self.is_visible() and self.is_loco_deck_active:
             anchors = copy.deepcopy(self._anchors)
             self._plot_yz.update(anchors, self._position, self._display_mode)
             self._plot_xy.update(anchors, self._position, self._display_mode)
