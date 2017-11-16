@@ -320,6 +320,9 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     # Update period of anchor position data
     UPDATE_PERIOD_ANCHOR_POS = 5000
 
+    LOCO_MODE_TWR = 0
+    LOCO_MODE_TDOA = 1
+
     # Frame rate (updates per second)
     FPS = 2
 
@@ -328,6 +331,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     _log_error_signal = pyqtSignal(object, str)
     _anchor_range_signal = pyqtSignal(int, object, object)
     _position_signal = pyqtSignal(int, object, object)
+    _loco_sys_signal = pyqtSignal(int, object, object)
     _anchor_position_signal = pyqtSignal(object)
 
     def __init__(self, tabWidget, helper, *args):
@@ -353,16 +357,23 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._disconnected_signal.connect(self._disconnected)
         self._anchor_range_signal.connect(self._anchor_range_received)
         self._position_signal.connect(self._position_received)
+        self._loco_sys_signal.connect(self._loco_sys_received)
         self._anchor_position_signal.connect(self._anchor_positions_updated)
 
-        self._id_anchor_button.clicked.connect(
+        self._id_anchor_button.toggled.connect(
             lambda enabled:
-            self._set_display_mode(DisplayMode.identify_anchor)
+            self._do_when_checked(
+                enabled,
+                self._set_display_mode,
+                DisplayMode.identify_anchor)
         )
 
-        self._estimated_postion_button.clicked.connect(
+        self._estimated_postion_button.toggled.connect(
             lambda enabled:
-            self._set_display_mode(DisplayMode.estimated_position)
+            self._do_when_checked(
+                enabled,
+                self._set_display_mode,
+                DisplayMode.estimated_position)
         )
 
         self._anchor_pos_ui = {}
@@ -398,6 +409,10 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._anchor_pos_timer = QTimer()
         self._anchor_pos_timer.setInterval(self.UPDATE_PERIOD_ANCHOR_POS)
         self._anchor_pos_timer.timeout.connect(self._poll_anchor_positions)
+
+    def _do_when_checked(self, enabled, fkn, arg):
+        if enabled:
+            fkn(arg)
 
     def _register_anchor_pos_ui(self, nr):
         x_spin = getattr(self, 'spin_a{}x'.format(nr))
@@ -469,6 +484,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         for i in range(8):
             label = getattr(self, '_status_a{}'.format(i))
             label.setStyleSheet(STYLE_NO_BACKGROUND)
+        self._id_anchor_button.setEnabled(True)
 
     def _scale_and_center_graphs(self):
         start_bounds = Range(sys.float_info.max, -sys.float_info.max)
@@ -599,7 +615,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
                         ("ranging", "distance7", "float"),
                     ],
                     self._anchor_range_signal.emit,
-                    self._log_error_signal.emit),
+                    self._log_error_signal.emit)
 
                 self._register_logblock(
                     "LoPoTab2",
@@ -610,7 +626,16 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
                         ("ranging", "state", "uint8_t")
                     ],
                     self._position_signal.emit,
-                    self._log_error_signal.emit),
+                    self._log_error_signal.emit)
+
+                self._register_logblock(
+                    "LoPoSys",
+                    [
+                        ("loco", "mode", "uint8_t")
+                    ],
+                    self._loco_sys_signal.emit,
+                    self._log_error_signal.emit,
+                    update_period=1000)
             except KeyError as e:
                 logger.warning(str(e))
             except AttributeError as e:
@@ -625,10 +650,11 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._clear_state()
         self._update_graphics()
 
-    def _register_logblock(self, logblock_name, variables, data_cb, error_cb):
+    def _register_logblock(self, logblock_name, variables, data_cb, error_cb,
+                           update_period=UPDATE_PERIOD_LOG):
         """Register log data to listen for. One logblock can contain a limited
         number of parameters (6 for floats)."""
-        lg = LogConfig(logblock_name, self.UPDATE_PERIOD_LOG)
+        lg = LogConfig(logblock_name, update_period)
         for variable in variables:
             if self._is_in_toc(variable):
                 lg.add_variable('{}.{}'.format(variable[0], variable[1]),
@@ -660,6 +686,18 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             if valid:
                 self._position[axis] = float(value)
         self._update_ranging_status_indicators(data["ranging.state"])
+
+    def _loco_sys_received(self, timestamp, data, logconf):
+        """Callback from the logging system when the loco pos sys config
+        is updated."""
+        if 'loco.mode' in data and data['loco.mode'] == self.LOCO_MODE_TDOA:
+            if self._id_anchor_button.isEnabled():
+                if self._id_anchor_button.isChecked():
+                    self._estimated_postion_button.setChecked(True)
+                self._id_anchor_button.setEnabled(False)
+        else:
+            if not self._id_anchor_button.isEnabled():
+                self._id_anchor_button.setEnabled(True)
 
     def _update_ranging_status_indicators(self, status):
         for i in range(8):
