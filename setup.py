@@ -11,7 +11,7 @@ import os
 
 try:
     import py2exe  # noqa
-except:
+except Exception:
     pass
 
 if sys.version_info < (3, 4):
