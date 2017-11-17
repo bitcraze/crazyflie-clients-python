@@ -32,25 +32,44 @@
          <item>
           <widget class="QGroupBox" name="groupBox_2">
            <property name="title">
-            <string>Mode</string>
+            <string>Graph settings</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
             <item>
-             <widget class="QRadioButton" name="_estimated_postion_button">
-              <property name="text">
-               <string>Position estimate</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="_id_anchor_button">
-              <property name="text">
-               <string>Anchor identification</string>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_3">
+                <item>
+                 <widget class="QRadioButton" name="_estimated_postion_button">
+                  <property name="text">
+                   <string>Position estimate</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="_id_anchor_button">
+                  <property name="text">
+                   <string>Anchor identification</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <item>
+                 <widget class="QPushButton" name="_show_all_button">
+                  <property name="text">
+                   <string>Zoom to fit</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
             </item>
            </layout>
           </widget>
@@ -58,11 +77,49 @@
          <item>
           <widget class="QGroupBox" name="groupBox_4">
            <property name="title">
-            <string>Anchor ranging status</string>
+            <string>System status</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_6">
             <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_7">
+              <item>
+               <widget class="QLabel" name="label_7">
+                <property name="text">
+                 <string>Position</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="_status_position">
+                <property name="text">
+                 <string>(0.0 , 0.0 , 0.0)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_3">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
              <layout class="QHBoxLayout" name="horizontalLayout_6">
+              <item>
+               <widget class="QLabel" name="label_8">
+                <property name="text">
+                 <string>Anchor</string>
+                </property>
+               </widget>
+              </item>
               <item>
                <widget class="QLabel" name="_status_a0">
                 <property name="frameShape">
@@ -165,37 +222,17 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_3">
-           <property name="title">
-            <string>Graph settings</string>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_5">
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_4">
-              <item>
-               <widget class="QPushButton" name="_show_all_button">
-                <property name="text">
-                 <string>Zoom to fit</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_2">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </widget>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </item>
@@ -635,8 +672,6 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>_estimated_postion_button</tabstop>
-  <tabstop>_id_anchor_button</tabstop>
   <tabstop>_show_all_button</tabstop>
   <tabstop>spin_a0x</tabstop>
   <tabstop>spin_a0y</tabstop>

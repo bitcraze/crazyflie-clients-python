@@ -414,6 +414,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._anchor_pos_timer.setInterval(self.UPDATE_PERIOD_ANCHOR_POS)
         self._anchor_pos_timer.timeout.connect(self._poll_anchor_positions)
 
+        self._update_position_label(self._position)
         self._enable_anchor_pos_ui()
 
     def _do_when_checked(self, enabled, fkn, arg):
@@ -780,4 +781,14 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             self._plot_yz.update(anchors, self._position, self._display_mode)
             self._plot_xy.update(anchors, self._position, self._display_mode)
             self._plot_xz.update(anchors, self._position, self._display_mode)
+            self._update_position_label(self._position)
             self._enable_anchor_pos_ui()
+
+    def _update_position_label(self, position):
+        if len(position) == 3:
+            coordinate = "({:0.2f}, {:0.2f}, {:0.2f})".format(
+                position[0], position[1], position[2])
+        else:
+            coordinate = '(0.00, 0.00, 0.00)'
+
+        self._status_position.setText(coordinate)
