@@ -26,13 +26,22 @@
       <layout class="QVBoxLayout" name="_plot_top_left_layout"/>
      </item>
      <item row="0" column="1">
-      <layout class="QVBoxLayout" name="_inputLayout">
+      <layout class="QVBoxLayout" name="_inputLayout" stretch="0,0,1">
+       <property name="spacing">
+        <number>-1</number>
+       </property>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetDefaultConstraint</enum>
+         </property>
          <item>
           <widget class="QGroupBox" name="groupBox_2">
            <property name="title">
             <string>Graph settings</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
             <item>
@@ -57,7 +66,7 @@
                  </widget>
                 </item>
                 <item>
-                 <spacer name="verticalSpacer_3">
+                 <spacer name="verticalSpacer_2">
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
                   </property>
@@ -81,7 +90,7 @@
                  </widget>
                 </item>
                 <item>
-                 <spacer name="verticalSpacer_4">
+                 <spacer name="verticalSpacer_3">
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
                   </property>
@@ -102,12 +111,24 @@
          </item>
          <item>
           <widget class="QGroupBox" name="groupBox_4">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="title">
             <string>Crazyflie status</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_6">
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0">
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_11">
+              <property name="sizeConstraint">
+               <enum>QLayout::SetDefaultConstraint</enum>
+              </property>
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_8">
                 <item>
@@ -305,12 +326,9 @@
                  </layout>
                 </item>
                 <item>
-                 <spacer name="verticalSpacer_2">
+                 <spacer name="verticalSpacer_4">
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
-                  </property>
-                  <property name="sizeType">
-                   <enum>QSizePolicy::Preferred</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -326,6 +344,9 @@
                <layout class="QVBoxLayout" name="verticalLayout_10">
                 <property name="spacing">
                  <number>0</number>
+                </property>
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetDefaultConstraint</enum>
                 </property>
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_12">
@@ -352,6 +373,12 @@
                   </item>
                   <item>
                    <widget class="QLabel" name="_state_twr">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="minimumSize">
                      <size>
                       <width>20</width>
@@ -385,6 +412,12 @@
                   </item>
                   <item>
                    <widget class="QLabel" name="_state_tdoa">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="minimumSize">
                      <size>
                       <width>20</width>
@@ -406,19 +439,6 @@
                    </widget>
                   </item>
                  </layout>
-                </item>
-                <item>
-                 <spacer name="verticalSpacer_5">
-                  <property name="orientation">
-                   <enum>Qt::Vertical</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>20</width>
-                    <height>40</height>
-                   </size>
-                  </property>
-                 </spacer>
                 </item>
                </layout>
               </item>
@@ -450,7 +470,7 @@
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>250</height>
+           <height>0</height>
           </size>
          </property>
          <property name="title">
@@ -465,6 +485,12 @@
                <layout class="QGridLayout" name="gridLayout_4">
                 <item row="1" column="0">
                  <widget class="QLabel" name="labela0">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="text">
                    <string>Anchor 0</string>
                   </property>
@@ -475,6 +501,15 @@
                 </item>
                 <item row="1" column="2">
                  <widget class="QDoubleSpinBox" name="spin_a0y">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::NoButtons</enum>
+                  </property>
                   <property name="minimum">
                    <double>-99.000000000000000</double>
                   </property>
@@ -482,6 +517,15 @@
                 </item>
                 <item row="1" column="3">
                  <widget class="QDoubleSpinBox" name="spin_a0z">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::NoButtons</enum>
+                  </property>
                   <property name="minimum">
                    <double>-99.000000000000000</double>
                   </property>
@@ -489,6 +533,15 @@
                 </item>
                 <item row="1" column="1">
                  <widget class="QDoubleSpinBox" name="spin_a0x">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::NoButtons</enum>
+                  </property>
                   <property name="minimum">
                    <double>-99.000000000000000</double>
                   </property>
@@ -496,6 +549,12 @@
                 </item>
                 <item row="0" column="1">
                  <widget class="QLabel" name="label">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="text">
                    <string>X</string>
                   </property>
@@ -506,6 +565,12 @@
                 </item>
                 <item row="0" column="2">
                  <widget class="QLabel" name="label_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="text">
                    <string>Y</string>
                   </property>
@@ -516,6 +581,12 @@
                 </item>
                 <item row="0" column="3">
                  <widget class="QLabel" name="label_3">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="text">
                    <string>Z</string>
                   </property>
@@ -534,6 +605,12 @@
                <layout class="QGridLayout" name="gridLayout_5">
                 <item row="0" column="3">
                  <widget class="QLabel" name="label_6">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="text">
                    <string>Z</string>
                   </property>
@@ -544,6 +621,12 @@
                 </item>
                 <item row="0" column="2">
                  <widget class="QLabel" name="label_5">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="text">
                    <string>Y</string>
                   </property>
@@ -554,6 +637,15 @@
                 </item>
                 <item row="1" column="3">
                  <widget class="QDoubleSpinBox" name="spin_a1z">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::NoButtons</enum>
+                  </property>
                   <property name="minimum">
                    <double>-99.000000000000000</double>
                   </property>
@@ -561,6 +653,12 @@
                 </item>
                 <item row="0" column="1">
                  <widget class="QLabel" name="label_4">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="text">
                    <string>X</string>
                   </property>
@@ -571,6 +669,12 @@
                 </item>
                 <item row="1" column="0">
                  <widget class="QLabel" name="labela1">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="text">
                    <string>Anchor 1</string>
                   </property>
@@ -581,6 +685,15 @@
                 </item>
                 <item row="1" column="2">
                  <widget class="QDoubleSpinBox" name="spin_a1y">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::NoButtons</enum>
+                  </property>
                   <property name="minimum">
                    <double>-99.000000000000000</double>
                   </property>
@@ -588,6 +701,15 @@
                 </item>
                 <item row="1" column="1">
                  <widget class="QDoubleSpinBox" name="spin_a1x">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="buttonSymbols">
+                   <enum>QAbstractSpinBox::NoButtons</enum>
+                  </property>
                   <property name="minimum">
                    <double>-99.000000000000000</double>
                   </property>
@@ -605,6 +727,12 @@
              <layout class="QHBoxLayout" name="block_a2">
               <item>
                <widget class="QLabel" name="labela2">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>Anchor 2</string>
                 </property>
@@ -615,6 +743,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a2x">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -622,6 +759,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a2y">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -629,6 +775,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a2z">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -640,6 +795,12 @@
              <layout class="QHBoxLayout" name="block_a3">
               <item>
                <widget class="QLabel" name="labela3">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>Anchor 3</string>
                 </property>
@@ -650,6 +811,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a3x">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -657,6 +827,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a3y">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -664,6 +843,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a3z">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -679,6 +867,12 @@
              <layout class="QHBoxLayout" name="block_a4">
               <item>
                <widget class="QLabel" name="labela4">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>Anchor 4</string>
                 </property>
@@ -689,6 +883,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a4x">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -696,6 +899,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a4y">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -703,6 +915,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a4z">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -714,6 +935,12 @@
              <layout class="QHBoxLayout" name="block_a5">
               <item>
                <widget class="QLabel" name="labela5">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>Anchor 5</string>
                 </property>
@@ -724,6 +951,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a5x">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -731,6 +967,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a5y">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -738,6 +983,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a5z">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -753,6 +1007,12 @@
              <layout class="QHBoxLayout" name="block_a6">
               <item>
                <widget class="QLabel" name="labela6">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>Anchor 6</string>
                 </property>
@@ -763,6 +1023,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a6x">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -770,6 +1039,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a6y">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -777,6 +1055,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a6z">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -788,6 +1075,12 @@
              <layout class="QHBoxLayout" name="block_a7">
               <item>
                <widget class="QLabel" name="labela7">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>Anchor 7</string>
                 </property>
@@ -798,6 +1091,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a7x">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -805,6 +1107,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a7y">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -812,6 +1123,15 @@
               </item>
               <item>
                <widget class="QDoubleSpinBox" name="spin_a7z">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
                 <property name="minimum">
                  <double>-99.000000000000000</double>
                 </property>
@@ -825,8 +1145,11 @@
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
              <widget class="QPushButton" name="_switch_mode_button">
+              <property name="toolTip">
+               <string>Write operation mode to anchors</string>
+              </property>
               <property name="text">
-               <string>Switch anchor mode</string>
+               <string>Switch mode to</string>
               </property>
              </widget>
             </item>
@@ -845,8 +1168,11 @@
             </item>
             <item>
              <widget class="QPushButton" name="_pos_estimate_button">
+              <property name="toolTip">
+               <string>Anchor position estimator wizard</string>
+              </property>
               <property name="text">
-               <string>Anchor pos estimator wizard (beta)</string>
+               <string>Pos estimator (beta)</string>
               </property>
              </widget>
             </item>
@@ -855,15 +1181,21 @@
               <property name="enabled">
                <bool>true</bool>
               </property>
+              <property name="toolTip">
+               <string>Read anchor positions from anchors</string>
+              </property>
               <property name="text">
-               <string>Read positions from anchors</string>
+               <string>Read</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="_write_pos_to_anhors_button">
+              <property name="toolTip">
+               <string>Write anchor positions to anchors</string>
+              </property>
               <property name="text">
-               <string>Write positions to anchors</string>
+               <string>Write</string>
               </property>
              </widget>
             </item>
