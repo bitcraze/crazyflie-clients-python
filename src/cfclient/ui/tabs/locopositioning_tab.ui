@@ -341,7 +341,7 @@
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
                   <property name="spacing">
-                   <number>-1</number>
+                   <number>6</number>
                   </property>
                   <item>
                    <widget class="QRadioButton" name="_mode_twr">
@@ -824,9 +824,9 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
-             <widget class="QPushButton" name="_pos_estimate_button">
+             <widget class="QPushButton" name="_switch_mode_button">
               <property name="text">
-               <string>Anchor pos estimator wizard (beta)</string>
+               <string>Switch anchor mode</string>
               </property>
              </widget>
             </item>
@@ -844,19 +844,26 @@
              </spacer>
             </item>
             <item>
+             <widget class="QPushButton" name="_pos_estimate_button">
+              <property name="text">
+               <string>Anchor pos estimator wizard (beta)</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QPushButton" name="_read_pos_from_anhors_button">
               <property name="enabled">
                <bool>true</bool>
               </property>
               <property name="text">
-               <string>Get from anchors</string>
+               <string>Read positions from anchors</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="_write_pos_to_anhors_button">
               <property name="text">
-               <string>Write to anchors</string>
+               <string>Write positions to anchors</string>
               </property>
              </widget>
             </item>

@@ -402,7 +402,15 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             lambda enabled: self._request_mode(enabled, self.LOCO_MODE_TDOA)
         )
 
+        self._current_requested_mode = self.LOCO_MODE_AUTO
+
         self._enable_mode_buttons(False)
+        self._switch_mode_button.setEnabled(False)
+
+        self._switch_mode_button.clicked.connect(
+            lambda enabled:
+            self._send_anchor_mode()
+        )
 
         self._anchor_pos_ui = {}
         for anchor_nr in range(0, 8):
@@ -523,6 +531,19 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
     def _set_display_mode(self, display_mode):
         self._display_mode = display_mode
+
+    def _send_anchor_mode(self):
+        lopo = LoPoAnchor(self._helper.cf)
+
+        # Set the mode from the last to the first anchor
+        # In TDoA mode this ensures that the master anchor is set last
+        for i in reversed(range(8)):
+            if self._current_requested_mode == self.LOCO_MODE_TDOA:
+                lopo.set_mode(i, lopo.MODE_TWR)
+            elif self._current_requested_mode == self.LOCO_MODE_TWR:
+                lopo.set_mode(i, lopo.MODE_TDOA)
+            else:
+                pass
 
     def _clear_state(self):
         self._anchors = {}
@@ -889,6 +910,15 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     def _request_mode(self, enabled, mode):
         if enabled:
             self._helper.cf.param.set_value(self.PARAM_MODE, str(mode))
+            self._current_requested_mode = mode
+            if mode == self.LOCO_MODE_TWR:
+                self._switch_mode_button.setText("Switch mode to TDoA")
+                self._switch_mode_button.setEnabled(True)
+            elif mode == self.LOCO_MODE_TDOA:
+                self._switch_mode_button.setText("Switch mode to TWR")
+                self._switch_mode_button.setEnabled(True)
+            else:
+                self._switch_mode_button.setEnabled(False)
 
     def _loco_mode_updated(self, name, value):
         mode = int(value)
