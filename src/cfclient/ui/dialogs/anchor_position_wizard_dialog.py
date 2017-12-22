@@ -163,27 +163,30 @@ class AnchorPositionWizardDialog(QtWidgets.QWidget, wizard_widget_class):
     def _record_origin(self):
         self._start_processing()
         self._ranges_origin = []
-        self._average_ranges(self._ranges_origin)
+        self._record_point_ranges(self._ranges_origin)
 
     def _record_x_axis(self):
         self._start_processing()
         self._ranges_x_axis = []
-        self._average_ranges(self._ranges_x_axis)
+        self._record_point_ranges(self._ranges_x_axis)
 
     def _record_xy_plane(self):
         self._start_processing()
         self._ranges_xy_plane = []
-        self._average_ranges(self._ranges_xy_plane)
+        self._record_point_ranges(self._ranges_xy_plane)
 
     def _record_space(self):
         self._start_processing()
         self.raw_range_list = []
         self._range_recorder.record(
-            30, self.raw_range_list, self._record_space_recorded_callback,
-            self._update_progress, self._error_callback)
+            int(30 * 1000 / self._range_recorder._update_period_ms),
+            self.raw_range_list,
+            self._record_space_recorded_callback,
+            self._update_progress,
+            self._error_callback)
 
     def _record_space_recorded_callback(self):
-        desired_count = 50
+        desired_count = 100
         actual_count = len(self.raw_range_list)
         if actual_count <= desired_count:
             self.range_list = self.raw_range_list
@@ -211,22 +214,15 @@ class AnchorPositionWizardDialog(QtWidgets.QWidget, wizard_widget_class):
             self._anchor_pos_ui[id].set_position(positions[i])
         self._finalize_next_step()
 
-    def _average_ranges(self, data):
-        seconds = 20 / (1000 / self._range_recorder._update_period_ms)
-        range_list = []
+    def _record_point_ranges(self, data):
         self._range_recorder.record(
-            seconds,
-            range_list,
-            partial(self._average_ranges_recorded_callback, range_list, data),
+            20,
+            data,
+            self._finalize_next_step,
             self._update_progress, self._error_callback)
 
     def _update_progress(self, progress):
         self._progress_bar.setValue(progress * 100)
-
-    def _average_ranges_recorded_callback(self, range_list, data):
-        averages = np.average(np.array(range_list), axis=0)
-        data.extend(averages.tolist())
-        self._finalize_next_step()
 
     def _close_dialog(self):
         self.close()

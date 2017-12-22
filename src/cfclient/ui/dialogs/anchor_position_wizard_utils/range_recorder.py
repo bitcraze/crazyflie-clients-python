@@ -22,8 +22,6 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA  02110-1301, USA.
 
-import time
-
 
 class RangeRecorder:
     def __init__(self, update_period_ms, anchor_indexes):
@@ -37,11 +35,10 @@ class RangeRecorder:
         self._anchor_indexes = anchor_indexes
         self._anchor_count = len(self._anchor_indexes)
 
-    def record(self, seconds, data, recording_finished_callback,
+    def record(self, required_good_samples, data, recording_finished_callback,
                update_ui_callback, error_callback):
         recording_data = {
-            'end_time': time.time() + seconds,
-            'start_time': time.time(),
+            'end_count': required_good_samples,
             'latest': 0,
             'workspace': [None] * self._MAX_ANCHORS,
             'data': data,
@@ -56,14 +53,13 @@ class RangeRecorder:
         for data_set in self._data_sets:
             self._process_range(data_set, anchor, distance, timestamp)
 
-        now = time.time()
         for data_set in self._data_sets:
             try:
-                progress = (now - data_set['start_time']) / \
-                           (data_set['end_time'] - data_set['start_time'])
+                nr_of_samples = len(data_set['data'])
+                progress = nr_of_samples / data_set['end_count']
                 data_set['update_ui_callback'](progress)
 
-                if now > data_set['end_time']:
+                if nr_of_samples >= data_set['end_count']:
                     data_set['done'] = True
                     data_set['update_ui_callback'](1.0)
                     data_set['done_callback']()
@@ -76,7 +72,8 @@ class RangeRecorder:
 
     def _process_range(self, data_set, anchor, distance, timestamp):
         # This method is called when log data arrives from the Crazyflie. The
-        # range data will have slightly different timestamps and we use the
+        # range data arrives in chunks with some of the anchors in each chunk.
+        # Each chunk have a timestamps and we use the
         # timestamps to try to figure out how to group them
         if (abs(timestamp - data_set['latest']) < self._max_time_diff):
             self._process_range_current_slot(data_set, anchor, distance)

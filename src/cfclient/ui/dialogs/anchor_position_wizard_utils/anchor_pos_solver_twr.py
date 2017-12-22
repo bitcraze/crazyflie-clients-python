@@ -21,6 +21,50 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA  02110-1301, USA.
+"""
+Use the Gauss–Newton algorithm to estimate anchor positions from ranging data
+(copter to anchors).
+
+Inputs are ranges in a few selected points:
+* The origin
+* A point on the X-axis, X > 0
+* A point in the X-Y plane, Y > 0
+* A number of random points in space
+
+x = [
+    x of anchor 0
+    y of anchor 0
+    z of anchor 0
+    x of anchor 1
+    y of anchor 1
+    z of anchor 1
+    x, y, z of anchor 2
+    ...
+    x, y, z of last anchor
+    x, y, z of origin position
+    x, y, z of x axis position
+    x, y, z of x-y plane position
+    x, y, z of space position 0
+    x, y, z of space position 1
+    x, y, z of space position 2
+    ...
+    x, y, z of last space position
+]
+
+In the iteration loop, some data is removed since it is known.
+x, y, z of origin position
+y, z of x axis position
+z of x-y plane position
+
+
+The functions to minimize are based on
+(Xa - Xp)^2 + (Ya - Yp)^2 + (Yz - Zp)^2 - D^2 = 0
+Where
+    a: anchor
+    p: the point of the measurement
+    D: Distance (range) measured by the system
+"""
+
 import random
 
 import numpy as np
@@ -31,29 +75,30 @@ class AnchorPosSolverTwr:
     Y = 1
     Z = 2
 
-    ANTENNA_DELAY = 0
+    # data types
     ANCHOR = 1
     POINT = 2
 
-    POINT_ORIGO = 0
+    POINT_ORIGIN = 0
     POINT_X_AXIS = 1
     POINT_XY_PLANE = 2
     POINT_SPACE_BASE = 3
 
-    def solve(self, anchor_count, d_origo, d_x_axis, d_x_y_plane, d_space):
+    def solve(self, anchor_count, d_origin, d_x_axis, d_x_y_plane, d_space):
         max_iterations = 100
         norm_min_diff = 0.1
         prev_norm = -100
 
         self.anchor_count = anchor_count
 
+        # Randomize a x vector to start from
         xx = np.array(list(map(lambda i: random.uniform(0.0, 2.0),
                                range(self._nr_of_params(d_space)))))
         x = self._insert_zeros_for_fixed_params(xx)
 
         found_result = False
         for i in range(max_iterations):
-            fx = self._f(x, d_origo, d_x_axis, d_x_y_plane, d_space)
+            fx = self._f(x, d_origin, d_x_axis, d_x_y_plane, d_space)
             norm = np.linalg.norm(fx)
 
             if abs(norm - prev_norm) < norm_min_diff:
@@ -62,7 +107,7 @@ class AnchorPosSolverTwr:
 
             prev_norm = norm
 
-            j = self._J(x, d_origo, d_x_axis, d_x_y_plane, d_space)
+            j = self._J(x, d_origin, d_x_axis, d_x_y_plane, d_space)
             jj = self._remove_columns_for_unused_params(j)
 
             h = np.linalg.lstsq(jj, fx)[0]
@@ -83,69 +128,64 @@ class AnchorPosSolverTwr:
             )
             result.append(anchor_pos)
 
-        print("Antenna delay: " + str(x[0]))
-
         return self._flip(result, x)
 
-    # x = [
-    #     antenna delay
-    #     x, y, z of anchor 0
-    #     x, y, z of anchor 1
-    #     x, y, z of anchor 2
-    #     ...
-    #     x, y, z of last anchor
-    #     x, y, z of origo position
-    #     x, y, z of x axis position
-    #     x, y, z of x-y plane position
-    #     x, y, z of space position 0
-    #     x, y, z of space position 1
-    #     x, y, z of space position 2
-    #     ...
-    #     x, y, z of last space position
-    # ]
-
+    """
+    Make sure the known parameters that should be 0 really are 0
+    """
     def _insert_zeros_for_fixed_params(self, x):
-        base = self._xi(self.POINT, self.POINT_ORIGO, self.X)
+        base = self._xi(self.POINT, self.POINT_ORIGIN, self.X)
         return np.insert(x, [base + 3, base + 1, base + 1, base + 0, base + 0,
                              base + 0], 0.0, axis=0)
 
+    """
+    Make a copy of the x vector and remove the known parameters to create the
+    compressed x vector that is used in the calculations
+    """
     def _remove_fixed_params(self, x):
         return np.delete(x, np.s_[
-            self._xi(self.POINT, self.POINT_ORIGO, self.X),
-            self._xi(self.POINT, self.POINT_ORIGO, self.Y),
-            self._xi(self.POINT, self.POINT_ORIGO, self.Z),
+            self._xi(self.POINT, self.POINT_ORIGIN, self.X),
+            self._xi(self.POINT, self.POINT_ORIGIN, self.Y),
+            self._xi(self.POINT, self.POINT_ORIGIN, self.Z),
             self._xi(self.POINT, self.POINT_X_AXIS, self.Y),
             self._xi(self.POINT, self.POINT_X_AXIS, self.Z),
             self._xi(self.POINT, self.POINT_XY_PLANE, self.Z),
         ], 0)
 
+    """
+    Make a copy of J and remove the columns that corresponds to the known
+    parameters in the x vector 
+    """
     def _remove_columns_for_unused_params(self, j):
         return np.delete(j, np.s_[
-            self._xi(self.POINT, self.POINT_ORIGO, self.X),
-            self._xi(self.POINT, self.POINT_ORIGO, self.Y),
-            self._xi(self.POINT, self.POINT_ORIGO, self.Z),
+            self._xi(self.POINT, self.POINT_ORIGIN, self.X),
+            self._xi(self.POINT, self.POINT_ORIGIN, self.Y),
+            self._xi(self.POINT, self.POINT_ORIGIN, self.Z),
             self._xi(self.POINT, self.POINT_X_AXIS, self.Y),
             self._xi(self.POINT, self.POINT_X_AXIS, self.Z),
             self._xi(self.POINT, self.POINT_XY_PLANE, self.Z),
         ], 1)
 
-    def _f(self, x, d_origo, d_x_axis, d_x_y_plane, d_space):
-        return self._for_all_points(x, d_origo, d_x_axis, d_x_y_plane,
+    def _f(self, x, d_origin, d_x_axis, d_x_y_plane, d_space):
+        return self._for_all_points(x, d_origin, d_x_axis, d_x_y_plane,
                                     d_space, self._f_row)
 
-    def _J(self, x, d_origo, d_x_axis, d_x_y_plane, d_space):
-        return self._for_all_points(x, d_origo, d_x_axis, d_x_y_plane,
+    def _J(self, x, d_origin, d_x_axis, d_x_y_plane, d_space):
+        return self._for_all_points(x, d_origin, d_x_axis, d_x_y_plane,
                                     d_space, self._J_row)
 
-    def _for_all_points(self, x, d_origo, d_x_axis, d_x_y_plane, d_space,
+    def _for_all_points(self, x, d_origin, d_x_axis, d_x_y_plane, d_space,
                         func):
         result = []
 
-        result.extend(self._for_one_point(x, d_origo, self.POINT_ORIGO, func))
-        result.extend(self._for_one_point(x, d_x_axis,
-                                          self.POINT_X_AXIS, func))
-        result.extend(self._for_one_point(x, d_x_y_plane,
-                                          self.POINT_XY_PLANE, func))
+        for d in d_origin:
+            result.extend(self._for_one_point(x, d, self.POINT_ORIGIN, func))
+
+        for d in d_x_axis:
+            result.extend(self._for_one_point(x, d, self.POINT_X_AXIS, func))
+
+        for d in d_x_y_plane:
+            result.extend(self._for_one_point(x, d, self.POINT_XY_PLANE, func))
 
         count = 0
         for d in d_space:
@@ -174,12 +214,10 @@ class AnchorPosSolverTwr:
         Y2 = self._xi(self.ANCHOR, anchor_index, self.Y)
         Z2 = self._xi(self.ANCHOR, anchor_index, self.Z)
 
-        ad = 0.0  # x[self._xi(self.ANTENNA_DELAY)]
-
         return (x[X2] - x[X1]) * (x[X2] - x[X1]) + \
                (x[Y2] - x[Y1]) * (x[Y2] - x[Y1]) + \
                (x[Z2] - x[Z1]) * (x[Z2] - x[Z1]) - \
-               (distance + ad) * (distance + ad)
+               (distance * distance)
 
     def _J_row(self, x, distance, anchor_index, point_index):
         X1 = self._xi(self.POINT, point_index, self.X)
@@ -192,9 +230,6 @@ class AnchorPosSolverTwr:
 
         result = [0.0] * (len(x))
 
-        # ad = [self._xi(self.ANTENNA_DELAY)]
-        # result[self._xi(self.ANTENNA_DELAY)] = -2 * (distance + ad)
-
         result[X1] = -2 * (x[X2] - x[X1])
         result[Y1] = -2 * (x[Y2] - x[Y1])
         result[Z1] = -2 * (x[Z2] - x[Z1])
@@ -205,6 +240,10 @@ class AnchorPosSolverTwr:
 
         return result
 
+    """
+    It is possible that we have found a solution where the coordinate system 
+    is mirrored. Flip it back if needed.
+    """
     def _flip(self, anchor_pos, x):
         result = anchor_pos
 
@@ -219,20 +258,15 @@ class AnchorPosSolverTwr:
 
         return result
 
+    """
+    Calculate the number of parameters in the compressed x vector
+    """
     def _nr_of_params(self, d_space):
-        # return 1 + self.anchor_count * 3 + 0 + 1 + 2 + len(d_space) * 3
         return self.anchor_count * 3 + 0 + 1 + 2 + len(d_space) * 3
 
-    # def _xi(self, type, index=0, coord=X):
-    #     if type == self.ANTENNA_DELAY:
-    #         return 0
-    #     if type == self.ANCHOR:
-    #         return 1 + index * 3 + coord
-    #     if type == self.POINT:
-    #         return 1 + self.anchor_count * 3 + index * 3 + coord
-    #
-    #     raise Exception('Unknown type')
-
+    """
+    Calculate the index in x of an element and axis 
+    """
     def _xi(self, type, index=0, coord=X):
         if type == self.ANCHOR:
             return index * 3 + coord
