@@ -154,7 +154,7 @@ class AnchorPosSolverTwr:
 
     """
     Make a copy of J and remove the columns that corresponds to the known
-    parameters in the x vector 
+    parameters in the x vector
     """
     def _remove_columns_for_unused_params(self, j):
         return np.delete(j, np.s_[
@@ -241,7 +241,7 @@ class AnchorPosSolverTwr:
         return result
 
     """
-    It is possible that we have found a solution where the coordinate system 
+    It is possible that we have found a solution where the coordinate system
     is mirrored. Flip it back if needed.
     """
     def _flip(self, anchor_pos, x):
@@ -265,7 +265,7 @@ class AnchorPosSolverTwr:
         return self.anchor_count * 3 + 0 + 1 + 2 + len(d_space) * 3
 
     """
-    Calculate the index in x of an element and axis 
+    Calculate the index in x of an element and axis
     """
     def _xi(self, type, index=0, coord=X):
         if type == self.ANCHOR:

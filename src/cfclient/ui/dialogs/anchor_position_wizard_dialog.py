@@ -33,7 +33,6 @@ import cfclient
 from PyQt5 import QtWidgets
 from PyQt5 import uic
 import numpy as np
-from functools import partial
 
 from .anchor_position_wizard_utils.anchor_pos_solver_twr import \
     AnchorPosSolverTwr
