@@ -2,7 +2,7 @@
 
 
 The Crazyflie PC client enables flashing and controlling the Crazyflie.
-It implement the user interface and high-level control (for example gamepad handling).
+It implements the user interface and high-level control (for example gamepad handling).
 The communication with Crazyflie and the implementation of the CRTP protocol to control the Crazflie is handled by the [cflib](https://github.com/bitcraze/crazyflie-lib-python) project.
 
 For more info see our [wiki](http://wiki.bitcraze.se/ "Bitcraze Wiki").
