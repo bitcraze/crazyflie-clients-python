@@ -3,7 +3,7 @@ install:
 - cmd: >-
     set PATH=C:\Miniconda35-x64;C:\Miniconda35-x64\scripts;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin
 
-    conda create -y -q -n cfclient python=3.4 pyqt=5 numpy
+    conda create -y -q -n cfclient python=3.4 pyqt=5
 
     activate cfclient
 
