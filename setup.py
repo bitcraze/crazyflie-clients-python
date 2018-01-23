@@ -134,7 +134,7 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib>=0.1.6', 'appdirs==1.4.0',
+    install_requires=platform_requires + ['cflib>=0.1.6', 'appdirs>=1.4.0',
                                           'pyzmq', 'pyqtgraph>=0.10'],
 
     # List of dev dependencies
