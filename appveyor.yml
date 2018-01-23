@@ -11,7 +11,7 @@ install:
 
     conda install -y -q numpy
 
-    rmdir /Q /S C:\Miniconda35\envs\cfclient\lib\site-packages\PyQt5\uic\port_v2
+    rmdir /Q /S C:\Miniconda35-x64\envs\cfclient\lib\site-packages\PyQt5\uic\port_v2
 
     python tools\build\prep_windows
 
