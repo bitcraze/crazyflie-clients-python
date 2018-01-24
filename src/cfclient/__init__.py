@@ -32,7 +32,7 @@ import sys
 if not hasattr(sys, 'frozen'):
     module_path = os.path.dirname(__file__)
 else:
-    module_path = os.path.dirname(sys.executable)
+    module_path = os.path.join(os.path.dirname(sys.executable), 'lib', 'cfclient')
 config_path = AppDirs("cfclient", "Bitcraze").user_config_dir
 
 # Locate the sdl2 lib on Windows (should be in cfclient/thirst_party/)
