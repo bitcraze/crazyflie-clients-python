@@ -7,37 +7,30 @@ The communication with Crazyflie and the implementation of the CRTP protocol to 
 
 For more info see our [wiki](http://wiki.bitcraze.se/ "Bitcraze Wiki").
 
-Running from source
--------------------
+# Running from source
 
 The Crazyflie client requires [cflib](https://github.com/bitcraze/crazyflie-lib-python).
 If you want to develop with the lib too, follow the cflib readme to install it.
 
 ## Windows (7/8/10)
 
-Running from source on Windows is tested using the [miniconda](http://conda.pydata.org/miniconda.html) python distribution. It is possible to run from any distribution as long as the required packages are installed. Building the windows installer requires Python 3.4 (because ```py2exe``` is not distributed for Python 3.5+ yet). The following instructions assumes **Miniconda 32-bit** is installed.
+Running from source on Windows is tested using the official python build from [python.org](https://python.org). The client works with python version >= 3.5. The procedure is tested with 32bit python. It should work with 64bit python but since it is not tested it can be broken (if so, do not hesitate to send a fix ;-).
 
-**Note on python version**: Building the windows executable and installer requires Python 3.4. The client has mostly been tested using Python 32Bit but should work on python 64Bits as well. If you are not interested about building the windows installer, just by running the client, you can run on more recent version of python.
+To run the client you should install python, make sure to check the "add to path" checkbox during install. You should also have git installed and in your path. Use git to clone the crazyflie client project.
 
-Open a command line windows and move to the crazyflie clients folder (the exact command depends of where the project is cloned):
+Open a command line window and move to the crazyflie clients folder (the exact command depends of where the project is cloned):
 ```
 cd crazyflie-clients-python
 ```
 
-Create and activate a Python 3.4 environment with pyqt5:
-```
-conda create -y -n cfclient python=3.4 pyqt=5
-activate cfclient
-```
-
-Download the 32bits SDL2.dll windows library:
+Download the SDL2.dll windows library:
 ```
 python tools\build\prep_windows
 ```
 
 Install the client in development mode:
 ```
-pip install -e .[dev]
+pip install -e .[dev,qt5]
 ```
 
 You can now run the clients with the following commands:
@@ -48,20 +41,13 @@ cfloader
 cfzmq
 ```
 
-**NOTE:** To use Crazyradio you will have to [install the drivers](https://wiki.bitcraze.io/doc:crazyradio:install_windows_zadig)
+**NOTE:** To use Crazyradio you will have to [install the drivers](https://wiki.bitcraze.io/misc:usbwindows)
 
 ### Working on the client with PyCharm
 
-Pycharm is an IDE for python. Any IDE or development environment will work for the Crazyflie client. The key here is to use the miniconda python interpreter from the environment created earlier, this can be applied to other development environment.
+Pycharm is an IDE for python. Any Python IDE or development environment will work for the Crazyflie client. To work on the Crazyflie firmware with Pycharm, install pycharm community edition and open the Crazyflie client folder in it. Pycharm will automatically detect the python installation.
 
-To work on the Crazyflie firmware with Pycharm, install pycharm comunity edition and open the Crazyflie client folder in it. Then:
-
- - Go to file>settings
- - Go to "Project: crazyflie-clients-python" > Project interpreter
- - Press the cog on the top right, beside "Project interpreter" and click "add local"
- - Locate the interpreter under \<miniconda_root\>\env\cfclient\python.exe (for example C:\Miniconda3\envs\cfclient\python.exe, see [screenshoot](https://wiki.bitcraze.io/_media/doc:crazyflie:client:pycfclient:cfclient_pycharm_windows_miniconda.png?t=1483971038&w=500&h=358&tok=9e4a0c))
- - Validate with OK two times
- - Open the bin/cfclient file in the pycharm editor and then "Run>Run 'cfclient'" will start the client
+To run the client, open and run the file ```bin/cfclient```.
 
 You are now able to edit and debug the python code. you can edit the .ui files for the GUI with QtCreator. You can the Qt development kit from the [Qt website](https://www.qt.io/download-open-source/) and open the .ui files in QtCreator.
 
@@ -71,14 +57,10 @@ When you are able to run from source, you can build the windows executable and i
 
 First build the executable
 ```
-python setup.py py2exe
+python setup.py build
 ```
-**NOTE:** The first time the previous command will fail complaining about a ```PyQt5\uic\port_v2```
-folder. Remove this folder with ```rmdir \Q \S path\to\PyQt5\uic\port_v2```,
-you can copy-paste the folder path from the py2exe error message.
 
-
-Now you can run the client with ```dist\cfclient.exe```.
+Now you can run the client with ```build\exe.win32-3.6\cfclient.exe```.
 
 To generate the installer you need [nsis](http://nsis.sourceforge.net/) installed and in the path. If you
 are a user of [chocolatey](https://chocolatey.org/) you can install it with ```choco install nsis.portable -version 2.50```,
@@ -98,7 +80,7 @@ makensis win32install\cfclient.nsi
 you have a lot of other 3rd party python stuff already running on your system
 they might or might not be affected by this.
 
-1. Install homebrew 
+1. Install homebrew
 
     See [the Homebrew site](https://brew.sh/)
 
@@ -108,18 +90,18 @@ they might or might not be affected by this.
     ```
 
 1. Install the client
-    
+
     * If you only want to use the client to fly the Crazyflie and don't care about coding
     ```
     pip3 install cfclient
     ```
-    
-    * If you want to develop the client and play with the source code. From the source folder run 
+
+    * If you want to develop the client and play with the source code. From the source folder run
     ```
     pip3 install -e .
     ```
-    If you want to develop on cflib as well, install cflib from <https://github.com/bitcraze/crazyflie-lib-python> 
-  
+    If you want to develop on cflib as well, install cflib from <https://github.com/bitcraze/crazyflie-lib-python>
+
 1. You now have all the dependencies needed to run the client. The client can now be started from any location by:
     ```
     cfclient
