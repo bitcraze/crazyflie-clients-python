@@ -10,16 +10,16 @@ import sys
 import os
 
 if sys.argv[1] == 'build':
-    from cx_Freeze import setup, Executable
+    from cx_Freeze import setup, Executable  # noqa
 
     cxfreeze_options = {
-        'options' : {
+        'options': {
             'build_exe': {'includes': ['numpy.core._methods',
                                        'numpy.lib.format',
                                        'pyqtgraph.debug',
                                        'pyqtgraph.ThreadsafeTimer']}
         },
-        'executables' : [Executable("bin/cfclient", icon='bitcraze.ico')],
+        'executables': [Executable("bin/cfclient", icon='bitcraze.ico')],
     }
 else:
     cxfreeze_options = {}
