@@ -141,7 +141,8 @@ setup(
     # You can install them by running
     # $ pip install -e .[dev]
     extras_require={
-        'dev': platform_dev_requires + []
+        'dev': platform_dev_requires + [],
+        'qt5': platform_dev_requires + ['pyqt5']
     },
 
     package_data=package_data,

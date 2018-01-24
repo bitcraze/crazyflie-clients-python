@@ -1,7 +1,7 @@
 version: 1.0.{build}
 install:
 - cmd: >-
-    set PATH=C:\Miniconda35;C:\Miniconda35\scripts;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin
+    set PATH=C:\Miniconda35-x64;C:\Miniconda35-x64\scripts;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin
 
     conda create -y -q -n cfclient python=3.4 pyqt=5
 
@@ -9,7 +9,9 @@ install:
 
     pip install -e .[dev]
 
-    rmdir /Q /S C:\Miniconda35\envs\cfclient\lib\site-packages\PyQt5\uic\port_v2
+    conda install -y -q numpy
+
+    rmdir /Q /S C:\Miniconda35-x64\envs\cfclient\lib\site-packages\PyQt5\uic\port_v2
 
     python tools\build\prep_windows
 
