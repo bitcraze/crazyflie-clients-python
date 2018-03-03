@@ -112,6 +112,7 @@ class JoystickReader(object):
 
         self.trim_roll = Config().get("trim_roll")
         self.trim_pitch = Config().get("trim_pitch")
+        self._rp_dead_band = 0.1
 
         self._input_map = None
 
@@ -298,13 +299,17 @@ class JoystickReader(object):
 
     def set_input_map(self, device_name, input_map_name):
         """Load and set an input device map with the given name"""
+        dev = self._get_device_from_name(device_name)
         settings = ConfigManager().get_settings(input_map_name)
+
         if settings:
             self.springy_throttle = settings["springythrottle"]
+            self._rp_dead_band = settings["rp_dead_band"]
             self._input_map = ConfigManager().get_config(input_map_name)
-        self._get_device_from_name(device_name).input_map = self._input_map
-        self._get_device_from_name(device_name).input_map_name = input_map_name
+        dev.input_map = self._input_map
+        dev.input_map_name = input_map_name
         Config().get("device_config_mapping")[device_name] = input_map_name
+        dev.set_dead_band(self._rp_dead_band)
 
     def start_input(self, device_name, role="Device", config_name=None):
         """
