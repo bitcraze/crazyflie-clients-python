@@ -3,6 +3,7 @@
     "inputdevice": {
       "updateperiod": 10,
       "name": "xbox360_mode1_linux",
+      "rp_dead_band": 0.1,
       "axis": [
         {
           "scale": -1.0,

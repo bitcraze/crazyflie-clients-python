@@ -662,7 +662,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     def _get_dev_status(self, device):
         msg = "{}".format(device.name)
         if device.supports_mapping:
-            map_name = "N/A"
+            map_name = "No input mapping"
             if device.input_map:
                 map_name = device.input_map_name
             msg += " ({})".format(map_name)
