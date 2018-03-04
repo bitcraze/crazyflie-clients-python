@@ -156,6 +156,7 @@ class InputDevice(InputReaderInterface):
             return [axis, buttons, self.data]
         else:
             return self.data
+
     @staticmethod
     def deadband(value, threshold):
         if abs(value) < threshold:
