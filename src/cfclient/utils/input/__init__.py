@@ -304,7 +304,9 @@ class JoystickReader(object):
 
         if settings:
             self.springy_throttle = settings["springythrottle"]
+####            try:
             self._rp_dead_band = settings["rp_dead_band"]
+####            except:
             self._input_map = ConfigManager().get_config(input_map_name)
         dev.input_map = self._input_map
         dev.input_map_name = input_map_name
