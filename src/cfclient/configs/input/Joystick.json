@@ -4,6 +4,7 @@
       "updateperiod": 10,
       "springythrottle": false,
       "name": "Joystick",
+      "rp_dead_band": 0.1,
       "axis": [
         {
           "scale": -1.0,

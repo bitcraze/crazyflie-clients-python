@@ -2,6 +2,7 @@
   "inputconfig": {
     "inputdevice":
     {"name": "Generic 2-axis gamepad on OS X", "updateperiod":10,
+     "rp_dead_band": 0.1,
      "axis": [
           {"name":"Roll", "type":"Input.AXIS", "id":3, "scale":1.0, "key":"roll"},
           {"name":"Pitch", "type":"Input.AXIS", "id":4, "scale":-1.0, "key":"pitch"},

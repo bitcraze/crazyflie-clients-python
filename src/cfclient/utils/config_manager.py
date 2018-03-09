@@ -87,7 +87,8 @@ class ConfigManager(metaclass=Singleton):
                 data = json.load(json_data)
                 new_input_device = {}
                 new_input_settings = {"updateperiod": 10,
-                                      "springythrottle": True}
+                                      "springythrottle": True,
+                                      "rp_dead_band": 0.05}
                 for s in data["inputconfig"]["inputdevice"]:
                     if s == "axis":
                         for a in data["inputconfig"]["inputdevice"]["axis"]:
