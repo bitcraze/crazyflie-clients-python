@@ -471,13 +471,13 @@ class JoystickReader(object):
                 else:
                     # Update the user roll/pitch trim from device
                     if data.toggled.pitchNeg and data.pitchNeg:
-                        self.trim_pitch -= 1
+                        self.trim_pitch -= .2
                     if data.toggled.pitchPos and data.pitchPos:
-                        self.trim_pitch += 1
+                        self.trim_pitch += .2
                     if data.toggled.rollNeg and data.rollNeg:
-                        self.trim_roll -= 1
+                        self.trim_roll -= .2
                     if data.toggled.rollPos and data.rollPos:
-                        self.trim_roll += 1
+                        self.trim_roll += .2
 
                     if data.toggled.pitchNeg or data.toggled.pitchPos or \
                             data.toggled.rollNeg or data.toggled.rollPos:
