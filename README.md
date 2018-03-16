@@ -115,7 +115,7 @@ If you want to develop with the lib, install cflib from https://github.com/bitcr
 
 Cfclient requires Python3, pip and pyqt5 to be installed using the system package manager. For example on Ubuntu/Debian:
 ```
-sudo apt-get install python3 python3-pip python3-pyqt5
+sudo apt-get install python3 python3-pip python3-pyqt5 python3-pyqt5.qtsvg
 ```
 
 Install cfclient to run it from source. From the source folder run (to install
