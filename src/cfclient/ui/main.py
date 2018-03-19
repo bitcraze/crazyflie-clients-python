@@ -244,13 +244,16 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._disable_input = False
 
         self.joystickReader.input_updated.add_callback(
-            lambda *args: self._disable_input or self.cf.commander.send_setpoint(*args))
+            lambda *args: self._disable_input or
+            self.cf.commander.send_setpoint(*args))
 
         self.joystickReader.assisted_input_updated.add_callback(
-            lambda *args: self._disable_input or self.cf.commander.send_velocity_world_setpoint(*args))
+            lambda *args: self._disable_input or
+            self.cf.commander.send_velocity_world_setpoint(*args))
 
         self.joystickReader.heighthold_input_updated.add_callback(
-            lambda *args: self._disable_input or self.cf.commander.send_zdistance_setpoint(*args))
+            lambda *args: self._disable_input or
+            self.cf.commander.send_zdistance_setpoint(*args))
 
         self.joystickReader.hover_input_updated.add_callback(
             self.cf.commander.send_hover_setpoint)
