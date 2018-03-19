@@ -40,3 +40,4 @@ class PluginHelper():
         self.cf = None
         self.menu = None
         self.logConfigReader = None
+        self.mainUI = None
