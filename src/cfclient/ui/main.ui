@@ -72,7 +72,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Ctrl+I</string>
+           <string/>
           </property>
          </widget>
         </item>

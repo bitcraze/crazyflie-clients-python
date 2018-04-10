@@ -203,8 +203,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         # TODO: Need to reload configs
         # ConfigManager().conf_needs_reload.add_callback(self._reload_configs)
 
-        self.connect_input = QShortcut("Ctrl+I", self.connectButton,\
-                                                       self._connect)
+        self.connect_input = QShortcut("Ctrl+I", self.connectButton,
+            self._connect)
         self.cf.connection_failed.add_callback(
             self.connectionFailedSignal.emit)
         self.connectionFailedSignal.connect(self._connection_failed)
@@ -482,7 +482,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.menuItemConnect.setEnabled(True)
             self.connectButton.setText("Disconnect")
             self.connectButton.setToolTip(
-                       "Disconnect from the Crazyflie (Ctrl+I)")
+                "Disconnect from the Crazyflie (Ctrl+I)")
             self.scanButton.setEnabled(False)
             self.logConfigAction.setEnabled(True)
             # Find out if there's an I2C EEPROM, otherwise don't show the
@@ -497,7 +497,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.menuItemConnect.setEnabled(True)
             self.connectButton.setText("Cancel")
             self.connectButton.setToolTip(
-                      "Cancel connecting to the Crazyflie (Ctrl+I)")
+                "Cancel connecting to the Crazyflie")
             self.scanButton.setEnabled(False)
             self.address.setEnabled(False)
             self.menuItemBootloader.setEnabled(False)
