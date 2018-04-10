@@ -71,6 +71,9 @@
             <height>0</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Ctrl+I</string>
+          </property>
          </widget>
         </item>
         <item row="0" column="2">
@@ -246,7 +249,7 @@
            <x>0</x>
            <y>0</y>
            <width>852</width>
-           <height>498</height>
+           <height>506</height>
           </rect>
          </property>
          <property name="sizePolicy">
@@ -298,7 +301,7 @@
      <x>0</x>
      <y>0</y>
      <width>872</width>
-     <height>22</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
