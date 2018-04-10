@@ -204,7 +204,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         # ConfigManager().conf_needs_reload.add_callback(self._reload_configs)
 
         self.connect_input = QShortcut("Ctrl+I", self.connectButton,
-            self._connect)
+                                       self._connect)
         self.cf.connection_failed.add_callback(
             self.connectionFailedSignal.emit)
         self.connectionFailedSignal.connect(self._connection_failed)
@@ -462,8 +462,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.menuItemConnect.setText("Connect to Crazyflie")
             self.menuItemConnect.setEnabled(canConnect)
             self.connectButton.setText("Connect")
-            self.connectButton.setToolTip(
-                "Connect to the Crazyflie on the selected interface (Ctrl+I)")
+            self.connectButton.setToolTip("Connect to the Crazyflie on"
+                                          "the selected interface (Ctrl+I)")
             self.connectButton.setEnabled(canConnect)
             self.scanButton.setText("Scan")
             self.scanButton.setEnabled(True)
@@ -481,8 +481,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.menuItemConnect.setText("Disconnect")
             self.menuItemConnect.setEnabled(True)
             self.connectButton.setText("Disconnect")
-            self.connectButton.setToolTip(
-                "Disconnect from the Crazyflie (Ctrl+I)")
+            self.connectButton.setToolTip("Disconnect from"
+                                          "the Crazyflie (Ctrl+I)")
             self.scanButton.setEnabled(False)
             self.logConfigAction.setEnabled(True)
             # Find out if there's an I2C EEPROM, otherwise don't show the
