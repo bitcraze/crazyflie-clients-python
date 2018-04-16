@@ -53,6 +53,7 @@ from PyQt5.QtCore import QThread
 from PyQt5.QtCore import QUrl
 from PyQt5.QtWidgets import QAction
 from PyQt5.QtWidgets import QActionGroup
+from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QMenu
@@ -202,6 +203,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         # TODO: Need to reload configs
         # ConfigManager().conf_needs_reload.add_callback(self._reload_configs)
 
+        self.connect_input = QShortcut("Ctrl+I", self.connectButton,
+                                       self._connect)
         self.cf.connection_failed.add_callback(
             self.connectionFailedSignal.emit)
         self.connectionFailedSignal.connect(self._connection_failed)
@@ -459,8 +462,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.menuItemConnect.setText("Connect to Crazyflie")
             self.menuItemConnect.setEnabled(canConnect)
             self.connectButton.setText("Connect")
-            self.connectButton.setToolTip(
-                "Connect to the Crazyflie on the selected interface")
+            self.connectButton.setToolTip("Connect to the Crazyflie on"
+                                          "the selected interface (Ctrl+I)")
             self.connectButton.setEnabled(canConnect)
             self.scanButton.setText("Scan")
             self.scanButton.setEnabled(True)
@@ -478,7 +481,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.menuItemConnect.setText("Disconnect")
             self.menuItemConnect.setEnabled(True)
             self.connectButton.setText("Disconnect")
-            self.connectButton.setToolTip("Disconnect from the Crazyflie")
+            self.connectButton.setToolTip("Disconnect from"
+                                          "the Crazyflie (Ctrl+I)")
             self.scanButton.setEnabled(False)
             self.logConfigAction.setEnabled(True)
             # Find out if there's an I2C EEPROM, otherwise don't show the
@@ -492,7 +496,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.menuItemConnect.setText("Cancel")
             self.menuItemConnect.setEnabled(True)
             self.connectButton.setText("Cancel")
-            self.connectButton.setToolTip("Cancel connecting to the Crazyflie")
+            self.connectButton.setToolTip(
+                "Cancel connecting to the Crazyflie")
             self.scanButton.setEnabled(False)
             self.address.setEnabled(False)
             self.menuItemBootloader.setEnabled(False)
@@ -561,6 +566,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             color = COLOR_RED
 
         self.batteryBar.setStyleSheet(progressbar_stylesheet(color))
+        self._aff_volts.setText(("%.3f" % data["pm.vbat"]))
 
     def _connected(self):
         self.uiState = UIState.CONNECTED

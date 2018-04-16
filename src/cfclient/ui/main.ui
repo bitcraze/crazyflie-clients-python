@@ -22,6 +22,34 @@
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
        <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="6">
+         <widget class="QLineEdit" name="_aff_volts">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>48</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>48</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="0">
          <widget class="QComboBox" name="interfaceCombo">
           <property name="minimumSize">
@@ -42,6 +70,9 @@
             <width>60</width>
             <height>0</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string/>
           </property>
          </widget>
         </item>
@@ -68,14 +99,14 @@
           </property>
          </spacer>
         </item>
-        <item row="0" column="6">
+        <item row="0" column="8">
          <widget class="QLabel" name="linkQualityLabel">
           <property name="text">
            <string>Link Quality:</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="7">
+        <item row="0" column="9">
          <widget class="QProgressBar" name="linkQualityBar">
           <property name="minimumSize">
            <size>
@@ -125,13 +156,13 @@
            </size>
           </property>
           <property name="minimum">
-           <number>3000</number>
+           <number>3400</number>
           </property>
           <property name="maximum">
-           <number>4200</number>
+           <number>4180</number>
           </property>
           <property name="value">
-           <number>3000</number>
+           <number>3800</number>
           </property>
           <property name="textVisible">
            <bool>true</bool>
@@ -144,6 +175,13 @@
           </property>
           <property name="format">
            <string>Battery %v mV</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="7">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string> volts </string>
           </property>
          </widget>
         </item>
@@ -211,7 +249,7 @@
            <x>0</x>
            <y>0</y>
            <width>852</width>
-           <height>500</height>
+           <height>506</height>
           </rect>
          </property>
          <property name="sizePolicy">
@@ -224,7 +262,16 @@
           <property name="sizeConstraint">
            <enum>QLayout::SetNoConstraint</enum>
           </property>
-          <property name="margin">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
            <number>0</number>
           </property>
           <item row="0" column="0">
@@ -254,7 +301,7 @@
      <x>0</x>
      <y>0</y>
      <width>872</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -310,12 +357,18 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="menuItemConnect">
    <property name="text">
-    <string>Connect</string>
+    <string>Connect Ctrl+C</string>
+   </property>
+   <property name="shortcut">
+    <string/>
    </property>
   </action>
   <action name="menuItemExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
    </property>
   </action>
   <action name="menuItemRegulation">
