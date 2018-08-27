@@ -1167,16 +1167,6 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="_pos_estimate_button">
-              <property name="toolTip">
-               <string>Anchor position estimator wizard</string>
-              </property>
-              <property name="text">
-               <string>Pos estimator (beta)</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <widget class="QPushButton" name="_read_pos_from_anhors_button">
               <property name="enabled">
                <bool>true</bool>

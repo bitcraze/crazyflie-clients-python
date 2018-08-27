@@ -49,9 +49,6 @@ from lpslib.lopoanchor import LoPoAnchor
 import copy
 import sys
 
-from cfclient.ui.dialogs.anchor_position_wizard_dialog import \
-    AnchorPositionWizardDialog
-
 __author__ = 'Bitcraze AB'
 __all__ = ['LocoPositioningTab']
 
@@ -363,8 +360,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
         self._display_mode = DisplayMode.estimated_position
 
-        self._anchor_position_wizard_dialog = None
-
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
         self._connected_signal.connect(self._connected)
@@ -428,11 +423,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
         self._show_all_button.clicked.connect(self._scale_and_center_graphs)
 
-        self._pos_estimate_button.clicked.connect(
-            self._show_anchor_postion_wizard_dialog
-        )
-        self._pos_estimate_button.setEnabled(False)
-
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
             self._connected_signal.emit)
@@ -462,11 +452,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     def _do_when_checked(self, enabled, fkn, arg):
         if enabled:
             fkn(arg)
-
-    def _show_anchor_postion_wizard_dialog(self):
-        self._anchor_position_wizard_dialog = AnchorPositionWizardDialog(
-            self.UPDATE_PERIOD_LOG, self._anchor_status, self._anchor_pos_ui)
-        self._anchor_position_wizard_dialog.show()
 
     def _register_anchor_pos_ui(self, nr):
         x_spin = getattr(self, 'spin_a{}x'.format(nr))
@@ -732,7 +717,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._clear_state()
         self._update_graphics()
         self.is_loco_deck_active = False
-        self._pos_estimate_button.setEnabled(False)
         self._update_lps_state(self.LOCO_MODE_UNKNOWN)
         self._enable_mode_buttons(False)
         self._loco_mode_updated('', self.LOCO_MODE_UNKNOWN)
@@ -765,9 +749,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             valid, anchor_number = self._parse_range_param_name(name)
             if valid:
                 self._get_anchor(anchor_number).distance = float(value)
-                if self._anchor_position_wizard_dialog:
-                    self._anchor_position_wizard_dialog.range_received(
-                        anchor_number, float(value), timestamp)
 
     def _position_received(self, timestamp, data, logconf):
         """Callback from the logging system when the position is updated."""
@@ -793,11 +774,9 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
                     if self._id_anchor_button.isChecked():
                         self._estimated_postion_button.setChecked(True)
                     self._id_anchor_button.setEnabled(False)
-                self._pos_estimate_button.setEnabled(False)
             else:
                 if not self._id_anchor_button.isEnabled():
                     self._id_anchor_button.setEnabled(True)
-                self._pos_estimate_button.setEnabled(self.is_loco_deck_active)
             self._update_lps_state(lps_state)
 
     def _update_ranging_status_indicators(self, status):
