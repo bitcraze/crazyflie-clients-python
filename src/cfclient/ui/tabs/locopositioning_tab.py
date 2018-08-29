@@ -455,6 +455,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         )
 
         self._show_all_button.clicked.connect(self._scale_and_center_graphs)
+        self._clear_anchors_button.clicked.connect(self._clear_anchors)
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
@@ -541,10 +542,13 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
                 lopo.set_mode(i, mode_translation[mode])
 
     def _clear_state(self):
-        self._anchors = {}
+        self._clear_anchors()
         self._position = [0.0, 0.0, 0.0]
         self._update_ranging_status_indicators()
         self._id_anchor_button.setEnabled(True)
+
+    def _clear_anchors(self):
+        self._anchors = {}
 
     def _scale_and_center_graphs(self):
         start_bounds = Range(sys.float_info.max, -sys.float_info.max)

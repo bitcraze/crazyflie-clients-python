@@ -90,6 +90,13 @@
                  </widget>
                 </item>
                 <item>
+                 <widget class="QPushButton" name="_clear_anchors_button">
+                  <property name="text">
+                   <string>Clear</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <spacer name="verticalSpacer_3">
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
