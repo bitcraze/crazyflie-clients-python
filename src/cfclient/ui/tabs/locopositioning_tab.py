@@ -362,6 +362,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     _anchor_range_signal = pyqtSignal(int, object, object)
     _position_signal = pyqtSignal(int, object, object)
     _loco_sys_signal = pyqtSignal(int, object, object)
+    _cb_param_to_detect_loco_deck_signal = pyqtSignal(object, object)
 
     _anchor_active_id_list_updated_signal = pyqtSignal(object)
     _anchor_data_updated_signal = pyqtSignal(object)
@@ -390,6 +391,8 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._anchor_range_signal.connect(self._anchor_range_received)
         self._position_signal.connect(self._position_received)
         self._loco_sys_signal.connect(self._loco_sys_received)
+        self._cb_param_to_detect_loco_deck_signal.connect(
+            self._cb_param_to_detect_loco_deck)
 
         self._anchor_active_id_list_updated_signal.connect(
             self._active_id_list_updated)
@@ -648,11 +651,35 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
-        logger.debug("Crazyflie connected to {}".format(link_uri))
+        logger.info("Crazyflie connected to {}".format(link_uri))
+        self._request_param_to_detect_loco_deck()
 
-        self.is_loco_deck_active = bool(
-            self._helper.cf.mem.ow_search(vid=0xBC, pid=0x06))
-        if self.is_loco_deck_active:
+    def _request_param_to_detect_loco_deck(self):
+        """Send a parameter request to detect if the Loco deck is installed"""
+        group = 'deck'
+        param = 'bcDWM1000'
+
+        if self._is_in_param_toc(group, param):
+            logger.info("Requesting loco deck parameter")
+            self._helper.cf.param.add_update_callback(
+                group=group, name=param,
+                cb=self._cb_param_to_detect_loco_deck_signal.emit)
+
+    def _cb_param_to_detect_loco_deck(self, name, value):
+        """Callback from the parameter sub system when the Loco deck detection
+        parameter has been updated"""
+        if value == '1':
+            logger.info("Loco deck installed, enabling LPS tab")
+            self._loco_deck_detected()
+        else:
+            logger.info("No Loco deck installed")
+
+    def _loco_deck_detected(self):
+        """Called when the loco deck has been detected. Enables the tab,
+        starts logging and polling of the memory sub system as well as starts
+        timers for updating graphics"""
+        if not self.is_loco_deck_active:
+            self.is_loco_deck_active = True
             try:
                 self._register_logblock(
                     "LoPoTab0",
@@ -747,6 +774,10 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         group = variable[0]
         param = variable[1]
         return group in toc.toc and param in toc.toc[group]
+
+    def _is_in_param_toc(self, group, param):
+        toc = self._helper.cf.param.toc
+        return bool(group in toc.toc and param in toc.toc[group])
 
     def _anchor_range_received(self, timestamp, data, logconf):
         """Callback from the logging system when a range is updated."""
