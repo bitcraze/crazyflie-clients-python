@@ -32,7 +32,8 @@ from PyQt5 import QtWidgets
 from PyQt5 import uic
 from PyQt5.QtCore import QAbstractTableModel, QVariant, Qt
 from PyQt5.QtGui import QBrush, QColor
-from PyQt5.QtWidgets import QInputDialog
+from PyQt5.QtWidgets import QInputDialog, QFileDialog
+import yaml
 
 __author__ = 'Bitcraze AB'
 __all__ = ['AnchorPositionDialog']
@@ -110,13 +111,14 @@ class AnchorPositionConfigTableModel(QAbstractTableModel):
             self._anchor_positions.sort(key=lambda row: row[1])
             self.layoutChanged.emit()
 
-    def replaceAnchorsFromLatestKnownPositions(self):
+    def replace_anchors_from_latest_known_positions(self):
+        self.replace_anchor_positions(self._latest_known_anchor_positions)
+
+    def replace_anchor_positions(self, anchor_positions):
         self.layoutAboutToBeChanged.emit()
-
         self._anchor_positions = []
-        for id, position in self._latest_known_anchor_positions.items():
+        for id, position in anchor_positions.items():
             self.add_anchor(id, x=position[0], y=position[1], z=position[2])
-
         self.layoutChanged.emit()
 
     def get_anchor_postions(self):
@@ -186,6 +188,10 @@ class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
         self._write_to_anchors_button.clicked.connect(
             self._write_to_anchors_button_clicked)
         self._close_button.clicked.connect(self.close)
+        self._load_button.clicked.connect(
+            self._load_button_clicked)
+        self._save_button.clicked.connect(
+            self._save_button_clicked)
 
     def _add_anchor_button_clicked(self):
         anchor_id, ok = QInputDialog.getInt(
@@ -194,7 +200,7 @@ class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
             self._data_model.add_anchor(anchor_id)
 
     def _get_from_anchors_button_clicked(self):
-        self._data_model.replaceAnchorsFromLatestKnownPositions()
+        self._data_model.replace_anchors_from_latest_known_positions()
 
     def _write_to_anchors_button_clicked(self):
         anchor_positions = self._data_model.get_anchor_postions()
@@ -202,3 +208,25 @@ class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
 
     def anchor_postions_updated(self, anchor_positions):
         self._data_model.anchor_postions_updated(anchor_positions)
+
+    def _load_button_clicked(self):
+        names = QFileDialog.getOpenFileName(self, 'Open file')
+        f = open(names[0], 'r')
+        with f:
+            data = yaml.load(f)
+
+            anchor_positions = {}
+            for id, pos in data.items():
+                anchor_positions[id] = (pos['x'], pos['y'], pos['z'])
+            self._data_model.replace_anchor_positions(anchor_positions)
+
+    def _save_button_clicked(self):
+        anchor_positions = self._data_model.get_anchor_postions()
+        data = {}
+        for id, pos in anchor_positions.items():
+            data[id] = {'x': pos[0], 'y': pos[1], 'z': pos[2]}
+
+        names = QFileDialog.getSaveFileName(self, 'Save file')
+        f = open(names[0], 'w')
+        with f:
+            yaml.dump(data, f)
