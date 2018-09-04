@@ -124,8 +124,11 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib>=0.1.6', 'appdirs>=1.4.0',
-                                          'pyzmq', 'pyqtgraph>=0.10', 'PyYAML'],
+    install_requires=platform_requires + ['cflib>=0.1.6',
+                                          'appdirs>=1.4.0',
+                                          'pyzmq',
+                                          'pyqtgraph>=0.10',
+                                          'PyYAML'],
 
     # List of dev and qt dependencies
     # You can install them by running
