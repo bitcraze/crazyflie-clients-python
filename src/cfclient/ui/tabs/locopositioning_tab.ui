@@ -389,6 +389,12 @@
            <property name="enabled">
             <bool>true</bool>
            </property>
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -401,6 +407,13 @@
            <layout class="QVBoxLayout" name="verticalLayout">
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <item>
+               <widget class="QLabel" name="label">
+                <property name="text">
+                 <string>Change mode:</string>
+                </property>
+               </widget>
+              </item>
               <item>
                <widget class="QPushButton" name="_switch_mode_to_twr_button">
                 <property name="toolTip">
@@ -422,6 +435,17 @@
                <widget class="QPushButton" name="_switch_mode_to_tdoa3_button">
                 <property name="text">
                  <string>TDoA 3</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_9">
+              <item>
+               <widget class="QPushButton" name="_configure_anchor_positions_button">
+                <property name="text">
+                 <string>Configure positions</string>
                 </property>
                </widget>
               </item>

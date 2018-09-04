@@ -34,6 +34,7 @@ import logging
 from enum import Enum
 from collections import namedtuple
 
+import time
 from PyQt5 import uic
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QFont
@@ -46,6 +47,8 @@ from cfclient.ui.tab import Tab
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import MemoryElement
 from lpslib.lopoanchor import LoPoAnchor
+
+from cfclient.ui.dialogs.anchor_position_dialog import AnchorPositionDialog
 
 import copy
 import sys
@@ -437,10 +440,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._switch_mode_to_tdoa2_button.setEnabled(False)
         self._switch_mode_to_tdoa3_button.setEnabled(False)
 
-        self._switch_mode_to_twr_button.setEnabled(False)
-        self._switch_mode_to_tdoa2_button.setEnabled(False)
-        self._switch_mode_to_tdoa3_button.setEnabled(False)
-
         self._switch_mode_to_twr_button.clicked.connect(
             lambda enabled:
             self._send_anchor_mode(self.LOCO_MODE_TWR)
@@ -456,6 +455,9 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
         self._show_all_button.clicked.connect(self._scale_and_center_graphs)
         self._clear_anchors_button.clicked.connect(self._clear_anchors)
+
+        self._configure_anchor_positions_button.clicked.connect(
+            self._show_anchor_postion_dialog)
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
@@ -482,6 +484,9 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
         self._lps_state = self.LOCO_MODE_UNKNOWN
         self._update_lps_state(self.LOCO_MODE_UNKNOWN)
+
+        self._anchor_position_dialog = AnchorPositionDialog(self)
+        self._configure_anchor_positions_button.setEnabled(False)
 
     def _do_when_checked(self, enabled, fkn, arg):
         if enabled:
@@ -529,7 +534,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
         mode_translation = {
             self.LOCO_MODE_TWR: lopo.MODE_TWR,
-            self.LOCO_MODE_TDOA2: lopo.MODE_TDOA2,
+            self.LOCO_MODE_TDOA2: lopo.MODE_TDOA,
             self.LOCO_MODE_TDOA3: lopo.MODE_TDOA3,
         }
 
@@ -732,6 +737,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
             self._start_polling_anchor_pos(self._helper.cf)
             self._enable_mode_buttons(True)
+            self._configure_anchor_positions_button.setEnabled(True)
 
             self._helper.cf.param.add_update_callback(
                 group=self.PARAM_MDOE_GR,
@@ -756,6 +762,8 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._update_lps_state(self.LOCO_MODE_UNKNOWN)
         self._enable_mode_buttons(False)
         self._loco_mode_updated('', self.LOCO_MODE_UNKNOWN)
+        self._configure_anchor_positions_button.setEnabled(False)
+        self._anchor_position_dialog.close()
 
     def _register_logblock(self, logblock_name, variables, data_cb, error_cb,
                            update_period=UPDATE_PERIOD_LOG):
@@ -889,6 +897,8 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             if anchor_data.is_valid:
                 anchor.set_position(anchor_data.position)
 
+        self._update_positions_in_config_dialog()
+
     def _parse_range_param_name(self, name):
         """Parse a parameter name for a ranging distance and return the number
            of the anchor. The name is on the format 'ranging.distance4' """
@@ -994,3 +1004,23 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             self._mode_twr.setChecked(False)
             self._mode_tdoa2.setChecked(False)
             self._mode_tdoa3.setChecked(False)
+
+    def _show_anchor_postion_dialog(self):
+        self._anchor_position_dialog.show()
+
+    def _update_positions_in_config_dialog(self):
+        positions = {}
+
+        for id, anchor in self._anchors.items():
+            if anchor.is_position_valid():
+                positions[id] = (anchor.x, anchor.y, anchor.z)
+
+        self._anchor_position_dialog.anchor_postions_updated(positions)
+
+    def write_positions_to_anchors(self, anchor_positions):
+        lopo = LoPoAnchor(self._helper.cf)
+
+        for _ in range(3):
+            for id, position in anchor_positions.items():
+                lopo.set_position(id, position)
+            time.sleep(0.2)
