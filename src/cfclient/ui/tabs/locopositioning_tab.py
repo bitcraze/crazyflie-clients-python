@@ -795,8 +795,13 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         """Callback from the logging system when a range is updated."""
         for name, value in data.items():
             valid, anchor_number = self._parse_range_param_name(name)
-            if valid:
-                self._get_anchor(anchor_number).distance = float(value)
+            # Only set distance on anchors that we have seen through other
+            # messages to avoid creating anchor 0-7 even if they do not exist
+            # in a TDoA3 set up for instance
+            if self._anchor_exists(anchor_number):
+                if valid:
+                    anchor = self._get_create_anchor(anchor_number)
+                    anchor.distance = float(value)
 
     def _position_received(self, timestamp, data, logconf):
         """Callback from the logging system when the position is updated."""
@@ -884,7 +889,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             anchor_data.set_is_active(False)
 
         for id in anchor_list:
-            anchor_data = self._get_anchor(id)
+            anchor_data = self._get_create_anchor(id)
             anchor_data.set_is_active(True)
 
         self._update_ranging_status_indicators()
@@ -893,7 +898,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         """Callback from the anchor state machine when the anchor positions
          are updated"""
         for id, anchor_data in position_dict.items():
-            anchor = self._get_anchor(id)
+            anchor = self._get_create_anchor(id)
             if anchor_data.is_valid:
                 anchor.set_position(anchor_data.position)
 
@@ -920,10 +925,13 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             valid = True
         return (valid, axis)
 
-    def _get_anchor(self, anchor_number):
+    def _get_create_anchor(self, anchor_number):
         if anchor_number not in self._anchors:
             self._anchors[anchor_number] = Anchor()
         return self._anchors[anchor_number]
+
+    def _anchor_exists(self, anchor_number):
+        return anchor_number in self._anchors
 
     def _update_graphics(self):
         if self.is_visible() and self.is_loco_deck_active:
