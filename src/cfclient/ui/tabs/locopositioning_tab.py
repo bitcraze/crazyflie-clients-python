@@ -828,33 +828,39 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     def _update_ranging_status_indicators(self):
         container = self._anchor_stats_container
 
-        while not container.isEmpty():
-            label = container.takeAt(0).widget()
-            label.deleteLater()
-
         ids = sorted(self._anchors.keys())
 
-        col = 1
-        row = 1
-
+        # Update existing labels or add new if needed
+        count = 0
         for id in ids:
-            label = QLabel()
+            col = count % 8
+            row = int(count / 8)
+
+            if count < container.count():
+                label = container.itemAtPosition(row, col).widget()
+            else:
+                label = QLabel()
+                label.setMinimumSize(30, 0)
+                label.setProperty('frameShape', 'QFrame::Box')
+                label.setAlignment(Qt.AlignCenter)
+                container.addWidget(label, row, col)
+
             label.setText(str(id))
-            label.setMinimumSize(30, 0)
-            label.setProperty('frameShape', 'QFrame::Box')
-            label.setAlignment(Qt.AlignCenter)
 
             if self._anchors[id].is_active():
                 label.setStyleSheet(STYLE_GREEN_BACKGROUND)
             else:
                 label.setStyleSheet(STYLE_RED_BACKGROUND)
 
-            container.addWidget(label, row, col)
+            count += 1
 
-            col += 1
-            if col > 8:
-                col = 1
-                row += 1
+        # Remove labels if there are too many
+        for i in range(count, container.count()):
+            col = i % 8
+            row = int(i / 8)
+
+            label = container.itemAtPosition(row, col).widget()
+            label.deleteLater()
 
     def _logging_error(self, log_conf, msg):
         """Callback from the log layer when an error occurs"""
