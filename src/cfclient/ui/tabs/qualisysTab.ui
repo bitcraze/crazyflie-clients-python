@@ -84,67 +84,7 @@
        <item>
         <widget class="QLabel" name="label">
          <property name="text">
-          <string>Crazyflie</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QSpinBox" name="cfChannelSpinner">
-         <property name="prefix">
-          <string>Ch. </string>
-         </property>
-         <property name="maximum">
-          <number>999</number>
-         </property>
-         <property name="value">
-          <number>80</number>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QComboBox" name="cfBandwidthBox">
-         <property name="minimumSize">
-          <size>
-           <width>64</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>64</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="currentIndex">
-          <number>2</number>
-         </property>
-         <item>
-          <property name="text">
-           <string>250 Kbit/s</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>1 MBit/s</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>2 Mbit/s</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="connectCrazyflieButton">
-         <property name="minimumSize">
-          <size>
-           <width>106</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Connect to Crazyflie</string>
+          <string>Crazyflie status</string>
          </property>
         </widget>
        </item>
@@ -235,8 +175,8 @@
              <rect>
               <x>0</x>
               <y>20</y>
-              <width>91</width>
-              <height>201</height>
+              <width>120</width>
+              <height>220</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -395,7 +335,7 @@
              <rect>
               <x>10</x>
               <y>-3</y>
-              <width>291</width>
+              <width>325</width>
               <height>191</height>
              </rect>
             </property>
@@ -527,7 +467,7 @@
               <x>10</x>
               <y>20</y>
               <width>251</width>
-              <height>80</height>
+              <height>95</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout_3">
@@ -661,6 +601,12 @@
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout">
+             <property name="horizontalSpacing">
+              <number>6</number>
+             </property>
+             <property name="verticalSpacing">
+              <number>0</number>
+             </property>
              <property name="leftMargin">
               <number>0</number>
              </property>
@@ -668,12 +614,6 @@
               <number>0</number>
              </property>
              <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <property name="horizontalSpacing">
-              <number>6</number>
-             </property>
-             <property name="verticalSpacing">
               <number>0</number>
              </property>
              <item row="2" column="0">
@@ -798,7 +738,7 @@
               <x>0</x>
               <y>120</y>
               <width>171</width>
-              <height>23</height>
+              <height>27</height>
              </rect>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -883,6 +823,12 @@
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout_2">
+             <property name="horizontalSpacing">
+              <number>6</number>
+             </property>
+             <property name="verticalSpacing">
+              <number>0</number>
+             </property>
              <property name="leftMargin">
               <number>0</number>
              </property>
@@ -890,12 +836,6 @@
               <number>0</number>
              </property>
              <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <property name="horizontalSpacing">
-              <number>6</number>
-             </property>
-             <property name="verticalSpacing">
               <number>0</number>
              </property>
              <item row="2" column="1">

@@ -241,14 +241,16 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._auto_reconnect_changed)
         self.autoReconnectCheckBox.setChecked(Config().get("auto_reconnect"))
 
+        self._disable_input = False
+
         self.joystickReader.input_updated.add_callback(
-            self.cf.commander.send_setpoint)
+            lambda *args: self._disable_input or self.cf.commander.send_setpoint(*args))
 
         self.joystickReader.assisted_input_updated.add_callback(
-            self.cf.commander.send_velocity_world_setpoint)
+            lambda *args: self._disable_input or self.cf.commander.send_velocity_world_setpoint(*args))
 
         self.joystickReader.heighthold_input_updated.add_callback(
-            self.cf.commander.send_zdistance_setpoint)
+            lambda *args: self._disable_input or self.cf.commander.send_zdistance_setpoint(*args))
 
         # Connection callbacks and signal wrappers for UI protection
         self.cf.connected.add_callback(self.connectionDoneSignal.emit)
@@ -290,6 +292,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         cfclient.ui.pluginhelper.cf = self.cf
         cfclient.ui.pluginhelper.inputDeviceReader = self.joystickReader
         cfclient.ui.pluginhelper.logConfigReader = self.logConfigReader
+        cfclient.ui.pluginhelper.mainUI = self
 
         self.logConfigDialogue = LogConfigDialogue(cfclient.ui.pluginhelper)
         self._bootloader_dialog = BootloaderDialog(cfclient.ui.pluginhelper)
@@ -385,6 +388,12 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             node.setData((m, mux_subnodes))
 
         self._mapping_support = True
+
+    def disable_input(self, disable):
+        """
+        Disable the gamepad input to be able to send setpoint from a tab
+        """
+        self._disable_input = disable
 
     def interfaceChanged(self, interface):
         if interface == INTERFACE_PROMPT_TEXT:

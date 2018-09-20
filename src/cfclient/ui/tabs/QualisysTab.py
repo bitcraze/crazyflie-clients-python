@@ -199,7 +199,6 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         # Connect the UI elements
         self.connectQtmButton.clicked.connect(self.establish_qtm_connection)
-        self.connectCrazyflieButton.clicked.connect(self.connect_crazyflie)
         self.landButton.clicked.connect(self.set_land_mode)
         self.liftButton.clicked.connect(self.set_lift_mode)
         self.followButton.clicked.connect(self.set_follow_mode)
@@ -223,11 +222,6 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.batteryBar.setTextVisible(False)
         self.batteryBar.setStyleSheet(progressbar_stylesheet(COLOR_BLUE))
         self.discover_qtm_on_network()
-
-        uri = str(Config().get("link_uri")).split("/")
-        self.cfChannelSpinner.setValue(int(uri[3]))
-        self.cfBandwidthBox.setCurrentIndex(int(uri[4][:1]if uri[4] != "250K" else 0))
-
 
     def path_changed(self):
 
@@ -434,7 +428,7 @@ class QualisysTab(Tab, qualisys_tab_class):
     def establish_qtm_connection(self):
 
         if self._qtm_connection is None:
-            ip = self.qtmIpBox.currentText().split(" ")
+            ip = ["something", "10.0.5.219"]  # self.qtmIpBox.currentText().split(" ")
 
             import qtm
             self._qrt = qtm.QRT(ip[1], 22223, version='1.17')
@@ -569,294 +563,280 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.qualisysWandPitch.setText(("%0.2f" % self.wand_pos.pitch))
         self.qualisysWandYaw.setText(("%0.2f" % self.wand_pos.yaw))
 
-    def connect_crazyflie(self):
-
-        if not self.flying_enabled:
-            self.flying_enabled = True
-            self.cfStatusLabel.setText(": connecting...")
-            self.uri = ("{}/{}".format(self.cfChannelSpinner.cleanText(), ("{}M".format(self.cfBandwidthBox.currentIndex()) if self.cfBandwidthBox.currentIndex() != 0 else "250K")))
-            Config().set("link_uri", "radio://0/{}".format(self.uri))
-            t = threading.Thread(target=self.flight_controller)
-            t.start()
-        else:
-            self.flying_enabled = False
-            self._disconnected("radio://0/{}".format(self.uri))
-
     def flight_controller(self):
         try:
-            with SyncCrazyflie("radio://0/{}".format(self.uri)) as _scf:
+            _scf = SyncCrazyflie(
+                "radio://0/{}".format(self.uri), self._helper.cf)
 
-                # init scf
-                self.scf = _scf
-                cf = self.scf.cf
-                self._connected(self.uri)
-                self.reset_estimator(self.scf)
+            # init scf
+            self.scf = _scf
+            cf = self.scf.cf
+            self.reset_estimator(self.scf)
 
-                cf.param.set_value('flightmode.posSet', '1')
+            cf.param.set_value('flightmode.posSet', '1')
 
-                time.sleep(0.1)
+            time.sleep(0.1)
 
-                # The threshold for how many frames without tracking is allowed before the cf's motors are stopped
-                lost_tracking_threshold = 100
-                frames_without_tracking = 0
-                position_hold_timer = 0
-                circle_angle_deg = 0.0
+            # The threshold for how many frames without tracking is allowed before the cf's motors are stopped
+            lost_tracking_threshold = 100
+            frames_without_tracking = 0
+            position_hold_timer = 0
+            circle_angle_deg = 0.0
 
 
-                # The main flight control loop, the behaviour is controlled by the state of "FlightMode"
-                while self.flying_enabled:
+            # The main flight control loop, the behaviour is controlled by the state of "FlightMode"
+            while self.flying_enabled:
 
-                    # Check that the position is valid and store it
-                    if self.cf_pos.is_valid():
-                        self.latest_valid_cf_pos = self.cf_pos
-                        frames_without_tracking = 0
-                    else:
-                        # if it isn't, count number of frames
-                        frames_without_tracking += 1
+                # Check that the position is valid and store it
+                if self.cf_pos.is_valid():
+                    self.latest_valid_cf_pos = self.cf_pos
+                    frames_without_tracking = 0
+                else:
+                    # if it isn't, count number of frames
+                    frames_without_tracking += 1
 
-                        if frames_without_tracking > lost_tracking_threshold:
-                            self.current_flight_mode = FlightModeStates.GROUNDED
-                            self.switch_flight_mode()
-                            self.statusLabel.setText("Status: Tracking lost, turning off motors")
-                            logger.info('Tracking lost, turning off motors')
-
-                    # If the cf is upside down, kill the motors
-                    if self.current_flight_mode != FlightModeStates.GROUNDED and (self.latest_valid_cf_pos.roll > 120 or self.latest_valid_cf_pos.roll < -120):
+                    if frames_without_tracking > lost_tracking_threshold:
                         self.current_flight_mode = FlightModeStates.GROUNDED
                         self.switch_flight_mode()
-                        self.statusLabel.setText("Status: Upside down, turning off motors")
-                        logger.info('Upside down, turning off motors')
+                        self.statusLabel.setText("Status: Tracking lost, turning off motors")
+                        logger.info('Tracking lost, turning off motors')
+
+                # If the cf is upside down, kill the motors
+                if self.current_flight_mode != FlightModeStates.GROUNDED and (self.latest_valid_cf_pos.roll > 120 or self.latest_valid_cf_pos.roll < -120):
+                    self.current_flight_mode = FlightModeStates.GROUNDED
+                    self.switch_flight_mode()
+                    self.statusLabel.setText("Status: Upside down, turning off motors")
+                    logger.info('Upside down, turning off motors')
 
 
-                    # Some of the flight modes needs an initial init when they are activated, which is done here
-                    if self.flight_mode_switched:
-                        if self.current_flight_mode == FlightModeStates.LAND:
-                                self.current_goal_pos = self.latest_valid_cf_pos
-                                logger.info('Trying to land at: x: {} y: {}'.format(self.current_goal_pos.x, self.current_goal_pos.y))
-                                land_rate_index = 1
-
-                        elif self.current_flight_mode == FlightModeStates.PATH:
-                            i = 1
-
-                            self.current_goal_pos = Position(self.flight_paths[self.pathSelector.currentIndex()][i][0], self.flight_paths[self.pathSelector.currentIndex()][i][1],
-                                                             self.flight_paths[self.pathSelector.currentIndex()][i][2], yaw=self.flight_paths[self.pathSelector.currentIndex()][i][3])
-                            logger.info(
-                                'Setting position {}'.format(self.current_goal_pos))
-                            self.flightPathDataTable.selectRow(i-1)
-
-                        elif self.current_flight_mode == FlightModeStates.CIRCLE:
-
-                            self.current_goal_pos = Position(
-                                round(math.cos(math.radians(circle_angle_deg)), 8) * self.circle_radius,
-                                round(math.sin(math.radians(circle_angle_deg)), 8) * self.circle_radius,
-                                self.circle_height, yaw=circle_angle_deg)
-
-
-                            logger.info(
-                                'Setting position {}'.format(self.current_goal_pos))
-
-                        elif self.current_flight_mode == FlightModeStates.FOLLOW:
-                            self.last_valid_wand_pos = Position(0, 0, 1)
-
-                        elif self.current_flight_mode == FlightModeStates.RECORD:
-                            self.new_path = []
-
-                        elif self.current_flight_mode == FlightModeStates.LIFT:
-                            self.current_goal_pos = self.latest_valid_cf_pos
-                            logger.info('Trying to lift at: {}'.format(self.current_goal_pos))
-
-                        elif self.current_flight_mode == FlightModeStates.HOVERING:
-                            self.current_goal_pos = self.latest_valid_cf_pos
-                            logger.info('Hovering at: {}'.format(self.current_goal_pos))
-
-                        elif self.current_flight_mode == FlightModeStates.GROUNDED:
-                            pass
-
-                        # Remember to set the flag back to false after the init is done
-                        self.flight_mode_switched = False
-
-                    # Switch on the FlightModeState and take actions accordingly
-
+                # Some of the flight modes needs an initial init when they are activated, which is done here
+                if self.flight_mode_switched:
                     if self.current_flight_mode == FlightModeStates.LAND:
-
-                        self.send_setpoint(self.scf, Position(self.current_goal_pos.x, self.current_goal_pos.y,
-                                                              (self.current_goal_pos.z / land_rate_index), yaw=0))
-                        # Check if the cf has reached the  position, if it has set a new position
-
-                        if self.latest_valid_cf_pos.distance_to(Position(self.current_goal_pos.x, self.current_goal_pos.y, (self.current_goal_pos.z /
-                                                                                                        land_rate_index))) < self.path_pos_threshold:
-                            land_rate_index *= 1.1
-
-                        if land_rate_index > 1000:
-                            self.send_setpoint(self.scf, Position(0, 0, 0))
-                            if self.land_for_recording:
-                                # Return the control to the recording mode after landing
-                                self.current_flight_mode = FlightModeStates.RECORD
-                                self.land_for_recording = False
-                            else:
-                                # Regular landing
-                                self.current_flight_mode = FlightModeStates.GROUNDED
-
-                            self.switch_flight_mode()
+                            self.current_goal_pos = self.latest_valid_cf_pos
+                            logger.info('Trying to land at: x: {} y: {}'.format(self.current_goal_pos.x, self.current_goal_pos.y))
+                            land_rate_index = 1
 
                     elif self.current_flight_mode == FlightModeStates.PATH:
+                        i = 1
 
-                        self.send_setpoint(self.scf, self.current_goal_pos)
-                        # Check if the cf has reached the goal position, if it has set a new goal position
-                        if self.latest_valid_cf_pos.distance_to(self.current_goal_pos) < self.path_pos_threshold:
-
-
-                            if position_hold_timer > self.position_hold_timelimit:
-
-                                i = (i + 1)
-                                if i == (len(self.flight_paths[self.pathSelector.currentIndex()])):
-                                    i = 1
-                                position_hold_timer = 0
-                                self.current_goal_pos = Position(self.flight_paths[self.pathSelector.currentIndex()][i][0], self.flight_paths[self.pathSelector.currentIndex()][i][1],
-                                                                 self.flight_paths[self.pathSelector.currentIndex()][i][2], yaw=self.flight_paths[self.pathSelector.currentIndex()][i][3])
-
-
-                                logger.info('Setting position {}'.format(self.current_goal_pos))
-                                self.flightPathDataTable.selectRow(i-1)
-                            elif position_hold_timer == 0:
-
-                                time_of_pos_reach = time.time()
-                                # Add som time just to get going, it will be overwritten in the next step. Setting it higher than the imit will break hte code.
-                                position_hold_timer = 0.0001
-                            else:
-                                position_hold_timer = time.time() - time_of_pos_reach
+                        self.current_goal_pos = Position(self.flight_paths[self.pathSelector.currentIndex()][i][0], self.flight_paths[self.pathSelector.currentIndex()][i][1],
+                                                            self.flight_paths[self.pathSelector.currentIndex()][i][2], yaw=self.flight_paths[self.pathSelector.currentIndex()][i][3])
+                        logger.info(
+                            'Setting position {}'.format(self.current_goal_pos))
+                        self.flightPathDataTable.selectRow(i-1)
 
                     elif self.current_flight_mode == FlightModeStates.CIRCLE:
-                        self.send_setpoint(self.scf, self.current_goal_pos)
 
-                        # Check if the cf has reached the goal position, if it has set a new goal position
-                        if self.latest_valid_cf_pos.distance_to(self.current_goal_pos) < self.circle_pos_threshold:
-
-                            if position_hold_timer >= self.position_hold_timelimit:
-
-                                position_hold_timer = 0
-
-                                # increment the angle
-                                circle_angle_deg = (circle_angle_deg + self.circle_resolution) % 360
-
-                                # Calculate the next position in the circle to fly to
-                                self.current_goal_pos = Position(round(math.cos(math.radians(circle_angle_deg)),4) * self.circle_radius,
-                                                                 round(math.sin(math.radians(circle_angle_deg)),4) * self.circle_radius,
-                                                                 self.circle_height, yaw=circle_angle_deg)
+                        self.current_goal_pos = Position(
+                            round(math.cos(math.radians(circle_angle_deg)), 8) * self.circle_radius,
+                            round(math.sin(math.radians(circle_angle_deg)), 8) * self.circle_radius,
+                            self.circle_height, yaw=circle_angle_deg)
 
 
-                                logger.info('Setting position {}'.format(self.current_goal_pos))
-
-                            elif position_hold_timer == 0:
-
-                                time_of_pos_reach = time.time()
-                                # Add som time just to get going, it will be overwritten in the next step.
-                                # Setting it higher than the imit will break the code.
-                                position_hold_timer = 0.0001
-                            else:
-                                position_hold_timer = time.time() - time_of_pos_reach
+                        logger.info(
+                            'Setting position {}'.format(self.current_goal_pos))
 
                     elif self.current_flight_mode == FlightModeStates.FOLLOW:
-
-                        if self.wand_pos.is_valid():
-                            self.last_valid_wand_pos = self.wand_pos
-
-                            # Fit the angle of the wand in the interval 0-4
-                            self.length_from_wand = (2*((self.wand_pos.roll + 90)/180)-1) + 2
-                            self.send_setpoint(self.scf, Position(self.wand_pos.x +
-                                                                  round(math.cos(math.radians(self.wand_pos.yaw)),4)
-                                                       * self.length_from_wand, self.wand_pos.y +
-                                                                  round(math.sin(math.radians(self.wand_pos.yaw)),4) *
-                                                       self.length_from_wand, ((self.wand_pos.z +
-                                                                                 round(math.sin(math.radians(self.wand_pos.pitch)),4) *
-                                                       self.length_from_wand) if ((self.wand_pos.z +
-                                                                                 round(math.sin(math.radians(self.wand_pos.pitch)),4) *
-                                                       self.length_from_wand) > 0) else 0)))
-                        else:
-                            self.length_from_wand = (2 * ((self.last_valid_wand_pos.roll + 90) / 180) - 1) + 2
-                            self.send_setpoint(self.scf, Position(self.last_valid_wand_pos.x +
-                                                                  round(math.cos(math.radians(self.last_valid_wand_pos.yaw)), 4)
-                                                                  * self.length_from_wand, self.last_valid_wand_pos.y +
-                                                                  round(math.sin(math.radians(self.last_valid_wand_pos.yaw)), 4) *
-                                                                  self.length_from_wand, int(self.last_valid_wand_pos.z +
-                                                                                             round(math.sin(
-                                                                                                 math.radians(
-                                                                                                     self.last_valid_wand_pos.pitch)),
-                                                                                                   4) *
-                                                                                             self.length_from_wand)))
-
-                    elif self.current_flight_mode == FlightModeStates.LIFT:
-
-                        self.send_setpoint(self.scf, Position(self.current_goal_pos.x, self.current_goal_pos.y, 1))
-
-                        if self.latest_valid_cf_pos.distance_to(Position(self.current_goal_pos.x, self.current_goal_pos.y, 1)) < 0.05:
-                            # Wait for hte crazyflie to reach the goal
-                            self.current_flight_mode = FlightModeStates.HOVERING
-                            self.switch_flight_mode()
-
-                    elif self.current_flight_mode == FlightModeStates.HOVERING:
-                        self.send_setpoint(self.scf, self.current_goal_pos)
+                        self.last_valid_wand_pos = Position(0, 0, 1)
 
                     elif self.current_flight_mode == FlightModeStates.RECORD:
+                        self.new_path = []
 
-                        if self.latest_valid_cf_pos.z > 1.0 and not self.recording_in_progress:
-                            # Start recording when the cf is lifted
-                            self.recording_in_progress = True
-                            # Start the timer thread
-                            self.save_current_position()
-                            # Gui
-                            logger.info("Recording flightpath")
-                            self.statusLabel.setText("Status: Recording Flightpath")
+                    elif self.current_flight_mode == FlightModeStates.LIFT:
+                        self.current_goal_pos = self.latest_valid_cf_pos
+                        logger.info('Trying to lift at: {}'.format(self.current_goal_pos))
 
-                        elif self.latest_valid_cf_pos.z < 0.03 and self.recording_in_progress:
-                            # Stop the recording when the cf is put on the ground again
-                            logger.info("Recording stopped")
-                            self.recording_in_progress = False
-
-                            # Remove the last bit (1s) of the recording, containing setting the cf down
-                            for i in range(20):
-                                self.new_path.pop()
-
-                            # Add the new path to list and Gui
-                            now = datetime.datetime.fromtimestamp(time.time())
-
-                            new_name = ("Recording {}/{}/{} {}:{}".format(now.year-2000, now.month if now.month > 9
-                            else "0{}".format(now.month), now.day if now.day > 9 else "0{}".format(now.day), now.hour
-                            if now.hour > 9 else "0{}".format(now.hour), now.minute if now.minute > 9 else
-                            "0{}".format(now.minute)))
-
-                            self.new_path.insert(0, new_name)
-                            self.flight_paths.append(self.new_path)
-                            self.pathSelector.addItem(new_name)
-
-                            # Select the new path
-                            self.pathSelector.setCurrentIndex(len(self.flight_paths) - 1)
-                            self.path_changed()
-                            Config().set("flight_paths", self.flight_paths)
-
-                            # Wait while the operator moves away
-                            self.statusLabel.setText("Status: Replay in 3s")
-                            time.sleep(1)
-                            self.statusLabel.setText("Status: Replay in 2s")
-                            time.sleep(1)
-                            self.statusLabel.setText("Status: Replay in 1s")
-                            time.sleep(1)
-                            # Switch to path mode and replay the recording
-                            self.current_flight_mode = FlightModeStates.PATH
-                            self.switch_flight_mode()
-
+                    elif self.current_flight_mode == FlightModeStates.HOVERING:
+                        self.current_goal_pos = self.latest_valid_cf_pos
+                        logger.info('Hovering at: {}'.format(self.current_goal_pos))
 
                     elif self.current_flight_mode == FlightModeStates.GROUNDED:
-                        self.send_setpoint(self.scf, Position(0, 0, 0))
+                        pass
 
-                    time.sleep(0.001)
+                    # Remember to set the flag back to false after the init is done
+                    self.flight_mode_switched = False
+
+                # Switch on the FlightModeState and take actions accordingly
+
+                if self.current_flight_mode == FlightModeStates.LAND:
+
+                    self.send_setpoint(self.scf, Position(self.current_goal_pos.x, self.current_goal_pos.y,
+                                                            (self.current_goal_pos.z / land_rate_index), yaw=0))
+                    # Check if the cf has reached the  position, if it has set a new position
+
+                    if self.latest_valid_cf_pos.distance_to(Position(self.current_goal_pos.x, self.current_goal_pos.y, (self.current_goal_pos.z /
+                                                                                                    land_rate_index))) < self.path_pos_threshold:
+                        land_rate_index *= 1.1
+
+                    if land_rate_index > 1000:
+                        self.send_setpoint(self.scf, Position(0, 0, 0))
+                        if self.land_for_recording:
+                            # Return the control to the recording mode after landing
+                            self.current_flight_mode = FlightModeStates.RECORD
+                            self.land_for_recording = False
+                        else:
+                            # Regular landing
+                            self.current_flight_mode = FlightModeStates.GROUNDED
+
+                        self.switch_flight_mode()
+
+                elif self.current_flight_mode == FlightModeStates.PATH:
+
+                    self.send_setpoint(self.scf, self.current_goal_pos)
+                    # Check if the cf has reached the goal position, if it has set a new goal position
+                    if self.latest_valid_cf_pos.distance_to(self.current_goal_pos) < self.path_pos_threshold:
+
+
+                        if position_hold_timer > self.position_hold_timelimit:
+
+                            i = (i + 1)
+                            if i == (len(self.flight_paths[self.pathSelector.currentIndex()])):
+                                i = 1
+                            position_hold_timer = 0
+                            self.current_goal_pos = Position(self.flight_paths[self.pathSelector.currentIndex()][i][0], self.flight_paths[self.pathSelector.currentIndex()][i][1],
+                                                                self.flight_paths[self.pathSelector.currentIndex()][i][2], yaw=self.flight_paths[self.pathSelector.currentIndex()][i][3])
+
+
+                            logger.info('Setting position {}'.format(self.current_goal_pos))
+                            self.flightPathDataTable.selectRow(i-1)
+                        elif position_hold_timer == 0:
+
+                            time_of_pos_reach = time.time()
+                            # Add som time just to get going, it will be overwritten in the next step. Setting it higher than the imit will break hte code.
+                            position_hold_timer = 0.0001
+                        else:
+                            position_hold_timer = time.time() - time_of_pos_reach
+
+                elif self.current_flight_mode == FlightModeStates.CIRCLE:
+                    self.send_setpoint(self.scf, self.current_goal_pos)
+
+                    # Check if the cf has reached the goal position, if it has set a new goal position
+                    if self.latest_valid_cf_pos.distance_to(self.current_goal_pos) < self.circle_pos_threshold:
+
+                        if position_hold_timer >= self.position_hold_timelimit:
+
+                            position_hold_timer = 0
+
+                            # increment the angle
+                            circle_angle_deg = (circle_angle_deg + self.circle_resolution) % 360
+
+                            # Calculate the next position in the circle to fly to
+                            self.current_goal_pos = Position(round(math.cos(math.radians(circle_angle_deg)),4) * self.circle_radius,
+                                                                round(math.sin(math.radians(circle_angle_deg)),4) * self.circle_radius,
+                                                                self.circle_height, yaw=circle_angle_deg)
+
+
+                            logger.info('Setting position {}'.format(self.current_goal_pos))
+
+                        elif position_hold_timer == 0:
+
+                            time_of_pos_reach = time.time()
+                            # Add som time just to get going, it will be overwritten in the next step.
+                            # Setting it higher than the imit will break the code.
+                            position_hold_timer = 0.0001
+                        else:
+                            position_hold_timer = time.time() - time_of_pos_reach
+
+                elif self.current_flight_mode == FlightModeStates.FOLLOW:
+
+                    if self.wand_pos.is_valid():
+                        self.last_valid_wand_pos = self.wand_pos
+
+                        # Fit the angle of the wand in the interval 0-4
+                        self.length_from_wand = (2*((self.wand_pos.roll + 90)/180)-1) + 2
+                        self.send_setpoint(self.scf, Position(self.wand_pos.x +
+                                                                round(math.cos(math.radians(self.wand_pos.yaw)),4)
+                                                    * self.length_from_wand, self.wand_pos.y +
+                                                                round(math.sin(math.radians(self.wand_pos.yaw)),4) *
+                                                    self.length_from_wand, ((self.wand_pos.z +
+                                                                                round(math.sin(math.radians(self.wand_pos.pitch)),4) *
+                                                    self.length_from_wand) if ((self.wand_pos.z +
+                                                                                round(math.sin(math.radians(self.wand_pos.pitch)),4) *
+                                                    self.length_from_wand) > 0) else 0)))
+                    else:
+                        self.length_from_wand = (2 * ((self.last_valid_wand_pos.roll + 90) / 180) - 1) + 2
+                        self.send_setpoint(self.scf, Position(self.last_valid_wand_pos.x +
+                                                                round(math.cos(math.radians(self.last_valid_wand_pos.yaw)), 4)
+                                                                * self.length_from_wand, self.last_valid_wand_pos.y +
+                                                                round(math.sin(math.radians(self.last_valid_wand_pos.yaw)), 4) *
+                                                                self.length_from_wand, int(self.last_valid_wand_pos.z +
+                                                                                            round(math.sin(
+                                                                                                math.radians(
+                                                                                                    self.last_valid_wand_pos.pitch)),
+                                                                                                4) *
+                                                                                            self.length_from_wand)))
+
+                elif self.current_flight_mode == FlightModeStates.LIFT:
+
+                    self.send_setpoint(self.scf, Position(self.current_goal_pos.x, self.current_goal_pos.y, 1))
+
+                    if self.latest_valid_cf_pos.distance_to(Position(self.current_goal_pos.x, self.current_goal_pos.y, 1)) < 0.05:
+                        # Wait for hte crazyflie to reach the goal
+                        self.current_flight_mode = FlightModeStates.HOVERING
+                        self.switch_flight_mode()
+
+                elif self.current_flight_mode == FlightModeStates.HOVERING:
+                    self.send_setpoint(self.scf, self.current_goal_pos)
+
+                elif self.current_flight_mode == FlightModeStates.RECORD:
+
+                    if self.latest_valid_cf_pos.z > 1.0 and not self.recording_in_progress:
+                        # Start recording when the cf is lifted
+                        self.recording_in_progress = True
+                        # Start the timer thread
+                        self.save_current_position()
+                        # Gui
+                        logger.info("Recording flightpath")
+                        self.statusLabel.setText("Status: Recording Flightpath")
+
+                    elif self.latest_valid_cf_pos.z < 0.03 and self.recording_in_progress:
+                        # Stop the recording when the cf is put on the ground again
+                        logger.info("Recording stopped")
+                        self.recording_in_progress = False
+
+                        # Remove the last bit (1s) of the recording, containing setting the cf down
+                        for i in range(20):
+                            self.new_path.pop()
+
+                        # Add the new path to list and Gui
+                        now = datetime.datetime.fromtimestamp(time.time())
+
+                        new_name = ("Recording {}/{}/{} {}:{}".format(now.year-2000, now.month if now.month > 9
+                        else "0{}".format(now.month), now.day if now.day > 9 else "0{}".format(now.day), now.hour
+                        if now.hour > 9 else "0{}".format(now.hour), now.minute if now.minute > 9 else
+                        "0{}".format(now.minute)))
+
+                        self.new_path.insert(0, new_name)
+                        self.flight_paths.append(self.new_path)
+                        self.pathSelector.addItem(new_name)
+
+                        # Select the new path
+                        self.pathSelector.setCurrentIndex(len(self.flight_paths) - 1)
+                        self.path_changed()
+                        Config().set("flight_paths", self.flight_paths)
+
+                        # Wait while the operator moves away
+                        self.statusLabel.setText("Status: Replay in 3s")
+                        time.sleep(1)
+                        self.statusLabel.setText("Status: Replay in 2s")
+                        time.sleep(1)
+                        self.statusLabel.setText("Status: Replay in 1s")
+                        time.sleep(1)
+                        # Switch to path mode and replay the recording
+                        self.current_flight_mode = FlightModeStates.PATH
+                        self.switch_flight_mode()
+
+
+                elif self.current_flight_mode == FlightModeStates.GROUNDED:
+                    # self.send_setpoint(self.scf, Position(0, 0, 0))
+                    pass  # If gounded, the control is switched back to gamepad
+
+                time.sleep(0.001)
 
 
         except Exception as err:
             logger.info(err)
             self.cfStatusLabel.setText(str(err))
-
-        self._disconnected(self.uri)
 
     def save_current_position(self):
         if self.recording_in_progress:
@@ -869,12 +849,17 @@ class QualisysTab(Tab, qualisys_tab_class):
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
 
+        if not self.flying_enabled:
+            self.flying_enabled = True
+            self.cfStatusLabel.setText(": connecting...")
+            t = threading.Thread(target=self.flight_controller)
+            t.start()
+
         self.uri = link_uri
         logger.debug("Crazyflie connected to {}".format(self.uri))
 
         #Gui
         self.cfStatusLabel.setText(': connected')
-        self.connectCrazyflieButton.setText('Disconnet Crazyflie')
         self.cf_ready_to_fly = True
 
         lg = LogConfig("Battery", 1000)
@@ -895,7 +880,6 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         logger.info("Crazyflie disconnected from {}".format(link_uri))
         self.cfStatusLabel.setText(': not connected')
-        self.connectCrazyflieButton.setText('Connect to Crazyflie')
         self.batteryBar.setValue(3000)
         self.flying_enabled = False
         self.cf_ready_to_fly = False
@@ -998,6 +982,12 @@ class QualisysTab(Tab, qualisys_tab_class):
 
     def switch_flight_mode(self):
         # Handles the behaviour of switching between flight modes
+
+        # Handle client input control. Disable gamepad input if we are not grounded
+        if self.current_flight_mode in [FlightModeStates.GROUNDED, FlightModeStates.DISCONNECTED, FlightModeStates.RECORD]:
+            self._helper.mainUI.disable_input(False)
+        else:
+            self._helper.mainUI.disable_input(True)
 
         # Set to true to indicate a flight mode switch
         self.flight_mode_switched = True
