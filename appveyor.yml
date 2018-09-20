@@ -1,26 +1,19 @@
 version: 1.0.{build}
 install:
 - cmd: >-
-    set PATH=C:\Miniconda35;C:\Miniconda35\scripts;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin
+    set PATH=C:\Python36;C:\Python36\Scripts;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin
 
-    conda create -y -q -n cfclient python=3.4 pyqt=5
-
-    activate cfclient
-
-    pip install -e .[dev]
-
-    rmdir /Q /S C:\Miniconda35\envs\cfclient\lib\site-packages\PyQt5\uic\port_v2
+    pip install -e .[dev,qt5]
 
     python tools\build\prep_windows
 
     choco install -y nsis.portable -version 2.50
 build_script:
 - cmd: >-
-    python setup.py py2exe
+    python setup.py build
 
     python win32install\generate_nsis.py
 
     makensis win32install\cfclient.nsi
 artifacts:
-- path: dist\
 - path: win32install\*.exe

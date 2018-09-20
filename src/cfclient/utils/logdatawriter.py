@@ -93,6 +93,7 @@ class LogWriter():
             logger.info("Stopped logging of block [%s] to file [%s]",
                         self._block.name, self._filename)
             self._header_values = []
+            self._header_written = False
 
     def start(self):
         """Start the logging to file"""

@@ -92,6 +92,7 @@ class InputDevice(InputReaderInterface):
         self.limit_rp = True
         self.limit_thrust = True
         self.limit_yaw = True
+        self.db = 0.
 
     def open(self):
         # TODO: Reset data?
@@ -99,6 +100,9 @@ class InputDevice(InputReaderInterface):
 
     def close(self):
         self._reader.close(self.id)
+
+    def set_dead_band(self, db):
+        self.db = db
 
     def read(self, include_raw=False):
         [axis, buttons] = self._reader.read(self.id)
@@ -135,6 +139,9 @@ class InputDevice(InputReaderInterface):
                 pass
             i += 1
 
+        self.data.roll = InputDevice.deadband(self.data.roll, self.db)
+        self.data.pitch = InputDevice.deadband(self.data.pitch, self.db)
+
         if self.limit_rp:
             [self.data.roll, self.data.pitch] = self._scale_rp(self.data.roll,
                                                                self.data.pitch)
@@ -149,3 +156,13 @@ class InputDevice(InputReaderInterface):
             return [axis, buttons, self.data]
         else:
             return self.data
+
+    @staticmethod
+    def deadband(value, threshold):
+        if abs(value) < threshold:
+            value = 0
+        elif value > 0:
+            value -= threshold
+        elif value < 0:
+            value += threshold
+        return value / (1 - threshold)

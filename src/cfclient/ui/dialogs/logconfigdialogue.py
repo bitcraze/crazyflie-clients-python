@@ -198,7 +198,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         try:
             self.period = int(value)
             self.checkAndEnableSaveButton()
-        except:
+        except Exception:
             self.period = 0
 
     def showErrorPopup(self, caption, message):

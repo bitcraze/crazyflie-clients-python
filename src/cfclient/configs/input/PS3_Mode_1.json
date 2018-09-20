@@ -2,6 +2,7 @@
   "inputconfig": {
     "inputdevice":
     {"name": "Playstation 3 Mode 1", "updateperiod":10,
+     "rp_dead_band": 0.1,
      "axis": [
           {"name":"Roll", "type":"Input.AXIS", "id":0, "scale":1.0, "key":"roll"},
           {"name":"Pitch", "type":"Input.AXIS", "id":1, "scale":-1.0, "key":"pitch"},

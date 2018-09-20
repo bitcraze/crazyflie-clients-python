@@ -62,7 +62,7 @@ class ConfigManager(metaclass=Singleton):
         try:
             idx = self._list_of_configs.index(config_name)
             return self._input_config[idx]
-        except:
+        except Exception:
             return None
 
     def get_settings(self, config_name):
@@ -70,7 +70,7 @@ class ConfigManager(metaclass=Singleton):
         try:
             idx = self._list_of_configs.index(config_name)
             return self._input_settings[idx]
-        except:
+        except Exception:
             return None
 
     def get_list_of_configs(self):
@@ -87,7 +87,8 @@ class ConfigManager(metaclass=Singleton):
                 data = json.load(json_data)
                 new_input_device = {}
                 new_input_settings = {"updateperiod": 10,
-                                      "springythrottle": True}
+                                      "springythrottle": True,
+                                      "rp_dead_band": 0.05}
                 for s in data["inputconfig"]["inputdevice"]:
                     if s == "axis":
                         for a in data["inputconfig"]["inputdevice"]["axis"]:
@@ -103,7 +104,7 @@ class ConfigManager(metaclass=Singleton):
 
                             try:
                                 ids = a["ids"]
-                            except:
+                            except Exception:
                                 ids = [a["id"]]
                             for id in ids:
                                 locaxis = copy.deepcopy(axis)

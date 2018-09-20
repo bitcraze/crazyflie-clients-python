@@ -9,10 +9,22 @@ import codecs
 import sys
 import os
 
-try:
-    import py2exe  # noqa
-except:
-    pass
+if sys.argv[1] == 'build':
+    from cx_Freeze import setup, Executable  # noqa
+
+    cxfreeze_options = {
+        'options': {
+            'build_exe': {'includes': ['numpy.core._methods',
+                                       'numpy.lib.format',
+                                       'pyqtgraph.debug',
+                                       'pyqtgraph.ThreadsafeTimer']}
+        },
+        'executables': [Executable("bin/cfclient", icon='bitcraze.ico')],
+    }
+else:
+    cxfreeze_options = {}
+# except:
+#     pass
 
 if sys.version_info < (3, 4):
     raise "must use python 3.4 or greater"
@@ -64,46 +76,24 @@ platform_dev_requires = []
 if sys.platform == 'win32' or sys.platform == 'darwin':
     platform_requires = ['pysdl2']
 if sys.platform == 'win32':
-    platform_dev_requires = ['py2exe', 'jinja2']
+    platform_dev_requires = ['cx_freeze', 'jinja2']
 
-# Make a special case when running py2exe to be able to access resources
-if sys.platform == 'win32' and sys.argv[1] == 'py2exe':
-    package_data = {}
-    qwindows = os.path.join(os.path.dirname(sys.executable),
-                            "Library\\plugins\\platforms\\qwindows.dll")
-    data_files = [
-        ('', ['README.md', 'src/cfclient/version.json']),
-        ('platforms', [qwindows]),
-        ('ui', glob('src/cfclient/ui/*.ui')),
-        ('ui/tabs', glob('src/cfclient/ui/tabs/*.ui')),
-        ('ui/widgets', glob('src/cfclient/ui/widgets/*.ui')),
-        ('ui/toolboxes', glob('src/cfclient/ui/toolboxes/*.ui')),
-        ('ui/dialogs', glob('src/cfclient/ui/dialogs/*.ui')),
-        ('configs', glob('src/cfclient/configs/*.json')),
-        ('configs/input', glob('src/cfclient/configs/input/*.json')),
-        ('configs/log', glob('src/cfclient/configs/log/*.json')),
-        ('', glob('src/cfclient/*.png')),
-        ('resources', glob('src/cfclient/resources/*')),
-        ('third_party', glob('src/cfclient/third_party/*')),
-    ]
-else:
-    package_data = {
-        'cfclient.ui':  relative(glob('src/cfclient/ui/*.ui')),
-        'cfclient.ui.tabs': relative(glob('src/cfclient/ui/tabs/*.ui')),
-        'cfclient.ui.widgets':  relative(glob('src/cfclient/ui/widgets/*.ui')),
-        'cfclient.ui.toolboxes':  relative(glob('src/cfclient/ui/toolboxes/*.ui')),  # noqa
-        'cfclient.ui.dialogs':  relative(glob('src/cfclient/ui/dialogs/*.ui')),
-        'cfclient':  relative(glob('src/cfclient/configs/*.json'), 'configs/') +  # noqa
-                     relative(glob('src/cfclient/configs/input/*.json'), 'configs/input/') +  # noqa
-                     relative(glob('src/cfclient/configs/log/*.json'), 'configs/log/') +  # noqa
-                     relative(glob('src/cfclient/resources/*'), 'resources/') +
-                     relative(glob('src/cfclient/*.png')),
-        '': ['README.md']
-    }
-    data_files = [
-        ('third_party', glob('src/cfclient/third_party/*')),
-    ]
-
+package_data = {
+    'cfclient.ui':  relative(glob('src/cfclient/ui/*.ui')),
+    'cfclient.ui.tabs': relative(glob('src/cfclient/ui/tabs/*.ui')),
+    'cfclient.ui.widgets':  relative(glob('src/cfclient/ui/widgets/*.ui')),
+    'cfclient.ui.toolboxes':  relative(glob('src/cfclient/ui/toolboxes/*.ui')),  # noqa
+    'cfclient.ui.dialogs':  relative(glob('src/cfclient/ui/dialogs/*.ui')),
+    'cfclient':  relative(glob('src/cfclient/configs/*.json'), 'configs/') +  # noqa
+                 relative(glob('src/cfclient/configs/input/*.json'), 'configs/input/') +  # noqa
+                 relative(glob('src/cfclient/configs/log/*.json'), 'configs/log/') +  # noqa
+                 relative(glob('src/cfclient/resources/*'), 'resources/') +
+                 relative(glob('src/cfclient/*.png')),
+    '': ['README.md']
+}
+data_files = [
+    ('third_party', glob('src/cfclient/third_party/*')),
+]
 
 # Initial parameters
 setup(
@@ -134,40 +124,24 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib>=0.1.1', 'appdirs==1.4.0',
-                                          'pyzmq', 'pyqtgraph>=0.10'],
+    install_requires=platform_requires + ['cflib>=0.1.6',
+                                          'appdirs>=1.4.0',
+                                          'pyzmq',
+                                          'pyqtgraph>=0.10',
+                                          'PyYAML'],
 
-    # List of dev dependencies
+    # List of dev and qt dependencies
     # You can install them by running
-    # $ pip install -e .[dev]
+    # $ pip install -e .[dev,qt5]
     extras_require={
-        'dev': platform_dev_requires + []
+        'dev': platform_dev_requires + [],
+        'qt5': ['pyqt5']
     },
 
     package_data=package_data,
 
-    # Py2exe options
-    console=[
-        {
-            'script': 'bin/cfclient',
-            'icon_resources': [(0, 'bitcraze.ico')]
-        }
-    ],
-    options={
-        "py2exe": {
-            'includes': ['cfclient.ui.widgets.hexspinbox',
-                         'zmq.backend.cython'],
-            'bundle_files': 3,
-            'skip_archive': True,
-        },
-    },
+    data_files=data_files,
 
-    data_files=data_files
+    # cx_freeze options
+    **cxfreeze_options
 )
-
-# Fixing the zmq lib in the windows binary dist folder
-if sys.platform == 'win32' and sys.argv[1] == 'py2exe':
-    print("Renaming zmq dll")
-    if os.path.isfile('dist/zmq.libzmq.pyd') and \
-       not os.path.isfile('dist/libzmq.pyd'):
-        os.rename('dist/zmq.libzmq.pyd', 'dist/libzmq.pyd')
