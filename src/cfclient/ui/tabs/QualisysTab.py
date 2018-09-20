@@ -47,11 +47,11 @@ from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 from cflib.crazyflie.syncLogger import SyncLogger
 
-from twisted.internet import defer
 import xml.etree.cElementTree as ET
 import threading
 
-
+import qtm
+import asyncio
 
 __author__ = 'Bitcraze AB'
 __all__ = ['QualisysTab']
@@ -91,6 +91,9 @@ def progressbar_stylesheet(color):
         }
     """
 
+def start_async_task(task):
+    asyncio.ensure_future(task)
+
 class QualisysTab(Tab, qualisys_tab_class):
     """Tab for controlling the crazyflie using Qualisys Motion Capturing system"""
 
@@ -111,7 +114,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.tabName = "Qualisys"
         self.menuName = "Qualisys Tab"
         self.tabWidget = tabWidget
-        self.qtm_6DoF_labels = "Empty"
+        self.qtm_6DoF_labels = None
         self._helper = helper
         self._qtm_connection = None
         self.scf = None
@@ -221,7 +224,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.path_changed()
         self.batteryBar.setTextVisible(False)
         self.batteryBar.setStyleSheet(progressbar_stylesheet(COLOR_BLUE))
-        self.discover_qtm_on_network()
+        start_async_task(self.discover_qtm_on_network())
 
     def path_changed(self):
 
@@ -412,47 +415,40 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.switch_flight_mode()
         logger.info('Stop button pressed, kill engines')
 
-    def discover_qtm_on_network(self):
-        from twisted.internet import reactor
-        from qtm.discovery import QRTDiscoveryProtocol
-
-        def receiver(response):
-            qtm = str(response[0].decode('UTF-8')).split(",")
-            self.qtmIpBox.addItem("{} {}".format(qtm[0], response[1] ))
-
-        protocol = QRTDiscoveryProtocol(receiver=receiver)
-
-        reactor.listenUDP(9999, protocol)
-        protocol.send_discovery_packet()
+    async def discover_qtm_on_network(self):
+        async for qtm_instance in qtm.Discover("127.0.0.1"):
+            qtm_info = qtm_instance.info.decode('UTF-8').split(",")[0]
+            self.qtmIpBox.addItem("{} {}".format(qtm_info, qtm_instance.host ))
 
     def establish_qtm_connection(self):
+        if self.qtmIpBox.count() == 0:
+            return
 
         if self._qtm_connection is None:
-            ip = ["something", "10.0.5.219"]  # self.qtmIpBox.currentText().split(" ")
+            ip = self.qtmIpBox.currentText().split(" ")[1]
+            start_async_task(self.qtm_connect(ip))
 
-            import qtm
-            self._qrt = qtm.QRT(ip[1], 22223, version='1.17')
-            self._qrt.connect(self.on_qtm_connect, on_disconnect=self.on_qtm_disconnect, on_event=self.on_qtm_event)
         else:
             self._qtm_connection.disconnect()
             self._qtm_connection = None
 
-    def on_qtm_connect(self, connection, version):
-        """Callback when QTM has been connected"""
+    async def qtm_connect(self, ip):
 
-        logger.info('Connected to QTM with {}'.format(version.decode("UTF-8")))
+        connection = await qtm.connect(ip, on_event=self.on_qtm_event, on_disconnect=lambda reason: start_async_task(self.on_qtm_disconnect(reason)))
+
+        if connection is None:
+            start_async_task(self.on_qtm_disconnect("Failed to connect"))
+            return
+
         self._qtm_connection = connection
+        await self.setup_qtm_connection()
 
-        self.setup_qtm_connection()
-
-    @defer.inlineCallbacks
-    def setup_qtm_connection(self):
-
+    async def setup_qtm_connection(self):
         self.connectQtmButton.setText('Disconnect QTM')
         self.qtmStatusLabel.setText(': connected : Waiting QTM to start sending data')
 
         try:
-            result = yield self._qtm_connection.get_parameters(parameters=['6d'])
+            result = await self._qtm_connection.get_parameters(parameters=['6d'])
 
             # Parse the returned xml
             xml = ET.fromstring(result)
@@ -472,12 +468,12 @@ class QualisysTab(Tab, qualisys_tab_class):
                 self.switch_flight_mode()
 
             # Make sure this is the last thing done with the qtm_connection (due to qtmRTProtocol structure)
-            yield self._qtm_connection.stream_frames(frames='allframes', components=['6deuler', '3d'], on_packet=self.on_packet)
+            await self._qtm_connection.stream_frames(components=['6deuler', '3d'], on_packet=self.on_packet)
 
         except Exception as err:
             logger.info(err)
 
-    def on_qtm_disconnect(self, reason):
+    async def on_qtm_disconnect(self, reason):
         """Callback when QTM has been disconnected"""
 
         self._qtm_connection = None
@@ -496,14 +492,13 @@ class QualisysTab(Tab, qualisys_tab_class):
     def on_qtm_event(self, event):
 
         logger.info(event)
-        from qtm.protocol import QRTEvent
 
-        if event == QRTEvent.EventRTfromFileStarted:
+        if event == qtm.QRTEvent.EventRTfromFileStarted:
             self.qtmStatusLabel.setText(': connected')
             self.qtmCfPositionBox.setEnabled(True)
             self.qtmWandPositionBox.setEnabled(True)
 
-        elif event == QRTEvent.EventRTfromFileStopped:
+        elif event == qtm.QRTEvent.EventRTfromFileStopped:
             self.qtmStatusLabel.setText(': connected : Waiting QTM to start sending data')
             self.qtmCfPositionBox.setEnabled(False)
             self.qtmWandPositionBox.setEnabled(False)
@@ -516,27 +511,26 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         # Cf not created yet or no packet received due to various reasons...
         # Wait for the two asynchronous calls in 'setup connection' to return with data
-        if bodies is None or self.qtm_6DoF_labels == 'Empty':
+        if bodies is None or self.qtm_6DoF_labels is None:
             return
 
-        else:
-            try:
-                temp_cf_pos = bodies[self.qtm_6DoF_labels.index("crazyflie")]
-                # QTM returns in mm in the order x, y, z, the Crazyflie api need data in meters, divide by thousand
-                # QTM returns euler rotations in deg in the order yaw, pitch, roll, not Qualisys Standard!
-                self.cf_pos = Position(temp_cf_pos[0][0] / 1000, temp_cf_pos[0][1] / 1000,temp_cf_pos[0][2] / 1000,
-                                       roll=temp_cf_pos[1][2], pitch=temp_cf_pos[1][1], yaw=temp_cf_pos[1][0])
+        try:
+            temp_cf_pos = bodies[self.qtm_6DoF_labels.index("crazyflie")]
+            # QTM returns in mm in the order x, y, z, the Crazyflie api need data in meters, divide by thousand
+            # QTM returns euler rotations in deg in the order yaw, pitch, roll, not Qualisys Standard!
+            self.cf_pos = Position(temp_cf_pos[0][0] / 1000, temp_cf_pos[0][1] / 1000,temp_cf_pos[0][2] / 1000,
+                                    roll=temp_cf_pos[1][2], pitch=temp_cf_pos[1][1], yaw=temp_cf_pos[1][0])
 
-            except ValueError as err:
-                self.qtmStatusLabel.setText(' : connected : No 6DoF body found called \'Crazyflie\'')
+        except ValueError as err:
+            self.qtmStatusLabel.setText(' : connected : No 6DoF body found called \'Crazyflie\'')
 
-            try :
-                temp_wand_pos = bodies[self.qtm_6DoF_labels.index("qstick")]
-                self.wand_pos = Position(temp_wand_pos[0][0] / 1000, temp_wand_pos[0][1] / 1000,temp_wand_pos[0][2] / 1000,
-                                         roll=temp_wand_pos[1][2], pitch=temp_wand_pos[1][1], yaw=temp_wand_pos[1][0])
+        try :
+            temp_wand_pos = bodies[self.qtm_6DoF_labels.index("qstick")]
+            self.wand_pos = Position(temp_wand_pos[0][0] / 1000, temp_wand_pos[0][1] / 1000,temp_wand_pos[0][2] / 1000,
+                                        roll=temp_wand_pos[1][2], pitch=temp_wand_pos[1][1], yaw=temp_wand_pos[1][0])
 
-            except ValueError as err:
-                self.qtmStatusLabel.setText(' : connected : No 6DoF body found called \'QStick\'')
+        except ValueError as err:
+            self.qtmStatusLabel.setText(' : connected : No 6DoF body found called \'QStick\'')
 
 
         if self.scf is not None and self.cf_pos.is_valid():

@@ -138,8 +138,10 @@ def main():
 
     app = QApplication(sys.argv)
 
-    import qt5reactor
-    qt5reactor.install()
+    from quamash import QSelectorEventLoop
+    import asyncio
+    loop = QSelectorEventLoop(app)
+    asyncio.set_event_loop(loop)  # NEW must set the event loop
 
     app.setWindowIcon(QIcon(cfclient.module_path + "/icon-256.png"))
     # Make sure the right icon is set in Windows 7+ taskbar
