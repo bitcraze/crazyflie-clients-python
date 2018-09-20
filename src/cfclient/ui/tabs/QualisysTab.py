@@ -253,11 +253,10 @@ class QualisysTab(Tab, qualisys_tab_class):
         if len(self.flight_paths) == 0:
             return
 
-        import ctypes
         current_index = self.pathSelector.currentIndex()
-        answer = ctypes.windll.user32.MessageBoxW(0, "Delete the flightpath: {}?".format(self.flight_paths[current_index][0]), "CFClient: Qualisystab", 4)
+        answer = QMessageBox.question(self, "CFClient: Qualisystab", "Delete the flightpath: {}?".format(self.flight_paths[current_index][0]), QMessageBox.Yes | QMessageBox.No)
 
-        if answer == 6:
+        if answer == QMessageBox.Yes:
             self.flight_paths.pop(current_index)
             self.pathSelector.clear()
 
