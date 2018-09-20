@@ -72,9 +72,6 @@ class FlightModeStates:
     CIRCLE = 7
     RECORD = 8
 
-class BatteryStates:
-    BATTERY, CHARGING, CHARGED, LOW_POWER = list(range(4))
-
 COLOR_BLUE = '#3399ff'
 COLOR_GREEN = '#00ff60'
 COLOR_RED = '#cc0404'
@@ -102,7 +99,6 @@ class QualisysTab(Tab, qualisys_tab_class):
     _log_data_signal = pyqtSignal(int, object, object)
     _log_error_signal = pyqtSignal(object, str)
     _param_updated_signal = pyqtSignal(str, str)
-    batteryUpdatedSignal = pyqtSignal(int, object, object)
     _imu_data_signal = pyqtSignal(int, object, object)
 
 
@@ -191,7 +187,6 @@ class QualisysTab(Tab, qualisys_tab_class):
         self._disconnected_signal.connect(self._disconnected)
         self._log_data_signal.connect(self._log_data_received)
         self._param_updated_signal.connect(self._param_updated)
-        self.batteryUpdatedSignal.connect(self._update_battery)
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
@@ -222,8 +217,6 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.posHoldCircleBox.setText(str(self.position_hold_timelimit))
         self.resolutionBox.setText(str(self.circle_resolution))
         self.path_changed()
-        self.batteryBar.setTextVisible(False)
-        self.batteryBar.setStyleSheet(progressbar_stylesheet(COLOR_BLUE))
         start_async_task(self.discover_qtm_on_network())
 
     def path_changed(self):
@@ -856,45 +849,14 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.cfStatusLabel.setText(': connected')
         self.cf_ready_to_fly = True
 
-        lg = LogConfig("Battery", 1000)
-        lg.add_variable("pm.vbat", "float")
-        lg.add_variable("pm.state", "int8_t")
-
-        if self.scf != None:
-            try:
-                self.scf.cf.log.add_config(lg)
-                lg.data_received_cb.add_callback(self.batteryUpdatedSignal.emit)
-                lg.error_cb.add_callback(self._log_error_signal.emit)
-                lg.start()
-            except KeyError as e:
-                logger.warning(str(e))
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
 
         logger.info("Crazyflie disconnected from {}".format(link_uri))
         self.cfStatusLabel.setText(': not connected')
-        self.batteryBar.setValue(3000)
         self.flying_enabled = False
         self.cf_ready_to_fly = False
-
-    def _update_battery(self, timestamp, data, logconf):
-
-        self.batteryBar.setValue(int(data["pm.vbat"] * 1000))
-        color = COLOR_BLUE
-        if data["pm.state"] in [BatteryStates.CHARGING, BatteryStates.CHARGED]:
-            color = COLOR_GREEN
-        elif data["pm.state"] == BatteryStates.LOW_POWER:
-            logger.info("Low battery voltage: {}".format( data["pm.vbat"]))
-            color = COLOR_RED
-
-            if self.current_flight_mode != FlightModeStates.GROUNDED and self.current_flight_mode != FlightModeStates.DISCONNECTED:
-                self.current_flight_mode = FlightModeStates.LAND
-                self.switch_flight_mode()
-
-            self.statusLabel.setText("Status: Low Battery")
-
-        self.batteryBar.setStyleSheet(progressbar_stylesheet(color))
 
     def _param_updated(self, name, value):
         """Callback when the registered parameter get's updated"""
