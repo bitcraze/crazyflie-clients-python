@@ -175,7 +175,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         try:
             self.flight_paths = Config().get("flight_paths")
         except Exception as err:
-            logger.debug("no fligt config")
+            logger.debug("No flight config")
             self.flight_paths = self.default_flight_paths
 
         if self.flight_paths == []:
