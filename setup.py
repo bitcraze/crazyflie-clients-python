@@ -17,7 +17,9 @@ if sys.argv[1] == 'build':
             'build_exe': {'includes': ['numpy.core._methods',
                                        'numpy.lib.format',
                                        'pyqtgraph.debug',
-                                       'pyqtgraph.ThreadsafeTimer']}
+                                       'pyqtgraph.ThreadsafeTimer',
+                                       ],
+                          'packages': ['asyncio']}
         },
         'executables': [Executable("bin/cfclient", icon='bitcraze.ico')],
     }
