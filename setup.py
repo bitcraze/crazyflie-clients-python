@@ -130,7 +130,9 @@ setup(
                                           'appdirs>=1.4.0',
                                           'pyzmq',
                                           'pyqtgraph>=0.10',
-                                          'PyYAML'],
+                                          'PyYAML',
+                                          'quamash==0.6.1',
+                                          'qtm>=2.0.1'],
 
     # List of dev and qt dependencies
     # You can install them by running

@@ -28,11 +28,13 @@
 
 import sys
 import os
+import asyncio
 import argparse
 import datetime
 
 import logging
 
+from quamash import QSelectorEventLoop
 import cfclient
 
 __author__ = 'Bitcraze AB'
@@ -138,10 +140,9 @@ def main():
 
     app = QApplication(sys.argv)
 
-    from quamash import QSelectorEventLoop
-    import asyncio
+    # Create and set an event loop that combines qt and asyncio
     loop = QSelectorEventLoop(app)
-    asyncio.set_event_loop(loop)  # NEW must set the event loop
+    asyncio.set_event_loop(loop)
 
     app.setWindowIcon(QIcon(cfclient.module_path + "/icon-256.png"))
     # Make sure the right icon is set in Windows 7+ taskbar
