@@ -36,7 +36,7 @@ import datetime
 import math
 
 from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
@@ -58,7 +58,7 @@ __all__ = ['QualisysTab']
 
 logger = logging.getLogger(__name__)
 
-qualisys_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/qualisysTab.ui")[0]
+qualisys_tab_class, _ = uic.loadUiType(cfclient.module_path + "/ui/tabs/qualisysTab.ui")
 
 
 class FlightModeStates:
@@ -211,6 +211,11 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         self.pathSelector.currentIndexChanged.connect(self.path_changed)
 
+        self.droneBox.currentIndexChanged[str].connect(self.drone_changed)
+        self.stickBox.currentIndexChanged[str].connect(self.stick_changed)
+        self.stickName = 'qstick'
+        self.droneName = 'crazyflie'
+
         # Populate UI elements
         self.posHoldPathBox.setText(str(self.position_hold_timelimit))
         self.radiusBox.setText(str(self.circle_radius))
@@ -218,6 +223,14 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.resolutionBox.setText(str(self.circle_resolution))
         self.path_changed()
         start_async_task(self.discover_qtm_on_network())
+
+    @pyqtSlot(str)
+    def drone_changed(self, drone):
+        self.droneName = drone
+
+    @pyqtSlot(str)
+    def stick_changed(self, stick):
+        self.stickName = stick
 
     def path_changed(self):
 
@@ -435,6 +448,22 @@ class QualisysTab(Tab, qualisys_tab_class):
         self._qtm_connection = connection
         await self.setup_qtm_connection()
 
+    def setup_6dof_comboboxes(self):
+        droneName = self.droneName
+        stickName = self.stickName
+
+        self.droneBox.clear()
+        self.stickBox.clear()
+        for label in self.qtm_6DoF_labels:
+            self.droneBox.addItem(label)
+            self.stickBox.addItem(label)
+
+        if droneName in self.qtm_6DoF_labels:
+            self.droneBox.setCurrentIndex(self.qtm_6DoF_labels.index(droneName))
+
+        if stickName in self.qtm_6DoF_labels:
+            self.stickBox.setCurrentIndex(self.qtm_6DoF_labels.index(stickName))
+
     async def setup_qtm_connection(self):
         self.connectQtmButton.setText('Disconnect QTM')
         self.qtmStatusLabel.setText(': connected : Waiting QTM to start sending data')
@@ -449,6 +478,8 @@ class QualisysTab(Tab, qualisys_tab_class):
             # Make all names lowercase
             self.qtm_6DoF_labels =[x.lower() for x in self.qtm_6DoF_labels]
             logger.info('6Dof bodies active in qtm: {}'.format(self.qtm_6DoF_labels))
+
+            self.setup_6dof_comboboxes()
 
             #Gui
             self.qtmStatusLabel.setText(': connected')
@@ -507,7 +538,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             return
 
         try:
-            temp_cf_pos = bodies[self.qtm_6DoF_labels.index("crazyflie")]
+            temp_cf_pos = bodies[self.qtm_6DoF_labels.index(self.droneName)]
             # QTM returns in mm in the order x, y, z, the Crazyflie api need data in meters, divide by thousand
             # QTM returns euler rotations in deg in the order yaw, pitch, roll, not Qualisys Standard!
             self.cf_pos = Position(temp_cf_pos[0][0] / 1000, temp_cf_pos[0][1] / 1000,temp_cf_pos[0][2] / 1000,
@@ -517,7 +548,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.qtmStatusLabel.setText(' : connected : No 6DoF body found called \'Crazyflie\'')
 
         try :
-            temp_wand_pos = bodies[self.qtm_6DoF_labels.index("qstick")]
+            temp_wand_pos = bodies[self.qtm_6DoF_labels.index(self.stickName)]
             self.wand_pos = Position(temp_wand_pos[0][0] / 1000, temp_wand_pos[0][1] / 1000,temp_wand_pos[0][2] / 1000,
                                         roll=temp_wand_pos[1][2], pitch=temp_wand_pos[1][1], yaw=temp_wand_pos[1][0])
 
