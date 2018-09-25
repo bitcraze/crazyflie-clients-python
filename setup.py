@@ -132,7 +132,7 @@ setup(
                                           'pyqtgraph>=0.10',
                                           'PyYAML',
                                           'quamash==0.6.1',
-                                          'qtm>=2.0.1'],
+                                          'qtm>=2.0.2'],
 
     # List of dev and qt dependencies
     # You can install them by running
