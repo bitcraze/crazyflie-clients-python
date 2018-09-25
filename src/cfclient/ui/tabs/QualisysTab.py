@@ -216,10 +216,10 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         self.pathSelector.currentIndexChanged.connect(self.path_changed)
 
-        self.droneBox.currentIndexChanged[str].connect(self.drone_changed)
+        self.quadBox.currentIndexChanged[str].connect(self.quad_changed)
         self.stickBox.currentIndexChanged[str].connect(self.stick_changed)
         self.stickName = 'qstick'
-        self.droneName = 'crazyflie'
+        self.quadName = 'crazyflie'
 
         # Populate UI elements
         self.posHoldPathBox.setText(str(self.position_hold_timelimit))
@@ -230,8 +230,8 @@ class QualisysTab(Tab, qualisys_tab_class):
         start_async_task(self.discover_qtm_on_network())
 
     @pyqtSlot(str)
-    def drone_changed(self, drone):
-        self.droneName = drone
+    def quad_changed(self, quad):
+        self.quadName = quad
 
     @pyqtSlot(str)
     def stick_changed(self, stick):
@@ -484,18 +484,18 @@ class QualisysTab(Tab, qualisys_tab_class):
         await self.setup_qtm_connection()
 
     def setup_6dof_comboboxes(self):
-        droneName = self.droneName
+        quadName = self.quadName
         stickName = self.stickName
 
-        self.droneBox.clear()
+        self.quadBox.clear()
         self.stickBox.clear()
         for label in self.qtm_6DoF_labels:
-            self.droneBox.addItem(label)
+            self.quadBox.addItem(label)
             self.stickBox.addItem(label)
 
-        if droneName in self.qtm_6DoF_labels:
-            self.droneBox.setCurrentIndex(
-                self.qtm_6DoF_labels.index(droneName))
+        if quadName in self.qtm_6DoF_labels:
+            self.quadBox.setCurrentIndex(
+                self.qtm_6DoF_labels.index(quadName))
 
         if stickName in self.qtm_6DoF_labels:
             self.stickBox.setCurrentIndex(
@@ -582,7 +582,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             return
 
         try:
-            temp_cf_pos = bodies[self.qtm_6DoF_labels.index(self.droneName)]
+            temp_cf_pos = bodies[self.qtm_6DoF_labels.index(self.quadName)]
             # QTM returns in mm in the order x, y, z, the Crazyflie api need
             # data in meters, divide by thousand
             # QTM returns euler rotations in deg in the order

@@ -767,7 +767,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="droneBox">
+               <widget class="QComboBox" name="quadBox">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
