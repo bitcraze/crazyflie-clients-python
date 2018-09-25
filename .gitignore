@@ -23,7 +23,6 @@ msvcp90.dll
 # PyCharm
 .idea/*
 .DS_Store
-src/cfclient/ui/tabs/test.py
 
 # vscode
 .vscode/
