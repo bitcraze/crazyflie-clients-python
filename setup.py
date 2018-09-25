@@ -19,7 +19,8 @@ if sys.argv[1] == 'build':
                                        'pyqtgraph.debug',
                                        'pyqtgraph.ThreadsafeTimer',
                                        ],
-                          'packages': ['asyncio']}
+                          'packages': ['asyncio'],
+                          'excludes': ['tkinter']}
         },
         'executables': [Executable("bin/cfclient", icon='bitcraze.ico')],
     }
