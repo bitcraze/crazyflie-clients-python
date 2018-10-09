@@ -42,12 +42,22 @@
            <height>0</height>
           </size>
          </property>
+         <property name="editable">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="connectQtmButton">
          <property name="text">
           <string>Connect to QTM</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="discoverQTM">
+         <property name="text">
+          <string>Scan</string>
          </property>
         </widget>
        </item>

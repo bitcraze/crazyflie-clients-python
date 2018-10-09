@@ -35,7 +35,7 @@ import datetime
 import math
 
 from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, pyqtProperty
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
@@ -92,7 +92,42 @@ def progressbar_stylesheet(color):
 
 
 def start_async_task(task):
-    asyncio.ensure_future(task)
+    return asyncio.ensure_future(task)
+
+
+class QDiscovery(QObject):
+    discoveringChanged = pyqtSignal(bool)
+    discoveredQTM = pyqtSignal(str, str)
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._discovering = False
+        self._found_qtms = {}
+
+    @pyqtProperty(bool, notify=discoveringChanged)
+    def discovering(self):
+        return self._discovering
+
+    @discovering.setter
+    def discovering(self, value):
+        if value != self._discovering:
+            self._discovering = value
+            self.discoveringChanged.emit(value)
+
+    def discover(self, *, interface='0.0.0.0'):
+        self.discovering = True
+        start_async_task(self._discover_qtm(interface))
+
+    async def _discover_qtm(self, interface):
+        try:
+            async for qtm_instance in qtm.Discover(interface):
+                info = qtm_instance.info.decode("utf-8").split(",")[0]
+                self.discoveredQTM.emit(info, qtm_instance.host)
+
+        except Exception as e:
+            logger.info("Exception during qtm discovery: %s", e)
+
+        self.discovering = False
 
 
 class QualisysTab(Tab, qualisys_tab_class):
@@ -227,7 +262,21 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.posHoldCircleBox.setText(str(self.position_hold_timelimit))
         self.resolutionBox.setText(str(self.circle_resolution))
         self.path_changed()
-        start_async_task(self.discover_qtm_on_network())
+
+        self._discovery = QDiscovery()
+        self._discovery.discoveringChanged.connect(self._is_discovering)
+        self._discovery.discoveredQTM.connect(self._qtm_discovered)
+
+        self.discoverQTM.clicked.connect(self._discovery.discover)
+        self._discovery.discover()
+
+    def _is_discovering(self, discovering):
+        if discovering:
+            self.qtmIpBox.clear()
+        self.discoverQTM.setEnabled(not discovering)
+
+    def _qtm_discovered(self, info, ip):
+        self.qtmIpBox.addItem("{} {}".format(ip, info))
 
     @pyqtSlot(str)
     def quad_changed(self, quad):
@@ -451,17 +500,18 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.switch_flight_mode()
         logger.info('Stop button pressed, kill engines')
 
-    async def discover_qtm_on_network(self):
-        async for qtm_instance in qtm.Discover("127.0.0.1"):
-            qtm_info = qtm_instance.info.decode('UTF-8').split(",")[0]
-            self.qtmIpBox.addItem("{} {}".format(qtm_info, qtm_instance.host))
-
     def establish_qtm_connection(self):
         if self.qtmIpBox.count() == 0:
             return
 
         if self._qtm_connection is None:
-            ip = self.qtmIpBox.currentText().split(" ")[1]
+            try:
+                ip = self.qtmIpBox.currentText().split(" ")[0]
+            except Exception as e:
+                logger.error("Incorrect entry: %s", e)
+                return
+
+            self.connectQtmButton.setEnabled(False)
             start_async_task(self.qtm_connect(ip))
 
         else:
@@ -502,6 +552,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                 self.qtm_6DoF_labels.index(stickName))
 
     async def setup_qtm_connection(self):
+        self.connectQtmButton.setEnabled(True)
         self.connectQtmButton.setText('Disconnect QTM')
         self.qtmStatusLabel.setText(
             ': connected : Waiting QTM to start sending data')
@@ -525,6 +576,8 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.qtmStatusLabel.setText(': connected')
             self.qtmCfPositionBox.setEnabled(True)
             self.qtmWandPositionBox.setEnabled(True)
+            self.discoverQTM.setEnabled(False)
+            self.qtmIpBox.setEnabled(False)
 
             if self.cf_ready_to_fly:
                 self.flight_mode = FlightModeStates.GROUNDED
@@ -548,6 +601,9 @@ class QualisysTab(Tab, qualisys_tab_class):
         # Gui
         self.qtmCfPositionBox.setEnabled(False)
         self.qtmWandPositionBox.setEnabled(False)
+        self.discoverQTM.setEnabled(True)
+        self.qtmIpBox.setEnabled(True)
+        self.connectQtmButton.setEnabled(True)
         self.connectQtmButton.setText('Connect QTM')
         self.qtmStatusLabel.setText(': not connected : {}'.format(reason))
 
