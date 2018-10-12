@@ -36,6 +36,7 @@ import math
 
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, pyqtProperty
+from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
@@ -1054,7 +1055,7 @@ class QualisysTab(Tab, qualisys_tab_class):
     def save_current_position(self):
         if self.recording:
             # Restart the timer
-            threading.Timer(0.05, self.save_current_position).start()
+            QTimer.singleShot(50, self.save_current_position)
             # Save the current position
             self.new_path.append([
                 self.valid_cf_pos.x, self.valid_cf_pos.y,
