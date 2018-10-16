@@ -97,6 +97,7 @@ class JoystickReader(object):
         self.thrust_slew_enabled = False
         self.thrust_slew_limit = 0
         self.has_pressure_sensor = False
+        self._hover_max_height = MAX_TARGET_HEIGHT
 
         self.max_rp_angle = 0
         self.max_yaw_rate = 0
@@ -186,6 +187,9 @@ class JoystickReader(object):
             if d.name == device_name:
                 return d
         return None
+
+    def set_hover_max_height(self, height):
+        self._hover_max_height = height
 
     def set_alt_hold_available(self, available):
         """Set if altitude hold is available or not (depending on HW)"""
@@ -458,8 +462,8 @@ class JoystickReader(object):
                     # Integrate velosity setpoint
                     self._target_height += vz * INPUT_READ_PERIOD
                     # Cap target height
-                    if self._target_height > MAX_TARGET_HEIGHT:
-                        self._target_height = MAX_TARGET_HEIGHT
+                    if self._target_height > self._hover_max_height:
+                        self._target_height = self._hover_max_height
                     if self._target_height < MIN_HOVER_HEIGHT:
                         self._target_height = MIN_HOVER_HEIGHT
 
@@ -495,8 +499,8 @@ class JoystickReader(object):
                         # Integrate velosity setpoint
                         self._target_height += vz * INPUT_READ_PERIOD
                         # Cap target height
-                        if self._target_height > MAX_TARGET_HEIGHT:
-                            self._target_height = MAX_TARGET_HEIGHT
+                        if self._target_height > self._hover_max_height:
+                            self._target_height = self._hover_max_height
                         if self._target_height < MIN_TARGET_HEIGHT:
                             self._target_height = MIN_TARGET_HEIGHT
                         self.heighthold_input_updated.call(roll, -pitch,
