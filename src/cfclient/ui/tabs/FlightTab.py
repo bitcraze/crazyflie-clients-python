@@ -629,7 +629,7 @@ class FlightTab(Tab, flight_tab_class):
             heightHoldPossible = True
             hoverPossible = True
             self.helper.inputDeviceReader.set_hover_max_height(1.0)
-        
+
         if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x0F):
             heightHoldPossible = True
             hoverPossible = True
