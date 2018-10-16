@@ -34,6 +34,7 @@ from PyQt5.QtCore import QAbstractTableModel, QVariant, Qt
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtWidgets import QInputDialog, QFileDialog
 import yaml
+import os
 
 __author__ = 'Bitcraze AB'
 __all__ = ['AnchorPositionDialog']
@@ -164,6 +165,8 @@ class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
         super(AnchorPositionDialog, self).__init__(*args)
         self.setupUi(self)
 
+        self._current_folder = os.path.expanduser('~')
+
         self._lps_tab = lps_tab
 
         self._headers = ['', 'id', 'x', 'y', 'z']
@@ -210,7 +213,15 @@ class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
         self._data_model.anchor_postions_updated(anchor_positions)
 
     def _load_button_clicked(self):
-        names = QFileDialog.getOpenFileName(self, 'Open file')
+        names = QFileDialog.getOpenFileName(self, 'Open file',
+                                            self._current_folder,
+                                            "*.yaml;;*.*")
+
+        if names[0] == '':
+            return
+
+        self._current_folder = os.path.dirname(names[0])
+
         f = open(names[0], 'r')
         with f:
             data = yaml.load(f)
@@ -226,7 +237,20 @@ class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
         for id, pos in anchor_positions.items():
             data[id] = {'x': pos[0], 'y': pos[1], 'z': pos[2]}
 
-        names = QFileDialog.getSaveFileName(self, 'Save file')
-        f = open(names[0], 'w')
+        names = QFileDialog.getSaveFileName(self, 'Save file',
+                                            self._current_folder,
+                                            "*.yaml;;*.*")
+
+        if names[0] == '':
+            return
+
+        self._current_folder = os.path.dirname(names[0])
+
+        if not names[0].endswith(".yaml") and names[0].find(".") < 0:
+            filename = names[0] + ".yaml"
+        else:
+            filename = names[0]
+
+        f = open(filename, 'w')
         with f:
             yaml.dump(data, f)
