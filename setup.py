@@ -26,8 +26,8 @@ else:
 # except:
 #     pass
 
-if sys.version_info < (3, 4):
-    raise "must use python 3.4 or greater"
+if sys.version_info < (3, 5):
+    raise "must use python 3.5 or greater"
 
 
 # Recover version from Git.
@@ -124,7 +124,7 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib>=0.1.6',
+    install_requires=platform_requires + ['cflib>=0.1.7',
                                           'appdirs>=1.4.0',
                                           'pyzmq',
                                           'pyqtgraph>=0.10',
