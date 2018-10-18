@@ -42,6 +42,19 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="_propellerTestButton">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;Experimental feature:&lt;/span&gt;&lt;span style=&quot; font-weight:600;&quot;&gt; Tests propellers and motors&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Place the Crazyflie on a flat hard surface and run the propeller test.&lt;/p&gt;&lt;p&gt;The crazyflie will run the motors in sequence and beeps the motors that are above the vibration threshold.&lt;/p&gt;&lt;p&gt;The results are also printed on the console.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Propeller test</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
