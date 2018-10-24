@@ -33,10 +33,12 @@ import logging
 import time
 import datetime
 import math
+from enum import Enum
 
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, pyqtProperty
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QStateMachine, QState, QEvent
+from PyQt5.QtCore import QAbstractTransition
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
@@ -62,7 +64,30 @@ qualisys_tab_class, _ = uic.loadUiType(cfclient.module_path +
                                        "/ui/tabs/qualisysTab.ui")
 
 
-class FlightModeStates:
+class FlightModeEvent(QEvent):
+
+    def __init__(self, mode, parent=None):
+        super(FlightModeEvent, self).__init__(QEvent.Type(QEvent.User + 1))
+        self.mode = mode
+
+
+class FlightModeTransition(QAbstractTransition):
+
+    def __init__(self, value, parent=None):
+        super(FlightModeTransition, self).__init__(parent)
+        self.value = value
+
+    def eventTest(self, event):
+        if event.type() != QEvent.Type(QEvent.User + 1):
+            return False
+
+        return event.mode == self.value
+
+    def onTransition(self, event):
+        pass
+
+
+class FlightModeStates(Enum):
     LAND = 0
     LIFT = 1
     FOLLOW = 2
@@ -144,6 +169,11 @@ class QualisysTab(Tab, qualisys_tab_class):
     _param_updated_signal = pyqtSignal(str, str)
     _imu_data_signal = pyqtSignal(int, object, object)
 
+    _flight_path_select_row = pyqtSignal(int)
+    _flight_path_set_model = pyqtSignal(QStandardItemModel)
+    _path_selector_add_item = pyqtSignal(str)
+    _path_selector_set_index = pyqtSignal(int)
+
     statusChanged = pyqtSignal(str)
     cfStatusChanged = pyqtSignal(str)
     qtmStatusChanged = pyqtSignal(str)
@@ -151,6 +181,10 @@ class QualisysTab(Tab, qualisys_tab_class):
     def __init__(self, tabWidget, helper, *args):
         super(QualisysTab, self).__init__(*args)
         self.setupUi(self)
+
+        self._machine = QStateMachine()
+        self._setup_states()
+        self._event = threading.Event()
 
         self.tabName = "Qualisys"
         self.menuName = "Qualisys Tab"
@@ -167,9 +201,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         self._qtm_status = self.qtmStatusLabel.text()
 
         self.flying_enabled = False
-        self.flight_mode_switched = True
-        self.flight_mode = FlightModeStates.DISCONNECTED
-        self.switch_flight_mode()
+        self.switch_flight_mode(FlightModeStates.DISCONNECTED)
         self.cf_ready_to_fly = False
         self.path_pos_threshold = 0.2
         self.circle_pos_threshold = 0.1
@@ -238,6 +270,11 @@ class QualisysTab(Tab, qualisys_tab_class):
         self._log_data_signal.connect(self._log_data_received)
         self._param_updated_signal.connect(self._param_updated)
 
+        self._flight_path_select_row.connect(self._select_flight_path_row)
+        self._flight_path_set_model.connect(self._set_flight_path_model)
+        self._path_selector_add_item.connect(self._add_path_selector_item)
+        self._path_selector_set_index.connect(self._set_path_selector_index)
+
         self.statusChanged.connect(self._update_status)
         self.cfStatusChanged.connect(self._update_cf_status)
         self.qtmStatusChanged.connect(self._update_qtm_status)
@@ -282,6 +319,166 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         self.discoverQTM.clicked.connect(self._discovery.discover)
         self._discovery.discover()
+
+    def _setup_states(self):
+        parent_state = QState()
+
+        # DISCONNECTED
+        disconnected = QState(parent_state)
+        disconnected.assignProperty(self, "status", "Disabled")
+        disconnected.assignProperty(self.pathButton, "text", "Path Mode")
+        disconnected.assignProperty(self.followButton, "text", "Follow Mode")
+        disconnected.assignProperty(self.circleButton, "text", "Circle Mode")
+        disconnected.assignProperty(self.recordButton, "text", "Record Mode")
+        disconnected.assignProperty(self.pathButton, "enabled", False)
+        disconnected.assignProperty(self.emergencyButton, "enabled", False)
+        disconnected.assignProperty(self.landButton, "enabled", False)
+        disconnected.assignProperty(self.followButton, "enabled", False)
+        disconnected.assignProperty(self.liftButton, "enabled", False)
+        disconnected.assignProperty(self.circleButton, "enabled", False)
+        disconnected.assignProperty(self.recordButton, "enabled", False)
+        disconnected.entered.connect(self._flight_mode_disconnected_entered)
+
+        # HOVERING
+        hovering = QState(parent_state)
+        hovering.assignProperty(self, "status", "Hovering...")
+        hovering.assignProperty(self.pathButton, "text", "Path Mode")
+        hovering.assignProperty(self.followButton, "text", "Follow Mode")
+        hovering.assignProperty(self.circleButton, "text", "Circle Mode")
+        hovering.assignProperty(self.recordButton, "text", "Record Mode")
+        hovering.assignProperty(self.pathButton, "enabled", True)
+        hovering.assignProperty(self.emergencyButton, "enabled", True)
+        hovering.assignProperty(self.landButton, "enabled", True)
+        hovering.assignProperty(self.followButton, "enabled", True)
+        hovering.assignProperty(self.liftButton, "enabled", False)
+        hovering.assignProperty(self.circleButton, "enabled", True)
+        hovering.assignProperty(self.recordButton, "enabled", True)
+        hovering.entered.connect(self._flight_mode_hovering_entered)
+
+        # GROUNDED
+        grounded = QState(parent_state)
+        grounded.assignProperty(self, "status", "Landed")
+        grounded.assignProperty(self.pathButton, "text", "Path Mode")
+        grounded.assignProperty(self.followButton, "text", "Follow Mode")
+        grounded.assignProperty(self.circleButton, "text", "Circle Mode")
+        grounded.assignProperty(self.recordButton, "text", "Record Mode")
+        grounded.assignProperty(self.pathButton, "enabled", True)
+        grounded.assignProperty(self.emergencyButton, "enabled", True)
+        grounded.assignProperty(self.landButton, "enabled", False)
+        grounded.assignProperty(self.followButton, "enabled", False)
+        grounded.assignProperty(self.liftButton, "enabled", True)
+        grounded.assignProperty(self.circleButton, "enabled", True)
+        grounded.assignProperty(self.recordButton, "enabled", True)
+        grounded.entered.connect(self._flight_mode_grounded_entered)
+
+        # PATH
+        path = QState(parent_state)
+        path.assignProperty(self, "status", "Path Mode")
+        path.assignProperty(self.pathButton, "text", "Stop")
+        path.assignProperty(self.followButton, "text", "Follow Mode")
+        path.assignProperty(self.circleButton, "text", "Circle Mode")
+        path.assignProperty(self.recordButton, "text", "Record Mode")
+        path.assignProperty(self.pathButton, "enabled", True)
+        path.assignProperty(self.emergencyButton, "enabled", True)
+        path.assignProperty(self.landButton, "enabled", True)
+        path.assignProperty(self.followButton, "enabled", False)
+        path.assignProperty(self.liftButton, "enabled", False)
+        path.assignProperty(self.circleButton, "enabled", False)
+        path.assignProperty(self.recordButton, "enabled", False)
+        path.entered.connect(self._flight_mode_path_entered)
+
+        # FOLLOW
+        follow = QState(parent_state)
+        follow.assignProperty(self, "status", "Follow Mode")
+        follow.assignProperty(self.pathButton, "text", "Path Mode")
+        follow.assignProperty(self.followButton, "text", "Stop")
+        follow.assignProperty(self.circleButton, "text", "Circle Mode")
+        follow.assignProperty(self.recordButton, "text", "Record Mode")
+        follow.assignProperty(self.pathButton, "enabled", False)
+        follow.assignProperty(self.emergencyButton, "enabled", True)
+        follow.assignProperty(self.landButton, "enabled", True)
+        follow.assignProperty(self.followButton, "enabled", False)
+        follow.assignProperty(self.liftButton, "enabled", False)
+        follow.assignProperty(self.circleButton, "enabled", False)
+        follow.assignProperty(self.recordButton, "enabled", False)
+        follow.entered.connect(self._flight_mode_follow_entered)
+
+        # LIFT
+        lift = QState(parent_state)
+        lift.assignProperty(self, "status", "Lifting...")
+        lift.assignProperty(self.pathButton, "enabled", False)
+        lift.assignProperty(self.emergencyButton, "enabled", True)
+        lift.assignProperty(self.landButton, "enabled", True)
+        lift.assignProperty(self.followButton, "enabled", False)
+        lift.assignProperty(self.liftButton, "enabled", False)
+        lift.assignProperty(self.circleButton, "enabled", False)
+        lift.assignProperty(self.recordButton, "enabled", False)
+        lift.entered.connect(self._flight_mode_lift_entered)
+
+        # LAND
+        land = QState(parent_state)
+        land.assignProperty(self, "status", "Landing...")
+        land.assignProperty(self.pathButton, "enabled", False)
+        land.assignProperty(self.emergencyButton, "enabled", True)
+        land.assignProperty(self.landButton, "enabled", False)
+        land.assignProperty(self.followButton, "enabled", False)
+        land.assignProperty(self.liftButton, "enabled", False)
+        land.assignProperty(self.circleButton, "enabled", False)
+        land.assignProperty(self.recordButton, "enabled", False)
+        land.entered.connect(self._flight_mode_land_entered)
+
+        # CIRCLE
+        circle = QState(parent_state)
+        circle.assignProperty(self, "status", "Circle Mode")
+        circle.assignProperty(self.pathButton, "text", "Path Mode")
+        circle.assignProperty(self.followButton, "text", "Follow Mode")
+        circle.assignProperty(self.circleButton, "text", "Stop")
+        circle.assignProperty(self.recordButton, "text", "Record Mode")
+        circle.assignProperty(self.pathButton, "enabled", False)
+        circle.assignProperty(self.emergencyButton, "enabled", True)
+        circle.assignProperty(self.landButton, "enabled", True)
+        circle.assignProperty(self.followButton, "enabled", False)
+        circle.assignProperty(self.liftButton, "enabled", False)
+        circle.assignProperty(self.circleButton, "enabled", True)
+        circle.assignProperty(self.recordButton, "enabled", False)
+        circle.entered.connect(self._flight_mode_circle_entered)
+
+        # RECORD
+        record = QState(parent_state)
+        record.assignProperty(self, "status", "Record Mode")
+        record.assignProperty(self.pathButton, "text", "Path Mode")
+        record.assignProperty(self.followButton, "text", "Follow Mode")
+        record.assignProperty(self.circleButton, "text", "Circle Mode")
+        record.assignProperty(self.recordButton, "text", "Stop")
+        record.assignProperty(self.pathButton, "enabled", False)
+        record.assignProperty(self.emergencyButton, "enabled", True)
+        record.assignProperty(self.landButton, "enabled", False)
+        record.assignProperty(self.followButton, "enabled", False)
+        record.assignProperty(self.liftButton, "enabled", False)
+        record.assignProperty(self.circleButton, "enabled", False)
+        record.assignProperty(self.recordButton, "enabled", True)
+        record.entered.connect(self._flight_mode_record_entered)
+
+        def add_transition(mode, child_state, parent):
+            transition = FlightModeTransition(mode)
+            transition.setTargetState(child_state)
+            parent.addTransition(transition)
+
+        add_transition(FlightModeStates.LAND, land, parent_state)
+        add_transition(FlightModeStates.LIFT, lift, parent_state)
+        add_transition(FlightModeStates.FOLLOW, follow, parent_state)
+        add_transition(FlightModeStates.PATH, path, parent_state)
+        add_transition(FlightModeStates.HOVERING, hovering, parent_state)
+        add_transition(FlightModeStates.GROUNDED, grounded, parent_state)
+        add_transition(FlightModeStates.DISCONNECTED, disconnected,
+                       parent_state)
+        add_transition(FlightModeStates.CIRCLE, circle, parent_state)
+        add_transition(FlightModeStates.RECORD, record, parent_state)
+
+        parent_state.setInitialState(disconnected)
+        self._machine.addState(parent_state)
+        self._machine.setInitialState(parent_state)
+        self._machine.start()
 
     def _is_discovering(self, discovering):
         if discovering:
@@ -343,14 +540,23 @@ class QualisysTab(Tab, qualisys_tab_class):
             self._cf_status = value
             self.cfStatusChanged.emit(value)
 
+    def _select_flight_path_row(self, row):
+        self.flightPathDataTable.selectRow(row)
+
+    def _set_flight_path_model(self, model):
+        self.flightPathDataTable.setModel(model)
+
+    def _add_path_selector_item(self, item):
+        self.pathSelector.addItem(item)
+
+    def _set_path_selector_index(self, index):
+        self.pathSelector.setCurrentIndex(index)
+
     def path_changed(self):
 
         if self.flight_mode == FlightModeStates.PATH:
-            self.flight_mode = FlightModeStates.HOVERING
-            self.switch_flight_mode()
+            self.switch_flight_mode(FlightModeStates.HOVERING)
             time.sleep(0.1)
-
-        self.model.clear()
 
         # Flight path ui table setup
         self.model = QStandardItemModel(10, 4)
@@ -362,22 +568,18 @@ class QualisysTab(Tab, qualisys_tab_class):
         # Populate the table with data
         if (len(self.flight_paths) == 0):
             return
-        for i in range(
-                1, len(self.flight_paths[self.pathSelector.currentIndex()])):
+        current = self.flight_paths[self.pathSelector.currentIndex()]
+        for i in range(1, len(current)):
             for j in range(0, 4):
-                self.model.setItem(
-                    i - 1, j,
-                    QStandardItem(
-                        str(self.flight_paths[self.pathSelector.currentIndex()]
-                            [i][j])))
-        self.flightPathDataTable.setModel(self.model)
+                self.model.setItem(i - 1, j,
+                                   QStandardItem(str(current[i][j])))
+        self._flight_path_set_model.emit(self.model)
         Config().set("flight_paths", self.flight_paths)
 
     def remove_current_path(self):
 
         if self.flight_mode == FlightModeStates.PATH:
-            self.flight_mode = FlightModeStates.HOVERING
-            self.switch_flight_mode()
+            self.switch_flight_mode(FlightModeStates.HOVERING)
             time.sleep(0.1)
         if len(self.flight_paths) == 0:
             return
@@ -403,20 +605,17 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.path_changed()
 
     def set_lift_mode(self):
-        self.flight_mode = FlightModeStates.LIFT
-        self.switch_flight_mode()
+        self.switch_flight_mode(FlightModeStates.LIFT)
 
     def set_land_mode(self):
-        self.flight_mode = FlightModeStates.LAND
-        self.switch_flight_mode()
+        self.switch_flight_mode(FlightModeStates.LAND)
 
     def set_circle_mode(self):
 
         # Toggle circle mode on and off
 
         if self.flight_mode == FlightModeStates.CIRCLE:
-            self.flight_mode = FlightModeStates.HOVERING
-            self.switch_flight_mode()
+            self.switch_flight_mode(FlightModeStates.HOVERING)
 
         else:
             try:
@@ -434,38 +633,30 @@ class QualisysTab(Tab, qualisys_tab_class):
                 logger.info(self.status)
                 return
 
-            self.flight_mode = FlightModeStates.CIRCLE
-            self.switch_flight_mode()
+            self.switch_flight_mode(FlightModeStates.CIRCLE)
 
     def set_record_mode(self):
         # Toggle record mode on and off
 
         if self.flight_mode == FlightModeStates.RECORD:
             # Cancel the recording
-            self.flight_mode = FlightModeStates.GROUNDED
             self.recording = False
-            self.switch_flight_mode()
+            self.switch_flight_mode(FlightModeStates.GROUNDED)
             self.land_for_recording = False
         elif self.flight_mode != FlightModeStates.GROUNDED:
             # If the cf is flying, start by landing
             self.land_for_recording = True
-            self.flight_mode = FlightModeStates.LAND
-            self.switch_flight_mode()
+            self.switch_flight_mode(FlightModeStates.LAND)
         else:
-            self.flight_mode = FlightModeStates.RECORD
-            self.switch_flight_mode()
+            self.switch_flight_mode(FlightModeStates.RECORD)
 
     def set_follow_mode(self):
-
         # Toggle follow mode on and off
 
         if self.flight_mode == FlightModeStates.FOLLOW:
-            self.flight_mode = FlightModeStates.HOVERING
-            self.switch_flight_mode()
+            self.switch_flight_mode(FlightModeStates.HOVERING)
         else:
-
-            self.flight_mode = FlightModeStates.FOLLOW
-            self.switch_flight_mode()
+            self.switch_flight_mode(FlightModeStates.FOLLOW)
 
     def set_path_mode(self):
         logger.info(self.model.item(0, 0))
@@ -473,8 +664,7 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         # Path mode on, return to hovering
         if self.flight_mode == FlightModeStates.PATH:
-            self.flight_mode = FlightModeStates.HOVERING
-            self.switch_flight_mode()
+            self.switch_flight_mode(FlightModeStates.HOVERING)
 
         elif self.model.item(0, 0) is None:
             self.status = "missing Flight Plan"
@@ -508,7 +698,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                         try:
                             float(element)
                         except ValueError:
-                            self.flightPathDataTable.selectRow(y)
+                            self._flight_path_select_row.emit(y)
                             self.status = ("Value at cell x:{} y:{} "
                                            "must be a number").format(x, y)
                             logger.info(self.status)
@@ -539,13 +729,11 @@ class QualisysTab(Tab, qualisys_tab_class):
                         self.flight_paths[self.pathSelector.currentIndex()][0])
                     self.flight_paths[self.pathSelector.currentIndex()] = list
                     Config().set("flight_paths", self.flight_paths)
-                    self.flight_mode = FlightModeStates.PATH
-                    self.switch_flight_mode()
+                    self.switch_flight_mode(FlightModeStates.PATH)
 
     def set_kill_engine(self):
         self.send_setpoint(self.scf, Position(0, 0, 0))
-        self.flight_mode = FlightModeStates.GROUNDED
-        self.switch_flight_mode()
+        self.switch_flight_mode(FlightModeStates.GROUNDED)
         logger.info('Stop button pressed, kill engines')
 
     def establish_qtm_connection(self):
@@ -627,8 +815,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.qtmIpBox.setEnabled(False)
 
             if self.cf_ready_to_fly:
-                self.flight_mode = FlightModeStates.GROUNDED
-                self.switch_flight_mode()
+                self.switch_flight_mode(FlightModeStates.GROUNDED)
 
             # Make sure this is the last thing done with the qtm_connection
             # (due to qtmRTProtocol structure)
@@ -655,13 +842,10 @@ class QualisysTab(Tab, qualisys_tab_class):
             reason if reason is not None else ''
             )
 
-        self.flight_mode = FlightModeStates.DISCONNECTED
-        self.switch_flight_mode()
+        self.switch_flight_mode(FlightModeStates.DISCONNECTED)
 
     def on_qtm_event(self, event):
-
         logger.info(event)
-
         if event == qtm.QRTEvent.EventRTfromFileStarted:
             self.qtmStatus = ': connected'
             self.qtmCfPositionBox.setEnabled(True)
@@ -738,6 +922,67 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.qualisysWandPitch.setText(("%0.2f" % self.wand_pos.pitch))
         self.qualisysWandYaw.setText(("%0.2f" % self.wand_pos.yaw))
 
+    def _flight_mode_land_entered(self):
+        self.current_goal_pos = self.valid_cf_pos
+        logger.info('Trying to land at: x: {} y: {}'.format(
+            self.current_goal_pos.x, self.current_goal_pos.y))
+        self.land_rate = 1
+        self._event.set()
+
+    def _flight_mode_path_entered(self):
+        self.path_index = 1
+
+        current = self.flight_paths[self.pathSelector.
+                                    currentIndex()]
+        self.current_goal_pos = Position(
+            current[self.path_index][0],
+            current[self.path_index][1],
+            current[self.path_index][2],
+            yaw=current[self.path_index][3])
+        logger.info('Setting position {}'.format(
+            self.current_goal_pos))
+        self._flight_path_select_row.emit(self.path_index - 1)
+        self._event.set()
+
+    def _flight_mode_circle_entered(self):
+        self.current_goal_pos = Position(
+            round(math.cos(math.radians(self.circle_angle)),
+                  8) * self.circle_radius,
+            round(math.sin(math.radians(self.circle_angle)), 8)
+            * self.circle_radius,
+            self.circle_height,
+            yaw=self.circle_angle)
+
+        logger.info('Setting position {}'.format(
+            self.current_goal_pos))
+        self._event.set()
+
+    def _flight_mode_follow_entered(self):
+        self.last_valid_wand_pos = Position(0, 0, 1)
+        self._event.set()
+
+    def _flight_mode_record_entered(self):
+        self.new_path = []
+        self._event.set()
+
+    def _flight_mode_lift_entered(self):
+        self.current_goal_pos = self.valid_cf_pos
+        logger.info('Trying to lift at: {}'.format(
+            self.current_goal_pos))
+        self._event.set()
+
+    def _flight_mode_hovering_entered(self):
+        self.current_goal_pos = self.valid_cf_pos
+        logger.info('Hovering at: {}'.format(
+            self.current_goal_pos))
+        self._event.set()
+
+    def _flight_mode_grounded_entered(self):
+        self._event.set()
+
+    def _flight_mode_disconnected_entered(self):
+        self._event.set()
+
     def flight_controller(self):
         try:
             _scf = SyncCrazyflie("radio://0/{}".format(self.uri),
@@ -757,7 +1002,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             lost_tracking_threshold = 100
             frames_without_tracking = 0
             position_hold_timer = 0
-            circle_angle_deg = 0.0
+            self.circle_angle = 0.0
 
             # The main flight control loop, the behaviour
             # is controlled by the state of "FlightMode"
@@ -772,8 +1017,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                     frames_without_tracking += 1
 
                     if frames_without_tracking > lost_tracking_threshold:
-                        self.flight_mode = FlightModeStates.GROUNDED
-                        self.switch_flight_mode()
+                        self.switch_flight_mode(FlightModeStates.GROUNDED)
                         self.status = "Tracking lost, turning off motors"
                         logger.info(self.status)
 
@@ -781,73 +1025,13 @@ class QualisysTab(Tab, qualisys_tab_class):
                 if self.flight_mode != FlightModeStates.GROUNDED and (
                         self.valid_cf_pos.roll > 120
                         or self.valid_cf_pos.roll < -120):
-                    self.flight_mode = FlightModeStates.GROUNDED
-                    self.switch_flight_mode()
+                    self.switch_flight_mode(FlightModeStates.GROUNDED)
                     self.status = "Status: Upside down, turning off motors"
                     logger.info(self.status)
 
-                # Some of the flight modes needs an initial init
-                # when they are activated, which is done here
-                if self.flight_mode_switched:
-                    if self.flight_mode == FlightModeStates.LAND:
-                        self.current_goal_pos = self.valid_cf_pos
-                        logger.info('Trying to land at: x: {} y: {}'.format(
-                            self.current_goal_pos.x, self.current_goal_pos.y))
-                        land_rate_index = 1
-
-                    elif self.flight_mode == FlightModeStates.PATH:
-                        i = 1
-
-                        self.current_goal_pos = Position(
-                            self.flight_paths[self.pathSelector.
-                                              currentIndex()][i][0],
-                            self.flight_paths[self.pathSelector.
-                                              currentIndex()][i][1],
-                            self.flight_paths[self.pathSelector.currentIndex()]
-                            [i][2],
-                            yaw=self.flight_paths[self.pathSelector.
-                                                  currentIndex()][i][3])
-                        logger.info('Setting position {}'.format(
-                            self.current_goal_pos))
-                        self.flightPathDataTable.selectRow(i - 1)
-
-                    elif self.flight_mode == FlightModeStates.CIRCLE:
-
-                        self.current_goal_pos = Position(
-                            round(math.cos(math.radians(circle_angle_deg)),
-                                  8) * self.circle_radius,
-                            round(math.sin(math.radians(circle_angle_deg)), 8)
-                            * self.circle_radius,
-                            self.circle_height,
-                            yaw=circle_angle_deg)
-
-                        logger.info('Setting position {}'.format(
-                            self.current_goal_pos))
-
-                    elif self.flight_mode == FlightModeStates.FOLLOW:
-                        self.last_valid_wand_pos = Position(0, 0, 1)
-
-                    elif self.flight_mode == FlightModeStates.RECORD:
-                        self.new_path = []
-
-                    elif self.flight_mode == FlightModeStates.LIFT:
-                        self.current_goal_pos = self.valid_cf_pos
-                        logger.info('Trying to lift at: {}'.format(
-                            self.current_goal_pos))
-
-                    elif self.flight_mode == FlightModeStates.HOVERING:
-                        self.current_goal_pos = self.valid_cf_pos
-                        logger.info('Hovering at: {}'.format(
-                            self.current_goal_pos))
-
-                    elif self.flight_mode == FlightModeStates.GROUNDED:
-                        pass
-
-                    # Remember to set the flag back to false
-                    # after the init is done
-                    self.flight_mode_switched = False
-
                 # Switch on the FlightModeState and take actions accordingly
+                # Wait so that any on state change actions are completed
+                self._event.wait()
 
                 if self.flight_mode == FlightModeStates.LAND:
 
@@ -856,7 +1040,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                         Position(
                             self.current_goal_pos.x,
                             self.current_goal_pos.y,
-                            (self.current_goal_pos.z / land_rate_index),
+                            (self.current_goal_pos.z / self.land_rate),
                             yaw=0))
                     # Check if the cf has reached the  position,
                     # if it has set a new position
@@ -864,22 +1048,21 @@ class QualisysTab(Tab, qualisys_tab_class):
                     if self.valid_cf_pos.distance_to(
                             Position(self.current_goal_pos.x,
                                      self.current_goal_pos.y,
-                                     (self.current_goal_pos.z / land_rate_index
+                                     (self.current_goal_pos.z / self.land_rate
                                       ))) < self.path_pos_threshold:
-                        land_rate_index *= 1.1
+                        self.land_rate *= 1.1
 
-                    if land_rate_index > 1000:
+                    if self.land_rate > 1000:
                         self.send_setpoint(self.scf, Position(0, 0, 0))
                         if self.land_for_recording:
                             # Return the control to the recording mode
                             # after landing
-                            self.flight_mode = FlightModeStates.RECORD
+                            mode = FlightModeStates.RECORD
                             self.land_for_recording = False
                         else:
                             # Regular landing
-                            self.flight_mode = FlightModeStates.GROUNDED
-
-                        self.switch_flight_mode()
+                            mode = FlightModeStates.GROUNDED
+                        self.switch_flight_mode(mode)
 
                 elif self.flight_mode == FlightModeStates.PATH:
 
@@ -891,24 +1074,24 @@ class QualisysTab(Tab, qualisys_tab_class):
 
                         if position_hold_timer > self.position_hold_timelimit:
 
-                            i = (i + 1)
-                            if i == (len(self.flight_paths[self.pathSelector.
-                                                           currentIndex()])):
-                                i = 1
+                            current = self.flight_paths[self.pathSelector.
+                                                        currentIndex()]
+
+                            self.path_index += 1
+                            if self.path_index == len(current):
+                                self.path_index = 1
                             position_hold_timer = 0
+
                             self.current_goal_pos = Position(
-                                self.flight_paths[self.pathSelector.
-                                                  currentIndex()][i][0],
-                                self.flight_paths[self.pathSelector.
-                                                  currentIndex()][i][1],
-                                self.flight_paths[self.pathSelector.
-                                                  currentIndex()][i][2],
-                                yaw=self.flight_paths[self.pathSelector.
-                                                      currentIndex()][i][3])
+                                current[self.path_index][0],
+                                current[self.path_index][1],
+                                current[self.path_index][2],
+                                yaw=current[self.path_index][3])
 
                             logger.info('Setting position {}'.format(
                                 self.current_goal_pos))
-                            self.flightPathDataTable.selectRow(i - 1)
+                            self._flight_path_select_row.emit(
+                                self.path_index - 1)
                         elif position_hold_timer == 0:
 
                             time_of_pos_reach = time.time()
@@ -934,20 +1117,21 @@ class QualisysTab(Tab, qualisys_tab_class):
                             position_hold_timer = 0
 
                             # increment the angle
-                            circle_angle_deg = (circle_angle_deg +
-                                                self.circle_resolution) % 360
+                            self.circle_angle = ((self.circle_angle +
+                                                  self.circle_resolution)
+                                                 % 360)
 
                             # Calculate the next position in
                             # the circle to fly to
                             self.current_goal_pos = Position(
                                 round(
-                                    math.cos(math.radians(circle_angle_deg)),
+                                    math.cos(math.radians(self.circle_angle)),
                                     4) * self.circle_radius,
                                 round(
-                                    math.sin(math.radians(circle_angle_deg)),
+                                    math.sin(math.radians(self.circle_angle)),
                                     4) * self.circle_radius,
                                 self.circle_height,
-                                yaw=circle_angle_deg)
+                                yaw=self.circle_angle)
 
                             logger.info('Setting position {}'.format(
                                 self.current_goal_pos))
@@ -1023,8 +1207,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                             Position(self.current_goal_pos.x,
                                      self.current_goal_pos.y, 1)) < 0.05:
                         # Wait for hte crazyflie to reach the goal
-                        self.flight_mode = FlightModeStates.HOVERING
-                        self.switch_flight_mode()
+                        self.switch_flight_mode(FlightModeStates.HOVERING)
 
                 elif self.flight_mode == FlightModeStates.HOVERING:
                     self.send_setpoint(self.scf, self.current_goal_pos)
@@ -1048,7 +1231,7 @@ class QualisysTab(Tab, qualisys_tab_class):
 
                         # Remove the last bit (1s) of the recording,
                         # containing setting the cf down
-                        for i in range(20):
+                        for self.path_index in range(20):
                             self.new_path.pop()
 
                         # Add the new path to list and Gui
@@ -1064,10 +1247,10 @@ class QualisysTab(Tab, qualisys_tab_class):
 
                         self.new_path.insert(0, new_name)
                         self.flight_paths.append(self.new_path)
-                        self.pathSelector.addItem(new_name)
+                        self._path_selector_add_item.emit(new_name)
 
                         # Select the new path
-                        self.pathSelector.setCurrentIndex(
+                        self._path_selector_set_index.emit(
                             len(self.flight_paths) - 1)
                         self.path_changed()
                         Config().set("flight_paths", self.flight_paths)
@@ -1080,23 +1263,21 @@ class QualisysTab(Tab, qualisys_tab_class):
                         self.status = "Replay in 1s"
                         time.sleep(1)
                         # Switch to path mode and replay the recording
-                        self.flight_mode = FlightModeStates.PATH
-                        self.switch_flight_mode()
+                        self.switch_flight_mode(FlightModeStates.PATH)
 
                 elif self.flight_mode == FlightModeStates.GROUNDED:
-                    # self.send_setpoint(self.scf, Position(0, 0, 0))
                     pass  # If gounded, the control is switched back to gamepad
 
                 time.sleep(0.001)
 
         except Exception as err:
-            logger.info(err)
+            logger.error(err)
             self.cfStatus = str(err)
 
     def save_current_position(self):
         if self.recording:
             # Restart the timer
-            QTimer.singleShot(50, self.save_current_position)
+            threading.Timer(0.05, self.save_current_position).start()
             # Save the current position
             self.new_path.append([
                 self.valid_cf_pos.x, self.valid_cf_pos.y,
@@ -1117,7 +1298,6 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         # Gui
         self.cfStatus = ': connected'
-        self.cf_ready_to_fly = True
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
@@ -1193,8 +1373,7 @@ class QualisysTab(Tab, qualisys_tab_class):
 
                     self.cfStatus = ": connected"
 
-                    self.flight_mode = FlightModeStates.GROUNDED
-                    self.switch_flight_mode()
+                    self.switch_flight_mode(FlightModeStates.GROUNDED)
                     self.cf_ready_to_fly = True
 
                     break
@@ -1209,8 +1388,10 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         self.wait_for_position_estimator(cf)
 
-    def switch_flight_mode(self):
+    def switch_flight_mode(self, mode):
         # Handles the behaviour of switching between flight modes
+
+        self.flight_mode = mode
 
         # Handle client input control.
         # Disable gamepad input if we are not grounded
@@ -1222,134 +1403,11 @@ class QualisysTab(Tab, qualisys_tab_class):
         else:
             self._helper.mainUI.disable_input(True)
 
-        # Set to true to indicate a flight mode switch
-        self.flight_mode_switched = True
+        self._event.clear()
+        # Threadsafe call
+        self._machine.postEvent(FlightModeEvent(mode))
 
-        if self.flight_mode == FlightModeStates.HOVERING:
-            self.status = "Hovering..."
-            self.pathButton.setText("Path Mode")
-            self.followButton.setText("Follow Mode")
-            self.circleButton.setText("Circle Mode")
-            self.recordButton.setText("Record Mode")
-            self.pathButton.setEnabled(True)
-            self.emergencyButton.setEnabled(True)
-            self.landButton.setEnabled(True)
-            self.followButton.setEnabled(True)
-            self.liftButton.setEnabled(False)
-            self.circleButton.setEnabled(True)
-            self.recordButton.setEnabled(True)
-            logger.info('Switching Flight Mode to: Hovering')
-
-        elif self.flight_mode == FlightModeStates.DISCONNECTED:
-            self.status = "Disabled"
-            self.pathButton.setText("Path Mode")
-            self.followButton.setText("Follow Mode")
-            self.circleButton.setText("Circle Mode")
-            self.recordButton.setText("Record Mode")
-            self.liftButton.setEnabled(False)
-            self.emergencyButton.setEnabled(False)
-            self.followButton.setEnabled(False)
-            self.landButton.setEnabled(False)
-            self.pathButton.setEnabled(False)
-            self.circleButton.setEnabled(False)
-            self.recordButton.setEnabled(False)
-            logger.info('Switching Flight Mode to: Disconnected')
-
-        elif self.flight_mode == FlightModeStates.GROUNDED:
-            self.status = "Landed"
-            self.pathButton.setText("Path Mode")
-            self.followButton.setText("Follow Mode")
-            self.circleButton.setText("Circle Mode")
-            self.recordButton.setText("Record Mode")
-            self.liftButton.setEnabled(True)
-            self.emergencyButton.setEnabled(True)
-            self.followButton.setEnabled(True)
-            self.pathButton.setEnabled(True)
-            self.landButton.setEnabled(False)
-            self.circleButton.setEnabled(True)
-            self.recordButton.setEnabled(True)
-            logger.info('Switching Flight Mode to: Grounded')
-
-        elif self.flight_mode == FlightModeStates.PATH:
-            self.status = "Path Mode"
-            self.circleButton.setText("Circle Mode")
-            self.followButton.setText("Follow Mode")
-            self.recordButton.setText("Record Mode")
-            self.pathButton.setText("Stop")
-            self.pathButton.setEnabled(True)
-            self.liftButton.setEnabled(False)
-            self.emergencyButton.setEnabled(True)
-            self.landButton.setEnabled(True)
-            self.followButton.setEnabled(False)
-            self.circleButton.setEnabled(False)
-            self.recordButton.setEnabled(False)
-            logger.info('Switching Flight Mode to: Path Mode')
-
-        elif self.flight_mode == FlightModeStates.FOLLOW:
-            self.status = "Follow Mode"
-            self.pathButton.setText("Path Mode")
-            self.circleButton.setText("Circle Mode")
-            self.recordButton.setText("Record Mode")
-            self.followButton.setText("Stop")
-            self.liftButton.setEnabled(False)
-            self.emergencyButton.setEnabled(True)
-            self.landButton.setEnabled(True)
-            self.pathButton.setEnabled(False)
-            self.circleButton.setEnabled(False)
-            self.recordButton.setEnabled(False)
-            logger.info('Switching Flight Mode to: Follow Mode')
-
-        elif self.flight_mode == FlightModeStates.LIFT:
-            self.status = "Lifting..."
-            self.liftButton.setEnabled(False)
-            self.emergencyButton.setEnabled(True)
-            self.landButton.setEnabled(True)
-            self.followButton.setEnabled(False)
-            self.pathButton.setEnabled(False)
-            self.circleButton.setEnabled(False)
-            self.recordButton.setEnabled(False)
-            logger.info('Switching Flight Mode to: Lift Mode')
-
-        elif self.flight_mode == FlightModeStates.LAND:
-            self.status = "Landing..."
-            self.liftButton.setEnabled(False)
-            self.landButton.setEnabled(False)
-            self.emergencyButton.setEnabled(True)
-            self.followButton.setEnabled(False)
-            self.pathButton.setEnabled(False)
-            self.circleButton.setEnabled(False)
-            self.recordButton.setEnabled(False)
-            logger.info('Switching Flight Mode to: Land Mode')
-
-        elif self.flight_mode == FlightModeStates.CIRCLE:
-            self.status = "Circle Mode"
-            self.pathButton.setText("Path Mode")
-            self.followButton.setText("Follow Mode")
-            self.recordButton.setText("Record Mode")
-            self.circleButton.setText("Stop")
-            self.liftButton.setEnabled(False)
-            self.emergencyButton.setEnabled(True)
-            self.landButton.setEnabled(True)
-            self.pathButton.setEnabled(False)
-            self.followButton.setEnabled(False)
-            self.circleButton.setEnabled(True)
-            self.recordButton.setEnabled(False)
-            logger.info('Switching Flight Mode to: Cricle Mode')
-
-        elif self.flight_mode == FlightModeStates.RECORD:
-            self.status = "Record Mode"
-            self.pathButton.setText("Path Mode")
-            self.followButton.setText("Follow Mode")
-            self.circleButton.setText("Circle Mode")
-            self.recordButton.setText("Stop")
-            self.liftButton.setEnabled(False)
-            self.emergencyButton.setEnabled(True)
-            self.landButton.setEnabled(False)
-            self.pathButton.setEnabled(False)
-            self.followButton.setEnabled(False)
-            self.circleButton.setEnabled(False)
-            self.recordButton.setEnabled(True)
-            logger.info('Switching Flight Mode to: Record Mode')
+        logger.info('Switching Flight Mode to: %s', mode)
 
     def send_setpoint(self, scf_, pos):
         # Wraps the send command to the crazyflie
