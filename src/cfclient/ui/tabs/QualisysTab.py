@@ -737,7 +737,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         logger.info('Stop button pressed, kill engines')
 
     def establish_qtm_connection(self):
-        if self.qtmIpBox.count() == 0:
+        if self.qtmIpBox.count() == 0 and self.qtmIpBox.currentText() == "":
             return
 
         if self._qtm_connection is None:
