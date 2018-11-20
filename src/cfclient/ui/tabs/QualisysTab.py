@@ -991,6 +991,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             # init scf
             self.scf = _scf
             cf = self.scf.cf
+            cf.param.set_value('stabilizer.estimator', '2')
             self.reset_estimator(self.scf)
 
             cf.param.set_value('flightmode.posSet', '1')
