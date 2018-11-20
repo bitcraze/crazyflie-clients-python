@@ -17,7 +17,10 @@ if sys.argv[1] == 'build':
             'build_exe': {'includes': ['numpy.core._methods',
                                        'numpy.lib.format',
                                        'pyqtgraph.debug',
-                                       'pyqtgraph.ThreadsafeTimer']}
+                                       'pyqtgraph.ThreadsafeTimer',
+                                       ],
+                          'packages': ['asyncio'],
+                          'excludes': ['tkinter']}
         },
         'executables': [Executable("bin/cfclient", icon='bitcraze.ico')],
     }
@@ -128,7 +131,9 @@ setup(
                                           'appdirs>=1.4.0',
                                           'pyzmq',
                                           'pyqtgraph>=0.10',
-                                          'PyYAML'],
+                                          'PyYAML',
+                                          'quamash==0.6.1',
+                                          'qtm>=2.0.2'],
 
     # List of dev and qt dependencies
     # You can install them by running
