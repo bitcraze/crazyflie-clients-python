@@ -46,7 +46,6 @@ import cfclient
 from cfclient.ui.tab import Tab
 from cfclient.utils.config import Config
 from cflib.crazyflie.log import LogConfig
-from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 from cflib.crazyflie.syncLogger import SyncLogger
 
 import xml.etree.cElementTree as ET
@@ -192,8 +191,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.qtm_6DoF_labels = None
         self._helper = helper
         self._qtm_connection = None
-        self.scf = None
-        self.uri = "80/2M"
+        self._cf = None
         self.model = QStandardItemModel(10, 4)
 
         self._cf_status = self.cfStatusLabel.text()
@@ -735,7 +733,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                     self.switch_flight_mode(FlightModeStates.PATH)
 
     def set_kill_engine(self):
-        self.send_setpoint(self.scf, Position(0, 0, 0))
+        self.send_setpoint(Position(0, 0, 0))
         self.switch_flight_mode(FlightModeStates.GROUNDED)
         logger.info('Stop button pressed, kill engines')
 
@@ -905,12 +903,12 @@ class QualisysTab(Tab, qualisys_tab_class):
         except ValueError as err:
             self.qtmStatus = ' : connected : No 6DoF body found'
 
-        if self.scf is not None and self.cf_pos.is_valid():
-            # If a scf (syncronous Crazyflie) exists and the position is valid
+        if self._cf is not None and self.cf_pos.is_valid():
+            # If a cf exists and the position is valid
             # Feed the current position of the cf back to the cf to
             # allow for self correction
-            self.scf.cf.extpos.send_extpos(self.cf_pos.x, self.cf_pos.y,
-                                           self.cf_pos.z)
+            self._cf.extpos.send_extpos(self.cf_pos.x, self.cf_pos.y,
+                                        self.cf_pos.z)
 
     def _update_ui(self):
         # Update the data in the GUI
@@ -993,16 +991,10 @@ class QualisysTab(Tab, qualisys_tab_class):
 
     def flight_controller(self):
         try:
-            _scf = SyncCrazyflie("radio://0/{}".format(self.uri),
-                                 self._helper.cf)
+            self._cf.param.set_value('stabilizer.estimator', '2')
+            self.reset_estimator(self._cf)
 
-            # init scf
-            self.scf = _scf
-            cf = self.scf.cf
-            cf.param.set_value('stabilizer.estimator', '2')
-            self.reset_estimator(self.scf)
-
-            cf.param.set_value('flightmode.posSet', '1')
+            self._cf.param.set_value('flightmode.posSet', '1')
 
             time.sleep(0.1)
 
@@ -1045,7 +1037,6 @@ class QualisysTab(Tab, qualisys_tab_class):
                 if self.flight_mode == FlightModeStates.LAND:
 
                     self.send_setpoint(
-                        self.scf,
                         Position(
                             self.current_goal_pos.x,
                             self.current_goal_pos.y,
@@ -1062,7 +1053,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                         self.land_rate *= 1.1
 
                     if self.land_rate > 1000:
-                        self.send_setpoint(self.scf, Position(0, 0, 0))
+                        self.send_setpoint(Position(0, 0, 0))
                         if self.land_for_recording:
                             # Return the control to the recording mode
                             # after landing
@@ -1075,7 +1066,7 @@ class QualisysTab(Tab, qualisys_tab_class):
 
                 elif self.flight_mode == FlightModeStates.PATH:
 
-                    self.send_setpoint(self.scf, self.current_goal_pos)
+                    self.send_setpoint(self.current_goal_pos)
                     # Check if the cf has reached the goal position,
                     # if it has set a new goal position
                     if self.valid_cf_pos.distance_to(
@@ -1114,7 +1105,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                             ) - time_of_pos_reach
 
                 elif self.flight_mode == FlightModeStates.CIRCLE:
-                    self.send_setpoint(self.scf, self.current_goal_pos)
+                    self.send_setpoint(self.current_goal_pos)
 
                     # Check if the cf has reached the goal position,
                     # if it has set a new goal position
@@ -1166,7 +1157,6 @@ class QualisysTab(Tab, qualisys_tab_class):
                         self.length_from_wand = (2 * (
                             (self.wand_pos.roll + 90) / 180) - 1) + 2
                         self.send_setpoint(
-                            self.scf,
                             Position(
                                 self.wand_pos.x + round(
                                     math.cos(math.radians(self.wand_pos.yaw)),
@@ -1187,7 +1177,6 @@ class QualisysTab(Tab, qualisys_tab_class):
                             (self.last_valid_wand_pos.roll + 90) / 180) -
                                                  1) + 2
                         self.send_setpoint(
-                            self.scf,
                             Position(
                                 self.last_valid_wand_pos.x + round(
                                     math.cos(
@@ -1208,7 +1197,6 @@ class QualisysTab(Tab, qualisys_tab_class):
                 elif self.flight_mode == FlightModeStates.LIFT:
 
                     self.send_setpoint(
-                        self.scf,
                         Position(self.current_goal_pos.x,
                                  self.current_goal_pos.y, 1))
 
@@ -1219,7 +1207,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                         self.switch_flight_mode(FlightModeStates.HOVERING)
 
                 elif self.flight_mode == FlightModeStates.HOVERING:
-                    self.send_setpoint(self.scf, self.current_goal_pos)
+                    self.send_setpoint(self.current_goal_pos)
 
                 elif self.flight_mode == FlightModeStates.RECORD:
 
@@ -1296,6 +1284,8 @@ class QualisysTab(Tab, qualisys_tab_class):
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
 
+        self._cf = self._helper.cf
+
         if not self.flying_enabled:
             self.flying_enabled = True
             self.cfStatus = ": connecting..."
@@ -1315,6 +1305,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.cfStatus = ': not connected'
         self.flying_enabled = False
         self.cf_ready_to_fly = False
+        self._cf = None
 
     def _param_updated(self, name, value):
         """Callback when the registered parameter get's updated"""
@@ -1333,7 +1324,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             self, "Example error", "Error when using log config"
             " [{0}]: {1}".format(log_conf.name, msg))
 
-    def wait_for_position_estimator(self, scf):
+    def wait_for_position_estimator(self, cf):
         logger.info('Waiting for estimator to find stable position...')
 
         self.cfStatus = (
@@ -1352,7 +1343,7 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         threshold = 0.001
 
-        with SyncLogger(scf, log_config) as log:
+        with SyncLogger(cf, log_config) as log:
             for log_entry in log:
                 data = log_entry[1]
 
@@ -1387,10 +1378,9 @@ class QualisysTab(Tab, qualisys_tab_class):
 
                     break
 
-    def reset_estimator(self, scf):
+    def reset_estimator(self, cf):
         # Reset the kalman filter
 
-        cf = scf.cf
         cf.param.set_value('kalman.resetEstimation', '1')
         time.sleep(0.1)
         cf.param.set_value('kalman.resetEstimation', '0')
@@ -1418,13 +1408,10 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         logger.info('Switching Flight Mode to: %s', mode)
 
-    def send_setpoint(self, scf_, pos):
+    def send_setpoint(self, pos):
         # Wraps the send command to the crazyflie
-
-        # The 'send_setpoint' function strangely takes the
-        # arguments in the order (Y, X, Yaw, Z)
-        scf_.cf.commander.send_setpoint(pos.y, pos.x, 0, int(pos.z * 1000))
-        pass
+        if self._cf is not None:
+            self._cf.commander.send_position_setpoint(pos.x, pos.y, pos.z, 0.0)
 
 
 class Position:
