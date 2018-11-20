@@ -170,7 +170,7 @@ class QualisysTab(Tab, qualisys_tab_class):
     _imu_data_signal = pyqtSignal(int, object, object)
 
     _flight_path_select_row = pyqtSignal(int)
-    _flight_path_set_model = pyqtSignal(QStandardItemModel)
+    _flight_path_set_model = pyqtSignal(object)
     _path_selector_add_item = pyqtSignal(str)
     _path_selector_set_index = pyqtSignal(int)
 
