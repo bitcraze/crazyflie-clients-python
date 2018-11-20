@@ -37,7 +37,7 @@ from enum import Enum
 
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, pyqtProperty
-from PyQt5.QtCore import QStateMachine, QState, QEvent
+from PyQt5.QtCore import QStateMachine, QState, QEvent, QTimer
 from PyQt5.QtCore import QAbstractTransition
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -319,6 +319,9 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         self.discoverQTM.clicked.connect(self._discovery.discover)
         self._discovery.discover()
+
+        self._ui_update_timer = QTimer(self)
+        self._ui_update_timer.timeout.connect(self._update_ui)
 
     def _setup_states(self):
         parent_state = QState()
@@ -817,6 +820,8 @@ class QualisysTab(Tab, qualisys_tab_class):
             if self.cf_ready_to_fly:
                 self.switch_flight_mode(FlightModeStates.GROUNDED)
 
+            self._ui_update_timer.start(200)
+
             # Make sure this is the last thing done with the qtm_connection
             # (due to qtmRTProtocol structure)
             await self._qtm_connection.stream_frames(
@@ -827,6 +832,8 @@ class QualisysTab(Tab, qualisys_tab_class):
 
     async def on_qtm_disconnect(self, reason):
         """Callback when QTM has been disconnected"""
+
+        self._ui_update_timer.stop()
 
         self._qtm_connection = None
         logger.info(reason)
@@ -905,6 +912,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.scf.cf.extpos.send_extpos(self.cf_pos.x, self.cf_pos.y,
                                            self.cf_pos.z)
 
+    def _update_ui(self):
         # Update the data in the GUI
         self.qualisysX.setText(("%0.4f" % self.cf_pos.x))
         self.qualisysY.setText(("%0.4f" % self.cf_pos.y))
