@@ -200,7 +200,6 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         self.flying_enabled = False
         self.switch_flight_mode(FlightModeStates.DISCONNECTED)
-        self.cf_ready_to_fly = False
         self.path_pos_threshold = 0.2
         self.circle_pos_threshold = 0.1
         self.circle_radius = 1.5
@@ -211,37 +210,37 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.new_path = []
         self.recording = False
         self.land_for_recording = False
-        self.default_flight_paths = [[
-            "Path 1: Sandbox", [0.0, -1.0, 1.0, 0.0], [0.0, 1.0, 1.0, 0.0]
-        ],
-                                     [
-                                         "Path 2: Height Test",
-                                         [0.0, 0.0, 0.5, 0.0],
-                                         [0.0, 0.0, 1.0, 0.0],
-                                         [0.0, 0.0, 1.5, 0.0],
-                                         [0.0, 0.0, 2.0, 0.0],
-                                         [0.0, 0.0, 2.3, 0.0],
-                                         [0.0, 0.0, 1.8, 0.0],
-                                         [0.0, 0.0, 0.5, 0.0],
-                                         [0.0, 0.0, 0.3, 0.0],
-                                         [0.0, 0.0, 0.15, 0.0]
-                                     ],
-                                     [
-                                         "Path 3: 'Spiral'",
-                                         [0.0, 0.0, 1.0, 0.0],
-                                         [0.5, 0.5, 1.0, 0.0],
-                                         [0.0, 1.0, 1.0, 0.0],
-                                         [-0.5, 0.5, 1.0, 0.0],
-                                         [0.0, 0.0, 1.0, 0.0],
-                                         [0.5, 0.5, 1.2, 0.0],
-                                         [0.0, 1.0, 1.4, 0.0],
-                                         [-0.5, 0.5, 1.6, 0.0],
-                                         [0.0, 0.0, 1.8, 0.0],
-                                         [0.5, 0.5, 1.5, 0.0],
-                                         [0.0, 1.0, 1.0, 0.0],
-                                         [-0.5, 0.5, 0.5, 0.0],
-                                         [0.0, 0.0, 0.25, 0.0]
-                                     ]]
+        self.default_flight_paths = [
+            [
+                "Path 1: Sandbox",
+                [0.0, -1.0, 1.0, 0.0],
+                [0.0, 1.0, 1.0, 0.0]],
+            [
+                "Path 2: Height Test",
+                [0.0, 0.0, 0.5, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.5, 0.0],
+                [0.0, 0.0, 2.0, 0.0],
+                [0.0, 0.0, 2.3, 0.0],
+                [0.0, 0.0, 1.8, 0.0],
+                [0.0, 0.0, 0.5, 0.0],
+                [0.0, 0.0, 0.3, 0.0],
+                [0.0, 0.0, 0.15, 0.0]],
+            [
+                "Path 3: 'Spiral'",
+                [0.0, 0.0, 1.0, 0.0],
+                [0.5, 0.5, 1.0, 0.0],
+                [0.0, 1.0, 1.0, 0.0],
+                [-0.5, 0.5, 1.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.5, 0.5, 1.2, 0.0],
+                [0.0, 1.0, 1.4, 0.0],
+                [-0.5, 0.5, 1.6, 0.0],
+                [0.0, 0.0, 1.8, 0.0],
+                [0.5, 0.5, 1.5, 0.0],
+                [0.0, 1.0, 1.0, 0.0],
+                [-0.5, 0.5, 0.5, 0.0],
+                [0.0, 0.0, 0.25, 0.0]]]
 
         # The position and rotation of the cf and wand obtained by the
         # camera tracking, if it cant be tracked the position becomes Nan
@@ -480,6 +479,19 @@ class QualisysTab(Tab, qualisys_tab_class):
         self._machine.addState(parent_state)
         self._machine.setInitialState(parent_state)
         self._machine.start()
+
+    def _update_flight_status(self):
+        prev_flying_enabled = self.flying_enabled
+        self.flying_enabled = self._cf is not None and \
+            self._qtm_connection is not None
+
+        if not prev_flying_enabled and self.flying_enabled:
+            self.switch_flight_mode(FlightModeStates.GROUNDED)
+            t = threading.Thread(target=self.flight_controller)
+            t.start()
+
+        if prev_flying_enabled and not self.flying_enabled:
+            self.switch_flight_mode(FlightModeStates.DISCONNECTED)
 
     def _is_discovering(self, discovering):
         if discovering:
@@ -815,8 +827,7 @@ class QualisysTab(Tab, qualisys_tab_class):
             self.discoverQTM.setEnabled(False)
             self.qtmIpBox.setEnabled(False)
 
-            if self.cf_ready_to_fly:
-                self.switch_flight_mode(FlightModeStates.GROUNDED)
+            self._update_flight_status()
 
             self._ui_update_timer.start(200)
 
@@ -832,6 +843,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         """Callback when QTM has been disconnected"""
 
         self._ui_update_timer.stop()
+        self._update_flight_status()
 
         self._qtm_connection = None
         logger.info(reason)
@@ -844,10 +856,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         self.connectQtmButton.setEnabled(True)
         self.connectQtmButton.setText('Connect QTM')
         self.qtmStatus = ': not connected : {}'.format(
-            reason if reason is not None else ''
-            )
-
-        self.switch_flight_mode(FlightModeStates.DISCONNECTED)
+            reason if reason is not None else '')
 
     def on_qtm_event(self, event):
         logger.info(event)
@@ -938,8 +947,7 @@ class QualisysTab(Tab, qualisys_tab_class):
     def _flight_mode_path_entered(self):
         self.path_index = 1
 
-        current = self.flight_paths[self.pathSelector.
-                                    currentIndex()]
+        current = self.flight_paths[self.pathSelector.currentIndex()]
         self.current_goal_pos = Position(
             current[self.path_index][0],
             current[self.path_index][1],
@@ -991,6 +999,7 @@ class QualisysTab(Tab, qualisys_tab_class):
 
     def flight_controller(self):
         try:
+            logger.info('Starting flight controller thread')
             self._cf.param.set_value('stabilizer.estimator', '2')
             self.reset_estimator(self._cf)
 
@@ -1048,8 +1057,8 @@ class QualisysTab(Tab, qualisys_tab_class):
                     if self.valid_cf_pos.distance_to(
                             Position(self.current_goal_pos.x,
                                      self.current_goal_pos.y,
-                                     (self.current_goal_pos.z / self.land_rate
-                                      ))) < self.path_pos_threshold:
+                                     self.current_goal_pos.z / self.land_rate
+                                     )) < self.path_pos_threshold:
                         self.land_rate *= 1.1
 
                     if self.land_rate > 1000:
@@ -1074,8 +1083,8 @@ class QualisysTab(Tab, qualisys_tab_class):
 
                         if position_hold_timer > self.position_hold_timelimit:
 
-                            current = self.flight_paths[self.pathSelector.
-                                                        currentIndex()]
+                            current = self.flight_paths[
+                                self.pathSelector.currentIndex()]
 
                             self.path_index += 1
                             if self.path_index == len(current):
@@ -1271,6 +1280,8 @@ class QualisysTab(Tab, qualisys_tab_class):
             logger.error(err)
             self.cfStatus = str(err)
 
+        logger.info('Terminating flight controller thread')
+
     def save_current_position(self):
         if self.recording:
             # Restart the timer
@@ -1285,15 +1296,9 @@ class QualisysTab(Tab, qualisys_tab_class):
         """Callback when the Crazyflie has been connected"""
 
         self._cf = self._helper.cf
+        self._update_flight_status()
 
-        if not self.flying_enabled:
-            self.flying_enabled = True
-            self.cfStatus = ": connecting..."
-            t = threading.Thread(target=self.flight_controller)
-            t.start()
-
-        self.uri = link_uri
-        logger.debug("Crazyflie connected to {}".format(self.uri))
+        logger.debug("Crazyflie connected to {}".format(link_uri))
 
         # Gui
         self.cfStatus = ': connected'
@@ -1303,9 +1308,8 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         logger.info("Crazyflie disconnected from {}".format(link_uri))
         self.cfStatus = ': not connected'
-        self.flying_enabled = False
-        self.cf_ready_to_fly = False
         self._cf = None
+        self._update_flight_status()
 
     def _param_updated(self, name, value):
         """Callback when the registered parameter get's updated"""
@@ -1366,15 +1370,15 @@ class QualisysTab(Tab, qualisys_tab_class):
 
                 if (max_x - min_x) < threshold and (
                         max_y - min_y) < threshold and (
-                            max_z - min_z) < threshold:
-                    logger.info(
-                        "Position found with error in, x: {}, y: {}, z: {}".
-                        format(max_x - min_x, max_y - min_y, max_z - min_z))
+                        max_z - min_z) < threshold:
+                    logger.info("Position found with error in, x: {}, y: {}, "
+                                "z: {}".format(max_x - min_x,
+                                               max_y - min_y,
+                                               max_z - min_z))
 
                     self.cfStatus = ": connected"
 
                     self.switch_flight_mode(FlightModeStates.GROUNDED)
-                    self.cf_ready_to_fly = True
 
                     break
 
@@ -1389,14 +1393,14 @@ class QualisysTab(Tab, qualisys_tab_class):
 
     def switch_flight_mode(self, mode):
         # Handles the behaviour of switching between flight modes
-
         self.flight_mode = mode
 
         # Handle client input control.
         # Disable gamepad input if we are not grounded
         if self.flight_mode in [
-                FlightModeStates.GROUNDED, FlightModeStates.DISCONNECTED,
-                FlightModeStates.RECORD
+            FlightModeStates.GROUNDED,
+            FlightModeStates.DISCONNECTED,
+            FlightModeStates.RECORD
         ]:
             self._helper.mainUI.disable_input(False)
         else:
