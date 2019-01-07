@@ -136,11 +136,12 @@ setup(
                                           'qtm>=2.0.2'],
 
     # List of dev and qt dependencies
+    # Pyqt5 5.9.2 seems to be the last version to work on Windows 8.1
     # You can install them by running
     # $ pip install -e .[dev,qt5]
     extras_require={
         'dev': platform_dev_requires + [],
-        'qt5': ['pyqt5']
+        'qt5': ['PyQt5==5.9.2']
     },
 
     package_data=package_data,
