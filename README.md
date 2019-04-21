@@ -74,6 +74,24 @@ makensis win32install\cfclient.nsi
 
 ## Mac OSX
 
+Unlike for Windows, there is no build for mac yet.
+It should be possible to package the client as a mac app and [help is wanted](https://github.com/bitcraze/crazyflie-clients-python/issues/231).
+In the mean time you can run the client by installing python and pulling the client python package.
+
+### Using the official python distribution
+
+The easiest to get the client running on Mac if you do not already have Homebrew installed is to use the official Python distribution.
+If you are using Homebrew look at the next section.
+If you are using Anaconda/Conda, the procedure should be very similar but you can skip the python installation.
+
+ 1) Download and install python from [python.org](https://python.org)
+ 2) [Download sdl2](https://www.libsdl.org/download-2.0.php) for Mac OSX and copy SDL2.framework into /Lirary/Frameworks
+ 3) Open a console and install the client with ```python3 -m pip install cfclient[qt5] pysdl2```. This will install the latest release.
+
+You can now launch the client with ```python3 -m cfclient.gui```
+
+If you want to develop and modify the client, you can clone this repos, uninstall cfclient with ```python3 -m pip uninstall cfclient``` and install it in development mode by navigating into the repos root folder and installing the client in edit mode: ```python3 -m pip install -e .```.
+
 ### Using homebrew
 **IMPORTANT NOTE**: The following will use
 [Homebrew](http://brew.sh/) and its own Python distribution. If
