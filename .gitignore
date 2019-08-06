@@ -26,3 +26,7 @@ msvcp90.dll
 
 # vscode
 .vscode/
+
+# Jykell githubpages
+docs/_site/*
+docs/Gemfile.lock
