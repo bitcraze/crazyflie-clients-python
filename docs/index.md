@@ -4,8 +4,17 @@ The Crazyflie PC client enables flashing and controlling the Crazyflie. It imple
 
 
 - Introduction
-- Build and run instructions
+- Run and Use instructions
   - [Run from source](run_from_source.md)
+  - [Installing Crazyflie client with macPorts](macports.md)
+  - [Userguide GUI](userguide_client.md)
+  - [Crazyflie headless client](cfheadless.md)
+  - [Input devices](inputdevices.md)
 - Explanation Functionalities
+  - [Crazyflie bootloader](cfloader.md)
+  - [Bootloader client implementation](client.md)
+  - [Client ZMQ](cfclient_zmq.md)
 - Development Instructions
+  - [Development info](dev_info_client.md)
+
 
