@@ -1,5 +1,10 @@
-Bootloader the Crazyflie 1.0/2.0
-================================
+---
+title: Bootloader the Crazyflie 1.0/2.0
+page_id: cfloader
+---
+
+
+
 
 The Crazyflie can be bootloaded from the commandline using the
 *cfloader* script.

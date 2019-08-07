@@ -1,5 +1,8 @@
-Crazyflie Python client
-=======================
+---
+title: Development Tools for CFclient
+page_id: dev_info_client
+---
+
 
 This page contains generic information about various topics that might
 be interesting while developing for the Crazyflie Python client. The

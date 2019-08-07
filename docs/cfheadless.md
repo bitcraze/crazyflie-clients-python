@@ -1,5 +1,7 @@
-# Crazyflie headless client
-
+---
+title: Crazyflie headless client
+page_id: cfheadless
+---
 
 The *cfheadless* client doesn\'t have a UI, it\'s run directly from the
 command line and is suited for headless hosts like the Raspberry Pi.

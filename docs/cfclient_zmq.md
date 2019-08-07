@@ -1,3 +1,9 @@
+---
+title: ZMQ implementation of the cfclient
+page_id: cfclient_zmq
+---
+
+
 The [Crazyflie Python client](/doc/crazyflie/client/pycfclient/index)
 runs a number of back-ends where you can set/get information from other
 applications via [ZMQ](http://zeromq.org/).

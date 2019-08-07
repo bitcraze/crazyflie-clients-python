@@ -1,5 +1,7 @@
-Installing Crazyflie client with macPorts
-=========================================
+---
+title: Installing Crazyflie client with macPorts
+page_id: macports 
+---
 
 This procedure has been tested on a just-installed Yosemite
 installation. Commands in code blocks have to be executed in a terminal

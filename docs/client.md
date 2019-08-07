@@ -1,4 +1,7 @@
-# Bootloader client implementation
+---
+title: Bootloader client implementation
+page_id: bootloaderclient
+---
 
 
 ## Bootloader file format

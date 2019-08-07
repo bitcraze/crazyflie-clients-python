@@ -1,4 +1,7 @@
-# Running from source
+---
+title: Running from source
+page_id: run_from_source 
+---
 
 The Crazyflie client requires [cflib](https://github.com/bitcraze/crazyflie-lib-python).
 If you want to develop with the lib too, follow the cflib readme to install it.

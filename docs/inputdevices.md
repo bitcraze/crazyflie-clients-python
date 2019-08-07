@@ -1,5 +1,7 @@
-Input-devices for the Crazyflie client
-======================================
+---
+title: Input-devices for the Crazyflie client
+page_id: inputdevices
+---
 
 The Crazyflie graphical control client needs an input-device (joystick)
 with a minimum of 4 analogue axes to be able to pilot the Crazyflie. The
