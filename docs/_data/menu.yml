@@ -8,6 +8,7 @@
     - {page_id: userguide_client}
     - {page_id: cfheadless}
     - {page_id: inputdevices}
+    - {page_id: raspberrypi}
 - title: Explanation Functionalities
   subs:
     - {page_id: cfloader}
@@ -16,6 +17,3 @@
 - title: Development instructions
   subs:
     - {page_id: dev_info_client}
-
-
-
