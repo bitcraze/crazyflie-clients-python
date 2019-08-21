@@ -20,7 +20,7 @@ Here\'s a quick overview:
 Architecture
 ============
 
-![](images/input-arch-mux.png){:.align-right
+![](/images/input-arch-mux.png){:.align-right
 width="600"}
 
 Input devices

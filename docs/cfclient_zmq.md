@@ -44,7 +44,6 @@ parameter to 4000.
       "value": "4000"
     }
 
-\</WRAP\> \</WRAP\>
 
 LED-ring
 ========
@@ -63,7 +62,7 @@ Protocol
  | version |  int                           |  Should be set to 1|
  | rgbleds  | array of 3 item arrays of int |  R/G/B value for each LED (starting at 1)|
 
-\</WRAP\> \<WRAP half column\> Example of setting all LEDs off:
+Example of setting all LEDs off:
 
     {
       "version": 1,
@@ -82,8 +81,6 @@ Protocol
         [0, 0, 0]
       ]
     }
-
-\</WRAP\> \</WRAP\>
 
 Input device
 ============

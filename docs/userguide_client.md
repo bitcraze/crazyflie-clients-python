@@ -45,7 +45,7 @@ For more info on LED indicators etc. have a look at the
 Main UI
 =======
 
-![](images/cf_client_1.png)
+![](/images/cf_client_1.png)
 
 1.  The window title will show the connection status
 2.  Connect/disconnect, scan and the drop-down connection list as well
@@ -78,7 +78,7 @@ client. The bootloader mode is accessed from the menu
 *Crazyflie-\>Bootloader*. If there is any problem during the flashing or
 a wrong firmware is flashed the process can just be started again.
 
-![](images/crazyflie_bootloading.png)
+![](/images/crazyflie_bootloading.png)
 
 To update the firmware in the Crazyflie 1.0/2.0 do the following:
 
@@ -140,7 +140,7 @@ any time the same way.
 |     **Crazyflie 1.0**                                                                        **Crazyflie 2.0**  |                                                                                                                                
 |-----|------------|  
 |   Click on the menu **\"Crazyflie-\>Configure 1.0\"** and then connect the bootloader by clicking on the \"cold boot\" button and by restarting the Crazyflie.  | First connect to the Crazyflie 2.0 with the normal connect button. Then open **\"Crazyflie-\>Configure 2.0\"** to reach the configure 2.0 dialog   |
- |    ![](images/configure_cf1.png){:width="500"}             |                                                                      ![](images/cfclient_cf2_config.png){:width="500"} |                                                            
+ |    ![](/images/configure_cf1.png){:width="500"}             |                                                                      ![](/images/cfclient_cf2_config.png){:width="500"} |                                                            
    |  Once the settings has been made press the program button to save them permanently in the Crazyflie flash.              |                                        Once the settings has been made press the write button to save them permanently in the Crazyflie 2.0 EEPROM.    |                                  
 
 
@@ -161,7 +161,7 @@ plotted in the plotter and saved to file in the log block tab.
 To setup a new log block click on the menu \"settings/logging
 configuration\", You then see the following toolbox:
 
-![](images/client_log-configuration_anotated.png){:align-center}
+![](/images/client_log-configuration_anotated.png){:align-center}
 
 1.  List of log variable in the Crazyflie
 2.  Log variables in the current log block
@@ -189,7 +189,7 @@ Input devices
 In order to control the Crazyflie you are connected to you will need
 some input-device. Normally this would be a gamepad, but any
 input-device with at least 4 analog axis will do. Here\'s [a
-list](input_devices.md) of some input-devices
+list](/inputdevices/) of some input-devices
 that are used.
 
 In order to make sense of the input from the device a mapping has to be
@@ -204,18 +204,18 @@ but if you have another input-device then it\'s quick to create your own
 configuration. Go to the menu *Input device -\> Configure device
 mapping*.
 
-![](images/cfclient_devconfig_select.png){:align-center
+![](/images/cfclient_devconfig_select.png){:align-center
 width="700"}
 
 Select the device you would like to configure and press *Configure*.
 
-![](images/cfclient_devconfig_axis.png){:align-center
+![](/images/cfclient_devconfig_axis.png){:align-center
 width="700"}
 
 For each functionality that can be mapped there\'s a *Detect* button, by
 pressing it the following dialog will appear.
 
-![](images/cfclient_devconfig_dialog.png){:align-center
+![](/images/cfclient_devconfig_dialog.png){:align-center
 width="300"}
 
 Follow the instructions to detect the axis or button that you would like
@@ -227,7 +227,7 @@ Go though all the functionality you would like to map by pressing the
 *Detect* button for each. To be able to save the mapping you will at
 least have to map roll, pitch, yaw and thrust.
 
-![](images/cfclient_devconfig_feedback.png){:align-center
+![](/images/cfclient_devconfig_feedback.png){:align-center
 width="700"}
 
 Once you have mapped functionality you will be able to see the feedback
@@ -270,31 +270,31 @@ For normal usage just enter the *Normal* menu, select the device you
 would like to use and the correct mapping. As a device is selected the
 list of mappings are enabled.
 
-![](images/cfclient_input_normal.png){:align-center
+![](/images/cfclient_input_normal.png){:align-center
 width="700"}
 
 If more than one input device is connected then it\'s possible to switch
 to one of the teacher modes.
 
-![](images/cfclient_input_mux_select.png){:align-center
+![](/images/cfclient_input_mux_select.png){:align-center
 width="700"}
 
 First select the device that should be used for the teacher and then
 it\'s mapping.
 
-![](images/cfclient_input_teacher.png){:align-center
+![](/images/cfclient_input_teacher.png){:align-center
 width="700"}
 
 Then select the device that should be used for the student and then
 it\'s mapping.
 
-![](images/cfclient_input_student.png){:align-center
+![](/images/cfclient_input_student.png){:align-center
 width="700"}
 
 Once this is done you will be able to see the open devices and
 configurations at the bottom of the user interface.
 
-![](images/cfclient_input_mux_configured.png){:align-center
+![](/images/cfclient_input_mux_configured.png){:align-center
 width="700"}
 
 Tabs
@@ -307,7 +307,7 @@ Flightcontrol
 -------------
 
 The normal view used when flying is the one seen below.
-![](images/cfclient_flightab.png){:align-center}
+![](/images/cfclient_flightab.png){:align-center}
 
 1.  Flight mode selector (Normal and Advanced)
 
@@ -337,7 +337,7 @@ Plotter
 -------
 
 The plotter tab can be used to visualize data logged from the Crazyflie
-![](images/cfclient_ploter.png){:align-center
+![](/images/cfclient_ploter.png){:align-center
 width="700"}
 
 1.  Select logging configuration to plot. Read about how to create
@@ -358,7 +358,7 @@ that can be changed in real-time. The parameter tab can be used to view
 and update parameters. For more information about parameters see
 logging and parameter frameworks LINK TO CF-FIRMWARE!
 
-![](images/cfclient_param.png){:align-center
+![](/images/cfclient_param.png){:align-center
 width="700"}
 
 1.  Parameter information fields
@@ -379,7 +379,7 @@ The log blocks tab shows all log configurations that are saved and if
 they are started. It\'s also possible to start/stop them as well as
 write the logged data to file.
 
-![](images/cfclient_logblocks_marked.png){:align-center
+![](/images/cfclient_logblocks_marked.png){:align-center
 width="700"}
 
 1.  Fields
@@ -426,7 +426,7 @@ Console
 
 The console tab will show printouts from the Crazyflie firmware as it\'s
 running.
-![](images/cfclient_console_marked.png){:align-center
+![](/images/cfclient_console_marked.png){:align-center
 width="700"}
 
 1.  Console output from the Crazyflie
@@ -455,7 +455,7 @@ Displays the configured anchor positions and the estimated position of
 the Crazyflie. Can be used to make sure the system is set up correctly
 and that the estimated position is reasonable.
 
-![](images/cfclient_position_estimate.png){:align-center
+![](/images/cfclient_position_estimate.png){:align-center
 width="700"}
 
 1.  Plot for X/Y (top view) showing anchors and Crazyflie
@@ -498,7 +498,7 @@ displays the configured anchor positions. When the crazyflie is close to
 an anchor this is indicated in the graphs by highlighting it. This mode
 is useful to identify anchors and verify that the system is correctly
 configured.
-![](images/cfclient_anchor_identification.png){:align-center
+![](/images/cfclient_anchor_identification.png){:align-center
 width="700"}
 
 1.  Plot for X/Y (top view) showing anchors and Crazyflie

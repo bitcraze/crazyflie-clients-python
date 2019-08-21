@@ -33,17 +33,16 @@ you can enable the warmboot mode. To do so, edit the file
 After this, \'make cload\' will restart the Crazyflie in bootlader mode,
 flash it and restart it with the new firmware.
 
-\<WRAP center round info\> In warmboot mode the bootloader is launched
+In warmboot mode the bootloader is launched
 using a random address. This means that multiple Crazyflie can be
-programmed at the same time without collision. \</WRAP\> \<WRAP center
-round important\> ***Warning*** If the flashing operation fails or if
+programmed at the same time without collision. 
+
+**Warning:** If the flashing operation fails or if
 the firmware has a bug, it may be impossible to warmboot. In that case
 start the bootloader manually and disable warmboot temporarly by
 programming with:
 
     make cload CLOAD_CMDS=
-
-\</WRAP\>
 
 cfloader
 ========

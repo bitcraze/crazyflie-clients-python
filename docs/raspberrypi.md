@@ -42,9 +42,9 @@ compatible with Raspberrypi 2):
     ([torrent](http://tracker.bitcraze.se/torrents/cfpi-0_1.zip.torrent))
     ([mega](https://mega.co.nz/#!HJpH2KDJ!bY-EdGtyxIRzOUu6xNVWnid_cco5wS-IQ6ELfc5Y1Q8))
 
-\<WRAP center round info \> ***Note*** Using Torrent is advised, we have
+**Note:** Using Torrent is advised, we have
 added webseed so it is faster than direct download and guarantee the
-file integrity. \</WRAP\>
+file integrity.
 
 Installing in an existing Raspbian sdcard
 =========================================

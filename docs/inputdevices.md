@@ -125,11 +125,9 @@ Xbox 360 controller
 Linux using USB
 ---------------
 
-\<WRAP center round tip 80%\> **INFO**
-
-All modern Linux distribution now have a kernel driver for the x-box
+**INFO:** All modern Linux distribution now have a kernel driver for the x-box
 gamepad. Thus it is unlikely the *xboxdrv* user-space driver is needed.
-\</WRAP\>
+
 
 If you are having problems getting this to work the userspace driver
 `xboxdrv` might be needed. It can be installed (on Ubuntu) by running:
