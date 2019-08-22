@@ -203,7 +203,7 @@ TOC cache files
 
 In order to speed up the connection procedure for the Crazyflie the TOCs
 are cached ([more info on logging/parameter frameworks and
-TOC](https://www.bitcraze.io/docs/crazyflie-firmware/master/)). The writable part of the TOC
+TOC](https://www.bitcraze.io/docs/crazyflie-firmware/master/) ). The writable part of the TOC
 cache is located in */conf/cache* where each cache is saved in a file
 named after the CRC32 (in hex) of the TOC CRC32 (for example
 *1CB41680.json*). There\'s also a read-only part of the TOC cache
