@@ -21,9 +21,9 @@ I found that installing only the command line developer tools is enough
 for Crazyflie client dependencies. However installing Xcode seems to be
 recommended. I installed the command line developer tools:
 
-![](/images/image03.png)
-![](/images/image00.png)
-![](/images/image01.png)
+![Xcode 1](/images/image03.png)
+![Xcode 2](/images/image00.png)
+![Xcode 3](/images/image01.png)
 
 Update mac ports
 
@@ -43,7 +43,7 @@ Install Crazyflie client dependencies
 Most but not all packages are pre-compiled so this installation takes
 some time. It took about 12 minutes for me, YMMV.
 
-![](/images/image05.png)
+![bash](/images/image05.png)
 
 Now you are able to clone and run the Crazyflie client!
 
@@ -52,7 +52,7 @@ Now you are able to clone and run the Crazyflie client!
     cd crazyflie-clients-python
     /opt/local/bin/python2.7 bin/cfclient
 
-![](/images/image04.png)
+![CF client](/images/image04.png)
 
 Optional dependencies
 ---------------------
@@ -64,13 +64,13 @@ lot depending on how many ports are pre-compiled):
 
     sudo port install py27-pyqtgraph
 
-![](/images/image02.png)
+![bash 2](/images/image02.png)
 
 You can now access the plotter tab:
 
     /opt/local/bin/python2.7 bin/cfclient
 
-![](/images/image06.png)
+![plotter tab](/images/image06.png)
 
 Troubleshooting
 ---------------

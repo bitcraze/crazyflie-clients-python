@@ -17,10 +17,10 @@ We haven\'t removed anything from the image, just added our own stuff.
 So you can still log in and used the Raspberry Pi as you would with the
 Raspbian image, but as an added feature you can also use our stuff. If
 you would like to re-create the SD-image with your own Wheezy image then
-[have a look at what we did](/projects/crazyflie/pc_utils/raspberrypi).
+[have a look at what we did](https://wiki.bitcraze.io/projects:crazyflie:pc_utils:raspberrypi).
 
 The changes made to the SD-card is mostly based of the contributed
-instructions from the [hacks section](/misc/hacks/rasberrypi).
+instructions from the [hacks section](https://wiki.bitcraze.io/misc:hacks:rasberrypi).
 
 Download
 ========
@@ -29,17 +29,13 @@ The SD-card image can be downloaded here (version 2015.3 and onward is
 compatible with Raspberrypi 2):
 
 -   Bitcraze Raspbian image 2015.3
-    ([torrent](http://files.bitcraze.se/dl/cfpi-2015.3.7z.torrent))
     ([direct download](http://files.bitcraze.se/dl/cfpi-2015.3.7z))
     ([mega](https://mega.co.nz/#!uQYSFIDJ!6PwIwxM315B99ejveo_6zlTVWk_oYkMOW0fKQLQ74A0))
 -   Bitcraze Raspbian image 0.3
-    ([torrent](http://files.bitcraze.se/dl/cfpi-0_3.7z.torrent))
     ([direct download](http://files.bitcraze.se/dl/cfpi-0_3.7z))
 -   Bitcraze Raspbian image 0.2
-    ([torrent](http://tracker.bitcraze.se/torrents/cfpi-0_2.zip.torrent))
     ([mega](https://mega.co.nz/#!fVoTBIAQ!Akk80haC--oZjklJxCzCaS_nnlg8xVQhUcczPviaawA))
 -   Bitcraze Raspbian image 0.1
-    ([torrent](http://tracker.bitcraze.se/torrents/cfpi-0_1.zip.torrent))
     ([mega](https://mega.co.nz/#!HJpH2KDJ!bY-EdGtyxIRzOUu6xNVWnid_cco5wS-IQ6ELfc5Y1Q8))
 
 **Note:** Using Torrent is advised, we have

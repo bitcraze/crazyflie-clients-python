@@ -20,7 +20,7 @@ Here\'s a quick overview:
 Architecture
 ============
 
-![](/images/input-arch-mux.png){:.align-right
+![input arch mux](/images/input-arch-mux.png){:.align-right
 width="600"}
 
 Input devices
@@ -71,7 +71,7 @@ The input interfaces don\'t use any mapping, the devices itself directly
 generate useful values (like roll/pitch/yaw/thrust). Currently there\'s
 two implementations: LeapMotion and ZMQ. Values are read the same way as
 from normal gamepads/joysticks, at 100Hz. For more information on how
-the ZMQ interface works read [here](/doc/crazyflie/zmq/index).
+the ZMQ interface works read [here](/cfclient_zmq#input-device).
 
 ### The MUX
 
@@ -203,7 +203,7 @@ TOC cache files
 
 In order to speed up the connection procedure for the Crazyflie the TOCs
 are cached ([more info on logging/parameter frameworks and
-TOC](/doc/crazyflie/dev/arch/logparam)). The writable part of the TOC
+TOC](https://www.bitcraze.io/docs/crazyflie-firmware/master/)). The writable part of the TOC
 cache is located in */conf/cache* where each cache is saved in a file
 named after the CRC32 (in hex) of the TOC CRC32 (for example
 *1CB41680.json*). There\'s also a read-only part of the TOC cache

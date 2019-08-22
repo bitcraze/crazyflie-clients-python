@@ -4,7 +4,7 @@ page_id: cfclient_zmq
 ---
 
 
-The [Crazyflie Python client](/doc/crazyflie/client/pycfclient/index)
+The [Crazyflie Python client](/userguide_client/)
 runs a number of back-ends where you can set/get information from other
 applications via [ZMQ](http://zeromq.org/).
 
@@ -96,7 +96,7 @@ parameters, it\'s just the control part that\'s broken out.
 By default this is disabled in the configuration file and needs to be
 enabled. The configuration file parameter is named *enable\_zmq\_input*
 (see
-[this](/doc/crazyflie/dev/host/client/index#user_configuration_file) to
+[this](/dev_info_client#user-configuration-file) to
 edit the configuration). To enable controlling by the back-end select
 the *ZMQ\@127.0.0.1:1212* input device in the *Input device* menu.
 
