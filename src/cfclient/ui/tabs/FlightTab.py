@@ -593,7 +593,7 @@ class FlightTab(Tab, flight_tab_class):
             self._ring_effect_changed)
 
         self._led_ring_effect.setCurrentIndex(current)
-        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x01):
+        if bool(self.helper.cf.param.values["deck"]["bcLedRing"]):
             self._led_ring_effect.setEnabled(True)
             self._led_ring_headlight.setEnabled(True)
 
@@ -617,20 +617,20 @@ class FlightTab(Tab, flight_tab_class):
         heightHoldPossible = False
         hoverPossible = False
 
-        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x09):
+        if bool(self.helper.cf.param.values["deck"]["bcZRanger"]):
             heightHoldPossible = True
             self.helper.inputDeviceReader.set_hover_max_height(1.0)
 
-        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x0E):
+        if bool(self.helper.cf.param.values["deck"]["bcZRanger2"]):
             heightHoldPossible = True
             self.helper.inputDeviceReader.set_hover_max_height(2.0)
 
-        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x0A):
+        if bool(self.helper.cf.param.values["deck"]["bcFlow"]):
             heightHoldPossible = True
             hoverPossible = True
             self.helper.inputDeviceReader.set_hover_max_height(1.0)
 
-        if self.helper.cf.mem.ow_search(vid=0xBC, pid=0x0F):
+        if bool(self.helper.cf.param.values["deck"]["bcFlow2"]):
             heightHoldPossible = True
             hoverPossible = True
             self.helper.inputDeviceReader.set_hover_max_height(2.0)
