@@ -244,6 +244,11 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._auto_reconnect_changed)
         self.autoReconnectCheckBox.setChecked(Config().get("auto_reconnect"))
 
+        self._keep_alive_enabled = Config().get("keep_alive")
+        self.keepAliveCheckBox.toggled.connect(
+            self._keep_alive_changed)
+        self.keepAliveCheckBox.setChecked(Config().get("keep_alive"))
+
         self._disable_input = False
 
         self.joystickReader.input_updated.add_callback(
@@ -550,6 +555,19 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._auto_reconnect_enabled = checked
         Config().set("auto_reconnect", checked)
         logger.info("Auto reconnect enabled: {}".format(checked))
+
+    def _keep_alive_changed(self, checked):
+        self._keep_alive_enabled = checked
+        Config().set("keep_alive", checked)
+        logger.info("Keep alive enabled: {}".format(checked))
+
+        if checked:
+            cflib.crtp.radiodriver.set_retries_before_disconnect(99999999999999999)  # never disconnect :)
+            cflib.crtp.radiodriver.set_retries(3)
+        else:
+            cflib.crtp.radiodriver.set_retries_before_disconnect(1500) # default
+            cflib.crtp.radiodriver.set_retries(3)
+        
 
     def _show_connect_dialog(self):
         self.logConfigDialogue.show()
