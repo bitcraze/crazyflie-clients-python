@@ -198,7 +198,7 @@ class FlightTab(Tab, flight_tab_class):
             cb=self._set_available_sensors)
 
         self.helper.cf.param.all_updated.add_callback(
-            self._ring_populate_dropdown)
+            self._all_params_updated)
 
         self.logBaro = None
         self.logAltHold = None
@@ -338,8 +338,6 @@ class FlightTab(Tab, flight_tab_class):
             logger.warning(str(e))
         except AttributeError as e:
             logger.warning(str(e))
-
-        self._populate_assisted_mode_dropdown()
 
     def _set_available_sensors(self, name, available):
         logger.info("[%s]: %s", name, available)
@@ -553,6 +551,10 @@ class FlightTab(Tab, flight_tab_class):
     def alt2_updated(self, state):
         self.helper.cf.param.set_value("ring.headlightEnable", str(state))
 
+    def _all_params_updated(self):
+        self._ring_populate_dropdown()
+        self._populate_assisted_mode_dropdown()
+
     def _ring_populate_dropdown(self):
         try:
             nbr = int(self.helper.cf.param.values["ring"]["neffect"])
@@ -593,7 +595,7 @@ class FlightTab(Tab, flight_tab_class):
             self._ring_effect_changed)
 
         self._led_ring_effect.setCurrentIndex(current)
-        if bool(self.helper.cf.param.values["deck"]["bcLedRing"]):
+        if int(self.helper.cf.param.values["deck"]["bcLedRing"]) == 1:
             self._led_ring_effect.setEnabled(True)
             self._led_ring_headlight.setEnabled(True)
 
@@ -617,20 +619,20 @@ class FlightTab(Tab, flight_tab_class):
         heightHoldPossible = False
         hoverPossible = False
 
-        if bool(self.helper.cf.param.values["deck"]["bcZRanger"]):
+        if int(self.helper.cf.param.values["deck"]["bcZRanger"]) == 1:
             heightHoldPossible = True
             self.helper.inputDeviceReader.set_hover_max_height(1.0)
 
-        if bool(self.helper.cf.param.values["deck"]["bcZRanger2"]):
+        if int(self.helper.cf.param.values["deck"]["bcZRanger2"]) == 1:
             heightHoldPossible = True
             self.helper.inputDeviceReader.set_hover_max_height(2.0)
 
-        if bool(self.helper.cf.param.values["deck"]["bcFlow"]):
+        if int(self.helper.cf.param.values["deck"]["bcFlow"]) == 1:
             heightHoldPossible = True
             hoverPossible = True
             self.helper.inputDeviceReader.set_hover_max_height(1.0)
 
-        if bool(self.helper.cf.param.values["deck"]["bcFlow2"]):
+        if int(self.helper.cf.param.values["deck"]["bcFlow2"]) == 1:
             heightHoldPossible = True
             hoverPossible = True
             self.helper.inputDeviceReader.set_hover_max_height(2.0)
