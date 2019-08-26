@@ -189,7 +189,7 @@
       </item>
       <item>
        <widget class="QGroupBox" name="groupBox">
-        <layout class="QHBoxLayout" stretch="0,0,1">
+        <layout class="QHBoxLayout" stretch="0,0,0,1">
          <item>
           <widget class="QLabel" name="addressLabel">
            <property name="text">
@@ -214,6 +214,19 @@
            </property>
            <property name="text">
             <string>Auto Reconnect</string>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="keepAliveCheckBox">
+           <property name="mouseTracking">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Keep Alive</string>
            </property>
            <property name="checked">
             <bool>false</bool>

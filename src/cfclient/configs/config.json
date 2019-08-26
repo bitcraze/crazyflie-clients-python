@@ -14,6 +14,7 @@
     "max_rp": 30,
     "client_side_xmode": false,
     "auto_reconnect": false,
+    "keep_alive": false,
     "device_config_mapping": {},
     "enable_debug_driver": false,
     "input_device_blacklist": "(VirtualBox|VMware)",
