@@ -141,7 +141,7 @@ setup(
     # $ pip install -e .[dev,qt5]
     extras_require={
         'dev': platform_dev_requires + [],
-        'qt5': ['PyQt5==5.9.2']
+        'qt5': ['PyQt5==5.13.1']
     },
 
     package_data=package_data,
