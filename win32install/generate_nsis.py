@@ -5,7 +5,7 @@ from subprocess import Popen
 
 import jinja2
 
-DIST_PATH = "..\\build\\exe.win32-3.7"
+DIST_PATH = "..\\build\\exe.win32-3.6"
 
 # Get list of files and directory to install/uninstall
 INSTALL_FILES = []

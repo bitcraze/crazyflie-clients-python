@@ -1,7 +1,7 @@
 version: 1.0.{build}
 install:
 - cmd: >-
-    set PATH=C:\Python37;C:\Python37\Scripts;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin
+    set PATH=C:\Python36;C:\Python36\Scripts;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin
 
     pip install -e .[dev,qt5]
 
