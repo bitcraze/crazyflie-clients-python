@@ -24,7 +24,7 @@ class _Reader(object):
 
     def devices(self):
         """List all the available connections"""
-        raise NotImplemented()
+        raise NotImplementedError
 
     def open(self, device_id):
         """
@@ -38,7 +38,7 @@ class _Reader(object):
 
     def read(self, device_id):
         """Read input from the selected device."""
-        raise NotImplemented()
+        raise NotImplementedError
 
 
 TWO = 1

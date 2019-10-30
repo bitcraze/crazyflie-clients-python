@@ -117,7 +117,7 @@ class JoystickReader(object):
 
         self._input_map = None
 
-        if Config().get("flightmode") is "Normal":
+        if Config().get("flightmode") == "Normal":
             self.max_yaw_rate = Config().get("normal_max_yaw")
             self.max_rp_angle = Config().get("normal_max_rp")
             # Values are stored at %, so use the functions to set the values
@@ -386,8 +386,8 @@ class JoystickReader(object):
                                 d.limit_rp = True
                     if self._assisted_control == \
                             JoystickReader.ASSISTED_CONTROL_ALTHOLD:
-                            self.assisted_control_updated.call(
-                                                data.assistedControl)
+                        self.assisted_control_updated.call(
+                                            data.assistedControl)
                     if ((self._assisted_control ==
                             JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD) or
                             (self._assisted_control ==
