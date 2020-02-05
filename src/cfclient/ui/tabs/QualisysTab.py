@@ -179,6 +179,11 @@ class QualisysTab(Tab, qualisys_tab_class):
 
     def __init__(self, tabWidget, helper, *args):
         super(QualisysTab, self).__init__(*args)
+
+        # Setting self._qtm_status should not be required here, but for some
+        # reason python 3.7.5 crashes without it.
+        self._qtm_status = None
+
         self.setupUi(self)
 
         self._machine = QStateMachine()
