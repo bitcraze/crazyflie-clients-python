@@ -1,6 +1,6 @@
 ---
 title: Userguide cfclient GUI
-page_id: userguide_client 
+page_id: userguide_client
 ---
 
 
@@ -137,11 +137,11 @@ The procedure is described below and the parameters can be changed again
 any time the same way.
 
 
-|     **Crazyflie 1.0**                                                |                        **Crazyflie 2.0**  |                                                                                                                                
-|-----|------------|  
+|     **Crazyflie 1.0**                                                |                        **Crazyflie 2.0**  |
+|-----|------------|
 |   Click on the menu **\"Crazyflie-\>Configure 1.0\"** and then connect the bootloader by clicking on the \"cold boot\" button and by restarting the Crazyflie.  | First connect to the Crazyflie 2.0 with the normal connect button. Then open **\"Crazyflie-\>Configure 2.0\"** to reach the configure 2.0 dialog   |
- |    ![CF1 config](/images/configure_cf1.png){:width="500"}             |                                                                      ![CF2 config](/images/cfclient_cf2_config.png){:width="500"} |                                                            
-   |  Once the settings has been made press the program button to save them permanently in the Crazyflie flash.              |                                        Once the settings has been made press the write button to save them permanently in the Crazyflie 2.0 EEPROM.    |                                  
+ |    ![CF1 config](/images/configure_cf1.png){:width="500"}             |                                                                      ![CF2 config](/images/cfclient_cf2_config.png){:width="500"} |
+   |  Once the settings has been made press the program button to save them permanently in the Crazyflie flash.              |                                        Once the settings has been made press the write button to save them permanently in the Crazyflie 2.0 EEPROM.    |
 
 
 Logging
@@ -189,7 +189,7 @@ Input devices
 In order to control the Crazyflie you are connected to you will need
 some input-device. Normally this would be a gamepad, but any
 input-device with at least 4 analog axis will do. Here\'s [a
-list](/inputdevices/) of some input-devices
+list](/userguides/inputdevices/) of some input-devices
 that are used.
 
 In order to make sense of the input from the device a mapping has to be
@@ -407,7 +407,7 @@ starting/stopping again will yield two files in the same directory). The
 data logged to the file is in CSV format with the headers for the data
 at the top. A timestamp is automatically added for each entry and shows
 the number of milliseconds passed since the Crazyflie started (sent
-together with the log data). 
+together with the log data).
 
 Example data
 of what\'s logged when logging the battery level:
@@ -518,11 +518,11 @@ The UI is normally used to get/set parameters, view logged data and send
 control commands to the Crazyflie. Aside from this there\'s also the
 possibility to connect via ZMQ to the client and control several things:
 
--   [Parameters](/cfclient_zmq#parameters):
+-   [Parameters](/functional-areas/cfclient_zmq#parameters):
     Get/set parameters by name
--   [LED-ring memory](/cfclient_zmq#led-ring):
+-   [LED-ring memory](/functional-areas/cfclient_zmq#led-ring):
     Write LED ring memory
--   [Input-device](/cfclient_zmq#input-device):
+-   [Input-device](/functional-areas/cfclient_zmq#input-device):
     Act as an input device
 
 The benefit of using this approach instead of the [stand-alone ZMQ

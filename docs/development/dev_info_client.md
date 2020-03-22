@@ -71,7 +71,7 @@ The input interfaces don\'t use any mapping, the devices itself directly
 generate useful values (like roll/pitch/yaw/thrust). Currently there\'s
 two implementations: LeapMotion and ZMQ. Values are read the same way as
 from normal gamepads/joysticks, at 100Hz. For more information on how
-the ZMQ interface works read [here](/cfclient_zmq#input-device).
+the ZMQ interface works read [here](/functional-areas/cfclient_zmq#input-device).
 
 ### The MUX
 
