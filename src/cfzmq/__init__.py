@@ -53,15 +53,15 @@ if os.name == 'posix':
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 # Main command socket for control (ping/pong)
-ZMQ_SRV_PORT = 2000
+ZMQ_SRV_PORT = 0
 # Log data socket (publish)
-ZMQ_LOG_PORT = 2001
+ZMQ_LOG_PORT = 1
 # Param value updated (publish)
-ZMQ_PARAM_PORT = 2002
+ZMQ_PARAM_PORT = 2
 # Async event for connection, like connection lost (publish)
-ZMQ_CONN_PORT = 2003
+ZMQ_CONN_PORT = 3
 # Control set-poins for Crazyflie (pull)
-ZMQ_CTRL_PORT = 2004
+ZMQ_CTRL_PORT = 4
 
 # Timeout before giving up when verifying param write
 PARAM_TIMEOUT = 2
@@ -317,7 +317,7 @@ class _CtrlThread(Thread):
 class ZMQServer():
     """Crazyflie ZMQ server"""
 
-    def __init__(self, base_url):
+    def __init__(self, base_url, base_port):
         """Start threads and bind ports"""
         cflib.crtp.init_drivers(enable_debug_driver=True)
         self._cf = Crazyflie(ro_cache=None,
@@ -328,11 +328,16 @@ class ZMQServer():
         self._base_url = base_url
         self._context = zmq.Context()
 
-        cmd_srv = self._bind_zmq_socket(zmq.REP, "cmd", ZMQ_SRV_PORT)
-        log_srv = self._bind_zmq_socket(zmq.PUB, "log", ZMQ_LOG_PORT)
-        param_srv = self._bind_zmq_socket(zmq.PUB, "param", ZMQ_PARAM_PORT)
-        ctrl_srv = self._bind_zmq_socket(zmq.PULL, "ctrl", ZMQ_CTRL_PORT)
-        conn_srv = self._bind_zmq_socket(zmq.PUB, "conn", ZMQ_CONN_PORT)
+        cmd_srv = self._bind_zmq_socket(zmq.REP, "cmd",
+                                        base_port + ZMQ_SRV_PORT)
+        log_srv = self._bind_zmq_socket(zmq.PUB, "log",
+                                        base_port + ZMQ_LOG_PORT)
+        param_srv = self._bind_zmq_socket(zmq.PUB, "param",
+                                          base_port + ZMQ_PARAM_PORT)
+        ctrl_srv = self._bind_zmq_socket(zmq.PULL, "ctrl",
+                                         base_port + ZMQ_CTRL_PORT)
+        conn_srv = self._bind_zmq_socket(zmq.PUB, "conn",
+                                         base_port + ZMQ_CONN_PORT)
 
         self._scan_thread = _SrvThread(cmd_srv, log_srv, param_srv, conn_srv,
                                        self._cf)
@@ -360,14 +365,17 @@ def main():
                         help="URL where ZMQ will accept connections")
     parser.add_argument("-d", "--debug", action="store_true", dest="debug",
                         help="Enable debug output")
-    (args, unused) = parser.parse_known_args()
+    parser.add_argument("-p", "--port", action="store", dest="port", type=int,
+                        default=2000,
+                        help="Base port to used for ZMQ sockets")
+    (args, _) = parser.parse_known_args()
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
 
-    ZMQServer(args.url)
+    ZMQServer(args.url, args.port)
 
     # CRTL-C to exit
 

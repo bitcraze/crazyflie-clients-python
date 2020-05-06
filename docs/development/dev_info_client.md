@@ -71,7 +71,7 @@ The input interfaces don\'t use any mapping, the devices itself directly
 generate useful values (like roll/pitch/yaw/thrust). Currently there\'s
 two implementations: LeapMotion and ZMQ. Values are read the same way as
 from normal gamepads/joysticks, at 100Hz. For more information on how
-the ZMQ interface works read [here](/cfclient_zmq#input-device).
+the ZMQ interface works read [here](/functional-areas/cfclient_zmq#input-device).
 
 ### The MUX
 
@@ -100,28 +100,28 @@ configuration file.
 
 ``` {.json}
 {
-  "client_side_xmode": false, 
-  "link_uri": "radio://0/100/250K", 
-  "input_device": "Sony PLAYSTATION(R)3 Controller", 
-  "slew_limit": 45, 
-  "max_rp": 30, 
-  "ui_update_period": 100, 
-  "trim_pitch": 0.0, 
+  "client_side_xmode": false,
+  "link_uri": "radio://0/100/250K",
+  "input_device": "Sony PLAYSTATION(R)3 Controller",
+  "slew_limit": 45,
+  "max_rp": 30,
+  "ui_update_period": 100,
+  "trim_pitch": 0.0,
   "device_config_mapping": {
-    "Leapmotion": "LeapMotion", 
-    "Sony PLAYSTATION(R)3 Controller": "PS3_Mode_1_Split-Yaw_Linux", 
+    "Leapmotion": "LeapMotion",
+    "Sony PLAYSTATION(R)3 Controller": "PS3_Mode_1_Split-Yaw_Linux",
     "PLAYSTATION(R)3 Controller (34:C7:31:8E:CF:0E)": "PS3_Mode_1",
     "Microsoft X-Box 360 pad": "xbox360_mode1_linux"
-  }, 
-  "slew_rate": 30, 
-  "auto_reconnect": false, 
-  "max_yaw": 200, 
-  "flightmode": "Advanced", 
-  "enable_debug_driver": false, 
-  "open_tabs": "Flight Control,Parameters,Console", 
-  "input_device_blacklist": "(VirtualBox|VMware)", 
-  "trim_roll": 0.0, 
-  "max_thrust": 80.0, 
+  },
+  "slew_rate": 30,
+  "auto_reconnect": false,
+  "max_yaw": 200,
+  "flightmode": "Advanced",
+  "enable_debug_driver": false,
+  "open_tabs": "Flight Control,Parameters,Console",
+  "input_device_blacklist": "(VirtualBox|VMware)",
+  "trim_roll": 0.0,
+  "max_thrust": 80.0,
   "min_thrust": 25.0
 }
 ```
@@ -165,17 +165,17 @@ accessed in the application.
 ``` {.json}
 {
   "writable" : {
-    "input_device": "", 
-    "link_uri": "", 
-    "flightmode": "Normal", 
-    "open_tabs": "Flight Control", 
-    "trim_pitch": 0.0, 
-    "slew_limit": 45, 
-    "slew_rate": 30, 
-    "trim_roll": 0.0, 
-    "max_thrust": 80, 
-    "min_thrust": 25, 
-    "max_yaw": 200, 
+    "input_device": "",
+    "link_uri": "",
+    "flightmode": "Normal",
+    "open_tabs": "Flight Control",
+    "trim_pitch": 0.0,
+    "slew_limit": 45,
+    "slew_rate": 30,
+    "trim_roll": 0.0,
+    "max_thrust": 80,
+    "min_thrust": 25,
+    "max_yaw": 200,
     "max_rp": 30,
     "client_side_xmode": false,
     "auto_reconnect": false,
@@ -185,11 +185,11 @@ accessed in the application.
     "ui_update_period": 100
   },
   "read-only" : {
-    "normal_slew_limit": 45, 
-    "normal_slew_rate": 30, 
-    "normal_max_thrust": 80, 
-    "normal_min_thrust": 25, 
-    "normal_max_yaw": 200, 
+    "normal_slew_limit": 45,
+    "normal_slew_rate": 30,
+    "normal_max_thrust": 80,
+    "normal_min_thrust": 25,
+    "normal_max_yaw": 200,
     "normal_max_rp": 30,
     "default_cf_channel": 10,
     "default_cf_speed": 0,
@@ -203,7 +203,7 @@ TOC cache files
 
 In order to speed up the connection procedure for the Crazyflie the TOCs
 are cached ([more info on logging/parameter frameworks and
-TOC](https://www.bitcraze.io/docs/crazyflie-firmware/master/index/) ). The writable part of the TOC
+TOC](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/) ). The writable part of the TOC
 cache is located in */conf/cache* where each cache is saved in a file
 named after the CRC32 (in hex) of the TOC CRC32 (for example
 *1CB41680.json*). There\'s also a read-only part of the TOC cache
@@ -220,15 +220,15 @@ The TOC cache files are organized in a hierarchical manner after the
 *acc* which contains the variables *y*,*x*,*z*,*zw* and *mag2*. Each of
 these variables have a set of attributes that are described below.
 
- |  Field          |        Format |   Comments| 
-  | --------------| ------- | --------|  
-|   ident               |   int     |  The TOC id of the variable| 
-|   group               |   string  |  The group the variable belongs to| 
-|   name                |   string  |  The name of the variable| 
- |  prototype           |   string  |  The Python unpack string of the variable used when unpacking the binary data| 
- |  [class]{.underline} |   string  |  The name of the class that can hold this variable (either LogTocElement or ParamTocElement)| 
-  | ctype               |   string |   The variable type in the firmware| 
- |  access               |  int    |   The access restrictions mask for the variable (only applicable for parameters). 0 = RW, 1 =  RO 
+ |  Field          |        Format |   Comments|
+  | --------------| ------- | --------|
+|   ident               |   int     |  The TOC id of the variable|
+|   group               |   string  |  The group the variable belongs to|
+|   name                |   string  |  The name of the variable|
+ |  prototype           |   string  |  The Python unpack string of the variable used when unpacking the binary data|
+ |  [class]{.underline} |   string  |  The name of the class that can hold this variable (either LogTocElement or ParamTocElement)|
+  | ctype               |   string |   The variable type in the firmware|
+ |  access               |  int    |   The access restrictions mask for the variable (only applicable for parameters). 0 = RW, 1 =  RO
 
 Below is an example of part of the log TOC cache:
 
@@ -236,82 +236,82 @@ Below is an example of part of the log TOC cache:
 {
   "acc": {
     "y": {
-      "ident": 8, 
-      "group": "acc", 
-      "name": "y", 
-      "pytype": "<f", 
-      "__class__": "LogTocElement", 
-      "ctype": "float", 
+      "ident": 8,
+      "group": "acc",
+      "name": "y",
+      "pytype": "<f",
+      "__class__": "LogTocElement",
+      "ctype": "float",
       "access": 0
-    }, 
+    },
     "x": {
-      "ident": 7, 
-      "group": "acc", 
-      "name": "x", 
-      "pytype": "<f", 
-      "__class__": "LogTocElement", 
-      "ctype": "float", 
+      "ident": 7,
+      "group": "acc",
+      "name": "x",
+      "pytype": "<f",
+      "__class__": "LogTocElement",
+      "ctype": "float",
       "access": 0
-    }, 
+    },
     "z": {
-      "ident": 9, 
-      "group": "acc", 
-      "name": "z", 
-      "pytype": "<f", 
-      "__class__": "LogTocElement", 
-      "ctype": "float", 
+      "ident": 9,
+      "group": "acc",
+      "name": "z",
+      "pytype": "<f",
+      "__class__": "LogTocElement",
+      "ctype": "float",
       "access": 0
-    }, 
+    },
     "zw": {
-      "ident": 10, 
-      "group": "acc", 
-      "name": "zw", 
-      "pytype": "<f", 
-      "__class__": "LogTocElement", 
-      "ctype": "float", 
+      "ident": 10,
+      "group": "acc",
+      "name": "zw",
+      "pytype": "<f",
+      "__class__": "LogTocElement",
+      "ctype": "float",
       "access": 0
-    }, 
+    },
     "mag2": {
-      "ident": 11, 
-      "group": "acc", 
-      "name": "mag2", 
-      "pytype": "<f", 
-      "__class__": "LogTocElement", 
-      "ctype": "float", 
+      "ident": 11,
+      "group": "acc",
+      "name": "mag2",
+      "pytype": "<f",
+      "__class__": "LogTocElement",
+      "ctype": "float",
       "access": 0
     }
-  }, 
+  },
   "mag": {
     "y": {
-      "ident": 39, 
-      "group": "mag", 
-      "name": "y", 
-      "pytype": "<f", 
-      "__class__": "LogTocElement", 
-      "ctype": "float", 
+      "ident": 39,
+      "group": "mag",
+      "name": "y",
+      "pytype": "<f",
+      "__class__": "LogTocElement",
+      "ctype": "float",
       "access": 0
-    }, 
+    },
     "x": {
-      "ident": 38, 
-      "group": "mag", 
-      "name": "x", 
-      "pytype": "<f", 
-      "__class__": "LogTocElement", 
-      "ctype": "float", 
+      "ident": 38,
+      "group": "mag",
+      "name": "x",
+      "pytype": "<f",
+      "__class__": "LogTocElement",
+      "ctype": "float",
       "access": 0
-    }, 
+    },
     "z": {
-      "ident": 40, 
-      "group": "mag", 
-      "name": "z", 
-      "pytype": "<f", 
-      "__class__": "LogTocElement", 
-      "ctype": "float", 
+      "ident": 40,
+      "group": "mag",
+      "name": "z",
+      "pytype": "<f",
+      "__class__": "LogTocElement",
+      "ctype": "float",
       "access": 0
     }
-  }, 
+  },
   "stabilizer": {
-      ....    
+      ....
   }
 }
 ```
@@ -322,88 +322,88 @@ Below is an example of part of the param TOC cache:
 {
   "imu_sensors": {
     "HMC5883L": {
-      "ident": 0, 
-      "group": "imu_sensors", 
-      "name": "HMC5883L", 
-      "pytype": "<B", 
-      "__class__": "ParamTocElement", 
-      "ctype": "uint8_t", 
+      "ident": 0,
+      "group": "imu_sensors",
+      "name": "HMC5883L",
+      "pytype": "<B",
+      "__class__": "ParamTocElement",
+      "ctype": "uint8_t",
       "access": 1
-    }, 
+    },
     "MS5611": {
-      "ident": 1, 
-      "group": "imu_sensors", 
-      "name": "MS5611", 
-      "pytype": "<B", 
-      "__class__": "ParamTocElement", 
-      "ctype": "uint8_t", 
+      "ident": 1,
+      "group": "imu_sensors",
+      "name": "MS5611",
+      "pytype": "<B",
+      "__class__": "ParamTocElement",
+      "ctype": "uint8_t",
       "access": 1
     }
-  }, 
+  },
   "sensorfusion6": {
     "ki": {
-      "ident": 30, 
-      "group": "sensorfusion6", 
-      "name": "ki", 
-      "pytype": "<f", 
-      "__class__": "ParamTocElement", 
-      "ctype": "float", 
+      "ident": 30,
+      "group": "sensorfusion6",
+      "name": "ki",
+      "pytype": "<f",
+      "__class__": "ParamTocElement",
+      "ctype": "float",
       "access": 0
-    }, 
+    },
     "kp": {
-      "ident": 29, 
-      "group": "sensorfusion6", 
-      "name": "kp", 
-      "pytype": "<f", 
-      "__class__": "ParamTocElement", 
-      "ctype": "float", 
+      "ident": 29,
+      "group": "sensorfusion6",
+      "name": "kp",
+      "pytype": "<f",
+      "__class__": "ParamTocElement",
+      "ctype": "float",
       "access": 0
     }
-  }, 
+  },
   "flightmode": {
     "althold": {
-      "ident": 10, 
-      "group": "flightmode", 
-      "name": "althold", 
-      "pytype": "<B", 
-      "__class__": "ParamTocElement", 
-      "ctype": "uint8_t", 
+      "ident": 10,
+      "group": "flightmode",
+      "name": "althold",
+      "pytype": "<B",
+      "__class__": "ParamTocElement",
+      "ctype": "uint8_t",
       "access": 0
     }
-  }, 
+  },
   "firmware": {
     "revision0": {
-      "ident": 57, 
-      "group": "firmware", 
-      "name": "revision0", 
-      "pytype": "<L", 
-      "__class__": "ParamTocElement", 
-      "ctype": "uint32_t", 
+      "ident": 57,
+      "group": "firmware",
+      "name": "revision0",
+      "pytype": "<L",
+      "__class__": "ParamTocElement",
+      "ctype": "uint32_t",
       "access": 1
-    }, 
+    },
     "revision1": {
-      "ident": 58, 
-      "group": "firmware", 
-      "name": "revision1", 
-      "pytype": "<H", 
-      "__class__": "ParamTocElement", 
-      "ctype": "uint16_t", 
+      "ident": 58,
+      "group": "firmware",
+      "name": "revision1",
+      "pytype": "<H",
+      "__class__": "ParamTocElement",
+      "ctype": "uint16_t",
       "access": 1
-    }, 
+    },
     "modified": {
-      "ident": 59, 
-      "group": "firmware", 
-      "name": "modified", 
-      "pytype": "<B", 
-      "__class__": "ParamTocElement", 
-      "ctype": "uint8_t", 
+      "ident": 59,
+      "group": "firmware",
+      "name": "modified",
+      "pytype": "<B",
+      "__class__": "ParamTocElement",
+      "ctype": "uint8_t",
       "access": 1
     }
-  }, 
+  },
   "cpu": {
      ....
   }
-}    
+}
 ```
 
 Input device configuration
@@ -422,107 +422,107 @@ to split up values on multiple axis. An example of this is using the
 bumper buttons to control the yaw, where the left one controls CW
 rotation and the right one controls CCW rotation.
 
-|   Field    |       Format    |      Comments| 
-|   --------| ------|  --------------|  
- |  inputconfig    | dict          |  Contains one input device| 
- |  inputdevice   |  dict          |  Contains a configuration for an input device| 
- |  updateperiod  |  int           |  Specifies how often the device is read (not used)| 
- |  name          |  string        |  Readable name of the configuration| 
- |  axis           | list          |  A list of every axis that is mapped| 
- |  scale          | float         |  A scale that should be applied to the axis value (will be divided with the scale). Negative values can be used to invert the axis| 
- |  offset       |   float         |  An offset that should be applied to the axis value| 
- |  type         |   string        |  Either Input.AXIS or Input.BUTTON depending on if it\'s an axis or a button that *id* or *ids* refer to| 
- |  id           |   int           |  The driver id of the axis (used for single axis mapping)| 
- |  ids          |   list of ints  |  The driver ids of the axis (used for split axis configuration). The first one will be the negative part and the second one the positive part| 
-  | key          |   string        |  This string is used inside the application to determine what value should be updated using this axis| 
-  | name         |   string        |  Readable name of the axis (not used)| 
+|   Field    |       Format    |      Comments|
+|   --------| ------|  --------------|
+ |  inputconfig    | dict          |  Contains one input device|
+ |  inputdevice   |  dict          |  Contains a configuration for an input device|
+ |  updateperiod  |  int           |  Specifies how often the device is read (not used)|
+ |  name          |  string        |  Readable name of the configuration|
+ |  axis           | list          |  A list of every axis that is mapped|
+ |  scale          | float         |  A scale that should be applied to the axis value (will be divided with the scale). Negative values can be used to invert the axis|
+ |  offset       |   float         |  An offset that should be applied to the axis value|
+ |  type         |   string        |  Either Input.AXIS or Input.BUTTON depending on if it\'s an axis or a button that *id* or *ids* refer to|
+ |  id           |   int           |  The driver id of the axis (used for single axis mapping)|
+ |  ids          |   list of ints  |  The driver ids of the axis (used for split axis configuration). The first one will be the negative part and the second one the positive part|
+  | key          |   string        |  This string is used inside the application to determine what value should be updated using this axis|
+  | name         |   string        |  Readable name of the axis (not used)|
 
 ``` {.json}
 {
   "inputconfig": {
     "inputdevice": {
-      "updateperiod": 10, 
-      "name": "PS3_Mode_1_Split-Yaw_Linux", 
+      "updateperiod": 10,
+      "name": "PS3_Mode_1_Split-Yaw_Linux",
       "axis": [
         {
-          "scale": -1.0, 
-          "type": "Input.AXIS", 
-          "id": 3, 
-          "key": "thrust", 
+          "scale": -1.0,
+          "type": "Input.AXIS",
+          "id": 3,
+          "key": "thrust",
           "name": "thrust",
           "offset": 1.0,
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.AXIS", 
+          "scale": 1.0,
+          "type": "Input.AXIS",
           "ids": [
-            12, 
+            12,
             13
-          ], 
-          "key": "yaw", 
+          ],
+          "key": "yaw",
           "name": "yaw"
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.AXIS", 
-          "id": 0, 
-          "key": "roll", 
+          "scale": 1.0,
+          "type": "Input.AXIS",
+          "id": 0,
+          "key": "roll",
           "name": "roll"
-        }, 
+        },
         {
-          "scale": -1.0, 
-          "type": "Input.AXIS", 
-          "id": 1, 
-          "key": "pitch", 
+          "scale": -1.0,
+          "type": "Input.AXIS",
+          "id": 1,
+          "key": "pitch",
           "name": "pitch"
-        }, 
+        },
         {
-          "scale": -1.0, 
-          "type": "Input.BUTTON", 
-          "id": 6, 
-          "key": "pitchcal", 
+          "scale": -1.0,
+          "type": "Input.BUTTON",
+          "id": 6,
+          "key": "pitchcal",
           "name": "pitchNeg"
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.BUTTON", 
-          "id": 4, 
-          "key": "pitchcal", 
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": 4,
+          "key": "pitchcal",
           "name": "pitchPos"
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.BUTTON", 
-          "id": -1, 
-          "key": "estop", 
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": -1,
+          "key": "estop",
           "name": "killswitch"
-        }, 
+        },
         {
-          "scale": -1.0, 
-          "type": "Input.BUTTON", 
-          "id": 7, 
-          "key": "rollcal", 
+          "scale": -1.0,
+          "type": "Input.BUTTON",
+          "id": 7,
+          "key": "rollcal",
           "name": "rollNeg"
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.BUTTON", 
-          "id": 5, 
-          "key": "rollcal", 
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": 5,
+          "key": "rollcal",
           "name": "rollPos"
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.BUTTON", 
-          "id": 14, 
-          "key": "althold", 
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": 14,
+          "key": "althold",
           "name": "althold"
-        }, 
+        },
         {
-          "scale": 1.0, 
-          "type": "Input.BUTTON", 
-          "id": 12, 
-          "key": "exit", 
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": 12,
+          "key": "exit",
           "name": "exitapp"
         }
       ]
@@ -542,17 +542,17 @@ logging configurations are stored in the */lib/cfclient/configs/log* and
 are copied into the user configuration directory on the first status (if
 */conf/log* doesn\'t exist).
 
-|  Field    |     Format |   Comments| 
- |  ------------ | --------|  
-|   logconfig   |  dict  |    Contains a logging configuration| 
- |  logblock    |  dict    |  A logging configuration| 
-|   name       |   string  |  A readable name of the configuration that will be shown in the UI| 
+|  Field    |     Format |   Comments|
+ |  ------------ | --------|
+|   logconfig   |  dict  |    Contains a logging configuration|
+ |  logblock    |  dict    |  A logging configuration|
+|   name       |   string  |  A readable name of the configuration that will be shown in the UI|
 |   period     |   int     |  The period the logging data should be requested in. Minimum resolution|  is 10th of ms
-|   variables    | list    |  A list of dictionaries, one for each variable in the configuration | 
-|   name         | string  |  The full name of the variable in the group.name format | 
-|   type        |  string  |  Could be either TOC or Memory, currently only TOC is implemented | 
-|   stored\_as  |  string  |  The format (as C type) that the variable is stored as in the firmware | 
-|   fetch\_as  |   string   | The format (as C type) that the variable should be logged as | 
+|   variables    | list    |  A list of dictionaries, one for each variable in the configuration |
+|   name         | string  |  The full name of the variable in the group.name format |
+|   type        |  string  |  Could be either TOC or Memory, currently only TOC is implemented |
+|   stored\_as  |  string  |  The format (as C type) that the variable is stored as in the firmware |
+|   fetch\_as  |   string   | The format (as C type) that the variable should be logged as |
 
 Below is an example of a log configuration file:
 

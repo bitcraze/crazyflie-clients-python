@@ -4,7 +4,7 @@ page_id: cfclient_zmq
 ---
 
 
-The [Crazyflie Python client](/userguide_client/)
+The [Crazyflie Python client](/userguides/userguide_client/)
 runs a number of back-ends where you can set/get information from other
 applications via [ZMQ](http://zeromq.org/).
 
@@ -96,7 +96,7 @@ parameters, it\'s just the control part that\'s broken out.
 By default this is disabled in the configuration file and needs to be
 enabled. The configuration file parameter is named *enable\_zmq\_input*
 (see
-[this](/dev_info_client#user-configuration-file) to
+[this](/development/dev_info_client#user-configuration-file) to
 edit the configuration). To enable controlling by the back-end select
 the *ZMQ\@127.0.0.1:1212* input device in the *Input device* menu.
 
@@ -115,10 +115,10 @@ Available keys for the *ctrl* dictionary:
 
  | Field |   Range |  Unit        |     Comments|
 |---------|----------|----------------|---------------|
-|  roll  |   N/A    | degrees      |    
-|  pitch |   N/A    | degrees     |     
-|  yaw   |   N/A    | degrees/second |  
-|  thrust |  0-100  | Percent  |        
+|  roll  |   N/A    | degrees      |
+|  pitch |   N/A    | degrees     |
+|  yaw   |   N/A    | degrees/second |
+|  thrust |  0-100  | Percent  |
 |  estop  |  T/F    | boolean  |        Used to stop the Crazyflie and disable the control
 |  alt1  |   T/F    | boolean  |        Alt1 is internally mapped to functionality like switching LED-ring effect
 |  alt2   |  T/F    | boolean |         Alt2 is internally mapped to functionality like switching LED-ring headlights on/off

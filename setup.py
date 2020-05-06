@@ -127,7 +127,7 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib>=0.1.8',
+    install_requires=platform_requires + ['cflib>=0.1.9',
                                           'appdirs>=1.4.0',
                                           'pyzmq==18.1.0',
                                           'pyqtgraph>=0.10',
@@ -136,12 +136,12 @@ setup(
                                           'qtm>=2.0.2'],
 
     # List of dev and qt dependencies
-    # Pyqt5 5.9.2 seems to be the last version to work on Windows 8.1
+    # Pyqt5 5.12.1 is the last version that does not cause performance problems
     # You can install them by running
     # $ pip install -e .[dev,qt5]
     extras_require={
         'dev': platform_dev_requires + [],
-        'qt5': ['PyQt5==5.13.1']
+        'qt5': ['PyQt5==5.12.1']
     },
 
     package_data=package_data,
