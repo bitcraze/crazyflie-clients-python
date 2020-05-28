@@ -131,7 +131,7 @@ setup(
                                           'appdirs>=1.4.0',
                                           'pyzmq==18.1.0',
                                           'pyqtgraph>=0.10',
-                                          'PyYAML==5.1.2',
+                                          'PyYAML>=5.1.2',
                                           'quamash==0.6.1',
                                           'qtm>=2.0.2'],
 
