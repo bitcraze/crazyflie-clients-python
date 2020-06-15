@@ -126,26 +126,26 @@ configuration file.
 }
 ```
 
-  Field                      Format    Comments
-  -------------------------- --------- ----------------------------------------------------------------------------------------------------------------------------------------------
-  client\_side\_xmode        boolean   Sets weather the client side X-mode is activated or not (more info here)
-  link\_uri                  string    The last successfully connected Crazyflie URI. This is used when you click \"Quick connect\" in the application
-  auto\_reconnect            boolean   Set\'s if auto-reconnect is enabled or not
-  ui\_update\_period         int       The minimum time (in ms) between UI updates for logging values
-  enable\_debug\_driver      boolean   The Crazyflie API contains a driver for debugging the UI. This driver will act as a Crazyflie and can be used to simulate a number of issues
-  open\_tabs                 string    A comma-separated list of the open tabs (using the tab.tabName attribute)
-  input\_device              string    The readable name of the last used input device
-  device\_config\_mapping    dict      A dictionary where the keys are readable input device names and the values are the last used mapping for the device
-  input\_device\_blacklist   string    A regexp that will sort out input devices while scanning. This is to avoid detecting virtual joysticks while using a VM
-  flight\_mode               string    The name of the last used flightmode (either Advanced or ?)
-  slew\_limit                int       The limit (in %) where the slew-tate limiting kicks in, only applicable in Advanced mode
-  slew\_rate                 int       The slew rate in %/s that will limit the lowering of the thrust, only applicable in Advanced mode
-  trim\_pitch                float     The pitch trim (degrees)
-  trim\_roll                 float     The roll trim (degrees)
-  max\_thrust                float     Max allowed thrust, only applicable in Advanced mode
-  min\_thrust                float     Min allowed thrust, only applicable in Advanced mode
-  max\_yaw                   float     Max allowed yaw rate (degrees/s), only applicable in Advanced mode
-  max\_rp                    float     Max allowed roll/pitch (degrees), only applicable in Advanced mode
+| Field                      | Format    | Comments |
+| -------------------------- | --------- | -------- |
+| client\_side\_xmode        | boolean   | Sets whether the client side X-mode is activated or not (more info here)|
+| link\_uri                  | string    | The last successfully connected Crazyflie URI. This is used when you click \"Quick connect\" in the application|
+| auto\_reconnect            | boolean   | Set\'s if auto-reconnect is enabled or not|
+| ui\_update\_period         | int       | The minimum time (in ms) between UI updates for logging values|
+| enable\_debug\_driver      | boolean   | The Crazyflie API contains a driver for debugging the UI. This driver will act as a Crazyflie and can be used to simulate a number of issues|
+| open\_tabs                 | string    | A comma-separated list of the open tabs (using the tab.tabName attribute)|
+| input\_device              | string    | The readable name of the last used input device|
+| device\_config\_mapping    | dict      | A dictionary where the keys are readable input device names and the values are the last used mapping for the device|
+| input\_device\_blacklist   | string    | A regexp that will sort out input devices while scanning. This is to avoid detecting virtual joysticks while using a VM|
+| flight\_mode               | string    | The name of the last used flightmode (either Advanced or ?)|
+| slew\_limit                | int       | The limit (in %) where the slew-tate limiting kicks in, only applicable in Advanced mode|
+| slew\_rate                 | int       | The slew rate in %/s that will limit the lowering of the thrust, only applicable in Advanced mode|
+| trim\_pitch                | float     | The pitch trim (degrees)|
+| trim\_roll                 | float     | The roll trim (degrees)|
+| max\_thrust                | float     | Max allowed thrust, only applicable in Advanced mode|
+| min\_thrust                | float     | Min allowed thrust, only applicable in Advanced mode|
+| max\_yaw                   | float     | Max allowed yaw rate (degrees/s), only applicable in Advanced mode|
+| max\_rp                    | float     | Max allowed roll/pitch (degrees), only applicable in Advanced mode|
 
 Default configuration file
 --------------------------
@@ -220,15 +220,15 @@ The TOC cache files are organized in a hierarchical manner after the
 *acc* which contains the variables *y*,*x*,*z*,*zw* and *mag2*. Each of
 these variables have a set of attributes that are described below.
 
- |  Field          |        Format |   Comments|
-  | --------------| ------- | --------|
-|   ident               |   int     |  The TOC id of the variable|
-|   group               |   string  |  The group the variable belongs to|
-|   name                |   string  |  The name of the variable|
- |  prototype           |   string  |  The Python unpack string of the variable used when unpacking the binary data|
- |  [class]{.underline} |   string  |  The name of the class that can hold this variable (either LogTocElement or ParamTocElement)|
-  | ctype               |   string |   The variable type in the firmware|
- |  access               |  int    |   The access restrictions mask for the variable (only applicable for parameters). 0 = RW, 1 =  RO
+| Field               | Format  | Comments |
+| ------------------- | ------- | -------- |
+| ident               | int     | The TOC id of the variable|
+| group               | string  | The group the variable belongs to|
+| name                | string  | The name of the variable|
+| prototype           | string  | The Python unpack string of the variable used when unpacking the binary data|
+| [class]{.underline} | string  | The name of the class that can hold this variable (either LogTocElement or ParamTocElement)|
+| ctype               | string  | The variable type in the firmware|
+| access              | int     | The access restrictions mask for the variable (only applicable for parameters). 0 = RW, 1 = RO|
 
 Below is an example of part of the log TOC cache:
 
@@ -422,20 +422,20 @@ to split up values on multiple axis. An example of this is using the
 bumper buttons to control the yaw, where the left one controls CW
 rotation and the right one controls CCW rotation.
 
-|   Field    |       Format    |      Comments|
-|   --------| ------|  --------------|
- |  inputconfig    | dict          |  Contains one input device|
- |  inputdevice   |  dict          |  Contains a configuration for an input device|
- |  updateperiod  |  int           |  Specifies how often the device is read (not used)|
- |  name          |  string        |  Readable name of the configuration|
- |  axis           | list          |  A list of every axis that is mapped|
- |  scale          | float         |  A scale that should be applied to the axis value (will be divided with the scale). Negative values can be used to invert the axis|
- |  offset       |   float         |  An offset that should be applied to the axis value|
- |  type         |   string        |  Either Input.AXIS or Input.BUTTON depending on if it\'s an axis or a button that *id* or *ids* refer to|
- |  id           |   int           |  The driver id of the axis (used for single axis mapping)|
- |  ids          |   list of ints  |  The driver ids of the axis (used for split axis configuration). The first one will be the negative part and the second one the positive part|
-  | key          |   string        |  This string is used inside the application to determine what value should be updated using this axis|
-  | name         |   string        |  Readable name of the axis (not used)|
+| Field        | Format        |  Comments|
+| --------     | ------------- |  --------------|
+| inputconfig  | dict          |  Contains one input device|
+| inputdevice  | dict          |  Contains a configuration for an input device|
+| updateperiod | int           |  Specifies how often the device is read (not used)|
+| name         | string        |  Readable name of the configuration|
+| axis         | list          |  A list of every axis that is mapped|
+| scale        | float         |  A scale that should be applied to the axis value (will be divided with the scale). Negative values can be used to invert the axis|
+| offset       | float         |  An offset that should be applied to the axis value|
+| type         | string        |  Either Input.AXIS or Input.BUTTON depending on if it\'s an axis or a button that *id* or *ids* refer to|
+| id           | int           |  The driver id of the axis (used for single axis mapping)|
+| ids          | list of ints  |  The driver ids of the axis (used for split axis configuration). The first one will be the negative part and the second one the positive part|
+| key          | string        |  This string is used inside the application to determine what value should be updated using this axis|
+| name         | string        |  Readable name of the axis (not used)|
 
 ``` {.json}
 {
@@ -542,17 +542,17 @@ logging configurations are stored in the */lib/cfclient/configs/log* and
 are copied into the user configuration directory on the first status (if
 */conf/log* doesn\'t exist).
 
-|  Field    |     Format |   Comments|
- |  ------------ | --------|
-|   logconfig   |  dict  |    Contains a logging configuration|
- |  logblock    |  dict    |  A logging configuration|
-|   name       |   string  |  A readable name of the configuration that will be shown in the UI|
-|   period     |   int     |  The period the logging data should be requested in. Minimum resolution|  is 10th of ms
-|   variables    | list    |  A list of dictionaries, one for each variable in the configuration |
-|   name         | string  |  The full name of the variable in the group.name format |
-|   type        |  string  |  Could be either TOC or Memory, currently only TOC is implemented |
-|   stored\_as  |  string  |  The format (as C type) that the variable is stored as in the firmware |
-|   fetch\_as  |   string   | The format (as C type) that the variable should be logged as |
+|  Field        | Format  | Comments |     |
+|  ------------ | ------- | -------- | --- |
+|   logconfig   | dict    | Contains a logging configuration||
+|   logblock    | dict    | A logging configuration||
+|   name        | string  | A readable name of the configuration that will be shown in the UI||
+|   period      | int     | The period the logging data should be requested in. Minimum resolution| is 10th of ms|
+|   variables   | list    | A list of dictionaries, one for each variable in the configuration ||
+|   name        | string  | The full name of the variable in the group.name format ||
+|   type        | string  | Could be either TOC or Memory, currently only TOC is implemented ||
+|   stored\_as  | string  | The format (as C type) that the variable is stored as in the firmware ||
+|   fetch\_as   | string  | The format (as C type) that the variable should be logged as ||
 
 Below is an example of a log configuration file:
 
