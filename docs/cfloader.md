@@ -9,7 +9,7 @@ page_id: cfloader
 The Crazyflie can be bootloaded from the commandline using the
 *cfloader* script.
 
-**Note:** To enter the bootloader for the Crazyflie 2.X power off thX
+**Note:** To enter the bootloader for the Crazyflie 2.X power off the
 platform and start it again by pressing the power button for at least
 1.5 seconds, but not more than 5.
 
