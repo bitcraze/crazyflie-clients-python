@@ -64,7 +64,7 @@ VERSION = get_version()
 if not VERSION and not os.path.isfile('src/cfclient/version.json'):
     sys.stderr.write("Git is required to install from source.\n" +
                      "Please clone the project with Git or use one of the\n" +
-                     "release pachages (either from pip or a binary build).\n")
+                     "release packages (either from pip or a binary build).\n")
     raise Exception("Git required.")
 
 if not VERSION:
