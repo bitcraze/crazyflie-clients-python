@@ -1,5 +1,5 @@
 ---
-title: Bootloader the Crazyflie 1.0/2.0
+title: Bootloader the Crazyflie 2.0
 page_id: cfloader
 ---
 
@@ -9,8 +9,7 @@ page_id: cfloader
 The Crazyflie can be bootloaded from the commandline using the
 *cfloader* script.
 
-**Note:** To enter the bootloader for the Crazyflie 1.0 just restart the
-platform. To enter the bootloader for the Crazyflie 2.0 power off the
+**Note:** To enter the bootloader for the Crazyflie 2.0 power off the
 platform and start it again by pressing the power button for at least
 1.5 seconds, but not more than 5.
 
