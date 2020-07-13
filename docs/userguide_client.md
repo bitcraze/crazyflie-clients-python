@@ -17,9 +17,8 @@ functionality.
 This page uses the terms
 [roll/pitch/yaw](http://en.wikipedia.org/wiki/Flight_dynamics_(fixed_wing_aircraft))
 extensively. For that to make any sense for a quadcopter we need to know
-where the front is ([Crazyflie
-1.0](https://wiki.bitcraze.io/projects:crazyflie:userguide:index#the_crazyflie), [Crazyflie
-2.0](https://wiki.bitcraze.io/projects:crazyflie2:userguide:index)).
+where the front is, 
+[Crazyflie 2.X](https://wiki.bitcraze.io/projects:crazyflie2:userguide:index).
 
 How to get flying
 =================
@@ -38,9 +37,7 @@ How to get flying
 -   When the handshake is done you can start flying the Crazyflie.
     Remember the most tricky part is the thrust so start out easy\...
 
-For more info on LED indicators etc. have a look at the
-[Crazyflie](https://wiki.bitcraze.io/projects:crazyflie:userguide:index#the_crazyflie) or
-[Crazyflie 2.0](https://wiki.bitcraze.io/projects:crazyflie2:userguide:index) user guide.
+For more info on LED indicators etc. have a look at the [Crazyflie 2.X](https://wiki.bitcraze.io/projects:crazyflie2:userguide:index) user guide.
 
 Main UI
 =======
@@ -80,36 +77,32 @@ a wrong firmware is flashed the process can just be started again.
 
 ![](images/crazyflie_bootloading.png)
 
-To update the firmware in the Crazyflie 1.0/2.0 do the following:
+To update the firmware in the Crazyflie 2.X do the following:
 
 -   Make sure that the Crazyflie is disconnected from the client and
     powered off
 -   Go to the menu *Crazyflie-\>Bootloader*
--   For Crazyflie 2.0 hold the button for about 3 seconds when turning
+-   Hold the button for about 3 seconds when turning
     it on until the blue LED M2 starts to blink to get into bootloader
     mode. If a wrong nRF51 firmware has been flashed you might have to
     start from an un-powered state. Then hold the button and connect
     power.
 -   Click \"Initiate bootloader cold boot\"
--   For Crazyflie 1.0 now power it on **within 5 seconds** using the
-    battery (not USB), the booloader should now connect
 -   Press \"Browse\" and select the binary you want to download *(e.g.
     cflie.bin)*. **Note:** A \*.bin file will be flashed to the STM32xxx
     only. Or select a [zip](https://wiki.bitcraze.io/doc:crazyflie:bootloader:index) file
-    containing firmware for both nRF51 and STM32F405 for Crazyflie 2.0
-    as well as firmware for the STM32F103 for the Crazyflie 1.0.
+    containing firmware for both nRF51 and STM32F405 for Crazyflie 2.X.
 -   Press \"Program\" and wait
 -   Press \"Restart in firmware mode\"
 
 To check the firmware version, under the *View* menu, open up
 *Tabs-\>Console* tab and look at the output when connecting to the
-Crazyflie 1.0/2.0.
+Crazyflie 2.X.
 
 Firmware configuration
 ----------------------
 
-It is possible to set another channel to communicate with the Crazyflie
-1.0/2.0. It can be wise to do this if there exist other wireless
+It is possible to set another channel to communicate with the Crazyflie 2.X. It can be wise to do this if there exist other wireless
 networks that can interfere, especially WiFi. It is also possible to
 permanently store the trim values for pitch and roll.
 
@@ -136,12 +129,11 @@ stored in a none volatile memory:
 The procedure is described below and the parameters can be changed again
 any time the same way.
 
+First connect to the Crazyflie 2.X with the normal connect button. Then open "Crazyflie->Configure 2.X" to reach the configure 2.X dialog
 
-|     **Crazyflie 1.0**                                                                        **Crazyflie 2.0**  |                                                                                                                                
-|-----|------------|  
-|   Click on the menu **\"Crazyflie-\>Configure 1.0\"** and then connect the bootloader by clicking on the \"cold boot\" button and by restarting the Crazyflie.  | First connect to the Crazyflie 2.0 with the normal connect button. Then open **\"Crazyflie-\>Configure 2.0\"** to reach the configure 2.0 dialog   |
- |    ![](images/configure_cf1.png){:width="500"}             |                                                                      ![](images/cfclient_cf2_config.png){:width="500"} |                                                            
-   |  Once the settings has been made press the program button to save them permanently in the Crazyflie flash.              |                                        Once the settings has been made press the write button to save them permanently in the Crazyflie 2.0 EEPROM.    |                                  
+![](images/cfclient_cf2_config.png){:width="500"}
+
+Once the settings has been made press the write button to save them permanently in the Crazyflie 2.X EEPROM.
 
 
 Logging
