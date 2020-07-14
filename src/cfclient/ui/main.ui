@@ -249,7 +249,7 @@
            <x>0</x>
            <y>0</y>
            <width>852</width>
-           <height>506</height>
+           <height>498</height>
           </rect>
          </property>
          <property name="sizePolicy">
@@ -301,7 +301,7 @@
      <x>0</x>
      <y>0</y>
      <width>872</width>
-     <height>20</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -337,7 +337,6 @@
     <addaction name="menuItemConnect"/>
     <addaction name="menuItemBootloader"/>
     <addaction name="_menu_cf2_config"/>
-    <addaction name="_menu_cf1_config"/>
    </widget>
    <widget class="QMenu" name="_menu_inputdevice">
     <property name="title">
@@ -482,19 +481,6 @@
    </property>
    <property name="text">
     <string>Configure 2.X</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::NoRole</enum>
-   </property>
-  </action>
-  <action name="_menu_cf_config_2">
-   <property name="text">
-    <string>Configure 1.0</string>
-   </property>
-  </action>
-  <action name="_menu_cf1_config">
-   <property name="text">
-    <string>Configure 1.0</string>
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>

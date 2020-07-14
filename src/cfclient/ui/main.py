@@ -59,7 +59,6 @@ from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QMenu
 from PyQt5.QtWidgets import QMessageBox
 
-from .dialogs.cf1config import Cf1ConfigDialog
 from .dialogs.cf2config import Cf2ConfigDialog
 from .dialogs.inputconfigdialogue import InputConfigDialogue
 from .dialogs.logconfigdialogue import LogConfigDialogue
@@ -307,12 +306,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.logConfigDialogue = LogConfigDialogue(cfclient.ui.pluginhelper)
         self._bootloader_dialog = BootloaderDialog(cfclient.ui.pluginhelper)
         self._cf2config_dialog = Cf2ConfigDialog(cfclient.ui.pluginhelper)
-        self._cf1config_dialog = Cf1ConfigDialog(cfclient.ui.pluginhelper)
         self.menuItemBootloader.triggered.connect(self._bootloader_dialog.show)
         self._about_dialog = AboutDialog(cfclient.ui.pluginhelper)
         self.menuItemAbout.triggered.connect(self._about_dialog.show)
         self._menu_cf2_config.triggered.connect(self._cf2config_dialog.show)
-        self._menu_cf1_config.triggered.connect(self._cf1config_dialog.show)
 
         # Load and connect tabs
         self.tabsMenuItem = QMenu("Tabs", self.menuView, enabled=True)
@@ -472,7 +469,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.address.setEnabled(True)
             self.batteryBar.setValue(3000)
             self._menu_cf2_config.setEnabled(False)
-            self._menu_cf1_config.setEnabled(True)
             self.linkQualityBar.setValue(0)
             self.menuItemBootloader.setEnabled(True)
             self.logConfigAction.setEnabled(False)
@@ -491,7 +487,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             # dialog.
             if len(self.cf.mem.get_mems(MemoryElement.TYPE_I2C)) > 0:
                 self._menu_cf2_config.setEnabled(True)
-            self._menu_cf1_config.setEnabled(False)
         elif self.uiState == UIState.CONNECTING:
             s = "Connecting to {} ...".format(self._selected_interface)
             self.setWindowTitle(s)
