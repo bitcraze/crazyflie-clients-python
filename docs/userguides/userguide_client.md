@@ -131,7 +131,7 @@ any time the same way.
 
 First connect to the Crazyflie 2.X with the normal connect button. Then open "Crazyflie->Configure 2.X" to reach the configure 2.X dialog
 
-![CF2 config](images/cfclient_cf2_config.png){:width="500"}
+![CF2 config](/images/cfclient_cf2_config.png){:width="500"}
 
 Once the settings has been made press the write button to save them permanently in the Crazyflie 2.X EEPROM.
 
