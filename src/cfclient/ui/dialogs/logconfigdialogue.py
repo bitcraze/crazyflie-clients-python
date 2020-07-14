@@ -214,6 +214,20 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
         toc = self.helper.cf.log.toc
 
+        for group, log_tocs in toc.toc.items():
+
+            string = 'Group: %s   => ' % group
+
+            for name, tocs in log_tocs.items():
+                string += '%s: ' % name
+                string += 'ident: %s ' % tocs.ident
+                string += 'pytype: %s ' % tocs.pytype
+                string += 'ctype: %s ' % tocs.ctype
+                
+            string += '\n'
+            print(string)
+
+
         for group in list(toc.toc.keys()):
             groupItem = QtWidgets.QTreeWidgetItem()
             groupItem.setData(NAME_FIELD, Qt.DisplayRole, group)

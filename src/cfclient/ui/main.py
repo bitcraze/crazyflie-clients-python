@@ -64,6 +64,10 @@ from .dialogs.cf2config import Cf2ConfigDialog
 from .dialogs.inputconfigdialogue import InputConfigDialogue
 from .dialogs.logconfigdialogue import LogConfigDialogue
 
+
+# ONLY FOR TEST
+from .dialogs.testdialogue import TestDialogue
+
 __author__ = 'Bitcraze AB'
 __all__ = ['MainUI']
 
@@ -296,12 +300,17 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._active_config = None
 
         self.inputConfig = None
-
+        
         # Add things to helper so tabs can access it
         cfclient.ui.pluginhelper.cf = self.cf
         cfclient.ui.pluginhelper.inputDeviceReader = self.joystickReader
         cfclient.ui.pluginhelper.logConfigReader = self.logConfigReader
         cfclient.ui.pluginhelper.mainUI = self
+
+
+        # ONLY FOR TEST-DEV
+        self.test = TestDialogue(cfclient.ui.pluginhelper)
+        
 
         self.logConfigDialogue = LogConfigDialogue(cfclient.ui.pluginhelper)
         self._bootloader_dialog = BootloaderDialog(cfclient.ui.pluginhelper)
@@ -552,7 +561,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         logger.info("Auto reconnect enabled: {}".format(checked))
 
     def _show_connect_dialog(self):
-        self.logConfigDialogue.show()
+        #self.logConfigDialogue.show()
+        self.test.show()
 
     def _update_battery(self, timestamp, data, logconf):
         self.batteryBar.setValue(int(data["pm.vbat"] * 1000))
