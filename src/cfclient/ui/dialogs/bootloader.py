@@ -70,6 +70,10 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         # self.tabWidget = tabWidget
         self.helper = helper
 
+        # use to stop the file-text to dissapear when 
+        # doing multiple flashes
+        self._selected_file = ''
+
         # self.cf = crazyflie
         self.clt = CrazyloadThread()
 
@@ -95,6 +99,9 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.clt.disconnectedSignal.connect(
             lambda: self.setUiState(UIState.DISCONNECTED))
 
+        # set radiobutton for flashing both mcu's (default)
+        self.radioBoth.setChecked(True)        
+
         self.clt.start()
 
     def _ui_connection_fail(self, message):
@@ -110,7 +117,6 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             self.progressBar.setTextVisible(False)
             self.progressBar.setValue(0)
             self.statusLabel.setText('Status: <b>IDLE</b>')
-            self.imagePathLine.setText("")
         elif (state == UIState.CONNECTING):
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
@@ -130,8 +136,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
             self.coldBootButton.setEnabled(False)
-            self.imagePathLine.setText("")
-
+            
     def setStatusLabel(self, text):
         self.connectionStatus.setText("Status: <b>%s</b>" % text)
 
@@ -161,6 +166,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         # Fix for crash in X on Ubuntu 14.04
         filename, _ = QtWidgets.QFileDialog.getOpenFileName()
         if filename != "":
+            self._selected_file = filename
             self.imagePathLine.setText(filename)
         pass
 
@@ -170,13 +176,23 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.resetButton.setEnabled(False)
         self.programButton.setEnabled(False)
         self.imagePathBrowseButton.setEnabled(False)
+
+        # by default, both of the mcu:s are flashed
+        mcu_to_flash = None
+
+        if self.radioStm32.isChecked():
+            mcu_to_flash = 'stm32'
+        elif self.radioNrf51.isChecked():
+            mcu_to_flash = 'nrf51'
+
+        # call the flasher   
         if self.imagePathLine.text() != "":
             self.clt.program.emit(self.imagePathLine.text(),
-                                  self.verifyCheckBox.isChecked())
+                                  self.verifyCheckBox.isChecked(),
+                                  mcu_to_flash)
         else:
             msgBox = QtWidgets.QMessageBox()
             msgBox.setText("Please choose an image file to program.")
-
             msgBox.exec_()
 
     @pyqtSlot()
@@ -215,7 +231,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 # event loop which is what we want
 class CrazyloadThread(QThread):
     # Input signals declaration (not sure it should be used like that...)
-    program = pyqtSignal(str, bool)
+    program = pyqtSignal(str, bool, str)
     verify = pyqtSignal()
     initiateColdBootSignal = pyqtSignal(str)
     resetCopterSignal = pyqtSignal()
@@ -262,10 +278,11 @@ class CrazyloadThread(QThread):
         except Exception as e:
             self.failed_signal.emit("{}".format(e))
 
-    def programAction(self, filename, verify):
+    def programAction(self, filename, verify, mcu_to_flash):
+        
         targets = {}
-        if str(filename).endswith("bin"):
-            targets["stm32"] = ("fw",)
+        if mcu_to_flash:
+            targets[mcu_to_flash] = ("fw",)
         try:
             self._bl.flash(str(filename), targets)
             self.programmed.emit(True)
