@@ -96,7 +96,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             lambda: self.setUiState(UIState.DISCONNECTED))
 
         # set radiobutton for flashing both mcu's (default)
-        self.radioBoth.setChecked(True)        
+        self.radioBoth.setChecked(True)
 
         self.clt.start()
 
@@ -132,7 +132,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
             self.coldBootButton.setEnabled(False)
-            
+
     def setStatusLabel(self, text):
         self.connectionStatus.setText("Status: <b>%s</b>" % text)
 
@@ -180,7 +180,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         elif self.radioNrf51.isChecked():
             mcu_to_flash = 'nrf51'
 
-        # call the flasher   
+        # call the flasher
         if self.imagePathLine.text() != "":
             self.clt.program.emit(self.imagePathLine.text(),
                                   self.verifyCheckBox.isChecked(),
@@ -274,7 +274,7 @@ class CrazyloadThread(QThread):
             self.failed_signal.emit("{}".format(e))
 
     def programAction(self, filename, verify, mcu_to_flash):
-        
+
         targets = {}
         if mcu_to_flash:
             targets[mcu_to_flash] = ("fw",)
