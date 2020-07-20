@@ -70,10 +70,6 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         # self.tabWidget = tabWidget
         self.helper = helper
 
-        # use to stop the file-text to dissapear when 
-        # doing multiple flashes
-        self._selected_file = ''
-
         # self.cf = crazyflie
         self.clt = CrazyloadThread()
 
@@ -166,7 +162,6 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         # Fix for crash in X on Ubuntu 14.04
         filename, _ = QtWidgets.QFileDialog.getOpenFileName()
         if filename != "":
-            self._selected_file = filename
             self.imagePathLine.setText(filename)
         pass
 
