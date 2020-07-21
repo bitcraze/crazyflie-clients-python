@@ -561,8 +561,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         logger.info("Auto reconnect enabled: {}".format(checked))
 
     def _show_connect_dialog(self):
-        #self.logConfigDialogue.show()
-        self.test.show()
+        self.logConfigDialogue.show()
+        #self.test.show()
 
     def _update_battery(self, timestamp, data, logconf):
         self.batteryBar.setValue(int(data["pm.vbat"] * 1000))
