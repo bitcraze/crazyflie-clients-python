@@ -53,12 +53,13 @@ logger = logging.getLogger(__name__)
 DEFAULT_CONF_NAME = 'log_config'
 DEFAULT_CATEGORY_NAME = 'category'
 
+
 class LogConfigReader():
     """Reads logging configurations from file"""
 
     def __init__(self, crazyflie):
 
-        self._log_configs = {'Default': []}
+        self._log_configs = {}
         self.dsList = []
         # Check if user config exists, otherwise copy files
         if (not os.path.exists(cfclient.config_path + "/log")):
@@ -69,7 +70,6 @@ class LogConfigReader():
                 shutil.copy2(f, cfclient.config_path + "/log")
         self._cf = crazyflie
         self._cf.connected.add_callback(self._connected)
-
 
     def create_empty_log_conf(self, category):
         """ Creates an empty log-configuration with a default name """
@@ -92,7 +92,7 @@ class LogConfigReader():
 
         self._log_configs[category].append(LogConfig(conf_name, 100))
         return conf_name
-                 
+
     def create_category(self):
         """ Creates a new category (dir in filesystem), with a unique name """
         log_path = os.path.join(cfclient.config_path, 'log')
@@ -116,22 +116,26 @@ class LogConfigReader():
             self._log_configs.pop(category)
 
     def delete_config(self, conf_name, category):
+        """ Deletes a configuration from file system.
+            NOTE: stabilizer.json is saved with LOWERCASE s,
+                  but name in config-file is Stabilizer.json
+        """
+        
         log_path = self._get_log_path(category)
         conf_path = os.path.join(log_path, conf_name) + '.json'
-        
         # File should exist, but just to be safe.
         if os.path.exists(conf_path):
             os.remove(conf_path)
             for conf in self._log_configs[category]:
                 if conf.name == conf_name:
                     self._log_configs[category].remove(conf)
-        
+
     def change_name_config(self, old_name, new_name, category):
         """ Changes name to the configuration and updates the
             file in the file system.
         """
         configs = self._log_configs[category]
-        
+
         for conf in configs:
             if conf.name == old_name:
                 conf.name = new_name
@@ -172,7 +176,7 @@ class LogConfigReader():
         config_nbrs = re.findall('(?<=%s)\d*' % DEFAULT_CATEGORY_NAME,
                         ' '.join(dirs))
         config_nbrs = list(filter(len, config_nbrs))
-        
+
         if config_nbrs:
             return DEFAULT_CATEGORY_NAME + str(
                             max([int(nbr) for nbr in config_nbrs]) + 1)
@@ -182,10 +186,11 @@ class LogConfigReader():
     def _read_config_categories(self):
         """Read and parse log configurations"""
 
+        self._log_configs = {'Default': []}
         log_path = os.path.join(cfclient.config_path, 'log')
-        
+
         for cathegory in os.listdir(log_path):
-            
+
             cathegory_path = os.path.join(log_path, cathegory)
 
             if (os.path.isdir(cathegory_path)):
@@ -206,7 +211,7 @@ class LogConfigReader():
 
     def _get_default_conf_name(self, log_path):
         config_nbrs = re.findall('(?<=%s)\d*(?!=\.json)' % DEFAULT_CONF_NAME,
-                ' '.join(os.listdir(log_path)))           
+                                 ' '.join(os.listdir(log_path)))           
         config_nbrs = list(filter(len, config_nbrs))
 
         if config_nbrs:
@@ -221,30 +226,55 @@ class LogConfigReader():
             infoNode = data["logconfig"]["logblock"]
 
             logConf = LogConfig(infoNode["name"],
-                            int(infoNode["period"]))
+                                int(infoNode["period"]))
             for v in data["logconfig"]["logblock"]["variables"]:
                 if v["type"] == "TOC":
                     logConf.add_variable(str(v["name"]), v["fetch_as"])
                 else:
                     logConf.add_variable("Mem", v["fetch_as"],
-                                        v["stored_as"],
-                                        int(v["address"], 16))
+                                         v["stored_as"],
+                                         int(v["address"], 16))
             return logConf
+
+    def _get_configpaths_recursively(self):
+        """ Reads all configuration files from the log path and
+            returns a list of tuples with format:
+            (category/conf-name, absolute path).
+        """
+        logpath = os.path.join(cfclient.config_path, 'log')
+        filepaths = []
+
+        for files in os.listdir(logpath):
+            abspath = os.path.join(logpath, files)
+            if os.path.isdir(abspath):
+                for config in os.listdir(abspath):
+                    if config.endswith('.json'):
+                        filepaths.append(('/'.join([files, config]),
+                                         os.path.join(abspath, config)))
+            else:
+                if files.endswith('.json'):
+                    filepaths.append((files, os.path.join(abspath)))
+
+        return filepaths
 
     def _read_config_files(self):
         """Read and parse log configurations"""
-        configsfound = [os.path.basename(f) for f in
-                        glob.glob(cfclient.config_path +
-                                  "/log/[A-Za-z_-]*.json")]
+
+        configsfound = self._get_configpaths_recursively()
+
+        #configsfound = [os.path.basename(f) for f in
+        #                glob.glob(cfclient.config_path +
+        #                          "/log/[A-Za-z_-]*.json")]
         new_dsList = []
         for conf in configsfound:
             try:
-                logger.info("Parsing [%s]", conf)
-                json_data = open(cfclient.config_path + "/log/%s" % conf)
+                logger.info("Parsing [%s]", conf[0])
+                #json_data = open(cfclient.config_path + "/log/%s" % conf)
+                json_data = open(conf[1])
                 self.data = json.load(json_data)
                 infoNode = self.data["logconfig"]["logblock"]
 
-                logConf = LogConfig(infoNode["name"],
+                logConf = LogConfig(conf[0],
                                     int(infoNode["period"]))
                 for v in self.data["logconfig"]["logblock"]["variables"]:
                     if v["type"] == "TOC":
@@ -314,3 +344,5 @@ class LogConfigReader():
 
         with open(file_path, 'w') as f:
             f.write(json.dumps(saveConfig, indent=2))
+
+        self._read_config_files()

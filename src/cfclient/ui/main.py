@@ -65,9 +65,6 @@ from .dialogs.inputconfigdialogue import InputConfigDialogue
 from .dialogs.logconfigdialogue import LogConfigDialogue
 
 
-# ONLY FOR TEST
-from .dialogs.testdialogue import TestDialogue
-
 __author__ = 'Bitcraze AB'
 __all__ = ['MainUI']
 
@@ -308,9 +305,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         cfclient.ui.pluginhelper.mainUI = self
 
 
-        # ONLY FOR TEST-DEV
-        self.test = TestDialogue(cfclient.ui.pluginhelper)
-        
 
         self.logConfigDialogue = LogConfigDialogue(cfclient.ui.pluginhelper)
         self._bootloader_dialog = BootloaderDialog(cfclient.ui.pluginhelper)
