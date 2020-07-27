@@ -45,6 +45,8 @@ import shutil
 import cfclient
 from cflib.crazyflie.log import LogVariable, LogConfig
 
+from PyQt5 import QtGui
+
 __author__ = 'Bitcraze AB'
 __all__ = ['LogVariable', 'LogConfigReader']
 
@@ -71,12 +73,20 @@ class LogConfigReader():
         self._cf = crazyflie
         self._cf.connected.add_callback(self._connected)
 
+    def get_icons(self):
+        client_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                      os.pardir))
+        icon_path = os.path.join(client_path, 'ui', 'icons')
+        save_icon = QtGui.QIcon(os.path.join(icon_path, 'create.png'))
+        delete_icon = QtGui.QIcon(os.path.join(icon_path, 'delete.png'))
+        return save_icon, delete_icon
+
     def create_empty_log_conf(self, category):
         """ Creates an empty log-configuration with a default name """
         log_path = self._get_log_path(category)
         conf_name = self._get_default_conf_name(log_path)
         file_path = os.path.join(log_path, conf_name) + '.json'
-        
+
         if not os.path.exists(file_path):
             with open(file_path, 'w') as f:
                 f.write(json.dumps(
@@ -88,7 +98,7 @@ class LogConfigReader():
                                 'period': 100
                             }
                         }
-                    }, indent=2) )
+                    }, indent=2))
 
         self._log_configs[category].append(LogConfig(conf_name, 100))
         return conf_name
@@ -120,7 +130,7 @@ class LogConfigReader():
             NOTE: stabilizer.json is saved with LOWERCASE s,
                   but name in config-file is Stabilizer.json
         """
-        
+
         log_path = self._get_log_path(category)
         conf_path = os.path.join(log_path, conf_name) + '.json'
         # File should exist, but just to be safe.
@@ -165,16 +175,16 @@ class LogConfigReader():
     def _get_log_path(self, category):
         """ Helper method """
         category_dir = '' if category == 'Default' else '/' + category
-        return os.path.join(cfclient.config_path, 
-                    'log' + category_dir)
+        return os.path.join(cfclient.config_path,
+                            'log' + category_dir)
 
     def _get_default_category(self, log_path):
         """ Creates a name for the category, ending with a unique number. """
         dirs = [dir_ for dir_ in os.listdir(log_path) if os.path.isdir(
             os.path.join(log_path, dir_)
         )]
-        config_nbrs = re.findall('(?<=%s)\d*' % DEFAULT_CATEGORY_NAME,
-                        ' '.join(dirs))
+        config_nbrs = re.findall(r'(?<=%s)\d*' % DEFAULT_CATEGORY_NAME,
+                                 ' '.join(dirs))
         config_nbrs = list(filter(len, config_nbrs))
 
         if config_nbrs:
@@ -210,8 +220,8 @@ class LogConfigReader():
                 self._log_configs['Default'].append(log_conf)
 
     def _get_default_conf_name(self, log_path):
-        config_nbrs = re.findall('(?<=%s)\d*(?!=\.json)' % DEFAULT_CONF_NAME,
-                                 ' '.join(os.listdir(log_path)))           
+        config_nbrs = re.findall(r'(?<=%s)\d*(?!=\.json)' % DEFAULT_CONF_NAME,
+                                 ' '.join(os.listdir(log_path)))
         config_nbrs = list(filter(len, config_nbrs))
 
         if config_nbrs:
@@ -262,20 +272,16 @@ class LogConfigReader():
 
         configsfound = self._get_configpaths_recursively()
 
-        #configsfound = [os.path.basename(f) for f in
-        #                glob.glob(cfclient.config_path +
-        #                          "/log/[A-Za-z_-]*.json")]
         new_dsList = []
         for conf in configsfound:
             try:
                 logger.info("Parsing [%s]", conf[0])
-                #json_data = open(cfclient.config_path + "/log/%s" % conf)
                 json_data = open(conf[1])
                 self.data = json.load(json_data)
                 infoNode = self.data["logconfig"]["logblock"]
+                logConfName = conf[0].replace('.json', '')
 
-                logConf = LogConfig(conf[0],
-                                    int(infoNode["period"]))
+                logConf = LogConfig(logConfName, int(infoNode["period"]))
                 for v in self.data["logconfig"]["logblock"]["variables"]:
                     if v["type"] == "TOC":
                         logConf.add_variable(str(v["name"]), v["fetch_as"])
@@ -288,7 +294,6 @@ class LogConfigReader():
             except Exception as e:
                 logger.warning("Exception while parsing logconfig file: %s", e)
         self.dsList = new_dsList
-
 
     def _connected(self, link_uri):
         """Callback that is called once Crazyflie is connected"""
@@ -340,7 +345,6 @@ class LogConfigReader():
             if old_conf.name == logconfig.name:
                 self._log_configs[category].remove(old_conf)
                 self._log_configs[category].append(logconfig)
-
 
         with open(file_path, 'w') as f:
             f.write(json.dumps(saveConfig, indent=2))

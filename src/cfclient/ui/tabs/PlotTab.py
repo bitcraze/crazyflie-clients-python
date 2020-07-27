@@ -56,10 +56,13 @@ class LogConfigModel(QAbstractItemModel):
     def __init__(self, parent=None):
         super(LogConfigModel, self).__init__(parent)
         self._nodes = []
+        from cflib.crazyflie.log import LogConfig
+        self._nodes.append(LogConfig('SUPERLOG', 100))
 
     def add_block(self, block):
         self._nodes.append(block)
         self.layoutChanged.emit()
+        self._nodes.sort(key=lambda conf: conf.name.lower())
 
     def parent(self, index):
         """Re-implemented method to get the parent of the given index"""
