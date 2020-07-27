@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>825</width>
-    <height>338</height>
+    <height>340</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -112,7 +112,17 @@
               </property>
              </widget>
             </item>
+            <item row="1" column="0" colspan="2">
+             <widget class="QLineEdit" name="imagePathLine"/>
+            </item>
             <item row="2" column="0">
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>Select which chip to flash (.zip = both, .bin = stm32 or nrf51):</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
              <widget class="QCheckBox" name="verifyCheckBox">
               <property name="enabled">
                <bool>false</bool>
@@ -122,15 +132,37 @@
               </property>
              </widget>
             </item>
+            <item row="2" column="2">
+             <layout class="QHBoxLayout" name="horizontalLayout_11">
+              <item>
+               <widget class="QRadioButton" name="radioBoth">
+                <property name="text">
+                 <string>Both</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="radioStm32">
+                <property name="text">
+                 <string>stm32</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="radioNrf51">
+                <property name="text">
+                 <string>nrf51</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
             <item row="0" column="0">
              <widget class="QLabel" name="label_3">
               <property name="text">
                <string>Select package to flash:</string>
               </property>
              </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLineEdit" name="imagePathLine"/>
             </item>
            </layout>
           </item>

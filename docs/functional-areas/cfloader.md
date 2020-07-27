@@ -1,5 +1,5 @@
 ---
-title: Bootloader the Crazyflie 1.0/2.0
+title: Bootloader the Crazyflie 2.X
 page_id: cfloader
 ---
 
@@ -9,8 +9,7 @@ page_id: cfloader
 The Crazyflie can be bootloaded from the commandline using the
 *cfloader* script.
 
-**Note:** To enter the bootloader for the Crazyflie 1.0 just restart the
-platform. To enter the bootloader for the Crazyflie 2.0 power off the
+**Note:** To enter the bootloader for the Crazyflie 2.X power off the
 platform and start it again by pressing the power button for at least
 1.5 seconds, but not more than 5.
 
@@ -69,20 +68,8 @@ script:
                                  possible  page in flash and reset to firmware
                                  mode.
 
-Crazyflie 1.0 examples
-----------------------
 
-    crazyflie-clients-python$ bin/cfloader flash cflie.bin stm32-fw
-    Restart the Crazyflie you want to bootload in the next  10 seconds ...  done!
-    Connected to bootloader on Crazyflie Nano Quadcopter (1.0) (version=0x1)
-    Target info: stm32 (0xFF)
-    Flash pages: 128 | Page size: 1024 | Buffer pages: 10 | Start page: 10
-    118 KBytes of flash avaliable for firmware image.
-
-    Flashing 1 of 1 to stm32 (fw): 56043 bytes (55 pages) ..........10..........10..........10..........10..........10.....5
-    Reset in firmware mode ...
-
-Crazyflie 2.0 examples
+Crazyflie 2.X examples
 ----------------------
 
 Flashing new firmware for the nRF51 MCU:
