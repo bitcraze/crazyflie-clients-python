@@ -171,6 +171,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         self._edit_name()
 
     def _delete_config(self):
+
         """ Deletes a category or a configuration
             depending on if the item has a parent or not.
         """
@@ -532,6 +533,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                     logger.warning("Error: Mem vars not supported!")
 
     def saveConfig(self):
+
         items = self.categoryTree.selectedItems()
 
         if items:
@@ -540,13 +542,13 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
             if parent:
                 category = parent.text(NAME_FIELD)
-                config = config.text(NAME_FIELD)
-                updatedConfig = self.createConfigFromSelection(
-                                            config)
+                config_name = config.text(NAME_FIELD)
+                updatedConfig = self.createConfigFromSelection(config_name)
+
                 if category != 'Default':
-                    plot_tab_name = '%s/%s' % (category, config)
+                    plot_tab_name = '%s/%s' % (category, config_name)
                 else:
-                    plot_tab_name = config
+                    plot_tab_name = config_name
 
                 try:
                     self.helper.logConfigReader.saveLogConfigFile(
@@ -566,7 +568,18 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         # it as category/config-name in the plotter-tab.
         # The config is however saved with only the config-name.
         updatedConfig.name = plot_tab_name
+
+        # If we're just updating a config, we want to delete the old one first
+        self._delete_from_plottab(config_name)
+
         self.helper.cf.log.add_config(updatedConfig)
+
+    def _delete_from_plottab(self, config_name):
+        for logconfig in self.helper.cf.log.log_blocks:
+            if logconfig.name == config_name:
+                self.helper.plotTab.remove_config(logconfig)
+                self.helper.cf.log.log_blocks.remove(logconfig)
+                logconfig.delete()
 
     def _get_node_children(self):
         root_item = self.varTree.invisibleRootItem()

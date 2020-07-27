@@ -56,8 +56,6 @@ class LogConfigModel(QAbstractItemModel):
     def __init__(self, parent=None):
         super(LogConfigModel, self).__init__(parent)
         self._nodes = []
-        from cflib.crazyflie.log import LogConfig
-        self._nodes.append(LogConfig('SUPERLOG', 100))
 
     def add_block(self, block):
         self._nodes.append(block)
@@ -70,7 +68,7 @@ class LogConfigModel(QAbstractItemModel):
 
     def remove_block(self, block):
         """Remove a block from the view"""
-        raise NotImplementedError()
+        self._nodes.remove(block)
 
     def columnCount(self, parent):
         """Re-implemented method to get the number of columns"""
@@ -247,6 +245,9 @@ class PlotTab(Tab, plot_tab_class):
         """Callback from the log layer when a new config has been added"""
         logger.debug("Callback for new config [%s]", logconfig.name)
         self._model.add_block(logconfig)
+
+    def remove_config(self, logconfig):
+        self._model.remove_block(logconfig)
 
     def _logging_error(self, log_conf, msg):
         """Callback from the log layer when an error occurs"""
