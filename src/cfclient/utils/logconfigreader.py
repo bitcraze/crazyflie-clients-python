@@ -126,19 +126,24 @@ class LogConfigReader():
             self._log_configs.pop(category)
 
     def delete_config(self, conf_name, category):
-        """ Deletes a configuration from file system.
-            NOTE: stabilizer.json is saved with LOWERCASE s,
-                  but name in config-file is Stabilizer.json
-        """
-
+        """ Deletes a configuration from file system. """
         log_path = self._get_log_path(category)
         conf_path = os.path.join(log_path, conf_name) + '.json'
-        # File should exist, but just to be safe.
-        if os.path.exists(conf_path):
-            os.remove(conf_path)
-            for conf in self._log_configs[category]:
-                if conf.name == conf_name:
-                    self._log_configs[category].remove(conf)
+
+        if not os.path.exists(conf_path):
+            # Check if we can find the file with lowercase first letter.
+            conf_path = os.path.join(log_path,
+                                     conf_name[0].lower() + conf_name[1:]
+                                     + '.json')
+            if not os.path.exists(conf_path):
+                # Cant' find the config-file
+                logger.warning('Failed to find log-config %s' % conf_path)
+                return
+
+        os.remove(conf_path)
+        for conf in self._log_configs[category]:
+            if conf.name == conf_name:
+                self._log_configs[category].remove(conf)
 
     def change_name_config(self, old_name, new_name, category):
         """ Changes name to the configuration and updates the
