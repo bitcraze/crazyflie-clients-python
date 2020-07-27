@@ -60,6 +60,8 @@ class LogTab(Tab, param_tab_class):
 
         # Init the tree widget
         self.logTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage'])
+        self.logTree.setSortingEnabled(True)
+        self.logTree.sortItems(0, Qt.AscendingOrder)
 
         self.cf.connected.add_callback(self.connectedSignal.emit)
         self.connectedSignal.connect(self.connected)
@@ -90,4 +92,3 @@ class LogTab(Tab, param_tab_class):
                 groupItem.addChild(item)
 
             self.logTree.addTopLevelItem(groupItem)
-            self.logTree.expandItem(groupItem)
