@@ -199,7 +199,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._active_device = ""
         # self.configGroup = QActionGroup(self._menu_mappings, exclusive=True)
 
-        self._mux_group = QActionGroup(self._menu_inputdevice, exclusive=True)
+        self._mux_group = QActionGroup(self._menu_inputdevice)
+        self._mux_group.setExclusive(True)
 
         # TODO: Need to reload configs
         # ConfigManager().conf_needs_reload.add_callback(self._reload_configs)
@@ -378,7 +379,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._all_mux_nodes = ()
 
         # Check which Input muxes are available
-        self._mux_group = QActionGroup(self._menu_inputdevice, exclusive=True)
+        self._mux_group = QActionGroup(self._menu_inputdevice)
+        self._mux_group.setExclusive(True)
         for m in self.joystickReader.available_mux():
             node = QAction(m.name,
                            self._menu_inputdevice,
@@ -765,7 +767,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         for menu in self._all_role_menus:
             role_menu = menu["rolemenu"]
             mux_menu = menu["muxmenu"]
-            dev_group = QActionGroup(role_menu, exclusive=True)
+            dev_group = QActionGroup(role_menu)
+            dev_group.setExclusive(True)
             for d in devs:
                 dev_node = QAction(d.name, role_menu, checkable=True,
                                    enabled=True)
@@ -776,7 +779,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 map_node = None
                 if d.supports_mapping:
                     map_node = QMenu("    Input map", role_menu, enabled=False)
-                    map_group = QActionGroup(role_menu, exclusive=True)
+                    map_group = QActionGroup(role_menu)
+                    map_group.setExclusive(True)
                     # Connect device node to map node for easy
                     # enabling/disabling when selection changes and device
                     # to easily enable it

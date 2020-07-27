@@ -179,6 +179,11 @@ class QualisysTab(Tab, qualisys_tab_class):
 
     def __init__(self, tabWidget, helper, *args):
         super(QualisysTab, self).__init__(*args)
+
+        # Setting self._qtm_status should not be required here, but for some
+        # reason python 3.7.5 crashes without it.
+        self._qtm_status = None
+
         self.setupUi(self)
 
         self._machine = QStateMachine()
@@ -253,7 +258,7 @@ class QualisysTab(Tab, qualisys_tab_class):
 
         try:
             self.flight_paths = Config().get("flight_paths")
-        except Exception as err:
+        except Exception:
             logger.debug("No flight config")
             self.flight_paths = self.default_flight_paths
 
@@ -725,7 +730,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                         # temp_position = []
                     temp = self.model.item(y, x)
 
-                except Exception as err:
+                except Exception:
                     reading_data = False
                     # remove the last "," element
                     list = list[:(len(list) - 1)]
@@ -896,7 +901,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                 pitch=temp_cf_pos[1][1],
                 yaw=temp_cf_pos[1][0])
 
-        except ValueError as err:
+        except ValueError:
             self.qtmStatus = ' : connected : No 6DoF body found'
 
         try:
@@ -909,7 +914,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                 pitch=temp_wand_pos[1][1],
                 yaw=temp_wand_pos[1][0])
 
-        except ValueError as err:
+        except ValueError:
             self.qtmStatus = ' : connected : No 6DoF body found'
 
         if self._cf is not None and self.cf_pos.is_valid():

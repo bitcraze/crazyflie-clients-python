@@ -64,7 +64,7 @@ VERSION = get_version()
 if not VERSION and not os.path.isfile('src/cfclient/version.json'):
     sys.stderr.write("Git is required to install from source.\n" +
                      "Please clone the project with Git or use one of the\n" +
-                     "release pachages (either from pip or a binary build).\n")
+                     "release packages (either from pip or a binary build).\n")
     raise Exception("Git required.")
 
 if not VERSION:
@@ -77,9 +77,9 @@ else:
 platform_requires = []
 platform_dev_requires = []
 if sys.platform == 'win32' or sys.platform == 'darwin':
-    platform_requires = ['pysdl2']
+    platform_requires = ['pysdl2==0.9.6']
 if sys.platform == 'win32':
-    platform_dev_requires = ['cx_freeze', 'jinja2']
+    platform_dev_requires = ['cx_freeze==5.1.1', 'jinja2==2.10.3']
 
 package_data = {
     'cfclient.ui':  relative(glob('src/cfclient/ui/*.ui')),
@@ -127,21 +127,21 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib>=0.1.7',
+    install_requires=platform_requires + ['cflib>=0.1.9',
                                           'appdirs>=1.4.0',
-                                          'pyzmq',
+                                          'pyzmq>=18.1.0',
                                           'pyqtgraph>=0.10',
-                                          'PyYAML',
+                                          'PyYAML>=5.1.2',
                                           'quamash==0.6.1',
                                           'qtm>=2.0.2'],
 
     # List of dev and qt dependencies
-    # Pyqt5 5.9.2 seems to be the last version to work on Windows 8.1
+    # Pyqt5 5.12.1 is the last version that does not cause performance problems
     # You can install them by running
     # $ pip install -e .[dev,qt5]
     extras_require={
         'dev': platform_dev_requires + [],
-        'qt5': ['PyQt5==5.9.2']
+        'qt5': ['PyQt5==5.12.1']
     },
 
     package_data=package_data,

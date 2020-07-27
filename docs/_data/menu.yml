@@ -1,5 +1,5 @@
 - page_id: home
-- title: Install Instructions
+- title: Installation
   subs:
     - {page_id: run_from_source}
     - {page_id: macports}
@@ -8,14 +8,12 @@
     - {page_id: userguide_client}
     - {page_id: cfheadless}
     - {page_id: inputdevices}
-- title: Explanation Functionalities
+    - {page_id: raspberrypi}
+- title: Functional areas
   subs:
     - {page_id: cfloader}
     - {page_id: bootloaderclient}
     - {page_id: cfclient_zmq}
-- title: Development instructions
+- title: Development
   subs:
     - {page_id: dev_info_client}
-
-
-

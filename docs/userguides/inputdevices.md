@@ -73,8 +73,8 @@ us an email.
 
  | **Controller**    |        **Linux USB**       |                                                        **Linux BT**  |                                                                    **Win XP USB**  | **Win XP BT**  |                                                                    **Win7 USB**     |                                                                      **Win7 BT**        |                                                                          **Win8 USB**         |                                                             **Mac OSX USB**  | **Mac OSX BT**|
 |--|--|--|--|--|--|--|--|--|--|--|
- | Playstation 3 (or copy)  | Works           |                                                            [Instructions](#linux_using_bluetooth) |  Works       |     [Instructions?](#winxp_using_bluetooth) |  [Motion joy instructions?](#win7_using_usb)  | [Motion joy instructions?](#win7_using_bluetooth)  | [Instructions](http://www.wikihow.com/Set-Up-USB-Game-Controllers-on-Windows-8) |  Works     |        [Instructions](#max_osx_using_usb)|
-  Xbox 360 (or copy)      |  [Instructions](#linux_using_usb)  | N/A                  |                                                             Works    |        N/A                       |                                                                                                                                                Works        |                                                                                N/A            |                                                                   Not tested    |    Not tested|
+ | Playstation 3 (or copy)  | Works           |                                                            [Instructions](#linux-using-bluetooth) |  Works       |     [Instructions?](#winxp-using-bluetooth) |  [Motion joy instructions?](#win7-using-usb)  | [Motion joy instructions?](#win7-using-bluetooth)  | [Instructions](http://www.wikihow.com/Set-Up-USB-Game-Controllers-on-Windows-8) |  Works     |        [Instructions](#mac-osx-with-bluetooth)|
+  Xbox 360 (or copy)      |  [Instructions](#linux-using-usb)  | N/A                  |                                                             Works    |        N/A                       |                                                                                                                                                Works        |                                                                                N/A            |                                                                   Not tested    |    Not tested|
 
 Playstation 3 controller
 ========================
@@ -125,11 +125,9 @@ Xbox 360 controller
 Linux using USB
 ---------------
 
-\<WRAP center round tip 80%\> **INFO**
-
-All modern Linux distribution now have a kernel driver for the x-box
+**INFO:** All modern Linux distribution now have a kernel driver for the x-box
 gamepad. Thus it is unlikely the *xboxdrv* user-space driver is needed.
-\</WRAP\>
+
 
 If you are having problems getting this to work the userspace driver
 `xboxdrv` might be needed. It can be installed (on Ubuntu) by running:
