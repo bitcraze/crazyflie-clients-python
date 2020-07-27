@@ -297,14 +297,12 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._active_config = None
 
         self.inputConfig = None
-        
+
         # Add things to helper so tabs can access it
         cfclient.ui.pluginhelper.cf = self.cf
         cfclient.ui.pluginhelper.inputDeviceReader = self.joystickReader
         cfclient.ui.pluginhelper.logConfigReader = self.logConfigReader
         cfclient.ui.pluginhelper.mainUI = self
-
-
 
         self.logConfigDialogue = LogConfigDialogue(cfclient.ui.pluginhelper)
         self._bootloader_dialog = BootloaderDialog(cfclient.ui.pluginhelper)
@@ -553,7 +551,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     def _show_connect_dialog(self):
         self.logConfigDialogue.show()
-        #self.test.show()
 
     def _update_battery(self, timestamp, data, logconf):
         self.batteryBar.setValue(int(data["pm.vbat"] * 1000))
