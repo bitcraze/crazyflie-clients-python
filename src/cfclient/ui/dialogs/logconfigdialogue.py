@@ -32,13 +32,13 @@ views in the UI.
 """
 
 import logging
-import os
 
 import cfclient
-from PyQt5 import Qt, QtWidgets, uic, QtGui
-from PyQt5.QtCore import *  # noqa
-from PyQt5.QtWidgets import *  # noqa
-from PyQt5.Qt import *  # noqa
+from PyQt5 import QtWidgets, uic, QtGui
+from PyQt5.QtCore import pyqtSlot, Qt, QTimer
+#from PyQt5.QtCore import *  # noqa
+#from PyQt5.QtWidgets import *  # noqa
+#from PyQt5.Qt import *  # noqa
 
 from cflib.crazyflie.log import LogConfig
 
@@ -62,8 +62,6 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         super(LogConfigDialogue, self).__init__(*args)
         self.setupUi(self)
         self.helper = helper
-        
-        self.helper.cf.disconnected.add_callback(lambda *args: print(args))
 
         self.categoryTree.setHeaderLabels(['Cathegories'])
         self.logTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage'])
@@ -72,14 +70,21 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         self.logTree.setSortingEnabled(True)
         self.varTree.setSortingEnabled(True)
 
+        # Item-click callbacks.
         self.addButton.clicked.connect(lambda: self.moveNode(self.logTree,
                                                              self.varTree))
         self.removeButton.clicked.connect(lambda: self.moveNode(self.varTree,
                                                                 self.logTree))
-        self.cancelButton.clicked.connect(self.close)
-        self.loadButton.clicked.connect(self.loadConfig)
         self.saveButton.clicked.connect(self.saveConfig)
 
+        self.categoryTree.itemClicked.connect(self._on_item_click)
+        self.categoryTree.itemPressed.connect(self._on_item_press)
+        self.categoryTree.itemChanged.connect(self._config_changed)
+
+        # Add/remove item on doubleclick.
+        self.logTree.itemDoubleClicked.connect(self.itemDoubleClicked)
+        self.varTree.itemDoubleClicked.connect(lambda: self.moveNode(
+                                            self.varTree, self.logTree))
         self.loggingPeriod.textChanged.connect(self.periodChanged)
 
         self.packetSize.setMaximum(26)
@@ -87,24 +92,11 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         self.packetSize.setValue(0)
         self.period = 0
 
-        self.categoryTree.itemClicked.connect(self._on_item_click)
-        self.categoryTree.itemPressed.connect(self._on_item_press)
-        self.categoryTree.itemChanged.connect(self._config_changed)
-
+        # Used when renaming a config/category
         self._last_pressed_item = None
 
-        # Add/remove item on doubleclick.
-        self.logTree.itemDoubleClicked.connect(self.itemDoubleClicked)
-        self.varTree.itemDoubleClicked.connect(lambda: self.moveNode(
-                                            self.varTree, self.logTree))
-
-
-
-        icon_path = '/home/victor/work/bitcraze/icons'
-        save_icon = QtGui.QIcon(os.path.join(icon_path, 'create.png'))
-        delete_icon = QtGui.QIcon(os.path.join(icon_path, 'delete.png'))
-
         # set icons
+        save_icon, delete_icon = self.helper.logConfigReader.get_icons()
         self.createCategoryBtn.setIcon(save_icon)
         self.createConfigBtn.setIcon(save_icon)
         self.deleteBtn.setIcon(delete_icon)
@@ -125,10 +117,11 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                                                     self.menuContextTree)
 
         # keyboard shortcuts
-        shortcut_delete = QShortcut(QKeySequence("Delete"), self)
+        shortcut_delete = QtWidgets.QShortcut(QtGui.QKeySequence("Delete"),
+                                              self)
         shortcut_delete.activated.connect(self._delete_config)
 
-        shortcut_f2 = QShortcut(QKeySequence("F2"), self)
+        shortcut_f2 = QtWidgets.QShortcut(QtGui.QKeySequence("F2"), self)
         shortcut_f2.activated.connect(self._edit_name)
 
         self._config_saved_timer = QTimer()
@@ -136,19 +129,13 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
         self.closeOnSave.setChecked(True)
 
-        # TODO:
-        # 1. Look at progressbar
-        # 2. Double check
-        # 3. Merge
-
     def itemDoubleClicked(self):
         if self.categoryTree.selectedItems():
             self.moveNode(self.logTree, self.varTree)
 
     def _config_saved_status(self):
         self.statusText.setText('')
-        self._config_saved_timer.stop() 
-
+        self._config_saved_timer.stop()
 
     def _on_item_press(self, item):
         self._last_pressed_item = item, item.text(0)
@@ -187,12 +174,12 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         """ Deletes a category or a configuration
             depending on if the item has a parent or not.
         """
-        
+
         items = self.categoryTree.selectedItems()
         if items:
             config = items[0]
             parent = config.parent()
-            
+
             if parent:
                 # Delete a configuration in the given category.
                 category = parent.text(0)
@@ -306,7 +293,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
     def _load_saved_configs(self):
         """ Read saved log-configs and display them on
             the left-side category-tree. """
-            
+
         config = None
         config = self.helper.logConfigReader._getLogConfigs()
 
@@ -314,16 +301,25 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
             logger.warning("Could not load config")
         else:
             self.categoryTree.clear()
-            # create category-tree
+            # Create category-tree.
             for conf_category in config:
                 category = QtWidgets.QTreeWidgetItem()
-                category.setData(0, Qt.DisplayRole, conf_category)
+                category.setData(NAME_FIELD, Qt.DisplayRole, conf_category)
                 category.setFlags(category.flags() | Qt.ItemIsEditable)
 
-                # populate category-tree with log configurations
+                # Copulate category-tree with log configurations.
                 for conf in config[conf_category]:
                     item = QtWidgets.QTreeWidgetItem()
-                    item.setData(0, Qt.DisplayRole, conf.name)
+
+                    # Check if name contains category/config-name.
+                    # This is only true is a new config has been added
+                    # during a session, and the window re-opened.
+                    if '/' in conf.name:
+                        conf_name = conf.name.split('/')[1]
+                    else:
+                        conf_name = conf.name
+
+                    item.setData(NAME_FIELD, Qt.DisplayRole, conf_name)
                     category.addChild(item)
 
                     # Enable item-editing.
@@ -466,16 +462,6 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
     def showEvent(self, event):
         self._load_saved_configs()
-        
-        return
-        self.updateToc()
-        self.populateDropDown()
-
-        toc = self.helper.cf.log.toc
-        if (len(list(toc.toc.keys())) > 0):
-            self.configNameCombo.setEnabled(True)
-        else:
-            self.configNameCombo.setEnabled(False)
 
     def periodChanged(self, value):
         try:
@@ -554,8 +540,14 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
             if parent:
                 category = parent.text(NAME_FIELD)
+                config = config.text(NAME_FIELD)
                 updatedConfig = self.createConfigFromSelection(
-                                            config.text(NAME_FIELD))
+                                            config)
+                if category != 'Default':
+                    plot_tab_name = '%s/%s' % (category, config)
+                else:
+                    plot_tab_name = config
+
                 try:
                     self.helper.logConfigReader.saveLogConfigFile(
                                                             category,
@@ -567,9 +559,14 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                         self.close()
 
                 except Exception as e:
-                    selfshowErrorPopup("Error when saving file",
-                                       "Error: %s" % e)
-        #self.helper.cf.log.add_config(updatedConfig)
+                    self.showErrorPopup("Error when saving file",
+                                        "Error: %s" % e)
+
+        # The name of the config is changed due to displaying
+        # it as category/config-name in the plotter-tab.
+        # The config is however saved with only the config-name.
+        updatedConfig.name = plot_tab_name
+        self.helper.cf.log.add_config(updatedConfig)
 
     def _get_node_children(self):
         root_item = self.varTree.invisibleRootItem()
