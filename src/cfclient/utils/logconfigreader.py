@@ -208,21 +208,27 @@ class LogConfigReader():
 
             cathegory_path = os.path.join(log_path, cathegory)
 
-            if (os.path.isdir(cathegory_path)):
-                # create a new cathegory
-                self._log_configs[cathegory] = []
-                for conf in os.listdir(cathegory_path):
-                    conf_path = os.path.join(cathegory_path, conf)
-                    log_conf = self._get_conf(conf_path)
+            try:
+                if (os.path.isdir(cathegory_path)):
+                    # create a new cathegory
+                    self._log_configs[cathegory] = []
+                    for conf in os.listdir(cathegory_path):
+                        if conf.endswith('.json'):
+                            conf_path = os.path.join(cathegory_path, conf)
+                            log_conf = self._get_conf(conf_path)
 
-                    # add the log configuration to the cathegory
-                    self._log_configs[cathegory].append(log_conf)
+                        # add the log configuration to the cathegory
+                        self._log_configs[cathegory].append(log_conf)
 
-            else:
-                # if it's not a directory, the log config is placed
-                # in the 'Default' cathegory
-                log_conf = self._get_conf(cathegory_path)
-                self._log_configs['Default'].append(log_conf)
+                else:
+                    # if it's not a directory, the log config is placed
+                    # in the 'Default' cathegory
+                    if cathegory_path.endswith('.json'):
+                        log_conf = self._get_conf(cathegory_path)
+                        self._log_configs['Default'].append(log_conf)
+
+            except Exception as e:
+                logger.warning("Failed to open log config %s", e)
 
     def _get_default_conf_name(self, log_path):
         config_nbrs = re.findall(r'(?<=%s)\d*(?!=\.json)' % DEFAULT_CONF_NAME,
