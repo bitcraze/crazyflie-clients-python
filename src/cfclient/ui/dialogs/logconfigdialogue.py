@@ -78,8 +78,8 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
         self.loggingPeriod.textChanged.connect(self.periodChanged)
 
-        self.packetSize.setMaximum(26)
         self.currentSize = 0
+        self.packetSize.setMaximum(100)
         self.packetSize.setValue(0)
         self.period = 0
 
@@ -118,15 +118,23 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         for node in self.getNodeChildren(self.varTree.invisibleRootItem()):
             for leaf in self.getNodeChildren(node):
                 self.currentSize = (self.currentSize +
-                                    self.decodeSize(leaf.text(CTYPE_FIELD)))
-        if self.currentSize > 26:
-            self.packetSize.setMaximum(self.currentSize / 26.0 * 100.0)
+                                    int(leaf.text(SIZE_FIELD)))
+
+        self.packetSizeText.setText('%s/%s bytes' % (self.currentSize,
+                                                     MAX_LOG_SIZE))
+
+        if self.currentSize > MAX_LOG_SIZE:
+            self.packetSize.setMaximum(self.currentSize / MAX_LOG_SIZE * 100)
             self.packetSize.setFormat("%v%")
-            self.packetSize.setValue(self.currentSize / 26.0 * 100.0)
+            self.packetSize.setValue(self.currentSize / MAX_LOG_SIZE * 100)
+            self.packetSize.setStyleSheet(
+                            'QProgressBar::chunk { background: red;}')
         else:
-            self.packetSize.setMaximum(26)
+            self.packetSize.setMaximum(MAX_LOG_SIZE)
             self.packetSize.setFormat("%p%")
             self.packetSize.setValue(self.currentSize)
+            self.packetSize.setStyleSheet(
+                        'QProgressBar::chunk { background: %s;}' % COLOR_GREEN)
 
     def addNewVar(self, logTreeItem, target):
         parentName = logTreeItem.parent().text(NAME_FIELD)
