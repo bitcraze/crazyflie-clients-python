@@ -77,7 +77,8 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                                                                 self.logTree))
         self.saveButton.clicked.connect(self.saveConfig)
 
-        self.categoryTree.itemClicked.connect(self._on_item_click)
+        #self.categoryTree.itemClicked.connect(self._on_item_click)
+        self.categoryTree.itemSelectionChanged.connect(self._item_selected)
         self.categoryTree.itemPressed.connect(self._on_item_press)
         self.categoryTree.itemChanged.connect(self._config_changed)
 
@@ -281,15 +282,27 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                 self._loadConfig(category, conf_name)
                 self.categoryTree.setCurrentItem(item)
 
-    @pyqtSlot(QtWidgets.QTreeWidgetItem, int)
-    def _on_item_click(self, it, col):
+    def _item_selected(self):
         """ Opens the log configuration of the pressed
             item in the category-tree. """
-        log_conf_name = it.text(col)
-        category = it.parent()
-        # if category is None, it's the category that's clicked
-        if category:
-            self._loadConfig(category.text(0), log_conf_name)
+        items = self.categoryTree.selectedItems()
+
+        if items:
+            config = items[0]
+            category = config.parent()
+            if category:
+                self._loadConfig(category.text(NAME_FIELD),
+                                 config.text(NAME_FIELD))
+            else:
+                # if category is None, it's the category that's clicked
+                self._clear_trees_and_progressbar()
+
+    def _clear_trees_and_progressbar(self):
+        self.varTree.clear()
+        self.logTree.clear()
+        self.currentSize = 0
+        self.loggingPeriod.setText('')
+        self.updatePacketSizeBar()
 
     def _load_saved_configs(self):
         """ Read saved log-configs and display them on
@@ -462,6 +475,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         return False
 
     def showEvent(self, event):
+        self._clear_trees_and_progressbar()
         self._load_saved_configs()
 
     def periodChanged(self, value):
