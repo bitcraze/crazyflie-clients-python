@@ -100,7 +100,6 @@ configuration file.
 
 ``` {.json}
 {
-  "client_side_xmode": false,
   "link_uri": "radio://0/100/250K",
   "input_device": "Sony PLAYSTATION(R)3 Controller",
   "slew_limit": 45,
@@ -128,7 +127,6 @@ configuration file.
 
 | Field                      | Format    | Comments |
 | -------------------------- | --------- | -------- |
-| client\_side\_xmode        | boolean   | Sets whether the client side X-mode is activated or not (more info here)|
 | link\_uri                  | string    | The last successfully connected Crazyflie URI. This is used when you click \"Quick connect\" in the application|
 | auto\_reconnect            | boolean   | Set\'s if auto-reconnect is enabled or not|
 | ui\_update\_period         | int       | The minimum time (in ms) between UI updates for logging values|
@@ -177,7 +175,6 @@ accessed in the application.
     "min_thrust": 25,
     "max_yaw": 200,
     "max_rp": 30,
-    "client_side_xmode": false,
     "auto_reconnect": false,
     "device_config_mapping": {},
     "enable_debug_driver": false,
