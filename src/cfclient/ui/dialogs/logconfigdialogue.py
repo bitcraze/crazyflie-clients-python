@@ -83,20 +83,6 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         self.packetSize.setValue(0)
         self.period = 0
 
-    def decodeSize(self, s):
-        size = 0
-        if ("16" in s):
-            size = 2
-        if ("float" in s):
-            size = 4
-        if ("8" in s):
-            size = 1
-        if ("FP16" in s):
-            size = 2
-        if ("32" in s):
-            size = 4
-        return size
-
     def sortTrees(self):
         self.varTree.invisibleRootItem().sortChildren(NAME_FIELD,
                                                       Qt.AscendingOrder)
