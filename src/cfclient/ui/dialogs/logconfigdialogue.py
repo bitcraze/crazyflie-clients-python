@@ -37,9 +37,6 @@ import struct
 import cfclient
 from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtCore import pyqtSlot, Qt, QTimer
-#from PyQt5.QtCore import *  # noqa
-#from PyQt5.QtWidgets import *  # noqa
-#from PyQt5.Qt import *  # noqa
 
 from cflib.crazyflie.log import LogConfig
 
@@ -469,7 +466,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
             self.period = 0
 
     def showErrorPopup(self, caption, message):
-        self.box = QMessageBox()  # noqa
+        self.box = QtWidgets.QMessageBox()  # noqa
         self.box.setWindowTitle(caption)
         self.box.setText(message)
         # self.box.setButtonText(1, "Ok")
