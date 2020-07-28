@@ -216,7 +216,7 @@
         </widget>
        </item>
        <item>
-        <spacer name="horizontalSpacer_3">
+        <spacer name="horizontalSpacer_2">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -236,9 +236,19 @@
         </widget>
        </item>
        <item>
-        <spacer name="horizontalSpacer_2">
+        <widget class="QCheckBox" name="closeOnSave">
+         <property name="text">
+          <string>Close window on save</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_4">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Minimum</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -247,13 +257,6 @@
           </size>
          </property>
         </spacer>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="closeOnSave">
-         <property name="text">
-          <string>Close window on save</string>
-         </property>
-        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="saveButton">
@@ -313,9 +316,6 @@
         <set>Qt::AlignCenter</set>
        </property>
       </widget>
-     </item>
-     <item>
-      <layout class="QGridLayout" name="gridLayout_2"/>
      </item>
      <item>
       <layout class="QGridLayout" name="gridLayout_2"/>
