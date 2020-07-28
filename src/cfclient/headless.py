@@ -66,14 +66,9 @@ class HeadlessClient():
         for d in self._jr.available_devices():
             self._devs.append(d.name)
 
-    def setup_controller(self, input_config, input_device=0, xmode=False):
+    def setup_controller(self, input_config, input_device=0):
         """Set up the device reader"""
         # Set up the joystick reader
-        self._jr.device_error.add_callback(self._input_dev_error)
-        print("Client side X-mode: %s" % xmode)
-        if (xmode):
-            self._cf.commander.set_client_xmode(xmode)
-
         devs = self._jr.available_devices()  # noqa, is this a bug?
         print("Will use [%s] for input" % self._devs[input_device])
         self._jr.start_input(self._devs[input_device])
@@ -145,9 +140,6 @@ def main():
     parser.add_argument("--controllers", action="store_true",
                         dest="list_controllers",
                         help="Only display available controllers and exit")
-    parser.add_argument("-x", "--x-mode", action="store_true",
-                        dest="xmode",
-                        help="Enable client-side X-mode")
     (args, unused) = parser.parse_known_args()
 
     if args.debug:
@@ -162,8 +154,7 @@ def main():
     else:
         if headless.controller_connected():
             headless.setup_controller(input_config=args.input,
-                                      input_device=args.controller,
-                                      xmode=args.xmode)
+                                      input_device=args.controller)
             headless.connect_crazyflie(link_uri=args.uri)
         else:
             print("No input-device connected, exiting!")

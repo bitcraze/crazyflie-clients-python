@@ -252,22 +252,6 @@ if resp["status"] == 0:
 else:
     print("fail! {}".format(resp["msg"]))
 
-param_cmd = {
-    "version": 1,
-    "cmd": "param",
-    "name": "flightctrl.xmode",
-    "value": True
-}
-
-print("Setting param {} to {}...".format(param_cmd["name"],
-                                         param_cmd["value"]), end=' ')
-client_conn.send_json(param_cmd)
-resp = client_conn.recv_json()
-if resp["status"] == 0:
-    print("done!")
-else:
-    print("fail! {}".format(resp["msg"]))
-
 
 # Start sending control commands
 ctrl = _CtrlThread(ctrl_conn)

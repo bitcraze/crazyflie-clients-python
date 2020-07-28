@@ -178,7 +178,6 @@ class PlotWidget(QtWidgets.QWidget, plot_widget_class):
         self._x_btn_group.addButton(self._enable_seconds_x)
         self._x_btn_group.addButton(self._enable_manual_x)
         self._x_btn_group.setExclusive(True)
-        self._x_btn_group.buttonClicked.connect(self._x_mode_change)
 
         self._draw_graph = True
         self._auto_redraw.stateChanged.connect(self._auto_redraw_change)
@@ -189,17 +188,6 @@ class PlotWidget(QtWidgets.QWidget, plot_widget_class):
             self._draw_graph = False
         else:
             self._draw_graph = True
-
-    def _x_mode_change(self, box):
-        """Callback when user changes the X-axis mode"""
-        if box == self._enable_range_x:
-            logger.info("Enable range x")
-            self._x_range = (
-                float(self._range_x_min.text()),
-                float(self._range_x_max.text()))
-        else:
-            self._range_x_min.setEnabled(False)
-            self._range_x_max.setEnabled(False)
 
     def _y_mode_change(self, box):
         """Callback when user changes the Y-axis mode"""
