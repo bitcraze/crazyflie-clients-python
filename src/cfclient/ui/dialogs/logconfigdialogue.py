@@ -32,6 +32,7 @@ views in the UI.
 """
 
 import logging
+import struct
 
 import cfclient
 from PyQt5 import Qt, QtWidgets, uic
@@ -51,8 +52,10 @@ logger = logging.getLogger(__name__)
 
 NAME_FIELD = 0
 ID_FIELD = 1
-PTYPE_FIELD = 2
-CTYPE_FIELD = 3
+TYPE_FIELD = 2
+SIZE_FIELD = 3
+MAX_LOG_SIZE = 26
+COLOR_GREEN = '#7cdb37'
 
 
 class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
@@ -62,8 +65,8 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         self.setupUi(self)
         self.helper = helper
 
-        self.logTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage'])
-        self.varTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage'])
+        self.logTree.setHeaderLabels(['Name', 'ID', 'Type', 'Size'])
+        self.varTree.setHeaderLabels(['Name', 'ID', 'Type', 'Size'])
 
         self.addButton.clicked.connect(lambda: self.moveNode(self.logTree,
                                                              self.varTree))
@@ -222,10 +225,10 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                 item.setData(NAME_FIELD, Qt.DisplayRole, param)
                 item.setData(ID_FIELD, Qt.DisplayRole,
                              toc.toc[group][param].ident)
-                item.setData(PTYPE_FIELD, Qt.DisplayRole,
-                             toc.toc[group][param].pytype)
-                item.setData(CTYPE_FIELD, Qt.DisplayRole,
+                item.setData(TYPE_FIELD, Qt.DisplayRole,
                              toc.toc[group][param].ctype)
+                item.setData(SIZE_FIELD, Qt.DisplayRole,
+                             struct.calcsize(toc.toc[group][param].pytype))
                 groupItem.addChild(item)
 
             self.logTree.addTopLevelItem(groupItem)
@@ -281,7 +284,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
             parentName = node.text(NAME_FIELD)
             for leaf in self.getNodeChildren(node):
                 varName = leaf.text(NAME_FIELD)
-                varType = str(leaf.text(CTYPE_FIELD))
+                varType = str(leaf.text(TYPE_FIELD))
                 completeName = "%s.%s" % (parentName, varName)
                 logconfig.add_variable(completeName, varType)
         return logconfig
