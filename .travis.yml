@@ -3,7 +3,7 @@ language: python
 git:
   depth: 150
 python:
-  - "2.7"
+  - "3.6"
 services:
   - docker
 before_install:
