@@ -41,3 +41,4 @@ class PluginHelper():
         self.menu = None
         self.logConfigReader = None
         self.mainUI = None
+        self.plotTab = None

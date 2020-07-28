@@ -1,11 +1,14 @@
 ---
 title: Installing Crazyflie client with macPorts
-page_id: macports 
+page_id: macports
 ---
 
 This procedure has been tested on a just-installed Yosemite
 installation. Commands in code blocks have to be executed in a terminal
 window.
+
+**Note:** This instruction is outdated and should be updated to use python 3.
+
 
 Prerequisite
 ------------

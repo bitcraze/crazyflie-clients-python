@@ -31,8 +31,6 @@ ZMQ server test application. Use CTRL-C to end the application.
 NOTE! If connected to a Crazyflie this will power on the motors!
 """
 
-from __future__ import print_function
-
 from threading import Thread
 import signal
 import time

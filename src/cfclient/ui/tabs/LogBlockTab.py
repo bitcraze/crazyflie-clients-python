@@ -176,6 +176,7 @@ class LogBlockModel(QAbstractItemModel):
     def add_block(self, block, connected_ts):
         self._nodes.append(LogBlockItem(block, self, connected_ts))
         self.layoutChanged.emit()
+        self._nodes.sort(key=lambda conf: conf.name.lower())
 
     def refresh(self):
         """Force a refresh of the view though the model"""

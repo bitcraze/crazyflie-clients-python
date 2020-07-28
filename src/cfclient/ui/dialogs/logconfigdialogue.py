@@ -34,10 +34,11 @@ views in the UI.
 import logging
 
 import cfclient
-from PyQt5 import Qt, QtWidgets, uic
-from PyQt5.QtCore import *  # noqa
-from PyQt5.QtWidgets import *  # noqa
-from PyQt5.Qt import *  # noqa
+from PyQt5 import QtWidgets, uic, QtGui
+from PyQt5.QtCore import pyqtSlot, Qt, QTimer
+#from PyQt5.QtCore import *  # noqa
+#from PyQt5.QtWidgets import *  # noqa
+#from PyQt5.Qt import *  # noqa
 
 from cflib.crazyflie.log import LogConfig
 
@@ -62,23 +63,305 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         self.setupUi(self)
         self.helper = helper
 
+        self.categoryTree.setHeaderLabels(['Cathegories'])
         self.logTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage'])
         self.varTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage'])
 
+        self.logTree.setSortingEnabled(True)
+        self.varTree.setSortingEnabled(True)
+
+        # Item-click callbacks.
         self.addButton.clicked.connect(lambda: self.moveNode(self.logTree,
                                                              self.varTree))
         self.removeButton.clicked.connect(lambda: self.moveNode(self.varTree,
                                                                 self.logTree))
-        self.cancelButton.clicked.connect(self.close)
-        self.loadButton.clicked.connect(self.loadConfig)
         self.saveButton.clicked.connect(self.saveConfig)
 
+        self.categoryTree.itemClicked.connect(self._on_item_click)
+        self.categoryTree.itemPressed.connect(self._on_item_press)
+        self.categoryTree.itemChanged.connect(self._config_changed)
+
+        # Add/remove item on doubleclick.
+        self.logTree.itemDoubleClicked.connect(self.itemDoubleClicked)
+        self.varTree.itemDoubleClicked.connect(lambda: self.moveNode(
+                                            self.varTree, self.logTree))
         self.loggingPeriod.textChanged.connect(self.periodChanged)
 
         self.packetSize.setMaximum(26)
         self.currentSize = 0
         self.packetSize.setValue(0)
         self.period = 0
+
+        # Used when renaming a config/category
+        self._last_pressed_item = None
+
+        # set icons
+        save_icon, delete_icon = self.helper.logConfigReader.get_icons()
+        self.createCategoryBtn.setIcon(save_icon)
+        self.createConfigBtn.setIcon(save_icon)
+        self.deleteBtn.setIcon(delete_icon)
+
+        # bind buttons
+        self.createCategoryBtn.clicked.connect(self._create_category)
+        self.createConfigBtn.clicked.connect(self._create_config)
+        self.deleteBtn.clicked.connect(self._delete_config)
+
+        # set tooltips
+        self.createCategoryBtn.setToolTip('Create a new category')
+        self.createConfigBtn.setToolTip('Create a new log-config')
+        self.deleteBtn.setToolTip('Delete category')
+
+        # enable right-click context-menu
+        self.categoryTree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.categoryTree.customContextMenuRequested.connect(
+                                                    self.menuContextTree)
+
+        # keyboard shortcuts
+        shortcut_delete = QtWidgets.QShortcut(QtGui.QKeySequence("Delete"),
+                                              self)
+        shortcut_delete.activated.connect(self._delete_config)
+
+        shortcut_f2 = QtWidgets.QShortcut(QtGui.QKeySequence("F2"), self)
+        shortcut_f2.activated.connect(self._edit_name)
+
+        self._config_saved_timer = QTimer()
+        self._config_saved_timer.timeout.connect(self._config_saved_status)
+
+        self.closeOnSave.setChecked(True)
+
+    def itemDoubleClicked(self):
+        if self.categoryTree.selectedItems():
+            self.moveNode(self.logTree, self.varTree)
+
+    def _config_saved_status(self):
+        self.statusText.setText('')
+        self._config_saved_timer.stop()
+
+    def _on_item_press(self, item):
+        self._last_pressed_item = item, item.text(0)
+
+    def _create_config(self):
+        """ Creates a new log-configuration in the chosen
+            category. If no category is selected, the
+            configuration is stored in the 'Default' category.
+        """
+        items = self.categoryTree.selectedItems()
+
+        if items:
+            config = items[0]
+            parent = config.parent()
+            if parent:
+                category = parent.text(0)
+            else:
+                category = config.text(0)
+
+            conf_name = self.helper.logConfigReader.create_empty_log_conf(
+                                                category)
+            self._reload()
+            # Load the newly created log-config.
+            self._select_item(conf_name, category)
+            self._edit_name()
+
+    def _create_category(self):
+        """ Creates a new category and enables editing the name.  """
+        category_name = self.helper.logConfigReader.create_category()
+        self._load_saved_configs()
+        self.sortTrees()
+        self._select_category(category_name)
+        self._edit_name()
+
+    def _delete_config(self):
+
+        """ Deletes a category or a configuration
+            depending on if the item has a parent or not.
+        """
+
+        items = self.categoryTree.selectedItems()
+        if items:
+            config = items[0]
+            parent = config.parent()
+
+            if parent:
+                # Delete a configuration in the given category.
+                category = parent.text(0)
+                self.helper.logConfigReader.delete_config(config.text(0),
+                                                          category)
+                self._reload()
+            else:
+                # Delete a category and all its log-configurations
+                category = config.text(0)
+                if category != 'Default':
+                    self.helper.logConfigReader.delete_category(category)
+                    self._reload()
+
+    def _config_changed(self, config):
+        """ Changes the name for a log-configuration or a category.
+            This is a callback function that gets called when an item
+            is changed.
+        """
+        item, old_name = self._last_pressed_item
+
+        parent = config.parent()
+        if parent:
+            # Change name for a log-config, inside of the category.
+            new_conf_name = item.text(0)
+            category = parent.text(0)
+            self.helper.logConfigReader.change_name_config(old_name,
+                                                           new_conf_name,
+                                                           category)
+        else:
+            # Change name for the category.
+            category = config.text(0)
+            self.helper.logConfigReader.change_name_category(old_name,
+                                                             category)
+
+    def _edit_name(self):
+        """ Enables editing the clicked item.
+            When the edit is saved, a callback is fired.
+        """
+        items = self.categoryTree.selectedItems()
+        if items:
+            item_clicked = items[0]
+            self.categoryTree.editItem(item_clicked, 0)
+
+    def _reload(self):
+        self.resetTrees()
+        self._load_saved_configs()
+        self.sortTrees()
+
+    def menuContextTree(self, point):
+
+        menu = QtWidgets.QMenu()
+
+        createConfig = None
+        createCategory = None
+        delete = None
+        edit = None
+
+        item = self.categoryTree.itemAt(point)
+        if item:
+            createConfig = menu.addAction('Create new log configuration')
+            edit = menu.addAction('Edit name')
+
+            if item.parent():
+                delete = menu.addAction('Delete config')
+            else:
+                delete = menu.addAction('Delete category')
+        else:
+            createCategory = menu.addAction('Create new Category')
+
+        action = menu.exec_(self.categoryTree.mapToGlobal(point))
+
+        if action == createConfig:
+            self._create_config()
+        elif createCategory:
+            self._create_category()
+        elif action == delete:
+            self._delete_config()
+        elif action == edit:
+            self._edit_name()
+
+    def _select_category(self, category):
+        items = self.categoryTree.findItems(category,
+                                            Qt.MatchFixedString
+                                            | Qt.MatchRecursive)
+        if items:
+            category = items[0]
+            self.categoryTree.setCurrentItem(category)
+            self._last_pressed_item = category, category.text(0)
+
+    def _select_item(self, conf_name, category):
+        """ loads the given config in the correct category """
+        items = self.categoryTree.findItems(conf_name,
+                                            Qt.MatchFixedString
+                                            | Qt.MatchRecursive)
+        for item in items:
+            if item.parent().text(0) == category:
+                self._last_pressed_item = item, conf_name
+                self._loadConfig(category, conf_name)
+                self.categoryTree.setCurrentItem(item)
+
+    @pyqtSlot(QtWidgets.QTreeWidgetItem, int)
+    def _on_item_click(self, it, col):
+        """ Opens the log configuration of the pressed
+            item in the category-tree. """
+        log_conf_name = it.text(col)
+        category = it.parent()
+        # if category is None, it's the category that's clicked
+        if category:
+            self._loadConfig(category.text(0), log_conf_name)
+
+    def _load_saved_configs(self):
+        """ Read saved log-configs and display them on
+            the left-side category-tree. """
+
+        config = None
+        config = self.helper.logConfigReader._getLogConfigs()
+
+        if (config is None):
+            logger.warning("Could not load config")
+        else:
+            self.categoryTree.clear()
+            # Create category-tree.
+            for conf_category in config:
+                category = QtWidgets.QTreeWidgetItem()
+                category.setData(NAME_FIELD, Qt.DisplayRole, conf_category)
+                category.setFlags(category.flags() | Qt.ItemIsEditable)
+
+                # Copulate category-tree with log configurations.
+                for conf in config[conf_category]:
+                    item = QtWidgets.QTreeWidgetItem()
+
+                    # Check if name contains category/config-name.
+                    # This is only true is a new config has been added
+                    # during a session, and the window re-opened.
+                    if '/' in conf.name:
+                        conf_name = conf.name.split('/')[1]
+                    else:
+                        conf_name = conf.name
+
+                    item.setData(NAME_FIELD, Qt.DisplayRole, conf_name)
+                    category.addChild(item)
+
+                    # Enable item-editing.
+                    item.setFlags(item.flags() | Qt.ItemIsEditable)
+
+                self.categoryTree.addTopLevelItem(category)
+                self.categoryTree.expandItem(category)
+
+            self.sortTrees()
+
+    def _loadConfig(self, category, config_name):
+        configs = self.helper.logConfigReader._getLogConfigs()[category]
+
+        if (configs is None):
+            logger.warning("Could not load config")
+
+        else:
+            for config in configs:
+                if config.name == config_name:
+                    self.resetTrees()
+                    self.loggingPeriod.setText("%d" % config.period_in_ms)
+                    self.period = config.period_in_ms
+                    for v in config.variables:
+                        if (v.is_toc_variable()):
+                            parts = v.name.split(".")
+                            varParent = parts[0]
+                            varName = parts[1]
+                            if self.moveNodeByName(
+                                    self.logTree, self.varTree, varParent,
+                                    varName) is False:
+                                logger.warning("Could not find node %s.%s!!",
+                                               varParent, varName)
+                        else:
+                            logger.warning("Error: Mem vars not supported!")
+
+            self.sortTrees()
+
+    def resetTrees(self):
+        self.varTree.clear()
+        self.logTree.clear()
+        self.updateToc()
 
     def decodeSize(self, s):
         size = 0
@@ -95,14 +378,11 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         return size
 
     def sortTrees(self):
-        self.varTree.invisibleRootItem().sortChildren(NAME_FIELD,
-                                                      Qt.AscendingOrder)
-        for node in self.getNodeChildren(self.varTree.invisibleRootItem()):
-            node.sortChildren(NAME_FIELD, Qt.AscendingOrder)
-        self.logTree.invisibleRootItem().sortChildren(NAME_FIELD,
-                                                      Qt.AscendingOrder)
-        for node in self.getNodeChildren(self.logTree.invisibleRootItem()):
-            node.sortChildren(NAME_FIELD, Qt.AscendingOrder)
+        """ Sorts all trees by their name. """
+        for tree in [self.logTree, self.varTree, self.categoryTree]:
+            tree.sortItems(NAME_FIELD, Qt.AscendingOrder)
+            for node in self.getNodeChildren(tree.invisibleRootItem()):
+                node.sortChildren(NAME_FIELD, Qt.AscendingOrder)
 
     def getNodeChildren(self, treeNode):
         children = []
@@ -182,17 +462,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         return False
 
     def showEvent(self, event):
-        self.updateToc()
-        self.populateDropDown()
-        toc = self.helper.cf.log.toc
-        if (len(list(toc.toc.keys())) > 0):
-            self.configNameCombo.setEnabled(True)
-        else:
-            self.configNameCombo.setEnabled(False)
-
-    def resetTrees(self):
-        self.varTree.clear()
-        self.updateToc()
+        self._load_saved_configs()
 
     def periodChanged(self, value):
         try:
@@ -211,7 +481,6 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
     def updateToc(self):
         self.logTree.clear()
-
         toc = self.helper.cf.log.toc
 
         for group in list(toc.toc.keys()):
@@ -229,8 +498,6 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                 groupItem.addChild(item)
 
             self.logTree.addTopLevelItem(groupItem)
-            self.logTree.expandItem(groupItem)
-        self.sortTrees()
 
     def populateDropDown(self):
         self.configNameCombo.clear()
@@ -266,22 +533,68 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                     logger.warning("Error: Mem vars not supported!")
 
     def saveConfig(self):
-        updatedConfig = self.createConfigFromSelection()
-        try:
-            self.helper.logConfigReader.saveLogConfigFile(updatedConfig)
-            self.close()
-        except Exception as e:
-            self.showErrorPopup("Error when saving file", "Error: %s" % e)
+
+        items = self.categoryTree.selectedItems()
+
+        if items:
+            config = items[0]
+            parent = config.parent()
+
+            if parent:
+                category = parent.text(NAME_FIELD)
+                config_name = config.text(NAME_FIELD)
+                updatedConfig = self.createConfigFromSelection(config_name)
+
+                if category != 'Default':
+                    plot_tab_name = '%s/%s' % (category, config_name)
+                else:
+                    plot_tab_name = config_name
+
+                try:
+                    self.helper.logConfigReader.saveLogConfigFile(
+                                                            category,
+                                                            updatedConfig)
+                    self.statusText.setText('Log config succesfully saved!')
+                    self._config_saved_timer.start(4000)
+
+                    if self.closeOnSave.isChecked():
+                        self.close()
+
+                except Exception as e:
+                    self.showErrorPopup("Error when saving file",
+                                        "Error: %s" % e)
+
+        # The name of the config is changed due to displaying
+        # it as category/config-name in the plotter-tab.
+        # The config is however saved with only the config-name.
+        updatedConfig.name = plot_tab_name
+
+        # If we're just updating a config, we want to delete the old one first
+        self._delete_from_plottab(config_name)
+
         self.helper.cf.log.add_config(updatedConfig)
 
-    def createConfigFromSelection(self):
-        logconfig = LogConfig(str(self.configNameCombo.currentText()),
-                              self.period)
-        for node in self.getNodeChildren(self.varTree.invisibleRootItem()):
+    def _delete_from_plottab(self, config_name):
+        for logconfig in self.helper.cf.log.log_blocks:
+            if logconfig.name == config_name:
+                self.helper.plotTab.remove_config(logconfig)
+                self.helper.cf.log.log_blocks.remove(logconfig)
+                logconfig.delete()
+
+    def _get_node_children(self):
+        root_item = self.varTree.invisibleRootItem()
+        return [root_item.child(i) for i in range(root_item.childCount())]
+
+    def createConfigFromSelection(self, config):
+        logconfig = LogConfig(config, self.period)
+
+        for node in self._get_node_children():
             parentName = node.text(NAME_FIELD)
+
             for leaf in self.getNodeChildren(node):
                 varName = leaf.text(NAME_FIELD)
                 varType = str(leaf.text(CTYPE_FIELD))
                 completeName = "%s.%s" % (parentName, varName)
                 logconfig.add_variable(completeName, varType)
+
         return logconfig

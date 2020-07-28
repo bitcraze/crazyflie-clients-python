@@ -63,6 +63,7 @@ from .dialogs.cf2config import Cf2ConfigDialog
 from .dialogs.inputconfigdialogue import InputConfigDialogue
 from .dialogs.logconfigdialogue import LogConfigDialogue
 
+
 __author__ = 'Bitcraze AB'
 __all__ = ['MainUI']
 
@@ -315,11 +316,15 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.tabsMenuItem = QMenu("Tabs", self.menuView, enabled=True)
         self.menuView.addMenu(self.tabsMenuItem)
 
-        # self.tabsMenuItem.setMenu(QtWidgets.QMenu())
         tabItems = {}
         self.loadedTabs = []
         for tabClass in cfclient.ui.tabs.available:
             tab = tabClass(self.tabs, cfclient.ui.pluginhelper)
+
+            # Set reference for plot-tab.
+            if isinstance(tab, cfclient.ui.tabs.PlotTab):
+                cfclient.ui.pluginhelper.plotTab = tab
+
             item = QtWidgets.QAction(tab.getMenuName(), self, checkable=True)
             item.toggled.connect(tab.toggleVisibility)
             self.tabsMenuItem.addAction(item)
