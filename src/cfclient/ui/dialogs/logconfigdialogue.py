@@ -36,7 +36,7 @@ import struct
 
 import cfclient
 from PyQt5 import QtWidgets, uic, QtGui
-from PyQt5.QtCore import pyqtSlot, Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer
 
 from cflib.crazyflie.log import LogConfig
 
@@ -77,7 +77,6 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                                                                 self.logTree))
         self.saveButton.clicked.connect(self.saveConfig)
 
-        #self.categoryTree.itemClicked.connect(self._on_item_click)
         self.categoryTree.itemSelectionChanged.connect(self._item_selected)
         self.categoryTree.itemPressed.connect(self._on_item_press)
         self.categoryTree.itemChanged.connect(self._config_changed)
