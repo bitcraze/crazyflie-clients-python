@@ -32,13 +32,11 @@ views in the UI.
 """
 
 import logging
+import struct
 
 import cfclient
 from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtCore import pyqtSlot, Qt, QTimer
-#from PyQt5.QtCore import *  # noqa
-#from PyQt5.QtWidgets import *  # noqa
-#from PyQt5.Qt import *  # noqa
 
 from cflib.crazyflie.log import LogConfig
 
@@ -52,8 +50,10 @@ logger = logging.getLogger(__name__)
 
 NAME_FIELD = 0
 ID_FIELD = 1
-PTYPE_FIELD = 2
-CTYPE_FIELD = 3
+TYPE_FIELD = 2
+SIZE_FIELD = 3
+MAX_LOG_SIZE = 26
+COLOR_GREEN = '#7cdb37'
 
 
 class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
@@ -63,9 +63,9 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         self.setupUi(self)
         self.helper = helper
 
+        self.logTree.setHeaderLabels(['Name', 'ID', 'Type', 'Size'])
+        self.varTree.setHeaderLabels(['Name', 'ID', 'Type', 'Size'])
         self.categoryTree.setHeaderLabels(['Cathegories'])
-        self.logTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage'])
-        self.varTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage'])
 
         self.logTree.setSortingEnabled(True)
         self.varTree.setSortingEnabled(True)
@@ -87,8 +87,8 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                                             self.varTree, self.logTree))
         self.loggingPeriod.textChanged.connect(self.periodChanged)
 
-        self.packetSize.setMaximum(26)
         self.currentSize = 0
+        self.packetSize.setMaximum(100)
         self.packetSize.setValue(0)
         self.period = 0
 
@@ -363,20 +363,6 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         self.logTree.clear()
         self.updateToc()
 
-    def decodeSize(self, s):
-        size = 0
-        if ("16" in s):
-            size = 2
-        if ("float" in s):
-            size = 4
-        if ("8" in s):
-            size = 1
-        if ("FP16" in s):
-            size = 2
-        if ("32" in s):
-            size = 4
-        return size
-
     def sortTrees(self):
         """ Sorts all trees by their name. """
         for tree in [self.logTree, self.varTree, self.categoryTree]:
@@ -395,15 +381,23 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         for node in self.getNodeChildren(self.varTree.invisibleRootItem()):
             for leaf in self.getNodeChildren(node):
                 self.currentSize = (self.currentSize +
-                                    self.decodeSize(leaf.text(CTYPE_FIELD)))
-        if self.currentSize > 26:
-            self.packetSize.setMaximum(self.currentSize / 26.0 * 100.0)
+                                    int(leaf.text(SIZE_FIELD)))
+
+        self.packetSizeText.setText('%s/%s bytes' % (self.currentSize,
+                                                     MAX_LOG_SIZE))
+
+        if self.currentSize > MAX_LOG_SIZE:
+            self.packetSize.setMaximum(self.currentSize / MAX_LOG_SIZE * 100)
             self.packetSize.setFormat("%v%")
-            self.packetSize.setValue(self.currentSize / 26.0 * 100.0)
+            self.packetSize.setValue(self.currentSize / MAX_LOG_SIZE * 100)
+            self.packetSize.setStyleSheet(
+                            'QProgressBar::chunk { background: red;}')
         else:
-            self.packetSize.setMaximum(26)
+            self.packetSize.setMaximum(MAX_LOG_SIZE)
             self.packetSize.setFormat("%p%")
             self.packetSize.setValue(self.currentSize)
+            self.packetSize.setStyleSheet(
+                        'QProgressBar::chunk { background: %s;}' % COLOR_GREEN)
 
     def addNewVar(self, logTreeItem, target):
         parentName = logTreeItem.parent().text(NAME_FIELD)
@@ -472,7 +466,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
             self.period = 0
 
     def showErrorPopup(self, caption, message):
-        self.box = QMessageBox()  # noqa
+        self.box = QtWidgets.QMessageBox()  # noqa
         self.box.setWindowTitle(caption)
         self.box.setText(message)
         # self.box.setButtonText(1, "Ok")
@@ -491,10 +485,10 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                 item.setData(NAME_FIELD, Qt.DisplayRole, param)
                 item.setData(ID_FIELD, Qt.DisplayRole,
                              toc.toc[group][param].ident)
-                item.setData(PTYPE_FIELD, Qt.DisplayRole,
-                             toc.toc[group][param].pytype)
-                item.setData(CTYPE_FIELD, Qt.DisplayRole,
+                item.setData(TYPE_FIELD, Qt.DisplayRole,
                              toc.toc[group][param].ctype)
+                item.setData(SIZE_FIELD, Qt.DisplayRole,
+                             struct.calcsize(toc.toc[group][param].pytype))
                 groupItem.addChild(item)
 
             self.logTree.addTopLevelItem(groupItem)
@@ -593,7 +587,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
             for leaf in self.getNodeChildren(node):
                 varName = leaf.text(NAME_FIELD)
-                varType = str(leaf.text(CTYPE_FIELD))
+                varType = str(leaf.text(TYPE_FIELD))
                 completeName = "%s.%s" % (parentName, varName)
                 logconfig.add_variable(completeName, varType)
 
