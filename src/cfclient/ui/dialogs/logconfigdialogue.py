@@ -352,7 +352,8 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
         else:
             for config in configs:
-                if config.name == config_name:
+                name = self._parse_configname(config)
+                if name == config_name:
                     self.resetTrees()
                     self.loggingPeriod.setText("%d" % config.period_in_ms)
                     self.period = config.period_in_ms
@@ -555,6 +556,11 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
             parent = config.parent()
 
             if parent:
+
+                # If we're just editing an existing config, we'll delete
+                # the old one first.
+                self._delete_from_plottab(self._last_pressed_item[1])
+
                 category = parent.text(NAME_FIELD)
                 config_name = config.text(NAME_FIELD)
                 updatedConfig = self.createConfigFromSelection(config_name)
@@ -570,7 +576,6 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                                                             updatedConfig)
                     self.statusText.setText('Log config succesfully saved!')
                     self._config_saved_timer.start(4000)
-
                     if self.closeOnSave.isChecked():
                         self.close()
 
@@ -582,15 +587,20 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         # it as category/config-name in the plotter-tab.
         # The config is however saved with only the config-name.
         updatedConfig.name = plot_tab_name
-
-        # If we're just updating a config, we want to delete the old one first
-        self._delete_from_plottab(config_name)
-
         self.helper.cf.log.add_config(updatedConfig)
 
-    def _delete_from_plottab(self, config_name):
+    def _parse_configname(self, config):
+        """ If the configs are placed in a category,
+            they are named as Category/confname.
+        """
+        parts = config.name.split('/')
+        return parts[1] if len(parts) > 1 else parts[0]
+
+    def _delete_from_plottab(self, conf_name):
+        """ Removes a config from the plot-tab. """
         for logconfig in self.helper.cf.log.log_blocks:
-            if logconfig.name == config_name:
+            config_to_delete = self._parse_configname(logconfig)
+            if config_to_delete == conf_name:
                 self.helper.plotTab.remove_config(logconfig)
                 self.helper.cf.log.log_blocks.remove(logconfig)
                 logconfig.delete()
