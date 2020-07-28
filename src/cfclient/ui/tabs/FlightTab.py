@@ -32,7 +32,7 @@ The flight control tab shows telemetry data and flight settings.
 import logging
 
 from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
 
 import cfclient
