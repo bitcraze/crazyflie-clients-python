@@ -522,33 +522,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         if (len(toc) > 0):
             self.loadButton.setEnabled(True)
 
-    def loadConfig(self):
-        cText = self.configNameCombo.currentText()
-        config = None
-        for d in self.helper.logConfigReader.getLogConfigs():
-            if (d.name == cText):
-                config = d
-        if (config is None):
-            logger.warning("Could not load config")
-        else:
-            self.resetTrees()
-            self.loggingPeriod.setText("%d" % config.period_in_ms)
-            self.period = config.period_in_ms
-            for v in config.variables:
-                if (v.is_toc_variable()):
-                    parts = v.name.split(".")
-                    varParent = parts[0]
-                    varName = parts[1]
-                    if self.moveNodeByName(
-                            self.logTree, self.varTree, varParent,
-                            varName) is False:
-                        logger.warning("Could not find node %s.%s!!",
-                                       varParent, varName)
-                else:
-                    logger.warning("Error: Mem vars not supported!")
-
     def saveConfig(self):
-
         items = self.categoryTree.selectedItems()
 
         if items:
