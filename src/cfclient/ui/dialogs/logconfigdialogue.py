@@ -36,7 +36,7 @@ import struct
 
 import cfclient
 from PyQt5 import QtWidgets, uic, QtGui
-from PyQt5.QtCore import pyqtSlot, Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer
 
 from cflib.crazyflie.log import LogConfig
 
@@ -77,7 +77,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                                                                 self.logTree))
         self.saveButton.clicked.connect(self.saveConfig)
 
-        self.categoryTree.itemClicked.connect(self._on_item_click)
+        self.categoryTree.itemSelectionChanged.connect(self._item_selected)
         self.categoryTree.itemPressed.connect(self._on_item_press)
         self.categoryTree.itemChanged.connect(self._config_changed)
 
@@ -281,15 +281,27 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                 self._loadConfig(category, conf_name)
                 self.categoryTree.setCurrentItem(item)
 
-    @pyqtSlot(QtWidgets.QTreeWidgetItem, int)
-    def _on_item_click(self, it, col):
+    def _item_selected(self):
         """ Opens the log configuration of the pressed
             item in the category-tree. """
-        log_conf_name = it.text(col)
-        category = it.parent()
-        # if category is None, it's the category that's clicked
-        if category:
-            self._loadConfig(category.text(0), log_conf_name)
+        items = self.categoryTree.selectedItems()
+
+        if items:
+            config = items[0]
+            category = config.parent()
+            if category:
+                self._loadConfig(category.text(NAME_FIELD),
+                                 config.text(NAME_FIELD))
+            else:
+                # if category is None, it's the category that's clicked
+                self._clear_trees_and_progressbar()
+
+    def _clear_trees_and_progressbar(self):
+        self.varTree.clear()
+        self.logTree.clear()
+        self.currentSize = 0
+        self.loggingPeriod.setText('')
+        self.updatePacketSizeBar()
 
     def _load_saved_configs(self):
         """ Read saved log-configs and display them on
@@ -339,7 +351,8 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
         else:
             for config in configs:
-                if config.name == config_name:
+                name = self._parse_configname(config)
+                if name == config_name:
                     self.resetTrees()
                     self.loggingPeriod.setText("%d" % config.period_in_ms)
                     self.period = config.period_in_ms
@@ -456,6 +469,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         return False
 
     def showEvent(self, event):
+        self._clear_trees_and_progressbar()
         self._load_saved_configs()
 
     def periodChanged(self, value):
@@ -501,33 +515,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         if (len(toc) > 0):
             self.loadButton.setEnabled(True)
 
-    def loadConfig(self):
-        cText = self.configNameCombo.currentText()
-        config = None
-        for d in self.helper.logConfigReader.getLogConfigs():
-            if (d.name == cText):
-                config = d
-        if (config is None):
-            logger.warning("Could not load config")
-        else:
-            self.resetTrees()
-            self.loggingPeriod.setText("%d" % config.period_in_ms)
-            self.period = config.period_in_ms
-            for v in config.variables:
-                if (v.is_toc_variable()):
-                    parts = v.name.split(".")
-                    varParent = parts[0]
-                    varName = parts[1]
-                    if self.moveNodeByName(
-                            self.logTree, self.varTree, varParent,
-                            varName) is False:
-                        logger.warning("Could not find node %s.%s!!",
-                                       varParent, varName)
-                else:
-                    logger.warning("Error: Mem vars not supported!")
-
     def saveConfig(self):
-
         items = self.categoryTree.selectedItems()
 
         if items:
@@ -535,6 +523,11 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
             parent = config.parent()
 
             if parent:
+
+                # If we're just editing an existing config, we'll delete
+                # the old one first.
+                self._delete_from_plottab(self._last_pressed_item[1])
+
                 category = parent.text(NAME_FIELD)
                 config_name = config.text(NAME_FIELD)
                 updatedConfig = self.createConfigFromSelection(config_name)
@@ -550,7 +543,6 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                                                             updatedConfig)
                     self.statusText.setText('Log config succesfully saved!')
                     self._config_saved_timer.start(4000)
-
                     if self.closeOnSave.isChecked():
                         self.close()
 
@@ -562,15 +554,20 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         # it as category/config-name in the plotter-tab.
         # The config is however saved with only the config-name.
         updatedConfig.name = plot_tab_name
-
-        # If we're just updating a config, we want to delete the old one first
-        self._delete_from_plottab(config_name)
-
         self.helper.cf.log.add_config(updatedConfig)
 
-    def _delete_from_plottab(self, config_name):
+    def _parse_configname(self, config):
+        """ If the configs are placed in a category,
+            they are named as Category/confname.
+        """
+        parts = config.name.split('/')
+        return parts[1] if len(parts) > 1 else parts[0]
+
+    def _delete_from_plottab(self, conf_name):
+        """ Removes a config from the plot-tab. """
         for logconfig in self.helper.cf.log.log_blocks:
-            if logconfig.name == config_name:
+            config_to_delete = self._parse_configname(logconfig)
+            if config_to_delete == conf_name:
                 self.helper.plotTab.remove_config(logconfig)
                 self.helper.cf.log.log_blocks.remove(logconfig)
                 logconfig.delete()
