@@ -536,22 +536,27 @@ class FlightTab(Tab, flight_tab_class):
         self._ring_effect = current
         self._ledring_nbr_effects = nbr
 
-        hardcoded_names = {0: "Off",
-                           1: "White spinner",
-                           2: "Color spinner",
-                           3: "Tilt effect",
-                           4: "Brightness effect",
-                           5: "Color spinner 2",
-                           6: "Double spinner",
-                           7: "Solid color effect",
-                           8: "Factory test",
-                           9: "Battery status",
-                           10: "Boat lights",
-                           11: "Alert",
-                           12: "Gravity",
-                           13: "LED tab",
-                           14: "Color fader",
-                           15: "Link quality"}
+        hardcoded_names = {
+            0: "Off",
+            1: "White spinner",
+            2: "Color spinner",
+            3: "Tilt effect",
+            4: "Brightness effect",
+            5: "Color spinner 2",
+            6: "Double spinner",
+            7: "Solid color effect",
+            8: "Factory test",
+            9: "Battery status",
+            10: "Boat lights",
+            11: "Alert",
+            12: "Gravity",
+            13: "LED tab",
+            14: "Color fader",
+            15: "Link quality",
+            16: "Location server status",
+            17: "Sequencer",
+            18: "Lighthouse quality",
+        }
 
         for i in range(nbr + 1):
             name = "{}: ".format(i)
