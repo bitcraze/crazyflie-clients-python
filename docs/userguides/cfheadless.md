@@ -29,7 +29,6 @@ optional arguments:
 -c CONTROLLER, --controller CONTROLLER
                     Use controller with specified id, id defaults to 0
 --controllers         Only display available controllers and exit
--x, --x-mode          Enable client-side X-mode
 ```
 The client is exited either by taking out the Crazyradio USB dongle or
 pressing Ctrl+C
