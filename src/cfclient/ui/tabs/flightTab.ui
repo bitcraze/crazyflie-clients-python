@@ -391,7 +391,7 @@
              <layout class="QVBoxLayout" name="verticalLayout_4"/>
             </widget>
             <widget class="QWidget" name="layoutWidget">
-             <layout class="QGridLayout" name="gridLayout_5" rowstretch="0,3,3,3,3,3" rowminimumheight="1,1,1,1,1,1">
+             <layout class="QGridLayout" name="gridLayout_5" rowstretch="0,0,0,0,0,0,0,0,0">
               <property name="sizeConstraint">
                <enum>QLayout::SetMinimumSize</enum>
               </property>
@@ -401,17 +401,158 @@
               <property name="verticalSpacing">
                <number>0</number>
               </property>
-              <item row="5" column="0">
+              <item row="2" column="5">
+               <widget class="QLineEdit" name="estimateX">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="5">
+               <widget class="QLineEdit" name="estimateZ">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="2">
+               <widget class="QLineEdit" name="targetHeight">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="4">
+               <widget class="QLabel" name="label_19">
+                <property name="text">
+                 <string>X</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="5">
+               <widget class="QLabel" name="label_20">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>State Estimate</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="4">
+               <widget class="QLabel" name="label_23">
+                <property name="text">
+                 <string>Yaw</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="4">
+               <widget class="QLabel" name="label_18">
+                <property name="text">
+                 <string>Y</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="4">
+               <widget class="QLabel" name="label_10">
+                <property name="text">
+                 <string>Z</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="5">
+               <widget class="QLineEdit" name="estimateThrust">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="5">
+               <widget class="QLineEdit" name="estimateY">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="inputYawLabel">
+                <property name="text">
+                 <string>Yaw</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QLineEdit" name="targetThrust">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="4">
                <widget class="QLabel" name="label_17">
+                <property name="text">
+                 <string>Pitch</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QLabel" name="inputHeightLabel">
                 <property name="text">
                  <string>Height</string>
                 </property>
                </widget>
               </item>
-              <item row="2" column="4">
-               <widget class="QLineEdit" name="actualPitch"/>
+              <item row="1" column="3">
+               <spacer name="horizontalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Fixed</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
               </item>
-              <item row="1" column="8" rowspan="5">
+              <item row="1" column="4">
+               <widget class="QLabel" name="label_21">
+                <property name="text">
+                 <string>Thrust</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="9" rowspan="7">
                <widget class="QProgressBar" name="actualM1">
                 <property name="maximum">
                  <number>65535</number>
@@ -424,7 +565,7 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="10" rowspan="5">
+              <item row="1" column="11" rowspan="7">
                <widget class="QProgressBar" name="actualM3">
                 <property name="maximum">
                  <number>65535</number>
@@ -437,30 +578,16 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="6">
-               <widget class="QLabel" name="label_6">
-                <property name="text">
-                 <string>Thrust</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="5" column="4">
-               <widget class="QLineEdit" name="actualHeight">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="2">
                <widget class="QLabel" name="label_14">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
-                 <string>Target</string>
+                 <string>Gamepad Input</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
@@ -468,9 +595,117 @@
                </widget>
               </item>
               <item row="3" column="2">
-               <widget class="QLineEdit" name="targetRoll"/>
+               <widget class="QLineEdit" name="targetRoll">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
               </item>
-              <item row="1" column="6" rowspan="5">
+              <item row="0" column="9">
+               <widget class="QLabel" name="M1label">
+                <property name="text">
+                 <string>M1</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="inputRollLabel">
+                <property name="text">
+                 <string>Roll</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="11">
+               <widget class="QLabel" name="M3label">
+                <property name="text">
+                 <string>M3</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="2">
+               <widget class="QLineEdit" name="targetYaw">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="10" rowspan="7">
+               <widget class="QProgressBar" name="actualM2">
+                <property name="maximum">
+                 <number>65535</number>
+                </property>
+                <property name="value">
+                 <number>0</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QLineEdit" name="targetPitch">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="inputPitchLabel">
+                <property name="text">
+                 <string>Pitch</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="10">
+               <widget class="QLabel" name="M2label">
+                <property name="text">
+                 <string>M2</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="12" rowspan="7">
+               <widget class="QProgressBar" name="actualM4">
+                <property name="maximum">
+                 <number>65535</number>
+                </property>
+                <property name="value">
+                 <number>0</number>
+                </property>
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="12">
+               <widget class="QLabel" name="M4label">
+                <property name="text">
+                 <string>M4</string>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="5">
+               <widget class="QLineEdit" name="estimateYaw">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="14" rowspan="8">
+               <layout class="QGridLayout" name="gridLayout_7"/>
+              </item>
+              <item row="1" column="7" rowspan="7">
                <widget class="QProgressBar" name="thrustProgress">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
@@ -501,126 +736,76 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_16">
-                <property name="text">
-                 <string>Thrust</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="8">
-               <widget class="QLabel" name="M1label">
-                <property name="text">
-                 <string>M1</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="0">
-               <widget class="QLabel" name="label_12">
+              <item row="6" column="4">
+               <widget class="QLabel" name="label_22">
                 <property name="text">
                  <string>Roll</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="10">
-               <widget class="QLabel" name="M3label">
-                <property name="text">
-                 <string>M3</string>
+              <item row="6" column="5">
+               <widget class="QLineEdit" name="estimateRoll">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
                 </property>
                </widget>
               </item>
-              <item row="4" column="2">
-               <widget class="QLineEdit" name="targetYaw"/>
-              </item>
-              <item row="1" column="9" rowspan="5">
-               <widget class="QProgressBar" name="actualM2">
-                <property name="maximum">
-                 <number>65535</number>
-                </property>
-                <property name="value">
-                 <number>0</number>
-                </property>
+              <item row="1" column="6">
+               <spacer name="horizontalSpacer_3">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Fixed</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="0" column="13">
+               <spacer name="horizontalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="inputThrustLabel">
+                <property name="text">
+                 <string>Thrust</string>
                 </property>
                </widget>
               </item>
-              <item row="2" column="2">
-               <widget class="QLineEdit" name="targetPitch"/>
-              </item>
-              <item row="2" column="0">
-               <widget class="QLabel" name="label_11">
-                <property name="text">
-                 <string>Pitch</string>
+              <item row="5" column="5">
+               <widget class="QLineEdit" name="estimatePitch">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
                 </property>
                </widget>
               </item>
-              <item row="0" column="4">
-               <widget class="QLabel" name="label_15">
+              <item row="0" column="7">
+               <widget class="QLabel" name="label_6">
                 <property name="text">
-                 <string>Actual</string>
+                 <string>Thrust</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="4">
-               <widget class="QLineEdit" name="actualYaw"/>
-              </item>
-              <item row="0" column="9">
-               <widget class="QLabel" name="M2label">
-                <property name="text">
-                 <string>M2</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="11" rowspan="5">
-               <widget class="QProgressBar" name="actualM4">
-                <property name="maximum">
-                 <number>65535</number>
-                </property>
-                <property name="value">
-                 <number>0</number>
-                </property>
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="2">
-               <widget class="QLineEdit" name="targetThrust"/>
-              </item>
-              <item row="0" column="11">
-               <widget class="QLabel" name="M4label">
-                <property name="text">
-                 <string>M4</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="4">
-               <widget class="QLineEdit" name="actualThrust"/>
-              </item>
-              <item row="0" column="12" rowspan="6">
-               <layout class="QGridLayout" name="gridLayout_7"/>
-              </item>
-              <item row="4" column="0">
-               <widget class="QLabel" name="label_13">
-                <property name="text">
-                 <string>Yaw</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="4">
-               <widget class="QLineEdit" name="actualRoll"/>
-              </item>
-              <item row="5" column="2">
-               <widget class="QLineEdit" name="targetHeight">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="text">
-                 <string/>
                 </property>
                </widget>
               </item>
