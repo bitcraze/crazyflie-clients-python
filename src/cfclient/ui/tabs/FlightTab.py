@@ -611,6 +611,7 @@ class FlightTab(Tab, flight_tab_class):
         self._assist_mode_combo.addItem("Height hold", 2)
         self._assist_mode_combo.addItem("Hover", 3)
 
+        # Add the tooltips to the assist-mode items.
         self._assist_mode_combo.setItemData(0, TOOLTIP_ALTITUDE_HOLD,
                                             Qt.ToolTipRole)
         self._assist_mode_combo.setItemData(1, TOOLTIP_POSITION_HOLD,
