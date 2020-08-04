@@ -1,6 +1,6 @@
 ---
 title: Running from source
-page_id: run_from_source 
+page_id: run_from_source
 ---
 
 The Crazyflie client requires [cflib](https://github.com/bitcraze/crazyflie-lib-python).
@@ -35,7 +35,7 @@ cfloader
 cfzmq
 ```
 
-**NOTE:** To use Crazyradio you will have to [install the drivers](https://wiki.bitcraze.io/misc:usbwindows)
+**NOTE:** To use Crazyradio you will have to [install the drivers](https://github.com/bitcraze/crazyradio-firmware/blob/master/docs/building/usbwindows.md)
 
 ### Working on the client with PyCharm
 
