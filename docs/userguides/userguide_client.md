@@ -17,7 +17,7 @@ functionality.
 This page uses the terms
 [roll/pitch/yaw](http://en.wikipedia.org/wiki/Flight_dynamics_(fixed_wing_aircraft))
 extensively. For that to make any sense for a quadcopter we need to know
-where the front is, 
+where the front is,
 [Crazyflie 2.X](https://wiki.bitcraze.io/projects:crazyflie2:userguide:index).
 
 How to get flying
@@ -42,7 +42,7 @@ For more info on LED indicators etc. have a look at the [Crazyflie 2.X](https://
 Main UI
 =======
 
-![CF client main](/images/cf_client_1.png)
+![CF client main](/docs/images/cf_client_1.png)
 
 1.  The window title will show the connection status
 2.  Connect/disconnect, scan and the drop-down connection list as well
@@ -75,7 +75,7 @@ client. The bootloader mode is accessed from the menu
 *Crazyflie-\>Bootloader*. If there is any problem during the flashing or
 a wrong firmware is flashed the process can just be started again.
 
-![CFclient bootloading](/images/crazyflie_bootloading.png)
+![CFclient bootloading](/docs/images/crazyflie_bootloading.png)
 
 To update the firmware in the Crazyflie 2.X do the following:
 
@@ -131,7 +131,7 @@ any time the same way.
 
 First connect to the Crazyflie 2.X with the normal connect button. Then open "Crazyflie->Configure 2.X" to reach the configure 2.X dialog
 
-![CF2 config](/images/cfclient_cf2_config.png){:width="500"}
+![CF2 config](/docs/images/cfclient_cf2_config.png){:width="500"}
 
 Once the settings has been made press the write button to save them permanently in the Crazyflie 2.X EEPROM.
 
@@ -153,7 +153,7 @@ plotted in the plotter and saved to file in the log block tab.
 To setup a new log block click on the menu \"settings/logging
 configuration\", You then see the following toolbox:
 
-![cfclient logging configuration](/images/client_log-configuration_anotated.png){:align-center}
+![cfclient logging configuration](/docs/images/client_log-configuration_anotated.png){:align-center}
 
 1.  List of log variable in the Crazyflie
 2.  Log variables in the current log block
@@ -181,7 +181,7 @@ Input devices
 In order to control the Crazyflie you are connected to you will need
 some input-device. Normally this would be a gamepad, but any
 input-device with at least 4 analog axis will do. Here\'s [a
-list](/userguides/inputdevices/) of some input-devices
+list](/docs/userguides/inputdevices.md) of some input-devices
 that are used.
 
 In order to make sense of the input from the device a mapping has to be
@@ -196,18 +196,18 @@ but if you have another input-device then it\'s quick to create your own
 configuration. Go to the menu *Input device -\> Configure device
 mapping*.
 
-![cfclient configure device](/images/cfclient_devconfig_select.png){:align-center
+![cfclient configure device](/docs/images/cfclient_devconfig_select.png){:align-center
 width="700"}
 
 Select the device you would like to configure and press *Configure*.
 
-![cfclient configure device axis](/images/cfclient_devconfig_axis.png){:align-center
+![cfclient configure device axis](/docs/images/cfclient_devconfig_axis.png){:align-center
 width="700"}
 
 For each functionality that can be mapped there\'s a *Detect* button, by
 pressing it the following dialog will appear.
 
-![cfclient configure device detect](/images/cfclient_devconfig_dialog.png){:align-center
+![cfclient configure device detect](/docs/images/cfclient_devconfig_dialog.png){:align-center
 width="300"}
 
 Follow the instructions to detect the axis or button that you would like
@@ -219,7 +219,7 @@ Go though all the functionality you would like to map by pressing the
 *Detect* button for each. To be able to save the mapping you will at
 least have to map roll, pitch, yaw and thrust.
 
-![cfclient configure device feedback](/images/cfclient_devconfig_feedback.png){:align-center
+![cfclient configure device feedback](/docs/images/cfclient_devconfig_feedback.png){:align-center
 width="700"}
 
 Once you have mapped functionality you will be able to see the feedback
@@ -262,31 +262,31 @@ For normal usage just enter the *Normal* menu, select the device you
 would like to use and the correct mapping. As a device is selected the
 list of mappings are enabled.
 
-![cfclient devices normal](/images/cfclient_input_normal.png){:align-center
+![cfclient devices normal](/docs/images/cfclient_input_normal.png){:align-center
 width="700"}
 
 If more than one input device is connected then it\'s possible to switch
 to one of the teacher modes.
 
-![cfclient devices mux select](/images/cfclient_input_mux_select.png){:align-center
+![cfclient devices mux select](/docs/images/cfclient_input_mux_select.png){:align-center
 width="700"}
 
 First select the device that should be used for the teacher and then
 it\'s mapping.
 
-![cfclient input teacher](/images/cfclient_input_teacher.png){:align-center
+![cfclient input teacher](/docs/images/cfclient_input_teacher.png){:align-center
 width="700"}
 
 Then select the device that should be used for the student and then
 it\'s mapping.
 
-![cfclient input student](/images/cfclient_input_student.png){:align-center
+![cfclient input student](/docs/images/cfclient_input_student.png){:align-center
 width="700"}
 
 Once this is done you will be able to see the open devices and
 configurations at the bottom of the user interface.
 
-![cfclient input mux configured](/images/cfclient_input_mux_configured.png){:align-center
+![cfclient input mux configured](/docs/images/cfclient_input_mux_configured.png){:align-center
 width="700"}
 
 Tabs
@@ -299,7 +299,7 @@ Flightcontrol
 -------------
 
 The normal view used when flying is the one seen below.
-![cfclient flighttab](/images/cfclient_flightab.png){:align-center}
+![cfclient flighttab](/docs/images/cfclient_flightab.png){:align-center}
 
 1.  Flight mode selector (Normal and Advanced)
 
@@ -329,7 +329,7 @@ Plotter
 -------
 
 The plotter tab can be used to visualize data logged from the Crazyflie
-![cfclient plotter](/images/cfclient_ploter.png){:align-center
+![cfclient plotter](/docs/images/cfclient_ploter.png){:align-center
 width="700"}
 
 1.  Select logging configuration to plot. Read about how to create
@@ -350,7 +350,7 @@ that can be changed in real-time. The parameter tab can be used to view
 and update parameters. For more information about parameters see
 logging and parameter frameworks LINK TO CF-FIRMWARE!
 
-![cfclient parameter list](/images/cfclient_param.png){:align-center
+![cfclient parameter list](/docs/images/cfclient_param.png){:align-center
 width="700"}
 
 1.  Parameter information fields
@@ -371,7 +371,7 @@ The log blocks tab shows all log configurations that are saved and if
 they are started. It\'s also possible to start/stop them as well as
 write the logged data to file.
 
-![cfclient log blocks](/images/cfclient_logblocks_marked.png){:align-center
+![cfclient log blocks](/docs/images/cfclient_logblocks_marked.png){:align-center
 width="700"}
 
 1.  Fields
@@ -418,7 +418,7 @@ Console
 
 The console tab will show printouts from the Crazyflie firmware as it\'s
 running.
-![cfclient console](/images/cfclient_console_marked.png){:align-center
+![cfclient console](/docs/images/cfclient_console_marked.png){:align-center
 width="700"}
 
 1.  Console output from the Crazyflie
@@ -447,7 +447,7 @@ Displays the configured anchor positions and the estimated position of
 the Crazyflie. Can be used to make sure the system is set up correctly
 and that the estimated position is reasonable.
 
-![cfclient positioning](/images/cfclient_position_estimate.png){:align-center
+![cfclient positioning](/docs/images/cfclient_position_estimate.png){:align-center
 width="700"}
 
 1.  Plot for X/Y (top view) showing anchors and Crazyflie
@@ -490,7 +490,7 @@ displays the configured anchor positions. When the crazyflie is close to
 an anchor this is indicated in the graphs by highlighting it. This mode
 is useful to identify anchors and verify that the system is correctly
 configured.
-![cfclient anchors](/images/cfclient_anchor_identification.png){:align-center
+![cfclient anchors](/docs/images/cfclient_anchor_identification.png){:align-center
 width="700"}
 
 1.  Plot for X/Y (top view) showing anchors and Crazyflie
@@ -510,11 +510,11 @@ The UI is normally used to get/set parameters, view logged data and send
 control commands to the Crazyflie. Aside from this there\'s also the
 possibility to connect via ZMQ to the client and control several things:
 
--   [Parameters](/functional-areas/cfclient_zmq#parameters):
+-   [Parameters](/docs/functional-areas/cfclient_zmq.md#parameters):
     Get/set parameters by name
--   [LED-ring memory](/functional-areas/cfclient_zmq#led-ring):
+-   [LED-ring memory](/docs/functional-areas/cfclient_zmq.md#led-ring):
     Write LED ring memory
--   [Input-device](/functional-areas/cfclient_zmq#input-device):
+-   [Input-device](/docs/functional-areas/cfclient_zmq.md#input-device):
     Act as an input device
 
 The benefit of using this approach instead of the [stand-alone ZMQ

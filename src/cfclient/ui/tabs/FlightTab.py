@@ -45,7 +45,9 @@ from cfclient.utils.input import JoystickReader
 
 from cfclient.ui.tab import Tab
 
-LOG_NAME_ESTIMATED_Z = "stateEstimate.z"
+LOG_NAME_ESTIMATE_X = 'stateEstimate.x'
+LOG_NAME_ESTIMATE_Y = 'stateEstimate.y'
+LOG_NAME_ESTIMATE_Z = 'stateEstimate.z'
 
 __author__ = 'Bitcraze AB'
 __all__ = ['FlightTab']
@@ -56,6 +58,25 @@ flight_tab_class = uic.loadUiType(cfclient.module_path +
                                   "/ui/tabs/flightTab.ui")[0]
 
 MAX_THRUST = 65536.0
+
+TOOLTIP_ALTITUDE_HOLD = """\
+Keeps the Crazyflie at its current altitude.
+Thrust control becomes height velocity control. The Crazyflie
+uses the barometer for height control and uses body-fixed coordinates."""
+
+TOOLTIP_POSITION_HOLD = """\
+Keeps the Crazyflie at its current 3D position. Pitch/Roll/
+Thrust control becomes X/Y/Z velocity control. Uses world coordinates."""
+
+TOOLTIP_HEIGHT_HOLD = """\
+When activated, keeps the Crazyflie at 40cm above the ground.
+Thrust control becomes height velocity control. Requires a height
+sensor like the Z-Ranger deck or flow deck. Uses body-fixed coordinates.."""
+
+TOOLTIP_HOVER = """\
+When activated, keeps the Crazyflie at 40cm above the ground and tries to
+keep the position in X and Y as well. Thrust control becomes height velocity
+control. Requires a flow deck. Uses body-fixed coordinates."""
 
 
 class FlightTab(Tab, flight_tab_class):
@@ -245,41 +266,61 @@ class FlightTab(Tab, flight_tab_class):
 
     def _baro_data_received(self, timestamp, data, logconf):
         if self.isVisible():
-            estimated_z = data[LOG_NAME_ESTIMATED_Z]
-            self.actualHeight.setText(("%.2f" % estimated_z))
+            estimated_x = data[LOG_NAME_ESTIMATE_X]
+            estimated_y = data[LOG_NAME_ESTIMATE_Y]
+            estimated_z = data[LOG_NAME_ESTIMATE_Z]
+            self.estimateX.setText(("%.2f" % estimated_x))
+            self.estimateY.setText(("%.2f" % estimated_y))
+            self.estimateZ.setText(("%.2f" % estimated_z))
             self.ai.setBaro(estimated_z, self.is_visible())
 
     def _heighthold_input_updated(self, roll, pitch, yaw, height):
         if (self.isVisible() and
                 (self.helper.inputDeviceReader.get_assisted_control() ==
                  self.helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD)):
+
             self.targetRoll.setText(("%0.2f deg" % roll))
             self.targetPitch.setText(("%0.2f deg" % pitch))
             self.targetYaw.setText(("%0.2f deg/s" % yaw))
             self.targetHeight.setText(("%.2f m" % height))
             self.ai.setHover(height, self.is_visible())
 
+            self._change_input_labels(using_hover_assist=False)
+
     def _hover_input_updated(self, vx, vy, yaw, height):
         if (self.isVisible() and
                 (self.helper.inputDeviceReader.get_assisted_control() ==
                  self.helper.inputDeviceReader.ASSISTED_CONTROL_HOVER)):
+
             self.targetRoll.setText(("%0.2f m/s" % vy))
             self.targetPitch.setText(("%0.2f m/s" % vx))
             self.targetYaw.setText(("%0.2f deg/s" % yaw))
             self.targetHeight.setText(("%.2f m" % height))
             self.ai.setHover(height, self.is_visible())
 
+            self._change_input_labels(using_hover_assist=True)
+
     def _imu_data_received(self, timestamp, data, logconf):
         if self.isVisible():
-            self.actualRoll.setText(("%.2f" % data["stabilizer.roll"]))
-            self.actualPitch.setText(("%.2f" % data["stabilizer.pitch"]))
-            self.actualYaw.setText(("%.2f" % data["stabilizer.yaw"]))
-            self.actualThrust.setText("%.2f%%" %
-                                      self.thrustToPercentage(
-                                          data["stabilizer.thrust"]))
+            self.estimateRoll.setText(("%.2f" % data["stabilizer.roll"]))
+            self.estimatePitch.setText(("%.2f" % data["stabilizer.pitch"]))
+            self.estimateYaw.setText(("%.2f" % data["stabilizer.yaw"]))
+            self.estimateThrust.setText("%.2f%%" %
+                                        self.thrustToPercentage(
+                                            data["stabilizer.thrust"]))
 
             self.ai.setRollPitch(-data["stabilizer.roll"],
                                  data["stabilizer.pitch"], self.is_visible())
+
+    def _change_input_labels(self, using_hover_assist):
+        if using_hover_assist:
+            pitch, roll, yaw = 'Velocity X', 'Velocity Y', 'Velocity Z'
+        else:
+            pitch, roll, yaw = 'Pitch', 'Roll', 'Yaw'
+
+        self.inputPitchLabel.setText(pitch)
+        self.inputRollLabel.setText(roll)
+        self.inputYawLabel.setText(yaw)
 
     def connected(self, linkURI):
         # IMU & THRUST
@@ -316,16 +357,24 @@ class FlightTab(Tab, flight_tab_class):
         except AttributeError as e:
             logger.warning(str(e))
 
+    def _enable_estimators(self, should_enable):
+        self.estimateX.setEnabled(should_enable)
+        self.estimateY.setEnabled(should_enable)
+        self.estimateZ.setEnabled(should_enable)
+
     def _set_available_sensors(self, name, available):
         logger.info("[%s]: %s", name, available)
         available = eval(available)
 
-        self.actualHeight.setEnabled(True)
+        self._enable_estimators(True)
+
         self.helper.inputDeviceReader.set_alt_hold_available(available)
         if not self.logBaro:
             # The sensor is available, set up the logging
             self.logBaro = LogConfig("Baro", 200)
-            self.logBaro.add_variable(LOG_NAME_ESTIMATED_Z, "float")
+            self.logBaro.add_variable(LOG_NAME_ESTIMATE_X, "float")
+            self.logBaro.add_variable(LOG_NAME_ESTIMATE_Y, "float")
+            self.logBaro.add_variable(LOG_NAME_ESTIMATE_Z, "float")
 
             try:
                 self.helper.cf.log.add_config(self.logBaro)
@@ -345,15 +394,21 @@ class FlightTab(Tab, flight_tab_class):
         self.actualM2.setValue(0)
         self.actualM3.setValue(0)
         self.actualM4.setValue(0)
-        self.actualRoll.setText("")
-        self.actualPitch.setText("")
-        self.actualYaw.setText("")
-        self.actualThrust.setText("")
-        self.actualHeight.setText("")
+
+        self.estimateRoll.setText("")
+        self.estimatePitch.setText("")
+        self.estimateYaw.setText("")
+        self.estimateThrust.setText("")
+        self.estimateX.setText("")
+        self.estimateY.setText("")
+        self.estimateZ.setText("")
+
         self.targetHeight.setText("Not Set")
         self.ai.setHover(0, self.is_visible())
         self.targetHeight.setEnabled(False)
-        self.actualHeight.setEnabled(False)
+
+        self._enable_estimators(False)
+
         self.logBaro = None
         self.logAltHold = None
         self._led_ring_effect.setEnabled(False)
@@ -427,6 +482,8 @@ class FlightTab(Tab, flight_tab_class):
         self.targetThrust.setText(("%0.2f %%" %
                                    self.thrustToPercentage(thrust)))
         self.thrustProgress.setValue(thrust)
+
+        self._change_input_labels(using_hover_assist=False)
 
     def setMotorLabelsEnabled(self, enabled):
         self.M1label.setEnabled(enabled)
@@ -509,6 +566,7 @@ class FlightTab(Tab, flight_tab_class):
                  JoystickReader.ASSISTED_CONTROL_HOVER)):
             self.targetThrust.setEnabled(not enabled)
             self.targetHeight.setEnabled(enabled)
+            print('Chaning enable for target height: %s' % enabled)
         else:
             self.helper.cf.param.set_value("flightmode.althold", str(enabled))
 
@@ -591,6 +649,17 @@ class FlightTab(Tab, flight_tab_class):
         self._assist_mode_combo.addItem("Position hold", 1)
         self._assist_mode_combo.addItem("Height hold", 2)
         self._assist_mode_combo.addItem("Hover", 3)
+
+        # Add the tooltips to the assist-mode items.
+        self._assist_mode_combo.setItemData(0, TOOLTIP_ALTITUDE_HOLD,
+                                            Qt.ToolTipRole)
+        self._assist_mode_combo.setItemData(1, TOOLTIP_POSITION_HOLD,
+                                            Qt.ToolTipRole)
+        self._assist_mode_combo.setItemData(2, TOOLTIP_HEIGHT_HOLD,
+                                            Qt.ToolTipRole)
+        self._assist_mode_combo.setItemData(3, TOOLTIP_HOVER,
+                                            Qt.ToolTipRole)
+
         heightHoldPossible = False
         hoverPossible = False
 

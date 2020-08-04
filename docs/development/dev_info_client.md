@@ -20,7 +20,7 @@ Here\'s a quick overview:
 Architecture
 ============
 
-![input arch mux](/images/input-arch-mux.png){:.align-right
+![input arch mux](/docs/images/input-arch-mux.png){:.align-right
 width="600"}
 
 Input devices
@@ -71,7 +71,7 @@ The input interfaces don\'t use any mapping, the devices itself directly
 generate useful values (like roll/pitch/yaw/thrust). Currently there\'s
 two implementations: LeapMotion and ZMQ. Values are read the same way as
 from normal gamepads/joysticks, at 100Hz. For more information on how
-the ZMQ interface works read [here](/functional-areas/cfclient_zmq#input-device).
+the ZMQ interface works read [here](/docs/functional-areas/cfclient_zmq.md#input-device).
 
 ### The MUX
 
