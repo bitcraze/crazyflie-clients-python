@@ -65,7 +65,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
         self.logTree.setHeaderLabels(['Name', 'ID', 'Type', 'Size'])
         self.varTree.setHeaderLabels(['Name', 'ID', 'Type', 'Size'])
-        self.categoryTree.setHeaderLabels(['Cathegories'])
+        self.categoryTree.setHeaderLabels(['Categories'])
 
         self.logTree.setSortingEnabled(True)
         self.varTree.setSortingEnabled(True)
