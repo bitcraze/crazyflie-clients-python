@@ -15,12 +15,7 @@ out of the box. The image is based on the
 
 We haven\'t removed anything from the image, just added our own stuff.
 So you can still log in and used the Raspberry Pi as you would with the
-Raspbian image, but as an added feature you can also use our stuff. If
-you would like to re-create the SD-image with your own Wheezy image then
-[have a look at what we did](https://wiki.bitcraze.io/projects:crazyflie:pc_utils:raspberrypi).
-
-The changes made to the SD-card is mostly based of the contributed
-instructions from the [hacks section](https://wiki.bitcraze.io/misc:hacks:rasberrypi).
+Raspbian image, but as an added feature you can also use our stuff.
 
 Download
 ========

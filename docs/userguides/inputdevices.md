@@ -10,18 +10,6 @@ supports creating new configurations that uses other controllers. This
 page details what controllers are supported out of the box, how to
 create a new configurations and how to debug problems.
 
-Limitations
------------
-
-First of all there\'s currently a few limitations in the client (that
-will be fixed in the future):
-
--   ~~After entering the configuration dialogue the application needs to
-    be restarted.~~ Fixed in 2013.4.2
--   ~~There\'s only support for one input device. If you have multiple
-    connected the application will choose the first one.~~ Fixed in
-    2013.4.1
-
 Steps to get the controller working
 -----------------------------------
 
@@ -73,8 +61,8 @@ us an email.
 
  | **Controller**    |        **Linux USB**       |                                                        **Linux BT**  |                                                                    **Win XP USB**  | **Win XP BT**  |                                                                    **Win7 USB**     |                                                                      **Win7 BT**        |                                                                          **Win8 USB**         |                                                             **Mac OSX USB**  | **Mac OSX BT**|
 |--|--|--|--|--|--|--|--|--|--|--|
- | Playstation 3 (or copy)  | Works           |                                                            [Instructions](#linux-using-bluetooth) |  Works       |     [Instructions?](#winxp-using-bluetooth) |  [Motion joy instructions?](#win7-using-usb)  | [Motion joy instructions?](#win7-using-bluetooth)  | [Instructions](http://www.wikihow.com/Set-Up-USB-Game-Controllers-on-Windows-8) |  Works     |        [Instructions](#mac-osx-with-bluetooth)|
-  Xbox 360 (or copy)      |  [Instructions](#linux-using-usb)  | N/A                  |                                                             Works    |        N/A                       |                                                                                                                                                Works        |                                                                                N/A            |                                                                   Not tested    |    Not tested|
+ | Playstation 3 (or copy)  | Works           |                                                            Works |  Works       |     Works | Works  | Works  | Works,  |  Works     |        Works|
+  Xbox 360 (or copy)      |  Works  | N/A                  |                                                             Works    |        N/A                       |                                                                                                                                                Works        |                                                                                N/A            |                                                                   Not tested    |    Not tested|
 
 Playstation 3 controller
 ========================
@@ -85,11 +73,6 @@ Linux using Bluetooth
 [How to set up Sixaxis on
 Ubuntu](https://help.ubuntu.com/community/Sixaxis) (tested on Ubuntu
 13.10)
-
-WinXP using Bluetooth
----------------------
-
-**TODO**
 
 Win7 using USB
 --------------
@@ -106,10 +89,14 @@ Win7 using Bluetooth
 
 Should work using MotionJoy but this needs confirmation.
 
+Win8 USB
+--------------------
+[Instructions](http://www.wikihow.com/Set-Up-USB-Game-Controllers-on-Windows-8)
+
 Mac OSX with Bluetooth
 ----------------------
 
-Works. To pair the controller follow the steps outlined
+To pair the controller follow the steps outlined
 [here](https://gist.github.com/statico/3172711). **TODO**: This
 procedure is somewhat shaky. Figure out and add a solid set of steps
 here.
@@ -139,4 +126,4 @@ And then started by running:
     sudo xboxdrv
 
 More info about the `xboxdrv` is available
-[here](http://pingus.seul.org/~grumbel/xboxdrv/).
+[here](https://xboxdrv.gitlab.io/).
