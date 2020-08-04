@@ -20,8 +20,9 @@ extensively. For that to make any sense for a quadcopter we need to know
 where the front is,
 [Crazyflie 2.X](https://www.bitcraze.io/documentation/system/).
 
-How to get flying
-=================
+---
+
+## How to get flying
 
 -   Start up the application
 -   Insert the joystick and Crazyradio (PA)
@@ -39,8 +40,9 @@ How to get flying
 
 For more info on LED indicators etc. have a look at the [Crazyflie 2.X](https://www.bitcraze.io/documentation/tutorials/getting-started-with-crazyflie-2-x/#understanding-leds) user guide.
 
-Main UI
-=======
+---
+
+## Main UI
 
 ![CF client main](/docs/images/cf_client_1.png)
 
@@ -59,14 +61,14 @@ Main UI
     - Tabs with specific functionality (see below for details)
     - The selected and used input interface
 
-Functionality
-=============
+---
+
+## Functionality
 
 Below are a few guides on how to accomplish specific tasks with the
 client.
 
-Firmware upgrade
-----------------
+### Firmware upgrade
 
 For updating the Crazyflie firmware there\'s the possibility to enter
 bootloader mode and flash [new
@@ -97,8 +99,7 @@ To check the firmware version, under the *View* menu, open up
 *Tabs-\>Console* tab and look at the output when connecting to the
 Crazyflie 2.X.
 
-Firmware configuration
-----------------------
+### Firmware configuration
 
 It is possible to set another channel to communicate with the Crazyflie 2.X. It can be wise to do this if there exist other wireless
 networks that can interfere, especially WiFi. It is also possible to
@@ -133,9 +134,7 @@ First connect to the Crazyflie 2.X with the normal connect button. Then open "Cr
 
 Once the settings has been made press the write button to save them permanently in the Crazyflie 2.X EEPROM.
 
-
-Logging
--------
+### Logging
 
 The Crazyflie logging framework allows to log the state of Crazyflie
 variables in real-time. This subsystem is used by the client to show
@@ -166,15 +165,13 @@ configuration\", You then see the following toolbox:
     be done by right-clicking anywhere in the category-tree.
 9.  Save log block configuration
 
-Flight settings
----------------
+### Flight settings
 
 By using the settings on the [Flight control
 tab](#flightcontrol) you can set
 things such as the max roll/pitch and thrust.
 
-Input devices
--------------
+### Input devices
 
 In order to control the Crazyflie you are connected to you will need
 some input-device. Normally this would be a gamepad, but any
@@ -287,14 +284,14 @@ configurations at the bottom of the user interface.
 ![cfclient input mux configured](/docs/images/cfclient_input_mux_configured.png){:align-center
 width="700"}
 
-Tabs
-====
+---
+
+## Tabs
 
 The main interface is built up of different tabs that can be
 shown/hidden from the *View-\>Tabs* menu.
 
-Flightcontrol
--------------
+### Flightcontrol
 
 The normal view used when flying is the one seen below.
 ![cfclient flighttab](/docs/images/cfclient_flightab.png){:align-center}
@@ -326,8 +323,7 @@ The normal view used when flying is the one seen below.
 8. Motor output on the Crazyflie
 9. Horizon indicator
 
-Plotter
--------
+### Plotter
 
 The plotter tab can be used to visualize data logged from the Crazyflie
 ![cfclient plotter](/docs/images/cfclient_ploter.png){:align-center
@@ -343,8 +339,7 @@ width="700"}
 6.  Auto update graph. If this is disabled the plot will stop updating
     (but data will still be collected in the background)
 
-Parameters
-----------
+### Parameters
 
 The Crazyflie supports parameters, variables stored in the Crazyflie
 that can be changed in real-time. The parameter tab can be used to view
@@ -365,8 +360,7 @@ width="700"}
     - Group: To make things easier each group has it's members organized as sub-nodes to the group
     - Parameters: The full name of each parameter is the group combined with the name (group.name)
 
-Log blocks
-----------
+### Log blocks
 
 The log blocks tab shows all log configurations that are saved and if
 they are started. It\'s also possible to start/stop them as well as
@@ -413,9 +407,7 @@ of what\'s logged when logging the battery level:
     13103,3.74252200127
 
 
-
-Console
--------
+### Console
 
 The console tab will show printouts from the Crazyflie firmware as it\'s
 running.
@@ -424,8 +416,7 @@ width="700"}
 
 1.  Console output from the Crazyflie
 
-Loco Positioning
-----------------
+### Loco Positioning
 
 The Loco Positioning tab shows information from the Loco Positioning
 system when present.
@@ -504,8 +495,9 @@ width="700"}
 5.  Current system mode indication. The system must be in TWR mode for
     the anchor identification mode to be available.
 
-ZMQ backends
-============
+---
+
+## ZMQ backends
 
 The UI is normally used to get/set parameters, view logged data and send
 control commands to the Crazyflie. Aside from this there\'s also the
