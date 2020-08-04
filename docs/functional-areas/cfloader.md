@@ -13,8 +13,9 @@ The Crazyflie can be bootloaded from the commandline using the
 platform and start it again by pressing the power button for at least
 1.5 seconds, but not more than 5.
 
-Programming Crazyflie from firmware projects
-============================================
+---
+
+## Programming Crazyflie from firmware projects
 
 When developping with the Crazyflie firmware projects, either
 [crazyflie-firmware](https://github.com/bitcraze/crazyflie-firmware) or
@@ -34,7 +35,7 @@ flash it and restart it with the new firmware.
 
 In warmboot mode the bootloader is launched
 using a random address. This means that multiple Crazyflie can be
-programmed at the same time without collision. 
+programmed at the same time without collision.
 
 **Warning:** If the flashing operation fails or if
 the firmware has a bug, it may be impossible to warmboot. In that case
@@ -43,8 +44,9 @@ programming with:
 
     make cload CLOAD_CMDS=
 
-cfloader
-========
+---
+
+## cfloader
 
 The script is located in the *bin* directory in the
 *crazyflie-clients-python* repository and client. Here\'s how to use the
@@ -68,9 +70,9 @@ script:
                                  possible  page in flash and reset to firmware
                                  mode.
 
+---
 
-Crazyflie 2.X examples
-----------------------
+## Crazyflie 2.X examples
 
 Flashing new firmware for the nRF51 MCU:
 

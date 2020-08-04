@@ -10,20 +10,9 @@ supports creating new configurations that uses other controllers. This
 page details what controllers are supported out of the box, how to
 create a new configurations and how to debug problems.
 
-Limitations
------------
+---
 
-First of all there\'s currently a few limitations in the client (that
-will be fixed in the future):
-
--   ~~After entering the configuration dialogue the application needs to
-    be restarted.~~ Fixed in 2013.4.2
--   ~~There\'s only support for one input device. If you have multiple
-    connected the application will choose the first one.~~ Fixed in
-    2013.4.1
-
-Steps to get the controller working
------------------------------------
+## Steps to get the controller working
 
 Here\'s a few steps that you have to go though in order to get the
 input-device working. If any of the steps are not working then the
@@ -64,8 +53,9 @@ delete the contents of the user config folder (win:
 *\~/.config/cfclient*) and create a new configuration from scratch as
 described above.
 
-Input device overview
-=====================
+---
+
+## Input device overview
 
 Below is a list of controllers and the status for different OSs. The
 list is far from complete so if you have more info please edit or drop
@@ -73,26 +63,19 @@ us an email.
 
  | **Controller**    |        **Linux USB**       |                                                        **Linux BT**  |                                                                    **Win XP USB**  | **Win XP BT**  |                                                                    **Win7 USB**     |                                                                      **Win7 BT**        |                                                                          **Win8 USB**         |                                                             **Mac OSX USB**  | **Mac OSX BT**|
 |--|--|--|--|--|--|--|--|--|--|--|
- | Playstation 3 (or copy)  | Works           |                                                            [Instructions](#linux-using-bluetooth) |  Works       |     [Instructions?](#winxp-using-bluetooth) |  [Motion joy instructions?](#win7-using-usb)  | [Motion joy instructions?](#win7-using-bluetooth)  | [Instructions](http://www.wikihow.com/Set-Up-USB-Game-Controllers-on-Windows-8) |  Works     |        [Instructions](#mac-osx-with-bluetooth)|
-  Xbox 360 (or copy)      |  [Instructions](#linux-using-usb)  | N/A                  |                                                             Works    |        N/A                       |                                                                                                                                                Works        |                                                                                N/A            |                                                                   Not tested    |    Not tested|
+ | Playstation 3 (or copy)  | Works           |                                                            Works |  Works       |     Works | Works  | Works  | Works,  |  Works     |        Works|
+  Xbox 360 (or copy)      |  Works  | N/A                  |                                                             Works    |        N/A                       |                                                                                                                                                Works        |                                                                                N/A            |                                                                   Not tested    |    Not tested|
 
-Playstation 3 controller
-========================
 
-Linux using Bluetooth
----------------------
+### Playstation 3 controller
+
+#### Linux using Bluetooth
 
 [How to set up Sixaxis on
 Ubuntu](https://help.ubuntu.com/community/Sixaxis) (tested on Ubuntu
 13.10)
 
-WinXP using Bluetooth
----------------------
-
-**TODO**
-
-Win7 using USB
---------------
+#### Win7 using USB
 
 There\'s support for this using MotionJoy, **but** the mapping of the
 axis is not the same as for Windows XP/Linux and has to be configured.
@@ -101,15 +84,16 @@ axis is not the same as for Windows XP/Linux and has to be configured.
 [Video on how to get started with
 MotionJoy](http://youtu.be/b2lUxNShIDs).
 
-Win7 using Bluetooth
---------------------
+#### Win7 using Bluetooth
 
 Should work using MotionJoy but this needs confirmation.
 
-Mac OSX with Bluetooth
-----------------------
+#### Win8 USB
+[Instructions](http://www.wikihow.com/Set-Up-USB-Game-Controllers-on-Windows-8)
 
-Works. To pair the controller follow the steps outlined
+#### Mac OSX with Bluetooth
+
+To pair the controller follow the steps outlined
 [here](https://gist.github.com/statico/3172711). **TODO**: This
 procedure is somewhat shaky. Figure out and add a solid set of steps
 here.
@@ -119,11 +103,11 @@ controller from OSX. This is easiest done if you enable in in System
 Preferences -\> Bluetooth enable Show Bluetooth status in menu bar. From
 the menu bar item you can easily disconnect it.
 
-Xbox 360 controller
-===================
+---
 
-Linux using USB
----------------
+### Xbox 360 controller
+
+#### Linux using USB
 
 **INFO:** All modern Linux distribution now have a kernel driver for the x-box
 gamepad. Thus it is unlikely the *xboxdrv* user-space driver is needed.
@@ -139,4 +123,4 @@ And then started by running:
     sudo xboxdrv
 
 More info about the `xboxdrv` is available
-[here](http://pingus.seul.org/~grumbel/xboxdrv/).
+[here](https://xboxdrv.gitlab.io/).
