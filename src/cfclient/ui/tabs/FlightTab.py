@@ -59,6 +59,25 @@ flight_tab_class = uic.loadUiType(cfclient.module_path +
 
 MAX_THRUST = 65536.0
 
+TOOLTIP_ALTITUDE_HOLD = """\
+Keeps the Crazyflie at its current altitude.
+Thrust control becomes height velocity control. The Crazyflie
+uses the barometer for height control and uses body-fixed coordinates."""
+
+TOOLTIP_POSITION_HOLD = """\
+Keeps the Crazyflie at its current 3D position. Pitch/Roll/
+Thrust control becomes X/Y/Z velocity control. Uses world coordinates."""
+
+TOOLTIP_HEIGHT_HOLD = """\
+When activated, keeps the Crazyflie at 40cm above the ground.
+Thrust control becomes height velocity control. Requires a height
+sensor like the Z-Ranger deck or flow deck. Uses body-fixed coordinates.."""
+
+TOOLTIP_HOVER = """\
+When activated, keeps the Crazyflie at 40cm above the ground and tries to
+keep the position in X and Y as well. Thrust control becomes height velocity
+control. Requires a flow deck. Uses body-fixed coordinates."""
+
 
 class FlightTab(Tab, flight_tab_class):
     uiSetupReadySignal = pyqtSignal()
@@ -630,6 +649,17 @@ class FlightTab(Tab, flight_tab_class):
         self._assist_mode_combo.addItem("Position hold", 1)
         self._assist_mode_combo.addItem("Height hold", 2)
         self._assist_mode_combo.addItem("Hover", 3)
+
+        # Add the tooltips to the assist-mode items.
+        self._assist_mode_combo.setItemData(0, TOOLTIP_ALTITUDE_HOLD,
+                                            Qt.ToolTipRole)
+        self._assist_mode_combo.setItemData(1, TOOLTIP_POSITION_HOLD,
+                                            Qt.ToolTipRole)
+        self._assist_mode_combo.setItemData(2, TOOLTIP_HEIGHT_HOLD,
+                                            Qt.ToolTipRole)
+        self._assist_mode_combo.setItemData(3, TOOLTIP_HOVER,
+                                            Qt.ToolTipRole)
+
         heightHoldPossible = False
         hoverPossible = False
 
