@@ -1,6 +1,6 @@
 ---
 title: Bitcraze Raspberry Pi SD-card image
-page_id: raspberrypi 
+page_id: raspberrypi
 ---
 
 
@@ -15,15 +15,11 @@ out of the box. The image is based on the
 
 We haven\'t removed anything from the image, just added our own stuff.
 So you can still log in and used the Raspberry Pi as you would with the
-Raspbian image, but as an added feature you can also use our stuff. If
-you would like to re-create the SD-image with your own Wheezy image then
-[have a look at what we did](https://wiki.bitcraze.io/projects:crazyflie:pc_utils:raspberrypi).
+Raspbian image, but as an added feature you can also use our stuff.
 
-The changes made to the SD-card is mostly based of the contributed
-instructions from the [hacks section](https://wiki.bitcraze.io/misc:hacks:rasberrypi).
+---
 
-Download
-========
+## Download
 
 The SD-card image can be downloaded here (version 2015.3 and onward is
 compatible with Raspberrypi 2):
@@ -42,8 +38,9 @@ compatible with Raspberrypi 2):
 added webseed so it is faster than direct download and guarantee the
 file integrity.
 
-Installing in an existing Raspbian sdcard
-=========================================
+---
+
+## Installing in an existing Raspbian sdcard
 
 If you already have a running raspbian system no need to download the
 image, connect your raspberrypi and run the following command to install
@@ -52,8 +49,9 @@ You must be logged with the \'pi\' user to launch the command:
 
     curl https://raw.githubusercontent.com/bitcraze/bitcraze-raspberry-pi/2015.3/bitcraze_raspberrypi.sh | sh
 
-SD-image info
-=============
+---
+
+## SD-image info
 
     Size: 4 GB
     User: pi
@@ -61,8 +59,9 @@ SD-image info
 
 (version before 2015.3 had bitcraze/crazyflie as username/password)
 
-What\'s added to the image
-==========================
+---
+
+## What\'s added to the image
 
 There\'s a list of what\'s added:
 
@@ -74,15 +73,17 @@ There\'s a list of what\'s added:
 -   Driver for the Xbox 360 wireless controller and automatic start of
     the utilities
 
-Creating the SD-card
-====================
+---
+
+## Creating the SD-card
 
 First of all you have to write the image to the SD-card. There are good
 instructions on how to do this
 [here](http://elinux.org/RPi_Easy_SD_Card_Setup#Create_your_own).
 
-How to use the SD-card image
-============================
+---
+
+## How to use the SD-card image
 
 First of all you need to set up what controller and link settings you
 are using. This is done by editing the two files in the folder /home/pi
@@ -98,8 +99,9 @@ To quit either power off the Crazyflie or pull-out the Crazyradio.
 In order to restart flying you have to pull-out the Crazyradio dongle
 and insert it again.
 
-Troubleshooting
-===============
+---
+
+## Troubleshooting
 
 Try to pull-out and insert the Crazyradio. Then wait up to 10 seconds
 before you try to control the Crazyflie.
@@ -110,11 +112,11 @@ Crazyflie.
 
 Check logfile /tmp/cfheadless.log for messages
 
-FAQ
-===
+---
 
-How do I get the RedOctane Xbox360 controller to work
------------------------------------------------------
+## FAQ
+
+### How do I get the RedOctane Xbox360 controller to work
 
 You will have to edit the `/root/bin/xbox` file to contain the following
 to get the RedOctaine xbox360 (1430:f801) controller to work:
