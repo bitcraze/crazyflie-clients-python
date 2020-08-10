@@ -89,14 +89,12 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         # Connecting GUI signals (a pity to do that manually...)
         self.imagePathBrowseButton.clicked.connect(self.pathBrowse)
         self.programButton.clicked.connect(self.programAction)
-        self.verifyButton.clicked.connect(self.verifyAction)
         self.coldBootButton.clicked.connect(self.initiateColdboot)
         self.resetButton.clicked.connect(self.resetCopter)
         self._cancel_bootloading.clicked.connect(self.close)
 
         # connecting other signals
         self.clt.programmed.connect(self.programDone)
-        self.clt.verified.connect(self.verifyDone)
         self.clt.statusChanged.connect(self.statusUpdate)
         # self.clt.updateBootloaderStatusSignal.connect(
         #                                         self.updateBootloaderStatus)
@@ -197,7 +195,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             save to release_path.
         """
         self.downloadStatus.setText('Downloaded')
-        self.clt.program.emit(release_path, True, '')
+        self.clt.program.emit(release_path, '')
 
     @pyqtSlot()
     def pathBrowse(self):
@@ -225,9 +223,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
                 mcu_to_flash = 'stm32'
             elif self.radioNrf51.isChecked():
                 mcu_to_flash = 'nrf51'
-            self.clt.program.emit(self.imagePathLine.text(),
-                                  self.verifyCheckBox.isChecked(),
-                                  mcu_to_flash)
+            self.clt.program.emit(self.imagePathLine.text(), mcu_to_flash)
         # If no file is supplied, we try to get a firmware from web-request
         else:
             requested_release = self.firmwareDropdown.currentText()
@@ -239,11 +235,6 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             # msgBox = QtWidgets.QMessageBox()
             # msgBox.setText("Please choose an image file to program.")
             # msgBox.exec_()
-
-    @pyqtSlot()
-    def verifyAction(self):
-        self.statusLabel.setText('Status: <b>Initiate verification</b>')
-        pass
 
     @pyqtSlot(bool)
     def programDone(self, success):
@@ -257,11 +248,6 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.resetButton.setEnabled(True)
         self.programButton.setEnabled(True)
         self.imagePathBrowseButton.setEnabled(True)
-
-    @pyqtSlot()
-    def verifyDone(self):
-        self.statusLabel.setText('Status: <b>Verification complete</b>')
-        pass
 
     @pyqtSlot(str, int)
     def statusUpdate(self, status, progress):
@@ -278,8 +264,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 # event loop which is what we want
 class CrazyloadThread(QThread):
     # Input signals declaration (not sure it should be used like that...)
-    program = pyqtSignal(str, bool, str)
-    verify = pyqtSignal()
+    program = pyqtSignal(str, str)
     initiateColdBootSignal = pyqtSignal(str)
     resetCopterSignal = pyqtSignal()
     writeConfigSignal = pyqtSignal(int, int, float, float)
@@ -325,8 +310,7 @@ class CrazyloadThread(QThread):
         except Exception as e:
             self.failed_signal.emit("{}".format(e))
 
-    def programAction(self, filename, verify, mcu_to_flash):
-
+    def programAction(self, filename, mcu_to_flash):
         targets = {}
         if mcu_to_flash:
             targets[mcu_to_flash] = ("fw",)
