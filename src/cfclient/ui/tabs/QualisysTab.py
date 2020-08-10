@@ -98,24 +98,6 @@ class FlightModeStates(Enum):
     RECORD = 8
 
 
-COLOR_BLUE = '#3399ff'
-COLOR_GREEN = '#00ff60'
-COLOR_RED = '#cc0404'
-
-
-def progressbar_stylesheet(color):
-    return """
-        QProgressBar {
-            border: 1px solid #AAA;
-            background-color: transparent;
-        }
-
-        QProgressBar::chunk {
-            background-color: """ + color + """;
-        }
-    """
-
-
 def start_async_task(task):
     return asyncio.ensure_future(task)
 
