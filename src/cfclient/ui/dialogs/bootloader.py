@@ -32,6 +32,12 @@ read/write the configuration block in the Crazyflie flash.
 from cflib.bootloader import Bootloader
 
 import logging
+import json
+import os
+import threading
+from urllib.request import urlopen
+from urllib.error import URLError
+import zipfile
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import pyqtSlot, pyqtSignal, QThread
@@ -46,6 +52,10 @@ logger = logging.getLogger(__name__)
 service_dialog_class = uic.loadUiType(cfclient.module_path +
                                       "/ui/dialogs/bootloader.ui")[0]
 
+# This url is used to fetch all the releases from the FirmwareDownloader
+RELEASE_URL = 'https://api.github.com/repos/bitcraze/'\
+              'crazyflie-release/releases'
+
 
 class UIState:
     DISCONNECTED = 0
@@ -59,6 +69,9 @@ class UIState:
 class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     """Tab for update the Crazyflie firmware and for reading/writing the config
     block in flash"""
+
+    _release_firmwares_found = pyqtSignal(object)
+    _release_downloaded = pyqtSignal(str, object)
 
     def __init__(self, helper, *args):
         super(BootloaderDialog, self).__init__(*args)
@@ -98,6 +111,15 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         # set radiobutton for flashing both mcu's (default)
         self.radioBoth.setChecked(True)
 
+        self._releases = {}
+        self._release_firmwares_found.connect(self._populate_firmware_dropdown)
+        self._release_downloaded.connect(self.release_zip_downloaded)
+        self.firmware_downloader = FirmwareDownloader(
+                                        self._release_firmwares_found,
+                                        self._release_downloaded)
+        self.firmware_downloader.get_firmware_releases()
+
+        self.firmware_downloader.start()
         self.clt.start()
 
     def _ui_connection_fail(self, message):
@@ -153,8 +175,29 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.radioSpeed.setCurrentIndex(speed)
 
     def closeEvent(self, event):
+        # Remove downloaded-firmware files.
+        self.firmware_downloader.bootload_complete.emit()
         self.setUiState(UIState.RESET)
         self.clt.resetCopterSignal.emit()
+
+    def _populate_firmware_dropdown(self, releases):
+        """ Callback from firmware-downloader that retrieves all
+            the latest firmware-releases.
+        """
+        for release in releases:
+            release_name = release[0]
+            for download in release[1:]:
+                download_name, download_link = download
+                widget_name = '%s - %s' % (release_name, download_name)
+                self._releases[widget_name] = download_link
+                self.firmwareDropdown.addItem(widget_name)
+
+    def release_zip_downloaded(self, release_name, release_path):
+        """ Callback when a release is succesfully downloaded and
+            save to release_path.
+        """
+        self.downloadStatus.setText('Downloaded')
+        self.clt.program.emit(release_path, True, '')
 
     @pyqtSlot()
     def pathBrowse(self):
@@ -172,23 +215,30 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.programButton.setEnabled(False)
         self.imagePathBrowseButton.setEnabled(False)
 
-        # by default, both of the mcu:s are flashed
-        mcu_to_flash = None
-
-        if self.radioStm32.isChecked():
-            mcu_to_flash = 'stm32'
-        elif self.radioNrf51.isChecked():
-            mcu_to_flash = 'nrf51'
-
         # call the flasher
         if self.imagePathLine.text() != "":
+
+            # by default, both of the mcu:s are flashed
+            mcu_to_flash = None
+
+            if self.radioStm32.isChecked():
+                mcu_to_flash = 'stm32'
+            elif self.radioNrf51.isChecked():
+                mcu_to_flash = 'nrf51'
             self.clt.program.emit(self.imagePathLine.text(),
                                   self.verifyCheckBox.isChecked(),
                                   mcu_to_flash)
+        # If no file is supplied, we try to get a firmware from web-request
         else:
-            msgBox = QtWidgets.QMessageBox()
-            msgBox.setText("Please choose an image file to program.")
-            msgBox.exec_()
+            requested_release = self.firmwareDropdown.currentText()
+            download_url = self._releases[requested_release]
+            self.downloadStatus.setText('Fetching...')
+            self.firmware_downloader.download_release(requested_release,
+                                                      download_url)
+
+            # msgBox = QtWidgets.QMessageBox()
+            # msgBox.setText("Please choose an image file to program.")
+            # msgBox.exec_()
 
     @pyqtSlot()
     def verifyAction(self):
@@ -199,6 +249,8 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     def programDone(self, success):
         if success:
             self.statusLabel.setText('Status: <b>Programing complete!</b>')
+            self.downloadStatus.setText('')
+
         else:
             self.statusLabel.setText('Status: <b>Programing failed!</b>')
 
@@ -291,3 +343,98 @@ class CrazyloadThread(QThread):
             pass
         self._bl.close()
         self.disconnectedSignal.emit()
+
+
+class FirmwareDownloader(QThread):
+    """ Uses github API to retrieves firmware-releases. """
+
+    bootload_complete = pyqtSignal()
+
+    def __init__(self, qtsignal_get_all_firmwares, qtsignal_get_release):
+        super(FirmwareDownloader, self).__init__()
+
+        self._qtsignal_get_all_firmwares = qtsignal_get_all_firmwares
+        self._qtsignal_get_release = qtsignal_get_release
+
+        self._filepath = os.path.join(os.path.dirname(__file__),
+                                      'tmp.zip')
+        self.moveToThread(self)
+
+        self.bootload_complete.connect(lambda: self._remove_zip_file())
+
+    def get_firmware_releases(self):
+        """ Wrapper-function """
+        threading.Thread(target=self._get_firmware_releases,
+                         args=(self._qtsignal_get_all_firmwares, )).start()
+
+    def download_release(self, release_name, url):
+        """ Wrapper-function """
+        threading.Thread(target=self._download_release,
+                         args=(self._qtsignal_get_release,
+                               release_name, url)).start()
+
+    def _get_firmware_releases(self, signal):
+        """ Gets the firmware releases from the github API
+            and returns a list of format [rel-name, {release: download-link}].
+            Returns None if the request fails.
+        """
+        try:
+            with urlopen(RELEASE_URL) as resp:
+                response = json.load(resp)
+        except URLError:
+            logger.warning(
+                'Failed to make web request to get firmware-release')
+
+        release_list = []
+
+        for release in response:
+            release_name = release['name']
+            if release_name:
+                releases = [release_name]
+                for download in release['assets']:
+                    releases.append(
+                        (download['name'], download['browser_download_url']))
+                release_list.append(releases)
+
+        if release_list:
+            signal.emit(release_list)
+        else:
+            logger.warning('Failed to parse firmware-releases in web request')
+
+    def _download_release(self, signal, release_name, url):
+        """ Downloads the given release and calls the callback signal
+            if successful.
+        """
+        try:
+            # Check if we have an old file saved and if so, ensure it's a valid
+            # zipfile and then call signal
+            with open(self._filepath, 'rb') as f:
+                previous_release = zipfile.ZipFile(f)
+                # testzip returns None if it's OK.
+                if previous_release.testzip() is None:
+                    logger.info('Using same firmware-release file at'
+                                '%s' % self._filepath)
+                    signal.emit(release_name, self._filepath)
+                    return
+        except FileNotFoundError:
+            try:
+                # Fetch the file with a new web request and save it to
+                # a temporary file.
+                with urlopen(url) as response:
+                    with open(self._filepath, 'wb') as release_file:
+                        release_file.write(response.read())
+                    logger.info('Created temporary firmware-release file at'
+                                '%s' % self._filepath)
+                    signal.emit(release_name, self._filepath)
+            except URLError:
+                logger.warning('Failed to make web request to get requested'
+                               ' firmware-release')
+
+    def _remove_zip_file(self):
+        try:
+            os.remove(self._filepath)
+            logger.info('Removed temporary firmware-release file at'
+                        '%s' % self._filepath)
+        except FileNotFoundError:
+            logger.warning('Failed to delete temporary firmware-release file'
+                           ' at %s' % self._filepath)

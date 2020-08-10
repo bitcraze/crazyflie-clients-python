@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>825</width>
-    <height>340</height>
+    <height>371</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -160,7 +160,27 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_3">
               <property name="text">
-               <string>Select package to flash:</string>
+               <string>Select package to flash or pick one from the available firmwares</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="label_2">
+              <property name="text">
+               <string>Available firmwares</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QComboBox" name="firmwareDropdown"/>
+            </item>
+            <item row="4" column="2">
+             <widget class="QLabel" name="downloadStatus">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
