@@ -346,6 +346,41 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         self._mapping_support = True
 
+        # Add checkbuttons for theme-selection.
+        self._theme_group = QActionGroup(self.menuThemes)
+        self._theme_group.setExclusive(True)
+        self._theme_checkboxes = []
+        for theme in UiUtils.THEMES:
+            node = QAction(theme, self.menuThemes, checkable=True)
+            node.setObjectName(theme)
+            node.toggled.connect(self._theme_selected)
+            self._theme_checkboxes.append(node)
+            self._theme_group.addAction(node)
+            self.menuThemes.addAction(node)
+
+    def _theme_selected(self, *args):
+        """ Callback when a theme is selected. """
+        for checkbox in self._theme_checkboxes:
+            if checkbox.isChecked():
+                theme = checkbox.objectName()
+                app = QtWidgets.QApplication.instance()
+                app.setStyleSheet(UiUtils.select_theme(theme))
+                Config().set('theme', theme)
+
+    def _check_theme(self, theme_name):
+        # Check the default theme.
+        for theme in self._theme_checkboxes:
+            if theme.objectName() == theme_name:
+                theme.setChecked(True)
+                self._theme_selected(True)
+
+    def set_default_theme(self):
+        try:
+            theme = Config().get('theme')
+        except KeyError:
+            theme = 'Default'
+        self._check_theme(theme)
+
     def disable_input(self, disable):
         """
         Disable the gamepad input to be able to send setpoint from a tab
