@@ -25,7 +25,7 @@
         <bool>true</bool>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="About">
         <attribute name="title">
@@ -39,7 +39,7 @@
              <item row="1" column="0">
               <widget class="QLabel" name="label_2">
                <property name="text">
-                <string>Copyright (c) 2011-2017, Bitcraze AB</string>
+                <string>Copyright (c) 2011-2020, Bitcraze AB</string>
                </property>
               </widget>
              </item>
@@ -47,6 +47,12 @@
               <widget class="QLabel" name="label">
                <property name="text">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;The Crazyflie client is a multi-platform client&lt;br/&gt;for controlling, bootloading and logging the Crazyflie.&lt;br/&gt;For more info visit our homepage.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;http://www.bitcraze.io&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Bitcraze Homepage&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;&lt;br/&gt;&lt;/span&gt;&lt;a href=&quot;http://wiki.bitcraze.io/doc:crazyflie:client:pycfclient:index&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Client documentation on Bitcraze Wiki&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;&lt;br/&gt;&lt;/span&gt;&lt;a href=&quot;http://forum.bitcraze.se&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Bitcraze Forum&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="openExternalLinks">
+                <bool>true</bool>
+               </property>
+               <property name="textInteractionFlags">
+                <set>Qt::TextBrowserInteraction</set>
                </property>
               </widget>
              </item>
@@ -84,7 +90,11 @@
          <item>
           <layout class="QGridLayout" name="gridLayout_3">
            <item row="0" column="0">
-            <widget class="QTextEdit" name="_credits"/>
+            <widget class="QTextEdit" name="_credits">
+             <property name="textInteractionFlags">
+              <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse|Qt::TextBrowserInteraction|Qt::TextEditable|Qt::TextEditorInteraction|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+             </property>
+            </widget>
            </item>
           </layout>
          </item>
