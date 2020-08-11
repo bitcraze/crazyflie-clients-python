@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>825</width>
-    <height>340</height>
+    <height>402</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -105,16 +105,6 @@
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
            <layout class="QGridLayout" name="gridLayout_4">
-            <item row="1" column="2">
-             <widget class="QPushButton" name="imagePathBrowseButton">
-              <property name="text">
-               <string>Browse</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0" colspan="2">
-             <widget class="QLineEdit" name="imagePathLine"/>
-            </item>
             <item row="2" column="0">
              <widget class="QLabel" name="label">
               <property name="text">
@@ -122,13 +112,20 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="0">
-             <widget class="QCheckBox" name="verifyCheckBox">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
+            <item row="1" column="0" colspan="2">
+             <widget class="QLineEdit" name="imagePathLine"/>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_3">
               <property name="text">
-               <string>Verify flashing</string>
+               <string>Select package to flash or pick one from the available firmwares</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <widget class="QPushButton" name="imagePathBrowseButton">
+              <property name="text">
+               <string>Browse</string>
               </property>
              </widget>
             </item>
@@ -157,10 +154,23 @@
               </item>
              </layout>
             </item>
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_3">
+            <item row="3" column="1">
+             <widget class="QComboBox" name="firmwareDropdown"/>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_2">
               <property name="text">
-               <string>Select package to flash:</string>
+               <string>Available firmwares</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="2">
+             <widget class="QLabel" name="downloadStatus">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -180,16 +190,6 @@
                </size>
               </property>
              </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="verifyButton">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Verify</string>
-              </property>
-             </widget>
             </item>
             <item>
              <widget class="QPushButton" name="programButton">
