@@ -139,6 +139,8 @@ def main():
     from PyQt5.QtGui import QIcon
 
     app = QApplication(sys.argv)
+    from cfclient.utils.ui import UiUtils
+    app.setStyleSheet(UiUtils.progressbar_stylesheet(UiUtils.COLOR_BLUE))
 
     # Create and set an event loop that combines qt and asyncio
     loop = QSelectorEventLoop(app)

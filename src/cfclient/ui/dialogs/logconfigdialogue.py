@@ -35,6 +35,7 @@ import logging
 import struct
 
 import cfclient
+from cfclient.utils.ui import UiUtils
 from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtCore import Qt, QTimer
 
@@ -53,7 +54,6 @@ ID_FIELD = 1
 TYPE_FIELD = 2
 SIZE_FIELD = 3
 MAX_LOG_SIZE = 26
-COLOR_GREEN = '#7cdb37'
 
 
 class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
@@ -404,13 +404,13 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
             self.packetSize.setFormat("%v%")
             self.packetSize.setValue(self.currentSize / MAX_LOG_SIZE * 100)
             self.packetSize.setStyleSheet(
-                            'QProgressBar::chunk { background: red;}')
+                        UiUtils.progressbar_stylesheet('red'))
         else:
             self.packetSize.setMaximum(MAX_LOG_SIZE)
             self.packetSize.setFormat("%p%")
             self.packetSize.setValue(self.currentSize)
             self.packetSize.setStyleSheet(
-                        'QProgressBar::chunk { background: %s;}' % COLOR_GREEN)
+                        UiUtils.progressbar_stylesheet(UiUtils.COLOR_GREEN))
 
     def addNewVar(self, logTreeItem, target):
         parentName = logTreeItem.parent().text(NAME_FIELD)
