@@ -27,6 +27,7 @@
 The about dialog.
 """
 
+import os
 import sys
 
 import cfclient
@@ -139,8 +140,10 @@ class AboutDialog(QtWidgets.QWidget, about_widget_class):
 
         # Open the Credits file and show it in the UI
         credits = ""
+        src = os.path.dirname(cfclient.module_path)
+        path = os.path.join(os.path.dirname(src), 'CREDITS.txt')
         try:
-            with open("CREDITS.txt", encoding='utf-8', mode='r') as f:
+            with open(path, encoding='utf-8') as f:
                 for line in f:
                     credits += "{}<br>".format(line)
         except IOError:

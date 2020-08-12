@@ -25,9 +25,16 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA  02110-1301, USA.
 
+import os
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QFont
+
+import cfclient
 
 __author__ = 'Bitcraze AB'
 __all__ = ['UiUtils']
+
+ICON_PATH = os.path.join(cfclient.module_path, 'ui', 'icons')
 
 
 class UiUtils:
@@ -35,14 +42,264 @@ class UiUtils:
     COLOR_GREEN = '#7cdb37'
     COLOR_BLUE = '#3399ff'
     COLOR_RED = '#cc0404'
+    COLOR_NAVY_BLUE = '#23335D'
+    COLOR_LIGHT_GRAY = '#C8C8C8'
+    COLOR_LIGHT_GRAY2 = '#A3A3A3'
+    COLOR_HACKER_BLACK = '#0A0B0B'
+    COLOR_HACKER_GREEN = '#00FF2F'
+
+    FONT = QFont('Palantino')
+
+    THEMES = ['Default', 'Navy blue', 'Hacker']
+
+    _THEME_DEFAULT = QApplication.style()
+
+    _THEME_HACKER = """
+            QApplication {
+                font: Palantino;
+            }
+
+            QProgressBar {
+                border: 1px solid gray;
+                border-radius: 2px;
+                background-color: white;
+                text-align: center;
+            }
+
+            QProgressBar::chunk {
+                border-radius: 2px;
+                background-color: """ + COLOR_GREEN + """;
+            }
+
+            QWidget {
+                background-color: """ + COLOR_HACKER_BLACK + """;
+                color: white;
+            }
+
+            QPushButton {
+                background-color: """ + COLOR_HACKER_BLACK + """;
+                color: """ + COLOR_HACKER_GREEN + """;
+            }
+
+            QPushButton:hover {
+                background-color: """ + COLOR_LIGHT_GRAY + """;
+            }
+
+            QSpinBox {
+                background-color: white;
+                color: """ + COLOR_HACKER_BLACK + """;
+            }
+
+            QAbstractSpinBox {
+                background-color: white;
+                color: """ + COLOR_HACKER_BLACK + """;
+            }
+
+            QAbstractSpinBox::Dropdown {
+                background-color: white;
+                color: """ + COLOR_HACKER_BLACK + """;
+            }
+
+            QLineEdit {
+                border-style: outset;
+                border-width: 2px;
+                border-radius: 10px;
+                border-color: white;
+                background-color: white;
+                color: """ + COLOR_HACKER_BLACK + """;
+                margin: 3px;
+                border-radius: 2px;
+            }
+
+            QMenu::item:selected {
+                background-color: """ + COLOR_LIGHT_GRAY + """;
+            }
+
+            QTabWidget {
+                border: 3px solid white;
+            }
+
+            QCheckBox::indicator {
+                border: 1px solid white;
+                background: """ + COLOR_HACKER_BLACK + """;
+            }
+
+            QCheckBox::indicator:checked {
+                image: url(""" + ICON_PATH + '/checkmark_white.png' + """);
+            }
+
+            QComboBox {
+                selection-background-color: white;
+                selection-color: """ + COLOR_HACKER_GREEN + """;
+                color: """ + COLOR_HACKER_GREEN + """;
+                background-color: """ + COLOR_HACKER_BLACK + """;
+                border: 1px solid white;
+            }
+
+            QComboBox QAbstractItemView {
+                color: """ + COLOR_HACKER_GREEN + """;
+                background-color: """ + COLOR_HACKER_BLACK + """;
+            }
+
+            .QSlider {
+                min-width: 100px;
+                max-width: 100px;
+            }
+
+            .QSlider::groove:vertical {
+                border: 1px solid white;
+                width: 10px;
+            }
+
+            .QSlider::handle:vertical {
+                background: """ + COLOR_GREEN + """;
+                border: 5px solid #B5E61D;
+                height: 5px;
+                border-radius: 30px;
+            }
+
+            QTreeWidget {
+                border-style: outset;
+                border-width: 1px;
+                border-color: rgba(255, 255, 255, .8);
+            }
+
+            QTabBar::tab:hover {
+                background-color: """ + COLOR_LIGHT_GRAY + """;
+            }
+
+            QTabBar::tab:selected {
+                background-color: """ + COLOR_LIGHT_GRAY2 + """;
+            }
+        """
+
+    _THEME_NAVY = """
+            QProgressBar {
+                border: 1px solid gray;
+                border-radius: 2px;
+                background-color: white;
+                text-align: center;
+            }
+
+            QProgressBar::chunk {
+                border-radius: 2px;
+                background-color: """ + COLOR_GREEN + """;
+            }
+
+            QWidget {
+                background-color: """ + COLOR_NAVY_BLUE + """;
+                color: white;
+            }
+
+            QPushButton {
+                background-color: white;
+                color: black;
+            }
+
+            QPushButton:hover {
+                background-color: """ + COLOR_LIGHT_GRAY + """;
+            }
+
+            QComboBox {
+                background-color: white;
+                color: black;
+            }
+
+            QSpinBox {
+                background-color: white;
+                color: black;
+            }
+
+            QAbstractSpinBox {
+                background-color: white;
+                color: black;
+            }
+
+            QLineEdit {
+                background-color: white;
+                color: black;
+                border: 1px solid gray;
+                margin: 3px;
+                border-radius: 2px;
+            }
+
+            QMenu::item:selected {
+                background-color: """ + COLOR_LIGHT_GRAY + """;
+            }
+
+            QTabWidget {
+                border: 3px solid white;
+            }
+
+            QCheckBox::indicator {
+                border: 1px solid white;
+                background-color: """ + COLOR_NAVY_BLUE + """;
+            }
+
+            QCheckBox::indicator:checked {
+                image: url(""" + ICON_PATH + '/checkmark_white.png' + """);
+            }
+
+            .QSlider {
+                min-width: 100px;
+                max-width: 100px;
+            }
+
+            QComboBox {
+                selection-background-color: """ + COLOR_NAVY_BLUE + """;
+                selection-color: white;
+                color: black;
+            }
+
+            QComboBox QAbstractItemView {
+                color: black;
+                background-color: white;
+            }
+
+            .QSlider::groove:vertical {
+                border: 1px solid white;
+                width: 10px;
+            }
+
+            .QSlider::handle:vertical {
+                background: """ + COLOR_GREEN + """;
+                border: 5px solid #B5E61D;
+                height: 5px;
+                border-radius: 30px;
+            }
+
+            QTabBar::tab:hover {
+                background-color: """ + COLOR_LIGHT_GRAY + """;
+            }
+
+            QTabBar::tab:selected {
+                background-color: """ + COLOR_LIGHT_GRAY2 + """;
+            }
+
+        """
+
+    _THEMES = {
+        'Default': _THEME_DEFAULT,
+        'Navy blue': _THEME_NAVY,
+        'Hacker': _THEME_HACKER,
+        }
+
+    @staticmethod
+    def set_background_color(obj, red, green, blue):
+        obj.setStyleSheet('background-color: rgb(%s, %s, %s)' %
+                          (red, green, blue))
+
+    @staticmethod
+    def select_theme(theme):
+        return UiUtils._THEMES[theme]
 
     @staticmethod
     def progressbar_stylesheet(color):
+
         return """
             QProgressBar {
                 border: 1px solid gray;
                 border-radius: 2px;
-                background-color: transparent;
                 text-align: center;
             }
 
@@ -50,4 +307,4 @@ class UiUtils:
                 border-radius: 2px;
                 background-color: """ + color + """;
             }
-        """
+            """

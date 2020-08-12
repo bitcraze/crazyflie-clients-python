@@ -140,13 +140,12 @@ def main():
 
     app = QApplication(sys.argv)
     from cfclient.utils.ui import UiUtils
-    app.setStyleSheet(UiUtils.progressbar_stylesheet(UiUtils.COLOR_BLUE))
 
     # Create and set an event loop that combines qt and asyncio
     loop = QSelectorEventLoop(app)
     asyncio.set_event_loop(loop)
 
-    app.setWindowIcon(QIcon(cfclient.module_path + "/icon-256.png"))
+    app.setWindowIcon(QIcon(cfclient.module_path + "/ui/icons/icon-256.png"))
     # Make sure the right icon is set in Windows 7+ taskbar
     if os.name == 'nt':
         import ctypes
@@ -159,7 +158,10 @@ def main():
             pass
 
     main_window = MainUI()
+    app.setStyleSheet(UiUtils.progressbar_stylesheet(UiUtils.COLOR_BLUE))
+    app.setFont(UiUtils.FONT)
     main_window.show()
+    main_window.set_default_theme()
     sys.exit(app.exec_())
 
 

@@ -37,6 +37,7 @@ from PyQt5.QtCore import pyqtSignal
 
 import cfclient
 from cfclient.ui.tab import Tab
+from cfclient.utils.ui import UiUtils
 
 from cflib.crazyflie.mem import MemoryElement
 
@@ -125,9 +126,8 @@ class LEDTab(Tab, led_tab_class):
         if col.isValid() and self._mem:
             logger.info(col.red())
             self._mem.leds[nbr].set(r=col.red(), g=col.green(), b=col.blue())
-            self.sender().setStyleSheet("background-color: rgb({},{},{})"
-                                        .format(col.red(), col.green(),
-                                                col.blue()))
+            UiUtils.set_background_color(self.sender(), col.red(), col.green(),
+                                         col.blue())
             self._write_led_output()
 
     def _intensity_change(self, value):
