@@ -158,7 +158,6 @@ def main():
             pass
 
     main_window = MainUI()
-    app.setStyleSheet(UiUtils.progressbar_stylesheet(UiUtils.COLOR_BLUE))
     app.setFont(UiUtils.FONT)
     main_window.show()
     main_window.set_default_theme()

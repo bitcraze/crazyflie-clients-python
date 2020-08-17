@@ -26,7 +26,6 @@
 #  MA  02110-1301, USA.
 
 import os
-from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QFont
 
 import cfclient
@@ -43,6 +42,7 @@ class UiUtils:
     COLOR_BLUE = '#3399ff'
     COLOR_RED = '#cc0404'
     COLOR_NAVY_BLUE = '#23335D'
+    COLOR_NAVY_LIGHT_BLUE = '#3c4869'
     COLOR_LIGHT_GRAY = '#C8C8C8'
     COLOR_LIGHT_GRAY2 = '#A3A3A3'
     COLOR_HACKER_BLACK = '#0A0B0B'
@@ -52,7 +52,23 @@ class UiUtils:
 
     THEMES = ['Default', 'Navy blue', 'Hacker']
 
-    _THEME_DEFAULT = QApplication.style()
+    # Note: progress bar styling is required for all themes to make the bars
+    # wider on OSX (default is very thin) and display the text in the bar.
+    # In general terms, when styling something, do check on all OSes, it
+    # rarely looks the same.
+
+    _THEME_DEFAULT = """
+            QProgressBar {
+                border: 1px solid gray;
+                border-radius: 2px;
+                text-align: center;
+            }
+
+            QProgressBar::chunk {
+                border-radius: 2px;
+                background-color: """ + COLOR_BLUE + """;
+            }
+    """
 
     _THEME_HACKER = """
             QApplication {
@@ -79,25 +95,23 @@ class UiUtils:
             QPushButton {
                 background-color: """ + COLOR_HACKER_BLACK + """;
                 color: """ + COLOR_HACKER_GREEN + """;
+                border: 1px solid gray;
             }
 
             QPushButton:hover {
                 background-color: """ + COLOR_LIGHT_GRAY + """;
             }
 
-            QSpinBox {
+            QComboBox, QAbstractSpinBox, QAbstractSpinBox::Dropdown, QSpinBox {
                 background-color: white;
                 color: """ + COLOR_HACKER_BLACK + """;
             }
 
-            QAbstractSpinBox {
-                background-color: white;
-                color: """ + COLOR_HACKER_BLACK + """;
-            }
-
-            QAbstractSpinBox::Dropdown {
-                background-color: white;
-                color: """ + COLOR_HACKER_BLACK + """;
+            QComboBox:disabled,
+            QAbstractSpinBox:disabled,
+            QSpinBox:disabled,
+            QAbstractButton:disabled {
+                color: gray;
             }
 
             QLineEdit {
@@ -136,7 +150,7 @@ class UiUtils:
                 border: 1px solid white;
             }
 
-            QComboBox QAbstractItemView {
+            QComboBox, QAbstractItemView {
                 color: """ + COLOR_HACKER_GREEN + """;
                 background-color: """ + COLOR_HACKER_BLACK + """;
             }
@@ -158,10 +172,14 @@ class UiUtils:
                 border-radius: 30px;
             }
 
-            QTreeWidget {
+            QTreeView, QTextEdit {
                 border-style: outset;
                 border-width: 1px;
-                border-color: rgba(255, 255, 255, .8);
+                border-color: """ + COLOR_LIGHT_GRAY2 + """;
+            }
+
+            QTabBar::tab {
+                background-color: """ + COLOR_HACKER_BLACK + """;
             }
 
             QTabBar::tab:hover {
@@ -200,22 +218,19 @@ class UiUtils:
                 background-color: """ + COLOR_LIGHT_GRAY + """;
             }
 
-            QComboBox {
+            QComboBox, QAbstractSpinBox, QSpinBox {
                 background-color: white;
                 color: black;
             }
 
-            QSpinBox {
-                background-color: white;
-                color: black;
+            QComboBox:disabled,
+            QAbstractSpinBox:disabled,
+            QSpinBox:disabled,
+            QAbstractButton:disabled {
+                color: gray;
             }
 
-            QAbstractSpinBox {
-                background-color: white;
-                color: black;
-            }
-
-            QLineEdit {
+            QLineEdit, QAbstractScrollArea {
                 background-color: white;
                 color: black;
                 border: 1px solid gray;
@@ -251,7 +266,7 @@ class UiUtils:
                 color: black;
             }
 
-            QComboBox QAbstractItemView {
+            QComboBox, QAbstractItemView {
                 color: black;
                 background-color: white;
             }
@@ -268,12 +283,23 @@ class UiUtils:
                 border-radius: 30px;
             }
 
+            QTabBar::tab {
+                background-color: """ + COLOR_NAVY_LIGHT_BLUE + """;
+            }
+
             QTabBar::tab:hover {
                 background-color: """ + COLOR_LIGHT_GRAY + """;
             }
 
             QTabBar::tab:selected {
                 background-color: """ + COLOR_LIGHT_GRAY2 + """;
+            }
+
+            QHeaderView {
+                background-color: """ + COLOR_NAVY_LIGHT_BLUE + """;
+                border-color: """ + COLOR_NAVY_LIGHT_BLUE + """;
+                border-width: 0px;
+                color: white;
             }
 
         """
