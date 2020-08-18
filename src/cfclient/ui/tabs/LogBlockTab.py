@@ -32,7 +32,7 @@ logging and also to write the logging data to file.
 """
 
 from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSignal, QSysInfo
+from PyQt5.QtCore import Qt, pyqtSignal
 
 import cfclient
 from cfclient.ui.tab import Tab
