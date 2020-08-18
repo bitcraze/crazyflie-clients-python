@@ -139,6 +139,7 @@ def main():
     from PyQt5.QtGui import QIcon
 
     app = QApplication(sys.argv)
+    app.setStyle("Fusion")
     from cfclient.utils.ui import UiUtils
 
     # Create and set an event loop that combines qt and asyncio
