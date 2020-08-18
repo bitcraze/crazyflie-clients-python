@@ -308,17 +308,9 @@ class CheckboxDelegate(QStyledItemDelegate):
         else:
             super(CheckboxDelegate, self).paint(painter, option, index)
 
-    """There is a bug in QT5 on OS X that draws the checkboxes in the top
-    left corner. This is a workaround to fix the problem.
-    See https://bugreports.qt.io/browse/QTBUG-40833 """
     def _paint_checkbox(self, style, painter):
-        if hasattr(QSysInfo, 'MacintoshVersion') and \
-                        QSysInfo.MacintoshVersion >= QSysInfo.MV_10_9 and \
-                        style.state & QStyle.State_Enabled:
-            self._paint_checkbox_osx_workaround(style, painter)
-        else:
-            QApplication.style().drawControl(
-                QStyle.CE_CheckBox, style, painter)
+        QApplication.style().drawControl(
+            QStyle.CE_CheckBox, style, painter)
 
     def _paint_checkbox_osx_workaround(self, style, painter):
         painter.save()
