@@ -6,9 +6,9 @@ from zipfile import ZipFile
 
 is_64bits = sys.maxsize > 2**32
 if is_64bits:
-    url = 'http://www.libsdl.org/release/SDL2-2.0.4-win32-x64.zip'
+    url = 'http://www.libsdl.org/release/SDL2-2.0.12-win32-x64.zip'
 else:
-    url = 'http://www.libsdl.org/release/SDL2-2.0.4-win32-x86.zip'
+    url = 'http://www.libsdl.org/release/SDL2-2.0.12-win32-x86.zip'
 dllpath = os.path.join("src", 'cfclient', 'third_party')
 
 
