@@ -59,6 +59,10 @@ def main():
     parser.add_argument('--debug', '-d', nargs=1, default='info', type=str,
                         help="set debug level "
                              "[minimal, info, debug, debugfile]")
+    parser.add_argument('--check-imports', type=bool, default=False,
+                        const=True, nargs="?",
+                        help="Check python imports and exit successfully" +
+                        " (intended for CI)")
     args = parser.parse_args()
     debug = args.debug
 
@@ -132,6 +136,10 @@ def main():
         except ImportError:
             logger.info("Foundation not found. Menu will show python as "
                         "application name")
+
+    if args.check_imports:
+        logger.info("All imports successful!")
+        sys.exit(0)
 
     # Start up the main user-interface
     from .ui.main import MainUI

@@ -12,6 +12,8 @@ build_script:
 - cmd: >-
     python setup.py build
 
+    build\exe.win32-3.6\cfclient.exe --check-imports
+
     python win32install\generate_nsis.py
 
     makensis win32install\cfclient.nsi
