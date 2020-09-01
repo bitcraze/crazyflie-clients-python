@@ -106,7 +106,8 @@ class LogWriter():
 
         if not self._file:
             time_now = datetime.datetime.now()
-            name = "{0}-{1}.csv".format(self._block.name,
+            block_name_corr = self._block.name.replace('/','-')
+            name = "{0}-{1}.csv".format(block_name_corr,
                                         time_now.strftime(
                                             "%Y%m%dT%H-%M-%S"))
             self._filename = os.path.join(self._dir, name)
