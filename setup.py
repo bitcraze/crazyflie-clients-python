@@ -127,13 +127,13 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib>=0.1.9',
-                                          'appdirs>=1.4.0',
-                                          'pyzmq>=18.1.0',
-                                          'pyqtgraph>=0.10',
-                                          'PyYAML>=5.1.2',
-                                          'quamash==0.6.1',
-                                          'qtm>=2.0.2'],
+    install_requires=platform_requires + ['cflib~=0.1.11',
+                                          'appdirs~=1.4.0',
+                                          'pyzmq~=19.0',
+                                          'pyqtgraph~=0.11',
+                                          'PyYAML~=5.3',
+                                          'quamash~=0.6.1',
+                                          'qtm~=2.0.2'],
 
     # List of dev and qt dependencies
     # Pyqt5 5.12.1 is the last version that does not cause performance problems
@@ -141,7 +141,7 @@ setup(
     # $ pip install -e .[dev,qt5]
     extras_require={
         'dev': platform_dev_requires + [],
-        'qt5': ['PyQt5==5.12.1']
+        'qt5': ['PyQt5~=5.15']
     },
 
     package_data=package_data,
