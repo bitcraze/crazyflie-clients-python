@@ -9,7 +9,7 @@ import codecs
 import sys
 import os
 
-if sys.argv[1] == 'build':
+if sys.argv[1] in ('build', 'bdist_msi', 'bdist_mac'):
     from cx_Freeze import setup, Executable  # noqa
 
     cxfreeze_options = {
