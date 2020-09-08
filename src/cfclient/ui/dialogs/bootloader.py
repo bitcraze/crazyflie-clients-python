@@ -31,6 +31,7 @@ read/write the configuration block in the Crazyflie flash.
 """
 from cflib.bootloader import Bootloader
 
+import tempfile
 import logging
 import json
 import os
@@ -92,6 +93,8 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.coldBootButton.clicked.connect(self.initiateColdboot)
         self.resetButton.clicked.connect(self.resetCopter)
         self._cancel_bootloading.clicked.connect(self.close)
+        self.sourceTab.currentChanged.connect(
+            lambda _: self.updateChipSelectRadio())
 
         # connecting other signals
         self.clt.programmed.connect(self.programDone)
@@ -105,9 +108,6 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.clt.failed_signal.connect(lambda m: self._ui_connection_fail(m))
         self.clt.disconnectedSignal.connect(
             lambda: self.setUiState(UIState.DISCONNECTED))
-
-        # set radiobutton for flashing both mcu's (default)
-        self.radioBoth.setChecked(True)
 
         self._releases = {}
         self._release_firmwares_found.connect(self._populate_firmware_dropdown)
@@ -198,13 +198,31 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.downloadStatus.setText('Downloaded')
         self.clt.program.emit(release_path, '')
 
+    def updateChipSelectRadio(self):
+        if self.sourceTab.currentWidget() == self.tabFromFile:
+            if self.imagePathLine.text().endswith(".zip"):
+                self.radioBoth.setEnabled(True)
+                self.radioBoth.setChecked(True)
+            elif self.imagePathLine.text().endswith(".bin"):
+                self.radioBoth.setEnabled(False)
+                self.radioStm32.setChecked(True)
+        else:
+            self.radioBoth.setEnabled(True)
+            self.radioBoth.setChecked(True)
+
     @pyqtSlot()
     def pathBrowse(self):
         filename = ""
         # Fix for crash in X on Ubuntu 14.04
         filename, _ = QtWidgets.QFileDialog.getOpenFileName()
-        if filename != "":
+        if filename != "" and filename[-4:] in (".bin", ".zip"):
             self.imagePathLine.setText(filename)
+            self.updateChipSelectRadio()
+        elif filename != "":
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setText("Wrong file extention. Must be .bin or .zip.")
+            msgBox.exec_()
+
         pass
 
     @pyqtSlot()
@@ -215,7 +233,16 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.imagePathBrowseButton.setEnabled(False)
 
         # call the flasher
-        if self.imagePathLine.text() != "":
+        if self.sourceTab.currentWidget() == self.tabFromFile:
+            if self.imagePathLine.text() == "":
+                msgBox = QtWidgets.QMessageBox()
+                msgBox.setText("Please choose an image file to program.")
+                msgBox.exec_()
+
+                self.resetButton.setEnabled(True)
+                self.programButton.setEnabled(True)
+                self.imagePathBrowseButton.setEnabled(True)
+                return
 
             # by default, both of the mcu:s are flashed
             mcu_to_flash = None
@@ -225,17 +252,12 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             elif self.radioNrf51.isChecked():
                 mcu_to_flash = 'nrf51'
             self.clt.program.emit(self.imagePathLine.text(), mcu_to_flash)
-        # If no file is supplied, we try to get a firmware from web-request
         else:
             requested_release = self.firmwareDropdown.currentText()
             download_url = self._releases[requested_release]
             self.downloadStatus.setText('Fetching...')
             self.firmware_downloader.download_release(requested_release,
                                                       download_url)
-
-            # msgBox = QtWidgets.QMessageBox()
-            # msgBox.setText("Please choose an image file to program.")
-            # msgBox.exec_()
 
     @pyqtSlot(bool)
     def programDone(self, success):
@@ -348,11 +370,10 @@ class FirmwareDownloader(QThread):
         self._qtsignal_get_all_firmwares = qtsignal_get_all_firmwares
         self._qtsignal_get_release = qtsignal_get_release
 
-        self._filepath = os.path.join(os.path.dirname(__file__),
+        self._tempDirectory = tempfile.TemporaryDirectory()
+        self._filepath = os.path.join(self._tempDirectory.name,
                                       'tmp.zip')
         self.moveToThread(self)
-
-        self.bootload_complete.connect(lambda: self._remove_zip_file())
 
     def get_firmware_releases(self):
         """ Wrapper-function """
@@ -370,6 +391,7 @@ class FirmwareDownloader(QThread):
             and returns a list of format [rel-name, {release: download-link}].
             Returns None if the request fails.
         """
+        response = {}
         try:
             with urlopen(RELEASE_URL) as resp:
                 response = json.load(resp)
@@ -421,12 +443,3 @@ class FirmwareDownloader(QThread):
             except URLError:
                 logger.warning('Failed to make web request to get requested'
                                ' firmware-release')
-
-    def _remove_zip_file(self):
-        try:
-            os.remove(self._filepath)
-            logger.info('Removed temporary firmware-release file at'
-                        '%s' % self._filepath)
-        except FileNotFoundError:
-            logger.warning('Failed to delete temporary firmware-release file'
-                           ' at %s' % self._filepath)
