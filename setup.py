@@ -127,7 +127,7 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib~=0.1.11',
+    install_requires=platform_requires + ['cflib~=0.1.12',
                                           'appdirs~=1.4.0',
                                           'pyzmq~=19.0',
                                           'pyqtgraph~=0.11',
