@@ -173,6 +173,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.radioSpeed.setCurrentIndex(speed)
 
     def closeEvent(self, event):
+        self.clt.terminate_flashing()
         # Remove downloaded-firmware files.
         self.firmware_downloader.bootload_complete.emit()
         self.setUiState(UIState.RESET)
@@ -284,8 +285,11 @@ class CrazyloadThread(QThread):
     def __init__(self):
         super(CrazyloadThread, self).__init__()
 
+        self._terminate_flashing = False
+
         self._bl = Bootloader()
         self._bl.progress_cb = self.statusChanged.emit
+        self._bl.terminate_flashing_cb = lambda: self._terminate_flashing
 
         # Make sure that the signals are handled by this thread event loop
         self.moveToThread(self)
@@ -315,10 +319,14 @@ class CrazyloadThread(QThread):
         if mcu_to_flash:
             targets[mcu_to_flash] = ("fw",)
         try:
+            self._terminate_flashing = False
             self._bl.flash(str(filename), targets)
             self.programmed.emit(True)
         except Exception:
             self.programmed.emit(False)
+
+    def terminate_flashing(self):
+        self._terminate_flashing = True
 
     def resetCopter(self):
         try:
