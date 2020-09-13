@@ -10,6 +10,7 @@ src/cfclient/third_party/*
 version.json
 win32install/*.exe
 win32install/cfclient.nsi
+*.snap
 
 # PC client settings
 conf/*

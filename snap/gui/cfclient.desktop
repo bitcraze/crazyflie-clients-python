@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Crazyflie client
+Exec=cfclient
+Icon=${SNAP}/meta/gui/cfclient.png
+Type=Application

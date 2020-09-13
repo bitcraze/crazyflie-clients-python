@@ -1,0 +1,29 @@
+name: cfclient
+version: git
+summary: Crazyflie client
+description: |
+  Crazyflie client
+base: core18
+confinement: strict
+icon: snap/gui/cfclient.png
+
+
+parts:
+  cfclient:
+    plugin: python
+    python-version: python3
+    source: .
+    stage-packages:
+      - python3-pyqt5
+
+apps:
+  cfclient:
+    command: python3 -m cfclient.gui
+    extensions:
+      - kde-neon
+    plugs:
+      - home
+      - opengl
+      - network
+      - network-bind
+      - raw-usb
