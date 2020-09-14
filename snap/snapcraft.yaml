@@ -27,3 +27,4 @@ apps:
       - network
       - network-bind
       - raw-usb
+      - joystick
