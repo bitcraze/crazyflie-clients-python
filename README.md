@@ -1,4 +1,4 @@
-# Crazyflie PC client [![Build Status](https://api.travis-ci.org/bitcraze/crazyflie-clients-python.svg)](https://travis-ci.org/bitcraze/crazyflie-clients-python) [![Build status](https://ci.appveyor.com/api/projects/status/u2kejdbc9wrexo31?svg=true)](https://ci.appveyor.com/project/bitcraze/crazyflie-clients-python)
+# Crazyflie PC client [![Build Status](https://api.travis-ci.org/bitcraze/crazyflie-clients-python.svg)](https://travis-ci.org/bitcraze/crazyflie-clients-python) [![Build status](https://ci.appveyor.com/api/projects/status/u2kejdbc9wrexo31?svg=true)](https://ci.appveyor.com/project/bitcraze/crazyflie-clients-python) [![cfclient](https://snapcraft.io//cfclient/badge.svg)](https://snapcraft.io/cfclient)
 
 
 The Crazyflie PC client enables flashing and controlling the Crazyflie.
@@ -6,6 +6,39 @@ It implements the user interface and high-level control (for example gamepad han
 The communication with Crazyflie and the implementation of the CRTP protocol to control the Crazflie is handled by the [cflib](https://github.com/bitcraze/crazyflie-lib-python) project.
 
 For more info see our [documentation](https://www.bitcraze.io/documentation/repository/crazyflie-clients-python/master/).
+
+# Installing from build
+
+## Linux
+
+The client can be installed and run with snap, it can be found on [snapcraft](https://snapcraft.io/cfclient) (ie. search Crazyflie in Ubuntu software) or installed from command line:
+```
+snap install --edge cfclient
+snap connect cfclient:raw-usb    # Required to access the Crazyradio
+snap connect cfclient:joystick   # Required to access gamepads
+```
+
+The only build available right now is the latest commit from github (edge), the next version will be pushed in the snapcraft stable channel.
+
+It is still required to set the udev permission with the snap, see the last section of this page.
+
+## Windows
+
+A windows installer is automatically built for each git commit in [appveyor](https://ci.appveyor.com/project/bitcraze/crazyflie-clients-python/build/artifacts).
+
+For each release, the release built is available in the [github release page](https://github.com/bitcraze/crazyflie-clients-python/releases).
+
+To use Crazyradio you will have to [install the drivers](https://github.com/bitcraze/crazyradio-firmware/blob/master/docs/building/usbwindows.md).
+
+## From Pypi (Windows, Mac, Linux, ..., with python3)
+
+Each release of the client is pushed to the [pypi repository](https://pypi.org/project/cfclient/). If you have python >= 3.5, it can be installed with pip:
+
+```
+python3 -m pip install cfclient pyqt5
+```
+
+Mac and windows will also need the SDL2 library to be installed (see bellow)
 
 # Running from source
 
