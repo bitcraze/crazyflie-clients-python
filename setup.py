@@ -136,12 +136,13 @@ setup(
                                           'qtm~=2.0.2'],
 
     # List of dev and qt dependencies
-    # Pyqt5 5.12.1 is the last version that does not cause performance problems
+    # Pyqt5 5.12 is the last version that does not cause performance problems
+    # on Windows and Mac
     # You can install them by running
     # $ pip install -e .[dev,qt5]
     extras_require={
         'dev': platform_dev_requires + [],
-        'qt5': ['PyQt5~=5.15']
+        'qt5': ['pyqt5~=5.12.0']
     },
 
     package_data=package_data,
