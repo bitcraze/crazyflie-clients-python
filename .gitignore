@@ -30,3 +30,6 @@ msvcp90.dll
 
 # Jykell files
 docs/.jekyll-metadata
+
+# Python venv
+venv/
