@@ -31,6 +31,7 @@ import os
 import asyncio
 import argparse
 import datetime
+import signal
 
 import logging
 
@@ -41,6 +42,14 @@ __author__ = 'Bitcraze AB'
 __all__ = []
 
 
+def handle_sigint(app):
+    logging.info('SIGINT received, exiting ...')
+    if app:
+        app.closeAllWindows()
+    else:
+        sys.exit(0)
+
+
 def main():
     """
     Check starting conditions and start GUI.
@@ -49,6 +58,10 @@ def main():
     all imports and exit verbosely if a library is not found. Disable outputs
     to stdout and start the GUI.
     """
+    app = None
+
+    # Connect ctrl-c (SIGINT) signal
+    signal.signal(signal.SIGINT, lambda sig, frame: handle_sigint(app))
 
     # Set ERROR level for PyQt5 logger
     qtlogger = logging.getLogger('PyQt5')
