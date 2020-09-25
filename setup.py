@@ -10,19 +10,25 @@ import sys
 import os
 import platform
 
-if sys.argv[1] in ('build', 'bdist_msi', 'bdist_mac'):
+if sys.argv[1] in ('build', 'bdist_msi', 'bdist_mac', 'bdist_dmg'):
     from cx_Freeze import setup, Executable  # noqa
 
     cxfreeze_options = {
         'options': {
-            'build_exe': {'includes': ['numpy.core._methods',
+            'build_exe': {
+                'includes': ['numpy.core._methods',
                                        'numpy.lib.format',
                                        'pyqtgraph.debug',
                                        'pyqtgraph.ThreadsafeTimer',
                                        ],
-                          'include_files': [],
-                          'packages': ['asyncio'],
-                          'excludes': ['tkinter']}
+                'include_files': [],
+                'packages': ['asyncio'],
+                'excludes': ['tkinter']
+            },
+            'bdist_mac': {
+                'iconfile': 'icon-256.icns',
+                'bundle_name': 'Crazyflie client',
+            },
         },
         'executables': [Executable("bin/cfclient", icon='bitcraze.ico')],
     }
