@@ -26,6 +26,7 @@
 
 """Initialization of the PC Client GUI."""
 
+import platform
 import sys
 import os
 import asyncio
@@ -62,6 +63,11 @@ def main():
 
     # Connect ctrl-c (SIGINT) signal
     signal.signal(signal.SIGINT, lambda sig, frame: handle_sigint(app))
+
+    # Allows frozen mac build to load libraries from app bundle
+    if getattr(sys, 'frozen', False) and platform.system() == 'Darwin':
+        os.environ['DYLD_FALLBACK_LIBRARY_PATH'] = os.path.dirname(
+            sys.executable)
 
     # Set ERROR level for PyQt5 logger
     qtlogger = logging.getLogger('PyQt5')

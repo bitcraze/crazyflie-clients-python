@@ -8,6 +8,7 @@ import json
 import codecs
 import sys
 import os
+import platform
 
 if sys.argv[1] in ('build', 'bdist_msi', 'bdist_mac'):
     from cx_Freeze import setup, Executable  # noqa
@@ -19,11 +20,17 @@ if sys.argv[1] in ('build', 'bdist_msi', 'bdist_mac'):
                                        'pyqtgraph.debug',
                                        'pyqtgraph.ThreadsafeTimer',
                                        ],
+                          'include_files': [],
                           'packages': ['asyncio'],
                           'excludes': ['tkinter']}
         },
         'executables': [Executable("bin/cfclient", icon='bitcraze.ico')],
     }
+    if platform.system() == 'Darwin':
+        cxfreeze_options['options']['build_exe']['include_files'] = [
+                ('/usr/local/lib/libusb-1.0.0.dylib', 'libusb.dylib'),
+                ('/usr/local/lib/libSDL2-2.0.0.dylib', 'libSDL2.dylib'),
+            ]
 else:
     cxfreeze_options = {}
 # except:
