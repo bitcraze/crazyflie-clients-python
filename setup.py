@@ -17,10 +17,10 @@ if sys.argv[1] in ('build', 'bdist_msi', 'bdist_mac', 'bdist_dmg'):
         'options': {
             'build_exe': {
                 'includes': ['numpy.core._methods',
-                                       'numpy.lib.format',
-                                       'pyqtgraph.debug',
-                                       'pyqtgraph.ThreadsafeTimer',
-                                       ],
+                             'numpy.lib.format',
+                             'pyqtgraph.debug',
+                             'pyqtgraph.ThreadsafeTimer',
+                             ],
                 'include_files': [],
                 'packages': ['asyncio'],
                 'excludes': ['tkinter']
