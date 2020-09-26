@@ -17,7 +17,9 @@
     "enable_debug_driver": false,
     "input_device_blacklist": "(VirtualBox|VMware)",
     "ui_update_period": 100,
-    "enable_zmq_input": false
+    "enable_zmq_input": false,
+    "enable_zmq_param": false,
+    "enable_zmq_led": false
   },
   "read-only" : {
     "normal_slew_limit": 45,

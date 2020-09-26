@@ -16,6 +16,12 @@ Here\'s a list of the ports/functions available:
  | 1214 |  PUSH  | LED-ring memory|
  | 1212 |  PULL |  Input device|
 
+By default all sockets are disabled in the configuration file and needs to be
+enabled. The configuration file parameter are named *enable\_zmq\_param*,
+*enable\_zmq\_led* and *enable\_zmq\_input*. see the
+[configuration documentation](/docs/development/dev_info_client.md#user-configuration-file)
+for more information about the configuration file.
+
 ---
 
 ## Parameters
@@ -93,11 +99,7 @@ computer, you can use ZMQ to inject control set-points directly into the
 client. You still use the client for connecting/logging/graphing/setting
 parameters, it\'s just the control part that\'s broken out.
 
-By default this is disabled in the configuration file and needs to be
-enabled. The configuration file parameter is named *enable\_zmq\_input*
-(see
-[this](/docs/development/dev_info_client.md#user-configuration-file) to
-edit the configuration). To enable controlling by the back-end select
+To enable controlling by the back-end select
 the *ZMQ\@127.0.0.1:1212* input device in the *Input device* menu.
 
 ### Protocol

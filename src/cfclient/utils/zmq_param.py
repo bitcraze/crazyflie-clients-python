@@ -33,6 +33,8 @@ Give access to the parameter framework via ZMQ.
 import logging
 from threading import Thread, Lock
 
+from cfclient.utils.config import Config
+
 ZMQ_PULL_PORT = 1024 + 189
 logger = logging.getLogger(__name__)
 
@@ -44,6 +46,10 @@ try:
 except Exception as e:
     logger.warning(
         "Not enabling ZMQ param access, import failed ({})".format(e))
+
+if not Config().get("enable_zmq_param"):
+    enabled = False
+    logger.info("ZMQ param disabled in config file")
 
 
 class _PullReader(Thread):

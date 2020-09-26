@@ -31,6 +31,7 @@ Give access to the LED driver memory via ZMQ.
 """
 
 from cflib.crazyflie.mem import MemoryElement
+from cfclient.utils.config import Config
 
 import logging
 from threading import Thread, Lock
@@ -46,6 +47,10 @@ try:
 except Exception as e:
     logger.warning("Not enabling ZMQ LED driver access,"
                    "import failed ({})".format(e))
+
+if not Config().get("enable_zmq_led"):
+    enabled = False
+    logger.info("ZMQ led disabled in config file")
 
 
 class _PullReader(Thread):
