@@ -1,0 +1,41 @@
+# MacOS build configuration
+
+name: MacOS
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: macos-10.15
+    steps:
+      # Checkout, fetch-depth=0 fetches the full repos (required for automatic versioning to work)
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          brew install sdl2 libusb
+          pip3 install -e .
+          pip3 install "pyqt5~=5.15.0"
+          pip3 install git+https://github.com/marcelotduarte/cx_Freeze@bfa89fc010b3c
+      
+      - name: Build
+        run: python3 setup.py bdist_mac
+      
+      - name: Archive
+        run: |
+          export VERSION=$(pip3 list | grep cfclient | awk '{print $2}')
+          zip -r "build/cfclient_$VERSION.zip" "build/Crazyflie client.app"
+      
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v2.1.4
+        with:
+          name: mac-build
+          path: "build/*.zip"
