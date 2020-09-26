@@ -32,7 +32,9 @@ jobs:
       - name: Archive
         run: |
           export VERSION=$(pip3 list | grep cfclient | awk '{print $2}')
-          zip -r "build/cfclient_$VERSION.zip" "build/Crazyflie client.app"
+          cd build
+          zip -r "cfclient_$VERSION.zip" "Crazyflie client.app"
+          cd ..
       
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v2.1.4
