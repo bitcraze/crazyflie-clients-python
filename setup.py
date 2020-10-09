@@ -147,7 +147,8 @@ setup(
                                           'PyYAML~=5.3',
                                           'quamash~=0.6.1',
                                           'qtm~=2.0.2',
-                                          'vispy~=0.6.5'],
+                                          'vispy~=0.6.5',
+                                          'numpy~=1.19.2'],
 
     # List of dev and qt dependencies
     # Pyqt5 5.12 is the last version that does not cause performance problems

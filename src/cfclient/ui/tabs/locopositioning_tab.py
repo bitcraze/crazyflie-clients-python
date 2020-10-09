@@ -30,7 +30,6 @@
 Shows data for the Loco Positioning system
 """
 
-import contextlib
 import logging
 from enum import Enum
 from collections import namedtuple
@@ -38,7 +37,6 @@ from collections import namedtuple
 import time
 from PyQt5 import uic
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QMessageBox
 from PyQt5.QtGui import QLabel
 from PyQt5.QtGui import QSizePolicy
@@ -53,12 +51,9 @@ from lpslib.lopoanchor import LoPoAnchor
 from cfclient.ui.dialogs.anchor_position_dialog import AnchorPositionDialog
 
 from vispy import scene
-
-from vispy.geometry.generation import create_sphere
-from vispy.color.colormap import get_colormaps
+import numpy as np
 
 import copy
-import sys
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LocoPositioningTab']
@@ -67,22 +62,6 @@ logger = logging.getLogger(__name__)
 
 locopositioning_tab_class = uic.loadUiType(
     cfclient.module_path + "/ui/tabs/locopositioning_tab.ui")[0]
-
-# Try the imports for PyQtGraph to see if it is installed
-try:
-    import pyqtgraph as pg
-    from pyqtgraph import ViewBox  # noqa
-    import pyqtgraph.console  # noqa
-    import numpy as np  # noqa
-
-    _pyqtgraph_found = True
-except Exception:
-    import traceback
-
-    logger.warning("PyQtGraph (or dependency) failed to import:\n%s",
-                   traceback.format_exc())
-    _pyqtgraph_found = False
-
 
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
@@ -152,16 +131,25 @@ class Plot3d(scene.SceneCanvas):
 
         self._view = self.central_widget.add_view()
         self._view.bgcolor = '#ffffff'
-        self._view.camera = scene.TurntableCamera(distance=10.0, up='+z', center=(0.0, 0.0, 1.0))
+        self._view.camera = scene.TurntableCamera(
+            distance=10.0,
+            up='+z',
+            center=(0.0, 0.0, 1.0))
 
-        self._cf = scene.visuals.Markers(pos=np.array([[0, 0, 0]]), parent=self._view.scene, face_color=self.POSITION_BRUSH)
+        self._cf = scene.visuals.Markers(
+            pos=np.array([[0, 0, 0]]),
+            parent=self._view.scene,
+            face_color=self.POSITION_BRUSH)
         self._anchor_contexts = {}
 
         self.freeze()
 
         plane_size = 10
-        scene.visuals.Plane(width=plane_size,
-            height=plane_size, width_segments=plane_size, height_segments=plane_size,
+        scene.visuals.Plane(
+            width=plane_size,
+            height=plane_size,
+            width_segments=plane_size,
+            height_segments=plane_size,
             color=(0.5, 0.5, 0.5, 0.5),
             edge_color="gray",
             parent=self._view.scene)
@@ -173,38 +161,38 @@ class Plot3d(scene.SceneCanvas):
         # draw arrows using lines instead.
         w = width / 2
         hw = head_width / 2
-        l = length - head_length
+        base_len = length - head_length
 
         # X-axis
         scene.visuals.LinePlot([
             [0, w, 0],
-            [l, w, 0],
-            [l, hw, 0],
+            [base_len, w, 0],
+            [base_len, hw, 0],
             [length, 0, 0],
-            [l, -hw, 0],
-            [l, -w, 0],
+            [base_len, -hw, 0],
+            [base_len, -w, 0],
             [0, -w, 0]],
             width=1.0, color='red', parent=parent)
 
         # Y-axis
         scene.visuals.LinePlot([
             [w, 0, 0],
-            [w, l, 0],
-            [hw, l, 0],
+            [w, base_len, 0],
+            [hw, base_len, 0],
             [0, length, 0],
-            [-hw, l, 0],
-            [-w, l, 0],
+            [-hw, base_len, 0],
+            [-w, base_len, 0],
             [-w, 0, 0]],
             width=1.0, color='green', parent=parent)
 
         # Z-axis
         scene.visuals.LinePlot([
             [0, w, 0],
-            [0, w, l],
-            [0, hw, l],
+            [0, w, base_len],
+            [0, hw, base_len],
             [0, 0, length],
-            [0, -hw, l],
-            [0, -w, l],
+            [0, -hw, base_len],
+            [0, -w, base_len],
             [0, -w, 0]],
             width=1.0, color='blue', parent=parent)
 
@@ -227,7 +215,9 @@ class Plot3d(scene.SceneCanvas):
         distance = anchor.distance
         if display_mode is DisplayMode.identify_anchor:
             if distance < self.VICINITY_DISTANCE:
-                color = self._mix(color, self.HIGHLIGHT_ANCHOR_BRUSH, (distance - self.HIGHLIGHT_DISTANCE) / (self.VICINITY_DISTANCE - self.HIGHLIGHT_DISTANCE))
+                amount = (distance - self.HIGHLIGHT_DISTANCE) / \
+                    (self.VICINITY_DISTANCE - self.HIGHLIGHT_DISTANCE)
+                color = self._mix(color, self.HIGHLIGHT_ANCHOR_BRUSH, amount)
 
             if distance < self.HIGHLIGHT_DISTANCE:
                 color = self.HIGHLIGHT_ANCHOR_BRUSH
@@ -237,14 +227,25 @@ class Plot3d(scene.SceneCanvas):
         marker_pos = anchor.get_position()
         text_pos = self.TEXT_OFFSET + marker_pos
         if id in self._anchor_contexts:
-            self._anchor_contexts[id][0].set_data(pos=np.array([marker_pos]), face_color=color, size=size)
+            self._anchor_contexts[id][0].set_data(
+                pos=np.array([marker_pos]),
+                face_color=color,
+                size=size)
 
             text = self._anchor_contexts[id][1]
             text.pos = text_pos
             text.font_size = font_size
         else:
-            marker = scene.visuals.Markers(pos=np.array([marker_pos]), face_color=color, size=size, parent=self._view.scene)
-            text = scene.visuals.Text(text=str(id), font_size=font_size, pos=text_pos, parent=self._view.scene)
+            marker = scene.visuals.Markers(
+                pos=np.array([marker_pos]),
+                face_color=color,
+                size=size,
+                parent=self._view.scene)
+            text = scene.visuals.Text(
+                text=str(id),
+                font_size=font_size,
+                pos=text_pos,
+                parent=self._view.scene)
             self._anchor_contexts[id] = [marker, text]
 
     def _purge_anchors(self, keep):
@@ -493,6 +494,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
     def _set_up_plots(self):
         self._plot_3d = Plot3d()
+        self._plot_3d.
         sizePolicy = QSizePolicy()
         sizePolicy.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
         sizePolicy.setVerticalPolicy(QSizePolicy.MinimumExpanding)
@@ -812,10 +814,10 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     def _update_graphics(self):
         if self.is_visible() and self.is_loco_deck_active:
             anchors = copy.deepcopy(self._anchors)
-            self._plot_3d.update_data(anchors, self._position, self._display_mode)
-            self._plot_yz.update(anchors, self._position, self._display_mode)
-            self._plot_xy.update(anchors, self._position, self._display_mode)
-            self._plot_xz.update(anchors, self._position, self._display_mode)
+            self._plot_3d.update_data(
+                anchors,
+                self._position,
+                self._display_mode)
             self._update_position_label(self._position)
 
     def _update_position_label(self, position):
