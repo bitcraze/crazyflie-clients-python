@@ -494,7 +494,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
     def _set_up_plots(self):
         self._plot_3d = Plot3d()
-        self._plot_3d.
         sizePolicy = QSizePolicy()
         sizePolicy.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
         sizePolicy.setVerticalPolicy(QSizePolicy.MinimumExpanding)
