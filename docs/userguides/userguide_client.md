@@ -421,11 +421,9 @@ width="700"}
 The Loco Positioning tab shows information from the Loco Positioning
 system when present.
 
-There are three graphs showing 2D projections of the system from three
-directions. The top left graph shows the system from above, the bottom
-left shows is it from the front (along the y-axis) while the bottom
-right shows it from the right side (along the negative x-axis). The
-graphs can be zoomed and scrolled.
+The bottom of the window shows a 3D view of the system. The
+graphs can rotated by clicking and draging, zoomed using the scroll wheel
+and moved by holding the shift key while clicking and draging.
 
 The tab can be used in two modes that is selected with the radio buttons
 to the right
@@ -442,20 +440,22 @@ and that the estimated position is reasonable.
 ![cfclient positioning](/docs/images/cfclient_position_estimate.png){:align-center
 width="700"}
 
-1.  Plot for X/Y (top view) showing anchors and Crazyflie
-2.  Plot for X/Z showing anchors and Crazyflie
-3.  Plot for Y/Z showing anchors and Crazyflie
-4.  Sets the graph mode
+1.  Plot showing anchors and Crazyflie
+2.  Sets the graph mode
     -   *Position estimate* - Normal viewing mode
     -   *Anchor identification* - Enhanced mode where anchor id and
         marker becomes larger when Crazyflie is closer
-5.  Indicates if anchors are communicating with Crazyflie (i.e anchors
+3.  Indicates if anchors are communicating with Crazyflie (i.e anchors
     are up and running)
-6.  Fit and center all data in graphs
-7.  Used to set anchor positions (see below)
+4.  Used to set anchor positions and change mode of the system
 
-When setting the anchor position there\'s three colors to indicate the
-status:
+### Anchor position configuration
+
+Click the ```Configure positions``` button top open the anghor position
+dialog. In the dialog you can set the coordinates of the anchors. If an
+anchor is missing, click ***** to add one more to the list.
+
+The color of the fields has the following meanings:
 
 -   *White* - No position exists for this anchor (i.e the position has
     not been read yet)
@@ -476,23 +476,27 @@ accordingly. There\'s also two buttons used for the settings:
     the positions are read back. If some of the fields are still red,
     try pressing the button again.
 
+You can save anchor positions to file to store the setup for later use.
+When you load positions from file the data in the input boxes will be
+rplaced by the contents of the file.
+
 ### Anchor identification mode
 
 displays the configured anchor positions. When the crazyflie is close to
 an anchor this is indicated in the graphs by highlighting it. This mode
 is useful to identify anchors and verify that the system is correctly
-configured.
+configured. **NOTE:** Only orks in TWR mode.
+
 ![cfclient anchors](/docs/images/cfclient_anchor_identification.png){:align-center
 width="700"}
 
-1.  Plot for X/Y (top view) showing anchors and Crazyflie
-2.  Plot for X/Z showing anchors and Crazyflie
-3.  Plot for Y/Z showing anchors and Crazyflie
-4.  Sets the graph mode
+1.  Sets the graph mode
     -   *Position estimate* - Normal viewing mode
     -   *Anchor identification* - Enhanced mode where anchor id and
-        marker becomes larger when Crazyflie is closer
-5.  Current system mode indication. The system must be in TWR mode for
+        marker becomes larger when Crazyflie is close to an anchor
+2.  Plot showing anchors and Crazyflie. In this example anchor 1 is close
+to the Crazyflie.
+3.  Current system mode indication. The system must be in TWR mode for
     the anchor identification mode to be available.
 
 ---
