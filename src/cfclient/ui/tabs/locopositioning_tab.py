@@ -30,6 +30,7 @@
 Shows data for the Loco Positioning system
 """
 
+import contextlib
 import logging
 from enum import Enum
 from collections import namedtuple
@@ -40,6 +41,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QMessageBox
 from PyQt5.QtGui import QLabel
+from PyQt5.QtGui import QSizePolicy
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -49,6 +51,11 @@ from cflib.crazyflie.mem import MemoryElement
 from lpslib.lopoanchor import LoPoAnchor
 
 from cfclient.ui.dialogs.anchor_position_dialog import AnchorPositionDialog
+
+from vispy import scene
+
+from vispy.geometry.generation import create_sphere
+from vispy.color.colormap import get_colormaps
 
 import copy
 import sys
@@ -122,143 +129,136 @@ class AxisScaleStep:
         self.center_only = center_only
 
 
-class PlotWrapper:
-    XAxis = 0
-    YAxis = 1
-    _refs = []
-    _change_lock = False
-
-    axis_dict = {'x': 0, 'y': 1, 'z': 2}
-
-    ANCHOR_BRUSH = (50, 150, 50)
-    ANCHOR_BRUSH_INVALID = (200, 150, 150)
-    HIGHLIGHT_ANCHOR_BRUSH = (0, 255, 0)
-    POSITION_BRUSH = (0, 0, 255)
+class Plot3d(scene.SceneCanvas):
+    ANCHOR_BRUSH = np.array((0.2, 0.5, 0.2))
+    ANCHOR_BRUSH_INVALID = np.array((0.8, 0.5, 0.5))
+    HIGHLIGHT_ANCHOR_BRUSH = np.array((0, 1, 0))
+    POSITION_BRUSH = np.array((0, 0, 1.0))
 
     VICINITY_DISTANCE = 2.5
     HIGHLIGHT_DISTANCE = 0.5
 
-    LABEL_SIZE = 15
-    LABEL_HIGHLIGHT_SIZE = 30
+    LABEL_SIZE = 100
+    LABEL_HIGHLIGHT_SIZE = 200
 
     ANCHOR_SIZE = 10
     HIGHLIGHT_SIZE = 20
 
-    def __init__(self, title, horizontal, vertical):
-        self._horizontal = horizontal
-        self._vertical = vertical
-        self._depth = self._find_missing_axis(horizontal, vertical)
-        self._title = title
-        self.widget = pg.PlotWidget(title=title, enableMenu=False)
-        self.widget.getPlotItem().hideButtons()
-        self._axis_scale_steps = []
+    TEXT_OFFSET = np.array((0.0, 0, 0.25))
 
-        self.widget.setLabel('left', self._vertical, units='m')
-        self.widget.setLabel('bottom', self._horizontal, units='m')
+    def __init__(self):
+        scene.SceneCanvas.__init__(self, keys=None)
+        self.unfreeze()
 
-        self.widget.setAspectLocked(True, 1)
-        self.widget.getViewBox().sigRangeChanged.connect(self._view_changed)
-        self.view = self.widget.getViewBox()
+        self._view = self.central_widget.add_view()
+        self._view.bgcolor = '#ffffff'
+        self._view.camera = scene.TurntableCamera(distance=10.0, up='+z', center=(0.0, 0.0, 1.0))
 
-    def update(self, anchors, pos, display_mode):
-        self.widget.clear()
+        self._cf = scene.visuals.Markers(pos=np.array([[0, 0, 0]]), parent=self._view.scene, face_color=self.POSITION_BRUSH)
+        self._anchor_contexts = {}
 
-        # Sort anchors in depth order to add the one closes last
-        for (id, anchor) in sorted(
-                anchors.items(),
-                key=lambda item: getattr(item[1], self._depth), reverse=True):
-            anchor_v = getattr(anchor, self._horizontal)
-            anchor_h = getattr(anchor, self._vertical)
-            anchor_active = anchor.is_active()
-            if anchor.is_position_valid():
-                self._plot_anchor(anchor_v, anchor_h, id, anchor.distance,
-                                  display_mode, anchor_active)
+        self.freeze()
 
-        if display_mode is DisplayMode.estimated_position:
-            cf_h = pos[PlotWrapper.axis_dict[self._horizontal]]
-            cf_v = pos[PlotWrapper.axis_dict[self._vertical]]
-            self.widget.plot([cf_h], [cf_v], pen=None,
-                             symbolBrush=PlotWrapper.POSITION_BRUSH)
+        plane_size = 10
+        scene.visuals.Plane(width=plane_size,
+            height=plane_size, width_segments=plane_size, height_segments=plane_size,
+            color=(0.5, 0.5, 0.5, 0.5),
+            edge_color="gray",
+            parent=self._view.scene)
 
-    def _find_missing_axis(self, axis1, axis2):
-        all = set(self.axis_dict.keys())
-        all.remove(axis1)
-        all.remove(axis2)
+        self.addArrows(1, 0.02, 0.1, 0.1, self._view.scene)
 
-        return list(all)[0]
+    def addArrows(self, length, width, head_length, head_width, parent):
+        # The Arrow visual in vispy does not seem to work very good,
+        # draw arrows using lines instead.
+        w = width / 2
+        hw = head_width / 2
+        l = length - head_length
 
-    def _plot_anchor(self, x, y, anchor_id, distance, display_mode, is_active):
-        if is_active:
-            brush = PlotWrapper.ANCHOR_BRUSH
+        # X-axis
+        scene.visuals.LinePlot([
+            [0, w, 0],
+            [l, w, 0],
+            [l, hw, 0],
+            [length, 0, 0],
+            [l, -hw, 0],
+            [l, -w, 0],
+            [0, -w, 0]],
+            width=1.0, color='red', parent=parent)
+
+        # Y-axis
+        scene.visuals.LinePlot([
+            [w, 0, 0],
+            [w, l, 0],
+            [hw, l, 0],
+            [0, length, 0],
+            [-hw, l, 0],
+            [-w, l, 0],
+            [-w, 0, 0]],
+            width=1.0, color='green', parent=parent)
+
+        # Z-axis
+        scene.visuals.LinePlot([
+            [0, w, 0],
+            [0, w, l],
+            [0, hw, l],
+            [0, 0, length],
+            [0, -hw, l],
+            [0, -w, l],
+            [0, -w, 0]],
+            width=1.0, color='blue', parent=parent)
+
+    def update_data(self, anchors, pos, display_mode):
+        self._cf.set_data(pos=np.array([pos]), face_color=self.POSITION_BRUSH)
+
+        for id, anchor in anchors.items():
+            self._update_anchor(id, anchor, display_mode)
+
+        self._purge_anchors(anchors.keys())
+
+    def _update_anchor(self, id, anchor, display_mode):
+        if anchor.is_active():
+            color = self.ANCHOR_BRUSH
         else:
-            brush = PlotWrapper.ANCHOR_BRUSH_INVALID
+            color = self.ANCHOR_BRUSH_INVALID
 
-        size = PlotWrapper.ANCHOR_SIZE
+        size = self.ANCHOR_SIZE
         font_size = self.LABEL_SIZE
+        distance = anchor.distance
         if display_mode is DisplayMode.identify_anchor:
-            if distance < PlotWrapper.VICINITY_DISTANCE:
-                brush = self._mix_brushes(
-                    brush,
-                    PlotWrapper.HIGHLIGHT_ANCHOR_BRUSH,
-                    distance / PlotWrapper.VICINITY_DISTANCE)
+            if distance < self.VICINITY_DISTANCE:
+                color = self._mix(color, self.HIGHLIGHT_ANCHOR_BRUSH, (distance - self.HIGHLIGHT_DISTANCE) / (self.VICINITY_DISTANCE - self.HIGHLIGHT_DISTANCE))
 
-            if distance < PlotWrapper.HIGHLIGHT_DISTANCE:
-                brush = PlotWrapper.HIGHLIGHT_ANCHOR_BRUSH
-                size = PlotWrapper.HIGHLIGHT_SIZE
+            if distance < self.HIGHLIGHT_DISTANCE:
+                color = self.HIGHLIGHT_ANCHOR_BRUSH
+                size = self.HIGHLIGHT_SIZE
                 font_size = self.LABEL_HIGHLIGHT_SIZE
 
-        self.widget.plot([x], [y], pen=None, symbolBrush=brush,
-                         symbolSize=size)
+        marker_pos = anchor.get_position()
+        text_pos = self.TEXT_OFFSET + marker_pos
+        if id in self._anchor_contexts:
+            self._anchor_contexts[id][0].set_data(pos=np.array([marker_pos]), face_color=color, size=size)
 
-        text = pg.TextItem(text="{}".format(anchor_id))
-        font = QFont("Helvetica", font_size)
-        text.setFont(font)
-        self.widget.addItem(text)
-        text.setPos(x, y)
+            text = self._anchor_contexts[id][1]
+            text.pos = text_pos
+            text.font_size = font_size
+        else:
+            marker = scene.visuals.Markers(pos=np.array([marker_pos]), face_color=color, size=size, parent=self._view.scene)
+            text = scene.visuals.Text(text=str(id), font_size=font_size, pos=text_pos, parent=self._view.scene)
+            self._anchor_contexts[id] = [marker, text]
 
-    def _mix_brushes(self, brush1, brush2, mix):
-        if mix < 0.0:
-            return brush1
-        if mix > 1.0:
-            return brush2
+    def _purge_anchors(self, keep):
+        to_remove = []
+        for id, context in self._anchor_contexts.items():
+            if id not in keep:
+                to_remove.append(id)
+                for visual in context:
+                    visual.parent = None
+        for id in to_remove:
+            self._anchor_contexts.pop(id)
 
-        b1 = mix
-        b2 = 1.0 - mix
-        return (
-            brush1[0] * b1 + brush2[0] * b2,
-            brush1[1] * b1 + brush2[1] * b2,
-            brush1[2] * b1 + brush2[2] * b2,
-        )
-
-    def _view_changed(self, view, settings):
-        # Ignore all callbacks until this change is processed
-        if PlotWrapper._change_lock:
-            return
-        PlotWrapper._change_lock = True
-
-        for step in self._axis_scale_steps:
-            range = step.from_view.viewRange()[step.from_axis]
-            new_range = range
-
-            if step.center_only:
-                center = (range[0] + range[1]) / 2
-                current_range = step.to_view.viewRange()[step.to_axis]
-                current_center = (current_range[0] + current_range[1]) / 2
-                delta = center - current_center
-                new_range = [current_range[0] + delta,
-                             current_range[1] + delta]
-
-            if step.to_axis is PlotWrapper.XAxis:
-                step.to_view.setRange(xRange=new_range, padding=0.0,
-                                      update=True)
-            else:
-                step.to_view.setRange(yRange=new_range, padding=0.0,
-                                      update=True)
-
-        PlotWrapper._change_lock = False
-
-    def set_scale_steps(self, steps):
-        self._axis_scale_steps = steps
+    def _mix(self, col1, col2, mix):
+        return col1 * mix + col2 * (1.0 - mix)
 
 
 class DisplayMode(Enum):
@@ -453,7 +453,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             self._send_anchor_mode(self.LOCO_MODE_TDOA3)
         )
 
-        self._show_all_button.clicked.connect(self._scale_and_center_graphs)
         self._clear_anchors_button.clicked.connect(self._clear_anchors)
 
         self._configure_anchor_positions_button.clicked.connect(
@@ -493,38 +492,12 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             fkn(arg)
 
     def _set_up_plots(self):
-        self._plot_xy = PlotWrapper("Top view (X/Y)", "x", "y")
-        self._plot_top_left_layout.addWidget(self._plot_xy.widget)
-        self._plot_xz = PlotWrapper("Front view (X/Z)", "x", "z")
-        self._plot_bottom_left_layout.addWidget(self._plot_xz.widget)
-        self._plot_yz = PlotWrapper("Right view (Y/Z)", "y", "z")
-        self._plot_bottom_right_layout.addWidget(self._plot_yz.widget)
-        self._plot_xy.set_scale_steps([
-            AxisScaleStep(self._plot_xy, PlotWrapper.XAxis,
-                          self._plot_xz, PlotWrapper.XAxis),
-            AxisScaleStep(self._plot_xz, PlotWrapper.YAxis,
-                          self._plot_yz, PlotWrapper.YAxis),
-            AxisScaleStep(self._plot_xy, PlotWrapper.YAxis,
-                          self._plot_yz, PlotWrapper.XAxis, center_only=True)
-        ])
-        self._plot_xz.set_scale_steps([
-            AxisScaleStep(self._plot_xz, PlotWrapper.XAxis,
-                          self._plot_xy, PlotWrapper.XAxis),
-            AxisScaleStep(self._plot_xz, PlotWrapper.YAxis,
-                          self._plot_yz, PlotWrapper.YAxis),
-            AxisScaleStep(self._plot_xy, PlotWrapper.YAxis,
-                          self._plot_yz, PlotWrapper.XAxis, center_only=True)
-        ])
-        self._plot_yz.set_scale_steps([
-            AxisScaleStep(self._plot_yz, PlotWrapper.YAxis,
-                          self._plot_xz, PlotWrapper.YAxis),
-            AxisScaleStep(self._plot_xz, PlotWrapper.XAxis,
-                          self._plot_xy, PlotWrapper.XAxis),
-            AxisScaleStep(self._plot_yz, PlotWrapper.XAxis,
-                          self._plot_xy, PlotWrapper.YAxis, center_only=True)
-        ])
-
-        self._plot_xy.view.setRange(xRange=(0.0, 5.0))
+        self._plot_3d = Plot3d()
+        sizePolicy = QSizePolicy()
+        sizePolicy.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
+        sizePolicy.setVerticalPolicy(QSizePolicy.MinimumExpanding)
+        self._plot_3d.native.setSizePolicy(sizePolicy)
+        self._plot_bottom_right_layout.addWidget(self._plot_3d.native)
 
     def _set_display_mode(self, display_mode):
         self._display_mode = display_mode
@@ -554,109 +527,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
     def _clear_anchors(self):
         self._anchors = {}
-
-    def _scale_and_center_graphs(self):
-        start_bounds = Range(sys.float_info.max, -sys.float_info.max)
-        bounds = {"x": start_bounds, "y": start_bounds,
-                  "z": start_bounds}
-        for a in self._anchors.values():
-            bounds = self._find_min_max_data_range(bounds, [a.x, a.y, a.z])
-        bounds = self._find_min_max_data_range(bounds, self._position)
-
-        bounds = self._pad_bounds(bounds)
-        self._center_all_data_in_graphs(bounds)
-        self._rescale_to_fit_data(bounds)
-
-    def _rescale_to_fit_data(self, bounds):
-        [[xy_xmin, xy_xmax],
-            [xy_ymin, xy_ymax]] = self._plot_xy.view.viewRange()
-        [[yz_xmin, yz_xmax],
-            [yz_ymin, yz_ymax]] = self._plot_yz.view.viewRange()
-        if not self._is_data_visibile(bounds, self._position):
-            if self._will_new_range_zoom_in(Range(xy_xmin, xy_xmax),
-                                            bounds["x"]):
-                self._plot_xy.view.setRange(xRange=bounds["x"],
-                                            padding=0.0, update=True)
-
-        if not self._is_data_visibile(bounds, self._position):
-            if self._will_new_range_zoom_in(Range(xy_ymin, xy_ymax),
-                                            bounds["y"]):
-                self._plot_xy.view.setRange(yRange=bounds["y"],
-                                            padding=0.0, update=True)
-
-        if not self._is_data_visibile(bounds, self._position):
-            if self._will_new_range_zoom_in(Range(yz_xmin, yz_xmax),
-                                            bounds["y"]):
-                self._plot_yz.view.setRange(yRange=bounds["y"],
-                                            padding=0.0, update=True)
-
-        if not self._is_data_visibile(bounds, self._position):
-            if self._will_new_range_zoom_in(Range(yz_ymin, yz_ymax),
-                                            bounds["z"]):
-                self._plot_yz.view.setRange(yRange=bounds["z"], padding=0.0,
-                                            update=True)
-
-    def _pad_bounds(self, ranges):
-        new_ranges = ranges
-
-        new_ranges["x"] = Range(new_ranges["x"].min - 1.0,
-                                new_ranges["x"].max + 1.0)
-
-        new_ranges["y"] = Range(new_ranges["y"].min - 1.0,
-                                new_ranges["y"].max + 1.0)
-
-        new_ranges["z"] = Range(new_ranges["z"].min - 1.0,
-                                new_ranges["z"].max + 1.0)
-
-        return new_ranges
-
-    def _center_all_data_in_graphs(self, ranges):
-        # Will center data in graphs without taking care of scaling
-        self._plot_xy.view.setRange(xRange=ranges["x"], yRange=ranges["y"],
-                                    padding=0.0, update=True)
-        self._plot_yz.view.setRange(yRange=ranges["z"], padding=0.0,
-                                    update=True)
-
-    def _will_new_range_zoom_in(self, old_range, new_range):
-        return old_range.min > new_range.min
-
-    def _is_data_visibile(self, ranges, point):
-        [[xy_xmin, xy_xmax],
-            [xy_ymin, xy_ymax]] = self._plot_xy.view.viewRange()
-        [[yz_xmin, yz_xmax],
-            [yz_ymin, yz_ymax]] = self._plot_yz.view.viewRange()
-        [[xz_xmin, xz_xmax],
-            [xz_ymin, xz_ymax]] = self._plot_xz.view.viewRange()
-
-        allVisible = True
-
-        if ranges["x"].min < xy_xmin or ranges["x"].max > xy_xmax:
-            allVisible = False
-
-        if ranges["z"].min < yz_ymin or ranges["z"].max > yz_ymax:
-            allVisible = False
-
-        if ranges["y"].min < yz_xmin or ranges["y"].max > yz_xmax:
-            allVisible = False
-
-        if ranges["y"].min < xy_ymin or ranges["y"].max > xy_ymax:
-            allVisible = False
-
-        return allVisible
-
-    def _find_min_max_data_range(self, ranges, point):
-        result = ranges
-
-        result["x"] = Range(min(ranges["x"].min, point[0]),
-                            max(ranges["x"].max, point[0]))
-
-        result["y"] = Range(min(ranges["y"].min, point[1]),
-                            max(ranges["y"].max, point[1]))
-
-        result["z"] = Range(min(ranges["z"].min, point[2]),
-                            max(ranges["z"].max, point[2]))
-
-        return result
 
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
@@ -942,6 +812,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     def _update_graphics(self):
         if self.is_visible() and self.is_loco_deck_active:
             anchors = copy.deepcopy(self._anchors)
+            self._plot_3d.update_data(anchors, self._position, self._display_mode)
             self._plot_yz.update(anchors, self._position, self._display_mode)
             self._plot_xy.update(anchors, self._position, self._display_mode)
             self._plot_xz.update(anchors, self._position, self._display_mode)
