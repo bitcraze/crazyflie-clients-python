@@ -140,6 +140,8 @@ setup(
         ],
     },
 
+    # Pyqt5 5.12 is the last version that does not cause performance problems
+    # on Windows and Mac
     install_requires=platform_requires + ['cflib~=0.1.12',
                                           'appdirs~=1.4.0',
                                           'pyzmq~=19.0',
@@ -148,16 +150,14 @@ setup(
                                           'quamash~=0.6.1',
                                           'qtm~=2.0.2',
                                           'vispy~=0.6.5',
-                                          'numpy~=1.19.2'],
+                                          'numpy~=1.19.2',
+                                          'pyqt5~=5.12.0'],
 
-    # List of dev and qt dependencies
-    # Pyqt5 5.12 is the last version that does not cause performance problems
-    # on Windows and Mac
+    # List of dev dependencies
     # You can install them by running
-    # $ pip install -e .[dev,qt5]
+    # $ pip install -e .[dev]
     extras_require={
         'dev': platform_dev_requires + [],
-        'qt5': ['pyqt5~=5.12.0']
     },
 
     package_data=package_data,
