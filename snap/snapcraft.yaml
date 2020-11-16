@@ -18,6 +18,9 @@ parts:
     plugin: python
     python-version: python3
     source: .
+    stage-packages:
+      - libglu1-mesa
+      - libxcb-glx0
 
 apps:
   cfclient:
