@@ -94,6 +94,14 @@ if sys.platform == 'win32' or sys.platform == 'darwin':
 if sys.platform == 'win32':
     platform_dev_requires = ['cx_freeze==5.1.1', 'jinja2==2.10.3']
 
+# Only install the latest pyqt for Linux and Mac
+# On Windows, the latest version that does not have performance problems
+# is 5.12
+if sys.platform == 'win32':
+    platform_requires += ['pyqt5~=5.12.0']
+else:
+    platform_requires += ['pyqt5~=5.15.0']
+
 package_data = {
     'cfclient.ui':  relative(glob('src/cfclient/ui/*.ui')),
     'cfclient.ui.tabs': relative(glob('src/cfclient/ui/tabs/*.ui')),
@@ -140,8 +148,6 @@ setup(
         ],
     },
 
-    # Pyqt5 5.12 is the last version that does not cause performance problems
-    # on Windows and Mac
     install_requires=platform_requires + ['cflib~=0.1.12',
                                           'appdirs~=1.4.0',
                                           'pyzmq~=19.0',
@@ -150,8 +156,7 @@ setup(
                                           'quamash~=0.6.1',
                                           'qtm~=2.0.2',
                                           'vispy~=0.6.5',
-                                          'numpy~=1.19.2',
-                                          'pyqt5~=5.12.0'],
+                                          'numpy~=1.19.2'],
 
     # List of dev dependencies
     # You can install them by running
