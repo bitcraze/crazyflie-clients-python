@@ -13,12 +13,10 @@ For more info see our [documentation](https://www.bitcraze.io/documentation/repo
 
 The client can be installed and run with snap, it can be found on [snapcraft](https://snapcraft.io/cfclient) (ie. search Crazyflie in Ubuntu software) or installed from command line:
 ```
-snap install --edge cfclient
-snap connect cfclient:raw-usb    # Required to access the Crazyradio
-snap connect cfclient:joystick   # Required to access gamepads
+snap install --beta cfclient
 ```
 
-The only build available right now is the latest commit from github (edge), the next version will be pushed in the snapcraft stable channel.
+The edge version is currently broken (latest github commit). The last working version has been set to beta. The next release will be pushed in the snapcraft stable channel.
 
 It is still required to set the udev permission with the snap, see the last section of this page.
 
