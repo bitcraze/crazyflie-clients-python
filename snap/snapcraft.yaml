@@ -13,8 +13,6 @@ parts:
     plugin: python
     python-version: python3
     source: .
-    stage-packages:
-      - python3-pyqt5
 
 apps:
   cfclient:
