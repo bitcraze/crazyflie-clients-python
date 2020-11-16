@@ -52,7 +52,19 @@ At the very least you should **never** run pip in sudo, this would install depen
 
 ## Linux
 
-All dependencies on linux are handled by pip so to install an editable copy simply run:
+### Prerequisites
+
+From a fresh Ubuntu 20.04 system, running the client form source requires git and pip.
+
+```
+sudo apt install git python3-pip
+git clone https://github.com/bitcraze/crazyflie-clients-python
+cd crazyflie-clients-python
+```
+
+### Installing the client
+
+All other dependencies on linux are handled by pip so to install an editable copy simply run:
 
 ```
 $ python3 -m pip install -e .
