@@ -24,6 +24,8 @@ jobs:
           brew install sdl2 libusb
           pip3 install -e .
           pip3 install cx_freeze==6.3
+          pip3 uninstall pyqt5
+          pip3 install "pyqt5~=5.15.0"
       
       - name: Build
         run: python3 setup.py bdist_mac
