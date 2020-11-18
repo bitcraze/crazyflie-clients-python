@@ -129,11 +129,14 @@ makensis win32install\cfclient.nsi
 
 ## Mac OSX
 
+**Note**: There is currently problems with both Python 3.9 and Mac OS 11 Big Sur. The instruction bellow makes python 3.8 the default and will work up to Catalina.
+
 The supported way to run on Mac is by using the [Homebrew](http://brew.sh/) distribution of python3.
 
 Python3 and required libs can be installed with brew:
 ```
-brew install python3 sdl2 libusb
+brew install python3@3.8 sdl2 libusb
+brew link python3@3.8
 ```
 
 To install the client in edit mode:
