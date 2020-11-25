@@ -107,7 +107,9 @@ else:
 # Current version of vispy do not support Python 3.9
 # Getting Vispy form git if running in python 3.9
 if sys.version_info[:2] == (3, 9):
-    platform_requires += ['vispy @ git+https://github.com/vispy/vispy@74d9461d']
+    platform_requires += [
+        'vispy @ git+https://github.com/vispy/vispy@74d9461d'
+    ]
 else:
     platform_requires += ['vispy~=0.6.5']
 
