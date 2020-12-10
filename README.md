@@ -129,14 +129,15 @@ makensis win32install\cfclient.nsi
 
 ## Mac OSX
 
-**Note**: There is currently problems installing python packages with Mac OS 11 Big Sur. The instruction bellow only work up to Catalina.
+**Note**: On macOS 11 Big Sur, a recent version of python 3.9 and pip3 from brew is required, make sure your python3 install is up to date and if necessary upgrade pip with ```pip3 install --upgrade pip```.
 
 The supported way to run on Mac is by using the [Homebrew](http://brew.sh/) distribution of python3.
 
 Python3 and required libs can be installed with brew:
 ```
 brew install python3 sdl2 libusb
-brew link python3
+brew link python3   # This makes sure the latest python3 is used
+# if "which python3" does not return "/usr/local/bin/python3", relaunch your terminal
 ```
 
 To install the client in edit mode:
