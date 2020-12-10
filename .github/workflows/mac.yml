@@ -21,10 +21,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install python@3.8 sdl2 libusb
-          brew link --overwrite python@3.8
+          brew install python@3.9 sdl2 libusb
+          brew link --overwrite python@3.9
           pip3 install -e .
-          pip3 install cx_freeze==6.3
+          pip3 install cx_freeze~=6.4
       
       - name: Build
         run: python3 setup.py bdist_mac

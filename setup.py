@@ -20,7 +20,6 @@ if sys.argv[1] in ('build', 'bdist_msi', 'bdist_mac', 'bdist_dmg'):
                              'numpy.lib.format',
                              'pyqtgraph.debug',
                              'pyqtgraph.ThreadsafeTimer',
-                             'vispy.ext._bundled.six',
                              'vispy.app.backends._pyqt5',
                              ],
                 'include_files': [],
