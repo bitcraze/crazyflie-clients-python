@@ -67,7 +67,7 @@ jobs:
           pip install -e .
           python tools\build\prep_windows
           pip install cx_freeze~=6.4
-          pip install jinja
+          pip install jinja2
       
       - name: Install nsis
         run: choco install -y nsis.portable -version 2.50
