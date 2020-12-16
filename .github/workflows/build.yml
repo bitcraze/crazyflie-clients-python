@@ -1,6 +1,6 @@
-# MacOS build configuration
+# Binaries build configuration
 
-name: MacOS
+name: Binary builds
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -11,7 +11,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  mac-build:
     runs-on: macos-10.15
     steps:
       # Checkout, fetch-depth=0 fetches the full repos (required for automatic versioning to work)
@@ -41,3 +41,36 @@ jobs:
         with:
           name: mac-build
           path: "build/*.zip"
+  
+  windows-build:
+    runs-on: windows-2019
+
+    steps:
+      # Checkout, fetch-depth=0 fetches the full repos (required for automatic versioning to work)
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          python tools\build\prep_windows
+          pip install cx_freeze~=6.4
+
+      - name: Build exe
+        run: python setup.py install_exe -d windows_build
+      
+      - name: Test exe
+        run: windows_build\cfclient.exe --check-imports
+      
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v2.1.4
+        with:
+          name: windows-build
+          path: "windows_build\*"
+
