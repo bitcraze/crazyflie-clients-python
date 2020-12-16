@@ -1,6 +1,6 @@
 # Binaries build configuration
 
-name: Binary builds
+name: Build
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    name: Build on ${{ matrix.os }}
+    name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -47,6 +47,8 @@ jobs:
           path: "build/*.zip"
   
   windows-build:
+    name: Windows
+
     runs-on: windows-2019
 
     steps:
@@ -65,6 +67,10 @@ jobs:
           pip install -e .
           python tools\build\prep_windows
           pip install cx_freeze~=6.4
+          pip install jinja
+      
+      - name: Install nsis
+        run: choco install -y nsis.portable -version 2.50
 
       - name: Build exe
         run: python setup.py install_exe -d windows_build
@@ -72,9 +78,14 @@ jobs:
       - name: Test exe
         run: windows_build\cfclient.exe --check-imports
       
+      - name: Build installer
+        run: |
+          python win32install\generate_nsis.py
+          makensis win32install\cfclient.nsi
+      
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v2.1.4
         with:
           name: windows-build
-          path: "windows_build/*"
+          path: "win32install/*.exe"
 
