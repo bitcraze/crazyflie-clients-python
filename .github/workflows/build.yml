@@ -76,5 +76,5 @@ jobs:
         uses: actions/upload-artifact@v2.1.4
         with:
           name: windows-build
-          path: "windows_build\*"
+          path: "windows_build/*"
 
