@@ -103,14 +103,6 @@ if sys.platform == 'win32':
 else:
     platform_requires += ['pyqt5~=5.15.0']
 
-# Current version of vispy do not support Python 3.9
-# Getting Vispy form git if running in python 3.9
-if sys.version_info[:2] == (3, 9):
-    platform_requires += [
-        'vispy @ git+https://github.com/vispy/vispy@74d9461d'
-    ]
-else:
-    platform_requires += ['vispy~=0.6.5']
 
 package_data = {
     'cfclient.ui':  relative(glob('src/cfclient/ui/*.ui')),
@@ -165,7 +157,8 @@ setup(
                                           'PyYAML~=5.3',
                                           'quamash~=0.6.1',
                                           'qtm~=2.0.2',
-                                          'numpy~=1.19.2'],
+                                          'numpy~=1.19.2',
+                                          'vispy~=0.6.6'],
 
     # List of dev dependencies
     # You can install them by running

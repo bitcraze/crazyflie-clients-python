@@ -11,8 +11,12 @@ on:
     branches: [ master ]
 
 jobs:
-  mac-build:
-    runs-on: macos-10.15
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-10.15, macos-11.0]
     steps:
       # Checkout, fetch-depth=0 fetches the full repos (required for automatic versioning to work)
       - uses: actions/checkout@v2
@@ -39,7 +43,7 @@ jobs:
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v2.1.4
         with:
-          name: mac-build
+          name: ${{ matrix.os }}-build
           path: "build/*.zip"
   
   windows-build:
