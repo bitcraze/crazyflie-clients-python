@@ -10,7 +10,8 @@ import sys
 import os
 import platform
 
-if sys.argv[1] in ('build', 'bdist_msi', 'bdist_mac', 'bdist_dmg', 'install_exe'):
+if sys.argv[1] in ('build', 'bdist_msi', 'bdist_mac', 'bdist_dmg',
+                   'install_exe'):
     from cx_Freeze import setup, Executable  # noqa
 
     cxfreeze_options = {
