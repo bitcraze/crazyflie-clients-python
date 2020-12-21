@@ -72,7 +72,7 @@ Section "Crazyflie Client" SecCfclient
 
   ; Files to install
   {% for file in files %}
-    File "/oname=$INSTDIR\{{file}}" "..\build\exe.win32-3.6\\{{file}}"
+    File "/oname=$INSTDIR\{{file}}" "..\\windows_build\\{{file}}"
   {% endfor %}
 
   ; Write the installation path into the registry

@@ -10,9 +10,9 @@ install:
     choco install -y nsis.portable -version 2.50
 build_script:
 - cmd: >-
-    python setup.py build
+    python setup.py install_exe -d windows_build
 
-    build\exe.win32-3.6\cfclient.exe --check-imports
+    windows_build\cfclient.exe --check-imports
 
     python win32install\generate_nsis.py
 

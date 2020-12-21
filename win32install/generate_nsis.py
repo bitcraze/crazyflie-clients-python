@@ -5,7 +5,7 @@ from subprocess import Popen
 
 import jinja2
 
-DIST_PATH = "..\\build\\exe.win32-3.6"
+DIST_PATH = "..\\windows_build"
 
 # Get list of files and directory to install/uninstall
 INSTALL_FILES = []
@@ -33,7 +33,7 @@ VERSION = output.strip().decode("utf-8")
 
 print("Cfclient version {}".format(VERSION))
 
-os.chdir("..\\..\\win32install")
+os.chdir("..\\win32install")
 
 with open("cfclient.nsi.tmpl", "r") as template_file:
     TEMPLATE = template_file.read()

@@ -57,17 +57,16 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: Set up Python 3.9
+      - name: Set up Python 3.6
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: 3.6
+          architecture: 'x86'
 
       - name: Install dependencies
         run: |
-          pip install -e .
+          pip install -e .[dev,qt5]
           python tools\build\prep_windows
-          pip install cx_freeze~=6.4
-          pip install jinja2
       
       - name: Install nsis
         run: choco install -y nsis.portable -version 2.50
