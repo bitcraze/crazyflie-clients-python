@@ -39,7 +39,6 @@ from PyQt5 import uic
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QMessageBox
 from PyQt5.QtGui import QLabel
-from PyQt5.QtGui import QSizePolicy
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -494,10 +493,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
     def _set_up_plots(self):
         self._plot_3d = Plot3d()
-        sizePolicy = QSizePolicy()
-        sizePolicy.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
-        sizePolicy.setVerticalPolicy(QSizePolicy.MinimumExpanding)
-        self._plot_3d.native.setSizePolicy(sizePolicy)
         self._plot_bottom_right_layout.addWidget(self._plot_3d.native)
 
     def _set_display_mode(self, display_mode):
