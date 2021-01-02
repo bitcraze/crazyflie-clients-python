@@ -493,7 +493,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
     def _set_up_plots(self):
         self._plot_3d = Plot3d()
-        self._plot_bottom_right_layout.addWidget(self._plot_3d.native)
+        self._plot_layout.addWidget(self._plot_3d.native)
 
     def _set_display_mode(self, display_mode):
         self._display_mode = display_mode
