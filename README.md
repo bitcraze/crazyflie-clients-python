@@ -1,4 +1,4 @@
-# Crazyflie PC client [![CI](https://github.com/bitcraze/crazyflie-clients-python/workflows/CI/badge.svg)](https://github.com/bitcraze/crazyflie-clients-python/actions?query=workflow%3ACI) [![Build](https://github.com/bitcraze/crazyflie-clients-python/workflows/Build/badge.svg)](https://github.com/bitcraze/crazyflie-clients-python/actions?query=workflow%3ABuild) [![cfclient](https://snapcraft.io//cfclient/badge.svg)](https://snapcraft.io/cfclient)
+# Crazyflie PC client [![CI](https://github.com/bitcraze/crazyflie-clients-python/workflows/CI/badge.svg)](https://github.com/bitcraze/crazyflie-clients-python/actions?query=workflow%3ACI) [![cfclient](https://snapcraft.io//cfclient/badge.svg)](https://snapcraft.io/cfclient)
 
 
 The Crazyflie PC client enables flashing and controlling the Crazyflie.
