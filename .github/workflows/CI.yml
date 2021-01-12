@@ -45,7 +45,7 @@ jobs:
           brew install python@3.9 sdl2 libusb
           brew link --overwrite python@3.9
           pip3 install -e .
-          pip3 install cx_freeze==6.4
+          pip3 install cx_freeze==6.4.2
       
       - name: Build
         run: python3 setup.py bdist_mac
