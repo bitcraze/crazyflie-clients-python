@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2017 Bitcraze AB
+#  Copyright (C) 2011-2021 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -363,7 +363,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
     _disconnected_signal = pyqtSignal(str)
     _log_error_signal = pyqtSignal(object, str)
     _anchor_range_signal = pyqtSignal(int, object, object)
-    _position_signal = pyqtSignal(int, object, object)
     _loco_sys_signal = pyqtSignal(int, object, object)
     _cb_param_to_detect_loco_deck_signal = pyqtSignal(object, object)
 
@@ -381,7 +380,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._helper = helper
 
         self._anchors = {}
-        self._position = []
         self._clear_state()
         self._refs = []
 
@@ -392,7 +390,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._connected_signal.connect(self._connected)
         self._disconnected_signal.connect(self._disconnected)
         self._anchor_range_signal.connect(self._anchor_range_received)
-        self._position_signal.connect(self._position_received)
         self._loco_sys_signal.connect(self._loco_sys_received)
         self._cb_param_to_detect_loco_deck_signal.connect(
             self._cb_param_to_detect_loco_deck)
@@ -479,7 +476,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._anchor_state_timer.timeout.connect(self._poll_anchor_state)
         self._anchor_state_machine = None
 
-        self._update_position_label(self._position)
+        self._update_position_label(self._helper.pose_logger.position)
 
         self._lps_state = self.LOCO_MODE_UNKNOWN
         self._update_lps_state(self.LOCO_MODE_UNKNOWN)
@@ -517,7 +514,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
 
     def _clear_state(self):
         self._clear_anchors()
-        self._position = [0.0, 0.0, 0.0]
         self._update_ranging_status_indicators()
         self._id_anchor_button.setEnabled(True)
 
@@ -576,16 +572,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
                         ("ranging", "distance7", "float"),
                     ],
                     self._anchor_range_signal.emit,
-                    self._log_error_signal.emit)
-
-                self._register_logblock(
-                    "LoPoTab2",
-                    [
-                        ("kalman", "stateX", "float"),
-                        ("kalman", "stateY", "float"),
-                        ("kalman", "stateZ", "float"),
-                    ],
-                    self._position_signal.emit,
                     self._log_error_signal.emit)
 
                 self._register_logblock(
@@ -668,13 +654,6 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
                 if valid:
                     anchor = self._get_create_anchor(anchor_number)
                     anchor.distance = float(value)
-
-    def _position_received(self, timestamp, data, logconf):
-        """Callback from the logging system when the position is updated."""
-        for name, value in data.items():
-            valid, axis = self._parse_position_param_name(name)
-            if valid:
-                self._position[axis] = float(value)
 
     def _loco_sys_received(self, timestamp, data, logconf):
         """Callback from the logging system when the loco pos sys config
@@ -810,9 +789,9 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             anchors = copy.deepcopy(self._anchors)
             self._plot_3d.update_data(
                 anchors,
-                self._position,
+                self._helper.pose_logger.position,
                 self._display_mode)
-            self._update_position_label(self._position)
+            self._update_position_label(self._helper.pose_logger.position)
 
     def _update_position_label(self, position):
         if len(position) == 3:

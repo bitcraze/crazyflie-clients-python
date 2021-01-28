@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2021 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -83,8 +83,7 @@ class FlightTab(Tab, flight_tab_class):
     uiSetupReadySignal = pyqtSignal()
 
     _motor_data_signal = pyqtSignal(int, object, object)
-    _imu_data_signal = pyqtSignal(int, object, object)
-    _baro_data_signal = pyqtSignal(int, object, object)
+    _pose_data_signal = pyqtSignal(object, object)
 
     _input_updated_signal = pyqtSignal(float, float, float, float)
     _rp_trim_updated_signal = pyqtSignal(float, float)
@@ -144,8 +143,7 @@ class FlightTab(Tab, flight_tab_class):
         self._assisted_control_updated_signal.connect(
             self._assisted_control_updated)
 
-        self._imu_data_signal.connect(self._imu_data_received)
-        self._baro_data_signal.connect(self._baro_data_received)
+        self._pose_data_signal.connect(self._pose_data_received)
         self._motor_data_signal.connect(self._motor_data_received)
 
         self._log_error_signal.connect(self._logging_error)
@@ -205,7 +203,6 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.cf.param.all_updated.add_callback(
             self._all_params_updated)
 
-        self.logBaro = None
         self.logAltHold = None
 
         self.ai = AttitudeIndicator()
@@ -226,6 +223,9 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.inputDeviceReader.limiting_updated.add_callback(
             self._limiting_updated.emit)
         self._limiting_updated.connect(self._set_limiting_enabled)
+
+        self.helper.pose_logger.data_received_cb.add_callback(
+            self._pose_data_signal.emit)
 
     def _set_limiting_enabled(self, rp_limiting_enabled,
                               yaw_limiting_enabled,
@@ -264,15 +264,24 @@ class FlightTab(Tab, flight_tab_class):
             self.actualM3.setValue(data["motor.m3"])
             self.actualM4.setValue(data["motor.m4"])
 
-    def _baro_data_received(self, timestamp, data, logconf):
+            self.estimateThrust.setText(
+                "%.2f%%" % self.thrustToPercentage(data["stabilizer.thrust"]))
+
+    def _pose_data_received(self, pose_logger, pose):
         if self.isVisible():
-            estimated_x = data[LOG_NAME_ESTIMATE_X]
-            estimated_y = data[LOG_NAME_ESTIMATE_Y]
-            estimated_z = data[LOG_NAME_ESTIMATE_Z]
-            self.estimateX.setText(("%.2f" % estimated_x))
-            self.estimateY.setText(("%.2f" % estimated_y))
+            estimated_z = pose[2]
+            roll = pose[3]
+            pitch = pose[4]
+
+            self.estimateX.setText(("%.2f" % pose[0]))
+            self.estimateY.setText(("%.2f" % pose[1]))
             self.estimateZ.setText(("%.2f" % estimated_z))
+            self.estimateRoll.setText(("%.2f" % roll))
+            self.estimatePitch.setText(("%.2f" % pitch))
+            self.estimateYaw.setText(("%.2f" % pose[5]))
+
             self.ai.setBaro(estimated_z, self.is_visible())
+            self.ai.setRollPitch(-roll, pitch, self.is_visible())
 
     def _heighthold_input_updated(self, roll, pitch, yaw, height):
         if (self.isVisible() and
@@ -300,18 +309,6 @@ class FlightTab(Tab, flight_tab_class):
 
             self._change_input_labels(using_hover_assist=True)
 
-    def _imu_data_received(self, timestamp, data, logconf):
-        if self.isVisible():
-            self.estimateRoll.setText(("%.2f" % data["stabilizer.roll"]))
-            self.estimatePitch.setText(("%.2f" % data["stabilizer.pitch"]))
-            self.estimateYaw.setText(("%.2f" % data["stabilizer.yaw"]))
-            self.estimateThrust.setText("%.2f%%" %
-                                        self.thrustToPercentage(
-                                            data["stabilizer.thrust"]))
-
-            self.ai.setRollPitch(-data["stabilizer.roll"],
-                                 data["stabilizer.pitch"], self.is_visible())
-
     def _change_input_labels(self, using_hover_assist):
         if using_hover_assist:
             pitch, roll, yaw = 'Velocity X', 'Velocity Y', 'Velocity Z'
@@ -323,25 +320,9 @@ class FlightTab(Tab, flight_tab_class):
         self.inputYawLabel.setText(yaw)
 
     def connected(self, linkURI):
-        # IMU & THRUST
-        lg = LogConfig("Stabilizer", Config().get("ui_update_period"))
-        lg.add_variable("stabilizer.roll", "float")
-        lg.add_variable("stabilizer.pitch", "float")
-        lg.add_variable("stabilizer.yaw", "float")
-        lg.add_variable("stabilizer.thrust", "uint16_t")
-
-        try:
-            self.helper.cf.log.add_config(lg)
-            lg.data_received_cb.add_callback(self._imu_data_signal.emit)
-            lg.error_cb.add_callback(self._log_error_signal.emit)
-            lg.start()
-        except KeyError as e:
-            logger.warning(str(e))
-        except AttributeError as e:
-            logger.warning(str(e))
-
-        # MOTOR
+        # MOTOR & THRUST
         lg = LogConfig("Motors", Config().get("ui_update_period"))
+        lg.add_variable("stabilizer.thrust", "uint16_t")
         lg.add_variable("motor.m1")
         lg.add_variable("motor.m2")
         lg.add_variable("motor.m3")
@@ -367,26 +348,7 @@ class FlightTab(Tab, flight_tab_class):
         available = eval(available)
 
         self._enable_estimators(True)
-
         self.helper.inputDeviceReader.set_alt_hold_available(available)
-        if not self.logBaro:
-            # The sensor is available, set up the logging
-            self.logBaro = LogConfig("Baro", 200)
-            self.logBaro.add_variable(LOG_NAME_ESTIMATE_X, "float")
-            self.logBaro.add_variable(LOG_NAME_ESTIMATE_Y, "float")
-            self.logBaro.add_variable(LOG_NAME_ESTIMATE_Z, "float")
-
-            try:
-                self.helper.cf.log.add_config(self.logBaro)
-                self.logBaro.data_received_cb.add_callback(
-                    self._baro_data_signal.emit)
-                self.logBaro.error_cb.add_callback(
-                    self._log_error_signal.emit)
-                self.logBaro.start()
-            except KeyError as e:
-                logger.warning(str(e))
-            except AttributeError as e:
-                logger.warning(str(e))
 
     def disconnected(self, linkURI):
         self.ai.setRollPitch(0, 0)
@@ -409,7 +371,6 @@ class FlightTab(Tab, flight_tab_class):
 
         self._enable_estimators(False)
 
-        self.logBaro = None
         self.logAltHold = None
         self._led_ring_effect.setEnabled(False)
         self._led_ring_effect.clear()
