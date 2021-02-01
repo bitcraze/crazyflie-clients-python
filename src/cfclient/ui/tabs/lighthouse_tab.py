@@ -31,25 +31,16 @@ Shows data for the Lighthouse Positioning system
 """
 
 import logging
-from enum import Enum
-from collections import namedtuple
 
-import time
 from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
+from PyQt5.QtCore import pyqtSignal, QTimer
 from PyQt5.QtGui import QMessageBox
-from PyQt5.QtGui import QLabel
 
 import cfclient
 from cfclient.ui.tab import Tab
 
-from cflib.crazyflie.log import LogConfig
-from cflib.crazyflie.mem import MemoryElement
-
 from vispy import scene
 import numpy as np
-
-import copy
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LighthouseTab']
@@ -185,7 +176,6 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._cb_param_to_detect_lighthouse_deck_signal.connect(
             self._cb_param_to_detect_lighthouse_deck)
 
-
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
             self._connected_signal.emit)
@@ -214,7 +204,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._request_param_to_detect_lighthouse_deck()
 
     def _request_param_to_detect_lighthouse_deck(self):
-        """Send a parameter request to detect if the Lighthouse deck is installed"""
+        """Send a parameter request to detect if the Lighthouse deck is
+        installed"""
         group = 'deck'
         # TODO krri should the deck id be bcLighthouse4?
         param = 'bdLighthouse4'
