@@ -107,7 +107,7 @@ class AxisScaleStep:
         self.center_only = center_only
 
 
-class Plot3d(scene.SceneCanvas):
+class Plot3dLps(scene.SceneCanvas):
     ANCHOR_BRUSH = np.array((0.2, 0.5, 0.2))
     ANCHOR_BRUSH_INVALID = np.array((0.8, 0.5, 0.5))
     HIGHLIGHT_ANCHOR_BRUSH = np.array((0, 1, 0))
@@ -489,7 +489,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
             fkn(arg)
 
     def _set_up_plots(self):
-        self._plot_3d = Plot3d()
+        self._plot_3d = Plot3dLps()
         self._plot_layout.addWidget(self._plot_3d.native)
 
     def _set_display_mode(self, display_mode):
