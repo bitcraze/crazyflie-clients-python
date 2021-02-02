@@ -116,6 +116,14 @@ class MarkerPose():
         z_tip = np.dot(np.array(rot), np.array([0, 0, self.AXIS_LEN]))
         self._z_axis.set_data(np.array([position, z_tip + position]), color=self.COL_Z_AXIS)
 
+    def remove(self):
+        self._marker.parent = None
+        self._x_axis.parent = None
+        self._y_axis.parent = None
+        self._z_axis.parent = None
+        if self._label:
+            self._label.parent = None
+
 
 class Plot3dLighthouse(scene.SceneCanvas):
     POSITION_BRUSH = np.array((0, 0, 1.0))
@@ -141,7 +149,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
             up='+z',
             center=(0.0, 0.0, 1.0))
 
-        self._cf = MarkerPose(self._view.scene, self.POSITION_BRUSH)
+        self._cf = None
         self._base_stations = {}
 
         self.freeze()
@@ -199,6 +207,8 @@ class Plot3dLighthouse(scene.SceneCanvas):
             width=1.0, color='blue', parent=parent)
 
     def update_cf_pose(self, position, rot):
+        if not self._cf:
+            self._cf = MarkerPose(self._view.scene, self.POSITION_BRUSH)
         self._cf.set_pose(position, rot)
 
     def update_base_station_geos(self, geos):
@@ -207,6 +217,14 @@ class Plot3dLighthouse(scene.SceneCanvas):
                 self._base_stations[id] = MarkerPose(self._view.scene, self.POSITION_BRUSH, text=f"{id}")
 
             self._base_stations[id].set_pose(geo.origin, geo.rotation_matrix)
+
+    def clear(self):
+        self._cf.remove()
+        self._cf = None
+
+        for bs in self._base_stations.values():
+            bs.remove()
+        self._base_stations = {}
 
     def _mix(self, col1, col2, mix):
         return col1 * mix + col2 * (1.0 - mix)
@@ -277,7 +295,6 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         """Send a parameter request to detect if the Lighthouse deck is
         installed"""
         group = 'deck'
-        # TODO krri should the deck id be bcLighthouse4?
         param = 'bcLighthouse4'
 
         if self._is_in_param_toc(group, param):
@@ -314,7 +331,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         """Callback for when the Crazyflie has been disconnected"""
         logger.debug("Crazyflie disconnected from {}".format(link_uri))
         self._clear_state()
-        self._update_graphics()
+        self._plot_3d.clear()
         self.is_lighthouse_deck_active = False
 
     def _is_in_param_toc(self, group, param):
