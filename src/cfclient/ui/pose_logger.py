@@ -67,6 +67,11 @@ class PoseLogger:
         """Get the position part of the full pose"""
         return self.pose[0:3]
 
+    @property
+    def rpy(self):
+        """Get the roll, pitch and yaw of the full pose"""
+        return self.pose[3:6]
+
     def _connected(self, link_uri) -> None:
         logConf = LogConfig("Pose", 200)
         logConf.add_variable(self.LOG_NAME_ESTIMATE_X, "float")

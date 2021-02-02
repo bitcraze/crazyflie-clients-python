@@ -39,8 +39,11 @@ from PyQt5.QtGui import QMessageBox
 import cfclient
 from cfclient.ui.tab import Tab
 
+from cflib.crazyflie.mem.lighthouse_memory import LighthouseMemHelper
+
 from vispy import scene
 import numpy as np
+import math
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LighthouseTab']
@@ -53,6 +56,65 @@ lighthouse_tab_class = uic.loadUiType(
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
 STYLE_NO_BACKGROUND = "background-color: none;"
+
+
+class MarkerPose():
+    COL_X_AXIS = 'red'
+    COL_Y_AXIS = 'green'
+    COL_Z_AXIS = 'blue'
+
+    AXIS_LEN = 0.3
+
+    LABEL_SIZE = 100
+    LABEL_OFFSET = np.array((0.0, 0, 0.25))
+
+    def __init__(self, the_scene, color, text=None):
+        self._scene = the_scene
+        self._color = color
+        self._text = text
+
+        self._marker = scene.visuals.Markers(
+            pos=np.array([[0, 0, 0]]),
+            parent=self._scene,
+            face_color=self._color)
+
+        self._x_axis = scene.visuals.Line(
+            pos=np.array([[0, 0, 0], [0, 0, 0]]),
+            color=self.COL_X_AXIS,
+            parent=self._scene)
+
+        self._y_axis = scene.visuals.Line(pos=np.array(
+            [[0, 0, 0], [0, 0, 0]]),
+            color=self.COL_Y_AXIS,
+            parent=self._scene)
+
+        self._z_axis = scene.visuals.Line(
+            pos=np.array([[0, 0, 0], [0, 0, 0]]),
+            color=self.COL_Z_AXIS,
+            parent=self._scene)
+
+        self._label = None
+        if self._text:
+            self._label = scene.visuals.Text(
+                text=self._text,
+                font_size=self.LABEL_SIZE,
+                pos=self.LABEL_OFFSET,
+                parent=self._scene)
+
+    def set_pose(self, position, rot):
+        self._marker.set_data(pos=np.array([position]), face_color=self._color)
+
+        if self._label:
+            self._label.pos = self.LABEL_OFFSET + position
+
+        x_tip = np.dot(np.array(rot), np.array([self.AXIS_LEN, 0, 0]))
+        self._x_axis.set_data(np.array([position, x_tip + position]), color=self.COL_X_AXIS)
+
+        y_tip = np.dot(np.array(rot), np.array([0, self.AXIS_LEN, 0]))
+        self._y_axis.set_data(np.array([position, y_tip + position]), color=self.COL_Y_AXIS)
+
+        z_tip = np.dot(np.array(rot), np.array([0, 0, self.AXIS_LEN]))
+        self._z_axis.set_data(np.array([position, z_tip + position]), color=self.COL_Z_AXIS)
 
 
 class Plot3dLighthouse(scene.SceneCanvas):
@@ -79,10 +141,8 @@ class Plot3dLighthouse(scene.SceneCanvas):
             up='+z',
             center=(0.0, 0.0, 1.0))
 
-        self._cf = scene.visuals.Markers(
-            pos=np.array([[0, 0, 0]]),
-            parent=self._view.scene,
-            face_color=self.POSITION_BRUSH)
+        self._cf = MarkerPose(self._view.scene, self.POSITION_BRUSH)
+        self._base_stations = {}
 
         self.freeze()
 
@@ -96,9 +156,9 @@ class Plot3dLighthouse(scene.SceneCanvas):
             edge_color="gray",
             parent=self._view.scene)
 
-        self.addArrows(1, 0.02, 0.1, 0.1, self._view.scene)
+        self._addArrows(1, 0.02, 0.1, 0.1, self._view.scene)
 
-    def addArrows(self, length, width, head_length, head_width, parent):
+    def _addArrows(self, length, width, head_length, head_width, parent):
         # The Arrow visual in vispy does not seem to work very good,
         # draw arrows using lines instead.
         w = width / 2
@@ -138,8 +198,15 @@ class Plot3dLighthouse(scene.SceneCanvas):
             [0, -w, 0]],
             width=1.0, color='blue', parent=parent)
 
-    def update_data(self, pos):
-        self._cf.set_data(pos=np.array([pos]), face_color=self.POSITION_BRUSH)
+    def update_cf_pose(self, position, rot):
+        self._cf.set_pose(position, rot)
+
+    def update_base_station_geos(self, geos):
+        for id, geo in geos.items():
+            if (geo is not None) and (id not in self._base_stations):
+                self._base_stations[id] = MarkerPose(self._view.scene, self.POSITION_BRUSH, text=f"{id}")
+
+            self._base_stations[id].set_pose(geo.origin, geo.rotation_matrix)
 
     def _mix(self, col1, col2, mix):
         return col1 * mix + col2 * (1.0 - mix)
@@ -187,6 +254,9 @@ class LighthouseTab(Tab, lighthouse_tab_class):
 
         self.is_lighthouse_deck_active = False
 
+        self._lh_memory_helper = None
+        self._lh_geos = {}
+
         self._graph_timer = QTimer()
         self._graph_timer.setInterval(1000 / self.FPS)
         self._graph_timer.timeout.connect(self._update_graphics)
@@ -232,9 +302,18 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         if not self.is_lighthouse_deck_active:
             self.is_lighthouse_deck_active = True
 
+            # Update basestation position
+            self._lh_memory_helper = LighthouseMemHelper(self._helper.cf)
+            self._lh_memory_helper.read_all_geos(self._geometry_read_cb)
+
+    def _geometry_read_cb(self, geometries):
+        # Do something with it ....
+        self._lh_geos = geometries
+
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
         logger.debug("Crazyflie disconnected from {}".format(link_uri))
+        self._clear_state()
         self._update_graphics()
         self.is_lighthouse_deck_active = False
 
@@ -250,8 +329,9 @@ class LighthouseTab(Tab, lighthouse_tab_class):
 
     def _update_graphics(self):
         if self.is_visible() and self.is_lighthouse_deck_active:
-            self._plot_3d.update_data(
-                self._helper.pose_logger.position)
+            self._plot_3d.update_cf_pose(self._helper.pose_logger.position,
+                                         self._rpy_to_rot(self._helper.pose_logger.rpy))
+            self._plot_3d.update_base_station_geos(self._lh_geos)
             self._update_position_label(self._helper.pose_logger.position)
 
     def _update_position_label(self, position):
@@ -262,3 +342,29 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             coordinate = '(0.00, 0.00, 0.00)'
 
         self._status_position.setText(coordinate)
+
+    def _clear_state(self):
+        self._lh_memory_helper = None
+        self._lh_geos = {}
+
+    def _rpy_to_rot(self, rpy):
+        # http://planning.cs.uiuc.edu/node102.html
+        # Pitch reversed compared to page above
+        roll = rpy[0]
+        pitch = rpy[1]
+        yaw = rpy[2]
+
+        cg = math.cos(roll)
+        cb = math.cos(-pitch)
+        ca = math.cos(yaw)
+        sg = math.sin(roll)
+        sb = math.sin(-pitch)
+        sa = math.sin(yaw)
+
+        r = [
+            [ca * cb, ca * sb * sg - sa * cg, ca * sb * cg + sa * sg],
+            [sa * cb, sa * sb * sg + ca * cg, sa * sb * cg - ca * sg],
+            [-sb, cb * sg, cb * cg],
+        ]
+
+        return np.array(r)
