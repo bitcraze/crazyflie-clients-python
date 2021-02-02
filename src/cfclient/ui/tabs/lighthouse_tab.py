@@ -208,7 +208,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         installed"""
         group = 'deck'
         # TODO krri should the deck id be bcLighthouse4?
-        param = 'bdLighthouse4'
+        param = 'bcLighthouse4'
 
         if self._is_in_param_toc(group, param):
             logger.info("Requesting lighthouse deck parameter")
