@@ -151,7 +151,7 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib~=0.1.13.1',
+    install_requires=platform_requires + ['cflib',
                                           'appdirs~=1.4.0',
                                           'pyzmq~=19.0',
                                           'pyqtgraph~=0.11',
@@ -160,6 +160,10 @@ setup(
                                           'qtm~=2.0.2',
                                           'numpy~=1.19.2',
                                           'vispy~=0.6.6'],
+
+    dependency_links=[
+        'git+https://github.com/bitcraze/crazyflie-lib-python@7860e10a636cd6bba7053899d916954e94754838#egg=cflib'
+    ],
 
     # List of dev dependencies
     # You can install them by running
