@@ -219,8 +219,9 @@ class Plot3dLighthouse(scene.SceneCanvas):
             self._base_stations[id].set_pose(geo.origin, geo.rotation_matrix)
 
     def clear(self):
-        self._cf.remove()
-        self._cf = None
+        if self._cf:
+            self._cf.remove()
+            self._cf = None
 
         for bs in self._base_stations.values():
             bs.remove()
