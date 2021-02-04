@@ -58,6 +58,7 @@ STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
 STYLE_NO_BACKGROUND = "background-color: none;"
 
+
 class MarkerPose():
     COL_X_AXIS = 'red'
     COL_Y_AXIS = 'green'
