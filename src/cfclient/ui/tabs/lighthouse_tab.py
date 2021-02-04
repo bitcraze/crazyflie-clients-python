@@ -35,10 +35,12 @@ import logging
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, QTimer
 from PyQt5.QtGui import QMessageBox
+from vispy.scene import visuals
 
 import cfclient
 from cfclient.ui.tab import Tab
 
+from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem.lighthouse_memory import LighthouseMemHelper
 
 from vispy import scene
@@ -56,6 +58,8 @@ lighthouse_tab_class = uic.loadUiType(
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
 STYLE_NO_BACKGROUND = "background-color: none;"
+
+LOG_VISIBILITY = "lighthouse.bsVis"
 
 
 class MarkerPose():
@@ -124,9 +128,15 @@ class MarkerPose():
         if self._label:
             self._label.parent = None
 
+    def set_color(self, color):
+        self._color = color
+        self._marker.set_data(face_color=self._color)
+
 
 class Plot3dLighthouse(scene.SceneCanvas):
     POSITION_BRUSH = np.array((0, 0, 1.0))
+    BS_BRUSH_VISIBLE = np.array((0.2, 0.5, 0.2))
+    BS_BRUSH_NOT_VISIBLE = np.array((0.8, 0.5, 0.5))
 
     VICINITY_DISTANCE = 2.5
     HIGHLIGHT_DISTANCE = 0.5
@@ -214,9 +224,16 @@ class Plot3dLighthouse(scene.SceneCanvas):
     def update_base_station_geos(self, geos):
         for id, geo in geos.items():
             if (geo is not None) and (id not in self._base_stations):
-                self._base_stations[id] = MarkerPose(self._view.scene, self.POSITION_BRUSH, text=f"{id}")
+                self._base_stations[id] = MarkerPose(self._view.scene, self.BS_BRUSH_NOT_VISIBLE, text=f"{id}")
 
             self._base_stations[id].set_pose(geo.origin, geo.rotation_matrix)
+
+    def update_base_station_visibility(self, visibility):
+        for id, bs in self._base_stations.items():
+            if id in visibility:
+                bs.set_color(self.BS_BRUSH_VISIBLE)
+            else:
+                bs.set_color(self.BS_BRUSH_NOT_VISIBLE)
 
     def clear(self):
         if self._cf:
@@ -244,6 +261,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     _disconnected_signal = pyqtSignal(str)
     _log_error_signal = pyqtSignal(object, str)
     _cb_param_to_detect_lighthouse_deck_signal = pyqtSignal(object, object)
+    _status_report_signal = pyqtSignal(int, object, object)
 
     def __init__(self, tabWidget, helper, *args):
         super(LighthouseTab, self).__init__(*args)
@@ -259,8 +277,10 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         # to avoid manipulating the UI when rendering it
         self._connected_signal.connect(self._connected)
         self._disconnected_signal.connect(self._disconnected)
+        self._log_error_signal.connect(self._logging_error)
         self._cb_param_to_detect_lighthouse_deck_signal.connect(
             self._cb_param_to_detect_lighthouse_deck)
+        self._status_report_signal.connect(self._status_report_received)
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
@@ -275,13 +295,12 @@ class LighthouseTab(Tab, lighthouse_tab_class):
 
         self._lh_memory_helper = None
         self._lh_geos = {}
+        self._bs_visibility = set()
 
         self._graph_timer = QTimer()
         self._graph_timer.setInterval(1000 / self.FPS)
         self._graph_timer.timeout.connect(self._update_graphics)
         self._graph_timer.start()
-
-        self._update_position_label(self._helper.pose_logger.position)
 
     def _set_up_plots(self):
         self._plot_3d = Plot3dLighthouse()
@@ -320,20 +339,62 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         if not self.is_lighthouse_deck_active:
             self.is_lighthouse_deck_active = True
 
+            try:
+                self._register_logblock(
+                    "lhStatus",
+                    [LOG_VISIBILITY],
+                    self._status_report_signal.emit,
+                    self._log_error_signal.emit)
+            except KeyError as e:
+                logger.warning(str(e))
+            except AttributeError as e:
+                logger.warning(str(e))
+
             # Update basestation position
             self._lh_memory_helper = LighthouseMemHelper(self._helper.cf)
             self._lh_memory_helper.read_all_geos(self._geometry_read_cb)
 
     def _geometry_read_cb(self, geometries):
-        # Do something with it ....
         self._lh_geos = geometries
+
+    def _status_report_received(self, timestamp, data, logconf):
+        """Callback from the logging system when the status is updated."""
+        if LOG_VISIBILITY in data:
+            bit_mask = data[LOG_VISIBILITY]
+            for id in range(16):
+                if bit_mask & (1 << id):
+                    self._bs_visibility.add(id)
+                else:
+                    if id in self._bs_visibility:
+                        self._bs_visibility.remove(id)
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
         logger.debug("Crazyflie disconnected from {}".format(link_uri))
         self._clear_state()
+        self._update_graphics()
         self._plot_3d.clear()
         self.is_lighthouse_deck_active = False
+
+    def _register_logblock(self, logblock_name, variables, data_cb, error_cb,
+                           update_period=UPDATE_PERIOD_LOG):
+        """Register log data to listen for. One logblock can only contain a limited
+        number of parameters."""
+        lg = LogConfig(logblock_name, update_period)
+        for variable in variables:
+            if self._is_in_log_toc(variable):
+                lg.add_variable(variable)
+
+        self._helper.cf.log.add_config(lg)
+        lg.data_received_cb.add_callback(data_cb)
+        lg.error_cb.add_callback(error_cb)
+        lg.start()
+        return lg
+
+    def _is_in_log_toc(self, variable):
+        toc = self._helper.cf.log.toc
+        group, param = variable.split('.')
+        return group in toc.toc and param in toc.toc[group]
 
     def _is_in_param_toc(self, group, param):
         toc = self._helper.cf.param.toc
@@ -350,6 +411,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             self._plot_3d.update_cf_pose(self._helper.pose_logger.position,
                                          self._rpy_to_rot(self._helper.pose_logger.rpy))
             self._plot_3d.update_base_station_geos(self._lh_geos)
+            self._plot_3d.update_base_station_visibility(self._bs_visibility)
             self._update_position_label(self._helper.pose_logger.position)
 
     def _update_position_label(self, position):
