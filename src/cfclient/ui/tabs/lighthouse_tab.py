@@ -59,6 +59,7 @@ STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
 STYLE_NO_BACKGROUND = "background-color: none;"
 
 LOG_VISIBILITY = "lighthouse.bsVis"
+LOG_STATUS = "lighthouse.status"
 
 
 class MarkerPose():
@@ -256,6 +257,10 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     # Frame rate (updates per second)
     FPS = 2
 
+    STATUS_NOT_RECEIVING = 0
+    STATUS_MISSING_DATA = 1
+    STATUS_TO_ESTIMATOR = 2
+
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
     _log_error_signal = pyqtSignal(object, str)
@@ -295,6 +300,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._lh_memory_helper = None
         self._lh_geos = {}
         self._bs_visibility = set()
+        self._lh_status = self.STATUS_NOT_RECEIVING
 
         self._graph_timer = QTimer()
         self._graph_timer.setInterval(1000 / self.FPS)
@@ -341,7 +347,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             try:
                 self._register_logblock(
                     "lhStatus",
-                    [LOG_VISIBILITY],
+                    [LOG_VISIBILITY, LOG_STATUS],
                     self._status_report_signal.emit,
                     self._log_error_signal.emit)
             except KeyError as e:
@@ -366,6 +372,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
                 else:
                     if id in self._bs_visibility:
                         self._bs_visibility.remove(id)
+        if LOG_STATUS in data:
+            self._lh_status = data[LOG_STATUS]
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
@@ -412,6 +420,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             self._plot_3d.update_base_station_geos(self._lh_geos)
             self._plot_3d.update_base_station_visibility(self._bs_visibility)
             self._update_position_label(self._helper.pose_logger.position)
+            self._update_status_label(self._lh_status)
 
     def _update_position_label(self, position):
         if len(position) == 3:
@@ -422,9 +431,22 @@ class LighthouseTab(Tab, lighthouse_tab_class):
 
         self._status_position.setText(coordinate)
 
+    def _update_status_label(self, status):
+        text = ''
+        if status == self.STATUS_NOT_RECEIVING:
+            text = 'Not receving'
+        elif status == self.STATUS_MISSING_DATA:
+            text = 'Geo or calibration data missing'
+        elif status == self.STATUS_TO_ESTIMATOR:
+            text = 'Data sent to estimator'
+
+        self._status_status.setText(text)
+
     def _clear_state(self):
         self._lh_memory_helper = None
         self._lh_geos = {}
+        self._bs_visibility.clear()
+        self._lh_status = self.STATUS_NOT_RECEIVING
 
     def _rpy_to_rot(self, rpy):
         # http://planning.cs.uiuc.edu/node102.html
