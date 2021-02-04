@@ -58,10 +58,6 @@ STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
 STYLE_NO_BACKGROUND = "background-color: none;"
 
-LOG_VISIBILITY = "lighthouse.bsVis"
-LOG_STATUS = "lighthouse.status"
-
-
 class MarkerPose():
     COL_X_AXIS = 'red'
     COL_Y_AXIS = 'green'
@@ -261,6 +257,9 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     STATUS_MISSING_DATA = 1
     STATUS_TO_ESTIMATOR = 2
 
+    LOG_ACTIVE = "lighthouse.bsActive"
+    LOG_STATUS = "lighthouse.status"
+
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
     _log_error_signal = pyqtSignal(object, str)
@@ -347,7 +346,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             try:
                 self._register_logblock(
                     "lhStatus",
-                    [LOG_VISIBILITY, LOG_STATUS],
+                    [self.LOG_ACTIVE, self.LOG_STATUS],
                     self._status_report_signal.emit,
                     self._log_error_signal.emit)
             except KeyError as e:
@@ -364,16 +363,16 @@ class LighthouseTab(Tab, lighthouse_tab_class):
 
     def _status_report_received(self, timestamp, data, logconf):
         """Callback from the logging system when the status is updated."""
-        if LOG_VISIBILITY in data:
-            bit_mask = data[LOG_VISIBILITY]
+        if self.LOG_ACTIVE in data:
+            bit_mask = data[self.LOG_ACTIVE]
             for id in range(16):
                 if bit_mask & (1 << id):
                     self._bs_visibility.add(id)
                 else:
                     if id in self._bs_visibility:
                         self._bs_visibility.remove(id)
-        if LOG_STATUS in data:
-            self._lh_status = data[LOG_STATUS]
+        if self.LOG_STATUS in data:
+            self._lh_status = data[self.LOG_STATUS]
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
