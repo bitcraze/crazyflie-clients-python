@@ -35,7 +35,6 @@ import logging
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, QTimer
 from PyQt5.QtGui import QMessageBox
-from vispy.scene import visuals
 
 import cfclient
 from cfclient.ui.tab import Tab
