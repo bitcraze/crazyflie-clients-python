@@ -80,6 +80,9 @@ class ConsoleTab(Tab, console_tab_class):
         self._propellerTestButton.clicked.connect(
             lambda enabled:
             self._helper.cf.param.set_value("health.startPropTest", '1'))
+        self._batteryTestButton.clicked.connect(
+            lambda enabled:
+            self._helper.cf.param.set_value("health.startBatTest", '1'))
 
     def printText(self, text):
         # Make sure we get printouts from the Crazyflie into the log (such as
@@ -94,8 +97,10 @@ class ConsoleTab(Tab, console_tab_class):
         """Callback when the Crazyflie has been connected"""
         self._dumpSystemLoadButton.setEnabled(True)
         self._propellerTestButton.setEnabled(True)
+        self._batteryTestButton.setEnabled(True)
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
         self._dumpSystemLoadButton.setEnabled(False)
         self._propellerTestButton.setEnabled(False)
+        self._batteryTestButton.setEnabled(False)
