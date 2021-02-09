@@ -29,6 +29,7 @@
 Sets up logging for the the full pose of the Crazyflie
 """
 import logging
+import math
 
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.log import LogConfig
@@ -69,8 +70,13 @@ class PoseLogger:
 
     @property
     def rpy(self):
-        """Get the roll, pitch and yaw of the full pose"""
+        """Get the roll, pitch and yaw of the full pose in degrees"""
         return self.pose[3:6]
+
+    @property
+    def rpy_rad(self):
+        """Get the roll, pitch and yaw of the full pose in radians"""
+        return [math.radians(self.pose[3]), math.radians(self.pose[4]), math.radians(self.pose[5])]
 
     def _connected(self, link_uri) -> None:
         logConf = LogConfig("Pose", 200)

@@ -416,7 +416,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     def _update_graphics(self):
         if self.is_visible() and self.is_lighthouse_deck_active:
             self._plot_3d.update_cf_pose(self._helper.pose_logger.position,
-                                         self._rpy_to_rot(self._helper.pose_logger.rpy))
+                                         self._rpy_to_rot(self._helper.pose_logger.rpy_rad))
             self._plot_3d.update_base_station_geos(self._lh_geos)
             self._plot_3d.update_base_station_visibility(self._bs_visibility)
             self._update_position_label(self._helper.pose_logger.position)
