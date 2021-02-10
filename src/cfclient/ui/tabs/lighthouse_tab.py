@@ -42,6 +42,8 @@ from cfclient.ui.tab import Tab
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem.lighthouse_memory import LighthouseMemHelper
 
+from cfclient.ui.dialogs.lighthouse_bs_geometry_dialog import LighthouseBsGeometryDialog
+
 from vispy import scene
 import numpy as np
 import math
@@ -286,6 +288,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             self._cb_param_to_detect_lighthouse_deck)
         self._status_report_signal.connect(self._status_report_received)
 
+
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
             self._connected_signal.emit)
@@ -307,6 +310,15 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._graph_timer.timeout.connect(self._update_graphics)
         self._graph_timer.start()
 
+
+        self._basestation_geometry_dialog = LighthouseBsGeometryDialog(self)
+
+        self._manage_estimate_geometry_button.clicked.connect(
+            self._show_basestation_geometry_dialog)
+
+    def _show_basestation_geometry_dialog(self):
+        self._basestation_geometry_dialog.show()
+            
     def _set_up_plots(self):
         self._plot_3d = Plot3dLighthouse()
         self._plot_layout.addWidget(self._plot_3d.native)
