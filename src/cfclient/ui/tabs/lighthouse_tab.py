@@ -423,7 +423,6 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._is_connected = False
         self._update_ui()
 
-
     def _register_logblock(self, logblock_name, variables, data_cb, error_cb,
                            update_period=UPDATE_PERIOD_LOG):
         """Register log data to listen for. One logblock can only contain a limited
