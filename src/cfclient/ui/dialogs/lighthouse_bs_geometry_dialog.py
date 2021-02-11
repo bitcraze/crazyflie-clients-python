@@ -30,7 +30,7 @@ import logging
 import cfclient
 from PyQt5 import QtWidgets
 from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import QVariant, Qt, QAbstractTableModel, pyqtSignal
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtWidgets import QInputDialog, QFileDialog
 import yaml
@@ -160,6 +160,56 @@ class LighthouseSweepAngleAverageReader():
         return LighthouseBsVector(sum_horiz / count, sum_vert / count)
 
 
+class LighthouseBsGeometryTableModel(QAbstractTableModel):
+    def __init__(self, headers, parent=None, *args):
+        QAbstractTableModel.__init__(self, parent)
+        self._headers = headers
+        self._basestation_positions = []
+        
+    def rowCount(self, parent=None, *args, **kwargs):
+        return len(self._basestation_positions)
+
+    def columnCount(self, parent=None, *args, **kwargs):
+        return len(self._headers)
+
+    def data(self, index, role=None):
+        value = self._basestation_positions[index.row()][index.column()]
+        if index.isValid():
+            if index.column() == 0:
+                if role == Qt.DisplayRole:
+                    return QVariant(value)
+            else:
+                if role == Qt.DisplayRole:
+                    return QVariant('%.2f' % (value))
+        return QVariant()
+
+    def setData(self, index, value, role=Qt.EditRole):
+        if not index.isValid():
+            return False
+        self._basestation_positions[index.row()][index.column()] = value
+        return True
+
+    def headerData(self, col, orientation, role=None):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return QVariant(self._headers[col])
+        return QVariant()
+
+    def add_table_content(self, bs_id, x=0.0, y=0.0, z=0.0):
+        self.layoutAboutToBeChanged.emit()
+        self._basestation_positions.append([bs_id, x, y, z])
+        self._basestation_positions.sort(key=lambda row: row[1])
+        self.layoutChanged.emit()
+
+    def replace_table_content(self, id, position):
+        self.layoutAboutToBeChanged.emit()
+        self.add_table_content(id, x=position[0], y=position[1], z=position[2])
+        self.layoutChanged.emit()
+
+    def reset_table(self):
+        self._basestation_positions = []
+
+
+
 class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
 
     _sweep_angles_received_and_averaged_signal = pyqtSignal(object)
@@ -179,12 +229,26 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class
         self._sweep_angle_reader = LighthouseSweepAngleAverageReader(self._lighthouse_tab._helper.cf, self._sweep_angles_received_and_averaged_signal.emit)
 
         self._averaged_angles = None
-
         self._newly_estimated_geometry = None
+
+        # Table handlers
+        self._headers = ['id', 'x', 'y', 'z']
+        self._data_model = LighthouseBsGeometryTableModel(self._headers, self)
+        self._table_view.setModel(self._data_model)
+
+        self._table_view.verticalHeader().setVisible(False)
+
+        header = self._table_view.horizontalHeader()
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
 
         self._update_ui()
 
     def _sweep_angles_received_and_averaged_cb(self, averaged_angles):
+        self._data_model.reset_table()
+
         self._averaged_angles = averaged_angles
         estimator = LighthouseBsGeoEstimator()
         self._newly_estimated_geometry = {}
@@ -198,6 +262,7 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class
             geo.origin = position_bs_vector
             geo.valid = True
             self._newly_estimated_geometry[id] = geo
+            self._data_model.replace_table_content(id, position_bs_vector)
 
         self._update_ui()
 
