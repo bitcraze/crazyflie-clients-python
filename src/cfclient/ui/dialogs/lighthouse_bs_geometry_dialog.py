@@ -31,16 +31,12 @@ import cfclient
 from PyQt5 import QtWidgets
 from PyQt5 import uic
 from PyQt5.QtCore import QVariant, Qt, QAbstractTableModel, pyqtSignal
-from PyQt5.QtGui import QBrush, QColor
-from PyQt5.QtWidgets import QInputDialog, QFileDialog
-import yaml
-import os
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVector
 from cflib.localization.lighthouse_bs_geo import LighthouseBsGeoEstimator
 from cflib.crazyflie.mem import LighthouseBsGeometry
 
 __author__ = 'Bitcraze AB'
-__all__ = ['LighthouseBasestationGeometryDialog']
+__all__ = ['LighthouseBsGeometryDialog']
 
 logger = logging.getLogger(__name__)
 
@@ -117,9 +113,10 @@ class LighthouseSweepAngleAverageReader():
             self._sample_storage = None
 
     def _store_sample(self, base_station_id, bs_vectors, storage):
-        if not base_station_id in storage:
-            # TODO fix, use const
-            storage[base_station_id] = [[], [], [], []]
+        if base_station_id not in storage:
+            storage[base_station_id] = []
+            for sensor in range(self._reader.NR_OF_SENSORS):
+                storage[base_station_id].append([])
 
         for sensor in range(self._reader.NR_OF_SENSORS):
             storage[base_station_id][sensor].append(bs_vectors[sensor])
@@ -165,7 +162,7 @@ class LighthouseBsGeometryTableModel(QAbstractTableModel):
         QAbstractTableModel.__init__(self, parent)
         self._headers = headers
         self._basestation_positions = []
-        
+
     def rowCount(self, parent=None, *args, **kwargs):
         return len(self._basestation_positions)
 
@@ -219,15 +216,15 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class
 
         self._lighthouse_tab = lighthouse_tab
 
-        self._estimate_geometry_button.clicked.connect(
-            self._estimate_geometry_button_clicked)
+        self._estimate_geometry_button.clicked.connect(self._estimate_geometry_button_clicked)
+        self._write_to_cf_button.clicked.connect(self._write_to_cf_button_clicked)
 
         self._sweep_angles_received_and_averaged_signal.connect(self._sweep_angles_received_and_averaged_cb)
         self._close_button.clicked.connect(self.close)
 
-        self._sweep_angle_reader = LighthouseSweepAngleAverageReader(self._lighthouse_tab._helper.cf, self._sweep_angles_received_and_averaged_signal.emit)
+        self._sweep_angle_reader = LighthouseSweepAngleAverageReader(
+            self._lighthouse_tab._helper.cf, self._sweep_angles_received_and_averaged_signal.emit)
 
-        self._averaged_angles = None
         self._newly_estimated_geometry = None
 
         # Table handlers
@@ -245,15 +242,17 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class
 
         self._update_ui()
 
+    def reset(self):
+        self._newly_estimated_geometry = None
+
     def _sweep_angles_received_and_averaged_cb(self, averaged_angles):
         self._data_model.reset_table()
 
         self._averaged_angles = averaged_angles
         estimator = LighthouseBsGeoEstimator()
         self._newly_estimated_geometry = {}
-        
+
         for id, average_data in averaged_angles.items():
-            nr_samples = average_data[0]
             sensor_data = average_data[1]
             rotation_bs_matrix, position_bs_vector = estimator.estimate_geometry(sensor_data)
             geo = LighthouseBsGeometry()
@@ -269,5 +268,13 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class
         self._sweep_angle_reader.start_angle_collection()
         self._update_ui()
 
+    def _write_to_cf_button_clicked(self):
+        if self._newly_estimated_geometry is not None:
+            self._lighthouse_tab.write_and_store_geometry(self._newly_estimated_geometry)
+            self._newly_estimated_geometry = None
+
+        self._update_ui()
+
     def _update_ui(self):
         self._estimate_geometry_button.setEnabled(not self._sweep_angle_reader.is_collecting())
+        self._write_to_cf_button.setEnabled(self._newly_estimated_geometry is not None)

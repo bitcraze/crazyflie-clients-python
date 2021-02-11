@@ -268,6 +268,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     _log_error_signal = pyqtSignal(object, str)
     _cb_param_to_detect_lighthouse_deck_signal = pyqtSignal(object, object)
     _status_report_signal = pyqtSignal(int, object, object)
+    _new_data_geo_written_to_cf_ram_signal = pyqtSignal(bool)
+    _received_location_packet_signal = pyqtSignal(object)
 
     def __init__(self, tabWidget, helper, *args):
         super(LighthouseTab, self).__init__(*args)
@@ -287,14 +289,12 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._cb_param_to_detect_lighthouse_deck_signal.connect(
             self._cb_param_to_detect_lighthouse_deck)
         self._status_report_signal.connect(self._status_report_received)
-
+        self._new_data_geo_written_to_cf_ram_signal.connect(self._new_data_geo_written_to_cf_ram_cbl)
+        self._received_location_packet_signal.connect(self._received_location_packet_cb)
 
         # Connect the Crazyflie API callbacks to the signals
-        self._helper.cf.connected.add_callback(
-            self._connected_signal.emit)
-
-        self._helper.cf.disconnected.add_callback(
-            self._disconnected_signal.emit)
+        self._helper.cf.connected.add_callback(self._connected_signal.emit)
+        self._helper.cf.disconnected.add_callback(self._disconnected_signal.emit)
 
         self._set_up_plots()
 
@@ -310,15 +310,28 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._graph_timer.timeout.connect(self._update_graphics)
         self._graph_timer.start()
 
-
         self._basestation_geometry_dialog = LighthouseBsGeometryDialog(self)
 
         self._manage_estimate_geometry_button.clicked.connect(
             self._show_basestation_geometry_dialog)
 
+    def write_and_store_geometry(self, geometries):
+        if self._lh_memory_helper:
+            self._lh_memory_helper.write_geos(geometries, self._new_data_geo_written_to_cf_ram_signal.emit)
+
+    def _new_data_geo_written_to_cf_ram_cbl(self, success):
+        # The new gometry data is in CF RAM, write it to persistant memory
+        # When done, we will get at call to _received_location_packet_cb()
+        self._helper.cf.loc.send_lh_persist_data_packet(list(range(16)), [])
+
+    def _received_location_packet_cb(self, packet):
+        # New geo data has been written and stored in the CF, read it back to update the UI
+        if packet.type == self._helper.cf.loc.LH_PERSIST_DATA:
+            self._start_read_of_geo_data()
+
     def _show_basestation_geometry_dialog(self):
         self._basestation_geometry_dialog.show()
-            
+
     def _set_up_plots(self):
         self._plot_3d = Plot3dLighthouse()
         self._plot_layout.addWidget(self._plot_3d.native)
@@ -327,6 +340,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         """Callback when the Crazyflie has been connected"""
         logger.info("Crazyflie connected to {}".format(link_uri))
         self._request_param_to_detect_lighthouse_deck()
+        self._helper.cf.loc.receivedLocationPacket.add_callback(self._received_location_packet_signal.emit)
+        self._basestation_geometry_dialog.reset()
 
     def _request_param_to_detect_lighthouse_deck(self):
         """Send a parameter request to detect if the Lighthouse deck is
@@ -367,9 +382,12 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             except AttributeError as e:
                 logger.warning(str(e))
 
-            # Update basestation position
+            # Now that we know we have a lighthouse deck, setup the memory helper
             self._lh_memory_helper = LighthouseMemHelper(self._helper.cf)
-            self._lh_memory_helper.read_all_geos(self._geometry_read_cb)
+            self._start_read_of_geo_data()
+
+    def _start_read_of_geo_data(self):
+        self._lh_memory_helper.read_all_geos(self._geometry_read_cb)
 
     def _geometry_read_cb(self, geometries):
         self._lh_geos = geometries
