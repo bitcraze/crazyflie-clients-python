@@ -209,7 +209,6 @@ class LighthouseBsGeometryTableModel(QAbstractTableModel):
         self._basestation_positions = []
 
 
-
 class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
 
     _sweep_angles_received_and_averaged_signal = pyqtSignal(object)
