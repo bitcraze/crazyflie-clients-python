@@ -312,8 +312,10 @@ class LighthouseTab(Tab, lighthouse_tab_class):
 
         self._basestation_geometry_dialog = LighthouseBsGeometryDialog(self)
 
-        self._manage_estimate_geometry_button.clicked.connect(
-            self._show_basestation_geometry_dialog)
+        self._manage_estimate_geometry_button.clicked.connect(self._show_basestation_geometry_dialog)
+
+        self._is_connected = False
+        self._update_ui()
 
     def write_and_store_geometry(self, geometries):
         if self._lh_memory_helper:
@@ -330,6 +332,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             self._start_read_of_geo_data()
 
     def _show_basestation_geometry_dialog(self):
+        self._basestation_geometry_dialog.reset()
         self._basestation_geometry_dialog.show()
 
     def _set_up_plots(self):
@@ -342,6 +345,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._request_param_to_detect_lighthouse_deck()
         self._helper.cf.loc.receivedLocationPacket.add_callback(self._received_location_packet_signal.emit)
         self._basestation_geometry_dialog.reset()
+        self._is_connected = True
+        self._update_ui()
 
     def _request_param_to_detect_lighthouse_deck(self):
         """Send a parameter request to detect if the Lighthouse deck is
@@ -386,6 +391,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             self._lh_memory_helper = LighthouseMemHelper(self._helper.cf)
             self._start_read_of_geo_data()
 
+        self._update_ui()
+
     def _start_read_of_geo_data(self):
         self._lh_memory_helper.read_all_geos(self._geometry_read_cb)
 
@@ -411,7 +418,11 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._clear_state()
         self._update_graphics()
         self._plot_3d.clear()
+        self._basestation_geometry_dialog.close()
         self.is_lighthouse_deck_active = False
+        self._is_connected = False
+        self._update_ui()
+
 
     def _register_logblock(self, logblock_name, variables, data_cb, error_cb,
                            update_period=UPDATE_PERIOD_LOG):
@@ -451,6 +462,9 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             self._plot_3d.update_base_station_visibility(self._bs_visibility)
             self._update_position_label(self._helper.pose_logger.position)
             self._update_status_label(self._lh_status)
+
+    def _update_ui(self):
+        self._manage_estimate_geometry_button.setEnabled(self._is_connected and self.is_lighthouse_deck_active)
 
     def _update_position_label(self, position):
         if len(position) == 3:

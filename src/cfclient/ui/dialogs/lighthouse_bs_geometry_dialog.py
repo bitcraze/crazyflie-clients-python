@@ -53,14 +53,18 @@ class LighthouseSweepAngleReader():
     def __init__(self, cf, data_recevied_cb):
         self._cf = cf
         self._cb = data_recevied_cb
+        self._is_active = False
 
     def start(self):
         self._cf.loc.receivedLocationPacket.add_callback(self._packet_received_cb)
         self._angle_stream_activate(True)
+        self._is_active = True
 
     def stop(self):
-        self._cf.loc.receivedLocationPacket.remove_callback(self._packet_received_cb)
-        self._angle_stream_activate(False)
+        if self._is_active:
+            self._is_active = False
+            self._cf.loc.receivedLocationPacket.remove_callback(self._packet_received_cb)
+            self._angle_stream_activate(False)
 
     def _angle_stream_activate(self, is_active):
         value = 0
@@ -99,6 +103,10 @@ class LighthouseSweepAngleAverageReader():
     def start_angle_collection(self):
         self._sample_storage = {}
         self._reader.start()
+
+    def stop_angle_collection(self):
+        self._reader.stop()
+        self._sample_storage = None
 
     def is_collecting(self):
         return self._sample_storage is not None
@@ -203,7 +211,9 @@ class LighthouseBsGeometryTableModel(QAbstractTableModel):
         self.layoutChanged.emit()
 
     def reset_table(self):
+        self.layoutAboutToBeChanged.emit()
         self._basestation_positions = []
+        self.layoutChanged.emit()
 
 
 class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
@@ -244,10 +254,9 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class
 
     def reset(self):
         self._newly_estimated_geometry = None
+        self._update_ui()
 
     def _sweep_angles_received_and_averaged_cb(self, averaged_angles):
-        self._data_model.reset_table()
-
         self._averaged_angles = averaged_angles
         estimator = LighthouseBsGeoEstimator()
         self._newly_estimated_geometry = {}
@@ -260,9 +269,15 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class
             geo.origin = position_bs_vector
             geo.valid = True
             self._newly_estimated_geometry[id] = geo
-            self._data_model.replace_table_content(id, position_bs_vector)
 
         self._update_ui()
+
+    def _update_geo_table(self):
+        self._data_model.reset_table()
+
+        if self._newly_estimated_geometry is not None:
+            for id, geo in self._newly_estimated_geometry.items():
+                self._data_model.replace_table_content(id, geo.origin)
 
     def _estimate_geometry_button_clicked(self):
         self._sweep_angle_reader.start_angle_collection()
@@ -278,3 +293,13 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class
     def _update_ui(self):
         self._estimate_geometry_button.setEnabled(not self._sweep_angle_reader.is_collecting())
         self._write_to_cf_button.setEnabled(self._newly_estimated_geometry is not None)
+        self._load_button.setEnabled(False)
+        self._save_button.setEnabled(False)
+
+        self._update_geo_table()
+
+    def closeEvent(self, event):
+        self._stop_collection()
+
+    def _stop_collection(self):
+        self._sweep_angle_reader.stop_angle_collection()
