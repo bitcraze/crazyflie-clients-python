@@ -36,6 +36,8 @@ from PyQt5.QtWidgets import QInputDialog, QFileDialog
 import yaml
 import os
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVector
+from cflib.localization.lighthouse_bs_geo import LighthouseBsGeoEstimator
+from cflib.crazyflie.mem import LighthouseBsGeometry
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LighthouseBasestationGeometryDialog']
@@ -176,13 +178,27 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class
 
         self._sweep_angle_reader = LighthouseSweepAngleAverageReader(self._lighthouse_tab._helper.cf, self._sweep_angles_received_and_averaged_signal.emit)
 
-        self._new_estimate = None
+        self._averaged_angles = None
+
+        self._newly_estimated_geometry = None
 
         self._update_ui()
 
     def _sweep_angles_received_and_averaged_cb(self, averaged_angles):
-        # TODO Estimate geometry here
-        # self._new_estimate =
+        self._averaged_angles = averaged_angles
+        estimator = LighthouseBsGeoEstimator()
+        self._newly_estimated_geometry = {}
+        
+        for id, average_data in averaged_angles.items():
+            nr_samples = average_data[0]
+            sensor_data = average_data[1]
+            rotation_bs_matrix, position_bs_vector = estimator.estimate_geometry(sensor_data)
+            geo = LighthouseBsGeometry()
+            geo.rotation_matrix = rotation_bs_matrix
+            geo.origin = position_bs_vector
+            geo.valid = True
+            self._newly_estimated_geometry[id] = geo
+
         self._update_ui()
 
     def _estimate_geometry_button_clicked(self):
