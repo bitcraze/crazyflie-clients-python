@@ -147,9 +147,6 @@ class Plot3dLighthouse(scene.SceneCanvas):
 
     TEXT_OFFSET = np.array((0.0, 0, 0.25))
 
-    NO_POSITION = np.array((0.0, 0.0, 0.0))
-    NO_ROTATION_MATRIX = np.eye(3, 3)
-
     def __init__(self):
         scene.SceneCanvas.__init__(self, keys=None)
         self.unfreeze()
@@ -228,10 +225,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
             if (geo is not None) and (id not in self._base_stations):
                 self._base_stations[id] = MarkerPose(self._view.scene, self.BS_BRUSH_NOT_VISIBLE, text=f"{id}")
 
-            if geo.valid:
-                self._base_stations[id].set_pose(geo.origin, geo.rotation_matrix)
-            else:
-                self._base_stations[id].set_pose(self.NO_POSITION, self.NO_ROTATION_MATRIX)
+            self._base_stations[id].set_pose(geo.origin, geo.rotation_matrix)
 
     def update_base_station_visibility(self, visibility):
         for id, bs in self._base_stations.items():
@@ -405,7 +399,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._lh_memory_helper.read_all_geos(self._geometry_read_signal.emit)
 
     def _geometry_read_cb(self, geometries):
-        self._lh_geos = geometries
+        # Remove any geo data where the valid flag is False
+        self._lh_geos = dict(filter(lambda key_value: key_value[1].valid, geometries.items()))
         self._basestation_geometry_dialog.geometry_updated(self._lh_geos)
 
     def _status_report_received(self, timestamp, data, logconf):

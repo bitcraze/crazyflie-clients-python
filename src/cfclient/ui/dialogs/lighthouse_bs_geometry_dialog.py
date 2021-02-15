@@ -194,9 +194,9 @@ class LighthouseBsGeometryTableModel(QAbstractTableModel):
 
     def _compile_entry(self, current_geo, estimated_geo, index):
         result = 'N/A'
-        if current_geo is not None and current_geo.valid:
+        if current_geo is not None:
             result = '%.2f' % current_geo.origin[index]
-        if estimated_geo is not None and estimated_geo.valid:
+        if estimated_geo is not None:
             result += ' -> %.2f' % estimated_geo.origin[index]
 
         return result
