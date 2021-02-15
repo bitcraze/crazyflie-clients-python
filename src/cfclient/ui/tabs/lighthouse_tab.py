@@ -269,6 +269,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     _cb_param_to_detect_lighthouse_deck_signal = pyqtSignal(object, object)
     _status_report_signal = pyqtSignal(int, object, object)
     _new_data_geo_written_to_cf_ram_signal = pyqtSignal(bool)
+    _geometry_read_signal = pyqtSignal(object)
     _received_location_packet_signal = pyqtSignal(object)
 
     def __init__(self, tabWidget, helper, *args):
@@ -291,6 +292,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._status_report_signal.connect(self._status_report_received)
         self._new_data_geo_written_to_cf_ram_signal.connect(self._new_data_geo_written_to_cf_ram_cbl)
         self._received_location_packet_signal.connect(self._received_location_packet_cb)
+        self._geometry_read_signal.connect(self._geometry_read_cb)
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(self._connected_signal.emit)
@@ -394,10 +396,11 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._update_ui()
 
     def _start_read_of_geo_data(self):
-        self._lh_memory_helper.read_all_geos(self._geometry_read_cb)
+        self._lh_memory_helper.read_all_geos(self._geometry_read_signal.emit)
 
     def _geometry_read_cb(self, geometries):
         self._lh_geos = geometries
+        self._basestation_geometry_dialog.geometry_updated(self._lh_geos)
 
     def _status_report_received(self, timestamp, data, logconf):
         """Callback from the logging system when the status is updated."""

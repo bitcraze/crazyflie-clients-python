@@ -171,7 +171,7 @@
                 <item>
                  <widget class="QPushButton" name="_manage_estimate_geometry_button">
                   <property name="text">
-                   <string>Estimate Geometry</string>
+                   <string>Manage Geometry</string>
                   </property>
                  </widget>
                 </item>

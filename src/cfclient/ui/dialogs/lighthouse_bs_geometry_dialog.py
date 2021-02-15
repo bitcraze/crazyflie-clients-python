@@ -169,51 +169,79 @@ class LighthouseBsGeometryTableModel(QAbstractTableModel):
     def __init__(self, headers, parent=None, *args):
         QAbstractTableModel.__init__(self, parent)
         self._headers = headers
-        self._basestation_positions = []
+        self._table_values = []
+        self._current_geos = {}
+        self._estimated_geos = {}
 
     def rowCount(self, parent=None, *args, **kwargs):
-        return len(self._basestation_positions)
+        return len(self._table_values)
 
     def columnCount(self, parent=None, *args, **kwargs):
         return len(self._headers)
 
     def data(self, index, role=None):
-        value = self._basestation_positions[index.row()][index.column()]
         if index.isValid():
-            if index.column() == 0:
-                if role == Qt.DisplayRole:
-                    return QVariant(value)
-            else:
-                if role == Qt.DisplayRole:
-                    return QVariant('%.2f' % (value))
-        return QVariant()
+            value = self._table_values[index.row()][index.column()]
+            if role == Qt.DisplayRole:
+                return QVariant(value)
 
-    def setData(self, index, value, role=Qt.EditRole):
-        if not index.isValid():
-            return False
-        self._basestation_positions[index.row()][index.column()] = value
-        return True
+        return QVariant()
 
     def headerData(self, col, orientation, role=None):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return QVariant(self._headers[col])
         return QVariant()
 
-    def add_table_content(self, bs_id, x=0.0, y=0.0, z=0.0):
+    def _compile_entry(self, current_geo, estimated_geo, index):
+        result = '-'
+        if current_geo is not None:
+            result = '%.2f' % current_geo.origin[index]
+        if estimated_geo is not None:
+            result += ' -> %.2f' % estimated_geo.origin[index]
+
+        return result
+
+    def _add_table_value(self, current_geo, estimated_geo, id, table_values):
+        x = self._compile_entry(current_geo, estimated_geo, 0)
+        y = self._compile_entry(current_geo, estimated_geo, 1)
+        z = self._compile_entry(current_geo, estimated_geo, 2)
+
+        table_values.append([id, x, y, z])
+
+    def _add_table_value_for_id(self, current_geos, estimated_geos, table_values, id):
+        current_geo = None
+        if id in current_geos:
+            current_geo = current_geos[id]
+
+        estimated_geo = None
+        if id in estimated_geos:
+            estimated_geo = estimated_geos[id]
+
+        if current_geo is not None or estimated_geo is not None:
+            self._add_table_value(current_geo, estimated_geo, id, table_values)
+
+    def _add_table_values(self, current_geos, estimated_geos, table_values):
+        current_ids = set(current_geos.keys())
+        estimated_ids = set(estimated_geos.keys())
+        all_ids = current_ids.union(estimated_ids)
+
+        for id in all_ids:
+            self._add_table_value_for_id(current_geos, estimated_geos, table_values, id)
+
+    def _update_table_data(self):
         self.layoutAboutToBeChanged.emit()
-        self._basestation_positions.append([bs_id, x, y, z])
-        self._basestation_positions.sort(key=lambda row: row[1])
+        self._table_values = []
+        self._add_table_values(self._current_geos, self._estimated_geos, self._table_values)
+        self._table_values.sort(key=lambda row: row[0])
         self.layoutChanged.emit()
 
-    def replace_table_content(self, id, position):
-        self.layoutAboutToBeChanged.emit()
-        self.add_table_content(id, x=position[0], y=position[1], z=position[2])
-        self.layoutChanged.emit()
+    def set_estimated_geos(self, geos):
+        self._estimated_geos = geos
+        self._update_table_data()
 
-    def reset_table(self):
-        self.layoutAboutToBeChanged.emit()
-        self._basestation_positions = []
-        self.layoutChanged.emit()
+    def set_current_geos(self, geos):
+        self._current_geos = geos
+        self._update_table_data()
 
 
 class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
@@ -235,7 +263,8 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class
         self._sweep_angle_reader = LighthouseSweepAngleAverageReader(
             self._lighthouse_tab._helper.cf, self._sweep_angles_received_and_averaged_signal.emit)
 
-        self._newly_estimated_geometry = None
+        self._lh_geos = None
+        self._newly_estimated_geometry = {}
 
         # Table handlers
         self._headers = ['id', 'x', 'y', 'z']
@@ -253,7 +282,7 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class
         self._update_ui()
 
     def reset(self):
-        self._newly_estimated_geometry = None
+        self._newly_estimated_geometry = {}
         self._update_ui()
 
     def _sweep_angles_received_and_averaged_cb(self, averaged_angles):
@@ -272,34 +301,31 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class
 
         self._update_ui()
 
-    def _update_geo_table(self):
-        self._data_model.reset_table()
-
-        if self._newly_estimated_geometry is not None:
-            for id, geo in self._newly_estimated_geometry.items():
-                self._data_model.replace_table_content(id, geo.origin)
-
     def _estimate_geometry_button_clicked(self):
         self._sweep_angle_reader.start_angle_collection()
         self._update_ui()
 
     def _write_to_cf_button_clicked(self):
-        if self._newly_estimated_geometry is not None:
+        if len(self._newly_estimated_geometry) > 0:
             self._lighthouse_tab.write_and_store_geometry(self._newly_estimated_geometry)
-            self._newly_estimated_geometry = None
+            self._newly_estimated_geometry = {}
 
         self._update_ui()
 
     def _update_ui(self):
         self._estimate_geometry_button.setEnabled(not self._sweep_angle_reader.is_collecting())
-        self._write_to_cf_button.setEnabled(self._newly_estimated_geometry is not None)
+        self._write_to_cf_button.setEnabled(len(self._newly_estimated_geometry) > 0)
         self._load_button.setEnabled(False)
         self._save_button.setEnabled(False)
 
-        self._update_geo_table()
+        self._data_model.set_estimated_geos(self._newly_estimated_geometry)
 
     def closeEvent(self, event):
         self._stop_collection()
 
     def _stop_collection(self):
         self._sweep_angle_reader.stop_angle_collection()
+
+    def geometry_updated(self, geometry):
+        self._data_model.set_current_geos(geometry)
+        self._update_ui()
