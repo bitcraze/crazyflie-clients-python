@@ -147,6 +147,9 @@ class Plot3dLighthouse(scene.SceneCanvas):
 
     TEXT_OFFSET = np.array((0.0, 0, 0.25))
 
+    NO_POSITION = np.array((0.0, 0.0, 0.0))
+    NO_ROTATION_MATRIX = np.eye(3, 3)
+
     def __init__(self):
         scene.SceneCanvas.__init__(self, keys=None)
         self.unfreeze()
@@ -225,7 +228,10 @@ class Plot3dLighthouse(scene.SceneCanvas):
             if (geo is not None) and (id not in self._base_stations):
                 self._base_stations[id] = MarkerPose(self._view.scene, self.BS_BRUSH_NOT_VISIBLE, text=f"{id}")
 
-            self._base_stations[id].set_pose(geo.origin, geo.rotation_matrix)
+            if geo.valid:
+                self._base_stations[id].set_pose(geo.origin, geo.rotation_matrix)
+            else:
+                self._base_stations[id].set_pose(self.NO_POSITION, self.NO_ROTATION_MATRIX)
 
     def update_base_station_visibility(self, visibility):
         for id, bs in self._base_stations.items():
