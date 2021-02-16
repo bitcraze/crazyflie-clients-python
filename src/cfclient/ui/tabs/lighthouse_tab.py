@@ -349,6 +349,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         # The new gometry data is in CF RAM, write it to persistant memory
         # When done, we will get at call to _received_location_packet_cb()
         self._helper.cf.loc.send_lh_persist_data_packet(list(range(16)), [])
+        # Reset the bit fields for calibration data status to get a fresh view on
+        self._helper.cf.param.set_value("lighthouse.bsCalibReset", '1')
 
     def _received_location_packet_cb(self, packet):
         # New geo data has been written and stored in the CF, read it back to update the UI
