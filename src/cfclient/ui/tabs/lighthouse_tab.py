@@ -33,8 +33,8 @@ Shows data for the Lighthouse Positioning system
 import logging
 
 from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtGui import QMessageBox, QLabel
+from PyQt5.QtCore import pyqtSignal, QTimer
+from PyQt5.QtGui import QMessageBox
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -267,7 +267,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     LOG_CALIBRATION_EXISTS = "lighthouse.bsCalVal"
     LOG_CALIBRATION_CONFIRMED = "lighthouse.bsCalCon"
     LOG_CALIBRATION_UPDATED = "lighthouse.bsCalUd"
-    LOG_GEOMETERY_EXISTS  = "lighthouse.bsGeoVal"
+    LOG_GEOMETERY_EXISTS = "lighthouse.bsGeoVal"
     LOG_ACTIVE = "lighthouse.bsActive"
 
     _connected_signal = pyqtSignal(str)
@@ -319,8 +319,13 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._bs_geometry_data_exists = set()
         self._bs_data_to_estimator = set()
 
-        self._bs_stats = [self._bs_receives_light, self._bs_calibration_data_exists, self._bs_calibration_data_confirmed,
-            self._bs_calibration_data_updated, self._bs_geometry_data_exists, self._bs_data_to_estimator]
+        self._bs_stats = [
+            self._bs_receives_light,
+            self._bs_calibration_data_exists,
+            self._bs_calibration_data_confirmed,
+            self._bs_calibration_data_updated,
+            self._bs_geometry_data_exists,
+            self._bs_data_to_estimator]
 
         self._lh_status = self.STATUS_NOT_RECEIVING
 
@@ -451,7 +456,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         if self.LOG_ACTIVE in data:
             bit_mask = data[self.LOG_ACTIVE]
             self._adjust_bitmask(bit_mask, self._bs_data_to_estimator)
-            
+
         if self.LOG_STATUS in data:
             self._lh_status = data[self.LOG_STATUS]
 
@@ -576,11 +581,11 @@ class LighthouseTab(Tab, lighthouse_tab_class):
                 label = container.itemAtPosition(bs_indicator_id, stats_indicator_id).widget()
                 stats_id = stats_id_port.get(stats_indicator_id)
                 temp_set = self._bs_stats[stats_id]
-            
+
                 if bs in temp_set:
                     # If the status bar for calibration data is handled, have an intermeddiate status
-                        # else just have red or green.
-                    if stats_indicator_id is 2:
+                    # else just have red or green.
+                    if stats_indicator_id == 2:
                         calib_confirm = self._bs_stats[stats_id+1]
                         calib_updated = self._bs_stats[stats_id+2]
                         if calib_confirm:
@@ -588,6 +593,6 @@ class LighthouseTab(Tab, lighthouse_tab_class):
                         if calib_updated:
                             label.setStyleSheet(STYLE_ORANGE_BACKGROUND)
                     else:
-                            label.setStyleSheet(STYLE_GREEN_BACKGROUND)
+                        label.setStyleSheet(STYLE_GREEN_BACKGROUND)
                 else:
                     label.setStyleSheet(STYLE_RED_BACKGROUND)
