@@ -33,8 +33,8 @@ Shows data for the Lighthouse Positioning system
 import logging
 
 from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal, QTimer
-from PyQt5.QtGui import QMessageBox
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
+from PyQt5.QtGui import QMessageBox, QLabel
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -58,6 +58,7 @@ lighthouse_tab_class = uic.loadUiType(
 
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
+STYLE_ORANGE_BACKGROUND = "background-color: orange;"
 STYLE_NO_BACKGROUND = "background-color: none;"
 
 
@@ -260,8 +261,14 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     STATUS_MISSING_DATA = 1
     STATUS_TO_ESTIMATOR = 2
 
-    LOG_ACTIVE = "lighthouse.bsActive"
+    # TODO change these names to something more logical
     LOG_STATUS = "lighthouse.status"
+    LOG_RECEIVE = "lighthouse.bsReceive"
+    LOG_CALIBRATION_EXISTS = "lighthouse.bsCalVal"
+    LOG_CALIBRATION_CONFIRMED = "lighthouse.bsCalCon"
+    LOG_CALIBRATION_UPDATED = "lighthouse.bsCalUd"
+    LOG_GEOMETERY_EXISTS  = "lighthouse.bsGeoVal"
+    LOG_ACTIVE = "lighthouse.bsActive"
 
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
@@ -304,7 +311,17 @@ class LighthouseTab(Tab, lighthouse_tab_class):
 
         self._lh_memory_helper = None
         self._lh_geos = {}
-        self._bs_visibility = set()
+
+        self._bs_receives_light = set()
+        self._bs_calibration_data_exists = set()
+        self._bs_calibration_data_confirmed = set()
+        self._bs_calibration_data_updated = set()
+        self._bs_geometry_data_exists = set()
+        self._bs_data_to_estimator = set()
+
+        self._bs_stats = [self._bs_receives_light, self._bs_calibration_data_exists, self._bs_calibration_data_confirmed,
+            self._bs_calibration_data_updated, self._bs_geometry_data_exists, self._bs_data_to_estimator]
+
         self._lh_status = self.STATUS_NOT_RECEIVING
 
         self._graph_timer = QTimer()
@@ -381,7 +398,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             try:
                 self._register_logblock(
                     "lhStatus",
-                    [self.LOG_ACTIVE, self.LOG_STATUS],
+                    [self.LOG_STATUS, self.LOG_RECEIVE, self.LOG_CALIBRATION_EXISTS, self.LOG_CALIBRATION_CONFIRMED,
+                        self.LOG_CALIBRATION_UPDATED, self.LOG_GEOMETERY_EXISTS, self.LOG_ACTIVE],
                     self._status_report_signal.emit,
                     self._log_error_signal.emit)
             except KeyError as e:
@@ -403,16 +421,37 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._lh_geos = dict(filter(lambda key_value: key_value[1].valid, geometries.items()))
         self._basestation_geometry_dialog.geometry_updated(self._lh_geos)
 
+    def _adjust_bitmask(self, bit_mask, bs_list):
+        for id in range(16):
+            if bit_mask & (1 << id):
+                bs_list.add(id)
+            else:
+                if id in bs_list:
+                    bs_list.remove(id)
+        self._update_basestation_status_indicators()
+
     def _status_report_received(self, timestamp, data, logconf):
         """Callback from the logging system when the status is updated."""
+
+        if self.LOG_RECEIVE in data:
+            bit_mask = data[self.LOG_RECEIVE]
+            self._adjust_bitmask(bit_mask, self._bs_receives_light)
+        if self.LOG_CALIBRATION_EXISTS in data:
+            bit_mask = data[self.LOG_CALIBRATION_EXISTS]
+            self._adjust_bitmask(bit_mask, self._bs_calibration_data_exists)
+        if self.LOG_CALIBRATION_CONFIRMED in data:
+            bit_mask = data[self.LOG_CALIBRATION_CONFIRMED]
+            self._adjust_bitmask(bit_mask, self._bs_calibration_data_confirmed)
+        if self.LOG_CALIBRATION_UPDATED in data:
+            bit_mask = data[self.LOG_CALIBRATION_UPDATED]
+            self._adjust_bitmask(bit_mask, self._bs_calibration_data_updated)
+        if self.LOG_GEOMETERY_EXISTS in data:
+            bit_mask = data[self.LOG_GEOMETERY_EXISTS]
+            self._adjust_bitmask(bit_mask, self._bs_geometry_data_exists)
         if self.LOG_ACTIVE in data:
             bit_mask = data[self.LOG_ACTIVE]
-            for id in range(16):
-                if bit_mask & (1 << id):
-                    self._bs_visibility.add(id)
-                else:
-                    if id in self._bs_visibility:
-                        self._bs_visibility.remove(id)
+            self._adjust_bitmask(bit_mask, self._bs_data_to_estimator)
+            
         if self.LOG_STATUS in data:
             self._lh_status = data[self.LOG_STATUS]
 
@@ -462,7 +501,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             self._plot_3d.update_cf_pose(self._helper.pose_logger.position,
                                          self._rpy_to_rot(self._helper.pose_logger.rpy_rad))
             self._plot_3d.update_base_station_geos(self._lh_geos)
-            self._plot_3d.update_base_station_visibility(self._bs_visibility)
+            self._plot_3d.update_base_station_visibility(self._bs_data_to_estimator)
             self._update_position_label(self._helper.pose_logger.position)
             self._update_status_label(self._lh_status)
 
@@ -492,7 +531,13 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     def _clear_state(self):
         self._lh_memory_helper = None
         self._lh_geos = {}
-        self._bs_visibility.clear()
+        self._bs_receives_light.clear()
+        self._bs_calibration_data_exists.clear()
+        self._bs_calibration_data_confirmed.clear()
+        self._bs_calibration_data_updated.clear()
+        self._bs_geometry_data_exists.clear()
+        self._bs_data_to_estimator.clear()
+        self._update_basestation_status_indicators()
         self._lh_status = self.STATUS_NOT_RECEIVING
 
     def _rpy_to_rot(self, rpy):
@@ -516,3 +561,33 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         ]
 
         return np.array(r)
+
+    def _update_basestation_status_indicators(self):
+        """Handling the basestation status label handles to indicate
+            the state of received data per basestation"""
+        container = self._basestation_stats_container
+
+        # Ports the label number to the first index of the statistic id
+        stats_id_port = {1: 0, 2: 1, 3: 4, 4: 5}
+
+        for bs in range(2):
+            for stats_indicator_id in range(1, 5):
+                bs_indicator_id = bs + 1
+                label = container.itemAtPosition(bs_indicator_id, stats_indicator_id).widget()
+                stats_id = stats_id_port.get(stats_indicator_id)
+                temp_set = self._bs_stats[stats_id]
+            
+                if bs in temp_set:
+                    # If the status bar for calibration data is handled, have an intermeddiate status
+                        # else just have red or green.
+                    if stats_indicator_id is 2:
+                        calib_confirm = self._bs_stats[stats_id+1]
+                        calib_updated = self._bs_stats[stats_id+2]
+                        if calib_confirm:
+                            label.setStyleSheet(STYLE_GREEN_BACKGROUND)
+                        if calib_updated:
+                            label.setStyleSheet(STYLE_ORANGE_BACKGROUND)
+                    else:
+                            label.setStyleSheet(STYLE_GREEN_BACKGROUND)
+                else:
+                    label.setStyleSheet(STYLE_RED_BACKGROUND)
