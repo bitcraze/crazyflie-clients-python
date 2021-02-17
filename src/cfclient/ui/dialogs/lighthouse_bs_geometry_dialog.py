@@ -206,7 +206,7 @@ class LighthouseBsGeometryTableModel(QAbstractTableModel):
         y = self._compile_entry(current_geo, estimated_geo, 1)
         z = self._compile_entry(current_geo, estimated_geo, 2)
 
-        table_values.append([id, x, y, z])
+        table_values.append([id + 1, x, y, z])
 
     def _add_table_value_for_id(self, current_geos, estimated_geos, table_values, id):
         current_geo = None

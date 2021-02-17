@@ -320,6 +320,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._bs_geometry_data_exists = set()
         self._bs_data_to_estimator = set()
 
+        self._clear_state_indicator()
+
         self._bs_stats = [
             self._bs_receives_light,
             self._bs_calibration_data_exists,
@@ -528,7 +530,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     def _update_status_label(self, status):
         text = ''
         if status == self.STATUS_NOT_RECEIVING:
-            text = 'Not receving'
+            text = 'Not receiving'
         elif status == self.STATUS_MISSING_DATA:
             text = 'Geo or calibration data missing'
         elif status == self.STATUS_TO_ESTIMATOR:
@@ -546,7 +548,15 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._bs_geometry_data_exists.clear()
         self._bs_data_to_estimator.clear()
         self._update_basestation_status_indicators()
+        self._clear_state_indicator()
         self._lh_status = self.STATUS_NOT_RECEIVING
+
+    def _clear_state_indicator(self):
+        container = self._basestation_stats_container
+        for row in range(1, 3):
+            for col in range(1, 5):
+                color_label = container.itemAtPosition(row, col).widget()
+                color_label.setStyleSheet(STYLE_NO_BACKGROUND)
 
     def _rpy_to_rot(self, rpy):
         # http://planning.cs.uiuc.edu/node102.html
@@ -591,8 +601,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
                     if stats_indicator_id == 2:
                         label.setStyleSheet(STYLE_BLUE_BACKGROUND)
 
-                        calib_confirm = bs in self._bs_stats[stats_id+1]
-                        calib_updated = bs in self._bs_stats[stats_id+2]
+                        calib_confirm = bs in self._bs_stats[stats_id + 1]
+                        calib_updated = bs in self._bs_stats[stats_id + 2]
 
                         if calib_confirm:
                             label.setStyleSheet(STYLE_GREEN_BACKGROUND)
