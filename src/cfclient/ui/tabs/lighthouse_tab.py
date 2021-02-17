@@ -58,6 +58,7 @@ lighthouse_tab_class = uic.loadUiType(
 
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
+STYLE_BLUE_BACKGROUND = "background-color: lightblue;"
 STYLE_ORANGE_BACKGROUND = "background-color: orange;"
 STYLE_NO_BACKGROUND = "background-color: none;"
 
@@ -588,8 +589,11 @@ class LighthouseTab(Tab, lighthouse_tab_class):
                     # If the status bar for calibration data is handled, have an intermeddiate status
                     # else just have red or green.
                     if stats_indicator_id == 2:
-                        calib_confirm = self._bs_stats[stats_id+1]
-                        calib_updated = self._bs_stats[stats_id+2]
+                        label.setStyleSheet(STYLE_BLUE_BACKGROUND)
+
+                        calib_confirm = bs in self._bs_stats[stats_id+1]
+                        calib_updated = bs in self._bs_stats[stats_id+2]
+
                         if calib_confirm:
                             label.setStyleSheet(STYLE_GREEN_BACKGROUND)
                         if calib_updated:
