@@ -608,18 +608,22 @@ class LighthouseTab(Tab, lighthouse_tab_class):
                     # else just have red or green.
                     if stats_indicator_id == 2:
                         label.setStyleSheet(STYLE_BLUE_BACKGROUND)
+                        label.setToolTip('Calibration data from cache')
 
                         calib_confirm = bs in self._bs_stats[stats_id + 1]
                         calib_updated = bs in self._bs_stats[stats_id + 2]
 
                         if calib_confirm:
                             label.setStyleSheet(STYLE_GREEN_BACKGROUND)
+                            label.setToolTip('Calibration data verified')
                         if calib_updated:
                             label.setStyleSheet(STYLE_ORANGE_BACKGROUND)
+                            label.setToolTip('Calibration data updated, the geometry probably needs to be re-estimated')
                     else:
                         label.setStyleSheet(STYLE_GREEN_BACKGROUND)
                 else:
                     label.setStyleSheet(STYLE_RED_BACKGROUND)
+                    label.setToolTip('')
 
     def _load_sys_config_button_clicked(self):
         names = QFileDialog.getOpenFileName(self, 'Open file',
