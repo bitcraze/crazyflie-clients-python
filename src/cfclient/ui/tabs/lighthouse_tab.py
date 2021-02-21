@@ -35,6 +35,7 @@ import logging
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, QTimer
 from PyQt5.QtGui import QMessageBox
+from PyQt5.QtWidgets import QFileDialog
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -42,12 +43,14 @@ from cfclient.ui.tab import Tab
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import LighthouseMemHelper
 from cflib.localization import LighthouseConfigWriter
+from cflib.localization import LighthouseConfigFileManager
 
 from cfclient.ui.dialogs.lighthouse_bs_geometry_dialog import LighthouseBsGeometryDialog
 
 from vispy import scene
 import numpy as np
 import math
+import os
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LighthouseTab']
@@ -279,6 +282,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     _status_report_signal = pyqtSignal(int, object, object)
     _new_system_config_written_to_cf_signal = pyqtSignal(bool)
     _geometry_read_signal = pyqtSignal(object)
+    _calibration_read_signal = pyqtSignal(object)
 
     def __init__(self, tabWidget, helper, *args):
         super(LighthouseTab, self).__init__(*args)
@@ -300,6 +304,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._status_report_signal.connect(self._status_report_received)
         self._new_system_config_written_to_cf_signal.connect(self._new_system_config_written_to_cf)
         self._geometry_read_signal.connect(self._geometry_read_cb)
+        self._calibration_read_signal.connect(self._calibration_read_cb)
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(self._connected_signal.emit)
@@ -340,6 +345,10 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._basestation_geometry_dialog = LighthouseBsGeometryDialog(self)
 
         self._manage_estimate_geometry_button.clicked.connect(self._show_basestation_geometry_dialog)
+        self._load_sys_config_button.clicked.connect(self._load_sys_config_button_clicked)
+        self._save_sys_config_button.clicked.connect(self._save_sys_config_button_clicked)
+
+        self._current_folder = os.path.expanduser('~')
 
         self._is_connected = False
         self._update_ui()
@@ -511,7 +520,10 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             self._update_status_label(self._lh_status)
 
     def _update_ui(self):
-        self._manage_estimate_geometry_button.setEnabled(self._is_connected and self.is_lighthouse_deck_active)
+        enabled = self._is_connected and self.is_lighthouse_deck_active
+        self._manage_estimate_geometry_button.setEnabled(enabled)
+        self._load_sys_config_button.setEnabled(enabled)
+        self._save_sys_config_button.setEnabled(enabled)
 
     def _update_position_label(self, position):
         if len(position) == 3:
@@ -608,3 +620,43 @@ class LighthouseTab(Tab, lighthouse_tab_class):
                         label.setStyleSheet(STYLE_GREEN_BACKGROUND)
                 else:
                     label.setStyleSheet(STYLE_RED_BACKGROUND)
+
+    def _load_sys_config_button_clicked(self):
+        names = QFileDialog.getOpenFileName(self, 'Open file',
+                                            self._current_folder,
+                                            "*.yaml;;*.*")
+
+        if names[0] == '':
+            return
+
+        self._current_folder = os.path.dirname(names[0])
+
+        if self._lh_config_writer is not None:
+            self._lh_config_writer.write_and_store_config_from_file(self._new_system_config_written_to_cf_signal.emit,
+                                                                    names[0])
+
+    def _save_sys_config_button_clicked(self):
+        # Get calibration data from the Crazyflie to complete the system config data set
+        # When the data is ready we get a callback on _calibration_read
+        self._lh_memory_helper.read_all_calibs(self._calibration_read_signal.emit)
+
+    def _calibration_read_cb(self, calibs):
+        # Got calibration data from the CF, we have the full system configuration
+        self._save_sys_config(self._lh_geos, calibs)
+
+    def _save_sys_config(self, geos, calibs):
+        names = QFileDialog.getSaveFileName(self, 'Save file',
+                                            self._current_folder,
+                                            "*.yaml;;*.*")
+
+        if names[0] == '':
+            return
+
+        self._current_folder = os.path.dirname(names[0])
+
+        if not names[0].endswith(".yaml") and names[0].find(".") < 0:
+            filename = names[0] + ".yaml"
+        else:
+            filename = names[0]
+
+        LighthouseConfigFileManager.write(filename, geos, calibs)
