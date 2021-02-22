@@ -40,7 +40,7 @@ __all__ = ['LighthouseBsGeometryDialog']
 
 logger = logging.getLogger(__name__)
 
-(anchor_postiong_widget_class, connect_widget_base_class) = (
+(basestation_geometry_widget_class, connect_widget_base_class) = (
     uic.loadUiType(
         cfclient.module_path + '/ui/dialogs/lighthouse_bs_geometry_dialog.ui')
 )
@@ -125,7 +125,7 @@ class LighthouseBsGeometryTableModel(QAbstractTableModel):
         self._update_table_data()
 
 
-class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
+class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_class):
 
     _sweep_angles_received_and_averaged_signal = pyqtSignal(object)
 
@@ -196,9 +196,6 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, anchor_postiong_widget_class
     def _update_ui(self):
         self._estimate_geometry_button.setEnabled(not self._sweep_angle_reader.is_collecting())
         self._write_to_cf_button.setEnabled(len(self._newly_estimated_geometry) > 0)
-        self._load_button.setEnabled(False)
-        self._save_button.setEnabled(False)
-
         self._data_model.set_estimated_geos(self._newly_estimated_geometry)
 
     def closeEvent(self, event):

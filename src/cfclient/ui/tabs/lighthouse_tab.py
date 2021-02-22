@@ -46,6 +46,7 @@ from cflib.localization import LighthouseConfigWriter
 from cflib.localization import LighthouseConfigFileManager
 
 from cfclient.ui.dialogs.lighthouse_bs_geometry_dialog import LighthouseBsGeometryDialog
+from cfclient.ui.dialogs.basestation_mode_dialog import LighthouseBsModeDialog
 
 from vispy import scene
 import numpy as np
@@ -343,8 +344,11 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._graph_timer.start()
 
         self._basestation_geometry_dialog = LighthouseBsGeometryDialog(self)
+        self._basestation_mode_dialog = LighthouseBsModeDialog(self)
 
         self._manage_estimate_geometry_button.clicked.connect(self._show_basestation_geometry_dialog)
+        self._manage_basestation_mode_button.clicked.connect(self._show_basestation_mode_dialog)
+
         self._load_sys_config_button.clicked.connect(self._load_sys_config_button_clicked)
         self._save_sys_config_button.clicked.connect(self._save_sys_config_button_clicked)
 
@@ -367,6 +371,10 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     def _show_basestation_geometry_dialog(self):
         self._basestation_geometry_dialog.reset()
         self._basestation_geometry_dialog.show()
+
+    def _show_basestation_mode_dialog(self):
+        self._basestation_mode_dialog.reset()
+        self._basestation_mode_dialog.show()
 
     def _set_up_plots(self):
         self._plot_3d = Plot3dLighthouse()
@@ -539,9 +547,9 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         if status == self.STATUS_NOT_RECEIVING:
             text = 'Not receiving'
         elif status == self.STATUS_MISSING_DATA:
-            text = 'Geo or calibration data missing'
+            text = 'No geo/calib'
         elif status == self.STATUS_TO_ESTIMATOR:
-            text = 'Data sent to estimator'
+            text = 'LH ready'
 
         self._status_status.setText(text)
 
