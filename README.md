@@ -68,6 +68,11 @@ All other dependencies on linux are handled by pip so to install an editable cop
 $ python3 -m pip install -e .
 ```
 
+If you plan to do development on the client you should run:
+```
+$ python3 -m pip install -e .[dev]
+```
+
 The client can now be runned using ```cfclient``` if the local pip bin directory is in the path (it should be in a venv or after a reboot), or with ```python3 -m cfclient.gui```.
 
 ## Windows (7/8/10)
@@ -146,6 +151,13 @@ pip3 install -e .
 ```
 
 The client can now be started with ```cfclient``` or ```python3 -m cfclient.gui```.
+
+## Pre commit hooks
+If you want some extra help with keeping to the mandated python coding style you can install hooks that verify your style at commit time. This is done by running:
+```
+$ pre-commit install
+```
+This will run the lint checkers defined in `.pre-commit-config-yaml` on your proposed changes and alert you if you need to change anything.
 
 ## Working with the GUI .ui files
 
