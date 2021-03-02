@@ -159,7 +159,8 @@ setup(
                                           'quamash~=0.6.1',
                                           'qtm~=2.0.2',
                                           'numpy~=1.19.2',
-                                          'vispy~=0.6.6'],
+                                          'vispy~=0.6.6',
+                                          'pyserial~=3.5'],
 
     dependency_links=[
         'git+https://github.com/bitcraze/crazyflie-lib-python@7860e10a636cd6bba7053899d916954e94754838#egg=cflib'
