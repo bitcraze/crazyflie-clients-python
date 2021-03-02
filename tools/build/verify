@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+import subprocess
+
+__author__ = 'kristoffer'
+
+try:
+    subprocess.check_call(['pre-commit', 'run', '--all-files'])
+    print('verify pass')
+except subprocess.CalledProcessError as e:
+    print('Error: verify fail')
+    raise e
