@@ -39,9 +39,16 @@ class ConnectivityManager(QObject):
         'connect_button',
         'scan_button'])
 
+    CONNECTION_STATE_DISCONNECTED = 0
+    CONNECTION_STATE_CONNECTING = 1
+    CONNECTION_STATE_CONNECTED = 2
+    CONNECTION_STATE_SCANNING = 3
+
+    INTERFACE_PROMPT_TEXT = 'Select an interface'
+
     connect_button_clicked = pyqtSignal()
     scan_button_clicked = pyqtSignal(object)
-    interface_combo_current_index_changed = pyqtSignal(object)
+    connection_state_changed = pyqtSignal(object)
 
     def __init__(self):
         QObject.__init__(self)
@@ -59,7 +66,10 @@ class ConnectivityManager(QObject):
         ui_elements.interface_combo.currentIndexChanged['QString'].connect(
             self._interface_combo_current_index_changed_handler)
 
-    def set_state_disconnected(self, can_connect):
+    def set_state_disconnected(self):
+        self.connection_state_changed.emit(self.CONNECTION_STATE_DISCONNECTED)
+
+        can_connect = self.get_interface() is not None
         for ui_elements in self._ui_elements:
             ui_elements.connect_button.setText("Connect")
             ui_elements.connect_button.setToolTip("Connect to the Crazyflie on the selected interface (Ctrl+I)")
@@ -70,6 +80,7 @@ class ConnectivityManager(QObject):
             ui_elements.interface_combo.setEnabled(True)
 
     def set_state_connected(self):
+        self.connection_state_changed.emit(self.CONNECTION_STATE_CONNECTED)
         for ui_elements in self._ui_elements:
             ui_elements.connect_button.setText("Disconnect")
             ui_elements.connect_button.setToolTip("Disconnect from the Crazyflie (Ctrl+I)")
@@ -78,6 +89,7 @@ class ConnectivityManager(QObject):
             ui_elements.interface_combo.setEnabled(False)
 
     def set_state_connecting(self):
+        self.connection_state_changed.emit(self.CONNECTION_STATE_CONNECTING)
         for ui_elements in self._ui_elements:
             ui_elements.connect_button.setText("Cancel")
             ui_elements.connect_button.setToolTip("Cancel connecting to the Crazyflie")
@@ -86,6 +98,7 @@ class ConnectivityManager(QObject):
             ui_elements.interface_combo.setEnabled(False)
 
     def set_state_scanning(self):
+        self.connection_state_changed.emit(self.CONNECTION_STATE_SCANNING)
         for ui_elements in self._ui_elements:
             ui_elements.connect_button.setText("Connect")
             ui_elements.connect_button.setEnabled(False)
@@ -93,6 +106,13 @@ class ConnectivityManager(QObject):
             ui_elements.scan_button.setEnabled(False)
             ui_elements.address_spinner.setEnabled(False)
             ui_elements.interface_combo.setEnabled(False)
+
+    def set_enable(self, enable):
+        for ui_elements in self._ui_elements:
+            ui_elements.connect_button.setEnabled(enable)
+            ui_elements.scan_button.setEnabled(enable)
+            ui_elements.address_spinner.setEnabled(enable)
+            ui_elements.interface_combo.setEnabled(enable)
 
     def set_address(self, address):
         for ui_elements in self._ui_elements:
@@ -105,12 +125,27 @@ class ConnectivityManager(QObject):
             return 0
 
     def set_interfaces(self, interface_items, index):
+        new_index = 0
+        if index is not None:
+            new_index = index + 1
+
         for ui_elements in self._ui_elements:
             combo = ui_elements.interface_combo
 
             combo.clear()
+            combo.addItem(self.INTERFACE_PROMPT_TEXT)
             combo.addItems(interface_items)
-            combo.setCurrentIndex(index)
+            combo.setCurrentIndex(new_index)
+
+    def get_interface(self):
+        if len(self._ui_elements) > 0:
+            interface = self._ui_elements[0].interface_combo.currentText()
+            if interface == self.INTERFACE_PROMPT_TEXT:
+                self._selected_interface = None
+            else:
+                return interface
+        else:
+            return None
 
     def _connect_button_click_handler(self):
         self.connect_button_clicked.emit()
@@ -140,9 +175,9 @@ class ConnectivityManager(QObject):
                     ui_elements.address_spinner.setValue(value)
 
     def _interface_combo_current_index_changed_handler(self, interface):
+        can_connect = interface != self.INTERFACE_PROMPT_TEXT
         for ui_elements in self._ui_elements:
             combo = ui_elements.interface_combo
             if combo.currentText != interface:
                 combo.setCurrentText(interface)
-
-        self.interface_combo_current_index_changed.emit(interface)
+            ui_elements.connect_button.setEnabled(can_connect)
