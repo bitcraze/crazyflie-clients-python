@@ -26,23 +26,26 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #  02110-1301, USA.
 from collections import namedtuple
+from PyQt5.QtCore import pyqtSignal, QObject
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ConnectivityManager']
 
 
-class ConnectivityManager:
+class ConnectivityManager(QObject):
     UiElementsContainer = namedtuple('UiElementContainer', [
         'interface_combo',
         'address_spinner',
         'connect_button',
         'scan_button'])
 
+    connect_button_clicked = pyqtSignal()
+    scan_button_clicked = pyqtSignal(object)
+    interface_combo_current_index_changed = pyqtSignal(object)
+
     def __init__(self):
+        QObject.__init__(self)
         self._ui_elements = []
-        self._connect_button_clicked_cb = None
-        self._scan_button_clicked_cb = None
-        self._interface_combo_current_index_changed_cb = None
 
     def register_ui_elements(self, ui_elements):
         self._ui_elements.append(ui_elements)
@@ -109,22 +112,11 @@ class ConnectivityManager:
             combo.addItems(interface_items)
             combo.setCurrentIndex(index)
 
-    def connect_button_clicked_connect(self, clicked_cb):
-        self._connect_button_clicked_cb = clicked_cb
-
-    def scan_button_clicked_connect(self, clicked_cb):
-        self._scan_button_clicked_cb = clicked_cb
-
-    def interface_combo_current_index_changed_connect(self, changed_cb):
-        self._interface_combo_current_index_changed_cb = changed_cb
-
     def _connect_button_click_handler(self):
-        if self._connect_button_clicked_cb is not None:
-            self._connect_button_clicked_cb()
+        self.connect_button_clicked.emit()
 
     def _scan_button_click_handler(self):
-        if self._scan_button_clicked_cb is not None:
-            self._scan_button_clicked_cb(self.get_address())
+        self.scan_button_clicked.emit(self.get_address())
 
     def _address_changed_handler(self, value):
         for ui_elements in self._ui_elements:
@@ -153,5 +145,4 @@ class ConnectivityManager:
             if combo.currentText != interface:
                 combo.setCurrentText(interface)
 
-        if self._interface_combo_current_index_changed_cb is not None:
-            self._interface_combo_current_index_changed_cb(interface)
+        self.interface_combo_current_index_changed.emit(interface)

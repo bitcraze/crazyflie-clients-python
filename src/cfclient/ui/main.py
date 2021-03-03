@@ -185,9 +185,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 connect_button=self.connectButton,
                 scan_button=self.scanButton))
 
-        self._connectivity_manager.connect_button_clicked_connect(self._connect)
-        self._connectivity_manager.scan_button_clicked_connect(self._scan)
-        self._connectivity_manager.interface_combo_current_index_changed_connect(self.interfaceChanged)
+        self._connectivity_manager.connect_button_clicked.connect(self._connect)
+        self._connectivity_manager.scan_button_clicked.connect(self._scan)
+        self._connectivity_manager.interface_combo_current_index_changed.connect(self.interfaceChanged)
 
         self._auto_reconnect_enabled = Config().get("auto_reconnect")
         self.autoReconnectCheckBox.toggled.connect(
