@@ -43,3 +43,4 @@ class PluginHelper():
         self.mainUI = None
         self.plotTab = None
         self.pose_logger = None
+        self.connectivity_manager = None

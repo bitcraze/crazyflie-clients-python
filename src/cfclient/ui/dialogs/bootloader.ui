@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>585</width>
-    <height>460</height>
+    <width>675</width>
+    <height>551</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -41,13 +41,6 @@
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_5">
               <item>
-               <widget class="QPushButton" name="scanButton">
-                <property name="text">
-                 <string>Scan</string>
-                </property>
-               </widget>
-              </item>
-              <item>
                <widget class="QComboBox" name="comboBox">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -64,21 +57,37 @@
                 </property>
                </widget>
               </item>
+              <item>
+               <widget class="QPushButton" name="scanButton">
+                <property name="text">
+                 <string>Scan</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout">
               <item>
-               <widget class="QLabel" name="label">
+               <widget class="QLabel" name="addressLabel">
                 <property name="text">
                  <string>Address:</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="scanAddress">
-                <property name="text">
-                 <string>0xE7E7E7E7E7</string>
+               <widget class="HexSpinBox" name="address">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>158</width>
+                  <height>0</height>
+                 </size>
                 </property>
                </widget>
               </item>
@@ -369,6 +378,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>HexSpinBox</class>
+   <extends>QSpinBox</extends>
+   <header>cfclient.ui.widgets.hexspinbox</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

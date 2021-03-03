@@ -30,6 +30,7 @@ The bootloader dialog is used to update the Crazyflie firmware and to
 read/write the configuration block in the Crazyflie flash.
 """
 from cflib.bootloader import Bootloader
+from cfclient.ui.connectivity_manager import ConnectivityManager
 
 import tempfile
 import logging
@@ -95,6 +96,13 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self._cancel_bootloading.clicked.connect(self.close)
         self.sourceTab.currentChanged.connect(
             lambda _: self.updateChipSelectRadio())
+
+        self.helper.connectivity_manager.register_ui_elements(
+            ConnectivityManager.UiElementsContainer(
+                interface_combo=self.comboBox,
+                address_spinner=self.address,
+                connect_button=self.connectButton,
+                scan_button=self.scanButton))
 
         # connecting other signals
         self.clt.programmed.connect(self.programDone)

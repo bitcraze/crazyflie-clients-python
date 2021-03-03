@@ -36,6 +36,7 @@ import cfclient.ui.toolboxes
 import cflib.crtp
 from cfclient.ui.dialogs.about import AboutDialog
 from cfclient.ui.dialogs.bootloader import BootloaderDialog
+from cfclient.ui.connectivity_manager import ConnectivityManager
 from cfclient.utils.config import Config
 from cfclient.utils.config_manager import ConfigManager
 from cfclient.utils.input import JoystickReader
@@ -152,8 +153,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         # TODO: Need to reload configs
         # ConfigManager().conf_needs_reload.add_callback(self._reload_configs)
 
-        self.connect_input = QShortcut("Ctrl+I", self.connectButton,
-                                       self._connect)
+        self.connect_input = QShortcut("Ctrl+I", self.connectButton, self._connect)
         self.cf.connection_failed.add_callback(
             self.connectionFailedSignal.emit)
         self.connectionFailedSignal.connect(self._connection_failed)
@@ -168,10 +168,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         # Connect UI signals
         self.logConfigAction.triggered.connect(self._show_connect_dialog)
-        self.interfaceCombo.currentIndexChanged['QString'].connect(
-            self.interfaceChanged)
-        self.connectButton.clicked.connect(self._connect)
-        self.scanButton.clicked.connect(self._scan)
         self.menuItemConnect.triggered.connect(self._connect)
         self.menuItemConfInputDevice.triggered.connect(
             self._show_input_device_config_dialog)
@@ -181,7 +177,17 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._menuItem_openconfigfolder.triggered.connect(
             self._open_config_folder)
 
-        self.address.setValue(0xE7E7E7E7E7)
+        self._connectivity_manager = ConnectivityManager()
+        self._connectivity_manager.register_ui_elements(
+            ConnectivityManager.UiElementsContainer(
+                interface_combo=self.interfaceCombo,
+                address_spinner=self.address,
+                connect_button=self.connectButton,
+                scan_button=self.scanButton))
+
+        self._connectivity_manager.connect_button_clicked_connect(self._connect)
+        self._connectivity_manager.scan_button_clicked_connect(self._scan)
+        self._connectivity_manager.interface_combo_current_index_changed_connect(self.interfaceChanged)
 
         self._auto_reconnect_enabled = Config().get("auto_reconnect")
         self.autoReconnectCheckBox.toggled.connect(
@@ -226,8 +232,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             lambda percentage: self.linkQualityBar.setValue(percentage))
 
         self._selected_interface = None
-        self._initial_scan = True
-        self._scan()
 
         # Parse the log configuration files
         self.logConfigReader = LogConfigReader(self.cf)
@@ -243,6 +247,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         cfclient.ui.pluginhelper.inputDeviceReader = self.joystickReader
         cfclient.ui.pluginhelper.logConfigReader = self.logConfigReader
         cfclient.ui.pluginhelper.pose_logger = PoseLogger(self.cf)
+        cfclient.ui.pluginhelper.connectivity_manager = self._connectivity_manager
         cfclient.ui.pluginhelper.mainUI = self
 
         self.logConfigDialogue = LogConfigDialogue(cfclient.ui.pluginhelper)
@@ -252,6 +257,11 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._about_dialog = AboutDialog(cfclient.ui.pluginhelper)
         self.menuItemAbout.triggered.connect(self._about_dialog.show)
         self._menu_cf2_config.triggered.connect(self._cf2config_dialog.show)
+
+        self._connectivity_manager.set_address(0xE7E7E7E7E7)
+
+        self._initial_scan = True
+        self._scan(self._connectivity_manager.get_address())
 
         # Load and connect tabs
         self.tabsMenuItem = QMenu("Tabs", self.menuView, enabled=True)
@@ -394,8 +404,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     def foundInterfaces(self, interfaces):
         selected_interface = self._selected_interface
 
-        self.interfaceCombo.clear()
-        self.interfaceCombo.addItem(INTERFACE_PROMPT_TEXT)
+        interface_items = [INTERFACE_PROMPT_TEXT]
 
         formatted_interfaces = []
         for i in interfaces:
@@ -404,7 +413,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             else:
                 interface = i[0]
             formatted_interfaces.append(interface)
-        self.interfaceCombo.addItems(formatted_interfaces)
+        interface_items += formatted_interfaces
 
         if self._initial_scan:
             self._initial_scan = False
@@ -430,7 +439,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             except ValueError:
                 pass
 
-        self.interfaceCombo.setCurrentIndex(newIndex)
+        self._connectivity_manager.set_interfaces(interface_items, newIndex)
 
         self.uiState = UIState.DISCONNECTED
         self._update_ui_state()
@@ -441,28 +450,17 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             canConnect = self._selected_interface is not None
             self.menuItemConnect.setText("Connect to Crazyflie")
             self.menuItemConnect.setEnabled(canConnect)
-            self.connectButton.setText("Connect")
-            self.connectButton.setToolTip("Connect to the Crazyflie on"
-                                          "the selected interface (Ctrl+I)")
-            self.connectButton.setEnabled(canConnect)
-            self.scanButton.setText("Scan")
-            self.scanButton.setEnabled(True)
-            self.address.setEnabled(True)
+            self._connectivity_manager.set_state_disconnected(canConnect)
             self.batteryBar.setValue(3000)
             self._menu_cf2_config.setEnabled(False)
             self.linkQualityBar.setValue(0)
-            self.menuItemBootloader.setEnabled(True)
             self.logConfigAction.setEnabled(False)
-            self.interfaceCombo.setEnabled(True)
         elif self.uiState == UIState.CONNECTED:
             s = "Connected on %s" % self._selected_interface
             self.setWindowTitle(s)
             self.menuItemConnect.setText("Disconnect")
             self.menuItemConnect.setEnabled(True)
-            self.connectButton.setText("Disconnect")
-            self.connectButton.setToolTip("Disconnect from"
-                                          "the Crazyflie (Ctrl+I)")
-            self.scanButton.setEnabled(False)
+            self._connectivity_manager.set_state_connected()
             self.logConfigAction.setEnabled(True)
             # Find out if there's an I2C EEPROM, otherwise don't show the
             # dialog.
@@ -473,24 +471,11 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.setWindowTitle(s)
             self.menuItemConnect.setText("Cancel")
             self.menuItemConnect.setEnabled(True)
-            self.connectButton.setText("Cancel")
-            self.connectButton.setToolTip(
-                "Cancel connecting to the Crazyflie")
-            self.scanButton.setEnabled(False)
-            self.address.setEnabled(False)
-            self.menuItemBootloader.setEnabled(False)
-            self.interfaceCombo.setEnabled(False)
+            self._connectivity_manager.set_state_connecting()
         elif self.uiState == UIState.SCANNING:
             self.setWindowTitle("Scanning ...")
-            self.connectButton.setText("Connect")
             self.menuItemConnect.setEnabled(False)
-            self.connectButton.setText("Connect")
-            self.connectButton.setEnabled(False)
-            self.scanButton.setText("Scanning...")
-            self.scanButton.setEnabled(False)
-            self.address.setEnabled(False)
-            self.menuItemBootloader.setEnabled(False)
-            self.interfaceCombo.setEnabled(False)
+            self._connectivity_manager.set_state_scanning()
 
     @pyqtSlot(bool)
     def toggleToolbox(self, display):
@@ -623,10 +608,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         else:
             self.cf.open_link(self._selected_interface)
 
-    def _scan(self):
+    def _scan(self, address):
         self.uiState = UIState.SCANNING
         self._update_ui_state()
-        self.scanner.scanSignal.emit(self.address.value())
+        self.scanner.scanSignal.emit(address)
 
     def _display_input_device_error(self, error):
         self.cf.close_link()
