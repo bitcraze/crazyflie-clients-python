@@ -117,6 +117,8 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.clt.disconnectedSignal.connect(
             lambda: self.setUiState(UIState.DISCONNECTED))
 
+        self._cold_boot_error_message = ''
+
         self._releases = {}
         self._release_firmwares_found.connect(self._populate_firmware_dropdown)
         self._release_downloaded.connect(self.release_zip_downloaded)
@@ -129,8 +131,8 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.clt.start()
 
     def _ui_connection_fail(self, message):
-        self.setStatusLabel(message)
-        self.coldBootButton.setEnabled(True)
+        self._cold_boot_error_message = message
+        self.setUiState(UIState.CONNECT_FAILED)
 
     def setUiState(self, state):
         if (state == UIState.DISCONNECTED):
@@ -141,25 +143,30 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             self.progressBar.setTextVisible(False)
             self.progressBar.setValue(0)
             self.statusLabel.setText('Status: <b>IDLE</b>')
+            self.helper.connectivity_manager.set_enable(True)
         elif (state == UIState.CONNECTING):
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
             self.setStatusLabel("Trying to connect cold bootloader, restart "
                                 "the Crazyflie to connect")
             self.coldBootButton.setEnabled(False)
+            self.helper.connectivity_manager.set_enable(False)
         elif (state == UIState.CONNECT_FAILED):
-            self.setStatusLabel("Connecting to bootloader failed")
+            self.setStatusLabel(self._cold_boot_error_message)
             self.coldBootButton.setEnabled(True)
+            self.helper.connectivity_manager.set_enable(True)
         elif (state == UIState.COLD_CONNECT):
             self.resetButton.setEnabled(True)
             self.programButton.setEnabled(True)
             self.setStatusLabel("Connected to bootloader")
             self.coldBootButton.setEnabled(False)
+            self.helper.connectivity_manager.set_enable(False)
         elif (state == UIState.RESET):
             self.setStatusLabel("Resetting to firmware, disconnected")
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
             self.coldBootButton.setEnabled(False)
+            self.helper.connectivity_manager.set_enable(False)
 
     def setStatusLabel(self, text):
         self.connectionStatus.setText("Status: <b>%s</b>" % text)

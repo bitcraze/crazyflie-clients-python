@@ -70,21 +70,23 @@ class ConnectivityManager(QObject):
             self._interface_combo_current_index_changed_handler)
 
     def set_state(self, state):
-        self._state = state
-        self._update_ui()
+        if self._state != state:
+            self._state = state
+            self._update_ui()
 
-        if self._state == self.UIState.DISCONNECTED:
-            self.connection_state_changed.emit(self.UIState.DISCONNECTED)
-        elif self._state == self.UIState.CONNECTED:
-            self.connection_state_changed.emit(self.UIState.CONNECTED)
-        elif self._state == self.UIState.CONNECTING:
-            self.connection_state_changed.emit(self.UIState.CONNECTING)
-        elif self._state == self.UIState.SCANNING:
-            self.connection_state_changed.emit(self.UIState.SCANNING)
+            if self._state == self.UIState.DISCONNECTED:
+                self.connection_state_changed.emit(self.UIState.DISCONNECTED)
+            elif self._state == self.UIState.CONNECTED:
+                self.connection_state_changed.emit(self.UIState.CONNECTED)
+            elif self._state == self.UIState.CONNECTING:
+                self.connection_state_changed.emit(self.UIState.CONNECTING)
+            elif self._state == self.UIState.SCANNING:
+                self.connection_state_changed.emit(self.UIState.SCANNING)
 
     def set_enable(self, enable):
-        self._is_enabled = enable
-        self._update_ui()
+        if self._is_enabled != enable:
+            self._is_enabled = enable
+            self._update_ui()
 
     def set_address(self, address):
         for ui_elements in self._ui_elements:
