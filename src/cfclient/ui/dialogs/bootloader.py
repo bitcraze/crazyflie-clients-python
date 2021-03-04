@@ -45,6 +45,7 @@ from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import pyqtSlot, pyqtSignal, QThread
 
 import cfclient
+import cflib.crazyflie
 
 __author__ = 'Bitcraze AB'
 __all__ = ['BootloaderDialog']
@@ -59,18 +60,19 @@ RELEASE_URL = 'https://api.github.com/repos/bitcraze/'\
               'crazyflie-release/releases'
 
 
-class UIState:
-    DISCONNECTED = 0
-    CONNECTING = 5
-    CONNECT_FAILED = 1
-    COLD_CONNECT = 2
-    FLASHING = 3
-    RESET = 4
-
-
 class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     """Tab for update the Crazyflie firmware and for reading/writing the config
     block in flash"""
+
+    class UIState:
+        DISCONNECTED = 0
+        COLD_CONNECTING = 1
+        COLD_CONNECTED = 2
+        FW_CONNECTING = 3
+        FW_CONNECTED = 4
+        FW_SCANNING = 5
+        FLASHING = 6
+        RESET = 7
 
     _release_firmwares_found = pyqtSignal(object)
     _release_downloaded = pyqtSignal(str, object)
@@ -86,7 +88,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.helper = helper
 
         # self.cf = crazyflie
-        self.clt = CrazyloadThread()
+        self.clt = CrazyloadThread(self.helper.cf)
 
         # Connecting GUI signals (a pity to do that manually...)
         self.imagePathBrowseButton.clicked.connect(self.pathBrowse)
@@ -103,6 +105,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
                 address_spinner=self.address,
                 connect_button=self.connectButton,
                 scan_button=self.scanButton))
+        self.helper.connectivity_manager.connection_state_changed.connect(self._fw_connection_state_changed)
 
         # connecting other signals
         self.clt.programmed.connect(self.programDone)
@@ -110,14 +113,15 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         # self.clt.updateBootloaderStatusSignal.connect(
         #                                         self.updateBootloaderStatus)
         self.clt.connectingSignal.connect(
-            lambda: self.setUiState(UIState.CONNECTING))
+            lambda: self.setUiState(self.UIState.COLD_CONNECTING))
         self.clt.connectedSignal.connect(
-            lambda: self.setUiState(UIState.COLD_CONNECT))
+            lambda: self.setUiState(self.UIState.COLD_CONNECTED))
         self.clt.failed_signal.connect(lambda m: self._ui_connection_fail(m))
         self.clt.disconnectedSignal.connect(
-            lambda: self.setUiState(UIState.DISCONNECTED))
+            lambda: self.setUiState(self.UIState.DISCONNECTED))
 
-        self._cold_boot_error_message = ''
+        self._cold_boot_error_message = None
+        self._state = self.UIState.DISCONNECTED
 
         self._releases = {}
         self._release_firmwares_found.connect(self._populate_firmware_dropdown)
@@ -132,36 +136,60 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
     def _ui_connection_fail(self, message):
         self._cold_boot_error_message = message
-        self.setUiState(UIState.CONNECT_FAILED)
+        self.setUiState(self.UIState.DISCONNECTED)
 
     def setUiState(self, state):
-        if (state == UIState.DISCONNECTED):
+        self._state = state
+
+        if (state == self.UIState.DISCONNECTED):
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
-            self.setStatusLabel("Not connected")
+            if self._cold_boot_error_message is not None:
+                self.setStatusLabel(self._cold_boot_error_message)
+            else:
+                self.setStatusLabel("Not connected")
             self.coldBootButton.setEnabled(True)
             self.progressBar.setTextVisible(False)
             self.progressBar.setValue(0)
             self.statusLabel.setText('Status: <b>IDLE</b>')
             self.helper.connectivity_manager.set_enable(True)
-        elif (state == UIState.CONNECTING):
+        elif (state == self.UIState.COLD_CONNECTING):
+            self._cold_boot_error_message = None
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
-            self.setStatusLabel("Trying to connect cold bootloader, restart "
-                                "the Crazyflie to connect")
+            self.setStatusLabel("Trying to connect cold bootloader, restart the Crazyflie to connect")
             self.coldBootButton.setEnabled(False)
             self.helper.connectivity_manager.set_enable(False)
-        elif (state == UIState.CONNECT_FAILED):
-            self.setStatusLabel(self._cold_boot_error_message)
-            self.coldBootButton.setEnabled(True)
-            self.helper.connectivity_manager.set_enable(True)
-        elif (state == UIState.COLD_CONNECT):
+        elif (state == self.UIState.COLD_CONNECTED):
+            self._cold_boot_error_message = None
             self.resetButton.setEnabled(True)
             self.programButton.setEnabled(True)
             self.setStatusLabel("Connected to bootloader")
             self.coldBootButton.setEnabled(False)
             self.helper.connectivity_manager.set_enable(False)
-        elif (state == UIState.RESET):
+        elif (state == self.UIState.FW_CONNECTING):
+            self._cold_boot_error_message = None
+            self.resetButton.setEnabled(False)
+            self.programButton.setEnabled(False)
+            self.setStatusLabel("Trying to connect in firmware mode")
+            self.coldBootButton.setEnabled(False)
+            self.helper.connectivity_manager.set_enable(True)
+        elif (state == self.UIState.FW_CONNECTED):
+            self._cold_boot_error_message = None
+            self.resetButton.setEnabled(False)
+            self.programButton.setEnabled(True)
+            self.setStatusLabel("Connected in firmware mode")
+            self.coldBootButton.setEnabled(False)
+            self.helper.connectivity_manager.set_enable(True)
+        elif (state == self.UIState.FW_SCANNING):
+            self._cold_boot_error_message = None
+            self.resetButton.setEnabled(False)
+            self.programButton.setEnabled(False)
+            self.setStatusLabel("Scanning")
+            self.coldBootButton.setEnabled(False)
+            self.helper.connectivity_manager.set_enable(True)
+        elif (state == self.UIState.RESET):
+            self._cold_boot_error_message = None
             self.setStatusLabel("Resetting to firmware, disconnected")
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
@@ -171,15 +199,9 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     def setStatusLabel(self, text):
         self.connectionStatus.setText("Status: <b>%s</b>" % text)
 
-    def connected(self):
-        self.setUiState(UIState.COLD_CONNECT)
-
-    def connectionFailed(self):
-        self.setUiState(UIState.CONNECT_FAILED)
-
     def resetCopter(self):
         self.clt.resetCopterSignal.emit()
-        self.setUiState(UIState.RESET)
+        self.setUiState(self.UIState.RESET)
 
     def updateConfig(self, channel, speed, rollTrim, pitchTrim):
         self.rollTrim.setValue(rollTrim)
@@ -191,7 +213,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.clt.terminate_flashing()
         # Remove downloaded-firmware files.
         self.firmware_downloader.bootload_complete.emit()
-        self.setUiState(UIState.RESET)
+        self.setUiState(self.UIState.RESET)
         self.clt.resetCopterSignal.emit()
 
     def _populate_firmware_dropdown(self, releases):
@@ -225,6 +247,16 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             self.radioBoth.setEnabled(True)
             self.radioBoth.setChecked(True)
 
+    def _fw_connection_state_changed(self, new_state):
+        if new_state == ConnectivityManager.UIState.DISCONNECTED:
+            self.setUiState(self.UIState.DISCONNECTED)
+        elif new_state == ConnectivityManager.UIState.CONNECTING:
+            self.setUiState(self.UIState.FW_CONNECTING)
+        elif new_state == ConnectivityManager.UIState.CONNECTED:
+            self.setUiState(self.UIState.FW_CONNECTED)
+        elif new_state == ConnectivityManager.UIState.SCANNING:
+            self.setUiState(self.UIState.FW_SCANNING)
+
     @pyqtSlot()
     def pathBrowse(self):
         filename = ""
@@ -246,6 +278,11 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.resetButton.setEnabled(False)
         self.programButton.setEnabled(False)
         self.imagePathBrowseButton.setEnabled(False)
+
+        if self._state == self.UIState.COLD_CONNECTED:
+            self.clt.set_boot_mode(self.clt.COLD_BOOT)
+        else:
+            self.clt.set_boot_mode(self.clt.WARM_BOOT)
 
         # call the flasher
         if self.sourceTab.currentWidget() == self.tabFromFile:
@@ -319,7 +356,10 @@ class CrazyloadThread(QThread):
 
     radioSpeedPos = 2
 
-    def __init__(self):
+    WARM_BOOT = 0
+    COLD_BOOT = 1
+
+    def __init__(self, crazyflie: cflib.crazyflie.Crazyflie):
         super(CrazyloadThread, self).__init__()
 
         self._terminate_flashing = False
@@ -327,6 +367,10 @@ class CrazyloadThread(QThread):
         self._bl = Bootloader()
         self._bl.progress_cb = self.statusChanged.emit
         self._bl.terminate_flashing_cb = lambda: self._terminate_flashing
+
+        self._cf = crazyflie
+
+        self._boot_mode = self.COLD_BOOT
 
         # Make sure that the signals are handled by this thread event loop
         self.moveToThread(self)
@@ -338,6 +382,9 @@ class CrazyloadThread(QThread):
     def __del__(self):
         self.quit()
         self.wait()
+
+    def set_boot_mode(self, mode):
+        self._boot_mode = mode
 
     def initiateColdBoot(self, linkURI):
         self.connectingSignal.emit()
@@ -351,7 +398,24 @@ class CrazyloadThread(QThread):
         except Exception as e:
             self.failed_signal.emit("{}".format(e))
 
+    def rebootToBootloader(self):
+        self._bl.clink = self._cf.link_uri
+        self._cf.close_link()
+
+        try:
+            success = self._bl.start_bootloader(warm_boot=True)
+            if not success:
+                self.failed_signal.emit("Could not connect to bootloader")
+            else:
+                self.connectedSignal.emit()
+        except Exception as e:
+            self.failed_signal.emit("{}".format(e))
+
     def programAction(self, filename, mcu_to_flash):
+
+        if self._boot_mode == self.WARM_BOOT:
+            self.rebootToBootloader()
+
         targets = {}
         if mcu_to_flash:
             targets[mcu_to_flash] = ("fw",)
