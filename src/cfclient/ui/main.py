@@ -435,7 +435,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             canConnect = self._connectivity_manager.get_interface() is not None
             self.menuItemConnect.setText("Connect to Crazyflie")
             self.menuItemConnect.setEnabled(canConnect)
-            self._connectivity_manager.set_state_disconnected()
+            self._connectivity_manager.set_state(ConnectivityManager.UIState.DISCONNECTED)
             self.batteryBar.setValue(3000)
             self._menu_cf2_config.setEnabled(False)
             self.linkQualityBar.setValue(0)
@@ -445,7 +445,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.setWindowTitle(s)
             self.menuItemConnect.setText("Disconnect")
             self.menuItemConnect.setEnabled(True)
-            self._connectivity_manager.set_state_connected()
+            self._connectivity_manager.set_state(ConnectivityManager.UIState.CONNECTED)
             self.logConfigAction.setEnabled(True)
             # Find out if there's an I2C EEPROM, otherwise don't show the
             # dialog.
@@ -456,11 +456,11 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.setWindowTitle(s)
             self.menuItemConnect.setText("Cancel")
             self.menuItemConnect.setEnabled(True)
-            self._connectivity_manager.set_state_connecting()
+            self._connectivity_manager.set_state(ConnectivityManager.UIState.CONNECTING)
         elif self.uiState == UIState.SCANNING:
             self.setWindowTitle("Scanning ...")
             self.menuItemConnect.setEnabled(False)
-            self._connectivity_manager.set_state_scanning()
+            self._connectivity_manager.set_state(ConnectivityManager.UIState.SCANNING)
 
     @pyqtSlot(bool)
     def toggleToolbox(self, display):
