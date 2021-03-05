@@ -42,6 +42,7 @@ from .locopositioning_tab import LocoPositioningTab
 from .QualisysTab import QualisysTab
 from .LogClientTab import LogClientTab
 from .lighthouse_tab import LighthouseTab
+from .FlightPlanTab import FlightPlanTab
 
 __author__ = 'Bitcraze AB'
 __all__ = []
@@ -50,6 +51,7 @@ available = [
     ConsoleTab,
     # ExampleTab,
     FlightTab,
+    FlightPlanTab,
     # GpsTab,
     LEDTab,
     LogBlockTab,
