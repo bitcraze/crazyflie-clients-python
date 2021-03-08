@@ -30,7 +30,7 @@ To use Crazyradio you will have to [install the drivers](https://github.com/bitc
 
 ## From Pypi (Windows, Mac, Linux, ..., with python3)
 
-Each release of the client is pushed to the [pypi repository](https://pypi.org/project/cfclient/). If you have python >= 3.5, it can be installed with pip:
+Each release of the client is pushed to the [pypi repository](https://pypi.org/project/cfclient/). If you have python >= 3.6, it can be installed with pip:
 
 ```
 python3 -m pip install cfclient
@@ -40,7 +40,7 @@ Mac and windows will also need the SDL2 library to be installed (see bellow)
 
 # Running from source
 
-The Crazyflie client requires Python >= 3.5. The followind instruction describe hot to install it from source.
+The Crazyflie client requires Python >= 3.6. The followind instruction describe hot to install it from source.
 
 ## Pip and Venv
 
