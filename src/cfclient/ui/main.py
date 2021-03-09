@@ -186,11 +186,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._connectivity_manager.connect_button_clicked.connect(self._connect)
         self._connectivity_manager.scan_button_clicked.connect(self._scan)
 
-        self._auto_reconnect_enabled = Config().get("auto_reconnect")
-        self.autoReconnectCheckBox.toggled.connect(
-            self._auto_reconnect_changed)
-        self.autoReconnectCheckBox.setChecked(Config().get("auto_reconnect"))
-
         self._disable_input = False
 
         self.joystickReader.input_updated.add_callback(
@@ -494,11 +489,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.inputConfig = InputConfigDialogue(self.joystickReader)
         self.inputConfig.show()
 
-    def _auto_reconnect_changed(self, checked):
-        self._auto_reconnect_enabled = checked
-        Config().set("auto_reconnect", checked)
-        logger.info("Auto reconnect enabled: {}".format(checked))
-
     def _show_connect_dialog(self):
         self.logConfigDialogue.show()
 
@@ -554,25 +544,19 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                                                                 msg))
 
     def _connection_lost(self, linkURI, msg):
-        if not self._auto_reconnect_enabled:
-            if self.isActiveWindow():
-                warningCaption = "Communication failure"
-                error = "Connection lost to {}: {}".format(linkURI, msg)
-                QMessageBox.critical(self, warningCaption, error)
-                self.uiState = UIState.DISCONNECTED
-                self._update_ui_state()
-        else:
-            self._connect()
-
-    def _connection_failed(self, linkURI, error):
-        if not self._auto_reconnect_enabled:
-            msg = "Failed to connect on {}: {}".format(linkURI, error)
+        if self.isActiveWindow():
             warningCaption = "Communication failure"
-            QMessageBox.critical(self, warningCaption, msg)
+            error = "Connection lost to {}: {}".format(linkURI, msg)
+            QMessageBox.critical(self, warningCaption, error)
             self.uiState = UIState.DISCONNECTED
             self._update_ui_state()
-        else:
-            self._connect()
+
+    def _connection_failed(self, linkURI, error):
+        msg = "Failed to connect on {}: {}".format(linkURI, error)
+        warningCaption = "Communication failure"
+        QMessageBox.critical(self, warningCaption, msg)
+        self.uiState = UIState.DISCONNECTED
+        self._update_ui_state()
 
     def closeEvent(self, event):
         self.hide()
