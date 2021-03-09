@@ -28,6 +28,7 @@
 """
 Used for passing objects to tabs and toolboxes.
 """
+import os
 
 __author__ = 'Bitcraze AB'
 __all__ = ['PluginHelper']
@@ -44,3 +45,4 @@ class PluginHelper():
         self.plotTab = None
         self.pose_logger = None
         self.connectivity_manager = None
+        self.current_folder = os.path.expanduser('~')
