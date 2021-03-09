@@ -85,10 +85,10 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.menuName = "Service"
 
         # self.tabWidget = tabWidget
-        self.helper = helper
+        self._helper = helper
 
         # self.cf = crazyflie
-        self.clt = CrazyloadThread(self.helper.cf)
+        self.clt = CrazyloadThread(self._helper.cf)
 
         # Connecting GUI signals (a pity to do that manually...)
         self.imagePathBrowseButton.clicked.connect(self.pathBrowse)
@@ -96,16 +96,14 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.coldBootButton.clicked.connect(self.initiateColdboot)
         self.resetButton.clicked.connect(self.resetCopter)
         self._cancel_bootloading.clicked.connect(self.close)
-        self.sourceTab.currentChanged.connect(
-            lambda _: self.updateChipSelectRadio())
 
-        self.helper.connectivity_manager.register_ui_elements(
+        self._helper.connectivity_manager.register_ui_elements(
             ConnectivityManager.UiElementsContainer(
                 interface_combo=self.comboBox,
                 address_spinner=self.address,
                 connect_button=self.connectButton,
                 scan_button=self.scanButton))
-        self.helper.connectivity_manager.connection_state_changed.connect(self._fw_connection_state_changed)
+        self._helper.connectivity_manager.connection_state_changed.connect(self._fw_connection_state_changed)
 
         # connecting other signals
         self.clt.programmed.connect(self.programDone)
@@ -152,49 +150,49 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             self.progressBar.setTextVisible(False)
             self.progressBar.setValue(0)
             self.statusLabel.setText('Status: <b>IDLE</b>')
-            self.helper.connectivity_manager.set_enable(True)
+            self._helper.connectivity_manager.set_enable(True)
         elif (state == self.UIState.COLD_CONNECTING):
             self._cold_boot_error_message = None
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
             self.setStatusLabel("Trying to connect cold bootloader, restart the Crazyflie to connect")
             self.coldBootButton.setEnabled(False)
-            self.helper.connectivity_manager.set_enable(False)
+            self._helper.connectivity_manager.set_enable(False)
         elif (state == self.UIState.COLD_CONNECTED):
             self._cold_boot_error_message = None
             self.resetButton.setEnabled(True)
             self.programButton.setEnabled(True)
             self.setStatusLabel("Connected to bootloader")
             self.coldBootButton.setEnabled(False)
-            self.helper.connectivity_manager.set_enable(False)
+            self._helper.connectivity_manager.set_enable(False)
         elif (state == self.UIState.FW_CONNECTING):
             self._cold_boot_error_message = None
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
             self.setStatusLabel("Trying to connect in firmware mode")
             self.coldBootButton.setEnabled(False)
-            self.helper.connectivity_manager.set_enable(True)
+            self._helper.connectivity_manager.set_enable(True)
         elif (state == self.UIState.FW_CONNECTED):
             self._cold_boot_error_message = None
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(True)
             self.setStatusLabel("Connected in firmware mode")
             self.coldBootButton.setEnabled(False)
-            self.helper.connectivity_manager.set_enable(True)
+            self._helper.connectivity_manager.set_enable(True)
         elif (state == self.UIState.FW_SCANNING):
             self._cold_boot_error_message = None
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
             self.setStatusLabel("Scanning")
             self.coldBootButton.setEnabled(False)
-            self.helper.connectivity_manager.set_enable(True)
+            self._helper.connectivity_manager.set_enable(True)
         elif (state == self.UIState.RESET):
             self._cold_boot_error_message = None
             self.setStatusLabel("Resetting to firmware, disconnected")
             self.resetButton.setEnabled(False)
             self.programButton.setEnabled(False)
             self.coldBootButton.setEnabled(False)
-            self.helper.connectivity_manager.set_enable(False)
+            self._helper.connectivity_manager.set_enable(False)
 
     def setStatusLabel(self, text):
         self.connectionStatus.setText("Status: <b>%s</b>" % text)
@@ -235,18 +233,6 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.downloadStatus.setText('Downloaded')
         self.clt.program.emit(release_path, '')
 
-    def updateChipSelectRadio(self):
-        if self.sourceTab.currentWidget() == self.tabFromFile:
-            if self.imagePathLine.text().endswith(".zip"):
-                self.radioBoth.setEnabled(True)
-                self.radioBoth.setChecked(True)
-            elif self.imagePathLine.text().endswith(".bin"):
-                self.radioBoth.setEnabled(False)
-                self.radioStm32.setChecked(True)
-        else:
-            self.radioBoth.setEnabled(True)
-            self.radioBoth.setChecked(True)
-
     def _fw_connection_state_changed(self, new_state):
         if new_state == ConnectivityManager.UIState.DISCONNECTED:
             self.setUiState(self.UIState.DISCONNECTED)
@@ -259,18 +245,20 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
     @pyqtSlot()
     def pathBrowse(self):
-        filename = ""
-        # Fix for crash in X on Ubuntu 14.04
-        filename, _ = QtWidgets.QFileDialog.getOpenFileName()
-        if filename != "" and filename[-4:] in (".bin", ".zip"):
-            self.imagePathLine.setText(filename)
-            self.updateChipSelectRadio()
-        elif filename != "":
-            msgBox = QtWidgets.QMessageBox()
-            msgBox.setText("Wrong file extention. Must be .bin or .zip.")
-            msgBox.exec_()
+        names = QtWidgets.QFileDialog.getOpenFileName(
+            self, 'Release file to flash', self._helper.current_folder, "*.zip")
+        if names[0] == '':
+            return
 
-        pass
+        filename = names[0]
+        self._helper.current_folder = os.path.dirname(filename)
+
+        if filename[-4:] in ('.zip'):
+            self.imagePathLine.setText(filename)
+        else:
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setText("Wrong file extention. Must be .zip.")
+            msgBox.exec_()
 
     @pyqtSlot()
     def programAction(self):
@@ -296,13 +284,8 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
                 self.imagePathBrowseButton.setEnabled(True)
                 return
 
-            # by default, both of the mcu:s are flashed
+            # by default, flash everything in the zip (if possible)
             mcu_to_flash = None
-
-            if self.radioStm32.isChecked():
-                mcu_to_flash = 'stm32'
-            elif self.radioNrf51.isChecked():
-                mcu_to_flash = 'nrf51'
             self.clt.program.emit(self.imagePathLine.text(), mcu_to_flash)
         else:
             requested_release = self.firmwareDropdown.currentText()
