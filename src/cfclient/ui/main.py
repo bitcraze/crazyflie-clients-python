@@ -185,6 +185,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         self._connectivity_manager.connect_button_clicked.connect(self._connect)
         self._connectivity_manager.scan_button_clicked.connect(self._scan)
+        self._set_address()
 
         self._auto_reconnect_enabled = Config().get("auto_reconnect")
         self.autoReconnectCheckBox.toggled.connect(
@@ -359,6 +360,17 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._theme_checkboxes.append(node)
             self._theme_group.addAction(node)
             self.menuThemes.addAction(node)
+
+    def _set_address(self):
+        address = 0xE7E7E7E7E7
+        try:
+            link_uri = Config().get("link_uri")
+            if len(link_uri) > 0:
+                address = int(link_uri.split('/')[-1], 16)
+        except Exception as err:
+            logger.warn('failed to parse address from config: %s' % str(err))
+        finally:
+            self.address.setValue(address)
 
     def _theme_selected(self, *args):
         """ Callback when a theme is selected. """
