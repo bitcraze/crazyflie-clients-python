@@ -8,7 +8,7 @@ If you want to develop with the lib too, follow the cflib readme to install it.
 
 ## Windows (7/8/10)
 
-Running from source on Windows is tested using the official python build from [python.org](https://python.org). The client works with python version >= 3.5. The procedure is tested with 32bit python. It should work with 64bit python but since it is not tested it can be broken (if so, do not hesitate to send a fix ;-).
+Running from source on Windows is tested using the official python build from [python.org](https://python.org). The client works with python version >= 3.6. The procedure is tested with 32bit python. It should work with 64bit python but since it is not tested it can be broken (if so, do not hesitate to send a fix ;-).
 
 To run the client you should install python, make sure to check the "add to path" checkbox during install. You should also have git installed and in your path. Use git to clone the crazyflie client project.
 

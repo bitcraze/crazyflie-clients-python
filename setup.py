@@ -44,8 +44,8 @@ else:
 # except:
 #     pass
 
-if sys.version_info < (3, 5):
-    raise "must use python 3.5 or greater"
+if sys.version_info < (3, 6):
+    raise "must use python 3.6 or greater"
 
 
 # Recover version from Git.
