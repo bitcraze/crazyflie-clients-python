@@ -221,7 +221,7 @@ class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
 
         f = open(names[0], 'r')
         with f:
-            data = yaml.load(f)
+            data = yaml.safe_load(f)
 
             anchor_positions = {}
             for id, pos in data.items():
