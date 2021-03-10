@@ -27,7 +27,6 @@
 The about dialog.
 """
 
-import os
 import sys
 
 import cfclient
@@ -85,20 +84,6 @@ SENSOR_TESTS_FORMAT = "{}: {}<br>"
 FIRMWARE_FORMAT = "{:x}{:x} ({})"
 DECK_FORMAT = "{}: rev={}, adr={}<br>"
 
-CREDITS_FORMAT = """
-<b>Contributions</b><br>
-{contribs}
-<br><br>
-<b>Used libraries</b><br>
-<a href="http://qt-project.org/">QT</a><br>
-<a href="http://www.riverbankcomputing.co.uk/software/pyqt/intro">PyQT</a><br>
-<a href="http://pysdl2.readthedocs.org">PySDL2</a><br>
-<a href="http://www.pyqtgraph.org/">PyQtGraph</a><br>
-<a href="http://marble.kde.org/">KDE Marble</a><br>
-<a href="http://sourceforge.net/projects/pyusb/">PyUSB</a><br>
-<a href="http://www.python.org/">Python</a><br>
-"""
-
 
 class AboutDialog(QtWidgets.QWidget, about_widget_class):
     _disconnected_signal = pyqtSignal(str)
@@ -137,21 +122,6 @@ class AboutDialog(QtWidgets.QWidget, about_widget_class):
         helper.cf.disconnected.add_callback(self._disconnected_signal.emit)
 
         self._cb_deck_data_updated_signal.connect(self._deck_data_updated)
-
-        # Open the Credits file and show it in the UI
-        credits = ""
-        src = os.path.dirname(cfclient.module_path)
-        path = os.path.join(os.path.dirname(src), 'CREDITS.txt')
-        try:
-            with open(path, encoding='utf-8') as f:
-                for line in f:
-                    credits += "{}<br>".format(line)
-        except IOError:
-            credits = ""
-
-        self._credits.setHtml(
-            CREDITS_FORMAT.format(contribs=credits)
-        )
 
     def showEvent(self, event):
         """Event when the about box is shown"""
