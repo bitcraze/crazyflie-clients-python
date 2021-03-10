@@ -253,7 +253,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         filename = names[0]
         self._helper.current_folder = os.path.dirname(filename)
 
-        if filename[-4:] in ('.zip'):
+        if filename.endswith('.zip'):
             self.imagePathLine.setText(filename)
         else:
             msgBox = QtWidgets.QMessageBox()
