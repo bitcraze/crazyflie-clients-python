@@ -175,6 +175,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._menuItem_openconfigfolder.triggered.connect(
             self._open_config_folder)
 
+        self._set_address()
+
         self._connectivity_manager = ConnectivityManager()
         self._connectivity_manager.register_ui_elements(
             ConnectivityManager.UiElementsContainer(
@@ -185,7 +187,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         self._connectivity_manager.connect_button_clicked.connect(self._connect)
         self._connectivity_manager.scan_button_clicked.connect(self._scan)
-        self._set_address()
 
         self._auto_reconnect_enabled = Config().get("auto_reconnect")
         self.autoReconnectCheckBox.toggled.connect(
@@ -253,8 +254,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._about_dialog = AboutDialog(cfclient.ui.pluginhelper)
         self.menuItemAbout.triggered.connect(self._about_dialog.show)
         self._menu_cf2_config.triggered.connect(self._cf2config_dialog.show)
-
-        self._connectivity_manager.set_address(0xE7E7E7E7E7)
 
         self._initial_scan = True
         self._scan(self._connectivity_manager.get_address())
