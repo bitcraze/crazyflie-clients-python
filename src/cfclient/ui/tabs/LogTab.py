@@ -72,7 +72,10 @@ class LogTab(Tab, param_tab_class):
 
     @pyqtSlot('QString')
     def disconnected(self, linkname):
-        self.logTree.clear()
+        root = self.logTree.invisibleRootItem()
+        for i in range(root.childCount()):
+            item = root.child(i)
+            item.setFlags(Qt.NoItemFlags)
 
     @pyqtSlot(str)
     def connected(self, linkURI):

@@ -106,6 +106,12 @@ class ParamBlockModel(QAbstractItemModel):
         self._nodes = []
         self._column_headers = ['Name', 'Type', 'Access', 'Value']
         self._red_brush = QBrush(QColor("red"))
+        self._enabled = False
+
+    def set_enabled(self, enabled):
+        if self._enabled != enabled:
+            self._enabled = enabled
+            self.layoutChanged.emit()
 
     def set_toc(self, toc, crazyflie):
         """Populate the model with data from the param TOC"""
@@ -209,6 +215,10 @@ class ParamBlockModel(QAbstractItemModel):
     def flags(self, index):
         """Re-implemented function for getting the flags for a certain index"""
         flag = super(ParamBlockModel, self).flags(index)
+
+        if not self._enabled:
+            return Qt.NoItemFlags
+
         node = index.internalPointer()
         if index.column() == 3 and node.parent and node.access == "RW":
             flag |= Qt.ItemIsEditable
@@ -252,9 +262,12 @@ class ParamTab(Tab, param_tab_class):
         self.paramTree.setModel(self._model)
 
     def _connected(self, link_uri):
+        self._model.reset()
         self._model.set_toc(self.cf.param.toc.toc, self.helper.cf)
+        self._model.set_enabled(True)
 
     def _disconnected(self, link_uri):
-        self._model.beginResetModel()
-        self._model.reset()
-        self._model.endResetModel()
+        #
+        # This will gray out all rows
+        #
+        self._model.set_enabled(False)
