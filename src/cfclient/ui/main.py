@@ -255,6 +255,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.menuItemAbout.triggered.connect(self._about_dialog.show)
         self._menu_cf2_config.triggered.connect(self._cf2config_dialog.show)
 
+        self._connectivity_manager.set_address(self.address.value())
+
         self._initial_scan = True
         self._scan(self._connectivity_manager.get_address())
 
