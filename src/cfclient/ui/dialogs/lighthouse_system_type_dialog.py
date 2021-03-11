@@ -63,12 +63,17 @@ class LighthouseSystemTypeDialog(QtWidgets.QWidget, lighthouse_system_widget_cla
 
         self._curr_type = 0
 
-    def showEvent(self, event):
-        self._curr_type = 0
+    def get_system_type(self):
+        system_type = self.VALUE_V2
 
         values = self._helper.cf.param.values
         if self.PARAM_NAME in values[self.PARAM_GROUP]:
-            self._curr_type = int(values[self.PARAM_GROUP][self.PARAM_NAME])
+            system_type = int(values[self.PARAM_GROUP][self.PARAM_NAME])
+
+        return system_type
+
+    def showEvent(self, event):
+        self._curr_type = self.get_system_type()
 
         if self._curr_type == self.VALUE_V1:
             self._radio_btn_v1.setChecked(True)

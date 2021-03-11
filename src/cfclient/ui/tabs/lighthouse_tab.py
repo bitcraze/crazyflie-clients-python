@@ -669,9 +669,10 @@ class LighthouseTab(Tab, lighthouse_tab_class):
 
     def _calibration_read_cb(self, calibs):
         # Got calibration data from the CF, we have the full system configuration
-        self._save_sys_config(self._lh_geos, calibs)
+        system_type = self._system_type_dialog.get_system_type()
+        self._save_sys_config(self._lh_geos, calibs, system_type)
 
-    def _save_sys_config(self, geos, calibs):
+    def _save_sys_config(self, geos, calibs, system_type):
         names = QFileDialog.getSaveFileName(self, 'Save file', self._helper.current_folder, "*.yaml;*.*")
 
         if names[0] == '':
@@ -684,4 +685,4 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         else:
             filename = names[0]
 
-        LighthouseConfigFileManager.write(filename, geos, calibs)
+        LighthouseConfigFileManager.write(filename, geos=geos, calibs=calibs, system_type=system_type)
