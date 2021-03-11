@@ -30,6 +30,8 @@ The flight control tab shows telemetry data and flight settings.
 """
 
 import logging
+import time
+from enum import Enum
 
 from PyQt5 import uic
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -40,6 +42,7 @@ from cfclient.ui.widgets.ai import AttitudeIndicator
 
 from cfclient.utils.config import Config
 from cflib.crazyflie.log import LogConfig
+from cflib.positioning.position_hl_commander import PositionHlCommander
 
 from cfclient.utils.input import JoystickReader
 
@@ -79,10 +82,21 @@ keep the position in X and Y as well. Thrust control becomes height velocity
 control. Requires a flow deck. Uses body-fixed coordinates."""
 
 
+class CommanderAction(Enum):
+    TAKE_OFF = 1
+    LAND = 2
+    UP = 3
+    DOWN = 4
+    LEFT = 5
+    RIGHT = 6
+    FORWARD = 7
+    BACK = 8
+
+
 class FlightTab(Tab, flight_tab_class):
     uiSetupReadySignal = pyqtSignal()
 
-    _motor_data_signal = pyqtSignal(int, object, object)
+    _log_data_signal = pyqtSignal(int, object, object)
     _pose_data_signal = pyqtSignal(object, object)
 
     _input_updated_signal = pyqtSignal(float, float, float, float)
@@ -144,7 +158,7 @@ class FlightTab(Tab, flight_tab_class):
             self._assisted_control_updated)
 
         self._pose_data_signal.connect(self._pose_data_received)
-        self._motor_data_signal.connect(self._motor_data_received)
+        self._log_data_signal.connect(self._log_data_received)
 
         self._log_error_signal.connect(self._logging_error)
 
@@ -162,6 +176,35 @@ class FlightTab(Tab, flight_tab_class):
         self.maxYawRate.valueChanged.connect(self.maxYawRateChanged)
         self.uiSetupReadySignal.connect(self.uiSetupReady)
         self.isInCrazyFlightmode = False
+
+        # Command Based Flight Control
+        self._can_fly = 0
+        self._hlCommander = None
+        self.commanderTakeOffButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.TAKE_OFF)
+        )
+        self.commanderLandButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.LAND)
+        )
+        self.commanderLeftButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.LEFT)
+        )
+        self.commanderRightButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.RIGHT)
+        )
+        self.commanderForwardButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.FORWARD)
+        )
+        self.commanderBackButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.BACK)
+        )
+        self.commanderUpButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.UP)
+        )
+        self.commanderDownButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.DOWN)
+        )
+
         self.uiSetupReady()
 
         self.ratePidRadioButton.clicked.connect(
@@ -252,12 +295,39 @@ class FlightTab(Tab, flight_tab_class):
             self.flightModeCombo.setCurrentIndex(flightComboIndex)
             self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)
 
+    def _flight_command(self, action):
+        if self._hlCommander is None:
+            return
+
+        if action == CommanderAction.TAKE_OFF:
+            #
+            # Reset the Kalman filter before taking off, to avoid
+            # positional confusion.
+            #
+            self.helper.cf.param.set_value('kalman.resetEstimation', '1')
+            time.sleep(1)
+            self._hlCommander.take_off()
+        elif action == CommanderAction.LAND:
+            self._hlCommander.land()
+        elif action == CommanderAction.LEFT:
+            self._hlCommander.left(0.5)
+        elif action == CommanderAction.RIGHT:
+            self._hlCommander.right(0.5)
+        elif action == CommanderAction.FORWARD:
+            self._hlCommander.forward(0.5)
+        elif action == CommanderAction.BACK:
+            self._hlCommander.back(0.5)
+        elif action == CommanderAction.UP:
+            self._hlCommander.up(0.5)
+        elif action == CommanderAction.DOWN:
+            self._hlCommander.down(0.5)
+
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error",
                           "Error when starting log config [%s]: %s" % (
                               log_conf.name, msg))
 
-    def _motor_data_received(self, timestamp, data, logconf):
+    def _log_data_received(self, timestamp, data, logconf):
         if self.isVisible():
             self.actualM1.setValue(data["motor.m1"])
             self.actualM2.setValue(data["motor.m2"])
@@ -266,6 +336,10 @@ class FlightTab(Tab, flight_tab_class):
 
             self.estimateThrust.setText(
                 "%.2f%%" % self.thrustToPercentage(data["stabilizer.thrust"]))
+
+            if data["sys.canfly"] != self._can_fly:
+                self._can_fly = data["sys.canfly"]
+                self._update_flight_commander(True)
 
     def _pose_data_received(self, pose_logger, pose):
         if self.isVisible():
@@ -319,6 +393,31 @@ class FlightTab(Tab, flight_tab_class):
         self.inputRollLabel.setText(roll)
         self.inputYawLabel.setText(yaw)
 
+    def _update_flight_commander(self, connected):
+        self.commanderBox.setToolTip(str())
+        if not connected:
+            self.commanderBox.setEnabled(False)
+            return
+
+        if self._can_fly == 0:
+            self.commanderBox.setEnabled(False)
+            self.commanderBox.setToolTip(
+                'The Crazyflie reports that flight is not possible'
+            )
+            return
+
+        #                  flowV1    flowV2     LightHouse       LPS
+        position_decks = ['bcFlow', 'bcFlow2', 'bcLighthouse4', 'bcDWM1000']
+        for deck in position_decks:
+            if int(self.helper.cf.param.values['deck'][deck]) == 1:
+                self.commanderBox.setEnabled(True)
+                break
+        else:
+            self.commanderBox.setToolTip(
+                'You need a positioning deck to use Command Based Flight'
+            )
+            self.commanderBox.setEnabled(False)
+
     def connected(self, linkURI):
         # MOTOR & THRUST
         lg = LogConfig("Motors", Config().get("ui_update_period"))
@@ -327,10 +426,19 @@ class FlightTab(Tab, flight_tab_class):
         lg.add_variable("motor.m2")
         lg.add_variable("motor.m3")
         lg.add_variable("motor.m4")
+        lg.add_variable("sys.canfly")
+
+        self._hlCommander = PositionHlCommander(
+            self.helper.cf,
+            x=0.0, y=0.0, z=0.0,
+            default_velocity=0.3,
+            default_height=0.5,
+            controller=PositionHlCommander.CONTROLLER_PID
+        )
 
         try:
             self.helper.cf.log.add_config(lg)
-            lg.data_received_cb.add_callback(self._motor_data_signal.emit)
+            lg.data_received_cb.add_callback(self._log_data_signal.emit)
             lg.error_cb.add_callback(self._log_error_signal.emit)
             lg.start()
         except KeyError as e:
@@ -391,6 +499,8 @@ class FlightTab(Tab, flight_tab_class):
             pass
         self._assist_mode_combo.setEnabled(False)
         self._assist_mode_combo.clear()
+
+        self._update_flight_commander(False)
 
     def minMaxThrustChanged(self):
         self.helper.inputDeviceReader.min_thrust = self.minThrust.value()
@@ -543,6 +653,7 @@ class FlightTab(Tab, flight_tab_class):
     def _all_params_updated(self):
         self._ring_populate_dropdown()
         self._populate_assisted_mode_dropdown()
+        self._update_flight_commander(True)
 
     def _ring_populate_dropdown(self):
         try:
