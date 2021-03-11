@@ -1,6 +1,6 @@
 name: cfclient
+adopt-info: cfclient
 license: GPL-3.0
-version: git
 summary: Crazyflie client
 description: |
   Crazyflie client
@@ -17,7 +17,14 @@ parts:
   cfclient:
     plugin: python
     python-version: python3
-    source: .
+    source-type: git
+    override-pull: | # This override tells snapcraft to use latest release tag
+      snapcraftctl pull
+      last_tag="$(git describe --tags --abbrev=0 --match '[0-9]*.*')"
+      git fetch
+      git checkout "${last_tag}"
+      snapcraftctl set-version "${last_tag}"
+    source: https://github.com/bitcraze/crazyflie-clients-python.git
     stage-packages:
       - libglu1-mesa
       - libxcb-glx0
