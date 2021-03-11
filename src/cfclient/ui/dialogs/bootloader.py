@@ -228,7 +228,6 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.clt.terminate_flashing()
         # Remove downloaded-firmware files.
         self.firmware_downloader.bootload_complete.emit()
-        self.resetCopter()
 
     def _populate_firmware_dropdown(self, releases):
         """ Callback from firmware-downloader that retrieves all
@@ -315,11 +314,11 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         if success:
             self.statusLabel.setText('Status: <b>Programing complete!</b>')
             self.downloadStatus.setText('')
-
         else:
             self.statusLabel.setText('Status: <b>Programing failed!</b>')
 
         self.setUiState(self.UIState.DISCONNECTED)
+        self.resetCopter()
 
     @pyqtSlot(str, int)
     def statusUpdate(self, status, progress):
