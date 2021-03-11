@@ -47,6 +47,7 @@ from cflib.localization import LighthouseConfigFileManager
 
 from cfclient.ui.dialogs.lighthouse_bs_geometry_dialog import LighthouseBsGeometryDialog
 from cfclient.ui.dialogs.basestation_mode_dialog import LighthouseBsModeDialog
+from cfclient.ui.dialogs.lighthouse_system_type_dialog import LighthouseSystemTypeDialog
 
 from vispy import scene
 import numpy as np
@@ -350,8 +351,10 @@ class LighthouseTab(Tab, lighthouse_tab_class):
 
         self._basestation_geometry_dialog = LighthouseBsGeometryDialog(self)
         self._basestation_mode_dialog = LighthouseBsModeDialog(self)
+        self._system_type_dialog = LighthouseSystemTypeDialog(helper)
 
         self._manage_estimate_geometry_button.clicked.connect(self._show_basestation_geometry_dialog)
+        self._change_system_type_button.clicked.connect(lambda: self._system_type_dialog.show())
         self._manage_basestation_mode_button.clicked.connect(self._show_basestation_mode_dialog)
 
         self._load_sys_config_button.clicked.connect(self._load_sys_config_button_clicked)
@@ -542,6 +545,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     def _update_ui(self):
         enabled = self._is_connected and self.is_lighthouse_deck_active
         self._manage_estimate_geometry_button.setEnabled(enabled)
+        self._change_system_type_button.setEnabled(enabled)
         self._load_sys_config_button.setEnabled(enabled)
         self._save_sys_config_button.setEnabled(enabled)
 
