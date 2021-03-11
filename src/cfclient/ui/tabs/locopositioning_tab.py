@@ -481,7 +481,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self._lps_state = self.LOCO_MODE_UNKNOWN
         self._update_lps_state(self.LOCO_MODE_UNKNOWN)
 
-        self._anchor_position_dialog = AnchorPositionDialog(self)
+        self._anchor_position_dialog = AnchorPositionDialog(self, helper)
         self._configure_anchor_positions_button.setEnabled(False)
 
     def _do_when_checked(self, enabled, fkn, arg):

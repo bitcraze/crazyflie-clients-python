@@ -161,13 +161,12 @@ class AnchorPositionConfigTableModel(QAbstractTableModel):
 
 class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
 
-    def __init__(self, lps_tab, *args):
-        super(AnchorPositionDialog, self).__init__(*args)
+    def __init__(self, lps_tab, helper):
+        super(AnchorPositionDialog, self).__init__()
         self.setupUi(self)
 
-        self._current_folder = os.path.expanduser('~')
-
         self._lps_tab = lps_tab
+        self._helper = helper
 
         self._headers = ['', 'id', 'x', 'y', 'z']
         self._data_model = AnchorPositionConfigTableModel(self._headers, self)
@@ -213,18 +212,16 @@ class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
         self._data_model.anchor_postions_updated(anchor_positions)
 
     def _load_button_clicked(self):
-        names = QFileDialog.getOpenFileName(self, 'Open file',
-                                            self._current_folder,
-                                            "*.yaml;;*.*")
+        names = QFileDialog.getOpenFileName(self, 'Open file', self._helper.current_folder, "*.yaml;*.*")
 
         if names[0] == '':
             return
 
-        self._current_folder = os.path.dirname(names[0])
+        self._helper.current_folder = os.path.dirname(names[0])
 
         f = open(names[0], 'r')
         with f:
-            data = yaml.load(f)
+            data = yaml.safe_load(f)
 
             anchor_positions = {}
             for id, pos in data.items():
@@ -237,14 +234,12 @@ class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
         for id, pos in anchor_positions.items():
             data[id] = {'x': pos[0], 'y': pos[1], 'z': pos[2]}
 
-        names = QFileDialog.getSaveFileName(self, 'Save file',
-                                            self._current_folder,
-                                            "*.yaml;;*.*")
+        names = QFileDialog.getSaveFileName(self, 'Save file', self._helper.current_folder, "*.yaml;*.*")
 
         if names[0] == '':
             return
 
-        self._current_folder = os.path.dirname(names[0])
+        self._helper.current_folder = os.path.dirname(names[0])
 
         if not names[0].endswith(".yaml") and names[0].find(".") < 0:
             filename = names[0] + ".yaml"

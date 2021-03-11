@@ -352,8 +352,6 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._load_sys_config_button.clicked.connect(self._load_sys_config_button_clicked)
         self._save_sys_config_button.clicked.connect(self._save_sys_config_button_clicked)
 
-        self._current_folder = os.path.expanduser('~')
-
         self._is_connected = False
         self._update_ui()
 
@@ -634,14 +632,12 @@ class LighthouseTab(Tab, lighthouse_tab_class):
                     label.setToolTip('')
 
     def _load_sys_config_button_clicked(self):
-        names = QFileDialog.getOpenFileName(self, 'Open file',
-                                            self._current_folder,
-                                            "*.yaml;;*.*")
+        names = QFileDialog.getOpenFileName(self, 'Open file', self._helper.current_folder, "*.yaml;*.*")
 
         if names[0] == '':
             return
 
-        self._current_folder = os.path.dirname(names[0])
+        self._helper.current_folder = os.path.dirname(names[0])
 
         if self._lh_config_writer is not None:
             self._lh_config_writer.write_and_store_config_from_file(self._new_system_config_written_to_cf_signal.emit,
@@ -657,14 +653,12 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._save_sys_config(self._lh_geos, calibs)
 
     def _save_sys_config(self, geos, calibs):
-        names = QFileDialog.getSaveFileName(self, 'Save file',
-                                            self._current_folder,
-                                            "*.yaml;;*.*")
+        names = QFileDialog.getSaveFileName(self, 'Save file', self._helper.current_folder, "*.yaml;*.*")
 
         if names[0] == '':
             return
 
-        self._current_folder = os.path.dirname(names[0])
+        self._helper.current_folder = os.path.dirname(names[0])
 
         if not names[0].endswith(".yaml") and names[0].find(".") < 0:
             filename = names[0] + ".yaml"

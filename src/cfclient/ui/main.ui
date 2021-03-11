@@ -189,7 +189,7 @@
       </item>
       <item>
        <widget class="QGroupBox" name="groupBox">
-        <layout class="QHBoxLayout" stretch="0,0,1">
+        <layout class="QHBoxLayout" stretch="0,0,0">
          <item>
           <widget class="QLabel" name="addressLabel">
            <property name="text">
@@ -214,17 +214,17 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="autoReconnectCheckBox">
-           <property name="mouseTracking">
-            <bool>false</bool>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
            </property>
-           <property name="text">
-            <string>Auto Reconnect</string>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
            </property>
-           <property name="checked">
-            <bool>false</bool>
-           </property>
-          </widget>
+          </spacer>
          </item>
         </layout>
        </widget>
@@ -254,8 +254,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>852</width>
-           <height>493</height>
+           <width>846</width>
+           <height>469</height>
           </rect>
          </property>
          <property name="sizePolicy">
@@ -307,7 +307,7 @@
      <x>0</x>
      <y>0</y>
      <width>872</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

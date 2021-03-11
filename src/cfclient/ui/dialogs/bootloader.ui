@@ -31,7 +31,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget">
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="tab">
            <attribute name="title">
@@ -127,13 +127,6 @@
               </property>
               <property name="text">
                <string>Restart in firmware mode</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="_cancel_bootloading">
-              <property name="text">
-               <string>Cancel bootloading</string>
               </property>
              </widget>
             </item>
@@ -295,37 +288,6 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
-        <widget class="QLabel" name="chipSelectLabel">
-         <property name="text">
-          <string>Chip to flash:</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QRadioButton" name="radioBoth">
-         <property name="text">
-          <string>Both</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QRadioButton" name="radioStm32">
-         <property name="text">
-          <string>stm32</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QRadioButton" name="radioNrf51">
-         <property name="text">
-          <string>nrf51</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <spacer name="horizontalSpacer_2">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -337,6 +299,13 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>The Crazyflie may restart one or more times during the programming process </string>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="programButton">
