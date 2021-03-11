@@ -32,8 +32,10 @@
 import sys
 
 import cflib.crtp
-from cflib.bootloader import Bootloader
+from cflib.bootloader import Bootloader, Target
 from cflib.bootloader.boottypes import BootVersion, TargetTypes
+
+from typing import Optional, List
 
 
 def main():
@@ -52,6 +54,9 @@ def main():
     clink = None
     action = "info"
     boot = "cold"
+    filename = None  # type: Optional[str]
+    targets = None  # type: Optional[List[Target]]
+    bl = None  # type: Optional[Bootloader]
 
     if len(sys.argv) < 2:
         print()
@@ -110,20 +115,21 @@ def main():
             sys.exit(-1)
         action = "flash"
         filename = sys.argv[1]
-        targetnames = {}
+        targets = []  # Dict[Target]
         for t in sys.argv[2:]:
-            [target, type] = t.split("-")
-            if target in targetnames:
-                targetnames[target] += (type,)
+            if t.startswith("deck-"):
+                [deck, target, type] = t.split("-")
+                targets.append(Target("deck", target, type))
             else:
-                targetnames[target] = (type,)
+                [target, type] = t.split("-")
+                targets.append(Target("cf2", target, type))
     else:
         print("Action", sys.argv[0], "unknown!")
         link.close()
         sys.exit(-1)
 
     # Currently there's two different targets available
-    targets = ()
+    connected_targets = ()
 
     try:
         # Initialise the bootloader lib
@@ -159,15 +165,15 @@ def main():
             bl.protocol_version))
 
         if bl.protocol_version == BootVersion.CF2_PROTO_VER:
-            targets += (bl.get_target(TargetTypes.NRF51),)
-        targets += (bl.get_target(TargetTypes.STM32),)
+            connected_targets += (bl.get_target(TargetTypes.NRF51),)
+        connected_targets += (bl.get_target(TargetTypes.STM32),)
 
         ######################################
         # Doing something (hopefully) useful
         ######################################
 
         # Print information about the targets
-        for target in targets:
+        for target in connected_targets:
             print(target)
         if action == "info":
             None  # Already done ...
@@ -175,8 +181,8 @@ def main():
             print
             print("Reset in firmware mode ...")
             bl.reset_to_firmware()
-        elif action == "flash":
-            bl.flash(filename, targetnames)
+        elif action == "flash" and filename and targets:
+            bl.flash(filename, targets)
             print("Reset in firmware mode ...")
             bl.reset_to_firmware()
         else:
