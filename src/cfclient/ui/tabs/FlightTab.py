@@ -96,7 +96,7 @@ class CommanderAction(Enum):
 class FlightTab(Tab, flight_tab_class):
     uiSetupReadySignal = pyqtSignal()
 
-    _motor_data_signal = pyqtSignal(int, object, object)
+    _log_data_signal = pyqtSignal(int, object, object)
     _pose_data_signal = pyqtSignal(object, object)
 
     _input_updated_signal = pyqtSignal(float, float, float, float)
@@ -158,7 +158,7 @@ class FlightTab(Tab, flight_tab_class):
             self._assisted_control_updated)
 
         self._pose_data_signal.connect(self._pose_data_received)
-        self._motor_data_signal.connect(self._motor_data_received)
+        self._log_data_signal.connect(self._log_data_received)
 
         self._log_error_signal.connect(self._logging_error)
 
@@ -178,6 +178,7 @@ class FlightTab(Tab, flight_tab_class):
         self.isInCrazyFlightmode = False
 
         # Command Based Flight Control
+        self._can_fly = 0
         self._hlCommander = None
         self.commanderTakeOffButton.clicked.connect(
             lambda: self._flight_command(CommanderAction.TAKE_OFF)
@@ -326,7 +327,7 @@ class FlightTab(Tab, flight_tab_class):
                           "Error when starting log config [%s]: %s" % (
                               log_conf.name, msg))
 
-    def _motor_data_received(self, timestamp, data, logconf):
+    def _log_data_received(self, timestamp, data, logconf):
         if self.isVisible():
             self.actualM1.setValue(data["motor.m1"])
             self.actualM2.setValue(data["motor.m2"])
@@ -335,6 +336,10 @@ class FlightTab(Tab, flight_tab_class):
 
             self.estimateThrust.setText(
                 "%.2f%%" % self.thrustToPercentage(data["stabilizer.thrust"]))
+
+            if data["sys.canfly"] != self._can_fly:
+                self._can_fly = data["sys.canfly"]
+                self._update_flight_commander(True)
 
     def _pose_data_received(self, pose_logger, pose):
         if self.isVisible():
@@ -389,8 +394,16 @@ class FlightTab(Tab, flight_tab_class):
         self.inputYawLabel.setText(yaw)
 
     def _update_flight_commander(self, connected):
+        self.commanderBox.setToolTip(str())
         if not connected:
             self.commanderBox.setEnabled(False)
+            return
+
+        if self._can_fly == 0:
+            self.commanderBox.setEnabled(False)
+            self.commanderBox.setToolTip(
+                'The Crazyflie reports that flight is not possible'
+            )
             return
 
         #                  flowV1    flowV2     LightHouse       LPS
@@ -413,6 +426,7 @@ class FlightTab(Tab, flight_tab_class):
         lg.add_variable("motor.m2")
         lg.add_variable("motor.m3")
         lg.add_variable("motor.m4")
+        lg.add_variable("sys.canfly")
 
         self._hlCommander = PositionHlCommander(
             self.helper.cf,
@@ -424,7 +438,7 @@ class FlightTab(Tab, flight_tab_class):
 
         try:
             self.helper.cf.log.add_config(lg)
-            lg.data_received_cb.add_callback(self._motor_data_signal.emit)
+            lg.data_received_cb.add_callback(self._log_data_signal.emit)
             lg.error_cb.add_callback(self._log_error_signal.emit)
             lg.start()
         except KeyError as e:
