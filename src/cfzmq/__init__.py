@@ -319,7 +319,7 @@ class ZMQServer():
 
     def __init__(self, base_url, base_port):
         """Start threads and bind ports"""
-        cflib.crtp.init_drivers(enable_debug_driver=True)
+        cflib.crtp.init_drivers()
         self._cf = Crazyflie(ro_cache=None,
                              rw_cache=cfclient.config_path + "/cache")
 

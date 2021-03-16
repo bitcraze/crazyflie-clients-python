@@ -33,7 +33,6 @@ it into the UI when it is started.
 """
 from .ConsoleToolbox import ConsoleToolbox
 from .CrtpSharkToolbox import CrtpSharkToolbox
-from .DebugDriverToolbox import DebugDriverToolbox
 
 __author__ = 'Bitcraze AB'
 __all__ = []
@@ -41,5 +40,4 @@ __all__ = []
 toolboxes = [
     ConsoleToolbox,
     CrtpSharkToolbox,
-    DebugDriverToolbox
 ]
