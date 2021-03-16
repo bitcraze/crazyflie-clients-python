@@ -13,7 +13,6 @@ Checks
      - Possible to plot log configuration
      - Possible to start/stop log configuration
      - Possible to write logged data from log configuration to file
- - Verify that it's possible to connect to the debugdriver
  - Verify that the following works on all OSes supported
      - Verify that input devices are working
          - No input devices

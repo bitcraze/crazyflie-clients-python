@@ -123,8 +123,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.cf = Crazyflie(ro_cache=None,
                             rw_cache=cfclient.config_path + "/cache")
 
-        cflib.crtp.init_drivers(enable_debug_driver=Config()
-                                .get("enable_debug_driver"))
+        cflib.crtp.init_drivers()
 
         zmq_params = ZMQParamAccess(self.cf)
         zmq_params.start()
