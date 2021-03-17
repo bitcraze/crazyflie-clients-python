@@ -231,7 +231,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
     def update_base_station_geos(self, geos):
         for id, geo in geos.items():
             if (geo is not None) and (id not in self._base_stations):
-                self._base_stations[id] = MarkerPose(self._view.scene, self.BS_BRUSH_NOT_VISIBLE, text=f"{id}")
+                self._base_stations[id] = MarkerPose(self._view.scene, self.BS_BRUSH_NOT_VISIBLE, text=f"{id + 1}")
             self._base_stations[id].set_pose(geo.origin, geo.rotation_matrix)
 
         geos_to_remove = self._base_stations.keys() - geos.keys()
