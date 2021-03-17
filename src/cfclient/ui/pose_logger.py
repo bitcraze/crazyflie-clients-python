@@ -79,7 +79,7 @@ class PoseLogger:
         return [math.radians(self.pose[3]), math.radians(self.pose[4]), math.radians(self.pose[5])]
 
     def _connected(self, link_uri) -> None:
-        logConf = LogConfig("Pose", 200)
+        logConf = LogConfig("Pose", 40)
         logConf.add_variable(self.LOG_NAME_ESTIMATE_X, "float")
         logConf.add_variable(self.LOG_NAME_ESTIMATE_Y, "float")
         logConf.add_variable(self.LOG_NAME_ESTIMATE_Z, "float")
