@@ -98,6 +98,7 @@ class FlightTab(Tab, flight_tab_class):
 
     _log_data_signal = pyqtSignal(int, object, object)
     _pose_data_signal = pyqtSignal(object, object)
+    _supervisor_data_signal = pyqtSignal(object)
 
     _input_updated_signal = pyqtSignal(float, float, float, float)
     _rp_trim_updated_signal = pyqtSignal(float, float)
@@ -157,6 +158,7 @@ class FlightTab(Tab, flight_tab_class):
         self._assisted_control_updated_signal.connect(
             self._assisted_control_updated)
 
+        self._supervisor_data_signal.connect(lambda: self._update_flight_commander(True))
         self._pose_data_signal.connect(self._pose_data_received)
         self._log_data_signal.connect(self._log_data_received)
 
@@ -178,7 +180,6 @@ class FlightTab(Tab, flight_tab_class):
         self.isInCrazyFlightmode = False
 
         # Command Based Flight Control
-        self._can_fly = 0
         self._hlCommander = None
         self.commanderTakeOffButton.clicked.connect(
             lambda: self._flight_command(CommanderAction.TAKE_OFF)
@@ -204,6 +205,8 @@ class FlightTab(Tab, flight_tab_class):
         self.commanderDownButton.clicked.connect(
             lambda: self._flight_command(CommanderAction.DOWN)
         )
+        self.helper.supervisor_logger.data_received_cb.add_callback(
+            self._supervisor_data_signal.emit)
 
         self.uiSetupReady()
 
@@ -337,10 +340,6 @@ class FlightTab(Tab, flight_tab_class):
             self.estimateThrust.setText(
                 "%.2f%%" % self.thrustToPercentage(data["stabilizer.thrust"]))
 
-            if data["sys.canfly"] != self._can_fly:
-                self._can_fly = data["sys.canfly"]
-                self._update_flight_commander(True)
-
     def _pose_data_received(self, pose_logger, pose):
         if self.isVisible():
             estimated_z = pose[2]
@@ -399,7 +398,7 @@ class FlightTab(Tab, flight_tab_class):
             self.commanderBox.setEnabled(False)
             return
 
-        if self._can_fly == 0:
+        if not self.helper.supervisor_logger.can_fly:
             self.commanderBox.setEnabled(False)
             self.commanderBox.setToolTip(
                 'The Crazyflie reports that flight is not possible'
@@ -408,14 +407,17 @@ class FlightTab(Tab, flight_tab_class):
 
         #                  flowV1    flowV2     LightHouse       LPS
         position_decks = ['bcFlow', 'bcFlow2', 'bcLighthouse4', 'bcDWM1000']
-        for deck in position_decks:
-            if int(self.helper.cf.param.values['deck'][deck]) == 1:
-                self.commanderBox.setEnabled(True)
-                break
-        else:
-            self.commanderBox.setToolTip(
-                'You need a positioning deck to use Command Based Flight'
-            )
+        try:
+            for deck in position_decks:
+                if int(self.helper.cf.param.values['deck'][deck]) == 1:
+                    self.commanderBox.setEnabled(True)
+                    break
+            else:
+                self.commanderBox.setToolTip(
+                    'You need a positioning deck to use Command Based Flight'
+                )
+                self.commanderBox.setEnabled(False)
+        except KeyError:
             self.commanderBox.setEnabled(False)
 
     def connected(self, linkURI):
@@ -426,7 +428,6 @@ class FlightTab(Tab, flight_tab_class):
         lg.add_variable("motor.m2")
         lg.add_variable("motor.m3")
         lg.add_variable("motor.m4")
-        lg.add_variable("sys.canfly")
 
         self._hlCommander = PositionHlCommander(
             self.helper.cf,

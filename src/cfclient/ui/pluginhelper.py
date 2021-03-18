@@ -44,5 +44,6 @@ class PluginHelper():
         self.mainUI = None
         self.plotTab = None
         self.pose_logger = None
+        self.supervisor_logger = None
         self.connectivity_manager = None
         self.current_folder = os.path.expanduser('~')

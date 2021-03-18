@@ -31,6 +31,7 @@ import sys
 
 import cfclient
 from cfclient.ui.pose_logger import PoseLogger
+from cfclient.ui.supervisor_logger import SupervisorLogger
 import cfclient.ui.tabs
 import cfclient.ui.toolboxes
 import cflib.crtp
@@ -238,6 +239,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         cfclient.ui.pluginhelper.inputDeviceReader = self.joystickReader
         cfclient.ui.pluginhelper.logConfigReader = self.logConfigReader
         cfclient.ui.pluginhelper.pose_logger = PoseLogger(self.cf)
+        cfclient.ui.pluginhelper.supervisor_logger = SupervisorLogger(self.cf)
         cfclient.ui.pluginhelper.connectivity_manager = self._connectivity_manager
         cfclient.ui.pluginhelper.mainUI = self
 
