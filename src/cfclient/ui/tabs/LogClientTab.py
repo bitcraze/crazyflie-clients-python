@@ -46,7 +46,22 @@ log_client_tab_class = uic.loadUiType(cfclient.module_path +
                                       "/ui/tabs/logClientTab.ui")[0]
 
 
-class LogClientTab(Tab, log_client_tab_class, logging.StreamHandler):
+class LogHandler(logging.StreamHandler):
+    def __init__(self, signal):
+        logging.StreamHandler.__init__(self)
+        self._signal = signal
+
+    def emit(self, record):
+        fmt = '%(levelname)s:%(name)s:%(message)s'
+        formatter = logging.Formatter(fmt)
+        #
+        # Calling .emit() on the signal will make the callback
+        # we registered in LogClientTab run.
+        #
+        self._signal.emit(formatter.format(record))
+
+
+class LogClientTab(Tab, log_client_tab_class):
     """
     A tab for showing client logging information, such
     as USB Gamepad connections or scan feedback.
@@ -55,7 +70,6 @@ class LogClientTab(Tab, log_client_tab_class, logging.StreamHandler):
 
     def __init__(self, tabWidget, helper, *args):
         super(LogClientTab, self).__init__(*args)
-        logging.StreamHandler.__init__(self)
         self.setupUi(self)
 
         self.tabName = "Log Client"
@@ -65,22 +79,9 @@ class LogClientTab(Tab, log_client_tab_class, logging.StreamHandler):
 
         self._update.connect(self.printText)
         self._clearButton.clicked.connect(self.clear)
-        #
-        # We inherit from logging.StreamHandler and add ourself to the root
-        # logger. This means that our implementation of emit() will be called
-        # when a new LogRecord object is available on the stream.
-        #
-        cflogger = logging.getLogger(None)
-        cflogger.addHandler(self)
 
-    def emit(self, record):
-        fmt = '%(levelname)s:%(name)s:%(message)s'
-        formatter = logging.Formatter(fmt)
-        #
-        # Calling .emit() on the _update signal will make the callback
-        # we registered in __init__ run.
-        #
-        self._update.emit(formatter.format(record))
+        cflogger = logging.getLogger(None)
+        cflogger.addHandler(LogHandler(self._update))
 
     def printText(self, text):
         logger.debug("[%s]", text)
