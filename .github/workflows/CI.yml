@@ -25,44 +25,6 @@ jobs:
       - name: CI checks
         run: docker run --rm -v ${PWD}:/module bitcraze/builder ./tools/build/build
   
-  MacOS:
-    needs: checks
-
-    name: ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [macos-10.15, macos-11.0]
-    steps:
-      # Checkout, fetch-depth=0 fetches the full repos (required for automatic versioning to work)
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Install dependencies
-        run: |
-          brew install python@3.9 sdl2 libusb
-          brew link --overwrite python@3.9
-          pip3 install -e .
-          pip3 install cx_freeze==6.4.2
-      
-      - name: Build
-        run: python3 setup.py bdist_mac
-      
-      - name: Archive
-        run: |
-          export VERSION=$(pip3 list | grep cfclient | awk '{print $2}')
-          cd build
-          zip -r "cfclient_$VERSION.zip" "Crazyflie client.app"
-          cd ..
-      
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v2.1.4
-        with:
-          name: ${{ matrix.os }}-build
-          path: "build/*.zip"
-  
   Windows:
     name: Windows
     needs: checks
@@ -84,7 +46,6 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e .[dev,qt5]
-          python tools\build\prep_windows
       
       - name: Install nsis
         run: choco install -y nsis.portable -version 2.50

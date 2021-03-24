@@ -36,10 +36,6 @@ else:
                                'lib', 'cfclient')
 config_path = AppDirs("cfclient", "Bitcraze").user_config_dir
 
-# Locate the sdl2 lib on Windows (should be in cfclient/thirst_party/)
-if os.name == 'nt':
-    os.environ["PYSDL2_DLL_PATH"] = os.path.join(module_path, "third_party")
-
 if not hasattr(sys, 'frozen'):
     import pkg_resources
     try:

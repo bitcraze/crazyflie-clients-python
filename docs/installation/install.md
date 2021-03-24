@@ -39,11 +39,6 @@ Install git from the [official git website](https://git-scm.com/). Make sure it 
 git --version
 ```
 
-Use pip3 to get the [python sdl2 library](https://pypi.org/project/PySDL2/):
-```
-pip install pysdl2-dll
-```
-
 ### Install crazyradio drivers
 
 To use Crazyradio you will have to [install the drivers](https://github.com/bitcraze/crazyradio-firmware/blob/master/docs/building/usbwindows.md)
@@ -52,7 +47,7 @@ To use Crazyradio you will have to [install the drivers](https://github.com/bitc
 
 Python3 and required libs can be installed with brew:
 ```
-brew install python3 sdl2 libusb
+brew install python3 libusb
 brew link python3   # This makes sure the latest python3 is used
 # if "which python3" does not return "/usr/local/bin/python3", relaunch your terminal
 pip3 install --upgrade pip.
