@@ -39,11 +39,6 @@ Install git from the [official git website](https://git-scm.com/). Make sure it 
 git --version
 ```
 
-Use pip3 to get the [python sdl2 library](https://pypi.org/project/PySDL2/):
-```
-pip install pysdl2-dll
-```
-
 ### Install crazyradio drivers
 
 To use Crazyradio you will have to [install the drivers](https://github.com/bitcraze/crazyradio-firmware/blob/master/docs/building/usbwindows.md)
