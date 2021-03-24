@@ -406,6 +406,11 @@ class FlightTab(Tab, flight_tab_class):
             )
             return
 
+        # We cannot know if we have a positioning deck until we get params
+        if not self.helper.cf.param.is_updated:
+            self.commanderBox.setEnabled(False)
+            return
+
         #                  flowV1    flowV2     LightHouse       LPS
         position_decks = ['bcFlow', 'bcFlow2', 'bcLighthouse4', 'bcDWM1000']
         for deck in position_decks:
