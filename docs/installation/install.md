@@ -1,14 +1,80 @@
 ---
-title: Running from source
-page_id: run_from_source
+title: Installation
+page_id: install
 ---
 
-The Crazyflie client requires [cflib](https://github.com/bitcraze/crazyflie-lib-python).
-If you want to develop with the lib too, follow the cflib readme to install it.
+
+# Installing from build
+
+## Linux
+
+The client can be installed and run with snap, it can be found on [snapcraft](https://snapcraft.io/cfclient) (ie. search Crazyflie in Ubuntu software) or installed from command line:
+```
+snap install --beta cfclient
+```
+
+The edge version is currently broken (latest github commit). The last working version has been set to beta. The next release will be pushed in the snapcraft stable channel.
+
+It is still required to set the udev permission with the snap, see the last section of this page.
+
+## Windows
+
+A windows installer is automatically built for each git commit in [appveyor](https://ci.appveyor.com/project/bitcraze/crazyflie-clients-python/build/artifacts).
+
+For each release, the release built is available in the [github release page](https://github.com/bitcraze/crazyflie-clients-python/releases).
+
+To use Crazyradio you will have to [install the drivers](https://github.com/bitcraze/crazyradio-firmware/blob/master/docs/building/usbwindows.md).
+
+## From Pypi (Windows, Mac, Linux, ..., with python3)
+
+Each release of the client is pushed to the [pypi repository](https://pypi.org/project/cfclient/). If you have python >= 3.6, it can be installed with pip:
+
+```
+python3 -m pip install cfclient
+```
+
+Mac and windows will also need the SDL2 library to be installed (see bellow)
+
+# Running from source
+
+The Crazyflie client requires Python >= 3.6. The followind instruction describe hot to install it from source.
+
+## Pip and Venv
+
+It is good to work within a [python venv](https://docs.python.org/3/library/venv.html), this way you are not installing dependencies in your main python instance.
+
+At the very least you should **never** run pip in sudo, this would install dependencies system wide and could cause compatiblity problems with already installed application. If the ```pip``` of ```python3 -m pip``` command request the administrator password, you should run the command with ```--user``` (for example ```python3 -m pip install --user -e .```). This should not be required on modern python distribution though since the *--user*  flag seems to be the default behaviour.
+
+## Linux
+
+### Prerequisites
+
+From a fresh Ubuntu 20.04 system, running the client form source requires git and pip.
+
+```
+sudo apt install git python3-pip
+git clone https://github.com/bitcraze/crazyflie-clients-python
+cd crazyflie-clients-python
+```
+
+### Installing the client
+
+All other dependencies on linux are handled by pip so to install an editable copy simply run:
+
+```
+$ python3 -m pip install -e .
+```
+
+If you plan to do development on the client you should run:
+```
+$ python3 -m pip install -e .[dev]
+```
+
+The client can now be runned using ```cfclient``` if the local pip bin directory is in the path (it should be in a venv or after a reboot), or with ```python3 -m cfclient.gui```.
 
 ## Windows (7/8/10)
 
-Running from source on Windows is tested using the official python build from [python.org](https://python.org). The client works with python version >= 3.6. The procedure is tested with 32bit python. It should work with 64bit python but since it is not tested it can be broken (if so, do not hesitate to send a fix ;-).
+Running from source on Windows is tested using the official python build from [python.org](https://python.org). The client works with python version >= 3.5. The procedure is tested with 32bit python. It will work with 64bit python but since it is not tested.
 
 To run the client you should install python, make sure to check the "add to path" checkbox during install. You should also have git installed and in your path. Use git to clone the crazyflie client project.
 
@@ -19,12 +85,12 @@ cd crazyflie-clients-python
 
 Download the SDL2.dll windows library:
 ```
-python tools\build\prep_windows
+python3 tools\build\prep_windows
 ```
 
 Install the client in development mode:
 ```
-pip install -e .[dev,qt5]
+pip3 install -e .[dev]
 ```
 
 You can now run the clients with the following commands:
@@ -37,17 +103,14 @@ cfzmq
 
 **NOTE:** To use Crazyradio you will have to [install the drivers](https://github.com/bitcraze/crazyradio-firmware/blob/master/docs/building/usbwindows.md)
 
-### Working on the client with PyCharm
-
-Pycharm is an IDE for python. Any Python IDE or development environment will work for the Crazyflie client. To work on the Crazyflie firmware with Pycharm, install pycharm community edition and open the Crazyflie client folder in it. Pycharm will automatically detect the python installation.
-
-To run the client, open and run the file ```bin/cfclient```.
-
-You are now able to edit and debug the python code. you can edit the .ui files for the GUI with QtCreator. You can the Qt development kit from the [Qt website](https://www.qt.io/download-open-source/) and open the .ui files in QtCreator.
-
 ### Creating Windows installer
 
-When you are able to run from source, you can build the windows executable and installer.
+Building the windows installer currently only works with python 3.6. This is due to a bug in CX_freeze, see issue #441 for update about this problem.
+
+To build the windows installer you need to install the dev dependencies
+```
+pip install -e .[dev]
+```
 
 First build the executable
 ```
@@ -68,93 +131,35 @@ makensis win32install\cfclient.nsi
 
 ## Mac OSX
 
-Unlike for Windows, there is no build for mac yet.
-It should be possible to package the client as a mac app and [help is wanted](https://github.com/bitcraze/crazyflie-clients-python/issues/231).
-In the mean time you can run the client by installing python and pulling the client python package.
+**Note**: On macOS 11 Big Sur, a recent version of python 3.9 and pip3 from brew is required, make sure your python3 install is up to date and if necessary upgrade pip with ```pip3 install --upgrade pip```.
 
-### Using the official python distribution
+The supported way to run on Mac is by using the [Homebrew](http://brew.sh/) distribution of python3.
 
-The easiest to get the client running on Mac if you do not already have Homebrew installed is to use the official Python distribution.
-If you are using Homebrew look at the next section.
-If you are using Anaconda/Conda, the procedure should be very similar but you can skip the python installation.
-
- 1) Download and install python from [python.org](https://python.org)
- 2) [Download sdl2](https://www.libsdl.org/download-2.0.php) for Mac OSX and copy SDL2.framework into /Lirary/Frameworks
- 3) Open a console and install the client with ```python3 -m pip install cfclient[qt5] pysdl2```. This will install the latest release.
-
-You can now launch the client with ```python3 -m cfclient.gui```
-
-If you want to develop and modify the client, you can clone this repos, uninstall cfclient with ```python3 -m pip uninstall cfclient``` and install it in development mode by navigating into the repos root folder and installing the client in edit mode: ```python3 -m pip install -e .```.
-
-### Using homebrew
-**IMPORTANT NOTE**: The following will use
-[Homebrew](http://brew.sh/) and its own Python distribution. If
-you have a lot of other 3rd party python stuff already running on your system
-they might or might not be affected by this.
-
-1. Install homebrew
-
-    See [the Homebrew site](https://brew.sh/)
-
-1. Install the brew bottles needed
-    ```
-    brew install python3 sdl sdl2 sdl_image sdl_mixer sdl_ttf libusb portmidi pyqt5
-    ```
-
-1. Install the client
-
-    * If you only want to use the client to fly the Crazyflie and don't care about coding
-    ```
-    pip3 install cfclient
-    ```
-
-    * If you want to develop the client and play with the source code. From the source folder run
-    ```
-    pip3 install -e .
-    ```
-    If you want to develop on cflib as well, install cflib from <https://github.com/bitcraze/crazyflie-lib-python>
-
-1. You now have all the dependencies needed to run the client. The client can now be started from any location by:
-    ```
-    cfclient
-    ```
-
-## Linux
-
-### Launching the GUI application
-
-If you want to develop with the lib, install cflib from https://github.com/bitcraze/crazyflie-lib-python
-
-Cfclient requires Python3, pip and pyqt5 to be installed using the system package manager. For example on Ubuntu/Debian:
+Python3 and required libs can be installed with brew:
 ```
-sudo apt-get install python3 python3-pip python3-pyqt5 python3-pyqt5.qtsvg
+brew install python3 sdl2 libusb
+brew link python3   # This makes sure the latest python3 is used
+# if "which python3" does not return "/usr/local/bin/python3", relaunch your terminal
 ```
 
-Install cfclient to run it from source. From the source folder run (to install
-for your user only you can add ```--user``` to the command):
+To install the client in edit mode:
 ```
 pip3 install -e .
 ```
-To launch the GUI application in the source folder type:
-```python3 bin/cfclient```
 
-To launch the GUI after a systemwide installation, execute ```cfclient```.
+The client can now be started with ```cfclient``` or ```python3 -m cfclient.gui```.
 
-### Dependencies
+## Pre commit hooks
+If you want some extra help with keeping to the mandated python coding style you can install hooks that verify your style at commit time. This is done by running:
+```
+$ pre-commit install
+```
+This will run the lint checkers defined in `.pre-commit-config-yaml` on your proposed changes and alert you if you need to change anything.
 
-The Crazyflie PC client has the following dependencies:
+## Working with the GUI .ui files
 
-* Installed from system packages
-  * Python 3.4+
-  * PyQt5
-  * A pyusb backend: libusb 0.X/1.X
-* Installed from PyPI using PIP:
-  * cflib
-  * PyUSB
-  * PyQtGraph
-  * ZMQ
-  * appdirs
-  * PyYAML
+you can edit the .ui files for the GUI with QtCreator. For Windows and Mac You can the Qt development kit from the [Qt website](https://www.qt.io/download-open-source/). On linux QtCreator is usually available as package, for example on Ubuntu it can be installed with ```sudo apt install qtcreator```.
+
 
 ### Setting udev permissions
 

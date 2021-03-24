@@ -1,7 +1,7 @@
 - page_id: home
 - title: Installation
   subs:
-    - {page_id: run_from_source}
+    - {page_id: install}
 - title: Userguides
   subs:
     - {page_id: userguide_client}
