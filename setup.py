@@ -96,8 +96,6 @@ if sys.platform == 'win32' or sys.platform == 'darwin':
 if sys.platform == 'win32':
     platform_dev_requires.extend(['cx_freeze==5.1.1', 'jinja2==2.10.3'])
 
-print(sys.platform)
-
 # Only install the latest pyqt for Linux and Mac
 # On Windows, the latest version that does not have performance problems
 # is 5.12
