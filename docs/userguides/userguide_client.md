@@ -56,10 +56,10 @@ For more info on LED indicators etc. have a look at the [Crazyflie 2.X](https://
        * *Connect:* Will connect to the selected URI in the connection list
        * *Disconnect:* Will disconnect the current Crazyflie
        * *Address:* The address to scan for. If you didn't change this [in the configuration]( #firmware-configuration), then leave the default of 0xE7E7E7E7E7
-       * *Auto Reconnect:* Try to automatically reconnect when connection is lost.
-    - Battery and link quality (from 0% to 100%)
-    - Tabs with specific functionality (see below for details)
-    - The selected and used input interface
+3. Battery and link quality (from 0% to 100%)
+4. Tabs with specific functionality (see below for details)
+5. The selected and used input interface
+6. Command based flight control, allow controlled flight if, and only if, a positioning deck such as the [Flow deck](https://store.bitcraze.io/collections/decks/products/flow-deck-v2), the [Loco deck](https://store.bitcraze.io/collections/decks/products/loco-positioning-deck) or the [Lighthouse deck](https://store.bitcraze.io/collections/decks/products/lighthouse-positioning-deck) is present.
 
 ---
 
