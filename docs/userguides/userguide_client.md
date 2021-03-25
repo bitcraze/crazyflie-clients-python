@@ -3,15 +3,13 @@ title: Userguide cfclient GUI
 page_id: userguide_client
 ---
 
-
-
 This page is intended to give an overview on how to use the Crazyflie
 client, not for installing it. For install instructions go
 [here](https://github.com/bitcraze/crazyflie-clients-python/blob/develop/README.md).
 
 The Crazyflie client is used for controlling the Crazyflie, flashing
 firmware, setting parameters and logging data. The main UI is built up
-of a number of tabs, where each tab is used for a specific
+of a number of [tabs](tabs/index.md), where each tab is used for a specific
 functionality.
 
 This page uses the terms
@@ -156,8 +154,7 @@ configuration\", You then see the following toolbox:
 
 ### Flight settings
 
-By using the settings on the [Flight control
-tab](#flightcontrol) you can set
+By using the settings on the [Flight control tab](tabs/flightcontrol.md) you can set
 things such as the max roll/pitch and thrust.
 
 ### Input devices
@@ -272,221 +269,6 @@ configurations at the bottom of the user interface.
 
 ![cfclient input mux configured](/docs/images/cfclient_input_mux_configured.png){:align-center
 width="700"}
-
----
-
-## Tabs
-
-The main interface is built up of different tabs that can be
-shown/hidden from the *View-\>Tabs* menu.
-
-### Flightcontrol
-
-The normal view used when flying is the one seen below.
-![cfclient flighttab](/docs/images/cfclient_flightab.png){:align-center}
-
-1.  Flight mode selector (Normal and Advanced)
-    * *Normal:* Recommended for beginners
-    * *Advanced:* Will unlock flight settings in 3
-
-2.  Assisted mode selection. The assisted mode is enabled when the assisted mode
-    button is pressed on the Gamepad.
-    * *Altitude hold*: Keeps the Crazyflie at its current altitude automatically. Thrust control becomes height velocity control.
-    * *Position hold*: Keeps the Crazyflie at its current 3D position. Pitch/Roll/Thrust control becomes X/Y/Z velocity control.
-    * *Height hold*: When activated, keeps the Crazyflie at 40cm above the ground. Thrust control becomes height velocity control. Requires a height sensor like the [Z-Ranger deck](https://www.bitcraze.io/products/z-ranger-deck-v2/).
-    * *Hover*: When activated, keeps the Crazyflie at 40cm above the ground and tries to
-    keep the position in X and Y as well. Thrust control becomes height velocity
-    control. Requires a flow deck. Uses body-fixed coordinates.
-3. Roll/pitch trim can be set either in the UI or using the controller (if the correct buttons are mapped).
-    This will offset the input to the Crazyflie for correcting imbalance and reducing drift.
-4. Advanced flight control settings are available if Advanced mode has been selected (settings are in %):
-    * *Max angle:* Set the max roll/pitch angle allowed
-    * *Max yaw rate:*Set the max yaw rate allowed
-    * *Max thrust:* Set the max thrust allowed
-    * *Min thrust:* Minimum thrust before 0 is sent to the Crazyflie
-    * *Slew limit:* Set the percentage where the thrust is slew controlled (the thrust value lowering will be limited). This makes the Crazyflie a bit easier to fly for beginners
-    * *Slew rate:* When the thrust is below the slew limit, this is the maximum rate of lowering the thrust
-5. Settings for flight decks, currently the LED-ring effect and headlights can be set (if the ring is attached)
-6. Target values sent from the client for controlling the Crazyflie
-7. Actual values logged from the Crazyflie
-8. Motor output on the Crazyflie
-9. Horizon indicator
-
-### Plotter
-
-The plotter tab can be used to visualize data logged from the Crazyflie
-![cfclient plotter](/docs/images/cfclient_ploter.png){:align-center
-width="700"}
-
-1.  Select logging configuration to plot. Read about how to create
-    configurations \<here\>.
-2.  Legend for the logging configuration that is being plotted.
-3.  Logged data, zooming and panning can be done with the mouse.
-4.  Number of samples showed in the plot. After this is filled the plot
-    will start scrolling the data
-5.  Auto-scaling or fixed scaling for the Y-axis
-6.  Auto update graph. If this is disabled the plot will stop updating
-    (but data will still be collected in the background)
-
-### Parameters
-
-The Crazyflie supports parameters, variables stored in the Crazyflie
-that can be changed in real-time. The parameter tab can be used to view
-and update parameters. For more information about parameters see
-[logging and parameter frameworks](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/userguides/logparam/).
-
-![cfclient parameter list](/docs/images/cfclient_param.png){:align-center
-width="700"}
-
-1.  Parameter information fields
-
-
-
-       * *Name:* The name of the parameter or group.
-       * *Type:* The C-type of the variable stored in the Crazyflie (you cannot set values outside this)
-       * *Access:* RW parameters can be written from the client while RO parameters can only be read
-       * *Value:* The value of the parameter
-    - Group: To make things easier each group has it's members organized as sub-nodes to the group
-    - Parameters: The full name of each parameter is the group combined with the name (group.name)
-
-### Log blocks
-
-The log blocks tab shows all log configurations that are saved and if
-they are started. It\'s also possible to start/stop them as well as
-write the logged data to file.
-
-![cfclient log blocks](/docs/images/cfclient_logblocks_marked.png){:align-center
-width="700"}
-
-1.  Fields
-    -   *ID:* Block id in Crazyflie
-    -   *Name:* Block name in client
-    -   *Period:* The period of which the data is sent back to the
-        client
-    -   *Start:* Marked if started, click to start/stop block. Note that
-        some of the blocks are used for the user interface, so if they
-        are stopped the user interface will stop updating
-    -   *Write to <file:*> Marked if writing to file, clock to
-        start/stop writing. The data will be written in the
-        configuration folder for the client (see \<here\> how to find
-        it).
-    -   *Contents:* The variables contained in the block (named by
-        group.name)
-2.  Information for log configurations are folded by group by default,
-    opening them up will show in detail what variables are in the group
-
- The data written to file will be in
-the configuration folder under *logdata*. Each directory is timestamped
-after when the client was started and each file timestamped after when
-the writing to file was started (i.e starting/stopping and
-starting/stopping again will yield two files in the same directory). The
-data logged to the file is in CSV format with the headers for the data
-at the top. A timestamp is automatically added for each entry and shows
-the number of milliseconds passed since the Crazyflie started (sent
-together with the log data).
-
-Example data
-of what\'s logged when logging the battery level:
-
-    Timestamp,pm.vbat
-    9103,3.74252200127
-    10103,3.74252200127
-    11103,3.74252200127
-    12103,3.74252200127
-    13103,3.74252200127
-
-
-### Console
-
-The console tab will show printouts from the Crazyflie firmware as it\'s
-running.
-![cfclient console](/docs/images/cfclient_console_marked.png){:align-center
-width="700"}
-
-1.  Console output from the Crazyflie
-
-### Loco Positioning
-
-The Loco Positioning tab shows information from the Loco Positioning
-system when present.
-
-The bottom of the window shows a 3D view of the system. The
-graphs can rotated by clicking and draging, zoomed using the scroll wheel
-and moved by holding the shift key while clicking and draging.
-
-The tab can be used in two modes that is selected with the radio buttons
-to the right
-
-To setup the LPS anchor system mode (TWR or TDoA), see the [Configure
-LPS positioning mode wirelessly](https://www.bitcraze.io/documentation/repository/lps-node-firmware/master/) documentation.
-
-### Position estimate mode
-
-Displays the configured anchor positions and the estimated position of
-the Crazyflie. Can be used to make sure the system is set up correctly
-and that the estimated position is reasonable.
-
-![cfclient positioning](/docs/images/cfclient_position_estimate.png){:align-center
-width="700"}
-
-1.  Plot showing anchors and Crazyflie
-2.  Sets the graph mode
-    -   *Position estimate* - Normal viewing mode
-    -   *Anchor identification* - Enhanced mode where anchor id and
-        marker becomes larger when Crazyflie is closer
-3.  Indicates if anchors are communicating with Crazyflie (i.e anchors
-    are up and running)
-4.  Used to set anchor positions and change mode of the system
-
-### Anchor position configuration
-
-Click the ```Configure positions``` button top open the anghor position
-dialog. In the dialog you can set the coordinates of the anchors. If an
-anchor is missing, click ***** to add one more to the list.
-
-The color of the fields has the following meanings:
-
--   *White* - No position exists for this anchor (i.e the position has
-    not been read yet)
--   *Red* - Position has been read from the anchor and it differs from
-    the currently shown value in the input box
--   *Green* - Position has been read from the anchor and it is the same
-    as the currently shown value in the input box
-
-The positions of the anchors is continuously read in the background and
-as positions comes in or input box values changes the colors will be set
-accordingly. There\'s also two buttons used for the settings:
-
--   *Get from anchors* - Fills the input boxes with the positions read
-    from the anchors
--   *Write to anchors* - Writes the currently shown values in the input
-    boxes to the anchors. In order to check that the write has been
-    successful wait about 10s and all the fields should turn green as
-    the positions are read back. If some of the fields are still red,
-    try pressing the button again.
-
-You can save anchor positions to file to store the setup for later use.
-When you load positions from file the data in the input boxes will be
-rplaced by the contents of the file.
-
-### Anchor identification mode
-
-displays the configured anchor positions. When the crazyflie is close to
-an anchor this is indicated in the graphs by highlighting it. This mode
-is useful to identify anchors and verify that the system is correctly
-configured. **NOTE:** Only orks in TWR mode.
-
-![cfclient anchors](/docs/images/cfclient_anchor_identification.png){:align-center
-width="700"}
-
-1.  Sets the graph mode
-    -   *Position estimate* - Normal viewing mode
-    -   *Anchor identification* - Enhanced mode where anchor id and
-        marker becomes larger when Crazyflie is close to an anchor
-2.  Plot showing anchors and Crazyflie. In this example anchor 1 is close
-to the Crazyflie.
-3.  Current system mode indication. The system must be in TWR mode for
-    the anchor identification mode to be available.
 
 ---
 

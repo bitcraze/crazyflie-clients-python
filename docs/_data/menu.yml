@@ -5,6 +5,7 @@
 - title: Userguides
   subs:
     - {page_id: userguide_client}
+    - {page_id: tabs}
     - {page_id: cfheadless}
     - {page_id: inputdevices}
     - {page_id: raspberrypi}
