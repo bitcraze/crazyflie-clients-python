@@ -15,4 +15,5 @@ The following tabs are currently available:
 * [Parameter Tab](./parameters.md)
 * [Log Blocks Tab](./logblocks.md)
 * [Loco Positioning Tab](./loco.md)
+* [Lighthouse Positioning Tab](./lighthouse.md)
 * [Console Tab](./console.md)
