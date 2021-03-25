@@ -122,7 +122,7 @@ configuration file.
 
 | Field                      | Format    | Comments |
 | -------------------------- | --------- | -------- |
-| link\_uri                  | string    | The last successfully connected Crazyflie URI. This is used when you click \"Quick connect\" in the application|
+| link\_uri                  | string    | The last successfully connected Crazyflie URI. This is used to fill in the address in the top bar at startup|
 | auto\_reconnect            | boolean   | Set\'s if auto-reconnect is enabled or not|
 | ui\_update\_period         | int       | The minimum time (in ms) between UI updates for logging values|
 | open\_tabs                 | string    | A comma-separated list of the open tabs (using the tab.tabName attribute)|
