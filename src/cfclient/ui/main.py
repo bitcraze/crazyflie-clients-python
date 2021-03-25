@@ -278,12 +278,15 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         # First instantiate all tabs and then open them in the correct order
         try:
             for tName in Config().get("open_tabs").split(","):
-                t = tabItems[tName]
-                if (t is not None and t.isEnabled()):
-                    # Toggle though menu so it's also marked as open there
-                    t.toggle()
-        except Exception as e:
-            logger.warning("Exception while opening tabs [{}]".format(e))
+                try:
+                    t = tabItems[tName]
+                    if (t is not None and t.isEnabled()):
+                        # Toggle though menu so it's also marked as open there
+                        t.toggle()
+                except Exception as e:
+                    logger.warning("Exception while opening tab [{}]".format(e))
+        except KeyError as e:
+            logger.warning("Failed to get open_tabs: {}".format(e))
 
         # Loading toolboxes (A bit of magic for a lot of automatic)
         self.toolboxesMenuItem = QMenu("Toolboxes", self.menuView,
