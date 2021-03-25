@@ -59,6 +59,21 @@ For more info on LED indicators etc. have a look at the [Crazyflie 2.X](https://
 5. The selected and used input interface
 6. Command based flight control, allow controlled flight if, and only if, a positioning deck such as the [Flow deck](https://store.bitcraze.io/collections/decks/products/flow-deck-v2), the [Loco deck](https://store.bitcraze.io/collections/decks/products/loco-positioning-deck) or the [Lighthouse deck](https://store.bitcraze.io/collections/decks/products/lighthouse-positioning-deck) is present.
 
+### Tabs
+
+The main interface is built up of different tabs that can be
+shown/hidden from the *View-\>Tabs* menu.
+
+The following tabs are currently available:
+
+* [Flightcontrol Tab](./flightcontrol_tab.md)
+* [Plotter Tab](./plotter_tab.md)
+* [Parameter Tab](./parameters_tab.md)
+* [Log Blocks Tab](./logblocks_tab.md)
+* [Loco Positioning Tab](./loco_tab.md)
+* [Lighthouse Positioning Tab](./lighthouse_tab.md)
+* [Console Tab](./console_tab.md)
+
 ---
 
 ## Functionality
@@ -79,12 +94,12 @@ To update the firmware in the Crazyflie 2.X do the following:
 -   Select the latest release from the drop down menu or select it if you have downloaded it from the [Github release page](https://github.com/bitcraze/crazyflie-release/releases).
 -   Click \"Program\" and wait for both the STM and NRF to be flashed.
 -   If your crazyflie has a lighthouse deck, the lighthouse deck fpga will be updated too (>= release 2021.03)
--   Your crazyflie will automatically restart a couple of times. 
+-   Your crazyflie will automatically restart a couple of times.
 -   Do not touch or restart your crazyflie untill all flashing is done and you see \"status: idle\" at the bottom.
 - To check the firmware version, under the *View* menu, open up *Tabs-\>Console* tab and look at the output when connecting to the
 Crazyflie 2.X.
 
-If you accidently restarted your crazyflie during flashing or anything else happend which caused your crazyflie to not start up properly, follow [the instructions for recovery mode](/docs/userguides/recovery-mode.md). 
+If you accidently restarted your crazyflie during flashing or anything else happend which caused your crazyflie to not start up properly, follow [the instructions for recovery mode](/docs/userguides/recovery-mode.md).
 
 ### Firmware configuration
 
@@ -269,6 +284,8 @@ configurations at the bottom of the user interface.
 
 ![cfclient input mux configured](/docs/images/cfclient_input_mux_configured.png){:align-center
 width="700"}
+
+
 
 ---
 
