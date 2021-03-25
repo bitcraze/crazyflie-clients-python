@@ -112,7 +112,6 @@ configuration file.
   "auto_reconnect": false,
   "max_yaw": 200,
   "flightmode": "Advanced",
-  "enable_debug_driver": false,
   "open_tabs": "Flight Control,Parameters,Console",
   "input_device_blacklist": "(VirtualBox|VMware)",
   "trim_roll": 0.0,
@@ -123,10 +122,9 @@ configuration file.
 
 | Field                      | Format    | Comments |
 | -------------------------- | --------- | -------- |
-| link\_uri                  | string    | The last successfully connected Crazyflie URI. This is used when you click \"Quick connect\" in the application|
+| link\_uri                  | string    | The last successfully connected Crazyflie URI. This is used to fill in the address in the top bar at startup|
 | auto\_reconnect            | boolean   | Set\'s if auto-reconnect is enabled or not|
 | ui\_update\_period         | int       | The minimum time (in ms) between UI updates for logging values|
-| enable\_debug\_driver      | boolean   | The Crazyflie API contains a driver for debugging the UI. This driver will act as a Crazyflie and can be used to simulate a number of issues|
 | open\_tabs                 | string    | A comma-separated list of the open tabs (using the tab.tabName attribute)|
 | input\_device              | string    | The readable name of the last used input device|
 | device\_config\_mapping    | dict      | A dictionary where the keys are readable input device names and the values are the last used mapping for the device|
@@ -172,7 +170,6 @@ accessed in the application.
     "max_rp": 30,
     "auto_reconnect": false,
     "device_config_mapping": {},
-    "enable_debug_driver": false,
     "input_device_blacklist": "(VirtualBox|VMware)",
     "ui_update_period": 100
   },
