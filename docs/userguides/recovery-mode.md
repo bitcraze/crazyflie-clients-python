@@ -3,7 +3,7 @@ title: Recovery firmware flashing
 page_id: recovery-mode
 ---
 
-_Only use this type of firmware flashing if you crazyflie is not booting up properly. Check [the cfclient userguide](/docs/userguides/userguide_client.md) for the official instructions._
+_Only use this type of firmware flashing if you crazyflie is not booting up properly. Check [the cfclient userguide](/docs/userguides/userguide_client/index.md) for the official instructions._
 
 For updating the Crazyflie firmware there\'s the possibility to enter
 bootloader mode and flash [new
@@ -30,4 +30,4 @@ To update the firmware in the Crazyflie 2.X do the following:
 -   Press \"Program\" and wait (do not restart the crazyflie untill it is finsished.)
 -   Press \"Restart in firmware mode\"
 
-_Be aware that the Lighthouse FPGA will not be updated in this mode, so please use the [the cfclient userguide](/docs/userguides/userguide_client.md) after you have recovered crazyflie._
+_Be aware that the Lighthouse FPGA will not be updated in this mode, so please use the [the cfclient userguide](/docs/userguides/userguide_client/index.md) after you have recovered crazyflie._

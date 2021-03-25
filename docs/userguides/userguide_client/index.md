@@ -9,7 +9,7 @@ client, not for installing it. For install instructions go
 
 The Crazyflie client is used for controlling the Crazyflie, flashing
 firmware, setting parameters and logging data. The main UI is built up
-of a number of [tabs](tabs/index.md), where each tab is used for a specific
+of a number of [tabs](index.md#tabs), where each tab is used for a specific
 functionality.
 
 This page uses the terms
@@ -169,7 +169,7 @@ configuration\", You then see the following toolbox:
 
 ### Flight settings
 
-By using the settings on the [Flight control tab](tabs/flightcontrol.md) you can set
+By using the settings on the [Flight control tab](./flightcontrol_tab.md) you can set
 things such as the max roll/pitch and thrust.
 
 ### Input devices

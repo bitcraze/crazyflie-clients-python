@@ -4,7 +4,7 @@ page_id: cfclient_zmq
 ---
 
 
-The [Crazyflie Python client](/docs/userguides/userguide_client.md)
+The [Crazyflie Python client](/docs/userguides/userguide_client/index.md)
 runs a number of back-ends where you can set/get information from other
 applications via [ZMQ](http://zeromq.org/).
 
