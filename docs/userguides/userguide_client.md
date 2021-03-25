@@ -70,34 +70,23 @@ client.
 
 ### Firmware upgrade
 
-For updating the Crazyflie firmware there\'s the possibility to enter
-bootloader mode and flash [new
-firmware](https://github.com/bitcraze/crazyflie-release/releases) from within the
-client. The bootloader mode is accessed from the menu
-*Crazyflie-\>Bootloader*. If there is any problem during the flashing or
-a wrong firmware is flashed the process can just be started again.
+For updating the Crazyflie firmware you can keep being connected to the crazyflie. This will open up a seperate dialog that will guide you through the process.
 
-![CFclient bootloading](/docs/images/crazyflie_bootloading.png)
+![CFclient bootloading](/docs/images/firmware-upgrade.png)
 
 To update the firmware in the Crazyflie 2.X do the following:
 
--   Make sure that the Crazyflie is disconnected from the client and
-    powered off
 -   Go to the menu *Crazyflie-\>Bootloader*
--   Hold the button for about 3 seconds when turning
-    it on until the blue LED M2 starts to blink to get into bootloader
-    mode. If a wrong nRF51 firmware has been flashed you might have to
-    start from an un-powered state. Then hold the button and connect
-    power.
--   Click \"Initiate bootloader cold boot\"
--   Press \"Browse\" and select the file you want to flash and whether you want
-    to flash both the mcu's or just one of them. (zip-file is for both).
--   Press \"Program\" and wait
--   Press \"Restart in firmware mode\"
-
-To check the firmware version, under the *View* menu, open up
-*Tabs-\>Console* tab and look at the output when connecting to the
+-   Connect to the crazyflie in this dialog, if it is not already connected in the flighttab.
+-   Select the latest release from the drop down menu or select it if you have downloaded it from the [Github release page](https://github.com/bitcraze/crazyflie-release/releases).
+-   Click \"Program\" and wait for both the STM and NRF to be flashed.
+-   If your crazyflie has a lighthouse deck, the lighthouse deck fpga will be updated too (>= release 2021.03)
+-   Your crazyflie will automatically restart a couple of times. 
+-   Do not touch or restart your crazyflie untill all flashing is done and you see \"status: idle\" at the bottom.
+- To check the firmware version, under the *View* menu, open up *Tabs-\>Console* tab and look at the output when connecting to the
 Crazyflie 2.X.
+
+If you accidently restarted your crazyflie during flashing or anything else happend which caused your crazyflie to not start up properly, follow [the instructions for recovery mode](/docs/userguides/recovery-mode.md). 
 
 ### Firmware configuration
 
