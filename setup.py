@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import subprocess
-from subprocess import PIPE, Popen
 from setuptools import setup, find_packages
 from glob import glob
 import json
@@ -9,6 +7,8 @@ import codecs
 import sys
 import os
 import platform
+
+from gitversion import get_version
 
 if sys.argv[1] in ('build', 'bdist_msi', 'bdist_mac', 'bdist_dmg',
                    'install_exe'):
@@ -46,28 +46,6 @@ else:
 
 if sys.version_info < (3, 6):
     raise "must use python 3.6 or greater"
-
-
-# Recover version from Git.
-# Returns None if git is not installed or if we are running outside of the git
-# tree
-def get_version():
-    try:
-        process = Popen(["git", "describe", "--tags"], stdout=PIPE)
-        (output, err) = process.communicate()
-        process.wait()
-    except OSError:
-        return None
-
-    if process.returncode != 0:
-        return None
-
-    version = output.strip().decode("UTF-8")
-
-    if subprocess.call(["git", "diff-index", "--quiet", "HEAD"]) != 0:
-        version += "_modified"
-
-    return version
 
 
 def relative(lst, base=''):
