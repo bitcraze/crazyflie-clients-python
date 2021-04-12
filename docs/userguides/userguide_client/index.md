@@ -84,6 +84,7 @@ client.
 ### Firmware upgrade
 
 For updating the Crazyflie firmware you can keep being connected to the crazyflie. This will open up a seperate dialog that will guide you through the process.
+Please note that you need to use a Crazyradio dongle to connect to the Crazyflie when doing firmware upgrades. Upgrading using USB is not possible.
 
 ![CFclient bootloading](/docs/images/firmware-upgrade.png)
 
