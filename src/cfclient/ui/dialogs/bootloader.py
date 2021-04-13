@@ -176,11 +176,17 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         elif (state == self.UIState.FW_CONNECTED):
             self._cold_boot_error_message = None
             self.resetButton.setEnabled(False)
-            self.programButton.setEnabled(True)
-            self.setStatusLabel("Connected in firmware mode")
             self.coldBootButton.setEnabled(False)
-            self.setSourceSelectionUiEnabled(True)
             self._helper.connectivity_manager.set_enable(True)
+
+            if self._helper.cf.link_uri.startswith("usb://"):
+                self.programButton.setEnabled(False)
+                self.setStatusLabel("Connected using USB")
+                self.setSourceSelectionUiEnabled(False)
+            else:
+                self.programButton.setEnabled(True)
+                self.setStatusLabel("Connected in firmware mode")
+                self.setSourceSelectionUiEnabled(True)
         elif (state == self.UIState.FW_SCANNING):
             self._cold_boot_error_message = None
             self.resetButton.setEnabled(False)
