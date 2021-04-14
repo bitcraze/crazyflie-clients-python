@@ -20,8 +20,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Check build and install
+        run: |
+          pip install setuptools
+          python3 setup.py sdist
+          pip install dist/*.tar.gz
+
       - run: docker pull bitcraze/builder
-      
+
       - name: CI checks
         run: docker run --rm -v ${PWD}:/module bitcraze/builder ./tools/build/build
   
