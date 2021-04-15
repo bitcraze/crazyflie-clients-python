@@ -52,7 +52,10 @@ def relative(lst, base=''):
     return list(map(lambda x: base + os.path.basename(x), lst))
 
 
-VERSION = get_version()
+try:
+    VERSION = get_version()
+except Exception:
+    VERSION = None
 
 if not VERSION and not os.path.isfile('src/cfclient/version.json'):
     sys.stderr.write("Git is required to install from source.\n" +
