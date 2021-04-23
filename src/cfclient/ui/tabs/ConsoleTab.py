@@ -89,10 +89,19 @@ class ConsoleTab(Tab, console_tab_class):
         # Make sure we get printouts from the Crazyflie into the log (such as
         # build version and test ok/fail)
         logger.debug("[%s]", text)
+        scrollbar = self.console.verticalScrollBar()
+        prev_scroll = scrollbar.value()
+        was_maximum = prev_scroll == scrollbar.maximum()
+        prev_cursor = self.console.textCursor()
+
         self.console.moveCursor(QTextCursor.End)
         self.console.insertPlainText(text)
-        scrollbar = self.console.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+
+        if was_maximum:
+            scrollbar.setValue(scrollbar.maximum())
+        else:
+            self.console.setTextCursor(prev_cursor)
+            scrollbar.setValue(prev_scroll)
 
     def clear(self):
         self.console.clear()
