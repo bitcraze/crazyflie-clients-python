@@ -91,16 +91,17 @@ class ConsoleTab(Tab, console_tab_class):
         logger.debug("[%s]", text)
         scrollbar = self.console.verticalScrollBar()
         prev_scroll = scrollbar.value()
-        was_maximum = prev_scroll == scrollbar.maximum()
         prev_cursor = self.console.textCursor()
+        was_maximum = prev_scroll == scrollbar.maximum()
 
         self.console.moveCursor(QTextCursor.End)
         self.console.insertPlainText(text)
 
-        if was_maximum:
+        self.console.setTextCursor(prev_cursor)
+
+        if was_maximum and not prev_cursor.hasSelection():
             scrollbar.setValue(scrollbar.maximum())
         else:
-            self.console.setTextCursor(prev_cursor)
             scrollbar.setValue(prev_scroll)
 
     def clear(self):
