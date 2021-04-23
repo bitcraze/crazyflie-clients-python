@@ -33,6 +33,7 @@ import logging
 
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QTextCursor
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -88,7 +89,10 @@ class ConsoleTab(Tab, console_tab_class):
         # Make sure we get printouts from the Crazyflie into the log (such as
         # build version and test ok/fail)
         logger.debug("[%s]", text)
+        self.console.moveCursor(QTextCursor.End)
         self.console.insertPlainText(text)
+        scrollbar = self.console.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
 
     def clear(self):
         self.console.clear()
