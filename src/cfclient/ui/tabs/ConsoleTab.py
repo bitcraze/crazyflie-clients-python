@@ -33,6 +33,7 @@ import logging
 
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QTextCursor
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -88,7 +89,20 @@ class ConsoleTab(Tab, console_tab_class):
         # Make sure we get printouts from the Crazyflie into the log (such as
         # build version and test ok/fail)
         logger.debug("[%s]", text)
+        scrollbar = self.console.verticalScrollBar()
+        prev_scroll = scrollbar.value()
+        prev_cursor = self.console.textCursor()
+        was_maximum = prev_scroll == scrollbar.maximum()
+
+        self.console.moveCursor(QTextCursor.End)
         self.console.insertPlainText(text)
+
+        self.console.setTextCursor(prev_cursor)
+
+        if was_maximum and not prev_cursor.hasSelection():
+            scrollbar.setValue(scrollbar.maximum())
+        else:
+            scrollbar.setValue(prev_scroll)
 
     def clear(self):
         self.console.clear()
