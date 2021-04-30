@@ -33,7 +33,7 @@ import sys
 
 import cflib.crtp
 from cflib.bootloader import Bootloader, Target
-from cflib.bootloader.boottypes import BootVersion, TargetTypes
+from cflib.bootloader.boottypes import BootVersion
 
 from typing import Optional, List
 
@@ -108,7 +108,6 @@ def main():
     elif sys.argv[0] == "reset":
         action = "reset"
     elif sys.argv[0] == "flash":
-        # print len(sys.argv)
         if len(sys.argv) < 2:
             print("The flash action require a file name.")
             link.close()
@@ -128,62 +127,43 @@ def main():
         link.close()
         sys.exit(-1)
 
-    # Currently there's two different targets available
-    connected_targets = ()
-
     try:
         # Initialise the bootloader lib
         bl = Bootloader(clink)
 
-        #########################################
-        # Get the connection with the bootloader
-        #########################################
-        # The connection is done by reseting to the bootloader (default)
-        if boot == "reset":
-            print("Reset to bootloader mode ..."),
+        warm_boot = (boot == "reset")
+        if warm_boot:
+            print("Reset to bootloader mode ...")
             sys.stdout.flush()
-            if bl.start_bootloader(warm_boot=True):
-                print(" done!")
-            else:
-                print("Failed to warmboot")
-                bl.close()
-                sys.exit(-1)
         else:  # The connection is done by a cold boot ...
             print("Restart the Crazyflie you want to bootload in the next"),
             print(" 10 seconds ..."),
 
             sys.stdout.flush()
-            if bl.start_bootloader(warm_boot=False):
-                print(" done!")
-            else:
-                print("Cannot connect the bootloader!")
-                bl.close()
-                sys.exit(-1)
-
-        print("Connected to bootloader on {} (version=0x{:X})".format(
-            BootVersion.to_ver_string(bl.protocol_version),
-            bl.protocol_version))
-
-        if bl.protocol_version == BootVersion.CF2_PROTO_VER:
-            connected_targets += (bl.get_target(TargetTypes.NRF51),)
-        connected_targets += (bl.get_target(TargetTypes.STM32),)
 
         ######################################
         # Doing something (hopefully) useful
         ######################################
 
-        # Print information about the targets
-        for target in connected_targets:
-            print(target)
         if action == "info":
-            None  # Already done ...
-        elif action == "reset":
-            print
-            print("Reset in firmware mode ...")
-            bl.reset_to_firmware()
+            def print_info(version: int, connected_targets: [Target]):
+                print("Connected to bootloader on {} (version=0x{:X})".format(
+                    BootVersion.to_ver_string(version),
+                    version
+                    )
+                )
+                for target in connected_targets:
+                    print(target)
+
+            # flash_full called with no filename will not flash, just call
+            # our info callback
+            bl.flash_full(None, warm_boot, None, print_info)
         elif action == "flash" and filename and targets:
-            bl.flash(filename, targets)
-            print("Reset in firmware mode ...")
+            try:
+                bl.flash_full(filename, warm_boot, targets)
+            except Exception as e:
+                print("Failed to flash: {}".format(e))
+        elif action == "reset":
             bl.reset_to_firmware()
         else:
             None
