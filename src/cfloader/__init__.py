@@ -157,10 +157,10 @@ def main():
 
             # flash_full called with no filename will not flash, just call
             # our info callback
-            bl.flash_full(None, warm_boot, None, print_info)
+            bl.flash_full(None, None, warm_boot, None, print_info)
         elif action == "flash" and filename and targets:
             try:
-                bl.flash_full(filename, warm_boot, targets)
+                bl.flash_full(None, filename, warm_boot, targets)
             except Exception as e:
                 print("Failed to flash: {}".format(e))
         elif action == "reset":
