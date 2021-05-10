@@ -309,19 +309,19 @@ Below is an example of part of the param TOC cache:
 ``` {.json}
 {
   "imu_sensors": {
-    "HMC5883L": {
+    "AK8963": {
       "ident": 0,
       "group": "imu_sensors",
-      "name": "HMC5883L",
+      "name": "AK8963",
       "pytype": "<B",
       "__class__": "ParamTocElement",
       "ctype": "uint8_t",
       "access": 1
     },
-    "MS5611": {
+    "LPS25H": {
       "ident": 1,
       "group": "imu_sensors",
-      "name": "MS5611",
+      "name": "LPS25H",
       "pytype": "<B",
       "__class__": "ParamTocElement",
       "ctype": "uint8_t",

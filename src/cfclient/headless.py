@@ -93,7 +93,7 @@ class HeadlessClient():
         # 2014-11-25 chad: Add a callback for when we have a good connection.
         self._cf.connected.add_callback(self._connected)
         self._cf.param.add_update_callback(
-            group="imu_sensors", name="HMC5883L", cb=(
+            group="imu_sensors", name="AK8963", cb=(
                 lambda name, found: self._jr.set_alt_hold_available(
                     eval(found))))
         self._jr.assisted_control_updated.add_callback(
