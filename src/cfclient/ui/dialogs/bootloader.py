@@ -390,7 +390,7 @@ class CrazyloadThread(QThread):
         self.connectingSignal.emit()
 
         try:
-            success = self._bl.start_bootloader(warm_boot=False)
+            success = self._bl.start_bootloader(warm_boot=False, cf=None)
             if not success:
                 self.failed_signal.emit("Could not connect to bootloader")
             else:
@@ -405,7 +405,8 @@ class CrazyloadThread(QThread):
         try:
             self._terminate_flashing = False
             self._bl.clink = self._cf.link_uri
-            self._bl.flash_full(str(filename),
+            self._bl.flash_full(self._cf,
+                                str(filename),
                                 self._boot_mode is self.WARM_BOOT,
                                 targets,
                                 None,
