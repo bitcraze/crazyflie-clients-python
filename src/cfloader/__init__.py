@@ -40,14 +40,10 @@ from typing import Optional, List
 
 def main():
     # Initialise the CRTP link driver
-    link = None
     try:
         cflib.crtp.init_drivers()
-        link = cflib.crtp.get_link_driver("radio://")
     except Exception as e:
         print("Error: {}".format(str(e)))
-        if link:
-            link.close()
         sys.exit(-1)
 
     # Set the default parameters
@@ -79,8 +75,6 @@ def main():
         print("                             possible  page in flash and reset "
               "to firmware")
         print("                             mode.")
-        if link:
-            link.close()
         sys.exit(0)
 
     # Analyse the command line parameters
@@ -110,7 +104,6 @@ def main():
     elif sys.argv[0] == "flash":
         if len(sys.argv) < 2:
             print("The flash action require a file name.")
-            link.close()
             sys.exit(-1)
         action = "flash"
         filename = sys.argv[1]
@@ -124,7 +117,6 @@ def main():
                 targets.append(Target("cf2", target, type))
     else:
         print("Action", sys.argv[0], "unknown!")
-        link.close()
         sys.exit(-1)
 
     try:
