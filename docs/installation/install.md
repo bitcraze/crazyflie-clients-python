@@ -18,7 +18,7 @@ pip3 install --upgrade pip.
 ### Setting udev permissions
 
 Using Crazyradio on Linux requires that you set udev permissions. See the cflib
-[readme](https://github.com/bitcraze/crazyflie-lib-python#setting-udev-permissions)
+[installation guide](https://github.com/bitcraze/crazyflie-lib-python/blob/master/docs/installation/install.md#setting-udev-permissions)
 for more information.
 
 ## Windows
