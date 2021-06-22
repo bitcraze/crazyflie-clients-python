@@ -17,3 +17,4 @@
 - title: Development
   subs:
     - {page_id: dev_info_client}
+    - {page_id: zmq-server}
