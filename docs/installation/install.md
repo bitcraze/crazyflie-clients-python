@@ -9,12 +9,14 @@ page_id: install
 
 For <  Ubuntu 20.04 you will need to check first if which version your python is on and if you have 'python3' on your system.
 
-From a fresh Ubuntu 20.04 system, running the client form source requires git and pip.
+From a fresh Ubuntu 20.04 system, running the client form source requires git and pip. 
 
 ```
-sudo apt install git python3-pip
-pip3 install --upgrade pip.
+sudo apt install git python3-pip python3-pyqt5
+pip3 install --upgrade pip
 ```
+Since the pyqt5 package required for the cfclient does not install all the libraries, it will need to be installed seperately too, however this should be fixed in the future. See this [issue](https://github.com/bitcraze/crazyflie-clients-python/issues/518)
+
 ### Setting udev permissions
 
 Using Crazyradio on Linux requires that you set udev permissions. See the cflib
@@ -55,6 +57,8 @@ pip3 install --upgrade pip.
 
 # Installing from latest release
 
+If you are planning to not do any developement on the client itself, we highly recommend you to install the cfclient according to latest release (as according of the instructions described) and not from source ([from these instructions](#installing-from-source)). 
+
 ## From Pypi (Windows, Mac, Linux, ..., with python3)
 
 Each release of the client is pushed to the [pypi repository](https://pypi.org/project/cfclient/). If you have python >= 3.6, it can be installed with pip:
@@ -64,7 +68,7 @@ pip install cfclient
 ```
 # Installing from source
 
-The Crazyflie client requires Python >= 3.6. The following instructions describe hot to install it from source.
+If you are planning to do development with the cfclient, you are at right spot! The Crazyflie client requires Python >= 3.6. The following instructions describe hot to install it from source. Make sure to also install the [cflib](https://github.com/bitcraze/crazyflie-lib-python) from source as well!
 
 ## Pip and Venv
 
