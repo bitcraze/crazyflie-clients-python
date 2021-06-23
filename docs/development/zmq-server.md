@@ -230,7 +230,7 @@ Logging data from the Crazyflie is done by setting up log configurations that wi
 
 **Note**: When a host connects to a Crazyflie the log configurations are all deleted. So if you connect, set up log configurations, disconnect and then connect again the configurations will be deleted.
 
-Below is an example for creating a logging configuration and starting it. The configuration contains the two variables _pm.vbat_ and _stabilizer.roll_ that will be sent at 1 Hz. Data will be published to the [log data socket](#log_data).
+Below is an example for creating a logging configuration and starting it. The configuration contains the two variables _pm.vbat_ and _stabilizer.roll_ that will be sent at 1 Hz. Data will be published to the [log socket](#log-socket).
 
 Each action for log configurations (create, start, stop, delete) will be broadcasted on the log data socket. Log data will also be boardcasted on the same socket.
 
@@ -351,7 +351,7 @@ to a number (0 for false, 1 for true). The type should match the type that is in
 | value  | unsigned/signed/float/bool | When received a string is created from the value |
 
 ## Log socket
-This socket is used for sending log configuration events as well as log data. The events that are sent is for creating, starting, stopping and deleting a configuration. For every started configuration the log data will be sent over this socket. To control this see the [[doc:crazyflie:client:cfzmq:index#log|log configuration above]].
+This socket is used for sending log configuration events as well as log data. The events that are sent is for creating, starting, stopping and deleting a configuration. For every started configuration the log data will be sent over this socket. To control this see the [log configuration above](#log).
 
 Each message contains an _event_ field (see below) and a _name_ field referring to the log configuration name.
 
