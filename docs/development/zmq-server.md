@@ -40,7 +40,7 @@ $bin/cfqmq --url "tcp://*"
 
 
 
-## Command socket 
+## Command socket
 The command messages are implemented as server/client, where each request to the server is answered with a response. Each message to the server contains version, command and fields related to the command, Each response from the server will contain version and status, where status 0 means everything was ok. This makes all the calls on this port synchronous, where the server will not reply until the action is completed or it fails.
 
 
@@ -108,7 +108,7 @@ Example response:
 
 ```
 
-## connect 
+## connect
 The connect command will connect to the supplied URI, download the logging TOC and parameter TOC/values and return everything. There's a timeout on the server-side that will be hit if the server can't connect to a Crazyflie on the supplied URI (of if there's some other error).
 
 The log TOC will be found in the _log_ dictionary, where the first level is group, the second level is name and the third is the attributes (see below). So the type of _altHold.target_ will be found in _log->altHold->target->type_.
@@ -132,64 +132,64 @@ Example response of **successful** command:
   "status": 0,
   "log": {
     "acc": {
-      "mag2": {"type": "float"}, 
+      "mag2": {"type": "float"},
       "x": {"type": "float"},
-      "y": {"type": "float"}, 
-      "z": {"type": "float"}, 
+      "y": {"type": "float"},
+      "z": {"type": "float"},
       "zw": {"type": "float"}
-    }, 
+    },
     "altHold": {
-      "err": {"type": "float"}, 
-      "target": {"type": "float"}, 
-      "vSpeed": {"type": "float"}, 
-      "vSpeedASL": {"type": "float"}, 
-      "vSpeedAcc": {"type": "float"}, 
+      "err": {"type": "float"},
+      "target": {"type": "float"},
+      "vSpeed": {"type": "float"},
+      "vSpeedASL": {"type": "float"},
+      "vSpeedAcc": {"type": "float"},
       "zSpeed": {"type": "float"}
-    }, 
+    },
     "baro": {
-      "asl": {"type": "float"}, 
-      "aslLong": {"type": "float"}, 
-      "aslRaw": {"type": "float"}, 
-      "pressure": {"type": "float"}, 
+      "asl": {"type": "float"},
+      "aslLong": {"type": "float"},
+      "aslRaw": {"type": "float"},
+      "pressure": {"type": "float"},
       "temp": {"type": "float"}
-    }, 
+    },
     "gyro": {
-      "x": {"type": "float"}, 
-      "y": {"type": "float"}, 
+      "x": {"type": "float"},
+      "y": {"type": "float"},
       "z": {"type": "float"}
-    }, 
+    },
     "mag": {
-      "x": {"type": "float"}, 
-      "y": {"type": "float"}, 
+      "x": {"type": "float"},
+      "y": {"type": "float"},
       "z": {"type": "float"}
-    }, 
+    },
     "mag_raw": {
-      "x": {"type": "int16_t"}, 
-      "y": {"type": "int16_t"}, 
+      "x": {"type": "int16_t"},
+      "y": {"type": "int16_t"},
       "z": {"type": "int16_t"}
-    }, 
+    },
     "motor": {
-      "m1": {"type": "int32_t"}, 
-      "m2": {"type": "int32_t"}, 
-      "m3": {"type": "int32_t"}, 
+      "m1": {"type": "int32_t"},
+      "m2": {"type": "int32_t"},
+      "m3": {"type": "int32_t"},
       "m4": {"type": "int32_t"}
     }
-}, 
+},
 "param": {
   "altHold": {
     "altHoldChangeSens": {
-      "access": "RW", 
-      "type": "float", 
+      "access": "RW",
+      "type": "float",
       "value": "200.0"
-    }, 
+    },
     "altHoldErrMax": {
-      "access": "RW", 
-      "type": "float", 
+      "access": "RW",
+      "type": "float",
       "value": "1.0"
-    }, 
+    },
     "aslAlpha": {
-      "access": "RW", 
-      "type": "float", 
+      "access": "RW",
+      "type": "float",
       "value": "0.920000016689"
     }
   }
@@ -225,8 +225,8 @@ For the parameters (found in _param_) the following attributes are set:
 | type    | string | (u)int8_t, (u)int16_t, (u)int32_t, float |
 | value    | string | String representation of the current parameter value |
 
-## log 
-Logging data from the Crazyflie is done by setting up log configurations that will push log data at a specified interval ([more info here](/documentation/repository/crazyflie-firmware/master/userguides/logparam/)). There are four command associated with log configurations: _create_, _start_, _stop_ and _delete_. Create and delete handles if the log configuration is stored in the Crazyflie memory or not. Start and stop handles if the log data is actually being sent or not from the Crazyflie to the host. Before a log config can be started is has to be created, before it can be stopped it has to be started and before it can be deleted is has to be created. Note that log block are automatically started once they have been created.
+## log
+Logging data from the Crazyflie is done by setting up log configurations that will push log data at a specified interval ([more info here](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/userguides/logparam/)). There are four command associated with log configurations: _create_, _start_, _stop_ and _delete_. Create and delete handles if the log configuration is stored in the Crazyflie memory or not. Start and stop handles if the log data is actually being sent or not from the Crazyflie to the host. Before a log config can be started is has to be created, before it can be stopped it has to be started and before it can be deleted is has to be created. Note that log block are automatically started once they have been created.
 
 **Note**: When a host connects to a Crazyflie the log configurations are all deleted. So if you connect, set up log configurations, disconnect and then connect again the configurations will be deleted.
 
@@ -288,7 +288,7 @@ The following attributes should be set in the request packet:
 The following errors can be seen in the response packet:
 
 |  Action  |  Status  |  Comment  |
-|  ---  |  ---  |  ---  |  
+|  ---  |  ---  |  ---  |
 | create | 0x01     | One or more variables were not found in the TOC |
 | create | 0x02     | The period is either too small/large of the configuration too large |
 | create | 0x03     | Timeout was hit when performing action.
@@ -296,10 +296,10 @@ The following errors can be seen in the response packet:
 | start/stop/delete | 0x02     | Timeout was hit when performing action |
 
 
-**note:** The Python API supports logging variables using different types than what the variables is declared as in the firmware. I.e you can log a uint32_t as a uint8_t, retaining the 8 MSB ([more info here](/documentation/repository/crazyflie-firmware/master/userguides/logparam/)). This is still not implemented.
+**note:** The Python API supports logging variables using different types than what the variables is declared as in the firmware. I.e you can log a uint32_t as a uint8_t, retaining the 8 MSB ([more info here](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/userguides/logparam/)). This is still not implemented.
 
-## param 
-During run-time it's possible to set parameters that are mapped directly to variables in the firmware([more info here](/documentation/repository/crazyflie-firmware/master/userguides/logparam/)). Each parameter update is also published on the param socket.
+## param
+During run-time it's possible to set parameters that are mapped directly to variables in the firmware([more info here](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/userguides/logparam/)). Each parameter update is also published on the param socket.
 
 Below is an example command to set the _flightctrl.xmode_ parameter.
 
@@ -319,8 +319,8 @@ Example response of **successful** command:
 {
     "version": 1,
     "status": 0,
-    "name": "flightctrl.xmode", 
-    "value": "1" 
+    "name": "flightctrl.xmode",
+    "value": "1"
 }
 ```
 
@@ -337,7 +337,7 @@ Example response of **un-successful** command:
 {
     "version": 1,
     "status": 1,
-    "msg": "Could not find flightctrl.xmode in TOC" 
+    "msg": "Could not find flightctrl.xmode in TOC"
 }
 ```
 
@@ -350,7 +350,7 @@ to a number (0 for false, 1 for true). The type should match the type that is in
 | name    | string | Name of parameter (group.name) |
 | value  | unsigned/signed/float/bool | When received a string is created from the value |
 
-## Log socket 
+## Log socket
 This socket is used for sending log configuration events as well as log data. The events that are sent is for creating, starting, stopping and deleting a configuration. For every started configuration the log data will be sent over this socket. To control this see the [[doc:crazyflie:client:cfzmq:index#log|log configuration above]].
 
 Each message contains an _event_ field (see below) and a _name_ field referring to the log configuration name.
@@ -365,8 +365,8 @@ The following events are sent:
 | stopped    | When a configuration is stopped |
 | deleted    | When a configuration is deleted |
 | data  | Log data (see below) |
- 
- 
+
+
 Example of a _started_ event:
 ```
 {
@@ -375,8 +375,8 @@ Example of a _started_ event:
   "event": "started"
 }
 ```
- 
- 
+
+
 
  The following fields is in the data event:
 
@@ -384,8 +384,8 @@ Example of a _started_ event:
 | name | string     | Name of the config that triggered the data |
 | timestamp | int   | Time since system start (in ms) |
 | variables | dict  | Dictionary where the keys are variable names (group.name) and the values are the variable values |
- 
- 
+
+
 Example of a data event:
 ```
 {
@@ -400,30 +400,30 @@ Example of a data event:
     }
 }
 ```
- 
- 
-## Param socket 
-This socket is used to broadcast parameter updates done on the [command socket](#command_socket)
-  
+
+
+## Param socket
+This socket is used to broadcast parameter updates done on the [command socket](#command-socket)
+
 For each update the variable name and value is sent.
- 
- 
+
+
 ```
 {
     "version": 1,
-    "name": "flightctrl.xmode", 
-    "value": "1" 
+    "name": "flightctrl.xmode",
+    "value": "1"
 }
 ```
- 
- 
 
-## Connection socket 
-This socket is used to broadcast changes in the connection state as events. Connecting the Crazyflie is a synchronous call to the [command socket](#command_socket) but for instance a lost connection will be asynchronous and boardcasted on this socket.
+
+
+## Connection socket
+This socket is used to broadcast changes in the connection state as events. Connecting the Crazyflie is a synchronous call to the [command socket](#command-socket) but for instance a lost connection will be asynchronous and boardcasted on this socket.
 
 Each event has a name and uri, there might also be an optional message. Note that disconnected is always sent no matter the reason. So a requested disconnect will send a _disconnected_ event, and a lost connection will send a _lost_ event as well as a _disconnected_ event.
 
-  
+
 There's a number of different events:
 
 |  Event  |  Comment  |  Msg field  |
@@ -433,22 +433,22 @@ There's a number of different events:
 | failed       | A connection request has failed | Yes |
 | disconnected | A Crazyflie has been disconnected | No |
 | lost         | An open connection has been lost | Yes |
- 
- 
+
+
 Example of a lost connection:
 ```
 {
     "version": 1,
-    "event": "failed", 
+    "event": "failed",
     "uri": "radio://0/10/250K",
-    "msg": "Too many packets lost!" 
+    "msg": "Too many packets lost!"
 }
 ```
- 
- 
-## Control socket 
+
+
+## Control socket
 Control commands can be sent at any time after the Crazyflie has been connected and has the following scaling/format:
-  
+
 ```
 {
   "version": 1,
@@ -458,12 +458,11 @@ Control commands can be sent at any time after the Crazyflie has been connected 
   "thrust": 0.0
 }
 ```
- 
- 
+
+
 |  Param  |  Unit  |  Limit  |
 |  ---  |  ---  |  ---  |
 | roll    | degrees| N/A     |
 | pitch    | degrees| N/A     |
 | yaw    | degrees/s| N/A     |
 | thrust    | PWM | 20 000 - 60 000|
- 
