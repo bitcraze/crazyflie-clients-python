@@ -3,7 +3,8 @@ title: ZMQ Server
 page_id: zmq-server
 ---
 
-The [ZMQ](http://zeromq.org/) framework (actually ØMQ) is used to interconnect applications or parts of applications to other applications via a range of interfaces. It's really nice since there's lots of language support and it's easy to use.
+The [ZMQ](http://zeromq.org/) framework (actually ØMQ) is used to interconnect applications or parts of applications to
+other applications via a range of interfaces. It's really nice since there's lots of language support and it's easy to use.
 
 The application uses 4 ports for communicating:
   * 2000: Main command/response socket (server/client)
@@ -12,9 +13,12 @@ The application uses 4 ports for communicating:
   * 2003: Connection events (publish)
   * 2004: Control data (pull)
 
-All communication is done using JSON. To test the implementation we have a [test client](https://github.com/bitcraze/crazyflie-clients-python/blob/develop/examples/zmqsrvtest.py) that could be useful to have a look at. Each message sent contains a _version_ field that should always be included.
+All communication is done using JSON. To test the implementation we have a
+[test client](https://github.com/bitcraze/crazyflie-clients-python/blob/develop/examples/zmqsrvtest.py) that could be
+useful to have a look at. Each message sent contains a _version_ field that should always be included.
 
 ## cfzmq
+
 The client is run using the command line:
 ```
 $ bin/cfzmq -h
@@ -41,7 +45,11 @@ $bin/cfqmq --url "tcp://*"
 
 
 ## Command socket
-The command messages are implemented as server/client, where each request to the server is answered with a response. Each message to the server contains version, command and fields related to the command, Each response from the server will contain version and status, where status 0 means everything was ok. This makes all the calls on this port synchronous, where the server will not reply until the action is completed or it fails.
+
+The command messages are implemented as server/client, where each request to the server is answered with a response.
+Each message to the server contains version, command and fields related to the command, Each response from the server
+will contain version and status, where status 0 means everything was ok. This makes all the calls on this port
+synchronous, where the server will not reply until the action is completed or it fails.
 
 
 Example command:
@@ -64,7 +72,8 @@ Example response of **successful** command:
 
 
 
-For each command there's an enumerated set of statuses that will be used (see blow) and each message where status != 0 will contain the field _msg_ detailing the error.
+For each command there's an enumerated set of statuses that will be used (see blow) and each message where
+status != 0 will contain the field _msg_ detailing the error.
 
 Example response of **unsuccessful** command:
 
@@ -77,7 +86,10 @@ Example response of **unsuccessful** command:
 ```
 
 ## scan
-The scan command will trigger a scanning of all of the available interfaces on the server (USB and Crazyradio) and return all the Crazyflies found. If no interfaces are available (no Crazyradio or Crazyflie) the command will return an empty list. Therefore there's no error conditions for this command, status will always be 0.
+
+The scan command will trigger a scanning of all of the available interfaces on the server (USB and Crazyradio) and
+return all the Crazyflies found. If no interfaces are available (no Crazyradio or Crazyflie) the command will
+return an empty list. Therefore there's no error conditions for this command, status will always be 0.
 
 
 Example command:
@@ -109,11 +121,16 @@ Example response:
 ```
 
 ## connect
-The connect command will connect to the supplied URI, download the logging TOC and parameter TOC/values and return everything. There's a timeout on the server-side that will be hit if the server can't connect to a Crazyflie on the supplied URI (of if there's some other error).
 
-The log TOC will be found in the _log_ dictionary, where the first level is group, the second level is name and the third is the attributes (see below). So the type of _altHold.target_ will be found in _log->altHold->target->type_.
+The connect command will connect to the supplied URI, download the logging TOC and parameter TOC/values and return
+everything. There's a timeout on the server-side that will be hit if the server can't connect to a Crazyflie on the
+supplied URI (of if there's some other error).
 
-The param TOC will be found in the _param_ dictionary, where the first level is group, the second level is name and the third is the attributes (see blow). So the RO/RW attribute for _altHold.aslAlpha_ will be found in _param->altHold->aslAlpha->access_.
+The log TOC will be found in the _log_ dictionary, where the first level is group, the second level is name and the
+third is the attributes (see below). So the type of _altHold.target_ will be found in _log->altHold->target->type_.
+
+The param TOC will be found in the _param_ dictionary, where the first level is group, the second level is name and
+the third is the attributes (see blow). So the RO/RW attribute for _altHold.aslAlpha_ will be found in _param->altHold->aslAlpha->access_.
 
 
 Example command:
@@ -213,26 +230,36 @@ Example response of **unsuccessful** command:
 
 For the log variables (found in _log_) the following attributes are set:
 
-|  Field  |  Type  |  Comment  |
-|  ---  |  ---  |  ---  |
-| type    | string | (u)int8, (u)int16, (u)int32, float |
+| Field | Type   | Comment                            |
+| ----- | ------ | ---------------------------------- |
+| type  | string | (u)int8, (u)int16, (u)int32, float |
 
 For the parameters (found in _param_) the following attributes are set:
 
-|  Field  |  Type  |  Comment  |
-|  ---  |  ---  |  ---  |
-| access  | string | RO for read only parameters, RW for writable |
-| type    | string | (u)int8_t, (u)int16_t, (u)int32_t, float |
-| value    | string | String representation of the current parameter value |
+| Field  | Type   |  Comment                                             |
+| ------ | ------ | ---------------------------------------------------- |
+| access | string | RO for read only parameters, RW for writable         |
+| type   | string | (u)int8_t, (u)int16_t, (u)int32_t, float             |
+| value  | string | String representation of the current parameter value |
 
 ## log
-Logging data from the Crazyflie is done by setting up log configurations that will push log data at a specified interval ([more info here](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/userguides/logparam/)). There are four command associated with log configurations: _create_, _start_, _stop_ and _delete_. Create and delete handles if the log configuration is stored in the Crazyflie memory or not. Start and stop handles if the log data is actually being sent or not from the Crazyflie to the host. Before a log config can be started is has to be created, before it can be stopped it has to be started and before it can be deleted is has to be created. Note that log block are automatically started once they have been created.
 
-**Note**: When a host connects to a Crazyflie the log configurations are all deleted. So if you connect, set up log configurations, disconnect and then connect again the configurations will be deleted.
+Logging data from the Crazyflie is done by setting up log configurations that will push log data at a specified
+interval ([more info here](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/userguides/logparam/)).
+There are four command associated with log configurations: _create_, _start_, _stop_ and _delete_. Create and delete
+handles if the log configuration is stored in the Crazyflie memory or not. Start and stop handles if the log data is
+actually being sent or not from the Crazyflie to the host. Before a log config can be started is has to be created,
+before it can be stopped it has to be started and before it can be deleted is has to be created. Note that log block
+are automatically started once they have been created.
 
-Below is an example for creating a logging configuration and starting it. The configuration contains the two variables _pm.vbat_ and _stabilizer.roll_ that will be sent at 1 Hz. Data will be published to the [log socket](#log-socket).
+**Note**: When a host connects to a Crazyflie the log configurations are all deleted. So if you connect, set up log
+configurations, disconnect and then connect again the configurations will be deleted.
 
-Each action for log configurations (create, start, stop, delete) will be broadcasted on the log data socket. Log data will also be boardcasted on the same socket.
+Below is an example for creating a logging configuration and starting it. The configuration contains the two
+variables _pm.vbat_ and _stabilizer.roll_ that will be sent at 1 Hz. Data will be published to the [log socket](#log-socket).
+
+Each action for log configurations (create, start, stop, delete) will be broadcasted on the log data socket. Log
+data will also be boardcasted on the same socket.
 
 
 First create the configuration:
@@ -278,28 +305,34 @@ Example response:
 
 The following attributes should be set in the request packet:
 
-|  Field  |  Type  |  Comment  |  Mandatory for  |
-|  ---  |  ---  |  ---  |  ---  |
-| name    | string | Name of configuration | all |
-| action  | string | create, start, stop, delete | all |
-| period  | int | Period (in ms) for data to be sent | create |
-| variables | list | List of variables "group.name" | create |
+| Field     | Type   | Comment                            | Mandatory for |
+| --------- | ------ | ---------------------------------- | ------------- |
+| name      | string | Name of configuration              | all           |
+| action    | string | create, start, stop, delete        | all           |
+| period    | int    | Period (in ms) for data to be sent | create        |
+| variables | list   | List of variables "group.name"     | create        |
 
 The following errors can be seen in the response packet:
 
-|  Action  |  Status  |  Comment  |
-|  ---  |  ---  |  ---  |
-| create | 0x01     | One or more variables were not found in the TOC |
-| create | 0x02     | The period is either too small/large of the configuration too large |
-| create | 0x03     | Timeout was hit when performing action.
-| start/stop/delete | 0x01     | Config name not found |
-| start/stop/delete | 0x02     | Timeout was hit when performing action |
+| Action            | Status | Comment                                                             |
+| ----------------- | ------ | ------------------------------------------------------------------- |
+| create            | 0x01   | One or more variables were not found in the TOC                     |
+| create            | 0x02   | The period is either too small/large of the configuration too large |
+| create            | 0x03   | Timeout was hit when performing action.                             |
+| start/stop/delete | 0x01   | Config name not found                                               |
+| start/stop/delete | 0x02   | Timeout was hit when performing action                              |
 
 
-**note:** The Python API supports logging variables using different types than what the variables is declared as in the firmware. I.e you can log a uint32_t as a uint8_t, retaining the 8 MSB ([more info here](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/userguides/logparam/)). This is still not implemented.
+**note:** The Python API supports logging variables using different types than what the variables is declared
+as in the firmware. I.e you can log a uint32_t as a uint8_t, retaining the 8 MSB
+([more info here](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/userguides/logparam/)).
+This is still not implemented.
 
 ## param
-During run-time it's possible to set parameters that are mapped directly to variables in the firmware([more info here](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/userguides/logparam/)). Each parameter update is also published on the param socket.
+
+During run-time it's possible to set parameters that are mapped directly to variables in the
+firmware([more info here](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/userguides/logparam/)).
+Each parameter update is also published on the param socket.
 
 Below is an example command to set the _flightctrl.xmode_ parameter.
 
@@ -326,11 +359,11 @@ Example response of **successful** command:
 
 The following errors can be seen in the response packet:
 
-|  Status  |  Comment  |
-|  ---  |  ---  |
-| 0x01     | The parameter was not found in the TOC |
-| 0x02     | The parameter is RO and cannot be set |
-| 0x03     | The timeout was reached |
+| Status | Comment                                |
+| ------ | -------------------------------------- |
+| 0x01   | The parameter was not found in the TOC |
+| 0x02   | The parameter is RO and cannot be set  |
+| 0x03   | The timeout was reached                |
 
 Example response of **un-successful** command:
 ```
@@ -342,29 +375,33 @@ Example response of **un-successful** command:
 ```
 
 The API accepts values as unsigned/signed/float/bool. Booleans are stored as uint8_t and will be converted
-to a number (0 for false, 1 for true). The type should match the type that is in the TOC (i.e don't try to set a float for a uint_8 variable).
+to a number (0 for false, 1 for true). The type should match the type that is in the TOC (i.e don't try to
+set a float for a uint_8 variable).
 
 
-|  Field  |  Type  |  Comment  |
-|  ---  |  ---  |  ---  |
-| name    | string | Name of parameter (group.name) |
-| value  | unsigned/signed/float/bool | When received a string is created from the value |
+| Field | Type                       | Comment                                          |
+| ----- | -------------------------- | ------------------------------------------------ |
+| name  | string                     | Name of parameter (group.name)                   |
+| value | unsigned/signed/float/bool | When received a string is created from the value |
 
 ## Log socket
-This socket is used for sending log configuration events as well as log data. The events that are sent is for creating, starting, stopping and deleting a configuration. For every started configuration the log data will be sent over this socket. To control this see the [log configuration above](#log).
+
+This socket is used for sending log configuration events as well as log data. The events that are sent is
+for creating, starting, stopping and deleting a configuration. For every started configuration the log data
+will be sent over this socket. To control this see the [log configuration above](#log).
 
 Each message contains an _event_ field (see below) and a _name_ field referring to the log configuration name.
 
 
 The following events are sent:
 
-|  Event  |  Comment  |
-|  ---  |  ---  |
-| created    | When a configuration is created |
-| started    | When a configuration is started |
-| stopped    | When a configuration is stopped |
-| deleted    | When a configuration is deleted |
-| data  | Log data (see below) |
+| Event   | Comment                         |
+| ------- | ------------------------------- |
+| created | When a configuration is created |
+| started | When a configuration is started |
+| stopped | When a configuration is stopped |
+| deleted | When a configuration is deleted |
+| data    | Log data (see below)            |
 
 
 Example of a _started_ event:
@@ -380,10 +417,11 @@ Example of a _started_ event:
 
  The following fields is in the data event:
 
-|  Field  |  Type  |  Comment  |
-| name | string     | Name of the config that triggered the data |
-| timestamp | int   | Time since system start (in ms) |
-| variables | dict  | Dictionary where the keys are variable names (group.name) and the values are the variable values |
+| Field     | Type   | Comment                                                                                          |
+| --------- | ------ | ------------------------------------------------------------------------------------------------ |
+| name      | string | Name of the config that triggered the data                                                       |
+| timestamp | int    | Time since system start (in ms)                                                                  |
+| variables | dict   | Dictionary where the keys are variable names (group.name) and the values are the variable values |
 
 
 Example of a data event:
@@ -403,6 +441,7 @@ Example of a data event:
 
 
 ## Param socket
+
 This socket is used to broadcast parameter updates done on the [command socket](#command-socket)
 
 For each update the variable name and value is sent.
@@ -419,20 +458,25 @@ For each update the variable name and value is sent.
 
 
 ## Connection socket
-This socket is used to broadcast changes in the connection state as events. Connecting the Crazyflie is a synchronous call to the [command socket](#command-socket) but for instance a lost connection will be asynchronous and boardcasted on this socket.
 
-Each event has a name and uri, there might also be an optional message. Note that disconnected is always sent no matter the reason. So a requested disconnect will send a _disconnected_ event, and a lost connection will send a _lost_ event as well as a _disconnected_ event.
+This socket is used to broadcast changes in the connection state as events. Connecting the Crazyflie is a synchronous
+call to the [command socket](#command-socket) but for instance a lost connection will be asynchronous and boardcasted
+on this socket.
+
+Each event has a name and uri, there might also be an optional message. Note that disconnected is always sent no
+matter the reason. So a requested disconnect will send a _disconnected_ event, and a lost connection will send a
+_lost_ event as well as a _disconnected_ event.
 
 
 There's a number of different events:
 
-|  Event  |  Comment  |  Msg field  |
-|  ---  |  ---  |  ---  |
-| requested    | A connection has been requested | No |
-| connected    | A Crazyflie has been connected and the TOCs has been downloaded | No |
-| failed       | A connection request has failed | Yes |
-| disconnected | A Crazyflie has been disconnected | No |
-| lost         | An open connection has been lost | Yes |
+| Event        | Comment                                                         | Msg field |
+| ------------ | --------------------------------------------------------------- | --------- |
+| requested    | A connection has been requested                                 | No        |
+| connected    | A Crazyflie has been connected and the TOCs has been downloaded | No        |
+| failed       | A connection request has failed                                 | Yes       |
+| disconnected | A Crazyflie has been disconnected                               | No        |
+| lost         | An open connection has been lost                                | Yes       |
 
 
 Example of a lost connection:
@@ -447,6 +491,7 @@ Example of a lost connection:
 
 
 ## Control socket
+
 Control commands can be sent at any time after the Crazyflie has been connected and has the following scaling/format:
 
 ```
@@ -460,9 +505,9 @@ Control commands can be sent at any time after the Crazyflie has been connected 
 ```
 
 
-|  Param  |  Unit  |  Limit  |
-|  ---  |  ---  |  ---  |
-| roll    | degrees| N/A     |
-| pitch    | degrees| N/A     |
-| yaw    | degrees/s| N/A     |
-| thrust    | PWM | 20 000 - 60 000|
+| Param  | Unit      | Limit           |
+| ------ | --------- | --------------- |
+| roll   | degrees   | N/A             |
+| pitch  | degrees   | N/A             |
+| yaw    | degrees/s | N/A             |
+| thrust | PWM       | 20 000 - 60 000 |
