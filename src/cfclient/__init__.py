@@ -24,6 +24,7 @@
 #  this program; if not, write to the Free Software Foundation, Inc., 51
 #  Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import json
 import os
 from appdirs import AppDirs
 import sys
@@ -43,6 +44,11 @@ if not hasattr(sys, 'frozen'):
     except pkg_resources.DistributionNotFound:
         VERSION = "dev"
 else:
-    import json
     with open(os.path.join(module_path, "version.json")) as f:
         VERSION = json.load(f)['version']
+
+try:
+    with open(os.path.join(module_path, "resources/log_param_doc.json")) as f:
+        log_param_doc = json.load(f)
+except:  # noqa
+    log_param_doc = None

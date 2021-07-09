@@ -34,7 +34,7 @@ import logging
 
 from PyQt5 import uic
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtCore import QAbstractItemModel, QModelIndex
+from PyQt5.QtCore import QAbstractItemModel, QModelIndex, QVariant
 from PyQt5.QtGui import QBrush, QColor
 
 import cfclient
@@ -59,8 +59,16 @@ class ParamChildItem(object):
         self.ctype = None
         self.access = None
         self.value = ""
+        self.description = str()
         self._cf = crazyflie
         self.is_updating = True
+
+        if cfclient.log_param_doc is not None:
+            try:
+                group = cfclient.log_param_doc['params'][parent.name]
+                self.description = group['variables'][name]['short_desc']
+            except:  # noqa
+                pass
 
     def updated(self, name, value):
         """Callback from the param layer when a parameter has been updated"""
@@ -91,6 +99,15 @@ class ParamGroupItem(object):
         self.children = []
         self.name = name
         self.model = model
+        self.description = str()
+
+        if cfclient.log_param_doc is not None:
+            try:
+                group = cfclient.log_param_doc['params'][name]
+                self.description = group['desc']
+                print(self.description)
+            except:  # noqa
+                pass
 
     def child_count(self):
         """Return the number of children this node has"""
@@ -104,7 +121,7 @@ class ParamBlockModel(QAbstractItemModel):
         """Create the empty model"""
         super(ParamBlockModel, self).__init__(parent)
         self._nodes = []
-        self._column_headers = ['Name', 'Type', 'Access', 'Value']
+        self._column_headers = ['Name', 'Type', 'Access', 'Value', 'Description']
         self._red_brush = QBrush(QColor("red"))
         self._enabled = False
 
@@ -179,11 +196,20 @@ class ParamBlockModel(QAbstractItemModel):
 
     def data(self, index, role):
         """Re-implemented method to get the data for a given index and role"""
+
+        if role == Qt.BackgroundColorRole:
+            if index.row() % 2 == 0:
+                return QVariant(QColor(0xff, 0xff, 0xff))
+            else:
+                return QVariant(QColor(0xe9, 0xe9, 0xe9))
+
         node = index.internalPointer()
         parent = node.parent
         if not parent:
             if role == Qt.DisplayRole and index.column() == 0:
                 return node.name
+            if role == Qt.DisplayRole and index.column() == 4:
+                return node.description
         elif role == Qt.DisplayRole:
             if index.column() == 0:
                 return node.name
@@ -193,6 +219,8 @@ class ParamBlockModel(QAbstractItemModel):
                 return node.access
             if index.column() == 3:
                 return node.value
+            if index.column() == 4:
+                return node.description
         elif role == Qt.EditRole and index.column() == 3:
             return node.value
         elif (role == Qt.BackgroundRole and index.column() == 3 and
@@ -260,6 +288,7 @@ class ParamTab(Tab, param_tab_class):
 
         self._model = ParamBlockModel(None)
         self.paramTree.setModel(self._model)
+        self.paramTree.header().resizeSection(0, 150)
 
     def _connected(self, link_uri):
         self._model.reset()
