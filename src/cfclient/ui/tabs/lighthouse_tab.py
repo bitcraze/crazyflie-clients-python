@@ -34,7 +34,7 @@ import logging
 
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, QTimer
-from PyQt5.QtGui import QMessageBox
+from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QFileDialog
 
 import cfclient
