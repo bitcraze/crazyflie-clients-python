@@ -9,13 +9,12 @@ page_id: install
 
 For <  Ubuntu 20.04 you will need to check first if which version your python is on and if you have 'python3' on your system.
 
-From a fresh Ubuntu 20.04 system, running the client form source requires git and pip. 
+From a fresh Ubuntu 20.04 system, running the client form source requires git, pip and a lib for the Qt GUI. 
 
 ```
-sudo apt install git python3-pip python3-pyqt5
+sudo apt install git python3-pip libxcb-xinerama0
 pip3 install --upgrade pip
 ```
-Since the pyqt5 package required for the cfclient does not install all the libraries, it will need to be installed seperately too, however this should be fixed in the future. See this [issue](https://github.com/bitcraze/crazyflie-clients-python/issues/518)
 
 ### Setting udev permissions
 
