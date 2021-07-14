@@ -165,6 +165,9 @@ def main():
     from PyQt5.QtWidgets import QApplication
     from PyQt5.QtGui import QIcon
 
+    if os.name == 'posix':
+        logger.info('If startup fails because of "xcb", install dependency with `sudo apt install libxcb-xinerama0`.')
+
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     from cfclient.utils.ui import UiUtils
