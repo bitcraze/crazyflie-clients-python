@@ -33,6 +33,8 @@ jobs:
       - name: Update client log_param_doc.json
         run: |
           cp firmware/docs/api/log_param_doc.json src/cfclient/resources/
+          git config --local user.email "ci@bitcraze.io"
+          git config --local user.name "Bitcraze CI Robot"
           git add -f src/cfclient/resources/log_param_doc.json
           git commit -m "Update log_param_doc.json" || echo "Nothing to commit"
 
