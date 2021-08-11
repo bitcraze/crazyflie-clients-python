@@ -33,7 +33,7 @@ jobs:
       - name: Update client log_param_doc.json
         run: |
           cp firmware/docs/api/log_param_doc.json src/cfclient/resources/
-          git add src/cfclient/resources/log_param_doc.json
+          git add -f src/cfclient/resources/log_param_doc.json
           git commit -m "Update log_param_doc.json" || echo "Nothing to commit"
 
       - name: Push changes
