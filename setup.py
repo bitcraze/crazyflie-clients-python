@@ -139,7 +139,7 @@ setup(
                                           'PyYAML~=5.3',
                                           'quamash~=0.6.1',
                                           'qtm~=2.0.2',
-                                          'numpy~=1.19.2',
+                                          'numpy>=1.19.2,<1.24',
                                           'vispy~=0.6.6',
                                           'pyserial~=3.5'],
 
