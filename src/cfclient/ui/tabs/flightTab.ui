@@ -63,19 +63,6 @@
               </property>
              </widget>
             </item>
-            <item row="5" column="0">
-             <widget class="QRadioButton" name="angularPidRadioButton">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Attitude control</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
             <item row="3" column="0">
              <widget class="QLabel" name="label_2">
               <property name="text">
@@ -120,16 +107,6 @@
               </property>
               <property name="text">
                <string>Flight mode</string>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="1">
-             <widget class="QRadioButton" name="ratePidRadioButton">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Rate control</string>
               </property>
              </widget>
             </item>

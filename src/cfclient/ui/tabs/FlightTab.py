@@ -207,25 +207,10 @@ class FlightTab(Tab, flight_tab_class):
 
         self.uiSetupReady()
 
-        self.ratePidRadioButton.clicked.connect(
-            lambda enabled:
-            self.helper.cf.param.set_value("flightmode.ratepid",
-                                           str(enabled)))
-
-        self.angularPidRadioButton.clicked.connect(
-            lambda enabled:
-            self.helper.cf.param.set_value("flightmode.ratepid",
-                                           str(not enabled)))
-
         self._led_ring_headlight.clicked.connect(
             lambda enabled:
             self.helper.cf.param.set_value("ring.headlightEnable",
                                            str(enabled)))
-
-        self.helper.cf.param.add_update_callback(
-            group="flightmode", name="ratepid",
-            cb=(lambda name, checked:
-                self.ratePidRadioButton.setChecked(eval(checked))))
 
         self.helper.cf.param.add_update_callback(
             group="ring", name="headlightEnable",
