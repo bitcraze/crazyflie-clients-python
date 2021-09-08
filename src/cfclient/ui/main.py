@@ -28,6 +28,7 @@ The main file for the Crazyflie control application.
 """
 import logging
 import sys
+import usb
 
 import cfclient
 from cfclient.ui.pose_logger import PoseLogger
@@ -54,6 +55,7 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtCore import QDir
 from PyQt5.QtCore import QThread
 from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QAction
 from PyQt5.QtWidgets import QActionGroup
 from PyQt5.QtWidgets import QShortcut
@@ -185,7 +187,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 scan_button=self.scanButton))
 
         self._connectivity_manager.connect_button_clicked.connect(self._connect)
-        self._connectivity_manager.scan_button_clicked.connect(self._scan)
+        self._connectivity_manager.scan_button_clicked.connect(self._scan_from_button)
 
         self._disable_input = False
 
@@ -358,6 +360,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._theme_checkboxes.append(node)
             self._theme_group.addAction(node)
             self.menuThemes.addAction(node)
+
+        # We only want to warn about USB permission once
+        self._permission_warned = False
 
     def _set_address(self):
         address = 0xE7E7E7E7E7
@@ -597,6 +602,30 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.uiState = UIState.SCANNING
         self._update_ui_state()
         self.scanner.scanSignal.emit(address)
+
+    def _scan_from_button(self, address):
+        #
+        # Below we check if we can open the Crazyradio device.
+        # If it is there, but we have no permissions we inform the user, once,
+        # about how to install the udev rules.
+        #
+        if not self._permission_warned:
+            try:
+                radio = cflib.crtp.radiodriver.RadioManager.open(0)
+                radio.close()
+            except usb.core.USBError as e:
+                if e.errno == 13:  # Permission denied
+                    link = "<a href='https://www.bitcraze.io/documentation/repository/crazyflie-lib-python/master/installation/usb_permissions/'>Install USB Permissions</a>" # noqa
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Information)
+                    msg.setTextFormat(Qt.RichText)
+                    msg.setText("Could not access Crazyradio")
+                    msg.setInformativeText(link)
+                    msg.setWindowTitle("Crazyradio permissions")
+                    msg.exec()
+                    self._permission_warned = True
+
+        self._scan(address)
 
     def _display_input_device_error(self, error):
         self.cf.close_link()
