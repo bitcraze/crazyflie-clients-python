@@ -56,7 +56,7 @@ pip3 install --upgrade pip.
 
 # Installing from latest release
 
-If you are planning to not do any developement on the client itself, we highly recommend you to install the cfclient according to latest release (as according of the instructions described) and not from source ([from these instructions](#installing-from-source)). 
+If you are planning to not do any development on the client itself, we highly recommend you to install the cfclient according to latest release (as according of the instructions described) and not from source ([from these instructions](#installing-from-source)). 
 
 Make sure that you have installed the [prerequisites](#prerequisites-installation)!
 
@@ -100,7 +100,7 @@ $ pip3 -e .[dev]
 
 The client can now be runned using ```cfclient``` if the local pip bin directory is in the path (it should be in a venv or after a reboot), or with ```python3 -m cfclient.gui```.
 
-At the very least you should **never** run pip in sudo, this would install dependencies system wide and could cause compatiblity problems with already installed application. If the ```pip``` of ```python3 -m pip``` command request the administrator password, you should run the command with ```--user``` (for example ```python3 -m pip install --user -e .```). This should not be required on modern python distribution though since the *--user*  flag seems to be the default behaviour.
+At the very least you should **never** run pip in sudo, this would install dependencies system wide and could cause compatibility problems with already installed application. If the ```pip``` of ```python3 -m pip``` command request the administrator password, you should run the command with ```--user``` (for example ```python3 -m pip install --user -e .```). This should not be required on modern python distribution though since the *--user*  flag seems to be the default behaviour.
 
 ## Windows (7/8/10)
 

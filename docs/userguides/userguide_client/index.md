@@ -209,7 +209,7 @@ width="300"}
 
 Follow the instructions to detect the axis or button that you would like
 to map to the functionality. If you would like to map the functionality
-to two axis (like right/left sholder-button) then select *Combined axis
+to two axis (like right/left shoulder-button) then select *Combined axis
 detection* and follow the instructions.
 
 Go though all the functionality you would like to map by pressing the
