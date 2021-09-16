@@ -449,7 +449,7 @@ class JoystickReader(object):
                     vz = data.thrust
                     yawrate = data.yaw
                     # The odd use of vx and vy is to map forward on the
-                    # physical joystick to positiv X-axis
+                    # physical joystick to positive X-axis
                     self.assisted_input_updated.call(vy, -vx, vz, yawrate)
                 elif self._assisted_control == \
                         JoystickReader.ASSISTED_CONTROL_HOVER \
@@ -459,7 +459,7 @@ class JoystickReader(object):
 
                     # Scale thrust to a value between -1.0 to 1.0
                     vz = (data.thrust - 32767) / 32767.0
-                    # Integrate velosity setpoint
+                    # Integrate velocity setpoint
                     self._target_height += vz * INPUT_READ_PERIOD
                     # Cap target height
                     if self._target_height > self._hover_max_height:
@@ -469,7 +469,7 @@ class JoystickReader(object):
 
                     yawrate = data.yaw
                     # The odd use of vx and vy is to map forward on the
-                    # physical joystick to positiv X-axis
+                    # physical joystick to positive X-axis
                     self.hover_input_updated.call(vy, -vx, yawrate,
                                                   self._target_height)
                 else:
@@ -496,7 +496,7 @@ class JoystickReader(object):
                         yawrate = data.yaw
                         # Scale thrust to a value between -1.0 to 1.0
                         vz = (data.thrust - 32767) / 32767.0
-                        # Integrate velosity setpoint
+                        # Integrate velocity setpoint
                         self._target_height += vz * INPUT_READ_PERIOD
                         # Cap target height
                         if self._target_height > self._hover_max_height:

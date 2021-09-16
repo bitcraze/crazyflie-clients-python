@@ -629,7 +629,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
                 temp_set = self._bs_stats[stats_id]
 
                 if bs in temp_set:
-                    # If the status bar for calibration data is handled, have an intermeddiate status
+                    # If the status bar for calibration data is handled, have an intermediate status
                     # else just have red or green.
                     if stats_indicator_id == 2:
                         label.setStyleSheet(STYLE_BLUE_BACKGROUND)

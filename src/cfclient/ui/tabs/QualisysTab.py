@@ -1259,7 +1259,7 @@ class QualisysTab(Tab, qualisys_tab_class):
                         self.switch_flight_mode(FlightModeStates.PATH)
 
                 elif self.flight_mode == FlightModeStates.GROUNDED:
-                    pass  # If gounded, the control is switched back to gamepad
+                    pass  # If grounded, the control is switched back to gamepad
 
                 time.sleep(0.001)
 

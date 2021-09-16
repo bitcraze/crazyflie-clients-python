@@ -17,7 +17,7 @@ platform and start it again by pressing the power button for at least
 
 ## Programming Crazyflie from firmware projects
 
-When developping with the Crazyflie firmware projects, either
+When developing with the Crazyflie firmware projects, either
 [crazyflie-firmware](https://github.com/bitcraze/crazyflie-firmware) or
 [crazyflie2-nrf-firmware](https://github.com/bitcraze/crazyflie2-nrf-firmware)
 you can flash your current build with:
@@ -30,7 +30,7 @@ you can enable the warmboot mode. To do so, edit the file
 
     CLOAD_CMDS = -w radio://0/80/250K/E7E7E7E7E7
 
-After this, \'make cload\' will restart the Crazyflie in bootlader mode,
+After this, \'make cload\' will restart the Crazyflie in bootloader mode,
 flash it and restart it with the new firmware.
 
 In warmboot mode the bootloader is launched
@@ -39,7 +39,7 @@ programmed at the same time without collision.
 
 **Warning:** If the flashing operation fails or if
 the firmware has a bug, it may be impossible to warmboot. In that case
-start the bootloader manually and disable warmboot temporarly by
+start the bootloader manually and disable warmboot temporarily by
 programming with:
 
     make cload CLOAD_CMDS=

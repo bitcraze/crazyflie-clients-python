@@ -259,7 +259,7 @@ Below is an example for creating a logging configuration and starting it. The co
 variables _pm.vbat_ and _stabilizer.roll_ that will be sent at 1 Hz. Data will be published to the [log socket](#log-socket).
 
 Each action for log configurations (create, start, stop, delete) will be broadcasted on the log data socket. Log
-data will also be boardcasted on the same socket.
+data will also be broadcasted on the same socket.
 
 
 First create the configuration:
@@ -460,7 +460,7 @@ For each update the variable name and value is sent.
 ## Connection socket
 
 This socket is used to broadcast changes in the connection state as events. Connecting the Crazyflie is a synchronous
-call to the [command socket](#command-socket) but for instance a lost connection will be asynchronous and boardcasted
+call to the [command socket](#command-socket) but for instance a lost connection will be asynchronous and broadcasted
 on this socket.
 
 Each event has a name and uri, there might also be an optional message. Note that disconnected is always sent no

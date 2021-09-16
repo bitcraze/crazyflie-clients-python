@@ -723,8 +723,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     def _inputconfig_selected(self, checked):
         """Called when a new configuration has been selected from the menu. The
-        data in the menu object is a referance to the device QAction in parent
-        menu. This contains a referance to the raw device."""
+        data in the menu object is a reference to the device QAction in parent
+        menu. This contains a reference to the raw device."""
         if not checked:
             return
 

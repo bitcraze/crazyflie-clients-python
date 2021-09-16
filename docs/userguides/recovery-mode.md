@@ -27,7 +27,7 @@ To update the firmware in the Crazyflie 2.X do the following:
     power.
 -   Click \"Initiate bootloader cold boot\"
 -   Select the latest release from the drop down menu or select it if you have downloaded it from the [Github release page](https://github.com/bitcraze/crazyflie-release/releases).
--   Press \"Program\" and wait (do not restart the crazyflie untill it is finsished.)
+-   Press \"Program\" and wait (do not restart the crazyflie untill it is finished.)
 -   Press \"Restart in firmware mode\"
 
 _Be aware that the Lighthouse FPGA will not be updated in this mode, so please use the [the cfclient userguide](/docs/userguides/userguide_client/index.md) after you have recovered crazyflie._

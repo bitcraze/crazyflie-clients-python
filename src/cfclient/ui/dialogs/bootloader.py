@@ -248,7 +248,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
                 self.firmwareDropdown.addItem(widget_name)
 
     def release_zip_downloaded(self, release_name, release_path):
-        """ Callback when a release is succesfully downloaded and
+        """ Callback when a release is successfully downloaded and
             save to release_path.
         """
         self.downloadStatus.setText('Downloaded')
