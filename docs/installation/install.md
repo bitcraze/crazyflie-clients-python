@@ -63,7 +63,7 @@ On Apple M1 Macs, care should be taken to use the X86 version of Brew since not 
 # Installing brew for x86_64, it will be installed in /usr/local by default
 arch --x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 # Now we have to use brew and then python from /usr/local ...
-arch --x86_64 brew install python@3.9
+arch --x86_64 brew install python@3.9 libusb
 # The arch command is not required anymore since everything brew installed are x86 executables
 ```
 
