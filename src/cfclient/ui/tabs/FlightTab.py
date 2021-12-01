@@ -115,8 +115,6 @@ class FlightTab(Tab, flight_tab_class):
 
     _limiting_updated = pyqtSignal(bool, bool, bool)
 
-
-
     def __init__(self, tabWidget, helper, *args):
         super(FlightTab, self).__init__(*args)
         self.setupUi(self)
@@ -208,7 +206,6 @@ class FlightTab(Tab, flight_tab_class):
         )
 
         self.joystickReader = JoystickReader()
-
 
         self.uiSetupReady()
 
@@ -413,11 +410,12 @@ class FlightTab(Tab, flight_tab_class):
             )
             self.commanderBox.setEnabled(False)
             return
-        
+
         # To prevent conflicting commands from the controller and the flight panel
         if len(self.joystickReader.available_devices()) > 0:
             self.commanderBox.setToolTip(
-                'Cant use both a USB controller and Command Based Flight')
+                'Cant use both an controller and Command Based Flight'
+            )
             self.commanderBox.setEnabled(False)
             return
 
