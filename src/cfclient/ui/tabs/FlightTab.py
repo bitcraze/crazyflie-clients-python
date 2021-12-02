@@ -205,8 +205,6 @@ class FlightTab(Tab, flight_tab_class):
             lambda: self._flight_command(CommanderAction.DOWN)
         )
 
-        self.joystickReader = JoystickReader()
-
         self.uiSetupReady()
 
         self._led_ring_headlight.clicked.connect(
@@ -412,7 +410,7 @@ class FlightTab(Tab, flight_tab_class):
             return
 
         # To prevent conflicting commands from the controller and the flight panel
-        if len(self.joystickReader.available_devices()) > 0:
+        if JoystickReader().available_devices():
             self.commanderBox.setToolTip(
                 'Cant use both an controller and Command Based Flight'
             )
