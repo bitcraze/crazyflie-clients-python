@@ -42,16 +42,8 @@ input-device will not be usable for piloting the Crazyflie:
     configured). Lastly enter the name of the configuration (without
     file extension) and press save. Now restart the application and try
     again.
+-   It can happen be that another USB device other than your controller is recognized. Then it might be necessary to blacklist the USB device in the cfclient's config.json file. Check out [the config file explanation](/docs/development/dev_info_client.md#user-configuration-file)
 
-**Please note!!** In the 2013.4.1 and previous versions there\'s a bug
-where the loading of a previous configuration will not work correctly.
-The values are not loaded but the configuration call still be saved.
-This results in a configuration file that will not work and an error
-will be shown when trying to use it. In order to fix this manually
-delete the contents of the user config folder (win:
-*C:\\Users\\your\_user\\AppData\\Roaming\\cfclient*, linux:
-*\~/.config/cfclient*) and create a new configuration from scratch as
-described above.
 
 ---
 
@@ -61,10 +53,10 @@ Below is a list of controllers and the status for different OSs. The
 list is far from complete so if you have more info please edit or drop
 us an email.
 
- | **Controller**    |        **Linux USB**       |                                                        **Linux BT**  |                                                                    **Win XP USB**  | **Win XP BT**  |                                                                    **Win7 USB**     |                                                                      **Win7 BT**        |                                                                          **Win8 USB**         |                                                             **Mac OSX USB**  | **Mac OSX BT**|
+ | **Controller**    | **Linux USB** |   **Linux BT** |**Win XP USB**  | **Win XP BT**  |**Win7 USB**     |   **Win7 BT** |  **Win8 USB** |**Win10 USB** |**Mac OSX USB**  | **Mac OSX BT**|
 |--|--|--|--|--|--|--|--|--|--|--|
- | Playstation 3 (or copy)  | Works           |                                                            Works |  Works       |     Works | Works  | Works  | Works,  |  Works     |        Works|
-  Xbox 360 (or copy)      |  Works  | N/A                  |                                                             Works    |        N/A                       |                                                                                                                                                Works        |                                                                                N/A            |                                                                   Not tested    |    Not tested|
+ | Playstation 3 (or copy)  | Works  | Works |  Works |  Works | Works  | Works  | Works,  | Not Tested | Works   |  Works|
+  Xbox 360 (or copy)   |  Works  | N/A  | Works    |   N/A    |   Works    |    N/A  |  Not tested | Works | Not tested    |  Not tested|
 
 
 ### Playstation 3 controller
