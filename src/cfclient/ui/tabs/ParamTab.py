@@ -105,7 +105,6 @@ class ParamGroupItem(object):
             try:
                 group = cfclient.log_param_doc['params'][name]
                 self.description = group['desc']
-                print(self.description)
             except:  # noqa
                 pass
 
