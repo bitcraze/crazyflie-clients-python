@@ -321,6 +321,7 @@ class ParamTab(Tab, param_tab_class):
         self._model.reset()
         self._model.set_toc(self.cf.param.toc.toc, self.helper.cf)
         self._model.set_enabled(True)
+        self.helper.cf.param.request_update_of_all_params()
 
     def _disconnected(self, link_uri):
         #
