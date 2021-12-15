@@ -14,6 +14,12 @@
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+        <widget class="QLineEdit" name="filterBox">
+            <property name="clearButtonEnabled"><bool>True</bool></property>
+            <property name="placeholderText"><string>Filter group ...</string></property>
+        </widget>
+    </item>
    <item>
     <widget class="QTreeView" name="paramTree"/>
    </item>

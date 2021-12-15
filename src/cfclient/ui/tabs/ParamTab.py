@@ -32,8 +32,8 @@ to edit them.
 
 import logging
 
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5 import uic, QtCore
+from PyQt5.QtCore import QSortFilterProxyModel, Qt, pyqtSignal
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, QVariant
 from PyQt5.QtGui import QBrush, QColor
 
@@ -260,6 +260,23 @@ class ParamBlockModel(QAbstractItemModel):
         self.layoutChanged.emit()
 
 
+class ParamTreeFilterProxy(QSortFilterProxyModel):
+    """
+    Implement a filtering proxy model that show all children if the group matches.
+    """
+    def __init__(self, paramTree):
+        super(ParamTreeFilterProxy, self).__init__(paramTree)
+
+    def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
+        '''
+        When a group match the filter, make sure all children matches as well.
+        '''
+        if not source_parent.isValid():
+            return super().filterAcceptsRow(source_row, source_parent)
+
+        return super().filterAcceptsRow(source_parent.row(), source_parent.parent())
+
+
 class ParamTab(Tab, param_tab_class):
     """
     Show all the parameters in the TOC and give the user the ability to edit
@@ -287,7 +304,18 @@ class ParamTab(Tab, param_tab_class):
         self._disconnected_signal.connect(self._disconnected)
 
         self._model = ParamBlockModel(None)
-        self.paramTree.setModel(self._model)
+
+        self.proxyModel = ParamTreeFilterProxy(self.paramTree)
+        self.proxyModel.setSourceModel(self._model)
+        self.proxyModel.setRecursiveFilteringEnabled(True)
+
+        @QtCore.pyqtSlot(str)
+        def onFilterChanged(text):
+            self.proxyModel.setFilterRegExp(text)
+
+        self.filterBox.textChanged.connect(onFilterChanged)
+
+        self.paramTree.setModel(self.proxyModel)
         self.paramTree.header().resizeSection(0, 150)
 
     def _connected(self, link_uri):
