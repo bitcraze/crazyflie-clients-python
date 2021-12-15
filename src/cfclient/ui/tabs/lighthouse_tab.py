@@ -345,7 +345,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._lh_status = self.STATUS_NOT_RECEIVING
 
         self._graph_timer = QTimer()
-        self._graph_timer.setInterval(1000 / self.FPS)
+        self._graph_timer.setInterval(int(1000 / self.FPS))
         self._graph_timer.timeout.connect(self._update_graphics)
         self._graph_timer.start()
 

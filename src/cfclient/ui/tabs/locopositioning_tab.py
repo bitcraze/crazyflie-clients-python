@@ -467,7 +467,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
         self.is_loco_deck_active = False
 
         self._graph_timer = QTimer()
-        self._graph_timer.setInterval(1000 / self.FPS)
+        self._graph_timer.setInterval(int(1000 / self.FPS))
         self._graph_timer.timeout.connect(self._update_graphics)
         self._graph_timer.start()
 
