@@ -36,7 +36,7 @@ import signal
 
 import logging
 
-from quamash import QSelectorEventLoop
+from asyncqt import QEventLoop
 import cfclient
 
 __author__ = 'Bitcraze AB'
@@ -173,7 +173,7 @@ def main():
     from cfclient.utils.ui import UiUtils
 
     # Create and set an event loop that combines qt and asyncio
-    loop = QSelectorEventLoop(app)
+    loop = QEventLoop(app)
     asyncio.set_event_loop(loop)
 
     app.setWindowIcon(QIcon(cfclient.module_path + "/ui/icons/icon-256.png"))
