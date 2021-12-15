@@ -36,6 +36,7 @@ from PyQt5 import uic, QtCore
 from PyQt5.QtCore import QSortFilterProxyModel, Qt, pyqtSignal
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, QVariant
 from PyQt5.QtGui import QBrush, QColor
+from PyQt5.QtWidgets import QHeaderView
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -315,7 +316,7 @@ class ParamTab(Tab, param_tab_class):
         self.filterBox.textChanged.connect(onFilterChanged)
 
         self.paramTree.setModel(self.proxyModel)
-        self.paramTree.header().resizeSection(0, 150)
+        self.paramTree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
 
     def _connected(self, link_uri):
         self._model.reset()
