@@ -13,15 +13,167 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
+  <layout class="QGridLayout" name="mainLayout">
+    <item row="0" column="0">
         <widget class="QLineEdit" name="filterBox">
             <property name="clearButtonEnabled"><bool>True</bool></property>
             <property name="placeholderText"><string>Filter group ...</string></property>
         </widget>
     </item>
-   <item>
-    <widget class="QTreeView" name="paramTree"/>
+    <item row="1" column="0">
+        <widget class="QTreeView" name="paramTree"/>
+   </item>
+   <item row="0" column="1" rowspan="2">
+    <widget class="QFrame" name="paramDetails">
+        <property name="frameShape">
+            <enum>QFrame::Box</enum>
+        </property>
+        <property name="minimumWidth">
+            <number>400</number>
+        </property>
+        <property name="maximumWidth">
+            <number>400</number>
+        </property>
+        <layout class="QGridLayout" name="paramDetailsLayout" rowstretch="0, 0, 0, 1">
+            <property name="verticalSpacing">
+                <number>10</number>
+            </property>
+            <item row="0" column="0" alignment="Qt::AlignTop">
+                <widget class="QLabel" name="paramDetailsLabel">
+                    <property name="font">
+                        <font>
+                            <pointsize>24</pointsize>
+                            <bold>true</bold>
+                        </font>
+                    </property>
+                </widget>
+            </item>
+            <item row="1" column="0" alignment="Qt::AlignTop">
+                <widget class="QLabel" name="paramDetailsDescription"/>
+            </item>
+
+            <item row="2" column="0" alignment="Qt::AlignTop">
+                <widget class="QFrame" name="valueFrame">
+                    <property name="frameShape">
+                        <enum>QFrame::Box</enum>
+                    </property>
+                    <property name="visible">
+                        <bool>False</bool>
+                    </property>
+                    <layout class="QGridLayout" name="PersistentLayout">
+                        <property name="verticalSpacing">
+                            <number>10</number>
+                        </property>
+                        <item row="0" column="0" colspan="2">
+                            <widget class="QLabel" name="persistent">
+                                <property name="text">
+                                    <string>Values</string>
+                                </property>
+                                <property name="font">
+                                <font>
+                                    <bold>true</bold>
+                                </font>
+                                </property>
+                            </widget>       
+                        </item>
+                        <item row="1" column="0">
+                            <widget class="QLabel" name="current">
+                                <property name="text">
+                                    <string>Current value:</string>
+                                </property>
+                                <property name="font">
+                                    <font>
+                                        <bold>true</bold>
+                                    </font>
+                                    </property>
+                            </widget>
+                        </item>
+                        <item row="1" column="1">
+                            <widget class="QLineEdit" name="currentValue"/>
+                        </item>
+                        <item row="1" column="2">
+                            <widget class="QPushButton" name="setParamButton">
+                                <property name="text">
+                                    <string>Set</string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item row="1" column="3">
+                            <widget class="QPushButton" name="resetDefaultButton">
+                                <property name="text">
+                                    <string>Reset to default</string>
+                                </property>
+                            </widget>
+                        </item>
+                        <item row="2" column="0">
+                            <widget class="QLabel" name="default">
+                                <property name="text">
+                                    <string>Default value:</string>
+                                </property>
+                                <property name="font">
+                                    <font>
+                                        <bold>true</bold>
+                                    </font>
+                                    </property>
+                            </widget>
+                        </item>
+                        <item row="2" column="1" colspan="3">
+                            <widget class="QLabel" name="defaultValue"/>
+                        </item>
+                    </layout>
+                </widget>
+            </item>
+            <item row="3" column="0" alignment="Qt::AlignTop">
+                <widget class="QFrame" name="persistentFrame">
+                    <property name="frameShape">
+                        <enum>QFrame::Box</enum>
+                    </property>
+                    <property name="visible">
+                        <bool>False</bool>
+                    </property>
+                    <layout class="QGridLayout" name="PersistentLayout">
+                        <property name="verticalSpacing">
+                            <number>10</number>
+                        </property>
+                        <item row="0" column="0" colspan="2">
+                            <widget class="QLabel" name="persistent">
+                                <property name="text">
+                                    <string>Persistent parameter</string>
+                                </property>
+                                <property name="font">
+                                <font>
+                                    <bold>true</bold>
+                                </font>
+                                </property>
+                            </widget>       
+                        </item>
+                        <item row="2" column="0">
+                            <widget class="QLabel" name="default">
+                                <property name="text">
+                                    <string>Stored value:</string>
+                                </property>
+                                <property name="font">
+                                    <font>
+                                        <bold>true</bold>
+                                    </font>
+                                    </property>
+                            </widget>
+                        </item>
+                        <item row="2" column="1">
+                            <widget class="QLabel" name="storedValue"/>
+                        </item>
+                        <item row="4" column="0">
+                            <widget class="QPushButton" name="persistentButton">
+                                <property name="maximumWidth">
+                                    <number>50</number>
+                                </property>
+                            </widget>
+                        </item>
+                    </layout>
+                </widget>
+            </item>
+        </layout>
+    </widget>
    </item>
   </layout>
  </widget>
