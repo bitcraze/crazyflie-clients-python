@@ -50,6 +50,16 @@ param_tab_class = uic.loadUiType(
 logger = logging.getLogger(__name__)
 
 
+def round_if_float(value):
+    """If the value is float, we limit to 5 significat numbers"""
+    try:
+        value = float(value)
+        value = f'{value:.5g}'
+    except ValueError:
+        pass
+    return value
+
+
 class ParamChildItem(object):
     """Represents a leaf-node in the tree-view (one parameter)"""
 
@@ -67,7 +77,7 @@ class ParamChildItem(object):
 
     def updated(self, name, value):
         """Callback from the param layer when a parameter has been updated"""
-        self.value = value
+        self.value = round_if_float(value)
         self.is_updating = False
         self.parent.model.refresh()
 
@@ -284,7 +294,8 @@ class ParamTab(Tab, param_tab_class):
         self.paramTree.selectionModel().selectionChanged.connect(self._paramChanged)
 
     def _param_default_cb(self, name, default_value):
-        self.currentValue.setText(self.cf.param.get_value(name))
+        value = round_if_float(self.cf.param.get_value(name))
+        self.currentValue.setText(value)
         self.defaultValue.setText(str(default_value))
 
     def _persistent_button_cb(self, _):
