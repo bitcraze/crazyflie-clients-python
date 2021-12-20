@@ -296,6 +296,7 @@ class ParamTab(Tab, param_tab_class):
     def _param_default_cb(self, name, default_value):
         value = round_if_float(self.cf.param.get_value(name))
         self.currentValue.setText(value)
+        self.currentValue.setCursorPosition(0)
         self.defaultValue.setText(str(default_value))
 
     def _persistent_button_cb(self, _):
