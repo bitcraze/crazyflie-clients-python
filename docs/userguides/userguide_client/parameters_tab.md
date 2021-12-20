@@ -15,6 +15,8 @@ width="700"}
        * *Name:* The name of the parameter or group.
        * *Type:* The C-type of the variable stored in the Crazyflie (you cannot set values outside this)
        * *Access:* RW parameters can be written from the client while RO parameters can only be read
+       * *Persistent:* Indicates if it is possible to store this parameter's value in eeprom
        * *Value:* The value of the parameter
-    - Group: To make things easier each group has it's members organized as sub-nodes to the group
-    - Parameters: The full name of each parameter is the group combined with the name (group.name)
+2. Group: To make things easier each group has it's members organized as sub-nodes to the group
+3. Parameters: The full name of each parameter is the group combined with the name (group.name)
+4. The parameter sidebar, here you can set the current value of a parameter. And also store the value to, or clear value from, eeprom if the parameter is persistent
