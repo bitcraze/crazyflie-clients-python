@@ -297,7 +297,10 @@ class ParamTab(Tab, param_tab_class):
         value = round_if_float(self.cf.param.get_value(name))
         self.currentValue.setText(value)
         self.currentValue.setCursorPosition(0)
-        self.defaultValue.setText(str(default_value))
+        if default_value is not None:
+            self.defaultValue.setText(str(default_value))
+        else:
+            self.defaultValue.setText('-')
 
     def _persistent_button_cb(self, _):
         def success_cb(name, success):
@@ -364,6 +367,12 @@ class ParamTab(Tab, param_tab_class):
             complete = f'{group}.{param}'
             elem = self.cf.param.toc.get_element_by_complete_name(complete)
             self.cf.param.get_default_value(complete, self._param_default_cb)
+
+            writable = elem.get_readable_access() == 'RW'
+            self.currentValue.setEnabled(writable)
+            self.setParamButton.setEnabled(writable)
+            self.resetDefaultButton.setEnabled(writable)
+
             if elem.is_persistent():
                 self.cf.param.persistent_get_state(complete, self._persistent_state_cb)
 
