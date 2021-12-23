@@ -294,9 +294,6 @@ class ParamTab(Tab, param_tab_class):
         self.paramTree.selectionModel().selectionChanged.connect(self._paramChanged)
 
     def _param_default_cb(self, name, default_value):
-        value = round_if_float(self.cf.param.get_value(name))
-        self.currentValue.setText(value)
-        self.currentValue.setCursorPosition(0)
         if default_value is not None:
             self.defaultValue.setText(str(default_value))
         else:
@@ -366,6 +363,10 @@ class ParamTab(Tab, param_tab_class):
         if param:
             complete = f'{group}.{param}'
             elem = self.cf.param.toc.get_element_by_complete_name(complete)
+            value = round_if_float(self.cf.param.get_value(complete))
+            self.currentValue.setText(value)
+            self.currentValue.setCursorPosition(0)
+            self.defaultValue.setText('-')
             self.cf.param.get_default_value(complete, self._param_default_cb)
 
             writable = elem.get_readable_access() == 'RW'
