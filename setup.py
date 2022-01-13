@@ -73,7 +73,7 @@ else:
 platform_requires = []
 platform_dev_requires = ['pre-commit']
 if sys.platform == 'win32' or sys.platform == 'darwin':
-    platform_requires.extend(['pysdl2~=0.9.6', 'pysdl2-dll==2.0.14.post1'])
+    platform_requires.extend(['pysdl2~=0.9.6', 'pysdl2-dll==2.0.16'])
 if sys.platform == 'win32':
     platform_dev_requires.extend(['cx_freeze==5.1.1', 'jinja2==2.10.3'])
 
