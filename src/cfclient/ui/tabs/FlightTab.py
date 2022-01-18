@@ -569,11 +569,8 @@ class FlightTab(Tab, flight_tab_class):
     def updateEmergencyStop(self, emergencyStop):
         if emergencyStop:
             self.setMotorLabelsEnabled(False)
-            self.emergency_stop_label.setText(
-                self.emergencyStopStringWithText("Kill switch active"))
         else:
             self.setMotorLabelsEnabled(True)
-            self.emergency_stop_label.setText("")
 
     def flightmodeChange(self, item):
         Config().set("flightmode", str(self.flightModeCombo.itemText(item)))
