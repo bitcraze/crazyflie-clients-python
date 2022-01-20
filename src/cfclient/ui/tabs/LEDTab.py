@@ -34,6 +34,7 @@ import logging
 
 from PyQt5 import QtGui, uic
 from PyQt5.QtCore import pyqtSignal
+from PyQt5 import QtWidgets
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -121,7 +122,7 @@ class LEDTab(Tab, led_tab_class):
             led = self._mem.leds[nbr]
             col = QtGui.QColor.fromRgb(led.r, led.g, led.b)
 
-        col = QtGui.QColorDialog.getColor(col)
+        col = QtWidgets.QColorDialog.getColor(col)
 
         if col.isValid() and self._mem:
             logger.info(col.red())
