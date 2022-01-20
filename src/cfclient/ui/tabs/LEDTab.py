@@ -34,7 +34,7 @@ import logging
 
 from PyQt5 import QtGui, uic
 from PyQt5.QtCore import pyqtSignal
-from PyQt5 import QtWidgets;
+from PyQt5 import QtWidgets
 
 import cfclient
 from cfclient.ui.tab import Tab
