@@ -32,7 +32,7 @@
             <number>400</number>
         </property>
         <property name="maximumWidth">
-            <number>400</number>
+            <number>600</number>
         </property>
         <layout class="QGridLayout" name="paramDetailsLayout" rowstretch="0, 0, 0, 1">
             <property name="verticalSpacing">
@@ -89,10 +89,17 @@
                             </widget>
                         </item>
                         <item row="1" column="1">
-                            <widget class="QLineEdit" name="currentValue"/>
+                            <widget class="QLineEdit" name="currentValue">
+                                <property name="maximumWidth">
+                                    <number>75</number>
+                                </property>
+                            </widget>
                         </item>
                         <item row="1" column="2">
                             <widget class="QPushButton" name="setParamButton">
+                                <property name="maximumWidth">
+                                    <number>75</number>
+                                </property>
                                 <property name="text">
                                     <string>Set</string>
                                 </property>
