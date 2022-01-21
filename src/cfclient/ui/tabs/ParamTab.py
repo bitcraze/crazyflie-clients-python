@@ -35,8 +35,8 @@ import logging
 from PyQt5 import uic, QtCore
 from PyQt5.QtCore import QSortFilterProxyModel, Qt, pyqtSignal
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, QVariant
-from PyQt5.QtGui import QBrush, QColor
-from PyQt5.QtWidgets import QHeaderView
+from PyQt5.QtGui import QBrush, QColor, QPalette
+from PyQt5.QtWidgets import QHeaderView, QLabel
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -189,11 +189,28 @@ class ParamBlockModel(QAbstractItemModel):
     def data(self, index, role):
         """Re-implemented method to get the data for a given index and role"""
 
+        #
+        # We use this hacky-trick to find out if we are in dark-mode and
+        # figure out what bgcolor to set from that. We always use the current
+        # palette forgreound.
+        #
+        label = QLabel('dummy')
+        text_color = label.palette().color(QPalette.WindowText)
+        bg_color = label.palette().color(QPalette.Background)
+        is_dark = text_color.value() > bg_color.value()
+
         if role == Qt.BackgroundColorRole:
             if index.row() % 2 == 0:
-                return QVariant(QColor(0xff, 0xff, 0xff))
+                return QVariant(bg_color)
             else:
-                return QVariant(QColor(0xe9, 0xe9, 0xe9))
+                multiplier = 1.15 if is_dark else 0.95
+                return QVariant(
+                    QColor(
+                        int(bg_color.red() * multiplier),
+                        int(bg_color.green() * multiplier),
+                        int(bg_color.blue() * multiplier)
+                    )
+                )
 
         node = index.internalPointer()
         parent = node.parent
