@@ -35,8 +35,8 @@ import logging
 from PyQt5 import uic, QtCore
 from PyQt5.QtCore import QSortFilterProxyModel, Qt, pyqtSignal
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, QVariant
-from PyQt5.QtGui import QBrush, QColor, QPalette
-from PyQt5.QtWidgets import QHeaderView, QLabel
+from PyQt5.QtGui import QBrush, QColor
+from PyQt5.QtWidgets import QHeaderView
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -105,13 +105,14 @@ class ParamGroupItem(object):
 class ParamBlockModel(QAbstractItemModel):
     """Model for handling the parameters in the tree-view"""
 
-    def __init__(self, parent):
+    def __init__(self, parent, mainUI):
         """Create the empty model"""
         super(ParamBlockModel, self).__init__(parent)
         self._nodes = []
         self._column_headers = ['Name', 'Type', 'Access', 'Persistent', 'Value']
         self._red_brush = QBrush(QColor("red"))
         self._enabled = False
+        self._mainUI = mainUI
 
     def set_enabled(self, enabled):
         if self._enabled != enabled:
@@ -189,26 +190,16 @@ class ParamBlockModel(QAbstractItemModel):
     def data(self, index, role):
         """Re-implemented method to get the data for a given index and role"""
 
-        #
-        # We use this hacky-trick to find out if we are in dark-mode and
-        # figure out what bgcolor to set from that. We always use the current
-        # palette forgreound.
-        #
-        label = QLabel('dummy')
-        text_color = label.palette().color(QPalette.WindowText)
-        bg_color = label.palette().color(QPalette.Background)
-        is_dark = text_color.value() > bg_color.value()
-
         if role == Qt.BackgroundColorRole:
             if index.row() % 2 == 0:
-                return QVariant(bg_color)
+                return QVariant(self._mainUI.bgColor)
             else:
-                multiplier = 1.15 if is_dark else 0.95
+                multiplier = 1.15 if self._mainUI.isDark else 0.95
                 return QVariant(
                     QColor(
-                        int(bg_color.red() * multiplier),
-                        int(bg_color.green() * multiplier),
-                        int(bg_color.blue() * multiplier)
+                        int(self._mainUI.bgColor.red() * multiplier),
+                        int(self._mainUI.bgColor.green() * multiplier),
+                        int(self._mainUI.bgColor.blue() * multiplier)
                     )
                 )
 
@@ -294,7 +285,7 @@ class ParamTab(Tab, param_tab_class):
         self.cf.disconnected.add_callback(self._disconnected_signal.emit)
         self._disconnected_signal.connect(self._disconnected)
 
-        self._model = ParamBlockModel(None)
+        self._model = ParamBlockModel(None, self.helper.mainUI)
 
         self.proxyModel = ParamTreeFilterProxy(self.paramTree)
         self.proxyModel.setSourceModel(self._model)
