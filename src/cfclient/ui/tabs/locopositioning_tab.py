@@ -171,7 +171,7 @@ class Plot3dLps(scene.SceneCanvas):
             [base_len, -hw, 0],
             [base_len, -w, 0],
             [0, -w, 0]],
-            width=1.0, color='red', parent=parent)
+            width=1.0, color='red', parent=parent, marker_size=0.0)
 
         # Y-axis
         scene.visuals.LinePlot([
@@ -182,7 +182,7 @@ class Plot3dLps(scene.SceneCanvas):
             [-hw, base_len, 0],
             [-w, base_len, 0],
             [-w, 0, 0]],
-            width=1.0, color='green', parent=parent)
+            width=1.0, color='green', parent=parent, marker_size=0.0)
 
         # Z-axis
         scene.visuals.LinePlot([
@@ -193,7 +193,7 @@ class Plot3dLps(scene.SceneCanvas):
             [0, -hw, base_len],
             [0, -w, base_len],
             [0, -w, 0]],
-            width=1.0, color='blue', parent=parent)
+            width=1.0, color='blue', parent=parent, marker_size=0.0)
 
     def update_data(self, anchors, pos, display_mode):
         self._cf.set_data(pos=np.array([pos]), face_color=self.POSITION_BRUSH)

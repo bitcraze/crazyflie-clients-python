@@ -199,7 +199,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
             [base_len, -hw, 0],
             [base_len, -w, 0],
             [0, -w, 0]],
-            width=1.0, color='red', parent=parent)
+            width=1.0, color='red', parent=parent, marker_size=0.0)
 
         # Y-axis
         scene.visuals.LinePlot([
@@ -210,7 +210,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
             [-hw, base_len, 0],
             [-w, base_len, 0],
             [-w, 0, 0]],
-            width=1.0, color='green', parent=parent)
+            width=1.0, color='green', parent=parent, marker_size=0.0)
 
         # Z-axis
         scene.visuals.LinePlot([
@@ -221,7 +221,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
             [0, -hw, base_len],
             [0, -w, base_len],
             [0, -w, 0]],
-            width=1.0, color='blue', parent=parent)
+            width=1.0, color='blue', parent=parent, marker_size=0.0)
 
     def update_cf_pose(self, position, rot):
         if not self._cf:
@@ -305,8 +305,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._connected_signal.connect(self._connected)
         self._disconnected_signal.connect(self._disconnected)
         self._log_error_signal.connect(self._logging_error)
-        self._cb_param_to_detect_lighthouse_deck_signal.connect(
-            self._cb_param_to_detect_lighthouse_deck)
+        self._cb_param_to_detect_lighthouse_deck_signal.connect(self._cb_param_to_detect_lighthouse_deck)
         self._status_report_signal.connect(self._status_report_received)
         self._new_system_config_written_to_cf_signal.connect(self._new_system_config_written_to_cf)
         self._geometry_read_signal.connect(self._geometry_read_cb)

@@ -130,7 +130,7 @@ setup(
                                           'PyYAML~=5.3',
                                           'asyncqt~=0.8.0',
                                           'qtm~=2.0.2',
-                                          'numpy>=1.19.2,<1.24',
+                                          'numpy>=1.20,<1.25',
                                           'vispy~=0.9.0',
                                           'pyserial~=3.5',
                                           'pyqt5~=5.15.0'],
