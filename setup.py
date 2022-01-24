@@ -129,7 +129,7 @@ setup(
                                           'pyqtgraph~=0.11',
                                           'PyYAML~=5.3',
                                           'asyncqt~=0.8.0',
-                                          'qtm~=2.0.2',
+                                          'qtm~=2.1.1',
                                           'numpy>=1.20,<1.25',
                                           'vispy~=0.9.0',
                                           'pyserial~=3.5',

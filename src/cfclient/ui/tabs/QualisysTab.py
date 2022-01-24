@@ -798,7 +798,7 @@ class QualisysTab(Tab, qualisys_tab_class):
 
             # Parse the returned xml
             xml = ET.fromstring(result)
-            self.qtm_6DoF_labels = [label.text for label in xml.iter('Name')]
+            self.qtm_6DoF_labels = [label.text.strip() for index, label in enumerate(xml.findall("*/Body/Name"))]
 
             # Make all names lowercase
             self.qtm_6DoF_labels = [x.lower() for x in self.qtm_6DoF_labels]
