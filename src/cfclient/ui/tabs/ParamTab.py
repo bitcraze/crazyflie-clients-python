@@ -38,6 +38,8 @@ from PyQt5.QtCore import QAbstractItemModel, QModelIndex, QVariant
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtWidgets import QHeaderView
 
+from cflib.crazyflie.param import PersistentParamState
+
 import cfclient
 from cfclient.ui.tab import Tab
 
@@ -268,6 +270,11 @@ class ParamTab(Tab, param_tab_class):
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
 
+    _set_param_value_signal = pyqtSignal()
+    _persistent_state_signal = pyqtSignal(PersistentParamState)
+    _param_default_signal = pyqtSignal(object)
+    _reset_param_signal = pyqtSignal(str)
+
     def __init__(self, tabWidget, helper, *args):
         """Create the parameter tab"""
         super(ParamTab, self).__init__(*args)
@@ -286,6 +293,14 @@ class ParamTab(Tab, param_tab_class):
         self._disconnected_signal.connect(self._disconnected)
 
         self._model = ParamBlockModel(None, self.helper.mainUI)
+        self._persistent_state_signal.connect(self._persistent_state_cb)
+        self._set_param_value_signal.connect(self._set_param_value)
+        self.setParamButton.clicked.connect(self._set_param_value_signal.emit)
+        self._param_default_signal.connect(self._param_default_cb)
+
+        self._reset_param_signal.connect(lambda text: self.currentValue.setText(text))
+        self.resetDefaultButton.clicked.connect(lambda: self._reset_param_signal.emit(self.defaultValue.text()))
+        self.persistentButton.clicked.connect(self._persistent_button_cb)
 
         self.proxyModel = ParamTreeFilterProxy(self.paramTree)
         self.proxyModel.setSourceModel(self._model)
@@ -301,7 +316,7 @@ class ParamTab(Tab, param_tab_class):
         self.paramTree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.paramTree.selectionModel().selectionChanged.connect(self._paramChanged)
 
-    def _param_default_cb(self, name, default_value):
+    def _param_default_cb(self, default_value):
         if default_value is not None:
             self.defaultValue.setText(str(default_value))
         else:
@@ -309,8 +324,9 @@ class ParamTab(Tab, param_tab_class):
 
     def _persistent_button_cb(self, _):
         def success_cb(name, success):
+            print(f'store {success}!')
             if success:
-                self.cf.param.persistent_get_state(name, self._persistent_state_cb)
+                self.cf.param.persistent_get_state(name, lambda _, state: self._persistent_state_signal.emit(state))
 
         complete = self.paramDetailsLabel.text()
         if self.persistentButton.text() == 'Clear':
@@ -318,12 +334,9 @@ class ParamTab(Tab, param_tab_class):
         else:
             self.cf.param.persistent_store(complete, success_cb)
 
-    def _persistent_state_cb(self, name, state):
+    def _persistent_state_cb(self, state):
+        print(f'persistent callback! state: {state}')
         self.persistentFrame.setVisible(True)
-        try:
-            self.persistentButton.clicked.disconnect()
-        except Exception:
-            pass
 
         if state.is_stored:
             self.storedValue.setText(str(state.stored_value))
@@ -331,13 +344,11 @@ class ParamTab(Tab, param_tab_class):
             self.storedValue.setText('Not stored')
 
         self.persistentButton.setText('Clear' if state.is_stored else 'Store')
-        self.persistentButton.clicked.connect(self._persistent_button_cb)
 
-    def _setParamValue(self):
+    def _set_param_value(self):
         name = self.paramDetailsLabel.text()
         value = self.currentValue.text()
         self.cf.param.set_value(name, value)
-        self._paramChanged()
 
     def _paramChanged(self):
         indexes = self.paramTree.selectionModel().selectedIndexes()
@@ -375,7 +386,7 @@ class ParamTab(Tab, param_tab_class):
             self.currentValue.setText(value)
             self.currentValue.setCursorPosition(0)
             self.defaultValue.setText('-')
-            self.cf.param.get_default_value(complete, self._param_default_cb)
+            self.cf.param.get_default_value(complete, lambda _, value: self._param_default_signal.emit(value))
 
             writable = elem.get_readable_access() == 'RW'
             self.currentValue.setEnabled(writable)
@@ -383,10 +394,7 @@ class ParamTab(Tab, param_tab_class):
             self.resetDefaultButton.setEnabled(writable)
 
             if elem.is_persistent():
-                self.cf.param.persistent_get_state(complete, self._persistent_state_cb)
-
-            self.setParamButton.clicked.connect(self._setParamValue)
-            self.resetDefaultButton.clicked.connect(lambda: self.currentValue.setText(self.defaultValue.text()))
+                self.cf.param.persistent_get_state(complete, lambda _, state: self._persistent_state_signal.emit(state))
 
     def _connected(self, link_uri):
         self._model.reset()
