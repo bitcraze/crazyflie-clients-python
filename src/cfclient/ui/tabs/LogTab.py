@@ -60,7 +60,11 @@ class LogTab(Tab, param_tab_class):
 
         # Init the tree widget
         self.logTree.setAlternatingRowColors(True)
-        self.logTree.setStyleSheet('QTreeWidget { alternate-background-color: #e9e9e9; }')
+        if helper.mainUI.isDark:
+            self.logTree.setStyleSheet('QTreeWidget { alternate-background-color: #3c3c3c; }')
+        else:
+            self.logTree.setStyleSheet('QTreeWidget { alternate-background-color: #e9e9e9; }')
+
         self.logTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage', 'Description'])
         self.logTree.header().resizeSection(0, 150)
         self.logTree.setSortingEnabled(True)
