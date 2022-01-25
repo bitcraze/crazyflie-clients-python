@@ -432,7 +432,7 @@ class FlightTab(Tab, flight_tab_class):
             x=0.0, y=0.0, z=0.0,
             default_velocity=0.3,
             default_height=0.5,
-            controller=PositionHlCommander.CONTROLLER_PID
+            controller=int(self.helper.cf.param.get_value('stabilizer.controller'))
         )
 
         try:
