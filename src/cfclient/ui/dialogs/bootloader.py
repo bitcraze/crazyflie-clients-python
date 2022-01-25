@@ -39,7 +39,6 @@ import os
 import threading
 from urllib.request import urlopen
 from urllib.error import URLError
-import zipfile
 
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import pyqtSlot, pyqtSignal, QThread
@@ -500,4 +499,4 @@ class FirmwareDownloader(QThread):
                 signal.emit(release_name, self._filepath)
         except URLError:
             logger.warning('Failed to make web request to get requested'
-                            ' firmware-release')
+                           ' firmware-release')
