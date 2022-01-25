@@ -356,9 +356,9 @@ class ParamTab(Tab, param_tab_class):
         value = self.currentValue.text()
         try:
             self.cf.param.set_value(name, value)
-            self.currentValue.setStyleSheet("border: none")
+            self.currentValue.setStyleSheet('')
         except Exception:
-            self.currentValue.setStyleSheet("border: 1px solid red")
+            self.currentValue.setStyleSheet('border: 1px solid red')
 
     def _paramChanged(self):
         indexes = self.paramTree.selectionModel().selectedIndexes()
@@ -394,7 +394,7 @@ class ParamTab(Tab, param_tab_class):
             elem = self.cf.param.toc.get_element_by_complete_name(complete)
             value = round_if_float(self.cf.param.get_value(complete))
             self.currentValue.setText(value)
-            self.currentValue.setStyleSheet("border: none")
+            self.currentValue.setStyleSheet('')
             self.currentValue.setCursorPosition(0)
             self.defaultValue.setText('-')
             self.cf.param.get_default_value(complete, lambda _, value: self._param_default_signal.emit(value))
