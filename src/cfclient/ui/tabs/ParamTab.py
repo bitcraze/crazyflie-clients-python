@@ -81,7 +81,7 @@ class ParamChildItem(object):
         """Callback from the param layer when a parameter has been updated"""
         self.value = round_if_float(value)
         self.is_updating = False
-        self.parent.model.refresh()
+        self.parent.model.proxy.dataChanged.emit(QModelIndex(), QModelIndex())
 
     def child_count(self):
         """Return the number of children this node has"""
@@ -115,6 +115,10 @@ class ParamBlockModel(QAbstractItemModel):
         self._red_brush = QBrush(QColor("red"))
         self._enabled = False
         self._mainUI = mainUI
+        self.proxy = None
+
+    def set_proxy(self, proxy):
+        self.proxy = proxy
 
     def set_enabled(self, enabled):
         if self._enabled != enabled:
@@ -305,6 +309,7 @@ class ParamTab(Tab, param_tab_class):
         self.proxyModel = ParamTreeFilterProxy(self.paramTree)
         self.proxyModel.setSourceModel(self._model)
         self.proxyModel.setRecursiveFilteringEnabled(True)
+        self._model.set_proxy(self.proxyModel)
 
         @QtCore.pyqtSlot(str)
         def onFilterChanged(text):
