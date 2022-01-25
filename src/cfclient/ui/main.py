@@ -60,6 +60,7 @@ from PyQt5.QtWidgets import QAction
 from PyQt5.QtWidgets import QActionGroup
 from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtGui import QPalette
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QMenu
 from PyQt5.QtWidgets import QMessageBox
@@ -141,6 +142,15 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._statusbar_label = QLabel("No input-device found, insert one to"
                                        " fly.")
         self.statusBar().addWidget(self._statusbar_label)
+
+        #
+        # We use this hacky-trick to find out if we are in dark-mode and
+        # figure out what bgcolor to set from that. We always use the current
+        # palette forgreound.
+        #
+        self.textColor = self._statusbar_label.palette().color(QPalette.WindowText)
+        self.bgColor = self._statusbar_label.palette().color(QPalette.Background)
+        self.isDark = self.textColor.value() > self.bgColor.value()
 
         self.joystickReader = JoystickReader()
         self._active_device = ""
