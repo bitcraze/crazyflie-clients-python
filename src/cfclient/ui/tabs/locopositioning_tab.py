@@ -294,10 +294,8 @@ class AnchorStateMachine:
         self._cb_data = cb_data
 
     def poll(self):
-        if not self._waiting_for_response:
-            self._next_step()
-            self._request_step()
-            self._waiting_for_response = True
+        self._next_step()
+        self._request_step()
 
     def _next_step(self):
         self._current_step += 1
@@ -320,17 +318,14 @@ class AnchorStateMachine:
         return None
 
     def _cb_active_id_list_updated(self, mem_data):
-        self._waiting_for_response = False
         if self._cb_active_id_list:
             self._cb_active_id_list(mem_data.active_anchor_ids)
 
     def _cb_id_list_updated(self, mem_data):
-        self._waiting_for_response = False
         if self._cb_id_list:
             self._cb_id_list(mem_data.anchor_ids)
 
     def _cb_data_updated(self, mem_data):
-        self._waiting_for_response = False
         if self._cb_data:
             self._cb_data(mem_data.anchor_data)
 
