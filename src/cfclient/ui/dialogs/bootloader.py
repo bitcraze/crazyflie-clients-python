@@ -490,26 +490,14 @@ class FirmwareDownloader(QThread):
             if successful.
         """
         try:
-            # Check if we have an old file saved and if so, ensure it's a valid
-            # zipfile and then call signal
-            with open(self._filepath, 'rb') as f:
-                previous_release = zipfile.ZipFile(f)
-                # testzip returns None if it's OK.
-                if previous_release.testzip() is None:
-                    logger.info('Using same firmware-release file at'
-                                '%s' % self._filepath)
-                    signal.emit(release_name, self._filepath)
-                    return
-        except FileNotFoundError:
-            try:
-                # Fetch the file with a new web request and save it to
-                # a temporary file.
-                with urlopen(url) as response:
-                    with open(self._filepath, 'wb') as release_file:
-                        release_file.write(response.read())
-                    logger.info('Created temporary firmware-release file at'
-                                '%s' % self._filepath)
-                    signal.emit(release_name, self._filepath)
-            except URLError:
-                logger.warning('Failed to make web request to get requested'
-                               ' firmware-release')
+            # Fetch the file with a new web request and save it to
+            # a temporary file.
+            with urlopen(url) as response:
+                with open(self._filepath, 'wb') as release_file:
+                    release_file.write(response.read())
+                logger.info('Created temporary firmware-release file at'
+                            '%s' % self._filepath)
+                signal.emit(release_name, self._filepath)
+        except URLError:
+            logger.warning('Failed to make web request to get requested'
+                            ' firmware-release')
