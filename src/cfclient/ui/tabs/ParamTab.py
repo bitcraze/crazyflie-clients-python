@@ -300,6 +300,7 @@ class ParamTab(Tab, param_tab_class):
         self._persistent_state_signal.connect(self._persistent_state_cb)
         self._set_param_value_signal.connect(self._set_param_value)
         self.setParamButton.clicked.connect(self._set_param_value_signal.emit)
+        self.currentValue.returnPressed.connect(self._set_param_value_signal.emit)
         self._param_default_signal.connect(self._param_default_cb)
 
         self._reset_param_signal.connect(lambda text: self.currentValue.setText(text))
