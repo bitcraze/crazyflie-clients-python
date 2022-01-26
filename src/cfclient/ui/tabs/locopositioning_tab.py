@@ -296,8 +296,7 @@ class AnchorStateMachine:
     def poll(self):
         if not self._waiting_for_response:
             self._next_step()
-            self._request_step()
-            self._waiting_for_response = True
+            self._waiting_for_response = self._request_step()
 
     def _next_step(self):
         self._current_step += 1
@@ -305,13 +304,21 @@ class AnchorStateMachine:
             self._current_step = 0
 
     def _request_step(self):
+        result = True
+
         action = AnchorStateMachine.STEPS[self._current_step]
         if action == AnchorStateMachine.GET_ACTIVE:
             self._mem.update_active_id_list(self._cb_active_id_list_updated)
         elif action == AnchorStateMachine.GET_IDS:
             self._mem.update_id_list(self._cb_id_list_updated)
         else:
-            self._mem.update_data(self._cb_data_updated)
+            if self._mem.nr_of_anchors > 0:
+                # Only request anchor data if we actually have anchors, otherwise the callback will never be called
+                self._mem.update_data(self._cb_data_updated)
+            else:
+                result = False
+
+        return result
 
     def _get_mem(self, mem_sub):
         mem = mem_sub.get_mems(MemoryElement.TYPE_LOCO2)
