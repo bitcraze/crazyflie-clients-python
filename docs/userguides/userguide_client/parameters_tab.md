@@ -8,8 +8,7 @@ that can be changed in real-time. The parameter tab can be used to view
 and update parameters. For more information about parameters see
 [logging and parameter frameworks](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/userguides/logparam/).
 
-![cfclient parameter list](/docs/images/cfclient_param.png){:align-center
-width="700"}
+![cfclient parameter list](/docs/images/cfclient_param.png){:align-center width="700"}
 
 1.  Parameter information fields
        * *Name:* The name of the parameter or group.

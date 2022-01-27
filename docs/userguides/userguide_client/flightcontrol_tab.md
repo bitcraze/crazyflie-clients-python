@@ -4,6 +4,7 @@ page_id: flightcontrol_tab
 ---
 
 The normal view used when flying is the one seen below.
+
 ![cfclient flighttab](/docs/images/cfclient_flightab.png){:align-center}
 
 1.  Flight mode selector (Normal and Advanced)
@@ -32,3 +33,4 @@ The normal view used when flying is the one seen below.
 7. Actual values logged from the Crazyflie
 8. Motor output on the Crazyflie
 9. Horizon indicator
+10. Command based flight control, allow controlled flight if, and only if, a positioning deck such as the [Flow deck](https://store.bitcraze.io/collections/decks/products/flow-deck-v2), the [Loco deck](https://store.bitcraze.io/collections/decks/products/loco-positioning-deck) or the [Lighthouse deck](https://store.bitcraze.io/collections/decks/products/lighthouse-positioning-deck) is present.

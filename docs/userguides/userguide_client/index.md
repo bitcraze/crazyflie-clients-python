@@ -57,7 +57,6 @@ For more info on LED indicators etc. have a look at the [Crazyflie 2.X](https://
 3. Battery and link quality (from 0% to 100%)
 4. Tabs with specific functionality (see below for details)
 5. The selected and used input interface
-6. Command based flight control, allow controlled flight if, and only if, a positioning deck such as the [Flow deck](https://store.bitcraze.io/collections/decks/products/flow-deck-v2), the [Loco deck](https://store.bitcraze.io/collections/decks/products/loco-positioning-deck) or the [Lighthouse deck](https://store.bitcraze.io/collections/decks/products/lighthouse-positioning-deck) is present.
 
 ### Tabs
 

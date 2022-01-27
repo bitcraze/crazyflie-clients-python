@@ -7,7 +7,6 @@
     - {page_id: userguide_client}
     - {page_id: cfheadless}
     - {page_id: inputdevices}
-    - {page_id: raspberrypi}
     - {page_id: recovery-mode}
 - title: Functional areas
   subs:
