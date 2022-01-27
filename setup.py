@@ -133,7 +133,8 @@ setup(
                                           'numpy>=1.20,<1.25',
                                           'vispy~=0.9.0',
                                           'pyserial~=3.5',
-                                          'pyqt5~=5.15.0'],
+                                          'pyqt5~=5.15.0',
+                                          'PyQt5-sip>=12.9.0'],
 
     # List of dev dependencies
     # You can install them by running
