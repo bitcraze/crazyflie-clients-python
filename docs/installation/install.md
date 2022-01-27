@@ -2,14 +2,16 @@
 title: Installation Instructions
 page_id: install
 ---
-# Prerequisites installation
+# Prerequisites
 
-## Debian
+There are a few things to sort out on your machine before you can install the client. Please see the appropriate
+section depending on your environment.
 
+## Debian/Ubuntu
 
 For <  Ubuntu 20.04 you will need to check first if which version your python is on and if you have 'python3' on your system.
 
-From a fresh Ubuntu 20.04 system, running the client form source requires git, pip and a lib for the Qt GUI. 
+From a fresh Ubuntu 20.04 system, running the client form source requires git, pip and a lib for the Qt GUI.
 
 ```
 sudo apt install git python3-pip libxcb-xinerama0
@@ -71,9 +73,11 @@ From there, you can either add `/usr/local/bin` up in your path variable or run 
 
 # Installing from latest release
 
-If you are planning to not do any development on the client itself, we highly recommend you to install the cfclient according to latest release (as according of the instructions described) and not from source ([from these instructions](#installing-from-source)). 
+If you plan to use the client to control the Crazyflie, we highly recommend you to install the latest release using pip,
+as this is a well tested and stable. Please see next section.
 
-Make sure that you have installed the [prerequisites](#prerequisites-installation)!
+On the other hand, if you intend to do development work on the client and modify the source code, please see
+[Installing from source](#installing-from-source) bellow.
 
 ## From Pypi (Windows, Mac, Linux, ..., with python3)
 
@@ -84,13 +88,27 @@ pip3 install cfclient
 ```
 # Installing from source
 
-If you are planning to do development with the cfclient, you are at right spot! The Crazyflie client requires Python >= 3.6. The following instructions describe hot to install it from source. Make sure to also install the [cflib](https://github.com/bitcraze/crazyflie-lib-python) from source as well!
+If you are planning to do development work with the cfclient, you are at right spot!
 
 Make sure that you have installed the [prerequisites](#prerequisites-installation)
 
-## Pip and Venv
+Make sure to also install the [cflib](https://github.com/bitcraze/crazyflie-lib-python) from source as it is common to
+modify or examine this code as well when working with the client.
 
-It is good to work within a [python venv](https://docs.python.org/3/library/venv.html), this way you are not installing dependencies in your main python instance. For those that prefer it, you could also use Anaconda.
+When you have installed the client according to the instructions bellow, you can run the clients with the following commands:
+```
+cfclient
+cfheadless
+cfloader
+cfzmq
+```
+
+or with
+
+```python3 -m cfclient.gui```
+
+It is good to work within a [python venv](https://docs.python.org/3/library/venv.html), this way you are not installing
+dependencies in your main python instance. For those that prefer it, you could also use Anaconda.
 
 ## Linux
 Clone the repository with git
@@ -113,12 +131,16 @@ If you plan to do development on the client you should run:
 $ pip3 -e .[dev]
 ```
 
-The client can now be runned using ```cfclient``` if the local pip bin directory is in the path (it should be in a venv or after a reboot), or with ```python3 -m cfclient.gui```.
+The client can now be run if the local pip bin directory is in the path (it should be in a
+venv or after a reboot).
 
-At the very least you should **never** run pip in sudo, this would install dependencies system wide and could cause compatibility problems with already installed application. If the ```pip``` of ```python3 -m pip``` command request the administrator password, you should run the command with ```--user``` (for example ```python3 -m pip install --user -e .```). This should not be required on modern python distribution though since the *--user*  flag seems to be the default behaviour.
+Avoid running pip in sudo, this would install dependencies system wide and could cause
+compatibility problems with already installed applications. If the ```pip``` of ```python3 -m pip``` command request
+the administrator password, you should run the command with ```--user```
+(for example ```python3 -m pip install --user -e .```). This should not be required on modern python distribution
+though since the *--user*  flag seems to be the default behavior.
 
 ## Windows (7/8/10)
-
 
 Assuming git is installed such that you can use it from powershell/cmd, cd to a desired folder and git clone the project:
 
@@ -131,31 +153,24 @@ Install the client from source
 pip3 install -e .
 ```
 
-
 or install the client in development mode:
 ```
 pip install -e .[dev]
 ```
 
-You can now run the clients with the following commands:
-```
-cfclient
-cfheadless
-cfloader
-cfzmq
-```
-
-
 ## Mac OSX
+
+```
+git clone https://github.com/bitcraze/crazyflie-clients-python
+cd crazyflie-clients-python
+```
 
 To install the client in edit mode:
 ```
 pip3 install -e .
 ```
 
-The client can now be started with ```cfclient``` or ```python3 -m cfclient.gui```.
-
-# Extra 
+# Extra
 
 ## Pre commit hooks
 If you want some extra help with keeping to the mandated python coding style you can install hooks that verify your style at commit time. This is done by running:
@@ -168,4 +183,24 @@ This will run the lint checkers defined in `.pre-commit-config-yaml` on your pro
 
 you can edit the .ui files for the GUI with QtCreator. For Windows and Mac You can the Qt development kit from the [Qt website](https://www.qt.io/download-open-source/). On linux QtCreator is usually available as package, for example on Ubuntu it can be installed with ```sudo apt install qtcreator```.
 
+## Debugging the client from an IDE
 
+It is convenient to be able to set breakpoints, examine variables and so on from an IDE when debugging the client. To get
+this to work you need to run `./bin/cfclient` as the debug target in the IDE.
+
+In VSCode for instance, the launch.json should look something like this:
+
+``` json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "CfClient",
+            "type": "python",
+            "request": "launch",
+            "program": "./bin/cfclient",
+            "console": "integratedTerminal"
+        },
+    ]
+}
+```
