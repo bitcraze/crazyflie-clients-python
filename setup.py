@@ -73,7 +73,7 @@ else:
 platform_requires = []
 platform_dev_requires = ['pre-commit']
 if sys.platform == 'win32' or sys.platform == 'darwin':
-    platform_requires.extend(['pysdl2~=0.9.6', 'pysdl2-dll==2.0.16', 'sip==6.5.0', 'PyQt5-sip==12.9.0'])
+    platform_requires.extend(['pysdl2~=0.9.6', 'pysdl2-dll==2.0.16'])
 if sys.platform == 'win32':
     platform_dev_requires.extend(['cx_freeze==5.1.1', 'jinja2==2.10.3'])
 
@@ -133,7 +133,8 @@ setup(
                                           'numpy>=1.20,<1.25',
                                           'vispy~=0.9.0',
                                           'pyserial~=3.5',
-                                          'pyqt5~=5.15.0'],
+                                          'pyqt5~=5.15.0',
+                                          'PyQt5-sip>=12.9.0'],
 
     # List of dev dependencies
     # You can install them by running
