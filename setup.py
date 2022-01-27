@@ -44,8 +44,8 @@ else:
 # except:
 #     pass
 
-if sys.version_info < (3, 6):
-    raise "must use python 3.6 or greater"
+if sys.version_info < (3, 7):
+    raise "must use python 3.7 or greater"
 
 
 def relative(lst, base=''):
