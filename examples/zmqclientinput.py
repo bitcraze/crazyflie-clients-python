@@ -9,7 +9,7 @@ This code will ramp the Crazyflie motors from 25% to 45%
 
 To work, ZMQ has to be enabled in the client configuration and the client needs
 to be connected to a Crazyflie.
-See https://wiki.bitcraze.io/doc:crazyflie:client:pycfclient:zmq#input_device
+Search in bitcraze.io for 'ZMQ implementation of the cfclient' under header 'input devices'
 for the protocol documentation.
 """
 

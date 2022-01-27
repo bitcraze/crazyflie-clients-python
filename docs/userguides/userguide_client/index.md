@@ -15,8 +15,7 @@ functionality.
 This page uses the terms
 [roll/pitch/yaw](http://en.wikipedia.org/wiki/Flight_dynamics_(fixed_wing_aircraft))
 extensively. For that to make any sense for a quadcopter we need to know
-where the front is,
-[Crazyflie 2.X](https://www.bitcraze.io/documentation/system/).
+where the front is, so you will need to know [Crazyflie's coordinate system](https://www.bitcraze.io/documentation/system/platform/cf2-coordinate-system/)
 
 ---
 
