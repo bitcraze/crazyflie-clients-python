@@ -186,7 +186,7 @@ you can edit the .ui files for the GUI with QtCreator. For Windows and Mac You c
 ## Debugging the client from an IDE
 
 It is convenient to be able to set breakpoints, examine variables and so on from an IDE when debugging the client. To get
-this to work you need to run `./bin/cfclient` as the debug target in the IDE.
+this to work you need to run the python module `cfclient.gui` as the debug target in the IDE.
 
 In VSCode for instance, the launch.json should look something like this:
 
@@ -195,12 +195,14 @@ In VSCode for instance, the launch.json should look something like this:
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "CfClient",
+            "name": "Crazyflie client",
             "type": "python",
             "request": "launch",
-            "program": "./bin/cfclient",
-            "console": "integratedTerminal"
+            "module": "cfclient.gui"
         },
     ]
 }
 ```
+
+As noted earlier, it is common that work on the client also involve work in the [crazyflie-lib-python](https://github.com/bitcraze/crazyflie-lib-python).
+The `launch.json` documented here can also be used in the crazyflie lib project to debug lib-related code.
