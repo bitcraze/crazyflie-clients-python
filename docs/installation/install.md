@@ -77,7 +77,8 @@ Make sure that you have installed the [prerequisites](#prerequisites-installatio
 
 ## From Pypi (Windows, Mac, Linux, ..., with python3)
 
-Each release of the client is pushed to the [pypi repository](https://pypi.org/project/cfclient/). If you have python >= 3.6, it can be installed with pip:
+Each release of the client is pushed to the [pypi repository](https://pypi.org/project/cfclient/).
+If you have python >= 3.7, it can be installed with pip:
 
 ```
 pip3 install cfclient
@@ -86,7 +87,7 @@ pip3 install cfclient
 
 If you are planning to do development with the cfclient, you are at right spot! The Crazyflie client requires Python >= 3.6. The following instructions describe hot to install it from source. Make sure to also install the [cflib](https://github.com/bitcraze/crazyflie-lib-python) from source as well!
 
-Make sure that you have installed the [prerequisites](#prerequisites-installation)
+The sections bellow describes how to install the client from source on various platforms, they all require Python >= 3.7.
 
 ## Pip and Venv
 
