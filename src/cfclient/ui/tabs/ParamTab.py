@@ -386,7 +386,7 @@ class ParamTab(Tab, param_tab_class):
                 self.paramDetailsDescription.setWordWrap(True)
                 self.paramDetailsDescription.setText(desc.replace('\n', ''))
             except:  # noqa
-                pass
+                self.paramDetailsDescription.setText('')
 
         self.valueFrame.setVisible(param is not None)
         if param:
