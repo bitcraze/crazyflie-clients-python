@@ -33,9 +33,10 @@ Shows data for the Lighthouse Positioning system
 import logging
 
 from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal, QTimer
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QLabel
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -284,7 +285,6 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
     _log_error_signal = pyqtSignal(object, str)
-    _cb_param_to_detect_lighthouse_deck_signal = pyqtSignal(object, object)
     _status_report_signal = pyqtSignal(int, object, object)
     _new_system_config_written_to_cf_signal = pyqtSignal(bool)
     _geometry_read_signal = pyqtSignal(object)
@@ -305,7 +305,6 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._connected_signal.connect(self._connected)
         self._disconnected_signal.connect(self._disconnected)
         self._log_error_signal.connect(self._logging_error)
-        self._cb_param_to_detect_lighthouse_deck_signal.connect(self._cb_param_to_detect_lighthouse_deck)
         self._status_report_signal.connect(self._status_report_received)
         self._new_system_config_written_to_cf_signal.connect(self._new_system_config_written_to_cf)
         self._geometry_read_signal.connect(self._geometry_read_cb)
@@ -388,31 +387,14 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
         logger.info("Crazyflie connected to {}".format(link_uri))
-        self._request_param_to_detect_lighthouse_deck()
+
         self._basestation_geometry_dialog.reset()
         self._is_connected = True
-        self._update_ui()
 
-    def _request_param_to_detect_lighthouse_deck(self):
-        """Send a parameter request to detect if the Lighthouse deck is
-        installed"""
-        group = 'deck'
-        param = 'bcLighthouse4'
-
-        if self._is_in_param_toc(group, param):
-            logger.info("Requesting lighthouse deck parameter")
-            self._helper.cf.param.add_update_callback(
-                group=group, name=param,
-                cb=self._cb_param_to_detect_lighthouse_deck_signal.emit)
-
-    def _cb_param_to_detect_lighthouse_deck(self, name, value):
-        """Callback from the parameter sub system when the Lighthouse deck detection
-        parameter has been updated"""
-        if value == '1':
-            logger.info("Lighthouse deck installed, enabling the tab")
+        if self._helper.cf.param.get_value('deck.bcLighthouse4') == '1':
             self._lighthouse_deck_detected()
-        else:
-            logger.info("No Lighthouse deck installed")
+
+        self._update_ui()
 
     def _lighthouse_deck_detected(self):
         """Called when the lighthouse deck has been detected. Enables the tab,
@@ -433,11 +415,12 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             except AttributeError as e:
                 logger.warning(str(e))
 
+            bs_available_mask = int(self._helper.cf.param.get_value('lighthouse.bsAvailable'))
+            self._populate_status_matrix(bs_available_mask)
+
             # Now that we know we have a lighthouse deck, setup the memory helper and config writer
             self._lh_memory_helper = LighthouseMemHelper(self._helper.cf)
             self._lh_config_writer = LighthouseConfigWriter(self._helper.cf)
-
-        self._update_ui()
 
     def _start_read_of_geo_data(self):
         if not self._is_geometry_read_ongoing:
@@ -585,10 +568,11 @@ class LighthouseTab(Tab, lighthouse_tab_class):
 
     def _clear_state_indicator(self):
         container = self._basestation_stats_container
-        for row in range(1, 3):
-            for col in range(1, 5):
-                color_label = container.itemAtPosition(row, col).widget()
-                color_label.setStyleSheet(STYLE_NO_BACKGROUND)
+        for row in range(0, 5):
+            for col in range(1, 17):
+                item = container.itemAtPosition(row, col)
+                if item is not None:
+                    item.widget().deleteLater()
 
     def _rpy_to_rot(self, rpy):
         # http://planning.cs.uiuc.edu/node102.html
@@ -612,6 +596,32 @@ class LighthouseTab(Tab, lighthouse_tab_class):
 
         return np.array(r)
 
+    def _populate_status_matrix(self, bs_available_mask):
+        container = self._basestation_stats_container
+
+        # Find the nr of base stations by looking for the highest bit that is set
+        # Assume all bs up to that bit are available
+        for bs in range(0, 16):
+            if bs_available_mask & (1 << bs) == 0:
+                break
+
+            container.addWidget(self._create_label(str(bs + 1)), 0, bs + 1)
+            for i in range(1, 5):
+                container.addWidget(self._create_label(), i, bs + 1)
+
+    def _create_label(self, text=None):
+        label = QLabel()
+        label.setMinimumSize(30, 0)
+        label.setAlignment(Qt.AlignCenter)
+
+        if text:
+            label.setText(str(text))
+        else:
+            label.setProperty('frameShape', 'QFrame::Box')
+            label.setStyleSheet(STYLE_NO_BACKGROUND)
+
+        return label
+
     def _update_basestation_status_indicators(self):
         """Handling the basestation status label handles to indicate
             the state of received data per basestation"""
@@ -620,34 +630,36 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         # Ports the label number to the first index of the statistic id
         stats_id_port = {1: 0, 2: 1, 3: 4, 4: 5}
 
-        for bs in range(2):
+        for bs in range(16):
             for stats_indicator_id in range(1, 5):
                 bs_indicator_id = bs + 1
-                label = container.itemAtPosition(bs_indicator_id, stats_indicator_id).widget()
-                stats_id = stats_id_port.get(stats_indicator_id)
-                temp_set = self._bs_stats[stats_id]
+                item = container.itemAtPosition(stats_indicator_id, bs_indicator_id)
+                if item is not None:
+                    label = item.widget()
+                    stats_id = stats_id_port.get(stats_indicator_id)
+                    temp_set = self._bs_stats[stats_id]
 
-                if bs in temp_set:
-                    # If the status bar for calibration data is handled, have an intermediate status
-                    # else just have red or green.
-                    if stats_indicator_id == 2:
-                        label.setStyleSheet(STYLE_BLUE_BACKGROUND)
-                        label.setToolTip('Calibration data from cache')
+                    if bs in temp_set:
+                        # If the status bar for calibration data is handled, have an intermediate status
+                        # else just have red or green.
+                        if stats_indicator_id == 2:
+                            label.setStyleSheet(STYLE_BLUE_BACKGROUND)
+                            label.setToolTip('Calibration data from cache')
 
-                        calib_confirm = bs in self._bs_stats[stats_id + 1]
-                        calib_updated = bs in self._bs_stats[stats_id + 2]
+                            calib_confirm = bs in self._bs_stats[stats_id + 1]
+                            calib_updated = bs in self._bs_stats[stats_id + 2]
 
-                        if calib_confirm:
+                            if calib_confirm:
+                                label.setStyleSheet(STYLE_GREEN_BACKGROUND)
+                                label.setToolTip('Calibration data verified')
+                            if calib_updated:
+                                label.setStyleSheet(STYLE_ORANGE_BACKGROUND)
+                                label.setToolTip('Calibration data updated, the geometry probably needs to be re-estimated')
+                        else:
                             label.setStyleSheet(STYLE_GREEN_BACKGROUND)
-                            label.setToolTip('Calibration data verified')
-                        if calib_updated:
-                            label.setStyleSheet(STYLE_ORANGE_BACKGROUND)
-                            label.setToolTip('Calibration data updated, the geometry probably needs to be re-estimated')
                     else:
-                        label.setStyleSheet(STYLE_GREEN_BACKGROUND)
-                else:
-                    label.setStyleSheet(STYLE_RED_BACKGROUND)
-                    label.setToolTip('')
+                        label.setStyleSheet(STYLE_RED_BACKGROUND)
+                        label.setToolTip('')
 
     def _load_sys_config_button_clicked(self):
         names = QFileDialog.getOpenFileName(self, 'Open file', self._helper.current_folder, "*.yaml;;*.*")
