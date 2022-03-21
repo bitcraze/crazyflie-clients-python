@@ -660,7 +660,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
                                 label.setToolTip('Calibration data verified')
                             if calib_updated:
                                 label.setStyleSheet(STYLE_ORANGE_BACKGROUND)
-                                label.setToolTip('Calibration data updated, the geometry probably needs to be re-estimated')
+                                label.setToolTip('Calibration data updated, the geometry probably needs to be ' +
+                                                 're-estimated')
                         else:
                             label.setStyleSheet(STYLE_GREEN_BACKGROUND)
                     else:
