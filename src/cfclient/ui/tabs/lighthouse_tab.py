@@ -415,7 +415,13 @@ class LighthouseTab(Tab, lighthouse_tab_class):
             except AttributeError as e:
                 logger.warning(str(e))
 
-            bs_available_mask = int(self._helper.cf.param.get_value('lighthouse.bsAvailable'))
+            try:
+                bs_available_mask = int(self._helper.cf.param.get_value('lighthouse.bsAvailable'))
+            except KeyError as e:
+                # Old firmware that does not support lighthouse.bsAvailable, set to bs 1 and 2 for backwards
+                # compatibility
+                bs_available_mask = 0x3
+                logger.warning(str(e))
             self._populate_status_matrix(bs_available_mask)
 
             # Now that we know we have a lighthouse deck, setup the memory helper and config writer
