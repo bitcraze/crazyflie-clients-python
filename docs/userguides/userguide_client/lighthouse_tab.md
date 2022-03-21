@@ -5,7 +5,8 @@ page_id: lighthouse_tab
 
 The Lighthouse Positioning tab shows information from the Lighthouse Positioning
 system when present. It is also used to configure and manage the system.
-For more information on how the Lighthouse system works, please see TODO
+For more information on how the Lighthouse system works, please see
+[the firmware documentation](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/lighthouse/).
 
 ![cfclient positioning](/docs/images/cfclient_lh_main.png){:align-center width="700"}
 
@@ -35,7 +36,8 @@ The currently estimated position is displayed in the "Position" field.
 ### Base station status
 A detailed status of the base stations is indicated using colors in the grid. All
 four stages for a base station must be green for the data to be used in the position
-estimation process. When setting up the system work from left to right and make sure all the boxes to the left are green before you proceed to the next one.
+estimation process. When setting up the system, work from top to bottom and make sure all the boxes above are green
+before you proceed to the next one.
 
 1.  **Receiving** - green = light is received from the base station, red = no reception
 2.  **Calibration** - indicates if there is calibration data for the base station or not.
