@@ -241,11 +241,23 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         """
         for release in releases:
             release_name = release[0]
-            for download in release[1:]:
+            downloads = release[1:]
+
+            downloads.sort(key=self.download_sorter)
+
+            for download in downloads:
                 download_name, download_link = download
                 widget_name = '%s - %s' % (release_name, download_name)
                 self._releases[widget_name] = download_link
                 self.firmwareDropdown.addItem(widget_name)
+
+    def download_sorter(self, element):
+        '''Sort downloads to display cf2 before bolt and tag'''
+        name = element[0]
+        if 'cf2' in name:
+            return '0' + name
+        else:
+            return '1' + name
 
     def release_zip_downloaded(self, release_name, release_path):
         """ Callback when a release is successfully downloaded and
