@@ -1,5 +1,5 @@
 ---
-title: Bootloader the Crazyflie 2.X
+title: Bootload the Crazyflie 2.X
 page_id: cfloader
 ---
 
@@ -119,3 +119,23 @@ Flash a new firmware package (containing both nRF51 and STM32 firmware):
     Flashing 1 of 2 to stm32 (fw): 76435 bytes (75 pages) ..........10..........10..........10..........10..........10..........10..........10.....5
     Flashing 2 of 2 to nrf51 (fw): 25151 bytes (25 pages) .1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1
     Reset in firmware mode ...
+
+Flash a new firmware to the GAP8 on the AI-deck:
+
+    crazyflie-clients-python$ bin/cfloader flash myApp.bin deck-bcAI:gap8-fw -w radio://0/30/2M
+    Reset to bootloader mode ...
+    Skipping bcAI:esp
+    | 4% Writing to bcAI:gap8 deck memory
+    / 9% Writing to bcAI:gap8 deck memory
+    - 14% Writing to bcAI:gap8 deck memory
+    \ 19% Writing to bcAI:gap8 deck memory
+    ...
+
+Flash a new firmware to the ESP on the AI-deck:
+
+    crazyflie-clients-python$ bin/cfloader flash myApp.bin deck-bcAI:esp-fw -w radio://0/30/2M
+    Reset to bootloader mode ...
+    | 4% Writing to bcAI:esp deck memory
+    / 9% Writing to bcAI:esp deck memory
+    - 14% Writing to bcAI:esp deck memory
+    \ 19% Writing to bcAI:esp deck memory
