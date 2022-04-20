@@ -42,6 +42,16 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="_dumpAssertInformation">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Assert info</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="_propellerTestButton">
          <property name="enabled">
           <bool>false</bool>
