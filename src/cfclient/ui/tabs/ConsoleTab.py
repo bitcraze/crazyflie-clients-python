@@ -49,6 +49,7 @@ console_tab_class = uic.loadUiType(cfclient.module_path +
 
 class ConsoleTab(Tab, console_tab_class):
     """Console tab for showing printouts from Crazyflie"""
+    _link_established_signal = pyqtSignal(str)
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
     _update = pyqtSignal(str)
@@ -65,12 +66,14 @@ class ConsoleTab(Tab, console_tab_class):
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
+        self._link_established_signal.connect(self._link_established)
         self._connected_signal.connect(self._connected)
         self._disconnected_signal.connect(self._disconnected)
         self._update.connect(self.printText)
 
         self._helper.cf.console.receivedChar.add_callback(self._update.emit)
         self._helper.cf.connected.add_callback(self._connected_signal.emit)
+        self._helper.cf.link_established.add_callback(self._link_established_signal.emit)
         self._helper.cf.disconnected.add_callback(
             self._disconnected_signal.emit)
 
@@ -78,6 +81,9 @@ class ConsoleTab(Tab, console_tab_class):
         self._dumpSystemLoadButton.clicked.connect(
             lambda enabled:
             self._helper.cf.param.set_value("system.taskDump", '1'))
+        self._dumpAssertInformation.clicked.connect(
+            lambda enabled:
+            self._helper.cf.param.set_value_raw("system.assertInfo", 0x08, 1))
         self._propellerTestButton.clicked.connect(
             lambda enabled:
             self._helper.cf.param.set_value("health.startPropTest", '1'))
@@ -116,5 +122,11 @@ class ConsoleTab(Tab, console_tab_class):
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
         self._dumpSystemLoadButton.setEnabled(False)
+        self._dumpAssertInformation.setEnabled(False)
         self._propellerTestButton.setEnabled(False)
         self._batteryTestButton.setEnabled(False)
+
+    def _link_established(self, link_uri):
+        """Callback when the first packet on a new link is received"""
+        # Enable the assert dump button as early as possible. After an assert we will never get the connected() cb.
+        self._dumpAssertInformation.setEnabled(True)
