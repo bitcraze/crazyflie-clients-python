@@ -402,13 +402,13 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         if self.currentSize > MAX_LOG_SIZE:
             self.packetSize.setMaximum(self.currentSize / MAX_LOG_SIZE * 100)
             self.packetSize.setFormat("%v%")
-            self.packetSize.setValue(self.currentSize / MAX_LOG_SIZE * 100)
+            self.packetSize.setValue(int(self.currentSize / MAX_LOG_SIZE * 100))
             self.packetSize.setStyleSheet(
                         UiUtils.progressbar_stylesheet('red'))
         else:
             self.packetSize.setMaximum(MAX_LOG_SIZE)
             self.packetSize.setFormat("%p%")
-            self.packetSize.setValue(self.currentSize)
+            self.packetSize.setValue(int(self.currentSize))
             self.packetSize.setStyleSheet(
                         UiUtils.progressbar_stylesheet(UiUtils.COLOR_GREEN))
 
