@@ -255,17 +255,18 @@ class FlightTab(Tab, flight_tab_class):
         self.helper.pose_logger.data_received_cb.add_callback(
             self._pose_data_signal.emit)
 
-    def _set_limiting_enabled(self, rp_limiting_enabled,
-                              yaw_limiting_enabled,
-                              thrust_limiting_enabled):
-        self.maxAngle.setEnabled(rp_limiting_enabled)
+    def _set_limiting_enabled(self, rp_limiting_enabled, yaw_limiting_enabled, thrust_limiting_enabled):
+
         self.targetCalRoll.setEnabled(rp_limiting_enabled)
         self.targetCalPitch.setEnabled(rp_limiting_enabled)
-        self.maxYawRate.setEnabled(yaw_limiting_enabled)
-        self.maxThrust.setEnabled(thrust_limiting_enabled)
-        self.minThrust.setEnabled(thrust_limiting_enabled)
-        self.slewEnableLimit.setEnabled(thrust_limiting_enabled)
-        self.thrustLoweringSlewRateLimit.setEnabled(thrust_limiting_enabled)
+
+        advanced_is_enabled = self.isInCrazyFlightmode
+        self.maxAngle.setEnabled(rp_limiting_enabled and advanced_is_enabled)
+        self.maxYawRate.setEnabled(yaw_limiting_enabled and advanced_is_enabled)
+        self.maxThrust.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
+        self.minThrust.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
+        self.slewEnableLimit.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
+        self.thrustLoweringSlewRateLimit.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
 
     def thrustToPercentage(self, thrust):
         return ((thrust / MAX_THRUST) * 100.0)
