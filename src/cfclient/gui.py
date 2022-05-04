@@ -36,7 +36,7 @@ import signal
 
 import logging
 
-from asyncqt import QEventLoop
+from qasync import QEventLoop
 import cfclient
 
 __author__ = 'Bitcraze AB'
