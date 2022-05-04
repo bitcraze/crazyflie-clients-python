@@ -48,22 +48,22 @@ from cfclient.utils.zmq_param import ZMQParamAccess
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import MemoryElement
-from PyQt5 import QtWidgets
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtCore import QDir
-from PyQt5.QtCore import QThread
-from PyQt5.QtCore import QUrl
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QAction
-from PyQt5.QtWidgets import QActionGroup
-from PyQt5.QtWidgets import QShortcut
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtGui import QPalette
-from PyQt5.QtWidgets import QLabel
-from PyQt5.QtWidgets import QMenu
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6 import QtWidgets
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSlot
+from PyQt6.QtCore import QDir
+from PyQt6.QtCore import QThread
+from PyQt6.QtCore import QUrl
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QActionGroup
+from PyQt6.QtGui import QShortcut
+from PyQt6.QtGui import QDesktopServices
+from PyQt6.QtGui import QPalette
+from PyQt6.QtWidgets import QLabel
+from PyQt6.QtWidgets import QMenu
+from PyQt6.QtWidgets import QMessageBox
 
 from .dialogs.cf2config import Cf2ConfigDialog
 from .dialogs.inputconfigdialogue import InputConfigDialogue
@@ -148,8 +148,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         # figure out what bgcolor to set from that. We always use the current
         # palette forgreound.
         #
-        self.textColor = self._statusbar_label.palette().color(QPalette.WindowText)
-        self.bgColor = self._statusbar_label.palette().color(QPalette.Background)
+        self.textColor = self._statusbar_label.palette().color(QPalette.ColorRole.WindowText)
+        self.bgColor = self._statusbar_label.palette().color(QPalette.ColorRole.Window)
         self.isDark = self.textColor.value() > self.bgColor.value()
 
         self.joystickReader = JoystickReader()
@@ -279,7 +279,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             if isinstance(tab, cfclient.ui.tabs.PlotTab):
                 cfclient.ui.pluginhelper.plotTab = tab
 
-            item = QtWidgets.QAction(tab.getMenuName(), self, checkable=True)
+            item = QAction(tab.getMenuName(), self, checkable=True)
             item.toggled.connect(tab.toggleVisibility)
             self.tabsMenuItem.addAction(item)
             tabItems[tab.getTabName()] = item
@@ -313,7 +313,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.toolboxes += [dockToolbox, ]
 
             # Add menu item for the toolbox
-            item = QtWidgets.QAction(toolbox.getName(), self)
+            item = QAction(toolbox.getName(), self)
             item.setCheckable(True)
             item.triggered.connect(self.toggleToolbox)
             self.toolboxesMenuItem.addAction(item)
@@ -628,7 +628,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                     link = "<a href='https://www.bitcraze.io/documentation/repository/crazyflie-lib-python/master/installation/usb_permissions/'>Install USB Permissions</a>" # noqa
                     msg = QMessageBox()
                     msg.setIcon(QMessageBox.Information)
-                    msg.setTextFormat(Qt.RichText)
+                    msg.setTextFormat(Qt.TextFormat.RichText)
                     msg.setText("Could not access Crazyradio")
                     msg.setInformativeText(link)
                     msg.setWindowTitle("Crazyradio permissions")

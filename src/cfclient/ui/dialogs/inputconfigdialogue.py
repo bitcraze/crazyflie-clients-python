@@ -30,15 +30,14 @@ buttons and axis to match controls for the Crazyflie.
 import logging
 
 import cfclient
-from PyQt5.QtCore import QThread
-from PyQt5.QtCore import QTimer
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QThread
+from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QMessageBox
 from cfclient.utils.config_manager import ConfigManager
-from PyQt5 import Qt
-from PyQt5 import QtWidgets
-from PyQt5 import uic
-from PyQt5.Qt import *  # noqa
+from PyQt6 import QtWidgets
+from PyQt6 import uic
 
 __author__ = 'Bitcraze AB'
 __all__ = ['InputConfigDialogue']
@@ -207,7 +206,7 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
         self.cancelButton = QtWidgets.QPushButton('Cancel')
         self._popup.addButton(self.cancelButton, QMessageBox.DestructiveRole)
         self._popup.setWindowTitle(caption)
-        self._popup.setWindowFlags(Qt.Dialog | Qt.MSWindowsFixedSizeDialogHint)
+        self._popup.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.MSWindowsFixedSizeDialogHint)
         if len(directions) > 1:
             self._popup.originalMessage = message
             message = self._popup.originalMessage % directions[0]

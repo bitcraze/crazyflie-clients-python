@@ -33,9 +33,9 @@ import logging
 import time
 from enum import Enum
 
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QMessageBox
 
 import cfclient
 from cfclient.ui.widgets.ai import AttitudeIndicator
@@ -272,7 +272,7 @@ class FlightTab(Tab, flight_tab_class):
 
     def uiSetupReady(self):
         flightComboIndex = self.flightModeCombo.findText(
-            Config().get("flightmode"), Qt.MatchFixedString)
+            Config().get("flightmode"), Qt.MatchFlag.MatchFixedString)
         if (flightComboIndex < 0):
             self.flightModeCombo.setCurrentIndex(0)
             self.flightModeCombo.currentIndexChanged.emit(0)
@@ -720,13 +720,13 @@ class FlightTab(Tab, flight_tab_class):
 
         # Add the tooltips to the assist-mode items.
         self._assist_mode_combo.setItemData(0, TOOLTIP_ALTITUDE_HOLD,
-                                            Qt.ToolTipRole)
+                                            Qt.ItemDataRole.ToolTipRole)
         self._assist_mode_combo.setItemData(1, TOOLTIP_POSITION_HOLD,
-                                            Qt.ToolTipRole)
+                                            Qt.ItemDataRole.ToolTipRole)
         self._assist_mode_combo.setItemData(2, TOOLTIP_HEIGHT_HOLD,
-                                            Qt.ToolTipRole)
+                                            Qt.ItemDataRole.ToolTipRole)
         self._assist_mode_combo.setItemData(3, TOOLTIP_HOVER,
-                                            Qt.ToolTipRole)
+                                            Qt.ItemDataRole.ToolTipRole)
 
         heightHoldPossible = False
         hoverPossible = False

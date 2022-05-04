@@ -31,11 +31,11 @@ import sys
 
 import cfclient
 import cflib.crtp
-from PyQt5.QtCore import QT_VERSION_STR
-from PyQt5.QtCore import PYQT_VERSION_STR
-from PyQt5 import QtWidgets
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
+from PyQt6.QtCore import QT_VERSION_STR
+from PyQt6.QtCore import PYQT_VERSION_STR
+from PyQt6 import QtWidgets
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
 from cflib.crazyflie.mem import MemoryElement
 
 __author__ = 'Bitcraze AB'

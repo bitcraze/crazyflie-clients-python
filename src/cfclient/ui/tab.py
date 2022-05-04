@@ -31,8 +31,8 @@ Superclass for all tabs that implements common functions.
 
 import logging
 
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import pyqtSlot
+from PyQt6 import QtWidgets
+from PyQt6.QtCore import pyqtSlot
 
 from cfclient.utils.config import Config
 

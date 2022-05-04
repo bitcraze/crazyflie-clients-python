@@ -35,12 +35,14 @@ import datetime
 import math
 from enum import Enum
 
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, pyqtProperty
-from PyQt5.QtCore import QStateMachine, QState, QEvent, QTimer
-from PyQt5.QtCore import QAbstractTransition
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal, pyqtSlot, QObject, pyqtProperty
+from PyQt6.QtCore import QEvent, QTimer
+# TODO krri
+# from PyQt6.QtCore import QStateMachine, QState
+#from PyQt6.QtCore import QAbstractTransition
+from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtGui import QStandardItemModel, QStandardItem
 
 import cfclient
 from cfclient.ui.tab import Tab

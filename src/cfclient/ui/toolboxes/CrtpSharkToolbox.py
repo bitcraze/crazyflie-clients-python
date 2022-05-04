@@ -31,11 +31,11 @@ import os
 from time import time
 from binascii import hexlify
 
-from PyQt5 import QtWidgets
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtCore import Qt
+from PyQt6 import QtWidgets
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSlot
+from PyQt6.QtCore import Qt
 
 import cfclient
 
@@ -77,11 +77,11 @@ class CrtpSharkToolbox(QtWidgets.QWidget, param_tab_class):
             line = QtWidgets.QTreeWidgetItem()
 
             ms_diff = int(round(time() * 1000)) - self._ms_offset
-            line.setData(0, Qt.DisplayRole, "%d" % ms_diff)
-            line.setData(1, Qt.DisplayRole, "%s" % dir)
-            line.setData(2, Qt.DisplayRole, "%d/%d" % (pk.port, pk.channel))
+            line.setData(0, Qt.ItemDataRole.DisplayRole, "%d" % ms_diff)
+            line.setData(1, Qt.ItemDataRole.DisplayRole, "%s" % dir)
+            line.setData(2, Qt.ItemDataRole.DisplayRole, "%d/%d" % (pk.port, pk.channel))
 
-            line.setData(3, Qt.DisplayRole, hexlify(pk.data).decode('utf8'))
+            line.setData(3, Qt.ItemDataRole.DisplayRole, hexlify(pk.data).decode('utf8'))
 
             s = "%d, %s, %d/%d, %s" % (ms_diff, dir, pk.port, pk.channel,
                                        hexlify(pk.data).decode('utf8'))
@@ -120,7 +120,7 @@ class CrtpSharkToolbox(QtWidgets.QWidget, param_tab_class):
             self._outgoing_packet)
 
     def preferedDockArea(self):
-        return Qt.RightDockWidgetArea
+        return Qt.DockWidgetArea.RightDockWidgetArea
 
     def _save_data(self):
         dir = os.path.join(cfclient.config_path, "logdata")

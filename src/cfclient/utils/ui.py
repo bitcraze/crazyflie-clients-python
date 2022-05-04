@@ -26,7 +26,7 @@
 #  MA  02110-1301, USA.
 
 import os
-from PyQt5.QtGui import QFont
+from PyQt6.QtGui import QFont
 
 import cfclient
 

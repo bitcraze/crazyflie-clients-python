@@ -29,11 +29,11 @@ Shows the Log TOC of available variables in the Crazyflie.
 
 import cfclient
 from cfclient.ui.tab import Tab
-from PyQt5 import QtWidgets
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtCore import Qt
+from PyQt6 import QtWidgets
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSlot
+from PyQt6.QtCore import Qt
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LogTab']
@@ -68,7 +68,7 @@ class LogTab(Tab, param_tab_class):
         self.logTree.setHeaderLabels(['Name', 'ID', 'Unpack', 'Storage', 'Description'])
         self.logTree.header().resizeSection(0, 150)
         self.logTree.setSortingEnabled(True)
-        self.logTree.sortItems(0, Qt.AscendingOrder)
+        self.logTree.sortItems(0, Qt.SortOrder.AscendingOrder)
 
         self.cf.connected.add_callback(self.connectedSignal.emit)
         self.connectedSignal.connect(self.connected)
@@ -82,7 +82,7 @@ class LogTab(Tab, param_tab_class):
         root = self.logTree.invisibleRootItem()
         for i in range(root.childCount()):
             item = root.child(i)
-            item.setFlags(Qt.NoItemFlags)
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
 
     @pyqtSlot(str)
     def connected(self, linkURI):
@@ -96,16 +96,16 @@ class LogTab(Tab, param_tab_class):
 
             for param in list(toc.toc[group].keys()):
                 item = QtWidgets.QTreeWidgetItem()
-                item.setData(0, Qt.DisplayRole, param)
-                item.setData(1, Qt.DisplayRole, toc.toc[group][param].ident)
-                item.setData(2, Qt.DisplayRole, toc.toc[group][param].pytype)
-                item.setData(3, Qt.DisplayRole, toc.toc[group][param].ctype)
+                item.setData(0, Qt.ItemDataRole.DisplayRole, param)
+                item.setData(1, Qt.ItemDataRole.DisplayRole, toc.toc[group][param].ident)
+                item.setData(2, Qt.ItemDataRole.DisplayRole, toc.toc[group][param].pytype)
+                item.setData(3, Qt.ItemDataRole.DisplayRole, toc.toc[group][param].ctype)
 
                 if cfclient.log_param_doc is not None:
                     try:
                         log_groups = cfclient.log_param_doc['logs'][group]
                         log_variable = log_groups['variables'][param]
-                        item.setData(4, Qt.DisplayRole, log_variable['short_desc'])
+                        item.setData(4, Qt.ItemDataRole.DisplayRole, log_variable['short_desc'])
                     except:  # noqa
                         pass
 

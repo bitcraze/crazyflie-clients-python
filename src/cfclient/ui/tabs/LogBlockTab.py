@@ -31,17 +31,17 @@ This tab shows all log blocks that are registered and can be used to start the
 logging and also to write the logging data to file.
 """
 
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, pyqtSignal
 
 import cfclient
 from cfclient.ui.tab import Tab
 
 import logging
 
-from PyQt5.QtWidgets import QApplication, QStyledItemDelegate
-from PyQt5.QtWidgets import QAbstractItemView, QStyleOptionButton, QStyle
-from PyQt5.QtCore import QAbstractItemModel, QModelIndex
+from PyQt6.QtWidgets import QApplication, QStyledItemDelegate
+from PyQt6.QtWidgets import QAbstractItemView, QStyleOptionButton, QStyle
+from PyQt6.QtCore import QAbstractItemModel, QModelIndex
 
 from cfclient.utils.logdatawriter import LogWriter
 
@@ -221,7 +221,7 @@ class LogBlockModel(QAbstractItemModel):
 
     def headerData(self, section, orientation, role):
         """Re-implemented method to get the headers"""
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             return self._column_headers[section]
 
     def rowCount(self, parent):
@@ -251,20 +251,20 @@ class LogBlockModel(QAbstractItemModel):
         node = index.internalPointer()
         parent = node.parent
         if parent:
-            if role == Qt.DisplayRole and index.column() == 5:
+            if role == Qt.ItemDataRole.DisplayRole and index.column() == 5:
                 return node.name
-        elif not parent and role == Qt.DisplayRole and index.column() == 5:
+        elif not parent and role == Qt.ItemDataRole.DisplayRole and index.column() == 5:
             return node.var_list()
-        elif not parent and role == Qt.DisplayRole:
+        elif not parent and role == Qt.ItemDataRole.DisplayRole:
             if index.column() == 0:
                 return node.id
             if index.column() == 1:
                 return node.name
             if index.column() == 2:
                 return str(node.period)
-        if role == Qt.TextAlignmentRole and \
+        if role == Qt.ItemDataRole.TextAlignmentRole and \
                 (index.column() == 4 or index.column() == 3):
-            return Qt.AlignHCenter | Qt.AlignVCenter
+            return Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter
 
         return None
 
@@ -347,7 +347,7 @@ class LogBlockTab(Tab, logblock_tab_class):
         self._block_tree.setModel(self._model)
         self._block_tree.clicked.connect(self._model.clicked)
         self._block_tree.setItemDelegate(CheckboxDelegate())
-        self._block_tree.setSelectionMode(QAbstractItemView.NoSelection)
+        self._block_tree.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
 
     def _block_added(self, block):
         """Callback from logging layer when a new block is added"""

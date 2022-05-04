@@ -35,10 +35,10 @@ from enum import Enum
 from collections import namedtuple
 
 import time
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtWidgets import QLabel
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QLabel
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -694,7 +694,7 @@ class LocoPositioningTab(Tab, locopositioning_tab_class):
                 label = QLabel()
                 label.setMinimumSize(30, 0)
                 label.setProperty('frameShape', 'QFrame::Box')
-                label.setAlignment(Qt.AlignCenter)
+                label.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 container.addWidget(label, row, col)
 
             label.setText(str(id))

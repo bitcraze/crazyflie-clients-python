@@ -31,8 +31,8 @@ Shows information from the Python logging framework
 
 import logging
 
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
 
 import cfclient
 from cfclient.ui.tab import Tab

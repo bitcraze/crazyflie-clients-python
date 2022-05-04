@@ -28,9 +28,9 @@ Dialog box used to configure base station geometry. Used from the lighthouse tab
 import logging
 
 import cfclient
-from PyQt5 import QtWidgets
-from PyQt5 import uic
-from PyQt5.QtCore import QVariant, Qt, QAbstractTableModel, pyqtSignal
+from PyQt6 import QtWidgets
+from PyQt6 import uic
+from PyQt6.QtCore import QVariant, Qt, QAbstractTableModel, pyqtSignal
 from cflib.localization import LighthouseBsGeoEstimator
 from cflib.localization import LighthouseSweepAngleAverageReader
 from cflib.crazyflie.mem import LighthouseBsGeometry
@@ -63,13 +63,13 @@ class LighthouseBsGeometryTableModel(QAbstractTableModel):
     def data(self, index, role=None):
         if index.isValid():
             value = self._table_values[index.row()][index.column()]
-            if role == Qt.DisplayRole:
+            if role == Qt.ItemDataRole.DisplayRole:
                 return QVariant(value)
 
         return QVariant()
 
     def headerData(self, col, orientation, role=None):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return QVariant(self._headers[col])
         return QVariant()
 
@@ -155,10 +155,10 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._table_view.verticalHeader().setVisible(False)
 
         header = self._table_view.horizontalHeader()
-        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
-        header.setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
-        header.setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeMode.Stretch)
 
         self._update_ui()
 

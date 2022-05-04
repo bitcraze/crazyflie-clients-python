@@ -41,8 +41,8 @@ from urllib.request import urlopen
 from urllib.error import URLError
 import zipfile
 
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import pyqtSlot, pyqtSignal, QThread
+from PyQt6 import QtWidgets, uic
+from PyQt6.QtCore import pyqtSlot, pyqtSignal, QThread
 
 import cfclient
 import cflib.crazyflie
@@ -296,7 +296,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         else:
             msgBox = QtWidgets.QMessageBox()
             msgBox.setText("Wrong file extention. Must be .zip.")
-            msgBox.exec_()
+            msgBox.exec()
 
     @pyqtSlot()
     def programAction(self):
@@ -310,7 +310,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             if self.imagePathLine.text() == "":
                 msgBox = QtWidgets.QMessageBox()
                 msgBox.setText("Please choose an image file to program.")
-                msgBox.exec_()
+                msgBox.exec()
 
                 return
 

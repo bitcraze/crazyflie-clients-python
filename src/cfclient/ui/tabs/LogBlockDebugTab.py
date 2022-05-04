@@ -30,8 +30,8 @@ Shows all the parameters available in the Crazyflie and also gives the ability
 to edit them.
 """
 
-from PyQt5 import QtCore, QtWidgets, uic
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt6 import QtCore, QtWidgets, uic
+from PyQt6.QtCore import Qt, pyqtSignal
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -70,7 +70,7 @@ class LogBlockDebugTab(Tab, logblock_tab_class):
         self._block_tree.setHeaderLabels(
             ['Id', 'Name', 'Period (ms)', 'Added', 'Started', 'Error',
              'Contents'])
-        self._block_tree.sortItems(0, QtCore.Qt.AscendingOrder)
+        self._block_tree.sortItems(0, Qt.SortOrder.AscendingOrder)
 
     def _block_added(self, block):
         """Callback when a new logblock has been created"""
@@ -82,19 +82,19 @@ class LogBlockDebugTab(Tab, logblock_tab_class):
         self._block_tree.clear()
         for block in self._helper.cf.log.log_blocks:
             item = QtWidgets.QTreeWidgetItem()
-            item.setFlags(Qt.ItemIsEnabled |
-                          Qt.ItemIsSelectable)
-            item.setData(0, Qt.DisplayRole, block.id)
-            item.setData(1, Qt.EditRole, block.name)
-            item.setData(2, Qt.DisplayRole, (block.period_in_ms))
-            item.setData(3, Qt.DisplayRole, block.added)
-            item.setData(4, Qt.EditRole, block.started)
-            item.setData(5, Qt.EditRole, block.err_no)
+            item.setFlags(Qt.ItemFlag.ItemIsEnabled |
+                          Qt.ItemFlag.ItemIsSelectable)
+            item.setData(0, Qt.ItemDataRole.DisplayRole, block.id)
+            item.setData(1, Qt.ItemDataRole.EditRole, block.name)
+            item.setData(2, Qt.ItemDataRole.DisplayRole, (block.period_in_ms))
+            item.setData(3, Qt.ItemDataRole.DisplayRole, block.added)
+            item.setData(4, Qt.ItemDataRole.EditRole, block.started)
+            item.setData(5, Qt.ItemDataRole.EditRole, block.err_no)
             for var in block.variables:
                 subItem = QtWidgets.QTreeWidgetItem()
-                subItem.setFlags(Qt.ItemIsEnabled |
-                                 Qt.ItemIsSelectable)
-                subItem.setData(6, Qt.EditRole, var.name)
+                subItem.setFlags(Qt.ItemFlag.ItemIsEnabled |
+                                 Qt.ItemFlag.ItemIsSelectable)
+                subItem.setData(6, Qt.ItemDataRole.EditRole, var.name)
                 item.addChild(subItem)
 
             self._block_tree.addTopLevelItem(item)

@@ -26,10 +26,10 @@
 """
 A detachable toolbox for showing console printouts from the Crazyflie
 """
-from PyQt5 import QtWidgets
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtCore import Qt
+from PyQt6 import QtWidgets
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt
 
 import cfclient
 
@@ -66,4 +66,4 @@ class ConsoleToolbox(QtWidgets.QWidget, console_class):
             self._console_updated)
 
     def preferedDockArea(self):
-        return Qt.BottomDockWidgetArea
+        return Qt.DockWidgetArea.BottomDockWidgetArea

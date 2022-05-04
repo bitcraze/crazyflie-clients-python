@@ -45,7 +45,7 @@ import shutil
 import cfclient
 from cflib.crazyflie.log import LogVariable, LogConfig
 
-from PyQt5 import QtGui
+from PyQt6 import QtGui
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LogVariable', 'LogConfigReader']

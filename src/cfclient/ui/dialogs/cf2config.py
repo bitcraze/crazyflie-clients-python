@@ -32,9 +32,9 @@ import logging
 import cfclient
 from cflib.crazyflie.mem import MemoryElement
 
-from PyQt5 import QtWidgets
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
+from PyQt6 import QtWidgets
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
 
 __author__ = 'Bitcraze AB'
 __all__ = ['Cf2ConfigDialog']

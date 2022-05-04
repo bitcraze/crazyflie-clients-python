@@ -31,8 +31,9 @@ Attitude indicator widget.
 
 import sys
 
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets, QtCore
+from PyQt6.QtCore import Qt
+from PyQt6 import QtGui
+from PyQt6 import QtWidgets
 
 __author__ = 'Bitcraze AB'
 __all__ = ['AttitudeIndicator']
@@ -110,8 +111,7 @@ class AttitudeIndicator(QtWidgets.QWidget):
         qp.setBrush(QtGui.QColor(59, 41, 39))
         qp.drawRect(-w, int(h / 2), 3 * w, 3 * h)
 
-        pen = QtGui.QPen(QtGui.QColor(255, 255, 255), 1.5,
-                         QtCore.Qt.SolidLine)
+        pen = QtGui.QPen(QtGui.QColor(255, 255, 255), 1.5, Qt.PenStyle.SolidLine)
         qp.setPen(pen)
         qp.drawLine(-w, int(h / 2), 3 * w, int(h / 2))
 
@@ -142,8 +142,7 @@ class AttitudeIndicator(QtWidgets.QWidget):
 
         qp.setWorldMatrixEnabled(False)
 
-        pen = QtGui.QPen(QtGui.QColor(0, 0, 0), 2,
-                         QtCore.Qt.SolidLine)
+        pen = QtGui.QPen(QtGui.QColor(0, 0, 0), 2, Qt.PenStyle.SolidLine)
         qp.setBrush(QtGui.QColor(0, 0, 0))
         qp.setPen(pen)
         qp.drawLine(0, int(h / 2), w, int(h / 2))
@@ -152,8 +151,7 @@ class AttitudeIndicator(QtWidgets.QWidget):
 
         qp.setWorldMatrixEnabled(False)
 
-        pen = QtGui.QPen(QtGui.QColor(255, 255, 255), 2,
-                         QtCore.Qt.SolidLine)
+        pen = QtGui.QPen(QtGui.QColor(255, 255, 255), 2, Qt.PenStyle.SolidLine)
         qp.setBrush(QtGui.QColor(255, 255, 255))
         qp.setPen(pen)
         fh = int(max(7, h / 50))
@@ -214,8 +212,8 @@ if __name__ == "__main__":
         def initUI(self):
             vbox = QtWidgets.QVBoxLayout()
 
-            sld = QtWidgets.QSlider(QtCore.Qt.Horizontal, self)
-            sld.setFocusPolicy(QtCore.Qt.NoFocus)
+            sld = QtWidgets.QSlider(Qt.Orientation.Horizontal, self)
+            sld.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             sld.setRange(0, 3600)
             sld.setValue(1800)
             vbox.addWidget(sld)
@@ -228,21 +226,21 @@ if __name__ == "__main__":
             hbox = QtWidgets.QHBoxLayout()
             hbox.addLayout(vbox)
 
-            sldPitch = QtWidgets.QSlider(QtCore.Qt.Vertical, self)
-            sldPitch.setFocusPolicy(QtCore.Qt.NoFocus)
+            sldPitch = QtWidgets.QSlider(Qt.Orientation.Vertical, self)
+            sldPitch.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             sldPitch.setRange(0, 180)
             sldPitch.setValue(90)
             sldPitch.valueChanged[int].connect(self.updatePitch)
             hbox.addWidget(sldPitch)
 
-            sldHeight = QtWidgets.QSlider(QtCore.Qt.Vertical, self)
-            sldHeight.setFocusPolicy(QtCore.Qt.NoFocus)
+            sldHeight = QtWidgets.QSlider(Qt.Orientation.Vertical, self)
+            sldHeight.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             sldHeight.setRange(-200, 200)
             sldHeight.setValue(0)
             sldHeight.valueChanged[int].connect(self.updateBaro)
 
-            sldT = QtWidgets.QSlider(QtCore.Qt.Vertical, self)
-            sldT.setFocusPolicy(QtCore.Qt.NoFocus)
+            sldT = QtWidgets.QSlider(Qt.Orientation.Vertical, self)
+            sldT.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             sldT.setRange(-200, 200)
             sldT.setValue(0)
             sldT.valueChanged[int].connect(self.updateTarget)
@@ -263,7 +261,7 @@ if __name__ == "__main__":
     def main():
         app = QtWidgets.QApplication(sys.argv)
         Example()
-        sys.exit(app.exec_())
+        sys.exit(app.exec())
 
     if __name__ == '__main__':
         main()

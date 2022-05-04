@@ -26,7 +26,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #  02110-1301, USA.
 from collections import namedtuple
-from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt6.QtCore import pyqtSignal, QObject
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ConnectivityManager']
@@ -66,8 +66,9 @@ class ConnectivityManager(QObject):
         ui_elements.address_spinner.valueChanged.connect(self._address_changed_handler)
         ui_elements.address_spinner.editingFinished.connect(self._address_edited_handler)
 
-        ui_elements.interface_combo.currentIndexChanged['QString'].connect(
-            self._interface_combo_current_index_changed_handler)
+        # TODO KRRI removed
+        # ui_elements.interface_combo.currentIndexChanged['QString'].connect(
+        #     self._interface_combo_current_index_changed_handler)
 
     def set_state(self, state):
         if self._state != state:
