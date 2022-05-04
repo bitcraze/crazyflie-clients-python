@@ -106,7 +106,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     connectionDoneSignal = pyqtSignal(str)
     connectionFailedSignal = pyqtSignal(str, str)
     disconnectedSignal = pyqtSignal(str)
-    linkQualitySignal = pyqtSignal(int)
+    linkQualitySignal = pyqtSignal(float)
 
     _input_device_error_signal = pyqtSignal(str)
     _input_discovery_signal = pyqtSignal(object)
@@ -234,7 +234,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         # Connect link quality feedback
         self.cf.link_quality_updated.add_callback(self.linkQualitySignal.emit)
         self.linkQualitySignal.connect(
-            lambda percentage: self.linkQualityBar.setValue(percentage))
+            lambda percentage: self.linkQualityBar.setValue(int(percentage)))
 
         # Parse the log configuration files
         self.logConfigReader = LogConfigReader(self.cf)

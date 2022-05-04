@@ -551,7 +551,7 @@ class FlightTab(Tab, flight_tab_class):
         self.targetYaw.setText(("%0.2f deg/s" % yaw))
         self.targetThrust.setText(("%0.2f %%" %
                                    self.thrustToPercentage(thrust)))
-        self.thrustProgress.setValue(thrust)
+        self.thrustProgress.setValue(int(thrust))
 
         self._change_input_labels(using_hover_assist=False)
 

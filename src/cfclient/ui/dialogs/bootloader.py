@@ -343,7 +343,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         logger.debug("Status: [%s] | %d", status, progress)
         self.statusLabel.setText('Status: <b>' + status + '</b>')
         if progress >= 0:
-            self.progressBar.setValue(progress)
+            self.progressBar.setValue(int(progress))
 
     def initiateColdboot(self):
         self.clt.initiateColdBootSignal.emit("radio://0/100")
