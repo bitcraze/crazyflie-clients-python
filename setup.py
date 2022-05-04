@@ -128,7 +128,7 @@ setup(
                                           'pyzmq~=22.3',
                                           'pyqtgraph~=0.11',
                                           'PyYAML~=5.3',
-                                          'asyncqt~=0.8.0',
+                                          'qasync~=0.23.0',
                                           'qtm~=2.1.1',
                                           'numpy>=1.20,<1.25',
                                           'vispy~=0.9.0',
