@@ -290,7 +290,7 @@ class CheckboxDelegate(QStyledItemDelegate):
             checkbox_rect = QApplication.style(). \
                 subElementRect(QStyle.SE_CheckBoxIndicator, option)
             s.rect = option.rect
-            center_offset = s.rect.width() / 2 - checkbox_rect.width() / 2
+            center_offset = int(s.rect.width() / 2 - checkbox_rect.width() / 2)
             s.rect.adjust(center_offset, 0, 0, 0)
 
             if col == 3:
