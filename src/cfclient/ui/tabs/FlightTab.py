@@ -166,10 +166,8 @@ class FlightTab(Tab, flight_tab_class):
         self.flightModeCombo.currentIndexChanged.connect(self.flightmodeChange)
         self.minThrust.valueChanged.connect(self.minMaxThrustChanged)
         self.maxThrust.valueChanged.connect(self.minMaxThrustChanged)
-        self.thrustLoweringSlewRateLimit.valueChanged.connect(
-            self.thrustLoweringSlewRateLimitChanged)
-        self.slewEnableLimit.valueChanged.connect(
-            self.thrustLoweringSlewRateLimitChanged)
+        self.thrustLoweringSlewRateLimit.valueChanged.connect(self.thrustLoweringSlewRateLimitChanged)
+        self.slewEnableLimit.valueChanged.connect(self.thrustLoweringSlewRateLimitChanged)
         self.targetCalRoll.valueChanged.connect(self._trim_roll_changed)
         self.targetCalPitch.valueChanged.connect(self._trim_pitch_changed)
         self.maxAngle.valueChanged.connect(self.maxAngleChanged)
@@ -180,56 +178,32 @@ class FlightTab(Tab, flight_tab_class):
         # Command Based Flight Control
         self._can_fly = 0
         self._hlCommander = None
-        self.commanderTakeOffButton.clicked.connect(
-            lambda: self._flight_command(CommanderAction.TAKE_OFF)
-        )
-        self.commanderLandButton.clicked.connect(
-            lambda: self._flight_command(CommanderAction.LAND)
-        )
-        self.commanderLeftButton.clicked.connect(
-            lambda: self._flight_command(CommanderAction.LEFT)
-        )
-        self.commanderRightButton.clicked.connect(
-            lambda: self._flight_command(CommanderAction.RIGHT)
-        )
-        self.commanderForwardButton.clicked.connect(
-            lambda: self._flight_command(CommanderAction.FORWARD)
-        )
-        self.commanderBackButton.clicked.connect(
-            lambda: self._flight_command(CommanderAction.BACK)
-        )
-        self.commanderUpButton.clicked.connect(
-            lambda: self._flight_command(CommanderAction.UP)
-        )
-        self.commanderDownButton.clicked.connect(
-            lambda: self._flight_command(CommanderAction.DOWN)
-        )
+        self.commanderTakeOffButton.clicked.connect(lambda: self._flight_command(CommanderAction.TAKE_OFF))
+        self.commanderLandButton.clicked.connect(lambda: self._flight_command(CommanderAction.LAND))
+        self.commanderLeftButton.clicked.connect(lambda: self._flight_command(CommanderAction.LEFT))
+        self.commanderRightButton.clicked.connect(lambda: self._flight_command(CommanderAction.RIGHT))
+        self.commanderForwardButton.clicked.connect(lambda: self._flight_command(CommanderAction.FORWARD))
+        self.commanderBackButton.clicked.connect(lambda: self._flight_command(CommanderAction.BACK))
+        self.commanderUpButton.clicked.connect(lambda: self._flight_command(CommanderAction.UP))
+        self.commanderDownButton.clicked.connect(lambda: self._flight_command(CommanderAction.DOWN))
 
         self.uiSetupReady()
 
         self._led_ring_headlight.clicked.connect(
             lambda enabled:
-            self.helper.cf.param.set_value("ring.headlightEnable",
-                                           str(enabled)))
+            self.helper.cf.param.set_value("ring.headlightEnable", str(enabled)))
 
         self.helper.cf.param.add_update_callback(
             group="ring", name="headlightEnable",
-            cb=(lambda name, checked:
-                self._led_ring_headlight.setChecked(eval(checked))))
+            cb=(lambda name, checked: self._led_ring_headlight.setChecked(eval(checked))))
 
         self._ledring_nbr_effects = 0
 
-        self.helper.cf.param.add_update_callback(
-            group="ring",
-            name="effect",
-            cb=self._ring_effect_updated)
+        self.helper.cf.param.add_update_callback(group="ring", name="effect", cb=self._ring_effect_updated)
 
-        self.helper.cf.param.add_update_callback(
-            group="imu_sensors",
-            cb=self._set_available_sensors)
+        self.helper.cf.param.add_update_callback(group="imu_sensors", cb=self._set_available_sensors)
 
-        self.helper.cf.param.all_updated.add_callback(
-            self._all_params_updated)
+        self.helper.cf.param.all_updated.add_callback(self._all_params_updated)
 
         self.logAltHold = None
 
@@ -240,39 +214,35 @@ class FlightTab(Tab, flight_tab_class):
         self.targetCalPitch.setValue(Config().get("trim_pitch"))
         self.targetCalRoll.setValue(Config().get("trim_roll"))
 
-        self.helper.inputDeviceReader.alt1_updated.add_callback(
-            self.alt1_updated)
-        self.helper.inputDeviceReader.alt2_updated.add_callback(
-            self.alt2_updated)
+        self.helper.inputDeviceReader.alt1_updated.add_callback(self.alt1_updated)
+        self.helper.inputDeviceReader.alt2_updated.add_callback(self.alt2_updated)
         self._tf_state = 0
         self._ring_effect = 0
 
-        # Connect callbacks for input device limiting of rpöö/pitch/yaw/thust
-        self.helper.inputDeviceReader.limiting_updated.add_callback(
-            self._limiting_updated.emit)
+        # Connect callbacks for input device limiting of roll/pitch/yaw/thrust
+        self.helper.inputDeviceReader.limiting_updated.add_callback(self._limiting_updated.emit)
         self._limiting_updated.connect(self._set_limiting_enabled)
 
-        self.helper.pose_logger.data_received_cb.add_callback(
-            self._pose_data_signal.emit)
+        self.helper.pose_logger.data_received_cb.add_callback(self._pose_data_signal.emit)
 
-    def _set_limiting_enabled(self, rp_limiting_enabled,
-                              yaw_limiting_enabled,
-                              thrust_limiting_enabled):
-        self.maxAngle.setEnabled(rp_limiting_enabled)
+    def _set_limiting_enabled(self, rp_limiting_enabled, yaw_limiting_enabled, thrust_limiting_enabled):
+
         self.targetCalRoll.setEnabled(rp_limiting_enabled)
         self.targetCalPitch.setEnabled(rp_limiting_enabled)
-        self.maxYawRate.setEnabled(yaw_limiting_enabled)
-        self.maxThrust.setEnabled(thrust_limiting_enabled)
-        self.minThrust.setEnabled(thrust_limiting_enabled)
-        self.slewEnableLimit.setEnabled(thrust_limiting_enabled)
-        self.thrustLoweringSlewRateLimit.setEnabled(thrust_limiting_enabled)
+
+        advanced_is_enabled = self.isInCrazyFlightmode
+        self.maxAngle.setEnabled(rp_limiting_enabled and advanced_is_enabled)
+        self.maxYawRate.setEnabled(yaw_limiting_enabled and advanced_is_enabled)
+        self.maxThrust.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
+        self.minThrust.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
+        self.slewEnableLimit.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
+        self.thrustLoweringSlewRateLimit.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
 
     def thrustToPercentage(self, thrust):
         return ((thrust / MAX_THRUST) * 100.0)
 
     def uiSetupReady(self):
-        flightComboIndex = self.flightModeCombo.findText(
-            Config().get("flightmode"), Qt.MatchFixedString)
+        flightComboIndex = self.flightModeCombo.findText(Config().get("flightmode"), Qt.MatchFixedString)
         if (flightComboIndex < 0):
             self.flightModeCombo.setCurrentIndex(0)
             self.flightModeCombo.currentIndexChanged.emit(0)
