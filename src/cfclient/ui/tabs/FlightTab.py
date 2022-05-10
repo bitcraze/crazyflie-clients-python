@@ -190,12 +190,11 @@ class FlightTab(Tab, flight_tab_class):
         self.uiSetupReady()
 
         self._led_ring_headlight.clicked.connect(
-            lambda enabled:
-            self.helper.cf.param.set_value("ring.headlightEnable", str(enabled)))
+            lambda enabled: self.helper.cf.param.set_value("ring.headlightEnable", int(enabled)))
 
         self.helper.cf.param.add_update_callback(
             group="ring", name="headlightEnable",
-            cb=(lambda name, checked: self._led_ring_headlight.setChecked(eval(checked))))
+            cb=(lambda name, checked: self._led_ring_headlight.setChecked(bool(int(checked)))))
 
         self._ledring_nbr_effects = 0
 
