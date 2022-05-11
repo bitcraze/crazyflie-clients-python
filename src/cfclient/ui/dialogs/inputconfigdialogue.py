@@ -295,7 +295,7 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
                     scaled_value = InputConfigDialogue._scale(
                         self._input.max_yaw_rate, scaled_value
                     )
-                self._axisindicators[v].setValue(scaled_value)
+                self._axisindicators[v].setValue(int(scaled_value))
 
     def _map_axis(self, function, key_id, scale):
         self._map["Input.AXIS-{}".format(key_id)] = {}
