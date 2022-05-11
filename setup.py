@@ -94,6 +94,10 @@ data_files = [
     ('third_party', glob('src/cfclient/third_party/*')),
 ]
 
+# read the contents of README.md file fo use in pypi description
+directory = Path(__file__).parent
+long_description = (directory / 'README.md').read_text()
+
 # Initial parameters
 setup(
     name='cfclient',
@@ -102,6 +106,9 @@ setup(
     author='Bitcraze team',
     author_email='contact@bitcraze.se',
     url='http://www.bitcraze.io',
+
+    long_description=long_description,
+    long_description_content_type='text/markdown',
 
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',  # noqa
