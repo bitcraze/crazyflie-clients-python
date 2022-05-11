@@ -182,13 +182,13 @@ class AttitudeIndicator(QtWidgets.QWidget):
                 pos_y = -h / 6 * diff
 
             # difference from target (moves up and down +- 2.8m)
-            qp.drawText(w - fh * 3.8, int(pos_y + fh / 2), str(diff))
+            qp.drawText(int(w - fh * 3.8), int(pos_y + fh / 2), str(diff))
             # vertical line
-            qp.drawLine(w - fh * 4.5, 0, w - fh * 4.5, pos_y)
+            qp.drawLine(int(w - fh * 4.5), 0, int(w - fh * 4.5), int(pos_y))
             # left horizontal line
-            qp.drawLine(w - fh * 4.7, 0, w - fh * 4.5, 0)
+            qp.drawLine(int(w - fh * 4.7), 0, int(w - fh * 4.5), 0)
             # right horizontal line
-            qp.drawLine(w - fh * 4.2, pos_y, w - fh * 4.5, pos_y)
+            qp.drawLine(int(w - fh * 4.2), int(pos_y), int(w - fh * 4.5), int(pos_y))
 
 
 if __name__ == "__main__":
