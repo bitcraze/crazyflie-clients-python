@@ -10,6 +10,9 @@ import platform
 
 from gitversion import get_version
 
+from pathlib import Path
+
+
 if sys.argv[1] in ('build', 'bdist_msi', 'bdist_mac', 'bdist_dmg',
                    'install_exe'):
     from cx_Freeze import setup, Executable  # noqa
