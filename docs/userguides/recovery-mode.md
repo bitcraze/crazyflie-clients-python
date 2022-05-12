@@ -30,4 +30,4 @@ To update the firmware in the Crazyflie 2.X do the following:
 -   Press \"Program\" and wait (do not restart the crazyflie untill it is finished.)
 -   Press \"Restart in firmware mode\"
 
-_Be aware that the Lighthouse FPGA will not be updated in this mode, so please use the [the cfclient userguide](/docs/userguides/userguide_client/index.md) after you have recovered crazyflie._
+_Be aware that no deck firmware be updated in this mode, so please use the [the cfclient userguide](/docs/userguides/userguide_client/index.md) after you have recovered crazyflie._

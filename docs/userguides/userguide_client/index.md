@@ -88,11 +88,12 @@ Please note that you need to use a Crazyradio dongle to connect to the Crazyflie
 
 To update the firmware in the Crazyflie 2.X do the following:
 
+-   Make sure to have any decks you will be using attached during the update, since some of
+the decks contain their own firmware which will also be updated during the firmware update
 -   Go to the menu *Crazyflie-\>Bootloader*
 -   Connect to the crazyflie in this dialog, if it is not already connected in the flighttab.
 -   Select the latest release from the drop down menu or select it if you have downloaded it from the [Github release page](https://github.com/bitcraze/crazyflie-release/releases).
 -   Click \"Program\" and wait for both the STM and NRF to be flashed.
--   If your crazyflie has a lighthouse deck, the lighthouse deck fpga will be updated too (>= release 2021.03)
 -   Your crazyflie will automatically restart a couple of times.
 -   Do not touch or restart your crazyflie untill all flashing is done and you see \"status: idle\" at the bottom.
 - To check the firmware version, under the *View* menu, open up *Tabs-\>Console* tab and look at the output when connecting to the
