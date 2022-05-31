@@ -29,7 +29,7 @@ import logging
 from PyQt5 import QtGui, uic
 from PyQt5.QtCore import pyqtSignal
 from PyQt5 import QtWidgets
-from numpy import full
+import time
 
 import cfclient
 from cfclient.ui.tab import Tab
@@ -46,12 +46,16 @@ tuning_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/tuningTab.ui"
 
 class SliderParamMapper:
     def __init__(self, slider: SuperSlider, group: str, name: str):
-        self.slider = slider
         self.param_group = group
         self.param_name = name
         self.full_param_name = f'{group}.{name}'
+
+        self.slider = slider
         self.slider.value_changed_cb.add_callback(self.slider_changed)
         self.slider.setEnabled(False)
+
+        # Prevents param changes that comes back from the CF to set the parameter and create a feedback loop
+        self.receive_block_time = 0.0
 
         self.cf = None
 
@@ -64,13 +68,17 @@ class SliderParamMapper:
         self.cf = None
         self.slider.setEnabled(False)
 
+    # Called when the user has modified the value in the UI
     def slider_changed(self, value):
         if self.cf is not None:
             if self.cf.is_connected():
+                self.receive_block_time = time.time() + 0.4
                 self.cf.param.set_value(self.full_param_name, value)
 
+    # Called when a parameter in the CF has changed, this is also true if we initiated the param update
     def _param_updated_cb(self, full_param_name, value):
-        self.slider.set_value(float(value))
+        if time.time() > self.receive_block_time:
+            self.slider.set_value(float(value))
 
 
 class TuningTab(Tab, tuning_tab_class):
