@@ -112,33 +112,60 @@ class TuningTab(Tab, tuning_tab_class):
         self.mappers: list[SliderParamMapper] = []
 
         # Rate PID
-        self.mappers.append(self._create_slider(self.grid_rate, 1, 1, -1000, 1000, 'pid_rate', 'roll_kp'))
-        self.mappers.append(self._create_slider(self.grid_rate, 1, 2, -1000, 1000, 'pid_rate', 'roll_ki'))
-        self.mappers.append(self._create_slider(self.grid_rate, 1, 3, -10, 10, 'pid_rate', 'roll_kd'))
+        self.mappers.append(self._create_slider(self.grid_rate, 1, 1, 0, 1000, 'pid_rate', 'roll_kp'))
+        self.mappers.append(self._create_slider(self.grid_rate, 1, 2, 0, 1000, 'pid_rate', 'roll_ki'))
+        self.mappers.append(self._create_slider(self.grid_rate, 1, 3, 0, 10, 'pid_rate', 'roll_kd'))
 
-        self.mappers.append(self._create_slider(self.grid_rate, 2, 1, -1000, 1000, 'pid_rate', 'pitch_kp'))
-        self.mappers.append(self._create_slider(self.grid_rate, 2, 2, -1000, 1000, 'pid_rate', 'pitch_ki'))
-        self.mappers.append(self._create_slider(self.grid_rate, 2, 3, -10, 10, 'pid_rate', 'pitch_kd'))
+        self.mappers.append(self._create_slider(self.grid_rate, 2, 1, 0, 1000, 'pid_rate', 'pitch_kp'))
+        self.mappers.append(self._create_slider(self.grid_rate, 2, 2, 0, 1000, 'pid_rate', 'pitch_ki'))
+        self.mappers.append(self._create_slider(self.grid_rate, 2, 3, 0, 10, 'pid_rate', 'pitch_kd'))
 
-        self.mappers.append(self._create_slider(self.grid_rate, 3, 1, -200, 200, 'pid_rate', 'yaw_kp'))
-        self.mappers.append(self._create_slider(self.grid_rate, 3, 2, -100, 100, 'pid_rate', 'yaw_ki'))
-        self.mappers.append(self._create_slider(self.grid_rate, 3, 3, -10, 10, 'pid_rate', 'yaw_kd'))
+        self.mappers.append(self._create_slider(self.grid_rate, 3, 1, 0, 200, 'pid_rate', 'yaw_kp'))
+        self.mappers.append(self._create_slider(self.grid_rate, 3, 2, 0, 100, 'pid_rate', 'yaw_ki'))
+        self.mappers.append(self._create_slider(self.grid_rate, 3, 3, 0, 10, 'pid_rate', 'yaw_kd'))
 
         # Attitude PID
-        self.mappers.append(self._create_slider(self.grid_attitude, 1, 1, -10.0, 10.0, 'pid_attitude', 'roll_kp'))
-        self.mappers.append(self._create_slider(self.grid_attitude, 1, 2, -10, 10, 'pid_attitude', 'roll_ki'))
-        self.mappers.append(self._create_slider(self.grid_attitude, 1, 3, -10, 10, 'pid_attitude', 'roll_kd'))
+        self.mappers.append(self._create_slider(self.grid_attitude, 1, 1, 0, 10, 'pid_attitude', 'roll_kp'))
+        self.mappers.append(self._create_slider(self.grid_attitude, 1, 2, 0, 10, 'pid_attitude', 'roll_ki'))
+        self.mappers.append(self._create_slider(self.grid_attitude, 1, 3, 0, 10, 'pid_attitude', 'roll_kd'))
 
-        self.mappers.append(self._create_slider(self.grid_attitude, 2, 1, -10, 10, 'pid_attitude', 'pitch_kp'))
-        self.mappers.append(self._create_slider(self.grid_attitude, 2, 2, -10, 10, 'pid_attitude', 'pitch_ki'))
-        self.mappers.append(self._create_slider(self.grid_attitude, 2, 3, -10, 10, 'pid_attitude', 'pitch_kd'))
+        self.mappers.append(self._create_slider(self.grid_attitude, 2, 1, 0, 10, 'pid_attitude', 'pitch_kp'))
+        self.mappers.append(self._create_slider(self.grid_attitude, 2, 2, 0, 10, 'pid_attitude', 'pitch_ki'))
+        self.mappers.append(self._create_slider(self.grid_attitude, 2, 3, 0, 10, 'pid_attitude', 'pitch_kd'))
 
-        self.mappers.append(self._create_slider(self.grid_attitude, 3, 1, -10, 10, 'pid_attitude', 'yaw_kp'))
-        self.mappers.append(self._create_slider(self.grid_attitude, 3, 2, -10, 10, 'pid_attitude', 'yaw_ki'))
-        self.mappers.append(self._create_slider(self.grid_attitude, 3, 3, -10, 10, 'pid_attitude', 'yaw_kd'))
+        self.mappers.append(self._create_slider(self.grid_attitude, 3, 1, 0, 10, 'pid_attitude', 'yaw_kp'))
+        self.mappers.append(self._create_slider(self.grid_attitude, 3, 2, 0, 10, 'pid_attitude', 'yaw_ki'))
+        self.mappers.append(self._create_slider(self.grid_attitude, 3, 3, 0, 10, 'pid_attitude', 'yaw_kd'))
 
-        # Thrust
-        self.mappers.append(self._create_slider(self.grid_thrust, 0, 1, 0, 65536, 'posCtlPid', 'thrustBase'))
+        # Position control PID
+        self.mappers.append(self._create_slider(self.grid_pos_ctrl, 1, 1, 0, 10, 'posCtlPid', 'xKp'))
+        self.mappers.append(self._create_slider(self.grid_pos_ctrl, 1, 2, 0, 10, 'posCtlPid', 'xKi'))
+        self.mappers.append(self._create_slider(self.grid_pos_ctrl, 1, 3, 0, 10, 'posCtlPid', 'xKd'))
+
+        self.mappers.append(self._create_slider(self.grid_pos_ctrl, 2, 1, 0, 10, 'posCtlPid', 'yKp'))
+        self.mappers.append(self._create_slider(self.grid_pos_ctrl, 2, 2, 0, 10, 'posCtlPid', 'yKi'))
+        self.mappers.append(self._create_slider(self.grid_pos_ctrl, 2, 3, 0, 10, 'posCtlPid', 'yKd'))
+
+        self.mappers.append(self._create_slider(self.grid_pos_ctrl, 3, 1, 0, 10, 'posCtlPid', 'zKp'))
+        self.mappers.append(self._create_slider(self.grid_pos_ctrl, 3, 2, 0, 10, 'posCtlPid', 'zKi'))
+        self.mappers.append(self._create_slider(self.grid_pos_ctrl, 3, 3, 0, 10, 'posCtlPid', 'zKd'))
+
+        self.mappers.append(self._create_slider(self.grid_pos_ctrl, 5, 1, 0, 65536, 'posCtlPid', 'thrustBase'))
+
+        # Velocity control PID
+        self.mappers.append(self._create_slider(self.grid_vel_ctrl, 1, 1, 0, 50, 'velCtlPid', 'vxKp'))
+        self.mappers.append(self._create_slider(self.grid_vel_ctrl, 1, 2, 0, 50, 'velCtlPid', 'vxKi'))
+        self.mappers.append(self._create_slider(self.grid_vel_ctrl, 1, 3, 0, 10, 'velCtlPid', 'vxKd'))
+        self.mappers.append(self._create_slider(self.grid_vel_ctrl, 1, 4, 0, 10, 'velCtlPid', 'vxKFF'))
+
+        self.mappers.append(self._create_slider(self.grid_vel_ctrl, 2, 1, 0, 50, 'velCtlPid', 'vyKp'))
+        self.mappers.append(self._create_slider(self.grid_vel_ctrl, 2, 2, 0, 50, 'velCtlPid', 'vyKi'))
+        self.mappers.append(self._create_slider(self.grid_vel_ctrl, 2, 3, 0, 10, 'velCtlPid', 'vyKd'))
+        self.mappers.append(self._create_slider(self.grid_vel_ctrl, 2, 4, 0, 10, 'velCtlPid', 'vyKFF'))
+
+        self.mappers.append(self._create_slider(self.grid_vel_ctrl, 3, 1, 0, 50, 'velCtlPid', 'vzKp'))
+        self.mappers.append(self._create_slider(self.grid_vel_ctrl, 3, 2, 0, 50, 'velCtlPid', 'vzKi'))
+        self.mappers.append(self._create_slider(self.grid_vel_ctrl, 3, 3, 0, 10, 'velCtlPid', 'vzKd'))
 
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
