@@ -24,16 +24,15 @@
 Tab for tuning PID controller, mainly for larger quads.
 """
 
+from ast import Pass
 import logging
 
-from PyQt5 import QtGui, uic
+from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal
-from PyQt5 import QtWidgets
 import time
 
 import cfclient
 from cfclient.ui.tab import Tab
-from cfclient.utils.ui import UiUtils
 from cfclient.ui.widgets.super_slider import SuperSlider
 from cflib.crazyflie import Crazyflie
 
@@ -61,8 +60,9 @@ class SliderParamMapper:
 
     def connected(self, cf: Crazyflie):
         self.cf = cf
-        self.cf.param.add_update_callback(group=self.param_group, name=self.param_name, cb=self._param_updated_cb)
         self.slider.setEnabled(True)
+
+        return self.param_group, self.param_name
 
     def disconnected(self):
         self.cf = None
@@ -76,9 +76,10 @@ class SliderParamMapper:
                 self.cf.param.set_value(self.full_param_name, value)
 
     # Called when a parameter in the CF has changed, this is also true if we initiated the param update
-    def _param_updated_cb(self, full_param_name, value):
-        if time.time() > self.receive_block_time:
-            self.slider.set_value(float(value))
+    def param_updated_cb(self, full_param_name, value):
+        if full_param_name == self.full_param_name:
+            if time.time() > self.receive_block_time:
+                self.slider.set_value(float(value))
 
 
 class TuningTab(Tab, tuning_tab_class):
@@ -86,6 +87,9 @@ class TuningTab(Tab, tuning_tab_class):
 
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
+
+    _param_updated_signal = pyqtSignal(str, str)
+
 
     def __init__(self, tabWidget, helper, *args):
         super(TuningTab, self).__init__(*args)
@@ -101,6 +105,7 @@ class TuningTab(Tab, tuning_tab_class):
         # to avoid manipulating the UI when rendering it
         self._connected_signal.connect(self._connected)
         self._disconnected_signal.connect(self._disconnected)
+        self._param_updated_signal.connect(self._param_updated_cb)
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(
@@ -170,13 +175,14 @@ class TuningTab(Tab, tuning_tab_class):
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
         for mapper in self.mappers:
-            mapper.connected(self._helper.cf)
+            param_group, param_name = mapper.connected(self._helper.cf)
+            self._helper.cf.param.add_update_callback(group=param_group, name=param_name, cb=self._param_updated_signal.emit)
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
         for mapper in self.mappers:
             mapper.disconnected()
-        # TODO set default value?
+        # TODO set default values?
 
     def _create_slider(self, gridLayout, row, col, min_val, max_val, param_group:str, param_name: str):
         initial_val = (min_val + max_val) / 2.0
@@ -184,3 +190,7 @@ class TuningTab(Tab, tuning_tab_class):
         gridLayout.addWidget(slider, row, col)
 
         return SliderParamMapper(slider, param_group, param_name)
+
+    def _param_updated_cb(self, full_param_name, value):
+        for mapper in self.mappers:
+            mapper.param_updated_cb(full_param_name, value)
