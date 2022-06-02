@@ -34,7 +34,7 @@ import time
 import cfclient
 from cfclient.ui.tab import Tab
 from cfclient.ui.widgets.super_slider import SuperSlider
-from cflib.crazyflie import Crazyflie
+from cflib.crazyflie import Crazyflie, Param
 
 __author__ = 'Bitcraze AB'
 __all__ = ['TuningTab']
@@ -42,6 +42,7 @@ __all__ = ['TuningTab']
 logger = logging.getLogger(__name__)
 
 tuning_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/tuningTab.ui")[0]
+
 
 class SliderParamMapper:
     def __init__(self, slider: SuperSlider, group: str, name: str):
@@ -51,7 +52,6 @@ class SliderParamMapper:
 
         self.slider = slider
         self.slider.value_changed_cb.add_callback(self.slider_changed)
-        self.slider.setEnabled(False)
 
         # Prevents param changes that comes back from the CF to set the parameter and create a feedback loop
         self.receive_block_time = 0.0
@@ -63,13 +63,10 @@ class SliderParamMapper:
 
     def connected(self, cf: Crazyflie):
         self.cf = cf
-        self.slider.setEnabled(True)
-
         return self.param_group, self.param_name
 
     def disconnected(self):
         self.cf = None
-        self.slider.setEnabled(False)
 
     def link_with(self, other_mapper: 'SliderParamMapper', checkbox: QtWidgets.QCheckBox):
         self.linked_mapper = other_mapper
@@ -77,6 +74,9 @@ class SliderParamMapper:
 
         other_mapper.linked_mapper = self
         other_mapper.linked_checkbox = checkbox
+
+    def enable_ui(self, enabled):
+        self.slider.setEnabled(enabled)
 
     # Called when the user has modified the value in the UI
     def slider_changed(self, value):
@@ -104,6 +104,7 @@ class SliderParamMapper:
                 self.receive_block_time = time.time() + 0.4
                 self.cf.param.set_value(self.full_param_name, value)
 
+
 class TuningTab(Tab, tuning_tab_class):
     """Tab for plotting logging data"""
 
@@ -111,7 +112,6 @@ class TuningTab(Tab, tuning_tab_class):
     _disconnected_signal = pyqtSignal(str)
 
     _param_updated_signal = pyqtSignal(str, str)
-
 
     def __init__(self, tabWidget, helper, *args):
         super(TuningTab, self).__init__(*args)
@@ -137,95 +137,108 @@ class TuningTab(Tab, tuning_tab_class):
             self._disconnected_signal.emit)
 
         # A dictionary mapping the full param name to a SliderParamMapper
-        self.mappers: dict[str, SliderParamMapper] = {}
+        self.mappers = self._set_up_param_mappings()
+
+        self.store_button.clicked.connect(self._store_button_clicked)
+        self.clear_stored_button.clicked.connect(self._clear_stored_button_clicked)
+        self._enable_ui_objects(False)
+
+    def _set_up_param_mappings(self):
+        mappers: dict[str, SliderParamMapper] = {}
 
         # Rate PID
-        self.mappers |= self._create_slider(self.grid_rate, 1, 1, 0, 1000, 'pid_rate', 'roll_kp')
-        self.mappers |= self._create_slider(self.grid_rate, 1, 2, 0, 1000, 'pid_rate', 'roll_ki')
-        self.mappers |= self._create_slider(self.grid_rate, 1, 3, 0, 10, 'pid_rate', 'roll_kd')
+        mappers |= self._create_slider(self.grid_rate, 1, 1, 0, 1000, 'pid_rate', 'roll_kp')
+        mappers |= self._create_slider(self.grid_rate, 1, 2, 0, 1000, 'pid_rate', 'roll_ki')
+        mappers |= self._create_slider(self.grid_rate, 1, 3, 0, 10, 'pid_rate', 'roll_kd')
 
-        self.mappers |= self._create_slider(self.grid_rate, 2, 1, 0, 1000, 'pid_rate', 'pitch_kp')
-        self.mappers |= self._create_slider(self.grid_rate, 2, 2, 0, 1000, 'pid_rate', 'pitch_ki')
-        self.mappers |= self._create_slider(self.grid_rate, 2, 3, 0, 10, 'pid_rate', 'pitch_kd')
+        mappers |= self._create_slider(self.grid_rate, 2, 1, 0, 1000, 'pid_rate', 'pitch_kp')
+        mappers |= self._create_slider(self.grid_rate, 2, 2, 0, 1000, 'pid_rate', 'pitch_ki')
+        mappers |= self._create_slider(self.grid_rate, 2, 3, 0, 10, 'pid_rate', 'pitch_kd')
 
-        self.mappers |= self._create_slider(self.grid_rate, 3, 1, 0, 200, 'pid_rate', 'yaw_kp')
-        self.mappers |= self._create_slider(self.grid_rate, 3, 2, 0, 100, 'pid_rate', 'yaw_ki')
-        self.mappers |= self._create_slider(self.grid_rate, 3, 3, 0, 10, 'pid_rate', 'yaw_kd')
+        mappers |= self._create_slider(self.grid_rate, 3, 1, 0, 200, 'pid_rate', 'yaw_kp')
+        mappers |= self._create_slider(self.grid_rate, 3, 2, 0, 100, 'pid_rate', 'yaw_ki')
+        mappers |= self._create_slider(self.grid_rate, 3, 3, 0, 10, 'pid_rate', 'yaw_kd')
 
-        self._link(self.mappers, 'pid_rate.roll_kp', 'pid_rate.pitch_kp', self.rate_link_checkbox)
-        self._link(self.mappers, 'pid_rate.roll_ki', 'pid_rate.pitch_ki', self.rate_link_checkbox)
-        self._link(self.mappers, 'pid_rate.roll_kd', 'pid_rate.pitch_kd', self.rate_link_checkbox)
+        self._link(mappers, 'pid_rate.roll_kp', 'pid_rate.pitch_kp', self.rate_link_checkbox)
+        self._link(mappers, 'pid_rate.roll_ki', 'pid_rate.pitch_ki', self.rate_link_checkbox)
+        self._link(mappers, 'pid_rate.roll_kd', 'pid_rate.pitch_kd', self.rate_link_checkbox)
 
         # Attitude PID
-        self.mappers |= self._create_slider(self.grid_attitude, 1, 1, 0, 10, 'pid_attitude', 'roll_kp')
-        self.mappers |= self._create_slider(self.grid_attitude, 1, 2, 0, 10, 'pid_attitude', 'roll_ki')
-        self.mappers |= self._create_slider(self.grid_attitude, 1, 3, 0, 10, 'pid_attitude', 'roll_kd')
+        mappers |= self._create_slider(self.grid_attitude, 1, 1, 0, 10, 'pid_attitude', 'roll_kp')
+        mappers |= self._create_slider(self.grid_attitude, 1, 2, 0, 10, 'pid_attitude', 'roll_ki')
+        mappers |= self._create_slider(self.grid_attitude, 1, 3, 0, 10, 'pid_attitude', 'roll_kd')
 
-        self.mappers |= self._create_slider(self.grid_attitude, 2, 1, 0, 10, 'pid_attitude', 'pitch_kp')
-        self.mappers |= self._create_slider(self.grid_attitude, 2, 2, 0, 10, 'pid_attitude', 'pitch_ki')
-        self.mappers |= self._create_slider(self.grid_attitude, 2, 3, 0, 10, 'pid_attitude', 'pitch_kd')
+        mappers |= self._create_slider(self.grid_attitude, 2, 1, 0, 10, 'pid_attitude', 'pitch_kp')
+        mappers |= self._create_slider(self.grid_attitude, 2, 2, 0, 10, 'pid_attitude', 'pitch_ki')
+        mappers |= self._create_slider(self.grid_attitude, 2, 3, 0, 10, 'pid_attitude', 'pitch_kd')
 
-        self.mappers |= self._create_slider(self.grid_attitude, 3, 1, 0, 10, 'pid_attitude', 'yaw_kp')
-        self.mappers |= self._create_slider(self.grid_attitude, 3, 2, 0, 10, 'pid_attitude', 'yaw_ki')
-        self.mappers |= self._create_slider(self.grid_attitude, 3, 3, 0, 10, 'pid_attitude', 'yaw_kd')
+        mappers |= self._create_slider(self.grid_attitude, 3, 1, 0, 10, 'pid_attitude', 'yaw_kp')
+        mappers |= self._create_slider(self.grid_attitude, 3, 2, 0, 10, 'pid_attitude', 'yaw_ki')
+        mappers |= self._create_slider(self.grid_attitude, 3, 3, 0, 10, 'pid_attitude', 'yaw_kd')
 
-        self._link(self.mappers, 'pid_attitude.roll_kp', 'pid_attitude.pitch_kp', self.attitude_link_checkbox)
-        self._link(self.mappers, 'pid_attitude.roll_ki', 'pid_attitude.pitch_ki', self.attitude_link_checkbox)
-        self._link(self.mappers, 'pid_attitude.roll_kd', 'pid_attitude.pitch_kd', self.attitude_link_checkbox)
+        self._link(mappers, 'pid_attitude.roll_kp', 'pid_attitude.pitch_kp', self.attitude_link_checkbox)
+        self._link(mappers, 'pid_attitude.roll_ki', 'pid_attitude.pitch_ki', self.attitude_link_checkbox)
+        self._link(mappers, 'pid_attitude.roll_kd', 'pid_attitude.pitch_kd', self.attitude_link_checkbox)
 
         # Position control PID
-        self.mappers |= self._create_slider(self.grid_pos_ctrl, 1, 1, 0, 10, 'posCtlPid', 'xKp')
-        self.mappers |= self._create_slider(self.grid_pos_ctrl, 1, 2, 0, 10, 'posCtlPid', 'xKi')
-        self.mappers |= self._create_slider(self.grid_pos_ctrl, 1, 3, 0, 10, 'posCtlPid', 'xKd')
+        mappers |= self._create_slider(self.grid_pos_ctrl, 1, 1, 0, 10, 'posCtlPid', 'xKp')
+        mappers |= self._create_slider(self.grid_pos_ctrl, 1, 2, 0, 10, 'posCtlPid', 'xKi')
+        mappers |= self._create_slider(self.grid_pos_ctrl, 1, 3, 0, 10, 'posCtlPid', 'xKd')
 
-        self.mappers |= self._create_slider(self.grid_pos_ctrl, 2, 1, 0, 10, 'posCtlPid', 'yKp')
-        self.mappers |= self._create_slider(self.grid_pos_ctrl, 2, 2, 0, 10, 'posCtlPid', 'yKi')
-        self.mappers |= self._create_slider(self.grid_pos_ctrl, 2, 3, 0, 10, 'posCtlPid', 'yKd')
+        mappers |= self._create_slider(self.grid_pos_ctrl, 2, 1, 0, 10, 'posCtlPid', 'yKp')
+        mappers |= self._create_slider(self.grid_pos_ctrl, 2, 2, 0, 10, 'posCtlPid', 'yKi')
+        mappers |= self._create_slider(self.grid_pos_ctrl, 2, 3, 0, 10, 'posCtlPid', 'yKd')
 
-        self.mappers |= self._create_slider(self.grid_pos_ctrl, 3, 1, 0, 10, 'posCtlPid', 'zKp')
-        self.mappers |= self._create_slider(self.grid_pos_ctrl, 3, 2, 0, 10, 'posCtlPid', 'zKi')
-        self.mappers |= self._create_slider(self.grid_pos_ctrl, 3, 3, 0, 10, 'posCtlPid', 'zKd')
+        mappers |= self._create_slider(self.grid_pos_ctrl, 3, 1, 0, 10, 'posCtlPid', 'zKp')
+        mappers |= self._create_slider(self.grid_pos_ctrl, 3, 2, 0, 10, 'posCtlPid', 'zKi')
+        mappers |= self._create_slider(self.grid_pos_ctrl, 3, 3, 0, 10, 'posCtlPid', 'zKd')
 
-        self.mappers |= self._create_slider(self.grid_pos_ctrl, 5, 1, 0, 65536, 'posCtlPid', 'thrustBase')
+        mappers |= self._create_slider(self.grid_pos_ctrl, 5, 1, 0, 65536, 'posCtlPid', 'thrustBase')
 
-        self._link(self.mappers, 'posCtlPid.xKp', 'posCtlPid.yKp', self.position_link_checkbox)
-        self._link(self.mappers, 'posCtlPid.xKi', 'posCtlPid.yKi', self.position_link_checkbox)
-        self._link(self.mappers, 'posCtlPid.xKd', 'posCtlPid.yKd', self.position_link_checkbox)
+        self._link(mappers, 'posCtlPid.xKp', 'posCtlPid.yKp', self.position_link_checkbox)
+        self._link(mappers, 'posCtlPid.xKi', 'posCtlPid.yKi', self.position_link_checkbox)
+        self._link(mappers, 'posCtlPid.xKd', 'posCtlPid.yKd', self.position_link_checkbox)
 
         # Velocity control PID
-        self.mappers |= self._create_slider(self.grid_vel_ctrl, 1, 1, 0, 50, 'velCtlPid', 'vxKp')
-        self.mappers |= self._create_slider(self.grid_vel_ctrl, 1, 2, 0, 50, 'velCtlPid', 'vxKi')
-        self.mappers |= self._create_slider(self.grid_vel_ctrl, 1, 3, 0, 10, 'velCtlPid', 'vxKd')
-        self.mappers |= self._create_slider(self.grid_vel_ctrl, 1, 4, 0, 10, 'velCtlPid', 'vxKFF')
+        mappers |= self._create_slider(self.grid_vel_ctrl, 1, 1, 0, 50, 'velCtlPid', 'vxKp')
+        mappers |= self._create_slider(self.grid_vel_ctrl, 1, 2, 0, 50, 'velCtlPid', 'vxKi')
+        mappers |= self._create_slider(self.grid_vel_ctrl, 1, 3, 0, 10, 'velCtlPid', 'vxKd')
+        mappers |= self._create_slider(self.grid_vel_ctrl, 1, 4, 0, 10, 'velCtlPid', 'vxKFF')
 
-        self.mappers |= self._create_slider(self.grid_vel_ctrl, 2, 1, 0, 50, 'velCtlPid', 'vyKp')
-        self.mappers |= self._create_slider(self.grid_vel_ctrl, 2, 2, 0, 50, 'velCtlPid', 'vyKi')
-        self.mappers |= self._create_slider(self.grid_vel_ctrl, 2, 3, 0, 10, 'velCtlPid', 'vyKd')
-        self.mappers |= self._create_slider(self.grid_vel_ctrl, 2, 4, 0, 10, 'velCtlPid', 'vyKFF')
+        mappers |= self._create_slider(self.grid_vel_ctrl, 2, 1, 0, 50, 'velCtlPid', 'vyKp')
+        mappers |= self._create_slider(self.grid_vel_ctrl, 2, 2, 0, 50, 'velCtlPid', 'vyKi')
+        mappers |= self._create_slider(self.grid_vel_ctrl, 2, 3, 0, 10, 'velCtlPid', 'vyKd')
+        mappers |= self._create_slider(self.grid_vel_ctrl, 2, 4, 0, 10, 'velCtlPid', 'vyKFF')
 
-        self.mappers |= self._create_slider(self.grid_vel_ctrl, 3, 1, 0, 50, 'velCtlPid', 'vzKp')
-        self.mappers |= self._create_slider(self.grid_vel_ctrl, 3, 2, 0, 50, 'velCtlPid', 'vzKi')
-        self.mappers |= self._create_slider(self.grid_vel_ctrl, 3, 3, 0, 10, 'velCtlPid', 'vzKd')
+        mappers |= self._create_slider(self.grid_vel_ctrl, 3, 1, 0, 50, 'velCtlPid', 'vzKp')
+        mappers |= self._create_slider(self.grid_vel_ctrl, 3, 2, 0, 50, 'velCtlPid', 'vzKi')
+        mappers |= self._create_slider(self.grid_vel_ctrl, 3, 3, 0, 10, 'velCtlPid', 'vzKd')
 
-        self._link(self.mappers, 'velCtlPid.vxKp', 'velCtlPid.vyKp', self.velocity_link_checkbox)
-        self._link(self.mappers, 'velCtlPid.vxKi', 'velCtlPid.vyKi', self.velocity_link_checkbox)
-        self._link(self.mappers, 'velCtlPid.vxKd', 'velCtlPid.vyKd', self.velocity_link_checkbox)
-        self._link(self.mappers, 'velCtlPid.vxKFF', 'velCtlPid.vyKFF', self.velocity_link_checkbox)
+        self._link(mappers, 'velCtlPid.vxKp', 'velCtlPid.vyKp', self.velocity_link_checkbox)
+        self._link(mappers, 'velCtlPid.vxKi', 'velCtlPid.vyKi', self.velocity_link_checkbox)
+        self._link(mappers, 'velCtlPid.vxKd', 'velCtlPid.vyKd', self.velocity_link_checkbox)
+        self._link(mappers, 'velCtlPid.vxKFF', 'velCtlPid.vyKFF', self.velocity_link_checkbox)
 
+        return mappers
 
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
         for mapper in self.mappers.values():
             param_group, param_name = mapper.connected(self._helper.cf)
-            self._helper.cf.param.add_update_callback(group=param_group, name=param_name, cb=self._param_updated_signal.emit)
+            self._helper.cf.param.add_update_callback(
+                group=param_group, name=param_name, cb=self._param_updated_signal.emit)
+
+        self._enable_ui_objects(True)
 
     def _disconnected(self, link_uri):
         """Callback for when the Crazyflie has been disconnected"""
         for mapper in self.mappers.values():
             mapper.disconnected()
+
+        self._enable_ui_objects(False)
         # TODO set default values?
 
-    def _create_slider(self, gridLayout, row, col, min_val, max_val, param_group:str, param_name: str):
+    def _create_slider(self, gridLayout, row, col, min_val, max_val, param_group: str, param_name: str):
         initial_val = (min_val + max_val) / 2.0
         slider = SuperSlider(min_val, max_val, initial_val)
         gridLayout.addWidget(slider, row, col)
@@ -243,3 +256,29 @@ class TuningTab(Tab, tuning_tab_class):
         other_mapper = mappers[other]
 
         first_mapper.link_with(other_mapper, checkbox)
+
+    def _store_button_clicked(self):
+        param: Param = self._helper.cf.param
+        for full_param_name in self.mappers.keys():
+            param.persistent_store(full_param_name)
+
+    def _clear_stored_button_clicked(self):
+        param: Param = self._helper.cf.param
+        for full_param_name in self.mappers.keys():
+            param.persistent_clear(full_param_name)
+
+    def _enable_ui_objects(self, enabled):
+        objects = [
+            self.rate_link_checkbox,
+            self.attitude_link_checkbox,
+            self.position_link_checkbox,
+            self.velocity_link_checkbox,
+            self.store_button,
+            self.clear_stored_button,
+        ]
+
+        for item in objects:
+            item.setEnabled(enabled)
+
+        for mapper in self.mappers.values():
+            mapper.enable_ui(enabled)

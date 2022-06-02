@@ -90,7 +90,7 @@ class SuperSlider(QtWidgets.QWidget):
         layout.addWidget(self.min_label, 1, 0)
         layout.addWidget(self.input, 1, 1)
         layout.addWidget(self.max_label, 1, 2)
-        self.setLayout(layout);
+        self.setLayout(layout)
 
     def _small_font(self, label):
         font = label.font()

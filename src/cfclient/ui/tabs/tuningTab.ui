@@ -709,9 +709,16 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="store_button">
        <property name="text">
         <string>Store</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="clear_stored_button">
+       <property name="text">
+        <string>Clear stored</string>
        </property>
       </widget>
      </item>
