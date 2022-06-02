@@ -28,7 +28,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>2</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="tab_attitude">
         <attribute name="title">
@@ -126,7 +126,7 @@
               </widget>
              </item>
              <item row="1" column="5" rowspan="2">
-              <widget class="QCheckBox" name="attitude_link">
+              <widget class="QCheckBox" name="attitude_link_checkbox">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -259,7 +259,7 @@
               </widget>
              </item>
              <item row="1" column="5" rowspan="2">
-              <widget class="QCheckBox" name="rate_link">
+              <widget class="QCheckBox" name="rate_link_checkbox">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -387,7 +387,7 @@
               </widget>
              </item>
              <item row="1" column="5" rowspan="2">
-              <widget class="QCheckBox" name="position_link">
+              <widget class="QCheckBox" name="position_link_checkbox">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -591,7 +591,7 @@
               </widget>
              </item>
              <item row="1" column="6" rowspan="2">
-              <widget class="QCheckBox" name="velocity_link">
+              <widget class="QCheckBox" name="velocity_link_checkbox">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                  <horstretch>0</horstretch>
