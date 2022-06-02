@@ -35,6 +35,7 @@ import cfclient
 from cfclient.ui.tab import Tab
 from cfclient.ui.widgets.super_slider import SuperSlider
 from cflib.crazyflie import Crazyflie, Param
+from cflib.utils.callbacks import Syncer
 
 __author__ = 'Bitcraze AB'
 __all__ = ['TuningTab']
@@ -111,7 +112,7 @@ class TuningTab(Tab, tuning_tab_class):
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
 
-    _param_updated_signal = pyqtSignal(str, str)
+    _param_updated_signal = pyqtSignal(str, object)
 
     def __init__(self, tabWidget, helper, *args):
         super(TuningTab, self).__init__(*args)
@@ -141,6 +142,7 @@ class TuningTab(Tab, tuning_tab_class):
 
         self.store_button.clicked.connect(self._store_button_clicked)
         self.clear_stored_button.clicked.connect(self._clear_stored_button_clicked)
+        self.default_values_button.clicked.connect(self._default_values_button_clicked)
         self._enable_ui_objects(False)
 
     def _set_up_param_mappings(self):
@@ -260,12 +262,23 @@ class TuningTab(Tab, tuning_tab_class):
     def _store_button_clicked(self):
         param: Param = self._helper.cf.param
         for full_param_name in self.mappers.keys():
+            # syncer = Syncer()
             param.persistent_store(full_param_name)
 
     def _clear_stored_button_clicked(self):
         param: Param = self._helper.cf.param
         for full_param_name in self.mappers.keys():
             param.persistent_clear(full_param_name)
+
+    def _default_values_button_clicked(self):
+        param: Param = self._helper.cf.param
+        for full_param_name in self.mappers.keys():
+            # For some reason we run into problems if we try to get all params in one go. Pace by getting them
+            # one by one.
+            syncer = Syncer()
+            param.get_default_value(full_param_name, syncer.success_cb)
+            syncer.wait()
+            self._param_updated_cb(*syncer.success_args)
 
     def _enable_ui_objects(self, enabled):
         objects = [
@@ -275,6 +288,7 @@ class TuningTab(Tab, tuning_tab_class):
             self.velocity_link_checkbox,
             self.store_button,
             self.clear_stored_button,
+            self.default_values_button,
         ]
 
         for item in objects:

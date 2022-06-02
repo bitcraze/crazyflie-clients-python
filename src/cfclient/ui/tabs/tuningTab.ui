@@ -709,16 +709,32 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <widget class="QPushButton" name="store_button">
+      <widget class="QPushButton" name="default_values_button">
+       <property name="toolTip">
+        <string>Get the default tuning values for the tuning parameters (this will not change the stored values)</string>
+       </property>
        <property name="text">
-        <string>Store</string>
+        <string>Default values</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="store_button">
+       <property name="toolTip">
+        <string>Store values in the persistent memory to use them after a restart.</string>
+       </property>
+       <property name="text">
+        <string>Persist values</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="clear_stored_button">
+       <property name="toolTip">
+        <string>Clear the persisted values. The tuning parameters will get default values after restart.</string>
+       </property>
        <property name="text">
-        <string>Clear stored</string>
+        <string>Clear persisted values</string>
        </property>
       </widget>
      </item>
