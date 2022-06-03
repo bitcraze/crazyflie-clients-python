@@ -149,72 +149,72 @@ class TuningTab(Tab, tuning_tab_class):
         mappers: dict[str, SliderParamMapper] = {}
 
         # Rate PID
-        mappers |= self._create_slider(self.grid_rate, 1, 1, 0, 1000, 'pid_rate', 'roll_kp')
-        mappers |= self._create_slider(self.grid_rate, 1, 2, 0, 1000, 'pid_rate', 'roll_ki')
-        mappers |= self._create_slider(self.grid_rate, 1, 3, 0, 10, 'pid_rate', 'roll_kd')
+        mappers.update(self._create_slider(self.grid_rate, 1, 1, 0, 1000, 'pid_rate', 'roll_kp'))
+        mappers.update(self._create_slider(self.grid_rate, 1, 2, 0, 1000, 'pid_rate', 'roll_ki'))
+        mappers.update(self._create_slider(self.grid_rate, 1, 3, 0, 10, 'pid_rate', 'roll_kd'))
 
-        mappers |= self._create_slider(self.grid_rate, 2, 1, 0, 1000, 'pid_rate', 'pitch_kp')
-        mappers |= self._create_slider(self.grid_rate, 2, 2, 0, 1000, 'pid_rate', 'pitch_ki')
-        mappers |= self._create_slider(self.grid_rate, 2, 3, 0, 10, 'pid_rate', 'pitch_kd')
+        mappers.update(self._create_slider(self.grid_rate, 2, 1, 0, 1000, 'pid_rate', 'pitch_kp'))
+        mappers.update(self._create_slider(self.grid_rate, 2, 2, 0, 1000, 'pid_rate', 'pitch_ki'))
+        mappers.update(self._create_slider(self.grid_rate, 2, 3, 0, 10, 'pid_rate', 'pitch_kd'))
 
-        mappers |= self._create_slider(self.grid_rate, 3, 1, 0, 200, 'pid_rate', 'yaw_kp')
-        mappers |= self._create_slider(self.grid_rate, 3, 2, 0, 100, 'pid_rate', 'yaw_ki')
-        mappers |= self._create_slider(self.grid_rate, 3, 3, 0, 10, 'pid_rate', 'yaw_kd')
+        mappers.update(self._create_slider(self.grid_rate, 3, 1, 0, 200, 'pid_rate', 'yaw_kp'))
+        mappers.update(self._create_slider(self.grid_rate, 3, 2, 0, 100, 'pid_rate', 'yaw_ki'))
+        mappers.update(self._create_slider(self.grid_rate, 3, 3, 0, 10, 'pid_rate', 'yaw_kd'))
 
         self._link(mappers, 'pid_rate.roll_kp', 'pid_rate.pitch_kp', self.rate_link_checkbox)
         self._link(mappers, 'pid_rate.roll_ki', 'pid_rate.pitch_ki', self.rate_link_checkbox)
         self._link(mappers, 'pid_rate.roll_kd', 'pid_rate.pitch_kd', self.rate_link_checkbox)
 
         # Attitude PID
-        mappers |= self._create_slider(self.grid_attitude, 1, 1, 0, 10, 'pid_attitude', 'roll_kp')
-        mappers |= self._create_slider(self.grid_attitude, 1, 2, 0, 10, 'pid_attitude', 'roll_ki')
-        mappers |= self._create_slider(self.grid_attitude, 1, 3, 0, 10, 'pid_attitude', 'roll_kd')
+        mappers.update(self._create_slider(self.grid_attitude, 1, 1, 0, 10, 'pid_attitude', 'roll_kp'))
+        mappers.update(self._create_slider(self.grid_attitude, 1, 2, 0, 10, 'pid_attitude', 'roll_ki'))
+        mappers.update(self._create_slider(self.grid_attitude, 1, 3, 0, 10, 'pid_attitude', 'roll_kd'))
 
-        mappers |= self._create_slider(self.grid_attitude, 2, 1, 0, 10, 'pid_attitude', 'pitch_kp')
-        mappers |= self._create_slider(self.grid_attitude, 2, 2, 0, 10, 'pid_attitude', 'pitch_ki')
-        mappers |= self._create_slider(self.grid_attitude, 2, 3, 0, 10, 'pid_attitude', 'pitch_kd')
+        mappers.update(self._create_slider(self.grid_attitude, 2, 1, 0, 10, 'pid_attitude', 'pitch_kp'))
+        mappers.update(self._create_slider(self.grid_attitude, 2, 2, 0, 10, 'pid_attitude', 'pitch_ki'))
+        mappers.update(self._create_slider(self.grid_attitude, 2, 3, 0, 10, 'pid_attitude', 'pitch_kd'))
 
-        mappers |= self._create_slider(self.grid_attitude, 3, 1, 0, 10, 'pid_attitude', 'yaw_kp')
-        mappers |= self._create_slider(self.grid_attitude, 3, 2, 0, 10, 'pid_attitude', 'yaw_ki')
-        mappers |= self._create_slider(self.grid_attitude, 3, 3, 0, 10, 'pid_attitude', 'yaw_kd')
+        mappers.update(self._create_slider(self.grid_attitude, 3, 1, 0, 10, 'pid_attitude', 'yaw_kp'))
+        mappers.update(self._create_slider(self.grid_attitude, 3, 2, 0, 10, 'pid_attitude', 'yaw_ki'))
+        mappers.update(self._create_slider(self.grid_attitude, 3, 3, 0, 10, 'pid_attitude', 'yaw_kd'))
 
         self._link(mappers, 'pid_attitude.roll_kp', 'pid_attitude.pitch_kp', self.attitude_link_checkbox)
         self._link(mappers, 'pid_attitude.roll_ki', 'pid_attitude.pitch_ki', self.attitude_link_checkbox)
         self._link(mappers, 'pid_attitude.roll_kd', 'pid_attitude.pitch_kd', self.attitude_link_checkbox)
 
         # Position control PID
-        mappers |= self._create_slider(self.grid_pos_ctrl, 1, 1, 0, 10, 'posCtlPid', 'xKp')
-        mappers |= self._create_slider(self.grid_pos_ctrl, 1, 2, 0, 10, 'posCtlPid', 'xKi')
-        mappers |= self._create_slider(self.grid_pos_ctrl, 1, 3, 0, 10, 'posCtlPid', 'xKd')
+        mappers.update(self._create_slider(self.grid_pos_ctrl, 1, 1, 0, 10, 'posCtlPid', 'xKp'))
+        mappers.update(self._create_slider(self.grid_pos_ctrl, 1, 2, 0, 10, 'posCtlPid', 'xKi'))
+        mappers.update(self._create_slider(self.grid_pos_ctrl, 1, 3, 0, 10, 'posCtlPid', 'xKd'))
 
-        mappers |= self._create_slider(self.grid_pos_ctrl, 2, 1, 0, 10, 'posCtlPid', 'yKp')
-        mappers |= self._create_slider(self.grid_pos_ctrl, 2, 2, 0, 10, 'posCtlPid', 'yKi')
-        mappers |= self._create_slider(self.grid_pos_ctrl, 2, 3, 0, 10, 'posCtlPid', 'yKd')
+        mappers.update(self._create_slider(self.grid_pos_ctrl, 2, 1, 0, 10, 'posCtlPid', 'yKp'))
+        mappers.update(self._create_slider(self.grid_pos_ctrl, 2, 2, 0, 10, 'posCtlPid', 'yKi'))
+        mappers.update(self._create_slider(self.grid_pos_ctrl, 2, 3, 0, 10, 'posCtlPid', 'yKd'))
 
-        mappers |= self._create_slider(self.grid_pos_ctrl, 3, 1, 0, 10, 'posCtlPid', 'zKp')
-        mappers |= self._create_slider(self.grid_pos_ctrl, 3, 2, 0, 10, 'posCtlPid', 'zKi')
-        mappers |= self._create_slider(self.grid_pos_ctrl, 3, 3, 0, 10, 'posCtlPid', 'zKd')
+        mappers.update(self._create_slider(self.grid_pos_ctrl, 3, 1, 0, 10, 'posCtlPid', 'zKp'))
+        mappers.update(self._create_slider(self.grid_pos_ctrl, 3, 2, 0, 10, 'posCtlPid', 'zKi'))
+        mappers.update(self._create_slider(self.grid_pos_ctrl, 3, 3, 0, 10, 'posCtlPid', 'zKd'))
 
-        mappers |= self._create_slider(self.grid_pos_ctrl, 5, 1, 0, 65536, 'posCtlPid', 'thrustBase')
+        mappers.update(self._create_slider(self.grid_pos_ctrl, 5, 1, 0, 65536, 'posCtlPid', 'thrustBase'))
 
         self._link(mappers, 'posCtlPid.xKp', 'posCtlPid.yKp', self.position_link_checkbox)
         self._link(mappers, 'posCtlPid.xKi', 'posCtlPid.yKi', self.position_link_checkbox)
         self._link(mappers, 'posCtlPid.xKd', 'posCtlPid.yKd', self.position_link_checkbox)
 
         # Velocity control PID
-        mappers |= self._create_slider(self.grid_vel_ctrl, 1, 1, 0, 50, 'velCtlPid', 'vxKp')
-        mappers |= self._create_slider(self.grid_vel_ctrl, 1, 2, 0, 50, 'velCtlPid', 'vxKi')
-        mappers |= self._create_slider(self.grid_vel_ctrl, 1, 3, 0, 10, 'velCtlPid', 'vxKd')
-        mappers |= self._create_slider(self.grid_vel_ctrl, 1, 4, 0, 10, 'velCtlPid', 'vxKFF')
+        mappers.update(self._create_slider(self.grid_vel_ctrl, 1, 1, 0, 50, 'velCtlPid', 'vxKp'))
+        mappers.update(self._create_slider(self.grid_vel_ctrl, 1, 2, 0, 50, 'velCtlPid', 'vxKi'))
+        mappers.update(self._create_slider(self.grid_vel_ctrl, 1, 3, 0, 10, 'velCtlPid', 'vxKd'))
+        mappers.update(self._create_slider(self.grid_vel_ctrl, 1, 4, 0, 10, 'velCtlPid', 'vxKFF'))
 
-        mappers |= self._create_slider(self.grid_vel_ctrl, 2, 1, 0, 50, 'velCtlPid', 'vyKp')
-        mappers |= self._create_slider(self.grid_vel_ctrl, 2, 2, 0, 50, 'velCtlPid', 'vyKi')
-        mappers |= self._create_slider(self.grid_vel_ctrl, 2, 3, 0, 10, 'velCtlPid', 'vyKd')
-        mappers |= self._create_slider(self.grid_vel_ctrl, 2, 4, 0, 10, 'velCtlPid', 'vyKFF')
+        mappers.update(self._create_slider(self.grid_vel_ctrl, 2, 1, 0, 50, 'velCtlPid', 'vyKp'))
+        mappers.update(self._create_slider(self.grid_vel_ctrl, 2, 2, 0, 50, 'velCtlPid', 'vyKi'))
+        mappers.update(self._create_slider(self.grid_vel_ctrl, 2, 3, 0, 10, 'velCtlPid', 'vyKd'))
+        mappers.update(self._create_slider(self.grid_vel_ctrl, 2, 4, 0, 10, 'velCtlPid', 'vyKFF'))
 
-        mappers |= self._create_slider(self.grid_vel_ctrl, 3, 1, 0, 50, 'velCtlPid', 'vzKp')
-        mappers |= self._create_slider(self.grid_vel_ctrl, 3, 2, 0, 50, 'velCtlPid', 'vzKi')
-        mappers |= self._create_slider(self.grid_vel_ctrl, 3, 3, 0, 10, 'velCtlPid', 'vzKd')
+        mappers.update(self._create_slider(self.grid_vel_ctrl, 3, 1, 0, 50, 'velCtlPid', 'vzKp'))
+        mappers.update(self._create_slider(self.grid_vel_ctrl, 3, 2, 0, 50, 'velCtlPid', 'vzKi'))
+        mappers.update(self._create_slider(self.grid_vel_ctrl, 3, 3, 0, 10, 'velCtlPid', 'vzKd'))
 
         self._link(mappers, 'velCtlPid.vxKp', 'velCtlPid.vyKp', self.velocity_link_checkbox)
         self._link(mappers, 'velCtlPid.vxKi', 'velCtlPid.vyKi', self.velocity_link_checkbox)
