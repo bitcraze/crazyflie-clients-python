@@ -42,6 +42,7 @@ from .locopositioning_tab import LocoPositioningTab
 from .QualisysTab import QualisysTab
 from .LogClientTab import LogClientTab
 from .lighthouse_tab import LighthouseTab
+from .TuningTab import TuningTab
 
 __author__ = 'Bitcraze AB'
 __all__ = []
@@ -60,4 +61,5 @@ available = [
     LighthouseTab,
     QualisysTab,
     LogClientTab,
+    TuningTab,
 ]
