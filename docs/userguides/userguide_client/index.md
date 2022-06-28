@@ -89,10 +89,10 @@ Please note that you need to use a Crazyradio dongle to connect to the Crazyflie
 To update the firmware in the Crazyflie 2.X do the following:
 
 -   Make sure to have any decks you will be using attached during the update, since some of
-the decks contain their own firmware which will also be updated during the firmware update
--   Go to the menu *Crazyflie-\>Bootloader*
+the decks contain their own firmware which will also be updated during the firmware update. Also make sure there is a battery attached.
+-   Go to the menu *Connect-\>Bootloader*
 -   Connect to the crazyflie in this dialog, if it is not already connected in the flighttab.
--   Select the latest release from the drop down menu or select it if you have downloaded it from the [Github release page](https://github.com/bitcraze/crazyflie-release/releases).
+-   Select the latest release from the drop down menu or select it if you have downloaded it from the [Github release page](https://github.com/bitcraze/crazyflie-release/releases). Make sure to select the right platform (cf2 is the Crazyflie 2.X)
 -   Click \"Program\" and wait for both the STM and NRF to be flashed.
 -   Your crazyflie will automatically restart a couple of times.
 -   Do not touch or restart your crazyflie untill all flashing is done and you see \"status: idle\" at the bottom.
@@ -130,11 +130,11 @@ stored in a none volatile memory:
 The procedure is described below and the parameters can be changed again
 any time the same way.
 
-First connect to the Crazyflie 2.X with the normal connect button. Then open "Crazyflie->Configure 2.X" to reach the configure 2.X dialog
+First connect to the Crazyflie 2.X with the normal connect button. Then open "Connect->Configure 2.X" to reach the configure 2.X dialog
 
 ![CF2 config](/docs/images/cfclient_cf2_config.png){:width="500"}
 
-Once the settings has been made press the write button to save them permanently in the Crazyflie 2.X EEPROM.
+Once the settings has been made press the write button to save them permanently in the Crazyflie 2.X EEPROM.  Then restart the Crazyflie and connect to the new address.
 
 ### Logging
 
