@@ -2,6 +2,9 @@
 title: Installation Instructions
 page_id: install
 ---
+
+This project requires Python 3.7+. See below sections for more platform-specific requirements.
+
 # Prerequisites
 
 There are a few things to sort out on your machine before you can install the client. Please see the appropriate
@@ -81,8 +84,7 @@ On the other hand, if you intend to do development work on the client and modify
 
 ## From Pypi (Windows, Mac, Linux, ..., with python3)
 
-Each release of the client is pushed to the [pypi repository](https://pypi.org/project/cfclient/).
-If you have python >= 3.7, it can be installed with pip:
+Each release of the client is pushed to the [pypi repository](https://pypi.org/project/cfclient/), so it can be installed with pip:
 
 ```
 pip3 install cfclient
@@ -91,7 +93,7 @@ pip3 install cfclient
 
 If you are planning to do development work with the cfclient, you are at right spot!
 
-The sections bellow describes how to install the client from source on various platforms, they all require Python >= 3.7.
+The sections bellow describes how to install the client from source on various platforms.
 
 Make sure to also install the [cflib](https://github.com/bitcraze/crazyflie-lib-python) from source as it is common to
 modify or examine this code as well when working with the client.
