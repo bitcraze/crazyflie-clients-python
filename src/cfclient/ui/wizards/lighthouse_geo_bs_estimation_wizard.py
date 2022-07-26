@@ -8,6 +8,9 @@ from cflib.crazyflie import Crazyflie
 from threading import Event
 from cflib.localization.lighthouse_types import LhCfPoseSample
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleAverageReader
+from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleReader
+from cflib.localization.lighthouse_types import LhMeasurement
+from cflib.localization.lighthouse_bs_vector import LighthouseBsVectors
 import cfclient
 import time
 
@@ -46,7 +49,7 @@ class RecordSingleSamplePage(QtWidgets.QWizardPage):
         super(RecordSingleSamplePage, self).__init__(parent)
         self.cf = cf
         self.explanation_text =  QtWidgets.QLabel()
-        self.explanation_text.setText('Step 1. Put the Crazyflie where you want the origin of your coordinate system.')
+        self.explanation_text.setText(' ')
         self.status_text =  QtWidgets.QLabel()
         self.status_text.setText('')
         self.start_measurement_button = QtWidgets.QPushButton("Start measurement")
@@ -105,6 +108,61 @@ class RecordSingleSamplePage(QtWidgets.QWizardPage):
 
     def getSample(self):
         return self.recorded_angles_result
+
+
+class RecordMultipleSamplePage(QtWidgets.QWizardPage):
+    def __init__(self, cf: Crazyflie, parent=None):
+        super(RecordMultipleSamplePage, self).__init__(parent)
+        self.cf = cf
+        self.explanation_text =  QtWidgets.QLabel()
+        self.explanation_text.setText(' ')        
+        self.status_text =  QtWidgets.QLabel()
+        self.status_text.setText('')
+        self.start_measurement_button = QtWidgets.QPushButton("Start measurements")
+        self.start_measurement_button.clicked.connect(self.btn_clicked)
+        self.fill_record_times = QtWidgets.QLineEdit(str(DEFAULT_RECORD_TIME))
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.explanation_text)
+        layout.addWidget(self.fill_record_times)
+        layout.addWidget(self.start_measurement_button)
+        layout.addWidget(self.status_text)
+        self.setLayout(layout)
+        self.is_done = False
+        self.recorded_angles_result = None
+        self.timer =  QtCore.QTimer()
+        self.reader = LighthouseSweepAngleReader(self.cf, self.ready_cb)
+        self.bs_seen = set()
+
+    def ready_cb(self, bs_id: int, angles: LighthouseBsVectors):
+        now = time.time()
+        measurement = LhMeasurement(timestamp=now, base_station_id=bs_id, angles=angles)
+        self.recorded_angles_result.append(measurement)
+        self.bs_seen.add(str(bs_id + 1))
+
+    def timer_cb(self):
+        if self.is_done is not True:
+            self.status_text.setText('No sweep angles recorded! \n' +
+                'Make sure that the lighthouse basestations are turned on!')
+            self.reader.stop()
+            self.start_measurement_button.setText("Restart Measurements")
+            self.start_measurement_button.setDisabled(False)
+            self.is_done = True
+            self.completeChanged.emit()
+        self.timer.stop()
+
+    def btn_clicked(self):
+        self.is_done = False
+        self.reader.start()
+        self.timer.timeout.connect(self.timer_cb)
+        self.timer.start(TIMEOUT_TIME) 
+        self.status_text.setText('Collecting sweep angles...')
+        self.start_measurement_button.setDisabled(True)
+
+    def isComplete(self):
+        return self.is_done
+
+    def getSamples(self):
+        return self.recorded_angles_result
     
         
 class Page1(RecordSingleSamplePage):
@@ -125,37 +183,13 @@ class Page3(RecordSingleSamplePage):
         super(Page3, self).__init__(cf, parent)
         self.explanation_text.setText('Step 3. Put the Crazyflie somehere in the XY-plane, but not on the X-axis. \n')
 
-class Page4(QtWidgets.QWizardPage):
+
+class Page4(RecordMultipleSamplePage):
     def __init__(self, cf: Crazyflie, parent=None):
-        super(Page4, self).__init__(parent)
-        explanation_text =  QtWidgets.QLabel()
-        explanation_text.setText('Step 4. We will now record data from the space you plan to fly in and optimize the base station \n ' +
+        super(Page4, self).__init__(cf, parent)
+        self.explanation_text.setText('Step 4. We will now record data from the space you plan to fly in and optimize the base station \n ' +
               'geometry based on this data. Move the Crazyflie around, try to cover all of the space, make sure \n ' +
               'all the base stations are received and do not move too fast.')
-        start_measurement_button = QtWidgets.QPushButton("Start measurement")
-        start_measurement_button.clicked.connect(self.btn_clicked)
-        self.fill_record_times = QtWidgets.QLineEdit(str(DEFAULT_RECORD_TIME))
-
-
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(explanation_text)
-        layout.addWidget(self.fill_record_times)
-        layout.addWidget(start_measurement_button)
-
-        self.setLayout(layout)
-        self.is_done = False
-
-    def btn_clicked(self):
-        print(self.fill_record_times.text())
-        for it in range(ITERATION_MAX_NR):
-            print(int(it))
-            time.sleep(1)
-        self.is_done = True
-        self.completeChanged.emit()
-
-    def isComplete(self):
-        return self.is_done
-
 
 class Page5(QtWidgets.QWizardPage):
     def __init__(self, page1: Page1, page2: Page2, page3: Page3, page4: Page4, parent=None):
