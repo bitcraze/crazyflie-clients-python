@@ -60,6 +60,7 @@ class RecordSingleSamplePage(QtWidgets.QWizardPage):
         layout.addWidget(self.status_text)
         self.setLayout(layout)
         self.is_done = False
+        self.too_few_bs = False
         self.recorded_angles_result = None
         self.timer =  QtCore.QTimer()
         self.reader = LighthouseSweepAngleAverageReader(self.cf, self.ready_cb)
@@ -71,7 +72,7 @@ class RecordSingleSamplePage(QtWidgets.QWizardPage):
             angles_calibrated[bs_id] = data[1]
         self.recorded_angles_result = LhCfPoseSample(angles_calibrated=angles_calibrated)
         self.visible_basestations = ', '.join(map(lambda x: str(x + 1), recorded_angles.keys()))
-        amount_of_basestations = recorded_angles.keys()
+        amount_of_basestations = len(recorded_angles.keys())
 
         self.start_measurement_button.setText("Restart Measurement")
         self.start_measurement_button.setDisabled(False)
@@ -79,6 +80,8 @@ class RecordSingleSamplePage(QtWidgets.QWizardPage):
         if amount_of_basestations < 2:
             self.status_text.setText(f'Recording Done! \n Visible Basestations: {self.visible_basestations}\n' +
             'Received too few base stations, we need at least two. Please try again!')
+            self.too_few_bs = True
+            self.is_done = True
         else:
             self.status_text.setText(f'Recording Done! \n Visible Basestations: {self.visible_basestations}\n')
             self.is_done = True
@@ -91,9 +94,8 @@ class RecordSingleSamplePage(QtWidgets.QWizardPage):
             self.reader.stop_angle_collection()
             self.start_measurement_button.setText("Restart Measurement")
             self.start_measurement_button.setDisabled(False)
-            self.is_done = True
-            self.completeChanged.emit()
-        self.timer.stop()
+        elif self.too_few_bs:
+            self.timer.stop()
 
     def btn_clicked(self):
         self.is_done = False
@@ -104,7 +106,7 @@ class RecordSingleSamplePage(QtWidgets.QWizardPage):
         self.start_measurement_button.setDisabled(True)
 
     def isComplete(self):
-        return self.is_done
+        return self.is_done and (self.too_few_bs is not True)
 
     def getSample(self):
         return self.recorded_angles_result
@@ -128,7 +130,7 @@ class RecordMultipleSamplePage(QtWidgets.QWizardPage):
         layout.addWidget(self.status_text)
         self.setLayout(layout)
         self.is_done = False
-        self.recorded_angles_result = None
+        self.recorded_angles_result: list[LhCfPoseSample] = []
         self.timer =  QtCore.QTimer()
         self.reader = LighthouseSweepAngleReader(self.cf, self.ready_cb)
         self.bs_seen = set()
@@ -140,21 +142,19 @@ class RecordMultipleSamplePage(QtWidgets.QWizardPage):
         self.bs_seen.add(str(bs_id + 1))
 
     def timer_cb(self):
-        if self.is_done is not True:
-            self.status_text.setText('No sweep angles recorded! \n' +
-                'Make sure that the lighthouse basestations are turned on!')
-            self.reader.stop()
-            self.start_measurement_button.setText("Restart Measurements")
-            self.start_measurement_button.setDisabled(False)
-            self.is_done = True
-            self.completeChanged.emit()
+        self.reader.stop()
+        self.status_text.setText(f'Recording Done! Got {len(self.recorded_angles_result)} samples!')
+        self.start_measurement_button.setText("Restart Measurements")
+        self.start_measurement_button.setDisabled(False)
+        self.is_done = True
+        self.completeChanged.emit()
         self.timer.stop()
 
     def btn_clicked(self):
         self.is_done = False
         self.reader.start()
         self.timer.timeout.connect(self.timer_cb)
-        self.timer.start(TIMEOUT_TIME) 
+        self.timer.start(int(self.fill_record_times.text())*1000) 
         self.status_text.setText('Collecting sweep angles...')
         self.start_measurement_button.setDisabled(True)
 
