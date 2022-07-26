@@ -41,26 +41,23 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
         self.resize(640,480)
 
 
-class Page1(QtWidgets.QWizardPage):
-    def __init__(self, cf:Crazyflie, parent=None):
-        super(Page1, self).__init__(parent)
+class RecordSingleSamplePage(QtWidgets.QWizardPage):
+    def __init__(self, cf: Crazyflie, parent=None):
+        super(RecordSingleSamplePage, self).__init__(parent)
         self.cf = cf
-        explanation_text =  QtWidgets.QLabel()
-        explanation_text.setText('Step 1. Put the Crazyflie where you want the origin of your coordinate system.')
+        self.explanation_text =  QtWidgets.QLabel()
+        self.explanation_text.setText('Step 1. Put the Crazyflie where you want the origin of your coordinate system.')
         self.status_text =  QtWidgets.QLabel()
         self.status_text.setText('')
         self.start_measurement_button = QtWidgets.QPushButton("Start measurement")
         self.start_measurement_button.clicked.connect(self.btn_clicked)
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(explanation_text)
+        layout.addWidget(self.explanation_text)
         layout.addWidget(self.start_measurement_button)
         layout.addWidget(self.status_text)
         self.setLayout(layout)
         self.is_done = False
-        self.is_ready = False
         self.recorded_angles_result = None
-        self.visible_basestations = None
-        self.amount_of_basestations = None
         self.timer =  QtCore.QTimer()
         self.reader = LighthouseSweepAngleAverageReader(self.cf, self.ready_cb)
 
@@ -71,12 +68,18 @@ class Page1(QtWidgets.QWizardPage):
             angles_calibrated[bs_id] = data[1]
         self.recorded_angles_result = LhCfPoseSample(angles_calibrated=angles_calibrated)
         self.visible_basestations = ', '.join(map(lambda x: str(x + 1), recorded_angles.keys()))
-        self.amount_of_basestations = recorded_angles.keys()
-        self.is_done = True
-        self.completeChanged.emit()
-        self.status_text.setText(f'Recording Done! \n Visible Basestations: {self.visible_basestations}\n')
+        amount_of_basestations = recorded_angles.keys()
+
         self.start_measurement_button.setText("Restart Measurement")
         self.start_measurement_button.setDisabled(False)
+
+        if amount_of_basestations < 2:
+            self.status_text.setText(f'Recording Done! \n Visible Basestations: {self.visible_basestations}\n' +
+            'Received too few base stations, we need at least two. Please try again!')
+        else:
+            self.status_text.setText(f'Recording Done! \n Visible Basestations: {self.visible_basestations}\n')
+            self.is_done = True
+            self.completeChanged.emit()
 
     def timeout_cb(self):
         if self.is_done is not True:
@@ -87,7 +90,6 @@ class Page1(QtWidgets.QWizardPage):
             self.start_measurement_button.setDisabled(False)
             self.is_done = True
             self.completeChanged.emit()
-            self.recorded_angles_result = 22
         self.timer.stop()
 
     def btn_clicked(self):
@@ -101,57 +103,27 @@ class Page1(QtWidgets.QWizardPage):
     def isComplete(self):
         return self.is_done
 
-    def getOrigin(self):
-        return self.recorded_angles_result 
-
-class Page2(QtWidgets.QWizardPage):
+    def getSample(self):
+        return self.recorded_angles_result
+    
+        
+class Page1(RecordSingleSamplePage):
     def __init__(self, cf: Crazyflie, parent=None):
-        super(Page2, self).__init__(parent)
-        explanation_text =  QtWidgets.QLabel()
-        explanation_text.setText(f'Step 2. Put the Crazyflie on the positive X-axis,  exactly {REFERENCE_DIST} meters from the origin.\n ' +
+        super(Page1, self).__init__(cf, parent)
+        self.explanation_text.setText('Step 1. Put the Crazyflie where you want the origin of your coordinate system.')
+
+
+class Page2(RecordSingleSamplePage):
+    def __init__(self, cf: Crazyflie, parent=None):
+        super(Page2, self).__init__(cf, parent)
+        self.explanation_text.setText(f'Step 2. Put the Crazyflie on the positive X-axis,  exactly {REFERENCE_DIST} meters from the origin.\n ' +
               'This position defines the direction of the X-axis, but it is also used for scaling of the system.')
-        start_measurement_button = QtWidgets.QPushButton("Start measurement")
-        start_measurement_button.clicked.connect(self.btn_clicked)
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(explanation_text)
-        layout.addWidget(start_measurement_button)
-        self.setLayout(layout)
-        self.is_done = False
 
-    def btn_clicked(self):
-        for it in range(ITERATION_MAX_NR):
-            print(it)
-            time.sleep(1)
-        self.is_done = True
-        self.completeChanged.emit()
 
-    def isComplete(self):
-        return self.is_done
-
-class Page3(QtWidgets.QWizardPage):
+class Page3(RecordSingleSamplePage):
     def __init__(self, cf: Crazyflie, parent=None):
-        super(Page3, self).__init__(parent)
-        explanation_text =  QtWidgets.QLabel()
-        explanation_text.setText('Step 3. Put the Crazyflie somehere in the XY-plane, but not on the X-axis. \n')
-        start_measurement_button = QtWidgets.QPushButton("Start measurement")
-        start_measurement_button.clicked.connect(self.btn_clicked)
-
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(explanation_text)
-        layout.addWidget(start_measurement_button)
-        self.setLayout(layout)
-        self.is_done = False
-
-    def btn_clicked(self):
-        for it in range(ITERATION_MAX_NR):
-            print(it)
-            time.sleep(1)
-        self.is_done = True
-        self.completeChanged.emit()
-
-    def isComplete(self):
-        return self.is_done
-
+        super(Page3, self).__init__(cf, parent)
+        self.explanation_text.setText('Step 3. Put the Crazyflie somehere in the XY-plane, but not on the X-axis. \n')
 
 class Page4(QtWidgets.QWizardPage):
     def __init__(self, cf: Crazyflie, parent=None):
@@ -193,6 +165,8 @@ class Page5(QtWidgets.QWizardPage):
         start_measurement_button = QtWidgets.QPushButton("Estimate geometry")
         start_measurement_button.clicked.connect(self.btn_clicked)
         self.page1 = page1
+        self.page2 = page2
+        self.page3 = page3
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(explanation_text)
@@ -203,7 +177,10 @@ class Page5(QtWidgets.QWizardPage):
 
     def btn_clicked(self):
         print('Estimating geometry...')
-        print(self.page1.getOrigin())
+        print(self.page1.getSample())
+        print(self.page2.getSample())
+        print(self.page3.getSample())
+
         for it in range(ITERATION_MAX_NR):
             print(int(it))
             time.sleep(1)
