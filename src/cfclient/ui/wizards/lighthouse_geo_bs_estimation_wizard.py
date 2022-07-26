@@ -4,15 +4,27 @@ from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5.QtCore import pyqtProperty
 from PyQt5 import QtCore, QtWidgets
+from cflib.crazyflie import Crazyflie
+from threading import Event
+from cflib.localization.lighthouse_types import LhCfPoseSample
+from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleAverageReader
+import cfclient
 import time
+
+
 REFERENCE_DIST = 1.0
 ITERATION_MAX_NR = 2
 DEFAULT_RECORD_TIME = 20
+TIMEOUT_TIME = 2000
+
+
 
 class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
-    def __init__(self, parent=None):
+    def __init__(self, lighthouse_tab, parent=None, *args):
         super(LighthouseBasestationGeometryWizard, self).__init__(parent)
-        self.addPage(Page1(self))
+        self._lighthouse_tab = lighthouse_tab
+        self.cf = self._lighthouse_tab._helper.cf
+        self.addPage(Page1(self.cf, self))
         self.addPage(Page2(self))
         self.addPage(Page3(self))
         self.addPage(Page4(self))
@@ -21,25 +33,71 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
         self.setWindowTitle("Lighthouse Basestation Geometry Wizard")
         self.resize(640,480)
 
+
+    def ready_cb(self, averages):
+        recorded_angles = averages
+        self.is_ready.set()
+        angles_calibrated = {}
+        for bs_id, data in recorded_angles.items():
+            angles_calibrated[bs_id] = data[1]
+        self.recorded_angles_result = LhCfPoseSample(angles_calibrated=angles_calibrated)
+        self.visible_basestations = ', '.join(map(lambda x: str(x + 1), recorded_angles.keys()))
+        self.amount_of_basestations = recorded_angles.keys()
+
+
 class Page1(QtWidgets.QWizardPage):
-    def __init__(self, parent=None):
+    def __init__(self, cf:Crazyflie, parent=None):
         super(Page1, self).__init__(parent)
+        self.cf = cf
         explanation_text =  QtWidgets.QLabel()
         explanation_text.setText('Step 1. Put the Crazyflie where you want the origin of your coordinate system.')
-        start_measurement_button = QtWidgets.QPushButton("Start measurement")
-        start_measurement_button.clicked.connect(self.btn_clicked)
+        self.status_text =  QtWidgets.QLabel()
+        self.status_text.setText('')
+        self.start_measurement_button = QtWidgets.QPushButton("Start measurement")
+        self.start_measurement_button.clicked.connect(self.btn_clicked)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(explanation_text)
-        layout.addWidget(start_measurement_button)
+        layout.addWidget(self.start_measurement_button)
+        layout.addWidget(self.status_text)
         self.setLayout(layout)
         self.is_done = False
+        self.is_ready = False
+        self.recorded_angles_result = None
+        self.visible_basestations = None
+        self.amount_of_basestations = None
+        self.timer =  QtCore.QTimer()
+        self.reader = LighthouseSweepAngleAverageReader(self.cf, self.ready_cb)
 
-    def btn_clicked(self):
-        for it in range(ITERATION_MAX_NR):
-            print(it)
-            time.sleep(1)
+    def ready_cb(self, averages):
+        recorded_angles = averages
+        angles_calibrated = {}
+        for bs_id, data in recorded_angles.items():
+            angles_calibrated[bs_id] = data[1]
+        self.recorded_angles_result = LhCfPoseSample(angles_calibrated=angles_calibrated)
+        self.visible_basestations = ', '.join(map(lambda x: str(x + 1), recorded_angles.keys()))
+        self.amount_of_basestations = recorded_angles.keys()
         self.is_done = True
         self.completeChanged.emit()
+        self.status_text.setText(f'Recording Done! \n Visible Basestations: {self.visible_basestations}\n')
+        self.start_measurement_button.setText("Restart Measurement")
+        self.start_measurement_button.setDisabled(False)
+
+    def timeout_cb(self):
+        if self.is_done is not True:
+            self.status_text.setText('No sweep angles recorded! \n' +
+                'Make sure that the lighthouse basestations are turned on!')
+            self.reader.stop_angle_collection()
+            self.start_measurement_button.setText("Restart Measurement")
+            self.start_measurement_button.setDisabled(False)
+        self.timer.stop()
+
+    def btn_clicked(self):
+        self.is_done = False
+        self.reader.start_angle_collection()
+        self.timer.timeout.connect(self.timeout_cb)
+        self.timer.start(TIMEOUT_TIME) 
+        self.status_text.setText('Collecting sweep angles...')
+        self.start_measurement_button.setDisabled(True)
 
     def isComplete(self):
         return self.is_done
