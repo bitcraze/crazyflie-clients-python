@@ -353,7 +353,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._system_type_dialog = LighthouseSystemTypeDialog(helper)
         self._basestation_geometry_wizard = LighthouseBasestationGeometryWizard(self)
 
-        self._manage_estimate_geometry_button.clicked.connect(self._show_basestation_geometry_wizard)
+        self._lighthouse_geometry_wizard_button.clicked.connect(self._show_basestation_geometry_wizard)
+        self._manage_estimate_geometry_button.clicked.connect(self._show_basestation_geometry_dialog)
         self._change_system_type_button.clicked.connect(lambda: self._system_type_dialog.show())
         self._manage_basestation_mode_button.clicked.connect(self._show_basestation_mode_dialog)
 

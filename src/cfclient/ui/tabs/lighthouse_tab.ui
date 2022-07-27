@@ -335,7 +335,18 @@
              <enum>QLayout::SetDefaultConstraint</enum>
             </property>
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0,0">
+             <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0,0,0">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <item>
+                 <widget class="QPushButton" name="_lighthouse_geometry_wizard_button">
+                  <property name="text">
+                   <string>Lighthouse Geometry Setup Wizard</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_6">
                 <item>
