@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-from PyQt5 import QtCore
 from PyQt5 import QtCore, QtWidgets
 from cflib.crazyflie import Crazyflie
-from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleAverageReader, LighthouseSweepAngleReader
+from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleAverageReader
+from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleReader
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVectors
 from cflib.localization.lighthouse_initial_estimator import LighthouseInitialEstimator
 from cflib.localization.lighthouse_sample_matcher import LighthouseSampleMatcher
@@ -175,8 +175,10 @@ class Page1(RecordSingleSamplePage):
 class Page2(RecordSingleSamplePage):
     def __init__(self, cf: Crazyflie, parent=None):
         super(Page2, self).__init__(cf, parent)
-        self.explanation_text.setText(f'Step 2. Put the Crazyflie on the positive X-axis,  exactly {REFERENCE_DIST} meters from the origin.\n ' +
-                                      'This position defines the direction of the X-axis, but it is also used for scaling of the system.')
+        self.explanation_text.setText(f'Step 2. Put the Crazyflie on the positive X-axis, \n' +
+                                      '  exactly {REFERENCE_DIST}  meters from the origin. \n\n ' +
+                                      'This position defines the direction of the X-axis, \n' +
+                                      '  but it is also used for scaling of the system.')
 
 
 class Page3(RecordSingleSamplePage):
@@ -188,9 +190,10 @@ class Page3(RecordSingleSamplePage):
 class Page4(RecordMultipleSamplePage):
     def __init__(self, cf: Crazyflie, parent=None):
         super(Page4, self).__init__(cf, parent)
-        self.explanation_text.setText('Step 4. We will now record data from the space you plan to fly in and optimize the base station \n ' +
-                                      'geometry based on this data. Move the Crazyflie around, try to cover all of the space, make sure \n ' +
-                                      'all the base stations are received and do not move too fast.')
+        self.explanation_text.setText('Step 4. We will now record data from the space you plan to fly in \n' +
+                                      ' and optimize the base station geometry based on this data. \n\n' +
+                                      'Move the Crazyflie around, try to cover all of the space, make \n ' +
+                                      '  sure all the base stations are received and do not move too fast.')
 
 
 class EstimateGeometryPage(QtWidgets.QWizardPage):
