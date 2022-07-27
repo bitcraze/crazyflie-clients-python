@@ -205,6 +205,9 @@ class EstimateGeometryPage(QtWidgets.QWizardPage):
         self.explanation_text.setText(' ')
         estimate_measurement_button = QtWidgets.QPushButton("Estimate geometry")
         estimate_measurement_button.clicked.connect(self.btn_clicked)
+        self.status_text =  QtWidgets.QLabel()
+        self.status_text.setText('')
+
         self.page1 = page1
         self.page2 = page2
         self.page3 = page3
@@ -213,20 +216,21 @@ class EstimateGeometryPage(QtWidgets.QWizardPage):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.explanation_text)
         layout.addWidget(estimate_measurement_button)
+        layout.addWidget(self.status_text)
 
         self.setLayout(layout)
         self.is_done = False
         self.bs_poses = None
 
     def btn_clicked(self):
-        print('Estimating geometry...')
+        self.status_text.setText('Estimating geometry...')
         origin = self.page1.getSample()
         x_axis = [self.page2.getSample()]
         xy_plane = [self.page3.getSample()]
         samples = self.page4.getSamples()
         self.bs_poses = self.estimate_geometry(origin, x_axis, xy_plane, samples)
         self.is_done = True
-        print('  Geometry estimated!')
+        self.status_text.setText('Geometry estimated! \n\n' + self.print_base_stations_poses(self.bs_poses))
         self.completeChanged.emit()
 
     def isComplete(self):
@@ -234,9 +238,17 @@ class EstimateGeometryPage(QtWidgets.QWizardPage):
 
     def print_base_stations_poses(self, base_stations: dict[int, Pose]):
         """Pretty print of base stations pose"""
+        bs_string = ''
         for bs_id, pose in sorted(base_stations.items()):
             pos = pose.translation
-            print(f'    {bs_id + 1}: ({pos[0]}, {pos[1]}, {pos[2]})')
+            temp_string = f'    {bs_id + 1}: ({pos[0]}, {pos[1]}, {pos[2]})'
+            print(temp_string)
+            bs_string += '\n' + temp_string
+
+        return bs_string
+
+         
+        
 
     def estimate_geometry(self, origin: LhCfPoseSample,
                       x_axis: list[LhCfPoseSample],
@@ -327,7 +339,7 @@ class UploadGeometryPage(QtWidgets.QWizardPage):
         return self.is_done
 
     def data_written_callback(self, _):
-        self.is_done
+        self.is_done = True
         self.completeChanged.emit()
         self.status_text.setText('Geometry is uploaded! Press Finish to close the wizard')
 
