@@ -200,6 +200,7 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._update_ui()
 
     def _estimate_geometry_button_clicked(self):
+        self._basestation_geometry_wizard.reset()
         self._basestation_geometry_wizard.show()
         self.hide()
 

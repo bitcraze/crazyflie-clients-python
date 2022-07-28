@@ -28,27 +28,41 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
         super(LighthouseBasestationGeometryWizard, self).__init__(parent)
         self.cf = cf
         self.ready_cb = ready_cb
-        get_origin_page = RecordOriginSamplePage(self.cf, self)
-        get_xaxis_page = RecordXAxisSamplePage(self.cf, self)
-        get_xyplane_page = RecordXYPlaneSamplesPage(self.cf, self)
-        get_xyzspace_page = RecordXYZSpaceSamplesPage(self.cf, self)
-        self.get_geometry_page = EstimateBSGeometryPage(
-            self.cf, get_origin_page, get_xaxis_page, get_xyplane_page, get_xyzspace_page, self)
-
-        self.addPage(get_origin_page)
-        self.addPage(get_xaxis_page)
-        self.addPage(get_xyplane_page)
-        self.addPage(get_xyzspace_page)
-        self.addPage(self.get_geometry_page)
-
-        self.setWindowTitle("Lighthouse Basestation Geometry Wizard")
-        self.resize(640, 480)
+        self.wizard_opened_first_time = True
+        self.reset()
 
         self.button(QtWidgets.QWizard.FinishButton).clicked.connect(self._finish_button_clicked_callback)
 
     def _finish_button_clicked_callback(self):
-
         self.ready_cb(self.get_geometry_page.get_geometry())
+
+    def reset(self):
+
+        if not self.wizard_opened_first_time:
+            self.removePage(0)
+            self.removePage(1)
+            self.removePage(2)
+            self.removePage(3)
+            self.removePage(4)
+            del self.get_origin_page, self.get_xaxis_page, self.get_xyplane_page, self.get_xyzspace_page, self.get_geometry_page
+        else:
+            self.wizard_opened_first_time = False
+
+        self.get_origin_page = RecordOriginSamplePage(self.cf, self)
+        self.get_xaxis_page = RecordXAxisSamplePage(self.cf, self)
+        self.get_xyplane_page = RecordXYPlaneSamplesPage(self.cf, self)
+        self.get_xyzspace_page = RecordXYZSpaceSamplesPage(self.cf, self)
+        self.get_geometry_page = EstimateBSGeometryPage(
+            self.cf, self.get_origin_page, self.get_xaxis_page, self.get_xyplane_page, self.get_xyzspace_page, self)
+
+        self.addPage(self.get_origin_page)
+        self.addPage(self.get_xaxis_page)
+        self.addPage(self.get_xyplane_page)
+        self.addPage(self.get_xyzspace_page)
+        self.addPage(self.get_geometry_page)
+
+        self.setWindowTitle("Lighthouse Basestation Geometry Wizard")
+        self.resize(640, 480)
 
 
 class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
