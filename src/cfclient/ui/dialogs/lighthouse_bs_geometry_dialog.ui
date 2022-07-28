@@ -41,6 +41,13 @@
          </property>
         </spacer>
        </item>
+       <item>
+        <widget class="QPushButton" name="_estimate_geometry_old_button">
+         <property name="text">
+          <string>Estimate Geometry OpenCV (old)</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </item>
      <item>

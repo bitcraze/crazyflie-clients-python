@@ -36,7 +36,6 @@ from cflib.localization import LighthouseSweepAngleAverageReader
 from cflib.crazyflie.mem import LighthouseBsGeometry
 from cfclient.ui.wizards.lighthouse_geo_bs_estimation_wizard import LighthouseBasestationGeometryWizard
 
-
 __author__ = 'Bitcraze AB'
 __all__ = ['LighthouseBsGeometryDialog']
 
@@ -139,11 +138,17 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._lighthouse_tab = lighthouse_tab
 
         self._estimate_geometry_button.clicked.connect(self._estimate_geometry_button_clicked)
+        self._estimate_geometry_old_button.clicked.connect(self._estimate_geometry_old_button_clicked)
         self._write_to_cf_button.clicked.connect(self._write_to_cf_button_clicked)
 
         self._sweep_angles_received_and_averaged_signal.connect(self._sweep_angles_received_and_averaged_cb)
         self._basestation_geometery_received_signal.connect(self._basestation_geometry_received_signal_cb)
         self._close_button.clicked.connect(self.close)
+
+        try:
+            import cv2
+        except ModuleNotFoundError:
+            self._estimate_geometry_old_button.setEnabled(False)
 
         self._sweep_angle_reader = LighthouseSweepAngleAverageReader(
             self._lighthouse_tab._helper.cf, self._sweep_angles_received_and_averaged_signal.emit)
@@ -198,6 +203,10 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._basestation_geometry_wizard.show()
         self.hide()
 
+    def _estimate_geometry_old_button_clicked(self):
+        self._sweep_angle_reader.start_angle_collection()
+        self._update_ui()
+
     def _write_to_cf_button_clicked(self):
         if len(self._newly_estimated_geometry) > 0:
             self._lighthouse_tab.write_and_store_geometry(self._newly_estimated_geometry)
@@ -206,7 +215,6 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._update_ui()
 
     def _update_ui(self):
-        self._estimate_geometry_button.setEnabled(not self._sweep_angle_reader.is_collecting())
         self._write_to_cf_button.setEnabled(len(self._newly_estimated_geometry) > 0)
         self._data_model.set_estimated_geos(self._newly_estimated_geometry)
 
@@ -216,7 +224,7 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
     def _stop_collection(self):
         self._sweep_angle_reader.stop_angle_collection()
 
-    def geometry_updated(self, geo_dict):
-        self._data_model.set_current_geos(geo_dict)
+    def geometry_updated(self, geometry):
+        self._data_model.set_current_geos(geometry)
 
         self._update_ui()
