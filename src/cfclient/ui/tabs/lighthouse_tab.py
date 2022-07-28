@@ -351,7 +351,7 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._basestation_geometry_dialog = LighthouseBsGeometryDialog(self)
         self._basestation_mode_dialog = LighthouseBsModeDialog(self)
         self._system_type_dialog = LighthouseSystemTypeDialog(helper)
-        self._basestation_geometry_wizard = LighthouseBasestationGeometryWizard(self)
+        #self._basestation_geometry_wizard = LighthouseBasestationGeometryWizard(self)
 
         self._lighthouse_geometry_wizard_button.clicked.connect(self._show_basestation_geometry_wizard)
         self._manage_estimate_geometry_button.clicked.connect(self._show_basestation_geometry_dialog)
@@ -376,7 +376,8 @@ class LighthouseTab(Tab, lighthouse_tab_class):
         self._start_read_of_geo_data()
 
     def _show_basestation_geometry_wizard(self):
-        self._basestation_geometry_wizard.show()
+        # self._basestation_geometry_wizard.show()
+        print('dummy')
 
     def _show_basestation_geometry_dialog(self):
         self._basestation_geometry_dialog.reset()

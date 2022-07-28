@@ -24,25 +24,31 @@ TIMEOUT_TIME = 2000
 
 
 class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
-    def __init__(self, lighthouse_tab, parent=None, *args):
+    def __init__(self, cf, ready_cb, parent=None, *args):
         super(LighthouseBasestationGeometryWizard, self).__init__(parent)
-        self._lighthouse_tab = lighthouse_tab
-        self.cf = self._lighthouse_tab._helper.cf
+        self.cf = cf
+        self.ready_cb = ready_cb
         page1 = Page1(self.cf, self)
         page2 = Page2(self.cf, self)
         page3 = Page3(self.cf, self)
         page4 = Page4(self.cf, self)
-        page5 = Page5(page1, page2, page3, page4, self)
-        page6 = Page6(self.cf, page5, self)
+        self.page5 = Page5(page1, page2, page3, page4, self)
+        #self.page6 = Page6(self.cf, self.page5, ready_cb, self)
 
         self.addPage(page1)
         self.addPage(page2)
         self.addPage(page3)
         self.addPage(page4)
-        self.addPage(page5)
-        self.addPage(page6)
+        self.addPage(self.page5)
+        # self.addPage(self.page6)
         self.setWindowTitle("Lighthouse Basestation Geometry Wizard")
         self.resize(640, 480)
+
+        self.button(QtWidgets.QWizard.FinishButton).clicked.connect(self._finish_button_clicked_callback)
+
+    def _finish_button_clicked_callback(self):
+
+        self.ready_cb(self.page5.get_geometry())
 
 
 class RecordSingleSamplePage(QtWidgets.QWizardPage):
@@ -288,6 +294,9 @@ class EstimateGeometryPage(QtWidgets.QWizardPage):
                                                                                            [REFERENCE_DIST, 0, 0],
                                                                                            cf_aligned_poses[1])
 
+        self.is_done = True
+        self.completeChanged.emit()
+
         print()
         print('Final solution:')
         print('  Base stations at:')
@@ -295,8 +304,19 @@ class EstimateGeometryPage(QtWidgets.QWizardPage):
 
         return bs_scaled_poses
 
-    def get_poses(self):
-        return self.bs_poses
+    def isComplete(self):
+        return self.is_done
+
+    def get_geometry(self):
+        geo_dict = {}
+        for bs_id, pose in self.bs_poses.items():
+            geo = LighthouseBsGeometry()
+            geo.origin = pose.translation.tolist()
+            geo.rotation_matrix = pose.rot_matrix.tolist()
+            geo.valid = True
+            geo_dict[bs_id] = geo
+
+        return geo_dict
 
 
 class Page5(EstimateGeometryPage):
@@ -306,7 +326,7 @@ class Page5(EstimateGeometryPage):
 
 
 class UploadGeometryPage(QtWidgets.QWizardPage):
-    def __init__(self, cf: Crazyflie, page5: Page5, parent=None):
+    def __init__(self, cf: Crazyflie, page5: Page5, ready_cf, parent=None):
         super(UploadGeometryPage, self).__init__(parent)
         self.explanation_text = QtWidgets.QLabel()
         self.explanation_text.setText(' ')
@@ -316,6 +336,7 @@ class UploadGeometryPage(QtWidgets.QWizardPage):
         start_upload_button.clicked.connect(self.btn_clicked)
         self.page5 = page5
         self.cf = cf
+        self.ready_cf = ready_cf
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.explanation_text)
@@ -331,8 +352,8 @@ class UploadGeometryPage(QtWidgets.QWizardPage):
         self.status_text.setText('Start uploading geometry')
         self.completeChanged.emit()
 
-    def isComplete(self):
-        return self.is_done
+    # def isComplete(self):
+    #    return self.is_done
 
     def data_written_callback(self, _):
         self.is_done = True
@@ -354,8 +375,8 @@ class UploadGeometryPage(QtWidgets.QWizardPage):
 
 
 class Page6(UploadGeometryPage):
-    def __init__(self, cf: Crazyflie, page5: Page5, parent=None):
-        super(Page6, self).__init__(cf, page5, parent)
+    def __init__(self, cf: Crazyflie, page5: Page5, ready_cf,  parent=None):
+        super(Page6, self).__init__(cf, page5, ready_cf, parent)
         self.explanation_text.setText(
             'Step 6. Double check the basestations geometry. If it looks good, press the button')
 
