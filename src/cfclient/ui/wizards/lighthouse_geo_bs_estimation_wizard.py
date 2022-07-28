@@ -89,7 +89,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         self.timeout_timer = QtCore.QTimer()
         self.timeout_timer.timeout.connect(self._timeout_cb)
         self.reader = LighthouseSweepAngleAverageReader(self.cf, self._ready_cb)
-        self.recorded_angles_result = None
+        self.recorded_angle_result = None
 
     def isComplete(self):
         return self.is_done and (self.too_few_bs is not True)
@@ -116,7 +116,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         angles_calibrated = {}
         for bs_id, data in recorded_angles.items():
             angles_calibrated[bs_id] = data[1]
-        self.recorded_angles_result = LhCfPoseSample(angles_calibrated=angles_calibrated)
+        self.recorded_angle_result = LhCfPoseSample(angles_calibrated=angles_calibrated)
         self.visible_basestations = ', '.join(map(lambda x: str(x + 1), recorded_angles.keys()))
         amount_of_basestations = len(recorded_angles.keys())
 
@@ -134,7 +134,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
             self.completeChanged.emit()
 
     def get_sample(self):
-        return self.recorded_angles_result
+        return self.recorded_angle_result
 
 
 class RecordOriginSamplePage(LighthouseBasestationGeometryWizardBasePage):
@@ -157,9 +157,17 @@ class RecordXYPlaneSamplesPage(LighthouseBasestationGeometryWizardBasePage):
         super(RecordXYPlaneSamplesPage, self).__init__(cf, False, parent)
         self.explanation_text.setText('Step 3. Put the Crazyflie somehere in the XY-plane, but not on the X-axis. \n')
         self.add_measurement_btn = QtWidgets.QPushButton("Add more measurements")
-        self.add_measurement_btn.clicked.connect(self._action_btn_clicked)
+        self.add_measurement_btn.clicked.connect(self._add_measurement_btn_clicked)
         self.layout.addWidget(self.add_measurement_btn)
         self.setLayout(self.layout)
+        self.recorded_angles_result: list[LhCfPoseSample] = []
+
+    def _add_measurement_btn_clicked(self):
+        self._action_btn_clicked()
+        self.recorded_angles_result.append(self.get_sample())
+
+    def get_samples(self):
+        return self.recorded_angles_result
 
 
 class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
@@ -216,7 +224,7 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
         self.status_text.setText('Estimating geometry...')
         origin = self.origin_page.get_sample()
         x_axis = [self.xaxis_page.get_sample()]
-        xy_plane = [self.xyplane_page.get_sample()]
+        xy_plane = self.xyplane_page.get_samples()
         samples = self.xyzspace_page.get_samples()
         self.bs_poses = self._estimate_geometry(origin, x_axis, xy_plane, samples)
         self.is_done = True
