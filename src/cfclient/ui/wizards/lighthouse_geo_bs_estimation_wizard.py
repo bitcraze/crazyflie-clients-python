@@ -81,8 +81,14 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         self.layout.addWidget(self.explanation_text)
         if show_fill_in_field:
             self.layout.addWidget(self.fill_record_times_line_edit)
+        self.layout.addStretch()
+
         self.layout.addWidget(self.start_action_button)
+        self.layout.addStretch()
+
         self.layout.addWidget(self.status_text)
+        self.layout.addStretch()
+
         self.setLayout(self.layout)
         self.is_done = False
         self.too_few_bs = False
@@ -91,8 +97,8 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         self.reader = LighthouseSweepAngleAverageReader(self.cf, self._ready_cb)
         self.recorded_angle_result = None
 
-    def isComplete(self):
-        return self.is_done and (self.too_few_bs is not True)
+    # def isComplete(self):
+    #    return self.is_done and (self.too_few_bs is not True)
 
     def _action_btn_clicked(self):
         self.is_done = False
