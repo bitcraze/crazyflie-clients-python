@@ -279,10 +279,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             if isinstance(tab, cfclient.ui.tabs.PlotTab):
                 cfclient.ui.pluginhelper.plotTab = tab
 
-            item = QtWidgets.QAction(tab.getMenuName(), self, checkable=True)
+            item = QtWidgets.QAction(tab.get_tab_toolbox_name(), self, checkable=True)
             item.toggled.connect(tab.toggleVisibility)
             self.tabsMenuItem.addAction(item)
-            tabItems[tab.getTabName()] = item
+            tabItems[tab.get_tab_toolbox_name()] = item
             self.loadedTabs.append(tab)
             if not tab.enabled:
                 item.setEnabled(False)
@@ -308,12 +308,12 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.toolboxes = []
         for t_class in cfclient.ui.toolboxes.toolboxes:
             toolbox = t_class(self.tabs, cfclient.ui.pluginhelper)
-            dockToolbox = MyDockWidget(toolbox.getName())
+            dockToolbox = MyDockWidget(toolbox.get_tab_toolbox_name())
             dockToolbox.setWidget(toolbox)
             self.toolboxes += [dockToolbox, ]
 
             # Add menu item for the toolbox
-            item = QtWidgets.QAction(toolbox.getName(), self)
+            item = QtWidgets.QAction(toolbox.get_tab_toolbox_name(), self)
             item.setCheckable(True)
             item.triggered.connect(self.toggleToolbox)
             self.toolboxesMenuItem.addAction(item)

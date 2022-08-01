@@ -279,16 +279,11 @@ class ParamTab(TabToolbox, param_tab_class):
     _param_default_signal = pyqtSignal(object)
     _reset_param_signal = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
+    def __init__(self, tabWidget, helper):
         """Create the parameter tab"""
-        super(ParamTab, self).__init__(*args)
+        super(ParamTab, self).__init__(tabWidget, helper, 'Parameters')
         self.setupUi(self)
 
-        self.tabName = "Parameters"
-        self.menuName = "Parameters"
-
-        self.helper = helper
-        self.tabWidget = tabWidget
         self.cf = helper.cf
 
         self.cf.connected.add_callback(self._connected_signal.emit)
@@ -296,7 +291,7 @@ class ParamTab(TabToolbox, param_tab_class):
         self.cf.disconnected.add_callback(self._disconnected_signal.emit)
         self._disconnected_signal.connect(self._disconnected)
 
-        self._model = ParamBlockModel(None, self.helper.mainUI)
+        self._model = ParamBlockModel(None, self._helper.mainUI)
         self._persistent_state_signal.connect(self._persistent_state_cb)
         self._set_param_value_signal.connect(self._set_param_value)
         self.setParamButton.clicked.connect(self._set_param_value_signal.emit)
@@ -409,9 +404,9 @@ class ParamTab(TabToolbox, param_tab_class):
 
     def _connected(self, link_uri):
         self._model.reset()
-        self._model.set_toc(self.cf.param.toc.toc, self.helper.cf)
+        self._model.set_toc(self.cf.param.toc.toc, self._helper.cf)
         self._model.set_enabled(True)
-        self.helper.cf.param.request_update_of_all_params()
+        self._helper.cf.param.request_update_of_all_params()
 
     def _disconnected(self, link_uri):
         #

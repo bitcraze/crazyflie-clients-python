@@ -133,12 +133,9 @@ class PlotTab(TabToolbox, plot_tab_class):
         (180, 60, 240),   # purple
     ]
 
-    def __init__(self, tabWidget, helper, *args):
-        super(PlotTab, self).__init__(*args)
+    def __init__(self, tabWidget, helper):
+        super(PlotTab, self).__init__(tabWidget, helper, 'Plotter')
         self.setupUi(self)
-
-        self.tabName = "Plotter"
-        self.menuName = "Plotter"
 
         self._log_error_signal.connect(self._logging_error)
 
@@ -150,21 +147,19 @@ class PlotTab(TabToolbox, plot_tab_class):
         self._model = LogConfigModel()
         self.dataSelector.setModel(self._model)
         self._log_data_signal.connect(self._log_data_received)
-        self.tabWidget = tabWidget
-        self.helper = helper
         self.plotLayout.addWidget(self._plot)
 
         # Connect external signals if we can use the tab
         if self.enabled:
             self._disconnected_signal.connect(self._disconnected)
-            self.helper.cf.disconnected.add_callback(
+            self._helper.cf.disconnected.add_callback(
                 self._disconnected_signal.emit)
 
             self._connected_signal.connect(self._connected)
-            self.helper.cf.connected.add_callback(
+            self._helper.cf.connected.add_callback(
                 self._connected_signal.emit)
 
-            self.helper.cf.log.block_added_cb.add_callback(self._config_added)
+            self._helper.cf.log.block_added_cb.add_callback(self._config_added)
             self.dataSelector.currentIndexChanged.connect(
                 self._selection_changed)
 

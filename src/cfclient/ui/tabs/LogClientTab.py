@@ -68,14 +68,9 @@ class LogClientTab(TabToolbox, log_client_tab_class):
     """
     _update = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(LogClientTab, self).__init__(*args)
+    def __init__(self, tabWidget, helper):
+        super(LogClientTab, self).__init__(tabWidget, helper, 'Log Client')
         self.setupUi(self)
-
-        self.tabName = "Log Client"
-        self.menuName = "Log Client"
-
-        self.tabWidget = tabWidget
 
         self._update.connect(self.printText)
         self._clearButton.clicked.connect(self.clear)

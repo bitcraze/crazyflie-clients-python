@@ -115,43 +115,37 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     _limiting_updated = pyqtSignal(bool, bool, bool)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(FlightTab, self).__init__(*args)
+    def __init__(self, tabWidget, helper):
+        super(FlightTab, self).__init__(tabWidget, helper, 'Flight Control')
         self.setupUi(self)
-
-        self.tabName = "Flight Control"
-        self.menuName = "Flight Control"
-
-        self.tabWidget = tabWidget
-        self.helper = helper
 
         self.disconnectedSignal.connect(self.disconnected)
         self.connectionFinishedSignal.connect(self.connected)
         # Incomming signals
-        self.helper.cf.connected.add_callback(
+        self._helper.cf.connected.add_callback(
             self.connectionFinishedSignal.emit)
-        self.helper.cf.disconnected.add_callback(self.disconnectedSignal.emit)
+        self._helper.cf.disconnected.add_callback(self.disconnectedSignal.emit)
 
         self._input_updated_signal.connect(self.updateInputControl)
-        self.helper.inputDeviceReader.input_updated.add_callback(
+        self._helper.inputDeviceReader.input_updated.add_callback(
             self._input_updated_signal.emit)
         self._rp_trim_updated_signal.connect(self.calUpdateFromInput)
-        self.helper.inputDeviceReader.rp_trim_updated.add_callback(
+        self._helper.inputDeviceReader.rp_trim_updated.add_callback(
             self._rp_trim_updated_signal.emit)
         self._emergency_stop_updated_signal.connect(self.updateEmergencyStop)
-        self.helper.inputDeviceReader.emergency_stop_updated.add_callback(
+        self._helper.inputDeviceReader.emergency_stop_updated.add_callback(
             self._emergency_stop_updated_signal.emit)
 
-        self.helper.inputDeviceReader.heighthold_input_updated.add_callback(
+        self._helper.inputDeviceReader.heighthold_input_updated.add_callback(
             self._heighthold_input_updated_signal.emit)
         self._heighthold_input_updated_signal.connect(
             self._heighthold_input_updated)
-        self.helper.inputDeviceReader.hover_input_updated.add_callback(
+        self._helper.inputDeviceReader.hover_input_updated.add_callback(
             self._hover_input_updated_signal.emit)
         self._hover_input_updated_signal.connect(
             self._hover_input_updated)
 
-        self.helper.inputDeviceReader.assisted_control_updated.add_callback(
+        self._helper.inputDeviceReader.assisted_control_updated.add_callback(
             self._assisted_control_updated_signal.emit)
 
         self._assisted_control_updated_signal.connect(
@@ -190,19 +184,19 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.uiSetupReady()
 
         self._led_ring_headlight.clicked.connect(
-            lambda enabled: self.helper.cf.param.set_value("ring.headlightEnable", int(enabled)))
+            lambda enabled: self._helper.cf.param.set_value("ring.headlightEnable", int(enabled)))
 
-        self.helper.cf.param.add_update_callback(
+        self._helper.cf.param.add_update_callback(
             group="ring", name="headlightEnable",
             cb=(lambda name, checked: self._led_ring_headlight.setChecked(bool(int(checked)))))
 
         self._ledring_nbr_effects = 0
 
-        self.helper.cf.param.add_update_callback(group="ring", name="effect", cb=self._ring_effect_updated)
+        self._helper.cf.param.add_update_callback(group="ring", name="effect", cb=self._ring_effect_updated)
 
-        self.helper.cf.param.add_update_callback(group="imu_sensors", cb=self._set_available_sensors)
+        self._helper.cf.param.add_update_callback(group="imu_sensors", cb=self._set_available_sensors)
 
-        self.helper.cf.param.all_updated.add_callback(self._all_params_updated)
+        self._helper.cf.param.all_updated.add_callback(self._all_params_updated)
 
         self.logAltHold = None
 
@@ -213,16 +207,16 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.targetCalPitch.setValue(Config().get("trim_pitch"))
         self.targetCalRoll.setValue(Config().get("trim_roll"))
 
-        self.helper.inputDeviceReader.alt1_updated.add_callback(self.alt1_updated)
-        self.helper.inputDeviceReader.alt2_updated.add_callback(self.alt2_updated)
+        self._helper.inputDeviceReader.alt1_updated.add_callback(self.alt1_updated)
+        self._helper.inputDeviceReader.alt2_updated.add_callback(self.alt2_updated)
         self._tf_state = 0
         self._ring_effect = 0
 
         # Connect callbacks for input device limiting of roll/pitch/yaw/thrust
-        self.helper.inputDeviceReader.limiting_updated.add_callback(self._limiting_updated.emit)
+        self._helper.inputDeviceReader.limiting_updated.add_callback(self._limiting_updated.emit)
         self._limiting_updated.connect(self._set_limiting_enabled)
 
-        self.helper.pose_logger.data_received_cb.add_callback(self._pose_data_signal.emit)
+        self._helper.pose_logger.data_received_cb.add_callback(self._pose_data_signal.emit)
 
     def _set_limiting_enabled(self, rp_limiting_enabled, yaw_limiting_enabled, thrust_limiting_enabled):
 
@@ -258,7 +252,7 @@ class FlightTab(TabToolbox, flight_tab_class):
             # Reset the Kalman filter before taking off, to avoid
             # positional confusion.
             #
-            self.helper.cf.param.set_value('kalman.resetEstimation', '1')
+            self._helper.cf.param.set_value('kalman.resetEstimation', '1')
             time.sleep(1)
             self._hlCommander.take_off()
         elif action == CommanderAction.LAND:
@@ -313,8 +307,8 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     def _heighthold_input_updated(self, roll, pitch, yaw, height):
         if (self.isVisible() and
-                (self.helper.inputDeviceReader.get_assisted_control() ==
-                 self.helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD)):
+                (self._helper.inputDeviceReader.get_assisted_control() ==
+                 self._helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD)):
 
             self.targetRoll.setText(("%0.2f deg" % roll))
             self.targetPitch.setText(("%0.2f deg" % pitch))
@@ -326,8 +320,8 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     def _hover_input_updated(self, vx, vy, yaw, height):
         if (self.isVisible() and
-                (self.helper.inputDeviceReader.get_assisted_control() ==
-                 self.helper.inputDeviceReader.ASSISTED_CONTROL_HOVER)):
+                (self._helper.inputDeviceReader.get_assisted_control() ==
+                 self._helper.inputDeviceReader.ASSISTED_CONTROL_HOVER)):
 
             self.targetRoll.setText(("%0.2f m/s" % vy))
             self.targetPitch.setText(("%0.2f m/s" % vx))
@@ -361,14 +355,14 @@ class FlightTab(TabToolbox, flight_tab_class):
             return
 
         # We cannot know if we have a positioning deck until we get params
-        if not self.helper.cf.param.is_updated:
+        if not self._helper.cf.param.is_updated:
             self.commanderBox.setEnabled(False)
             return
 
         #                  flowV1    flowV2     LightHouse       LPS
         position_decks = ['bcFlow', 'bcFlow2', 'bcLighthouse4', 'bcDWM1000']
         for deck in position_decks:
-            if int(self.helper.cf.param.values['deck'][deck]) == 1:
+            if int(self._helper.cf.param.values['deck'][deck]) == 1:
                 self.commanderBox.setEnabled(True)
                 break
         else:
@@ -397,15 +391,15 @@ class FlightTab(TabToolbox, flight_tab_class):
         lg.add_variable("sys.canfly")
 
         self._hlCommander = PositionHlCommander(
-            self.helper.cf,
+            self._helper.cf,
             x=0.0, y=0.0, z=0.0,
             default_velocity=0.3,
             default_height=0.5,
-            controller=int(self.helper.cf.param.get_value('stabilizer.controller'))
+            controller=int(self._helper.cf.param.get_value('stabilizer.controller'))
         )
 
         try:
-            self.helper.cf.log.add_config(lg)
+            self._helper.cf.log.add_config(lg)
             lg.data_received_cb.add_callback(self._log_data_signal.emit)
             lg.error_cb.add_callback(self._log_error_signal.emit)
             lg.start()
@@ -424,7 +418,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         available = eval(available)
 
         self._enable_estimators(True)
-        self.helper.inputDeviceReader.set_alt_hold_available(available)
+        self._helper.inputDeviceReader.set_alt_hold_available(available)
 
     def disconnected(self, linkURI):
         self.ai.setRollPitch(0, 0)
@@ -471,16 +465,16 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._update_flight_commander(False)
 
     def minMaxThrustChanged(self):
-        self.helper.inputDeviceReader.min_thrust = self.minThrust.value()
-        self.helper.inputDeviceReader.max_thrust = self.maxThrust.value()
+        self._helper.inputDeviceReader.min_thrust = self.minThrust.value()
+        self._helper.inputDeviceReader.max_thrust = self.maxThrust.value()
         if (self.isInCrazyFlightmode is True):
             Config().set("min_thrust", self.minThrust.value())
             Config().set("max_thrust", self.maxThrust.value())
 
     def thrustLoweringSlewRateLimitChanged(self):
-        self.helper.inputDeviceReader.thrust_slew_rate = (
+        self._helper.inputDeviceReader.thrust_slew_rate = (
             self.thrustLoweringSlewRateLimit.value())
-        self.helper.inputDeviceReader.thrust_slew_limit = (
+        self._helper.inputDeviceReader.thrust_slew_limit = (
             self.slewEnableLimit.value())
         if (self.isInCrazyFlightmode is True):
             Config().set("slew_limit", self.slewEnableLimit.value())
@@ -488,24 +482,24 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     def maxYawRateChanged(self):
         logger.debug("MaxYawrate changed to %d", self.maxYawRate.value())
-        self.helper.inputDeviceReader.max_yaw_rate = self.maxYawRate.value()
+        self._helper.inputDeviceReader.max_yaw_rate = self.maxYawRate.value()
         if (self.isInCrazyFlightmode is True):
             Config().set("max_yaw", self.maxYawRate.value())
 
     def maxAngleChanged(self):
         logger.debug("MaxAngle changed to %d", self.maxAngle.value())
-        self.helper.inputDeviceReader.max_rp_angle = self.maxAngle.value()
+        self._helper.inputDeviceReader.max_rp_angle = self.maxAngle.value()
         if (self.isInCrazyFlightmode is True):
             Config().set("max_rp", self.maxAngle.value())
 
     def _trim_pitch_changed(self, value):
         logger.debug("Pitch trim updated to [%f]" % value)
-        self.helper.inputDeviceReader.trim_pitch = value
+        self._helper.inputDeviceReader.trim_pitch = value
         Config().set("trim_pitch", value)
 
     def _trim_roll_changed(self, value):
         logger.debug("Roll trim updated to [%f]" % value)
-        self.helper.inputDeviceReader.trim_roll = value
+        self._helper.inputDeviceReader.trim_roll = value
         Config().set("trim_roll", value)
 
     def calUpdateFromInput(self, rollCal, pitchCal):
@@ -587,33 +581,33 @@ class FlightTab(TabToolbox, flight_tab_class):
         if (item == 3):  # Position hold
             mode = JoystickReader.ASSISTED_CONTROL_HOVER
 
-        self.helper.inputDeviceReader.set_assisted_control(mode)
+        self._helper.inputDeviceReader.set_assisted_control(mode)
         Config().set("assistedControl", mode)
 
     def _assisted_control_updated(self, enabled):
-        if self.helper.inputDeviceReader.get_assisted_control() == \
+        if self._helper.inputDeviceReader.get_assisted_control() == \
                 JoystickReader.ASSISTED_CONTROL_POSHOLD:
             self.targetThrust.setEnabled(not enabled)
             self.targetRoll.setEnabled(not enabled)
             self.targetPitch.setEnabled(not enabled)
-        elif ((self.helper.inputDeviceReader.get_assisted_control() ==
+        elif ((self._helper.inputDeviceReader.get_assisted_control() ==
                 JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD) or
-                (self.helper.inputDeviceReader.get_assisted_control() ==
+                (self._helper.inputDeviceReader.get_assisted_control() ==
                  JoystickReader.ASSISTED_CONTROL_HOVER)):
             self.targetThrust.setEnabled(not enabled)
             self.targetHeight.setEnabled(enabled)
             print('Chaning enable for target height: %s' % enabled)
         else:
-            self.helper.cf.param.set_value("flightmode.althold", str(enabled))
+            self._helper.cf.param.set_value("flightmode.althold", str(enabled))
 
     def alt1_updated(self, state):
         if state:
             new_index = (self._ring_effect+1) % (self._ledring_nbr_effects+1)
-            self.helper.cf.param.set_value("ring.effect",
+            self._helper.cf.param.set_value("ring.effect",
                                            str(new_index))
 
     def alt2_updated(self, state):
-        self.helper.cf.param.set_value("ring.headlightEnable", str(state))
+        self._helper.cf.param.set_value("ring.headlightEnable", str(state))
 
     def _all_params_updated(self):
         self._ring_populate_dropdown()
@@ -622,8 +616,8 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     def _ring_populate_dropdown(self):
         try:
-            nbr = int(self.helper.cf.param.values["ring"]["neffect"])
-            current = int(self.helper.cf.param.values["ring"]["effect"])
+            nbr = int(self._helper.cf.param.values["ring"]["neffect"])
+            current = int(self._helper.cf.param.values["ring"]["effect"])
         except KeyError:
             return
 
@@ -665,7 +659,7 @@ class FlightTab(TabToolbox, flight_tab_class):
             self._ring_effect_changed)
 
         self._led_ring_effect.setCurrentIndex(current)
-        if int(self.helper.cf.param.values["deck"]["bcLedRing"]) == 1:
+        if int(self._helper.cf.param.values["deck"]["bcLedRing"]) == 1:
             self._led_ring_effect.setEnabled(True)
             self._led_ring_headlight.setEnabled(True)
 
@@ -674,11 +668,11 @@ class FlightTab(TabToolbox, flight_tab_class):
         if index > -1:
             i = self._led_ring_effect.itemData(index)
             logger.info("Changed effect to {}".format(i))
-            if i != int(self.helper.cf.param.values["ring"]["effect"]):
-                self.helper.cf.param.set_value("ring.effect", str(i))
+            if i != int(self._helper.cf.param.values["ring"]["effect"]):
+                self._helper.cf.param.set_value("ring.effect", str(i))
 
     def _ring_effect_updated(self, name, value):
-        if self.helper.cf.param.is_updated:
+        if self._helper.cf.param.is_updated:
             self._led_ring_effect.setCurrentIndex(int(value))
 
     def _populate_assisted_mode_dropdown(self):
@@ -700,23 +694,23 @@ class FlightTab(TabToolbox, flight_tab_class):
         heightHoldPossible = False
         hoverPossible = False
 
-        if int(self.helper.cf.param.values["deck"]["bcZRanger"]) == 1:
+        if int(self._helper.cf.param.values["deck"]["bcZRanger"]) == 1:
             heightHoldPossible = True
-            self.helper.inputDeviceReader.set_hover_max_height(1.0)
+            self._helper.inputDeviceReader.set_hover_max_height(1.0)
 
-        if int(self.helper.cf.param.values["deck"]["bcZRanger2"]) == 1:
+        if int(self._helper.cf.param.values["deck"]["bcZRanger2"]) == 1:
             heightHoldPossible = True
-            self.helper.inputDeviceReader.set_hover_max_height(2.0)
+            self._helper.inputDeviceReader.set_hover_max_height(2.0)
 
-        if int(self.helper.cf.param.values["deck"]["bcFlow"]) == 1:
+        if int(self._helper.cf.param.values["deck"]["bcFlow"]) == 1:
             heightHoldPossible = True
             hoverPossible = True
-            self.helper.inputDeviceReader.set_hover_max_height(1.0)
+            self._helper.inputDeviceReader.set_hover_max_height(1.0)
 
-        if int(self.helper.cf.param.values["deck"]["bcFlow2"]) == 1:
+        if int(self._helper.cf.param.values["deck"]["bcFlow2"]) == 1:
             heightHoldPossible = True
             hoverPossible = True
-            self.helper.inputDeviceReader.set_hover_max_height(2.0)
+            self._helper.inputDeviceReader.set_hover_max_height(2.0)
 
         if not heightHoldPossible:
             self._assist_mode_combo.model().item(2).setEnabled(False)

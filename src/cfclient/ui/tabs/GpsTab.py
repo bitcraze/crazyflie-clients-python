@@ -60,15 +60,9 @@ class GpsTab(TabToolbox, gps_tab_class):
     _connected_signal = pyqtSignal(str)
     _console_signal = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(GpsTab, self).__init__(*args)
+    def __init__(self, tabWidget, helper):
+        super(GpsTab, self).__init__(tabWidget, helper, 'GPS')
         self.setupUi(self)
-
-        self.tabName = "GPS"
-        self.menuName = "GPS"
-
-        self.tabWidget = tabWidget
-        self.helper = helper
         self._cf = helper.cf
 
         view = self.view = QtWebKit.QWebView()
@@ -95,9 +89,9 @@ class GpsTab(TabToolbox, gps_tab_class):
         self._disconnected_signal.connect(self._disconnected)
 
         # Connect the callbacks from the Crazyflie API
-        self.helper.cf.disconnected.add_callback(
+        self._helper.cf.disconnected.add_callback(
             self._disconnected_signal.emit)
-        self.helper.cf.connected.add_callback(
+        self._helper.cf.connected.add_callback(
             self._connected_signal.emit)
 
         self._max_speed = 0.0

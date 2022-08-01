@@ -57,15 +57,9 @@ class LEDTab(TabToolbox, led_tab_class):
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(LEDTab, self).__init__(*args)
+    def __init__(self, tabWidget, helper):
+        super(LEDTab, self).__init__(tabWidget, helper, 'LED')
         self.setupUi(self)
-
-        self.tabName = "LED"
-        self.menuName = "LED tab"
-        self.tabWidget = tabWidget
-
-        self._helper = helper
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it

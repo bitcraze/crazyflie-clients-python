@@ -59,15 +59,9 @@ class ExampleTab(TabToolbox, example_tab_class):
     _log_error_signal = pyqtSignal(object, str)
     _param_updated_signal = pyqtSignal(str, str)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(ExampleTab, self).__init__(*args)
+    def __init__(self, tabWidget, helper):
+        super(ExampleTab, self).__init__(tabWidget, helper, 'Example')
         self.setupUi(self)
-
-        self.tabName = "Example"
-        self.menuName = "Example Tab"
-        self.tabWidget = tabWidget
-
-        self._helper = helper
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it

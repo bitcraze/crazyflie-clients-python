@@ -53,12 +53,9 @@ class CrtpSharkToolbox(TabToolbox, param_tab_class):
     _incoming_packet_signal = pyqtSignal(object)
     _outgoing_packet_signal = pyqtSignal(object)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(CrtpSharkToolbox, self).__init__(*args)
+    def __init__(self, tabWidget, helper):
+        super(CrtpSharkToolbox, self).__init__(tabWidget, helper, 'Crtp sniffer')
         self.setupUi(self)
-
-        self.helper = helper
-        self.tabWidget = tabWidget
 
         # Init the tree widget
         self.logTree.setHeaderLabels(['ms', 'Direction', 'Port/Chan', 'Data'])
@@ -97,12 +94,6 @@ class CrtpSharkToolbox(TabToolbox, param_tab_class):
         self.logTree.clear()
         self._data = []
 
-    def getName(self):
-        return 'Crtp sniffer'
-
-    def getTabName(self):
-        return 'Crtp sniffer'
-
     def _incoming_packet(self, pk):
         self._incoming_packet_signal.emit(pk)
 
@@ -110,15 +101,15 @@ class CrtpSharkToolbox(TabToolbox, param_tab_class):
         self._outgoing_packet_signal.emit(pk)
 
     def enable(self):
-        self.helper.cf.packet_received.add_callback(
+        self._helper.cf.packet_received.add_callback(
             self._incoming_packet)
-        self.helper.cf.packet_sent.add_callback(
+        self._helper.cf.packet_sent.add_callback(
             self._outgoing_packet)
 
     def disable(self):
-        self.helper.cf.packet_received.remove_callback(
+        self._helper.cf.packet_received.remove_callback(
             self._incoming_packet)
-        self.helper.cf.packet_sent.remove_callback(
+        self._helper.cf.packet_sent.remove_callback(
             self._outgoing_packet)
 
     def preferedDockArea(self):

@@ -159,8 +159,8 @@ class QualisysTab(TabToolbox, qualisys_tab_class):
     cfStatusChanged = pyqtSignal(str)
     qtmStatusChanged = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(QualisysTab, self).__init__(*args)
+    def __init__(self, tabWidget, helper):
+        super(QualisysTab, self).__init__(tabWidget, helper, 'Qualisys')
 
         # Setting self._qtm_status should not be required here, but for some
         # reason python 3.7.5 crashes without it.
@@ -172,11 +172,7 @@ class QualisysTab(TabToolbox, qualisys_tab_class):
         self._setup_states()
         self._event = threading.Event()
 
-        self.tabName = "Qualisys"
-        self.menuName = "Qualisys Tab"
-        self.tabWidget = tabWidget
         self.qtm_6DoF_labels = None
-        self._helper = helper
         self._qtm_connection = None
         self._cf = None
         self.model = QStandardItemModel(10, 4)

@@ -114,15 +114,9 @@ class TuningTab(TabToolbox, tuning_tab_class):
 
     _param_updated_signal = pyqtSignal(str, object)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(TuningTab, self).__init__(*args)
+    def __init__(self, tabWidget, helper):
+        super(TuningTab, self).__init__(tabWidget, helper, 'Tuning')
         self.setupUi(self)
-
-        self.tabName = "Tuning"
-        self.menuName = "Tuning tab"
-        self.tabWidget = tabWidget
-
-        self._helper = helper
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it

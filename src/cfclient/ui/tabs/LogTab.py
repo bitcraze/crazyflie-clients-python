@@ -46,15 +46,9 @@ class LogTab(TabToolbox, param_tab_class):
     connectedSignal = pyqtSignal(str)
     disconnectedSignal = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(LogTab, self).__init__(*args)
+    def __init__(self, tabWidget, helper):
+        super(LogTab, self).__init__(tabWidget, helper, 'Log TOC')
         self.setupUi(self)
-
-        self.tabName = "Log TOC"
-        self.menuName = "Log TOC"
-
-        self.helper = helper
-        self.tabWidget = tabWidget
 
         self.cf = helper.cf
 

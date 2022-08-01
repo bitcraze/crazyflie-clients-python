@@ -45,17 +45,19 @@ logger = logging.getLogger(__name__)
 class TabToolbox(QtWidgets.QWidget):
     """Superclass for all tabs that implements common functions."""
 
-    def __init__(self):
+    def __init__(self, tab_widget, helper, tab_toolbox_name):
         super(TabToolbox, self).__init__()
-        self.tabName = "N/A"
-        self.menuName = "N/A"
+        self.tab_widget = tab_widget
+        self._helper = helper
+        self.tab_toolbox_name = tab_toolbox_name
+
         self.enabled = True
 
     @pyqtSlot(bool)
     def toggleVisibility(self, checked):
         """Show or hide the tab."""
         if checked:
-            self.tabWidget.addTab(self, self.getTabName())
+            self.tab_widget.addTab(self, self.tab_toolbox_name)
             s = ""
             try:
                 s = Config().get("open_tabs")
@@ -65,12 +67,12 @@ class TabToolbox(QtWidgets.QWidget):
                 logger.warning("Exception while adding tab to config and "
                                "reading tab config")
             # Check this since tabs in config are opened when app is started
-            if (self.tabName not in s):
-                s += "%s" % self.tabName
+            if (self.tab_toolbox_name not in s):
+                s += "%s" % self.tab_toolbox_name
                 Config().set("open_tabs", str(s))
 
         if not checked:
-            self.tabWidget.removeTab(self.tabWidget.indexOf(self))
+            self.tab_widget.removeTab(self.tab_widget.indexOf(self))
             try:
                 parts = Config().get("open_tabs").split(",")
             except Exception:
@@ -79,18 +81,14 @@ class TabToolbox(QtWidgets.QWidget):
                 parts = []
             s = ""
             for p in parts:
-                if (self.tabName != p):
+                if (self.tab_toolbox_name != p):
                     s += "%s," % p
             s = s[0:len(s) - 1]  # Remove last comma
             Config().set("open_tabs", str(s))
 
-    def getMenuName(self):
-        """Return the name of the tab that will be shown in the menu"""
-        return self.menuName
-
-    def getTabName(self):
+    def get_tab_toolbox_name(self):
         """Return the name of the tab that will be shown in the tab"""
-        return self.tabName
+        return self.tab_toolbox_name
 
     def is_visible(self):
-        return self.tabWidget.currentWidget() == self
+        return self.tab_widget.currentWidget() == self

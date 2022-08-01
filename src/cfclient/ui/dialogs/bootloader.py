@@ -82,7 +82,6 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.setupUi(self)
 
         self.tabName = "Service"
-        self.menuName = "Service"
 
         # self.tabWidget = tabWidget
         self._helper = helper

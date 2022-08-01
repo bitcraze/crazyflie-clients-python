@@ -327,16 +327,10 @@ class LogBlockTab(TabToolbox, logblock_tab_class):
     _blocks_updated_signal = pyqtSignal(bool)
     _disconnected_signal = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
+    def __init__(self, tabWidget, helper):
         """Initialize the tab"""
-        super(LogBlockTab, self).__init__(*args)
+        super(LogBlockTab, self).__init__(tabWidget, helper, 'Log Blocks')
         self.setupUi(self)
-
-        self.tabName = "Log Blocks"
-        self.menuName = "Log Blocks"
-
-        self._helper = helper
-        self.tabWidget = tabWidget
 
         self._helper.cf.log.block_added_cb.add_callback(self._block_added)
         self._disconnected_signal.connect(self._disconnected)

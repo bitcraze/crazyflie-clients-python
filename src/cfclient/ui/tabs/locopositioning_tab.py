@@ -376,15 +376,9 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
     _anchor_active_id_list_updated_signal = pyqtSignal(object)
     _anchor_data_updated_signal = pyqtSignal(object)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(LocoPositioningTab, self).__init__(*args)
+    def __init__(self, tabWidget, helper):
+        super(LocoPositioningTab, self).__init__(tabWidget, helper, 'Loco Positioning')
         self.setupUi(self)
-
-        self.tabName = "Loco Positioning"
-        self.menuName = "Loco Positioning Tab"
-        self.tabWidget = tabWidget
-
-        self._helper = helper
 
         self._anchors = {}
         self._clear_state()

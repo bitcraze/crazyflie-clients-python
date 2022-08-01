@@ -290,15 +290,9 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     _geometry_read_signal = pyqtSignal(object)
     _calibration_read_signal = pyqtSignal(object)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(LighthouseTab, self).__init__(*args)
+    def __init__(self, tabWidget, helper):
+        super(LighthouseTab, self).__init__(tabWidget, helper, 'Lighthouse Positioning')
         self.setupUi(self)
-
-        self.tabName = "Lighthouse Positioning"
-        self.menuName = "Lighthouse Positioning Tab"
-        self.tabWidget = tabWidget
-
-        self._helper = helper
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it

@@ -44,26 +44,20 @@ class ConsoleToolbox(TabToolbox, console_class):
     """Console toolbox for showing printouts from the Crazyflie"""
     update = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(ConsoleToolbox, self).__init__(*args)
+    def __init__(self, tabWidget, helper):
+        super(ConsoleToolbox, self).__init__(tabWidget, helper, 'Console')
         self.setupUi(self)
 
         self.update.connect(self.console.insertPlainText)
-
-        self.helper = helper
-        self.tabWidget = tabWidget
-
-    def getName(self):
-        return 'Console'
 
     def _console_updated(self, data):
         self.update.emit(data)
 
     def enable(self):
-        self.helper.cf.console.receivedChar.add_callback(self._console_updated)
+        self._helper.cf.console.receivedChar.add_callback(self._console_updated)
 
     def disable(self):
-        self.helper.cf.console.receivedChar.remove_callback(
+        self._helper.cf.console.receivedChar.remove_callback(
             self._console_updated)
 
     def preferedDockArea(self):
