@@ -142,7 +142,7 @@ class PlotTab(TabToolbox, plot_tab_class):
         self._plot = PlotWidget(fps=30)
         # Check if we could find the PyQtImport. If not, then
         # set this tab as disabled
-        self.enabled = self._plot.can_enable
+        is_enabled = self._plot.can_enable
 
         self._model = LogConfigModel()
         self.dataSelector.setModel(self._model)
@@ -150,7 +150,7 @@ class PlotTab(TabToolbox, plot_tab_class):
         self.plotLayout.addWidget(self._plot)
 
         # Connect external signals if we can use the tab
-        if self.enabled:
+        if is_enabled:
             self._disconnected_signal.connect(self._disconnected)
             self._helper.cf.disconnected.add_callback(
                 self._disconnected_signal.emit)

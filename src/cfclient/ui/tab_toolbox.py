@@ -51,40 +51,15 @@ class TabToolbox(QtWidgets.QWidget):
         self._helper = helper
         self.tab_toolbox_name = tab_toolbox_name
 
-        self.enabled = True
-
     @pyqtSlot(bool)
     def toggleVisibility(self, checked):
         """Show or hide the tab."""
         if checked:
             self.tab_widget.addTab(self, self.tab_toolbox_name)
-            s = ""
-            try:
-                s = Config().get("open_tabs")
-                if (len(s) > 0):
-                    s += ","
-            except Exception:
-                logger.warning("Exception while adding tab to config and "
-                               "reading tab config")
-            # Check this since tabs in config are opened when app is started
-            if (self.tab_toolbox_name not in s):
-                s += "%s" % self.tab_toolbox_name
-                Config().set("open_tabs", str(s))
-
-        if not checked:
+            self._add_to_config(self.tab_toolbox_name)
+        else:
             self.tab_widget.removeTab(self.tab_widget.indexOf(self))
-            try:
-                parts = Config().get("open_tabs").split(",")
-            except Exception:
-                logger.warning("Exception while removing tab from config and "
-                               "reading tab config")
-                parts = []
-            s = ""
-            for p in parts:
-                if (self.tab_toolbox_name != p):
-                    s += "%s," % p
-            s = s[0:len(s) - 1]  # Remove last comma
-            Config().set("open_tabs", str(s))
+            self._remove_from_config(self.tab_toolbox_name)
 
     def get_tab_toolbox_name(self):
         """Return the name of the tab that will be shown in the tab"""
@@ -92,3 +67,27 @@ class TabToolbox(QtWidgets.QWidget):
 
     def is_visible(self):
         return self.tab_widget.currentWidget() == self
+
+    def _add_to_config(self, name):
+        tab_config = self.read_tab_config()
+        if name not in tab_config:
+            tab_config.append(name)
+        self._store_tab_config(tab_config)
+
+    def _remove_from_config(self, name):
+        tab_config = self.read_tab_config()
+        tab_config.remove(name)
+        self._store_tab_config(tab_config)
+
+    @staticmethod
+    def read_tab_config():
+        tab_config = []
+        try:
+            tab_config = Config().get("open_tabs").split(",")
+        except KeyError:
+            logger.warning("No tab config found")
+
+        return tab_config
+
+    def _store_tab_config(self, tab_config):
+        Config().set("open_tabs", ','.join(tab_config))

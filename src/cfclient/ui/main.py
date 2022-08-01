@@ -266,40 +266,11 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._initial_scan = True
         self._scan(self._connectivity_manager.get_address())
 
-        # Load and connect tabs
-        self.tabsMenuItem = QMenu("Tabs", self.menuView, enabled=True)
-        self.menuView.addMenu(self.tabsMenuItem)
+        self.tabs_menu_item = QMenu("Tabs", self.menuView, enabled=True)
+        self.menuView.addMenu(self.tabs_menu_item)
 
-        tabItems = {}
-        self.loadedTabs = []
-        for tabClass in cfclient.ui.tabs.available:
-            tab = tabClass(self.tab_widget, cfclient.ui.pluginhelper)
-
-            # Set reference for plot-tab.
-            if isinstance(tab, cfclient.ui.tabs.PlotTab):
-                cfclient.ui.pluginhelper.plotTab = tab
-
-            item = QtWidgets.QAction(tab.get_tab_toolbox_name(), self, checkable=True)
-            item.toggled.connect(tab.toggleVisibility)
-            self.tabsMenuItem.addAction(item)
-            tabItems[tab.get_tab_toolbox_name()] = item
-            self.loadedTabs.append(tab)
-            if not tab.enabled:
-                item.setEnabled(False)
-
-        # First instantiate all tabs and then open them in the correct order
-        try:
-            for tName in Config().get("open_tabs").split(","):
-                try:
-                    t = tabItems[tName]
-                    if (t is not None and t.isEnabled()):
-                        # Toggle though menu so it's also marked as open there
-                        t.toggle()
-                except Exception as e:
-                    logger.warning("Exception while opening tab [{}]".format(e))
-        except KeyError as e:
-            logger.warning("Failed to get open_tabs: {}".format(e))
-
+        self.tab_items, self.loaded_tabs = self.create_tab_toolboxes(self.tabs_menu_item, self.tab_widget)
+        self.read_tab_toolbox_config(self.tab_items)
 
         # References to all the device sub-menus in the "Input device" menu
         self._all_role_menus = ()
@@ -348,6 +319,37 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         # We only want to warn about USB permission once
         self._permission_warned = False
+
+    def create_tab_toolboxes(self, tabs_menu_item, tab_widget):
+        tab_items = {}
+        loaded_tabs = []
+
+        for tab_class in cfclient.ui.tabs.available:
+            tab_toolbox = tab_class(tab_widget, cfclient.ui.pluginhelper)
+            loaded_tabs.append(tab_toolbox)
+
+            # Set reference for plot-tab.
+            if isinstance(tab_toolbox, cfclient.ui.tabs.PlotTab):
+                cfclient.ui.pluginhelper.plotTab = tab_toolbox
+
+            # Add to menu
+            action_item = QtWidgets.QAction(tab_toolbox.get_tab_toolbox_name(), self, checkable=True)
+            action_item.toggled.connect(tab_toolbox.toggleVisibility)
+
+            tabs_menu_item.addAction(action_item)
+
+            tab_items[tab_toolbox.get_tab_toolbox_name()] = action_item
+
+        return tab_items, loaded_tabs
+
+    def read_tab_toolbox_config(self, tab_items):
+        tab_config = TabToolbox.read_tab_config()
+        for name in tab_config:
+            if name in tab_items.keys():
+                action_item = tab_items[name]
+                if action_item.isEnabled():
+                    # Toggle though the menu so it's also marked as open there
+                    action_item.toggle()
 
     def _set_address(self):
         address = 0xE7E7E7E7E7
