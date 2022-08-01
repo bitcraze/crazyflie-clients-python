@@ -46,7 +46,7 @@ from cflib.positioning.position_hl_commander import PositionHlCommander
 
 from cfclient.utils.input import JoystickReader
 
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 LOG_NAME_ESTIMATE_X = 'stateEstimate.x'
 LOG_NAME_ESTIMATE_Y = 'stateEstimate.y'
@@ -93,7 +93,7 @@ class CommanderAction(Enum):
     BACK = 8
 
 
-class FlightTab(Tab, flight_tab_class):
+class FlightTab(TabToolbox, flight_tab_class):
     uiSetupReadySignal = pyqtSignal()
 
     _log_data_signal = pyqtSignal(int, object, object)

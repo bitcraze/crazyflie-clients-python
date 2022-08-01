@@ -33,7 +33,7 @@ import logging
 import cfclient
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 from cflib.crazyflie.log import LogConfig
 from PyQt5 import QtCore
 from PyQt5 import QtGui
@@ -50,7 +50,7 @@ gps_tab_class = uic.loadUiType(cfclient.module_path +
                                "/ui/tabs/gpsTab.ui")[0]
 
 
-class GpsTab(Tab, gps_tab_class):
+class GpsTab(TabToolbox, gps_tab_class):
     """Tab for plotting logging data"""
 
     _log_data_signal = pyqtSignal(int, object, object)

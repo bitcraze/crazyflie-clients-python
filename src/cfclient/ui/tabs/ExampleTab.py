@@ -39,7 +39,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ExampleTab']
@@ -50,7 +50,7 @@ example_tab_class = uic.loadUiType(cfclient.module_path +
                                    "/ui/tabs/exampleTab.ui")[0]
 
 
-class ExampleTab(Tab, example_tab_class):
+class ExampleTab(TabToolbox, example_tab_class):
     """Tab for plotting logging data"""
 
     _connected_signal = pyqtSignal(str)

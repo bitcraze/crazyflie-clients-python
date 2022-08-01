@@ -39,7 +39,7 @@ from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QLabel
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import LighthouseMemHelper
@@ -260,7 +260,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
         return col1 * mix + col2 * (1.0 - mix)
 
 
-class LighthouseTab(Tab, lighthouse_tab_class):
+class LighthouseTab(TabToolbox, lighthouse_tab_class):
     """Tab for plotting Lighthouse data"""
 
     # Update period of log data in ms

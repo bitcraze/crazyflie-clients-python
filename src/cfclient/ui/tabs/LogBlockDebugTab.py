@@ -34,7 +34,7 @@ from PyQt5 import QtCore, QtWidgets, uic
 from PyQt5.QtCore import Qt, pyqtSignal
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LogBlockDebugTab']
@@ -43,7 +43,7 @@ logblock_tab_class = uic.loadUiType(cfclient.module_path +
                                     "/ui/tabs/logBlockDebugTab.ui")[0]
 
 
-class LogBlockDebugTab(Tab, logblock_tab_class):
+class LogBlockDebugTab(TabToolbox, logblock_tab_class):
     """
     Used to show debug-information about log status.
     """

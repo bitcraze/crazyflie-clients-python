@@ -35,7 +35,7 @@ from PyQt5 import uic
 from PyQt5.QtCore import Qt, pyqtSignal
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 import logging
 
@@ -319,7 +319,7 @@ class CheckboxDelegate(QStyledItemDelegate):
         painter.restore()
 
 
-class LogBlockTab(Tab, logblock_tab_class):
+class LogBlockTab(TabToolbox, logblock_tab_class):
     """
     Used to show debug-information about logblock status.
     """

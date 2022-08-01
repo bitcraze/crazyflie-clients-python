@@ -37,7 +37,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5 import QtWidgets
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 from cfclient.utils.ui import UiUtils
 
 from cflib.crazyflie.mem import MemoryElement
@@ -51,7 +51,7 @@ led_tab_class = uic.loadUiType(cfclient.module_path +
                                "/ui/tabs/ledTab.ui")[0]
 
 
-class LEDTab(Tab, led_tab_class):
+class LEDTab(TabToolbox, led_tab_class):
     """Tab for plotting logging data"""
 
     _connected_signal = pyqtSignal(str)

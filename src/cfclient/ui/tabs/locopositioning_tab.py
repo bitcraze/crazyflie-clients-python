@@ -41,7 +41,7 @@ from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QLabel
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import MemoryElement
@@ -342,7 +342,7 @@ class AnchorStateMachine:
             self._cb_data(mem_data.anchor_data)
 
 
-class LocoPositioningTab(Tab, locopositioning_tab_class):
+class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
     """Tab for plotting Loco Positioning data"""
 
     # Update period of log data in ms

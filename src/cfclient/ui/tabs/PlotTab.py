@@ -30,7 +30,7 @@ pre-configured.
 
 import logging
 
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 from cfclient.ui.widgets.plotwidget import PlotWidget
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal
@@ -113,7 +113,7 @@ class LogConfigModel(QAbstractItemModel):
         return self._nodes[i]
 
 
-class PlotTab(Tab, plot_tab_class):
+class PlotTab(TabToolbox, plot_tab_class):
     """Tab for plotting logging data"""
 
     _log_data_signal = pyqtSignal(int, object, object)

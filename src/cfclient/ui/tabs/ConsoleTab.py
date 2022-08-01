@@ -36,7 +36,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QTextCursor
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ConsoleTab']
@@ -47,7 +47,7 @@ console_tab_class = uic.loadUiType(cfclient.module_path +
                                    "/ui/tabs/consoleTab.ui")[0]
 
 
-class ConsoleTab(Tab, console_tab_class):
+class ConsoleTab(TabToolbox, console_tab_class):
     """Console tab for showing printouts from Crazyflie"""
     _link_established_signal = pyqtSignal(str)
     _connected_signal = pyqtSignal(str)

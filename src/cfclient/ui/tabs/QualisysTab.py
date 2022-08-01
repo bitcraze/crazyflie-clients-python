@@ -43,7 +43,7 @@ from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 from cfclient.utils.config import Config
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.syncLogger import SyncLogger
@@ -137,7 +137,7 @@ class QDiscovery(QObject):
         self.discovering = False
 
 
-class QualisysTab(Tab, qualisys_tab_class):
+class QualisysTab(TabToolbox, qualisys_tab_class):
     """
         Tab for controlling the crazyflie using
         Qualisys Motion Capturing system

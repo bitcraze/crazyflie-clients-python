@@ -35,7 +35,7 @@ from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LogClientTab']
@@ -61,7 +61,7 @@ class LogHandler(logging.StreamHandler):
         self._signal.emit(formatter.format(record))
 
 
-class LogClientTab(Tab, log_client_tab_class):
+class LogClientTab(TabToolbox, log_client_tab_class):
     """
     A tab for showing client logging information, such
     as USB Gamepad connections or scan feedback.

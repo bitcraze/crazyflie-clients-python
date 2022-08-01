@@ -28,7 +28,7 @@ Shows the Log TOC of available variables in the Crazyflie.
 """
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 from PyQt5 import QtWidgets
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal
@@ -42,7 +42,7 @@ param_tab_class = uic.loadUiType(cfclient.module_path +
                                  "/ui/tabs/logTab.ui")[0]
 
 
-class LogTab(Tab, param_tab_class):
+class LogTab(TabToolbox, param_tab_class):
     connectedSignal = pyqtSignal(str)
     disconnectedSignal = pyqtSignal(str)
 

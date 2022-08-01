@@ -37,16 +37,16 @@ from PyQt5.QtCore import pyqtSlot
 from cfclient.utils.config import Config
 
 __author__ = 'Bitcraze AB'
-__all__ = ['Tab']
+__all__ = ['TabToolbox']
 
 logger = logging.getLogger(__name__)
 
 
-class Tab(QtWidgets.QWidget):
+class TabToolbox(QtWidgets.QWidget):
     """Superclass for all tabs that implements common functions."""
 
     def __init__(self):
-        super(Tab, self).__init__()
+        super(TabToolbox, self).__init__()
         self.tabName = "N/A"
         self.menuName = "N/A"
         self.enabled = True

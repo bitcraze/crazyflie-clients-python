@@ -41,7 +41,7 @@ from PyQt5.QtWidgets import QHeaderView
 from cflib.crazyflie.param import PersistentParamState
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ParamTab']
@@ -265,7 +265,7 @@ class ParamTreeFilterProxy(QSortFilterProxyModel):
         return super().filterAcceptsRow(source_parent.row(), source_parent.parent())
 
 
-class ParamTab(Tab, param_tab_class):
+class ParamTab(TabToolbox, param_tab_class):
     """
     Show all the parameters in the TOC and give the user the ability to edit
     them
