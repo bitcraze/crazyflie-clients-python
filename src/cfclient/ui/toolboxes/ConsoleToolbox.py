@@ -26,12 +26,12 @@
 """
 A detachable toolbox for showing console printouts from the Crazyflie
 """
-from PyQt5 import QtWidgets
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import Qt
 
 import cfclient
+from cfclient.ui.tab_toolbox import TabToolbox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ConsoleToolbox']
@@ -40,17 +40,18 @@ console_class = uic.loadUiType(
     cfclient.module_path + "/ui/toolboxes/consoleToolbox.ui")[0]
 
 
-class ConsoleToolbox(QtWidgets.QWidget, console_class):
+class ConsoleToolbox(TabToolbox, console_class):
     """Console toolbox for showing printouts from the Crazyflie"""
     update = pyqtSignal(str)
 
-    def __init__(self, helper, *args):
+    def __init__(self, tabWidget, helper, *args):
         super(ConsoleToolbox, self).__init__(*args)
         self.setupUi(self)
 
         self.update.connect(self.console.insertPlainText)
 
         self.helper = helper
+        self.tabWidget = tabWidget
 
     def getName(self):
         return 'Console'

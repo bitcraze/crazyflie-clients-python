@@ -307,7 +307,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         self.toolboxes = []
         for t_class in cfclient.ui.toolboxes.toolboxes:
-            toolbox = t_class(cfclient.ui.pluginhelper)
+            toolbox = t_class(self.tabs, cfclient.ui.pluginhelper)
             dockToolbox = MyDockWidget(toolbox.getName())
             dockToolbox.setWidget(toolbox)
             self.toolboxes += [dockToolbox, ]

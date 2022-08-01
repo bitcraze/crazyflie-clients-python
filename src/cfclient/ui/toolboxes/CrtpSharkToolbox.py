@@ -38,25 +38,27 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtCore import Qt
 
 import cfclient
+from cfclient.ui.tab_toolbox import TabToolbox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['CrtpSharkToolbox']
 
 param_tab_class = uic.loadUiType(
-    cfclient.module_path + "/ui/toolboxes/crtpSharkToolbox.ui")[0]
+cfclient.module_path + "/ui/toolboxes/crtpSharkToolbox.ui")[0]
 
 
-class CrtpSharkToolbox(QtWidgets.QWidget, param_tab_class):
+class CrtpSharkToolbox(TabToolbox, param_tab_class):
     """Show packets that is sent vie the communication link"""
     nameModified = pyqtSignal()
     _incoming_packet_signal = pyqtSignal(object)
     _outgoing_packet_signal = pyqtSignal(object)
 
-    def __init__(self, helper, *args):
+    def __init__(self, tabWidget, helper, *args):
         super(CrtpSharkToolbox, self).__init__(*args)
         self.setupUi(self)
 
         self.helper = helper
+        self.tabWidget = tabWidget
 
         # Init the tree widget
         self.logTree.setHeaderLabels(['ms', 'Direction', 'Port/Chan', 'Data'])
