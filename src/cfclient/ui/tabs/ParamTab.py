@@ -279,9 +279,9 @@ class ParamTab(TabToolbox, param_tab_class):
     _param_default_signal = pyqtSignal(object)
     _reset_param_signal = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper):
+    def __init__(self, tab_widget, helper):
         """Create the parameter tab"""
-        super(ParamTab, self).__init__(tabWidget, helper, 'Parameters')
+        super(ParamTab, self).__init__(tab_widget, helper, 'Parameters')
         self.setupUi(self)
 
         self.cf = helper.cf

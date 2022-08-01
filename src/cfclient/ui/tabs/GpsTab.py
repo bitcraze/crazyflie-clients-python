@@ -60,8 +60,8 @@ class GpsTab(TabToolbox, gps_tab_class):
     _connected_signal = pyqtSignal(str)
     _console_signal = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper):
-        super(GpsTab, self).__init__(tabWidget, helper, 'GPS')
+    def __init__(self, tab_widget, helper):
+        super(GpsTab, self).__init__(tab_widget, helper, 'GPS')
         self.setupUi(self)
         self._cf = helper.cf
 

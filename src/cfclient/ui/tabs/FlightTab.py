@@ -115,8 +115,8 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     _limiting_updated = pyqtSignal(bool, bool, bool)
 
-    def __init__(self, tabWidget, helper):
-        super(FlightTab, self).__init__(tabWidget, helper, 'Flight Control')
+    def __init__(self, tab_widget, helper):
+        super(FlightTab, self).__init__(tab_widget, helper, 'Flight Control')
         self.setupUi(self)
 
         self.disconnectedSignal.connect(self.disconnected)

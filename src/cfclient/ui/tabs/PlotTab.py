@@ -133,8 +133,8 @@ class PlotTab(TabToolbox, plot_tab_class):
         (180, 60, 240),   # purple
     ]
 
-    def __init__(self, tabWidget, helper):
-        super(PlotTab, self).__init__(tabWidget, helper, 'Plotter')
+    def __init__(self, tab_widget, helper):
+        super(PlotTab, self).__init__(tab_widget, helper, 'Plotter')
         self.setupUi(self)
 
         self._log_error_signal.connect(self._logging_error)

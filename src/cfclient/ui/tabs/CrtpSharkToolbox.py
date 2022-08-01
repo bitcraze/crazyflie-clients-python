@@ -43,8 +43,7 @@ from cfclient.ui.tab_toolbox import TabToolbox
 __author__ = 'Bitcraze AB'
 __all__ = ['CrtpSharkToolbox']
 
-param_tab_class = uic.loadUiType(
-cfclient.module_path + "/ui/toolboxes/crtpSharkToolbox.ui")[0]
+param_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/crtpSharkToolbox.ui")[0]
 
 
 class CrtpSharkToolbox(TabToolbox, param_tab_class):
@@ -53,8 +52,8 @@ class CrtpSharkToolbox(TabToolbox, param_tab_class):
     _incoming_packet_signal = pyqtSignal(object)
     _outgoing_packet_signal = pyqtSignal(object)
 
-    def __init__(self, tabWidget, helper):
-        super(CrtpSharkToolbox, self).__init__(tabWidget, helper, 'Crtp sniffer')
+    def __init__(self, tab_widget, helper):
+        super(CrtpSharkToolbox, self).__init__(tab_widget, helper, 'Crtp sniffer')
         self.setupUi(self)
 
         # Init the tree widget

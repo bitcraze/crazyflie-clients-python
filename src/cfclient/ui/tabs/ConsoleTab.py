@@ -54,8 +54,8 @@ class ConsoleTab(TabToolbox, console_tab_class):
     _disconnected_signal = pyqtSignal(str)
     _update = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper):
-        super(ConsoleTab, self).__init__(tabWidget, helper, 'Console')
+    def __init__(self, tab_widget, helper):
+        super(ConsoleTab, self).__init__(tab_widget, helper, 'Console')
         self.setupUi(self)
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots

@@ -32,8 +32,8 @@ import usb
 
 import cfclient
 from cfclient.ui.pose_logger import PoseLogger
+from cfclient.ui.tab_toolbox import TabToolbox
 import cfclient.ui.tabs
-import cfclient.ui.toolboxes
 import cflib.crtp
 from cfclient.ui.dialogs.about import AboutDialog
 from cfclient.ui.dialogs.bootloader import BootloaderDialog
@@ -273,7 +273,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         tabItems = {}
         self.loadedTabs = []
         for tabClass in cfclient.ui.tabs.available:
-            tab = tabClass(self.tabs, cfclient.ui.pluginhelper)
+            tab = tabClass(self.tab_widget, cfclient.ui.pluginhelper)
 
             # Set reference for plot-tab.
             if isinstance(tab, cfclient.ui.tabs.PlotTab):
@@ -300,31 +300,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         except KeyError as e:
             logger.warning("Failed to get open_tabs: {}".format(e))
 
-        # Loading toolboxes (A bit of magic for a lot of automatic)
-        self.toolboxesMenuItem = QMenu("Toolboxes", self.menuView,
-                                       enabled=True)
-        self.menuView.addMenu(self.toolboxesMenuItem)
-
-        self.toolboxes = []
-        for t_class in cfclient.ui.toolboxes.toolboxes:
-            toolbox = t_class(self.tabs, cfclient.ui.pluginhelper)
-            dockToolbox = MyDockWidget(toolbox.get_tab_toolbox_name())
-            dockToolbox.setWidget(toolbox)
-            self.toolboxes += [dockToolbox, ]
-
-            # Add menu item for the toolbox
-            item = QtWidgets.QAction(toolbox.get_tab_toolbox_name(), self)
-            item.setCheckable(True)
-            item.triggered.connect(self.toggleToolbox)
-            self.toolboxesMenuItem.addAction(item)
-
-            dockToolbox.closed.connect(lambda: self.toggleToolbox(False))
-
-            # Setup some introspection
-            item.dockToolbox = dockToolbox
-            item.menuItem = item
-            dockToolbox.dockToolbox = dockToolbox
-            dockToolbox.menuItem = item
 
         # References to all the device sub-menus in the "Input device" menu
         self._all_role_menus = ()
@@ -590,9 +565,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._update_ui_state()
 
     def closeEvent(self, event):
-        self.hide()
-        self.cf.close_link()
         Config().save_file()
+        self.cf.close_link()
+        self.hide()
 
     def resizeEvent(self, event):
         Config().set("window_size", [event.size().width(),

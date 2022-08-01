@@ -84,7 +84,6 @@ package_data = {
     'cfclient.ui':  relative(glob('src/cfclient/ui/*.ui')),
     'cfclient.ui.tabs': relative(glob('src/cfclient/ui/tabs/*.ui')),
     'cfclient.ui.widgets':  relative(glob('src/cfclient/ui/widgets/*.ui')),
-    'cfclient.ui.toolboxes':  relative(glob('src/cfclient/ui/toolboxes/*.ui')),  # noqa
     'cfclient.ui.dialogs':  relative(glob('src/cfclient/ui/dialogs/*.ui')),
     'cfclient':  relative(glob('src/cfclient/configs/*.json'), 'configs/') +  # noqa
                  relative(glob('src/cfclient/configs/input/*.json'), 'configs/input/') +  # noqa
