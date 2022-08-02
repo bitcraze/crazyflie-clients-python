@@ -100,19 +100,12 @@ class CrtpSharkToolbox(TabToolbox, param_tab_class):
         self._outgoing_packet_signal.emit(pk)
 
     def enable(self):
-        self._helper.cf.packet_received.add_callback(
-            self._incoming_packet)
-        self._helper.cf.packet_sent.add_callback(
-            self._outgoing_packet)
+        self._helper.cf.packet_received.add_callback(self._incoming_packet)
+        self._helper.cf.packet_sent.add_callback(self._outgoing_packet)
 
     def disable(self):
-        self._helper.cf.packet_received.remove_callback(
-            self._incoming_packet)
-        self._helper.cf.packet_sent.remove_callback(
-            self._outgoing_packet)
-
-    def preferedDockArea(self):
-        return Qt.RightDockWidgetArea
+        self._helper.cf.packet_received.remove_callback(self._incoming_packet)
+        self._helper.cf.packet_sent.remove_callback(self._outgoing_packet)
 
     def _save_data(self):
         dir = os.path.join(cfclient.config_path, "logdata")

@@ -32,7 +32,9 @@ Superclass for all tabs that implements common functions.
 import logging
 
 from PyQt5 import QtWidgets
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import Qt
 
 from cfclient.utils.config import Config
 
@@ -45,21 +47,26 @@ logger = logging.getLogger(__name__)
 class TabToolbox(QtWidgets.QWidget):
     """Superclass for all tabs that implements common functions."""
 
+    CONF_KEY_TABS = "open_tabs"
+
     def __init__(self, tab_widget, helper, tab_toolbox_name):
         super(TabToolbox, self).__init__()
         self.tab_widget = tab_widget
         self._helper = helper
         self.tab_toolbox_name = tab_toolbox_name
 
+        self.dock_widget = self.MyDockWidget(tab_toolbox_name)
+        self.dock_widget.tab_toolbox = self
+
     @pyqtSlot(bool)
-    def toggleVisibility(self, checked):
+    def toggleTabVisibility(self, checked):
         """Show or hide the tab."""
         if checked:
             self.tab_widget.addTab(self, self.tab_toolbox_name)
-            self._add_to_config(self.tab_toolbox_name)
+            self._add_to_tab_config(self.tab_toolbox_name)
         else:
             self.tab_widget.removeTab(self.tab_widget.indexOf(self))
-            self._remove_from_config(self.tab_toolbox_name)
+            self._remove_from_tab_config(self.tab_toolbox_name)
 
     def get_tab_toolbox_name(self):
         """Return the name of the tab that will be shown in the tab"""
@@ -68,26 +75,38 @@ class TabToolbox(QtWidgets.QWidget):
     def is_visible(self):
         return self.tab_widget.currentWidget() == self
 
-    def _add_to_config(self, name):
+    # Override in implementation class if required
+    def preferred_dock_area(self):
+        return Qt.RightDockWidgetArea
+
+    def _add_to_tab_config(self, name):
         tab_config = self.read_tab_config()
         if name not in tab_config:
             tab_config.append(name)
-        self._store_tab_config(tab_config)
+            self._store_tab_config(tab_config)
 
-    def _remove_from_config(self, name):
+    def _remove_from_tab_config(self, name):
         tab_config = self.read_tab_config()
-        tab_config.remove(name)
-        self._store_tab_config(tab_config)
+        if name in tab_config:
+            tab_config.remove(name)
+            self._store_tab_config(tab_config)
 
     @staticmethod
     def read_tab_config():
         tab_config = []
         try:
-            tab_config = Config().get("open_tabs").split(",")
+            tab_config = Config().get(TabToolbox.CONF_KEY_TABS).split(",")
         except KeyError:
             logger.warning("No tab config found")
 
         return tab_config
 
     def _store_tab_config(self, tab_config):
-        Config().set("open_tabs", ','.join(tab_config))
+        Config().set(self.CONF_KEY_TABS, ','.join(tab_config))
+
+    class MyDockWidget(QtWidgets.QDockWidget):
+        closed = pyqtSignal()
+
+        def closeEvent(self, event):
+            super(TabToolbox.MyDockWidget, self).closeEvent(event)
+            self.closed.emit()
