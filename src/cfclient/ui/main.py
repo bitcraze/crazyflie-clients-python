@@ -264,10 +264,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.toolboxes_menu_item = QMenu("Toolboxes", self.menuView, enabled=True)
         self.menuView.addMenu(self.toolboxes_menu_item)
 
-        self.tab_items, self.loaded_tabs = self.create_tab_toolboxes(self.tabs_menu_item,
-                                                                     self.toolboxes_menu_item,
-                                                                     self.tab_widget)
-        self.read_tab_toolbox_config(self.tab_items)
+        self.loaded_tab_toolboxes = self.create_tab_toolboxes(self.tabs_menu_item, self.toolboxes_menu_item, self.tab_widget)
+        self.read_tab_toolbox_config(self.loaded_tab_toolboxes)
 
         # References to all the device sub-menus in the "Input device" menu
         self._all_role_menus = ()
@@ -318,12 +316,11 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._permission_warned = False
 
     def create_tab_toolboxes(self, tabs_menu_item, toolboxes_menu_item, tab_widget):
-        tab_items = {}
-        loaded_tabs = []
+        loaded_tab_toolboxes = {}
 
         for tab_class in cfclient.ui.tabs.available:
             tab_toolbox = tab_class(cfclient.ui.pluginhelper)
-            loaded_tabs.append(tab_toolbox)
+            loaded_tab_toolboxes[tab_toolbox.get_tab_toolbox_name()] = tab_toolbox
 
             # Set reference for plot-tab.
             if isinstance(tab_toolbox, cfclient.ui.tabs.PlotTab):
@@ -344,24 +341,21 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             toolbox_action_item.triggered.connect(self.toggle_toolbox_visibility)
             toolbox_action_item.tab_toolbox = tab_toolbox
             tab_toolbox.toolbox_action_item = toolbox_action_item
+            tab_toolbox.dock_widget.closed.connect(lambda: self.toggle_toolbox_visibility(False))
 
             toolboxes_menu_item.addAction(toolbox_action_item)
 
+        return loaded_tab_toolboxes
 
-            tab_toolbox.dock_widget.closed.connect(lambda: self.toggle_toolbox_visibility(False))
+    def read_tab_toolbox_config(self, loaded_tab_toolboxes):
+        # Add tabs in the correct order
+        for name in TabToolbox.read_tab_config():
+            if name in loaded_tab_toolboxes.keys():
+                self._tab_toolbox_show_as_tab(loaded_tab_toolboxes[name])
 
-            tab_items[tab_toolbox.get_tab_toolbox_name()] = tab_action_item
-
-        return tab_items, loaded_tabs
-
-    def read_tab_toolbox_config(self, tab_items):
-        tab_config = TabToolbox.read_tab_config()
-        for name in tab_config:
-            if name in tab_items.keys():
-                action_item = tab_items[name]
-                # if action_item.isEnabled():
-                #     # Toggle through the menu so it's also marked as open there
-                #     action_item.toggle()
+        for name in TabToolbox.read_toolbox_config():
+            if name in loaded_tab_toolboxes.keys():
+                self._tab_toolbox_show_as_toolbox(loaded_tab_toolboxes[name])
 
     def _set_address(self):
         address = 0xE7E7E7E7E7
@@ -498,54 +492,48 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._tab_toolbox_hide(tab_toolbox)
 
     def _tab_toolbox_show_as_tab(self, tab_toolbox):
-        if tab_toolbox.display_state == TabToolbox.DS_TOOLBOX:
+        if tab_toolbox.get_display_state() == TabToolbox.DS_TOOLBOX:
             dock_widget = tab_toolbox.dock_widget
             self.removeDockWidget(dock_widget)
             dock_widget.hide()
 
-        tab_toolbox_name = tab_toolbox.get_tab_toolbox_name()
-        self.tab_widget.addTab(tab_toolbox, tab_toolbox_name)
+        if tab_toolbox.get_display_state() != TabToolbox.DS_TAB:
+            tab_toolbox_name = tab_toolbox.get_tab_toolbox_name()
+            self.tab_widget.addTab(tab_toolbox, tab_toolbox_name)
 
         tab_toolbox.tab_action_item.setChecked(True)
         tab_toolbox.toolbox_action_item.setChecked(False)
-        tab_toolbox.display_state = TabToolbox.DS_TAB
+        tab_toolbox.set_display_state(TabToolbox.DS_TAB)
 
 
     def _tab_toolbox_show_as_toolbox(self, tab_toolbox):
         dock_widget = tab_toolbox.dock_widget
 
-        if tab_toolbox.display_state == TabToolbox.DS_HIDDEN:
-            self.addDockWidget(tab_toolbox.preferred_dock_area(), dock_widget)
-            dock_widget.setWidget(tab_toolbox)
-            dock_widget.show()
-        elif tab_toolbox.display_state == TabToolbox.DS_TAB:
+        if tab_toolbox.get_display_state() == TabToolbox.DS_TAB:
             self.tab_widget.removeTab(self.tab_widget.indexOf(tab_toolbox))
 
+        if tab_toolbox.get_display_state() != TabToolbox.DS_TOOLBOX:
             self.addDockWidget(tab_toolbox.preferred_dock_area(), dock_widget)
             dock_widget.setWidget(tab_toolbox)
             dock_widget.show()
-
-        elif tab_toolbox.display_state == TabToolbox.DS_TOOLBOX:
-            pass
 
         tab_toolbox.tab_action_item.setChecked(False)
         tab_toolbox.toolbox_action_item.setChecked(True)
-        tab_toolbox.display_state = TabToolbox.DS_TOOLBOX
+        tab_toolbox.set_display_state(TabToolbox.DS_TOOLBOX)
 
     def _tab_toolbox_hide(self, tab_toolbox):
         dock_widget = tab_toolbox.dock_widget
 
-        if tab_toolbox.display_state == TabToolbox.DS_TAB:
+        if tab_toolbox.get_display_state() == TabToolbox.DS_TAB:
             self.tab_widget.removeTab(self.tab_widget.indexOf(tab_toolbox))
-        elif tab_toolbox.display_state == TabToolbox.DS_TOOLBOX:
+        elif tab_toolbox.get_display_state() == TabToolbox.DS_TOOLBOX:
             self.removeDockWidget(dock_widget)
             dock_widget.hide()
             tab_toolbox.toolbox_action_item.setChecked(False)
 
         tab_toolbox.tab_action_item.setChecked(False)
         tab_toolbox.toolbox_action_item.setChecked(False)
-        tab_toolbox.display_state = TabToolbox.DS_HIDDEN
-
+        tab_toolbox.set_display_state(TabToolbox.DS_HIDDEN)
 
     def _rescan_devices(self):
         self._statusbar_label.setText("No inputdevice connected!")
