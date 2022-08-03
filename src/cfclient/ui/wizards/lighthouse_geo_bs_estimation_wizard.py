@@ -12,7 +12,6 @@ from cflib.localization.lighthouse_sample_matcher import LighthouseSampleMatcher
 from cflib.localization.lighthouse_system_aligner import LighthouseSystemAligner
 from cflib.localization.lighthouse_geometry_solver import LighthouseGeometrySolver
 from cflib.localization.lighthouse_system_scaler import LighthouseSystemScaler
-from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
 from cflib.localization.lighthouse_config_manager import LighthouseConfigWriter
 from cflib.localization.lighthouse_types import Pose, LhDeck4SensorPositions, LhMeasurement, LhCfPoseSample
 
@@ -160,7 +159,8 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         amount_of_basestations = len(recorded_angles.keys())
 
         if amount_of_basestations < 2:
-            self.status_text.setText(string_padding(f'Recording Done!  Visible Basestations: {self.visible_basestations}\n' +
+            self.status_text.setText(string_padding(f'Recording Done!' +
+                                                    f' Visible Basestations: {self.visible_basestations}\n' +
                                      'Received too few base stations, we need at least two. Please try again!'))
             self.too_few_bs = True
             self.is_done = True
@@ -247,7 +247,8 @@ class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
 
         if self.record_time_current == self.record_time_total:
             self.reader.stop()
-            self.status_text.setText(string_padding(f'Recording Done! Got {len(self.recorded_angles_result)} samples!'))
+            self.status_text.setText(string_padding(
+                'Recording Done!'+f' Got {len(self.recorded_angles_result)} samples!'))
             self.start_action_button.setText("Restart measurements")
             self.start_action_button.setDisabled(False)
             self.is_done = True
