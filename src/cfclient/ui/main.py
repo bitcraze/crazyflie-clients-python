@@ -264,7 +264,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.toolboxes_menu_item = QMenu("Toolboxes", self.menuView, enabled=True)
         self.menuView.addMenu(self.toolboxes_menu_item)
 
-        self.loaded_tab_toolboxes = self.create_tab_toolboxes(self.tabs_menu_item, self.toolboxes_menu_item, self.tab_widget)
+        self.loaded_tab_toolboxes = self.create_tab_toolboxes(self.tabs_menu_item,
+                                                              self.toolboxes_menu_item,
+                                                              self.tab_widget)
         self.read_tab_toolbox_config(self.loaded_tab_toolboxes)
 
         # References to all the device sub-menus in the "Input device" menu
@@ -504,7 +506,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         tab_toolbox.tab_action_item.setChecked(True)
         tab_toolbox.toolbox_action_item.setChecked(False)
         tab_toolbox.set_display_state(TabToolbox.DS_TAB)
-
 
     def _tab_toolbox_show_as_toolbox(self, tab_toolbox):
         dock_widget = tab_toolbox.dock_widget

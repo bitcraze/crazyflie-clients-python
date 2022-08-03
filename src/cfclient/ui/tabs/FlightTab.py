@@ -603,8 +603,7 @@ class FlightTab(TabToolbox, flight_tab_class):
     def alt1_updated(self, state):
         if state:
             new_index = (self._ring_effect+1) % (self._ledring_nbr_effects+1)
-            self._helper.cf.param.set_value("ring.effect",
-                                           str(new_index))
+            self._helper.cf.param.set_value("ring.effect", str(new_index))
 
     def alt2_updated(self, state):
         self._helper.cf.param.set_value("ring.headlightEnable", str(state))
