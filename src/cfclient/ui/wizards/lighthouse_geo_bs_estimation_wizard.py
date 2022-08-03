@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import cfclient
+
 from PyQt5 import QtCore, QtWidgets, QtGui
 from cflib.crazyflie import Crazyflie
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleAverageReader
@@ -82,8 +84,11 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         super(LighthouseBasestationGeometryWizardBasePage, self).__init__(parent)
         self.show_add_measurements = show_add_measurements
         self.cf = cf
+        self.explanation_picture = QtWidgets.QLabel()
+        pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/test.png")
+        pixmap = pixmap.scaledToWidth(640)
+        self.explanation_picture.setPixmap(pixmap)
         self.explanation_text = QtWidgets.QLabel()
-
         self.explanation_text.setText(' ')
         self.status_text = QtWidgets.QLabel()
         self.status_text.setFont(QtGui.QFont('Courier New', 10))
@@ -95,6 +100,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         self.seconds_explanation_text = QtWidgets.QLabel()
         self.fill_record_times_line_edit = QtWidgets.QLineEdit(str(DEFAULT_RECORD_TIME))
         self.layout = QtWidgets.QVBoxLayout()
+        self.layout.addWidget(self.explanation_picture)
         self.layout.addWidget(self.explanation_text)
 
         self.layout.addStretch()
@@ -157,7 +163,13 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
                                      'Received too few base stations, we need at least two. Please try again!'))
             self.too_few_bs = True
             self.is_done = True
+            if self.show_add_measurements and len(self.recorded_angles_result) > 0:
+                self.too_few_bs = False
+                self.completeChanged.emit()
+            self.start_action_button.setText("Restart Measurement")
+            self.start_action_button.setDisabled(False)
         else:
+            self.too_few_bs = False
             status_text_string = f'Recording Done! Visible Basestations: {self.visible_basestations}\n'
             if self.show_add_measurements:
                 status_text_string += f'Total measurements added: {len(self.recorded_angles_result)}\n'
@@ -167,13 +179,13 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
             self.is_done = True
             self.completeChanged.emit()
 
-        if self.show_add_measurements:
-            self.recorded_angles_result.append(self.get_sample())
-            self.start_action_button.setText("Add more measurements")
-            self.start_action_button.setDisabled(False)
-        else:
-            self.start_action_button.setText("Restart Measurement")
-            self.start_action_button.setDisabled(False)
+            if self.show_add_measurements:
+                self.recorded_angles_result.append(self.get_sample())
+                self.start_action_button.setText("Add more measurements")
+                self.start_action_button.setDisabled(False)
+            else:
+                self.start_action_button.setText("Restart Measurement")
+                self.start_action_button.setDisabled(False)
 
     def get_sample(self):
         return self.recorded_angle_result
@@ -184,6 +196,9 @@ class RecordOriginSamplePage(LighthouseBasestationGeometryWizardBasePage):
         super(RecordOriginSamplePage, self).__init__(cf)
         self.explanation_text.setText(
             'Step 1. Put the Crazyflie where you want the origin of your coordinate system.')
+        pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_1.png")
+        pixmap = pixmap.scaledToWidth(640)
+        self.explanation_picture.setPixmap(pixmap)
 
 
 class RecordXAxisSamplePage(LighthouseBasestationGeometryWizardBasePage):
@@ -191,12 +206,18 @@ class RecordXAxisSamplePage(LighthouseBasestationGeometryWizardBasePage):
         super(RecordXAxisSamplePage, self).__init__(cf)
         self.explanation_text.setText('Step 2. Put the Crazyflie on the positive X-axis,' +
                                       f'  exactly {REFERENCE_DIST} meters from the origin.')
+        pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_2.png")
+        pixmap = pixmap.scaledToWidth(640)
+        self.explanation_picture.setPixmap(pixmap)
 
 
 class RecordXYPlaneSamplesPage(LighthouseBasestationGeometryWizardBasePage):
     def __init__(self, cf: Crazyflie, parent=None):
         super(RecordXYPlaneSamplesPage, self).__init__(cf, show_add_measurements=True)
         self.explanation_text.setText('Step 3. Put the Crazyflie somehere in the XY-plane, but not on the X-axis. \n')
+        pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_3.png")
+        pixmap = pixmap.scaledToWidth(640)
+        self.explanation_picture.setPixmap(pixmap)
 
     def get_samples(self):
         return self.recorded_angles_result
@@ -207,6 +228,10 @@ class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
         super(RecordXYZSpaceSamplesPage, self).__init__(cf, show_fill_in_field=True, show_add_measurements=False)
         self.explanation_text.setText('Step 4. Move the Crazyflie around, try to cover all of the space,\n make sure ' +
                                       'all the base stations are received\n')
+        pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_4.png")
+        pixmap = pixmap.scaledToWidth(640)
+        self.explanation_picture.setPixmap(pixmap)
+
         self.recorded_angles_result: list[LhCfPoseSample] = []
         self.show_fill_in_field = True
         self.record_timer = QtCore.QTimer()
@@ -247,7 +272,9 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
         super(EstimateBSGeometryPage, self).__init__(cf)
         self.explanation_text.setText('Step 5.Press the button to estimate the geometry and check the result.\n' +
                                       'If it all looks good, press finish')
-
+        pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_5.png")
+        pixmap = pixmap.scaledToWidth(640)
+        self.explanation_picture.setPixmap(pixmap)
         self.start_action_button.setText('Estimate Geometry')
         self.origin_page = origin_page
         self.xaxis_page = xaxis_page
