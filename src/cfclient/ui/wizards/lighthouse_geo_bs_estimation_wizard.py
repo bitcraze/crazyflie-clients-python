@@ -265,6 +265,74 @@ class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
         return self.recorded_angles_result
 
 
+class EstimateGeometry(QtCore.QObject):
+    finished = QtCore.pyqtSignal()
+    failed = QtCore.pyqtSignal()
+
+    def __init__(self, origin, x_axis, xy_plane, samples):
+        super(EstimateGeometry, self).__init__()
+
+        self.origin = origin
+        self.x_axis = x_axis
+        self.xy_plane = xy_plane
+        self.samples = samples
+
+    def run(self):
+        self.bs_poses = self._estimate_geometry(self.origin, self.x_axis, self.xy_plane, self.samples)
+        if (self.bs_poses):
+            self.finished.emit()
+        else:
+            self.failed.emit()
+
+    def get_poses(self):
+        return self.bs_poses
+
+    def _print_base_stations_poses(self, base_stations: dict[int, Pose]):
+        """Pretty print of base stations pose"""
+        bs_string = ''
+        for bs_id, pose in sorted(base_stations.items()):
+            pos = pose.translation
+            temp_string = f'    {bs_id + 1}: ({pos[0]}, {pos[1]}, {pos[2]})'
+            print(temp_string)
+            bs_string += '\n' + temp_string
+
+        return bs_string
+
+    def _estimate_geometry(self, origin: LhCfPoseSample,
+                           x_axis: list[LhCfPoseSample],
+                           xy_plane: list[LhCfPoseSample],
+                           samples: list[LhCfPoseSample]) -> dict[int, Pose]:
+        """Estimate the geometry of the system based on samples recorded by a Crazyflie"""
+        matched_samples = [origin] + x_axis + xy_plane + LighthouseSampleMatcher.match(samples, min_nr_of_bs_in_match=2)
+        initial_guess = LighthouseInitialEstimator.estimate(matched_samples, LhDeck4SensorPositions.positions)
+
+        solution = LighthouseGeometrySolver.solve(initial_guess, matched_samples, LhDeck4SensorPositions.positions)
+        if not solution.success:
+            return None
+
+        start_x_axis = 1
+        start_xy_plane = 1 + len(x_axis)
+        origin_pos = solution.cf_poses[0].translation
+        x_axis_poses = solution.cf_poses[start_x_axis:start_x_axis + len(x_axis)]
+        x_axis_pos = list(map(lambda x: x.translation, x_axis_poses))
+        xy_plane_poses = solution.cf_poses[start_xy_plane:start_xy_plane + len(xy_plane)]
+        xy_plane_pos = list(map(lambda x: x.translation, xy_plane_poses))
+
+        # Align the solution
+        bs_aligned_poses, transformation = LighthouseSystemAligner.align(
+            origin_pos, x_axis_pos, xy_plane_pos, solution.bs_poses)
+
+        cf_aligned_poses = list(map(transformation.rotate_translate_pose, solution.cf_poses))
+
+        # Scale the solution
+        bs_scaled_poses, cf_scaled_poses, scale = LighthouseSystemScaler.scale_fixed_point(bs_aligned_poses,
+                                                                                           cf_aligned_poses,
+                                                                                           [REFERENCE_DIST, 0, 0],
+                                                                                           cf_aligned_poses[1])
+
+        return bs_scaled_poses
+
+
 class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
     def __init__(self, cf: Crazyflie, origin_page: RecordOriginSamplePage, xaxis_page: RecordXAxisSamplePage,
                  xyplane_page: RecordXYPlaneSamplesPage, xyzspace_page: RecordXYZSpaceSamplesPage, parent=None):
@@ -288,12 +356,29 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
         x_axis = [self.xaxis_page.get_sample()]
         xy_plane = self.xyplane_page.get_samples()
         samples = self.xyzspace_page.get_samples()
-        self.bs_poses = self._estimate_geometry(origin, x_axis, xy_plane, samples)
+        self.thread_estimator = QtCore.QThread()
+        self.worker = EstimateGeometry(origin, x_axis, xy_plane, samples)
+        self.worker.moveToThread(self.thread)
+        self.thread_estimator.started.connect(self.worker.run)
+        self.worker.finished.connect(self.thread_estimator.quit)
+        self.worker.finished.connect(self._geometry_estimated_finished)
+        self.worker.failed.connect(self._geometry_estimated_failed)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread_estimator.finished.connect(self.thread_estimator.deleteLater)
+        self.thread_estimator.start()
+
+    def _geometry_estimated_finished(self):
+        self.bs_poses = self.worker.get_poses()
         self.start_action_button.setDisabled(False)
-        self.is_done = True
         self.status_text.setText(string_padding('Geometry estimated! \n' +
                                  self._print_base_stations_poses(self.bs_poses)))
+        self.is_done = True
         self.completeChanged.emit()
+
+    def _geometry_estimated_failed(self):
+        self.bs_poses = self.worker.get_poses()
+        self.status_text.setText(string_padding('Geometry estimate failed! \n' +
+                                                'Hit Cancel and restart the wizard'))
 
     def _print_base_stations_poses(self, base_stations: dict[int, Pose]):
         """Pretty print of base stations pose"""
@@ -305,59 +390,6 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
             bs_string += '\n' + temp_string
 
         return bs_string
-
-    def _estimate_geometry(self, origin: LhCfPoseSample,
-                           x_axis: list[LhCfPoseSample],
-                           xy_plane: list[LhCfPoseSample],
-                           samples: list[LhCfPoseSample]) -> dict[int, Pose]:
-        """Estimate the geometry of the system based on samples recorded by a Crazyflie"""
-        matched_samples = [origin] + x_axis + xy_plane + LighthouseSampleMatcher.match(samples, min_nr_of_bs_in_match=2)
-        initial_guess = LighthouseInitialEstimator.estimate(matched_samples, LhDeck4SensorPositions.positions)
-
-        print('Initial guess base stations at:')
-        self._print_base_stations_poses(initial_guess.bs_poses)
-        print(f'{len(matched_samples)} samples will be used')
-
-        solution = LighthouseGeometrySolver.solve(initial_guess, matched_samples, LhDeck4SensorPositions.positions)
-        if not solution.success:
-            print('Solution did not converge, it might not be good!')
-
-        start_x_axis = 1
-        start_xy_plane = 1 + len(x_axis)
-        origin_pos = solution.cf_poses[0].translation
-        x_axis_poses = solution.cf_poses[start_x_axis:start_x_axis + len(x_axis)]
-        x_axis_pos = list(map(lambda x: x.translation, x_axis_poses))
-        xy_plane_poses = solution.cf_poses[start_xy_plane:start_xy_plane + len(xy_plane)]
-        xy_plane_pos = list(map(lambda x: x.translation, xy_plane_poses))
-
-        print('Raw solution:')
-        print('  Base stations at:')
-        self._print_base_stations_poses(solution.bs_poses)
-        print('  Solution match per base station:')
-        for bs_id, value in solution.error_info['bs'].items():
-            print(f'    {bs_id + 1}: {value}')
-
-        # Align the solution
-        bs_aligned_poses, transformation = LighthouseSystemAligner.align(
-            origin_pos, x_axis_pos, xy_plane_pos, solution.bs_poses)
-
-        cf_aligned_poses = list(map(transformation.rotate_translate_pose, solution.cf_poses))
-
-        # Scale the solution
-        bs_scaled_poses, cf_scaled_poses, scale = LighthouseSystemScaler.scale_fixed_point(bs_aligned_poses,
-                                                                                           cf_aligned_poses,
-                                                                                           [REFERENCE_DIST, 0, 0],
-                                                                                           cf_aligned_poses[1])
-
-        self.is_done = True
-        self.completeChanged.emit()
-
-        print()
-        print('Final solution:')
-        print('  Base stations at:')
-        self._print_base_stations_poses(bs_scaled_poses)
-
-        return bs_scaled_poses
 
     def get_geometry(self):
         geo_dict = {}
