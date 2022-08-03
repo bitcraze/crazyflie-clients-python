@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -52,8 +52,8 @@ class CrtpSharkToolbox(TabToolbox, param_tab_class):
     _incoming_packet_signal = pyqtSignal(object)
     _outgoing_packet_signal = pyqtSignal(object)
 
-    def __init__(self, tab_widget, helper):
-        super(CrtpSharkToolbox, self).__init__(tab_widget, helper, 'Crtp sniffer')
+    def __init__(self, helper):
+        super(CrtpSharkToolbox, self).__init__(helper, 'Crtp sniffer')
         self.setupUi(self)
 
         # Init the tree widget

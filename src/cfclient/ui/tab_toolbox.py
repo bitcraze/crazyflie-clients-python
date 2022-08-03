@@ -54,9 +54,8 @@ class TabToolbox(QtWidgets.QWidget):
     DS_TAB = 1
     DS_TOOLBOX = 2
 
-    def __init__(self, tab_widget, helper, tab_toolbox_name):
+    def __init__(self, helper, tab_toolbox_name):
         super(TabToolbox, self).__init__()
-        self.tab_widget = tab_widget
         self._helper = helper
         self.tab_toolbox_name = tab_toolbox_name
 
@@ -67,11 +66,11 @@ class TabToolbox(QtWidgets.QWidget):
         self.display_state = self.DS_HIDDEN
 
     def get_tab_toolbox_name(self):
-        """Return the name of the tab that will be shown in the tab"""
+        """Return the name that will be shown in the tab or toolbox"""
         return self.tab_toolbox_name
 
     def is_visible(self):
-        return self.tab_widget.currentWidget() == self
+        return self.display_state != self.DS_HIDDEN
 
     # Override in implementation class if required
     def preferred_dock_area(self):

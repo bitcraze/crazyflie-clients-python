@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -46,8 +46,7 @@ __all__ = ['PlotTab']
 
 logger = logging.getLogger(__name__)
 
-plot_tab_class = uic.loadUiType(cfclient.module_path +
-                                "/ui/tabs/plotTab.ui")[0]
+plot_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/plotTab.ui")[0]
 
 
 class LogConfigModel(QAbstractItemModel):
@@ -133,8 +132,8 @@ class PlotTab(TabToolbox, plot_tab_class):
         (180, 60, 240),   # purple
     ]
 
-    def __init__(self, tab_widget, helper):
-        super(PlotTab, self).__init__(tab_widget, helper, 'Plotter')
+    def __init__(self, helper):
+        super(PlotTab, self).__init__(helper, 'Plotter')
         self.setupUi(self)
 
         self._log_error_signal.connect(self._logging_error)

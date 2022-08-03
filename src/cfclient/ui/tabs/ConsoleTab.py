@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -54,8 +54,8 @@ class ConsoleTab(TabToolbox, console_tab_class):
     _disconnected_signal = pyqtSignal(str)
     _update = pyqtSignal(str)
 
-    def __init__(self, tab_widget, helper):
-        super(ConsoleTab, self).__init__(tab_widget, helper, 'Console')
+    def __init__(self, helper):
+        super(ConsoleTab, self).__init__(helper, 'Console')
         self.setupUi(self)
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots

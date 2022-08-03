@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -47,8 +47,7 @@ __all__ = ['LEDTab']
 
 logger = logging.getLogger(__name__)
 
-led_tab_class = uic.loadUiType(cfclient.module_path +
-                               "/ui/tabs/ledTab.ui")[0]
+led_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/ledTab.ui")[0]
 
 
 class LEDTab(TabToolbox, led_tab_class):
@@ -57,8 +56,8 @@ class LEDTab(TabToolbox, led_tab_class):
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
 
-    def __init__(self, tab_widget, helper):
-        super(LEDTab, self).__init__(tab_widget, helper, 'LED')
+    def __init__(self, helper):
+        super(LEDTab, self).__init__(helper, 'LED')
         self.setupUi(self)
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots

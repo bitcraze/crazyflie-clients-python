@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2021 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -42,8 +42,7 @@ __all__ = ['LogClientTab']
 
 logger = logging.getLogger(__name__)
 
-log_client_tab_class = uic.loadUiType(cfclient.module_path +
-                                      "/ui/tabs/logClientTab.ui")[0]
+log_client_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/logClientTab.ui")[0]
 
 
 class LogHandler(logging.StreamHandler):
@@ -68,8 +67,8 @@ class LogClientTab(TabToolbox, log_client_tab_class):
     """
     _update = pyqtSignal(str)
 
-    def __init__(self, tab_widget, helper):
-        super(LogClientTab, self).__init__(tab_widget, helper, 'Log Client')
+    def __init__(self, helper):
+        super(LogClientTab, self).__init__(helper, 'Log Client')
         self.setupUi(self)
 
         self._update.connect(self.printText)

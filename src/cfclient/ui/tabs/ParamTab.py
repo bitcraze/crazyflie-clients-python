@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -46,8 +46,7 @@ from cfclient.ui.tab_toolbox import TabToolbox
 __author__ = 'Bitcraze AB'
 __all__ = ['ParamTab']
 
-param_tab_class = uic.loadUiType(
-    cfclient.module_path + "/ui/tabs/paramTab.ui")[0]
+param_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/paramTab.ui")[0]
 
 logger = logging.getLogger(__name__)
 
@@ -279,9 +278,9 @@ class ParamTab(TabToolbox, param_tab_class):
     _param_default_signal = pyqtSignal(object)
     _reset_param_signal = pyqtSignal(str)
 
-    def __init__(self, tab_widget, helper):
+    def __init__(self, helper):
         """Create the parameter tab"""
-        super(ParamTab, self).__init__(tab_widget, helper, 'Parameters')
+        super(ParamTab, self).__init__(helper, 'Parameters')
         self.setupUi(self)
 
         self.cf = helper.cf

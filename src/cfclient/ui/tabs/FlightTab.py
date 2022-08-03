@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2021 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -115,8 +115,8 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     _limiting_updated = pyqtSignal(bool, bool, bool)
 
-    def __init__(self, tab_widget, helper):
-        super(FlightTab, self).__init__(tab_widget, helper, 'Flight Control')
+    def __init__(self, helper):
+        super(FlightTab, self).__init__(helper, 'Flight Control')
         self.setupUi(self)
 
         self.disconnectedSignal.connect(self.disconnected)

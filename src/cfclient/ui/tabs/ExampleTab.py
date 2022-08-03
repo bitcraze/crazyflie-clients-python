@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -46,8 +46,7 @@ __all__ = ['ExampleTab']
 
 logger = logging.getLogger(__name__)
 
-example_tab_class = uic.loadUiType(cfclient.module_path +
-                                   "/ui/tabs/exampleTab.ui")[0]
+example_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/exampleTab.ui")[0]
 
 
 class ExampleTab(TabToolbox, example_tab_class):
@@ -59,8 +58,8 @@ class ExampleTab(TabToolbox, example_tab_class):
     _log_error_signal = pyqtSignal(object, str)
     _param_updated_signal = pyqtSignal(str, str)
 
-    def __init__(self, tab_widget, helper):
-        super(ExampleTab, self).__init__(tab_widget, helper, 'Example')
+    def __init__(self, helper):
+        super(ExampleTab, self).__init__(helper, 'Example')
         self.setupUi(self)
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots

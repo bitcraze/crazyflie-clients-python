@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -60,8 +60,8 @@ class GpsTab(TabToolbox, gps_tab_class):
     _connected_signal = pyqtSignal(str)
     _console_signal = pyqtSignal(str)
 
-    def __init__(self, tab_widget, helper):
-        super(GpsTab, self).__init__(tab_widget, helper, 'GPS')
+    def __init__(self, helper):
+        super(GpsTab, self).__init__(helper, 'GPS')
         self.setupUi(self)
         self._cf = helper.cf
 

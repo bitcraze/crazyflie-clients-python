@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2021 Bitcraze AB
+#  Copyright (C) 2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -60,8 +60,7 @@ __all__ = ['LighthouseTab']
 
 logger = logging.getLogger(__name__)
 
-lighthouse_tab_class = uic.loadUiType(
-    cfclient.module_path + "/ui/tabs/lighthouse_tab.ui")[0]
+lighthouse_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/lighthouse_tab.ui")[0]
 
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
@@ -290,8 +289,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     _geometry_read_signal = pyqtSignal(object)
     _calibration_read_signal = pyqtSignal(object)
 
-    def __init__(self, tab_widget, helper):
-        super(LighthouseTab, self).__init__(tab_widget, helper, 'Lighthouse Positioning')
+    def __init__(self, helper):
+        super(LighthouseTab, self).__init__(helper, 'Lighthouse Positioning')
         self.setupUi(self)
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots

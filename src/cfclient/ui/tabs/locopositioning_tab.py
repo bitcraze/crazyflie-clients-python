@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2021 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -59,8 +59,7 @@ __all__ = ['LocoPositioningTab']
 
 logger = logging.getLogger(__name__)
 
-locopositioning_tab_class = uic.loadUiType(
-    cfclient.module_path + "/ui/tabs/locopositioning_tab.ui")[0]
+locopositioning_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/locopositioning_tab.ui")[0]
 
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
@@ -376,8 +375,8 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
     _anchor_active_id_list_updated_signal = pyqtSignal(object)
     _anchor_data_updated_signal = pyqtSignal(object)
 
-    def __init__(self, tab_widget, helper):
-        super(LocoPositioningTab, self).__init__(tab_widget, helper, 'Loco Positioning')
+    def __init__(self, helper):
+        super(LocoPositioningTab, self).__init__(helper, 'Loco Positioning')
         self.setupUi(self)
 
         self._anchors = {}

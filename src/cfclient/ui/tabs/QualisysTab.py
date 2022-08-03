@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -59,8 +59,7 @@ __all__ = ['QualisysTab']
 
 logger = logging.getLogger(__name__)
 
-qualisys_tab_class, _ = uic.loadUiType(cfclient.module_path +
-                                       "/ui/tabs/qualisysTab.ui")
+qualisys_tab_class, _ = uic.loadUiType(cfclient.module_path + "/ui/tabs/qualisysTab.ui")
 
 
 class FlightModeEvent(QEvent):
@@ -159,8 +158,8 @@ class QualisysTab(TabToolbox, qualisys_tab_class):
     cfStatusChanged = pyqtSignal(str)
     qtmStatusChanged = pyqtSignal(str)
 
-    def __init__(self, tab_widget, helper):
-        super(QualisysTab, self).__init__(tab_widget, helper, 'Qualisys')
+    def __init__(self, helper):
+        super(QualisysTab, self).__init__(helper, 'Qualisys')
 
         # Setting self._qtm_status should not be required here, but for some
         # reason python 3.7.5 crashes without it.

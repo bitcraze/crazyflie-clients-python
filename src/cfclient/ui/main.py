@@ -322,7 +322,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         loaded_tabs = []
 
         for tab_class in cfclient.ui.tabs.available:
-            tab_toolbox = tab_class(tab_widget, cfclient.ui.pluginhelper)
+            tab_toolbox = tab_class(cfclient.ui.pluginhelper)
             loaded_tabs.append(tab_toolbox)
 
             # Set reference for plot-tab.
@@ -533,12 +533,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         tab_toolbox.display_state = TabToolbox.DS_TOOLBOX
 
     def _tab_toolbox_hide(self, tab_toolbox):
-        tab_toolbox_name = tab_toolbox.get_tab_toolbox_name()
         dock_widget = tab_toolbox.dock_widget
 
-        if tab_toolbox.display_state == TabToolbox.DS_HIDDEN:
-            pass
-        elif tab_toolbox.display_state == TabToolbox.DS_TAB:
+        if tab_toolbox.display_state == TabToolbox.DS_TAB:
             self.tab_widget.removeTab(self.tab_widget.indexOf(tab_toolbox))
         elif tab_toolbox.display_state == TabToolbox.DS_TOOLBOX:
             self.removeDockWidget(dock_widget)

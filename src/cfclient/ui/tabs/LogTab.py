@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2012 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -38,16 +38,15 @@ from PyQt5.QtCore import Qt
 __author__ = 'Bitcraze AB'
 __all__ = ['LogTab']
 
-param_tab_class = uic.loadUiType(cfclient.module_path +
-                                 "/ui/tabs/logTab.ui")[0]
+param_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/logTab.ui")[0]
 
 
 class LogTab(TabToolbox, param_tab_class):
     connectedSignal = pyqtSignal(str)
     disconnectedSignal = pyqtSignal(str)
 
-    def __init__(self, tab_widget, helper):
-        super(LogTab, self).__init__(tab_widget, helper, 'Log TOC')
+    def __init__(self, helper):
+        super(LogTab, self).__init__(helper, 'Log TOC')
         self.setupUi(self)
 
         self.cf = helper.cf
