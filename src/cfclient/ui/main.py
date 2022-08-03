@@ -344,6 +344,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             toolbox_action_item.tab_toolbox = tab_toolbox
             tab_toolbox.toolbox_action_item = toolbox_action_item
             tab_toolbox.dock_widget.closed.connect(lambda: self.toggle_toolbox_visibility(False))
+            tab_toolbox.dock_widget.dockLocationChanged.connect(lambda area: self.set_preferred_dock_area(area))
 
             toolboxes_menu_item.addAction(toolbox_action_item)
 
@@ -351,11 +352,11 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     def read_tab_toolbox_config(self, loaded_tab_toolboxes):
         # Add tabs in the correct order
-        for name in TabToolbox.read_tab_config():
+        for name in TabToolbox.read_open_tab_config():
             if name in loaded_tab_toolboxes.keys():
                 self._tab_toolbox_show_as_tab(loaded_tab_toolboxes[name])
 
-        for name in TabToolbox.read_toolbox_config():
+        for name in TabToolbox.read_open_toolbox_config():
             if name in loaded_tab_toolboxes.keys():
                 self._tab_toolbox_show_as_toolbox(loaded_tab_toolboxes[name])
 
@@ -535,6 +536,12 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         tab_toolbox.tab_action_item.setChecked(False)
         tab_toolbox.toolbox_action_item.setChecked(False)
         tab_toolbox.set_display_state(TabToolbox.DS_HIDDEN)
+
+    @pyqtSlot(Qt.DockWidgetArea)
+    def set_preferred_dock_area(self, area):
+        dock_widget = self.sender()
+        tab_toolbox = dock_widget.tab_toolbox
+        tab_toolbox.set_preferred_dock_area(area)
 
     def _rescan_devices(self):
         self._statusbar_label.setText("No inputdevice connected!")

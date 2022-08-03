@@ -34,6 +34,7 @@ import logging
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QCloseEvent
 
 from cfclient.utils.config import Config
 
@@ -46,8 +47,9 @@ logger = logging.getLogger(__name__)
 class TabToolbox(QtWidgets.QWidget):
     """Superclass for all tabs that implements common functions."""
 
-    CONF_KEY_TABS = "open_tabs"
-    CONF_KEY_TOOLBOXES = "open_toolboxes"
+    CONF_KEY_OPEN_TABS = "open_tabs"
+    CONF_KEY_OPEN_TOOLBOXES = "open_toolboxes"
+    CONF_KEY_TOOLBOX_AREAS = "toolbox_areas"
 
     # Display states
     DS_HIDDEN = 0
@@ -65,6 +67,8 @@ class TabToolbox(QtWidgets.QWidget):
 
         self._display_state = self.DS_HIDDEN
 
+        self._dock_area = self._get_toolbox_area_config()
+
     def get_tab_toolbox_name(self):
         """Return the name that will be shown in the tab or toolbox"""
         return self.tab_toolbox_name
@@ -78,7 +82,7 @@ class TabToolbox(QtWidgets.QWidget):
     def set_display_state(self, new_display_state):
         if new_display_state != self._display_state:
             self._display_state = new_display_state
-            self._update_config(new_display_state)
+            self._update_open_config(new_display_state)
 
             if new_display_state == self.DS_HIDDEN:
                 self.disable()
@@ -86,7 +90,11 @@ class TabToolbox(QtWidgets.QWidget):
                 self.enable()
 
     def preferred_dock_area(self):
-        return Qt.RightDockWidgetArea
+        return self._dock_area
+
+    def set_preferred_dock_area(self, area):
+        self._dock_area = area
+        self._store_toolbox_area_config(area)
 
     def enable(self):
         pass
@@ -95,56 +103,99 @@ class TabToolbox(QtWidgets.QWidget):
         pass
 
     @classmethod
-    def read_tab_config(cls):
-        return cls._read_config(TabToolbox.CONF_KEY_TABS)
+    def read_open_tab_config(cls):
+        return cls._read_open_config(TabToolbox.CONF_KEY_OPEN_TABS)
 
     @classmethod
-    def read_toolbox_config(cls):
-        return TabToolbox._read_config(TabToolbox.CONF_KEY_TOOLBOXES)
+    def read_open_toolbox_config(cls):
+        return TabToolbox._read_open_config(TabToolbox.CONF_KEY_OPEN_TOOLBOXES)
 
     @classmethod
-    def _read_config(cls, key):
+    def _read_open_config(cls, key):
         config = []
         try:
-            config = Config().get(key).split(",")
+            value = Config().get(key)
+            # Python will return a list of an empty string if value is empty, filter it
+            config = list(filter(None, value.split(",")))
         except KeyError:
-            logger.warning(f'No config found for {key}')
+            logger.info(f'No config found for {key}')
 
         return config
 
-    def _update_config(self, display_state):
+    def _update_open_config(self, display_state):
         if display_state == self.DS_HIDDEN:
-            self._remove_from_config(TabToolbox.CONF_KEY_TABS)
-            self._remove_from_config(TabToolbox.CONF_KEY_TOOLBOXES)
+            self._remove_from_open_config(TabToolbox.CONF_KEY_OPEN_TABS)
+            self._remove_from_open_config(TabToolbox.CONF_KEY_OPEN_TOOLBOXES)
         elif display_state == self.DS_TAB:
-            self._add_to_config(TabToolbox.CONF_KEY_TABS)
-            self._remove_from_config(TabToolbox.CONF_KEY_TOOLBOXES)
+            self._add_to_open_config(TabToolbox.CONF_KEY_OPEN_TABS)
+            self._remove_from_open_config(TabToolbox.CONF_KEY_OPEN_TOOLBOXES)
         elif display_state == self.DS_TOOLBOX:
-            self._remove_from_config(TabToolbox.CONF_KEY_TABS)
-            self._add_to_config(TabToolbox.CONF_KEY_TOOLBOXES)
+            self._remove_from_open_config(TabToolbox.CONF_KEY_OPEN_TABS)
+            self._add_to_open_config(TabToolbox.CONF_KEY_OPEN_TOOLBOXES)
 
-    def _add_to_config(self, key):
-        config = self._read_config(key)
+    def _add_to_open_config(self, key):
+        config = self._read_open_config(key)
         name = self.tab_toolbox_name
 
         if name not in config:
             config.append(name)
-            self._store_config(key, config)
+            self._store_open_config(key, config)
 
-    def _remove_from_config(self, key):
-        config = self._read_config(key)
+    def _remove_from_open_config(self, key):
+        config = self._read_open_config(key)
         name = self.tab_toolbox_name
 
         if name in config:
             config.remove(name)
-            self._store_config(key, config)
+            self._store_open_config(key, config)
 
-    def _store_config(self, key, config):
-        Config().set(key, ','.join(config))
+    def _store_open_config(self, key, config):
+        value = ','.join(config)
+        Config().set(key, value)
+
+    def _get_toolbox_area_config(self):
+        result = Qt.RightDockWidgetArea
+
+        config = self._read_toolbox_area_config()
+
+        if self.tab_toolbox_name in config.keys():
+            result = config[self.tab_toolbox_name]
+
+        return result
+
+    def _store_toolbox_area_config(self, area):
+        config = self._read_toolbox_area_config()
+        config[self.tab_toolbox_name] = area
+        self._write_toolbox_area_config(config)
+
+    def _read_toolbox_area_config(self):
+        composite_config = []
+        try:
+            key = self.CONF_KEY_TOOLBOX_AREAS
+            value = Config().get(key)
+            # Python will return a list of an empty string if value is empty, filter it
+            composite_config = list(filter(None, value.split(",")))
+        except KeyError:
+            logger.info(f'No config found for {key}')
+
+        config = {}
+        for composite in composite_config:
+            try:
+                parts = composite.split(':')
+                config[parts[0]] = int(parts[1])
+            except KeyError:
+                logger.info(f'Can not understand config {composite}')
+
+        return config
+
+    def _write_toolbox_area_config(self, config):
+        key = self.CONF_KEY_TOOLBOX_AREAS
+        value = ','.join(map(lambda item: f'{item[0]}:{item[1]}', config.items()))
+        Config().set(key, value)
 
     class ClosingDockWidget(QtWidgets.QDockWidget):
         closed = pyqtSignal()
 
-        def closeEvent(self, event):
+        def closeEvent(self, event: QCloseEvent) -> None:
             super(TabToolbox.ClosingDockWidget, self).closeEvent(event)
             self.closed.emit()
