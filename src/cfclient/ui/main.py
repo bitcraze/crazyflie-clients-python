@@ -330,24 +330,25 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 cfclient.ui.pluginhelper.plotTab = tab_toolbox
 
             # Add to tabs menu
-            tab_action_item = QtWidgets.QAction(tab_toolbox.get_tab_toolbox_name(), self, checkable=True)
-            tab_action_item.toggled.connect(tab_toolbox.toggleTabVisibility)
+            tab_action_item = QtWidgets.QAction(tab_toolbox.get_tab_toolbox_name())
+            tab_action_item.setCheckable(True)
+            tab_action_item.triggered.connect(self.toggle_tab_visibility)
+            tab_action_item.tab_toolbox = tab_toolbox
+            tab_toolbox.tab_action_item = tab_action_item
 
             tabs_menu_item.addAction(tab_action_item)
 
             # Add to toolbox menu
             toolbox_action_item = QtWidgets.QAction(tab_toolbox.get_tab_toolbox_name())
             toolbox_action_item.setCheckable(True)
-            toolbox_action_item.triggered.connect(self.toggleToolboxVisibility)
+            toolbox_action_item.triggered.connect(self.toggle_toolbox_visibility)
+            toolbox_action_item.tab_toolbox = tab_toolbox
+            tab_toolbox.toolbox_action_item = toolbox_action_item
 
             toolboxes_menu_item.addAction(toolbox_action_item)
 
-            tab_toolbox.dock_widget.closed.connect(lambda: self.toggleToolboxVisibility(False))
 
-            toolbox_action_item.dockToolbox = tab_toolbox.dock_widget
-            toolbox_action_item.menuItem = toolbox_action_item
-            tab_toolbox.dock_widget.dockToolbox = tab_toolbox.dock_widget
-            tab_toolbox.dock_widget.menuItem = toolbox_action_item
+            tab_toolbox.dock_widget.closed.connect(lambda: self.toggle_toolbox_visibility(False))
 
             tab_items[tab_toolbox.get_tab_toolbox_name()] = tab_action_item
 
@@ -358,9 +359,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         for name in tab_config:
             if name in tab_items.keys():
                 action_item = tab_items[name]
-                if action_item.isEnabled():
-                    # Toggle through the menu so it's also marked as open there
-                    action_item.toggle()
+                # if action_item.isEnabled():
+                #     # Toggle through the menu so it's also marked as open there
+                #     action_item.toggle()
 
     def _set_address(self):
         address = 0xE7E7E7E7E7
@@ -477,19 +478,77 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._connectivity_manager.set_state(ConnectivityManager.UIState.SCANNING)
 
     @pyqtSlot(bool)
-    def toggleToolboxVisibility(self, checked):
-        menuItem = self.sender().menuItem
-        dockToolbox = self.sender().dockToolbox
-        tab_toolbox = dockToolbox.tab_toolbox
+    def toggle_tab_visibility(self, checked):
+        tab_action_item = self.sender()
+        tab_toolbox = tab_action_item.tab_toolbox
 
-        if checked and not dockToolbox.isVisible():
-            self.addDockWidget(tab_toolbox.preferred_dock_area(), dockToolbox)
-            dockToolbox.setWidget(tab_toolbox)
-            dockToolbox.show()
-        elif not checked:
-            self.removeDockWidget(dockToolbox)
-            dockToolbox.hide()
-            menuItem.setChecked(False)
+        if checked:
+            self._tab_toolbox_show_as_tab(tab_toolbox)
+        else:
+            self._tab_toolbox_hide(tab_toolbox)
+
+    @pyqtSlot(bool)
+    def toggle_toolbox_visibility(self, checked):
+        toolbox_action_item = self.sender()
+        tab_toolbox = toolbox_action_item.tab_toolbox
+
+        if checked:
+            self._tab_toolbox_show_as_toolbox(tab_toolbox)
+        else:
+            self._tab_toolbox_hide(tab_toolbox)
+
+    def _tab_toolbox_show_as_tab(self, tab_toolbox):
+        if tab_toolbox.display_state == TabToolbox.DS_TOOLBOX:
+            dock_widget = tab_toolbox.dock_widget
+            self.removeDockWidget(dock_widget)
+            dock_widget.hide()
+
+        tab_toolbox_name = tab_toolbox.get_tab_toolbox_name()
+        self.tab_widget.addTab(tab_toolbox, tab_toolbox_name)
+
+        tab_toolbox.tab_action_item.setChecked(True)
+        tab_toolbox.toolbox_action_item.setChecked(False)
+        tab_toolbox.display_state = TabToolbox.DS_TAB
+
+
+    def _tab_toolbox_show_as_toolbox(self, tab_toolbox):
+        dock_widget = tab_toolbox.dock_widget
+
+        if tab_toolbox.display_state == TabToolbox.DS_HIDDEN:
+            self.addDockWidget(tab_toolbox.preferred_dock_area(), dock_widget)
+            dock_widget.setWidget(tab_toolbox)
+            dock_widget.show()
+        elif tab_toolbox.display_state == TabToolbox.DS_TAB:
+            self.tab_widget.removeTab(self.tab_widget.indexOf(tab_toolbox))
+
+            self.addDockWidget(tab_toolbox.preferred_dock_area(), dock_widget)
+            dock_widget.setWidget(tab_toolbox)
+            dock_widget.show()
+
+        elif tab_toolbox.display_state == TabToolbox.DS_TOOLBOX:
+            pass
+
+        tab_toolbox.tab_action_item.setChecked(False)
+        tab_toolbox.toolbox_action_item.setChecked(True)
+        tab_toolbox.display_state = TabToolbox.DS_TOOLBOX
+
+    def _tab_toolbox_hide(self, tab_toolbox):
+        tab_toolbox_name = tab_toolbox.get_tab_toolbox_name()
+        dock_widget = tab_toolbox.dock_widget
+
+        if tab_toolbox.display_state == TabToolbox.DS_HIDDEN:
+            pass
+        elif tab_toolbox.display_state == TabToolbox.DS_TAB:
+            self.tab_widget.removeTab(self.tab_widget.indexOf(tab_toolbox))
+        elif tab_toolbox.display_state == TabToolbox.DS_TOOLBOX:
+            self.removeDockWidget(dock_widget)
+            dock_widget.hide()
+            tab_toolbox.toolbox_action_item.setChecked(False)
+
+        tab_toolbox.tab_action_item.setChecked(False)
+        tab_toolbox.toolbox_action_item.setChecked(False)
+        tab_toolbox.display_state = TabToolbox.DS_HIDDEN
+
 
     def _rescan_devices(self):
         self._statusbar_label.setText("No inputdevice connected!")

@@ -49,24 +49,22 @@ class TabToolbox(QtWidgets.QWidget):
 
     CONF_KEY_TABS = "open_tabs"
 
+    # Display states
+    DS_HIDDEN = 0
+    DS_TAB = 1
+    DS_TOOLBOX = 2
+
     def __init__(self, tab_widget, helper, tab_toolbox_name):
         super(TabToolbox, self).__init__()
         self.tab_widget = tab_widget
         self._helper = helper
         self.tab_toolbox_name = tab_toolbox_name
 
+        # Dock widget for toolbox behavior
         self.dock_widget = self.MyDockWidget(tab_toolbox_name)
         self.dock_widget.tab_toolbox = self
 
-    @pyqtSlot(bool)
-    def toggleTabVisibility(self, checked):
-        """Show or hide the tab."""
-        if checked:
-            self.tab_widget.addTab(self, self.tab_toolbox_name)
-            self._add_to_tab_config(self.tab_toolbox_name)
-        else:
-            self.tab_widget.removeTab(self.tab_widget.indexOf(self))
-            self._remove_from_tab_config(self.tab_toolbox_name)
+        self.display_state = self.DS_HIDDEN
 
     def get_tab_toolbox_name(self):
         """Return the name of the tab that will be shown in the tab"""
