@@ -77,12 +77,23 @@ class TabToolbox(QtWidgets.QWidget):
         return self._display_state
 
     def set_display_state(self, new_display_state):
-        self._display_state = new_display_state
-        self._update_config(new_display_state)
+        if new_display_state != self._display_state:
+            self._display_state = new_display_state
+            self._update_config(new_display_state)
 
-    # Override in implementation class if required
+            if new_display_state == self.DS_HIDDEN:
+                self.disable()
+            else:
+                self.enable()
+
     def preferred_dock_area(self):
         return Qt.RightDockWidgetArea
+
+    def enable(self):
+        pass
+
+    def disable(self):
+        pass
 
     @classmethod
     def read_tab_config(cls):
