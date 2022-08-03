@@ -172,15 +172,13 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
             self.too_few_bs = False
             status_text_string = f'Recording Done! Visible Basestations: {self.visible_basestations}\n'
             if self.show_add_measurements:
+                self.recorded_angles_result.append(self.get_sample())
                 status_text_string += f'Total measurements added: {len(self.recorded_angles_result)}\n'
-            else:
-                status_text_string += '\n\n'
             self.status_text.setText(string_padding(status_text_string))
             self.is_done = True
             self.completeChanged.emit()
 
             if self.show_add_measurements:
-                self.recorded_angles_result.append(self.get_sample())
                 self.start_action_button.setText("Add more measurements")
                 self.start_action_button.setDisabled(False)
             else:
@@ -236,23 +234,34 @@ class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
         self.show_fill_in_field = True
         self.record_timer = QtCore.QTimer()
         self.record_timer.timeout.connect(self._record_timer_cb)
+        self.record_time_total = DEFAULT_RECORD_TIME
+        self.record_time_current = 0
         self.reader = LighthouseSweepAngleReader(self.cf, self._ready_single_sample_cb)
         self.bs_seen = set()
 
     def _record_timer_cb(self):
-        self.reader.stop()
-        self.status_text.setText(string_padding(f'Recording Done! Got {len(self.recorded_angles_result)} samples!'))
-        self.start_action_button.setText("Restart measurements")
-        self.start_action_button.setDisabled(False)
-        self.is_done = True
-        self.completeChanged.emit()
-        self.record_timer.stop()
+        self.record_time_current += 1
+        self.status_text.setText(string_padding('Collecting sweep angles...' +
+                                 f' seconds remaining: {self.record_time_total-self.record_time_current}'))
+
+        if self.record_time_current == self.record_time_total:
+            self.reader.stop()
+            self.status_text.setText(string_padding(f'Recording Done! Got {len(self.recorded_angles_result)} samples!'))
+            self.start_action_button.setText("Restart measurements")
+            self.start_action_button.setDisabled(False)
+            self.is_done = True
+            self.completeChanged.emit()
+            self.record_timer.stop()
 
     def _action_btn_clicked(self):
         self.is_done = False
         self.reader.start()
-        self.record_timer.start(int(self.fill_record_times_line_edit.text())*1000)
-        self.status_text.setText(string_padding('Collecting sweep angles...'))
+        self.record_time_current = 0
+        self.record_time_total = int(self.fill_record_times_line_edit.text())
+        self.record_timer.start(1000)
+        self.status_text.setText(string_padding('Collecting sweep angles...' +
+                                 f' seconds remaining: {self.record_time_total}'))
+
         self.start_action_button.setDisabled(True)
 
     def _ready_single_sample_cb(self, bs_id: int, angles: LighthouseBsVectors):
@@ -265,12 +274,12 @@ class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
         return self.recorded_angles_result
 
 
-class EstimateGeometry(QtCore.QObject):
+class EstimateGeometryThread(QtCore.QObject):
     finished = QtCore.pyqtSignal()
     failed = QtCore.pyqtSignal()
 
     def __init__(self, origin, x_axis, xy_plane, samples):
-        super(EstimateGeometry, self).__init__()
+        super(EstimateGeometryThread, self).__init__()
 
         self.origin = origin
         self.x_axis = x_axis
@@ -357,8 +366,8 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
         xy_plane = self.xyplane_page.get_samples()
         samples = self.xyzspace_page.get_samples()
         self.thread_estimator = QtCore.QThread()
-        self.worker = EstimateGeometry(origin, x_axis, xy_plane, samples)
-        self.worker.moveToThread(self.thread)
+        self.worker = EstimateGeometryThread(origin, x_axis, xy_plane, samples)
+        self.worker.moveToThread(self.thread_estimator)
         self.thread_estimator.started.connect(self.worker.run)
         self.worker.finished.connect(self.thread_estimator.quit)
         self.worker.finished.connect(self._geometry_estimated_finished)
