@@ -50,6 +50,8 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
         self.ready_cb(self.get_geometry_page.get_geometry())
 
     def reset(self):
+        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowCloseButtonHint)
 
         if not self.wizard_opened_first_time:
             self.removePage(0)
@@ -75,7 +77,7 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
         self.addPage(self.get_geometry_page)
 
         self.setWindowTitle("Lighthouse Basestation Geometry Wizard")
-        self.resize(680, 640)
+        self.resize(780, 720)
 
 
 class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
@@ -85,9 +87,6 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         self.show_add_measurements = show_add_measurements
         self.cf = cf
         self.explanation_picture = QtWidgets.QLabel()
-        pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/test.png")
-        pixmap = pixmap.scaledToWidth(640)
-        self.explanation_picture.setPixmap(pixmap)
         self.explanation_text = QtWidgets.QLabel()
         self.explanation_text.setText(' ')
         self.status_text = QtWidgets.QLabel()
@@ -117,7 +116,9 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         if show_fill_in_field is False:
             self.spacer = QtWidgets.QLabel()
             self.spacer.setText(' ')
+            self.spacer.setFixedSize(50, 27)
             self.layout.addWidget(self.spacer)
+
         self.layout.addWidget(self.start_action_button)
 
         self.setLayout(self.layout)
@@ -193,7 +194,7 @@ class RecordOriginSamplePage(LighthouseBasestationGeometryWizardBasePage):
     def __init__(self, cf: Crazyflie, parent=None):
         super(RecordOriginSamplePage, self).__init__(cf)
         self.explanation_text.setText(
-            'Step 1. Put the Crazyflie where you want the origin of your coordinate system.')
+            'Step 1. Put the Crazyflie where you want the origin of your coordinate system.\n')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_1.png")
         pixmap = pixmap.scaledToWidth(640)
         self.explanation_picture.setPixmap(pixmap)
@@ -203,7 +204,7 @@ class RecordXAxisSamplePage(LighthouseBasestationGeometryWizardBasePage):
     def __init__(self, cf: Crazyflie, parent=None):
         super(RecordXAxisSamplePage, self).__init__(cf)
         self.explanation_text.setText('Step 2. Put the Crazyflie on the positive X-axis,' +
-                                      f'  exactly {REFERENCE_DIST} meters from the origin.')
+                                      f'  exactly {REFERENCE_DIST} meters from the origin.\n')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_2.png")
         pixmap = pixmap.scaledToWidth(640)
         self.explanation_picture.setPixmap(pixmap)
@@ -212,7 +213,7 @@ class RecordXAxisSamplePage(LighthouseBasestationGeometryWizardBasePage):
 class RecordXYPlaneSamplesPage(LighthouseBasestationGeometryWizardBasePage):
     def __init__(self, cf: Crazyflie, parent=None):
         super(RecordXYPlaneSamplesPage, self).__init__(cf, show_add_measurements=True)
-        self.explanation_text.setText('Step 3. Put the Crazyflie somehere in the XY-plane, but not on the X-axis. \n')
+        self.explanation_text.setText('Step 3. Put the Crazyflie somehere in the XY-plane, but not on the X-axis.\n ')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_3.png")
         pixmap = pixmap.scaledToWidth(640)
         self.explanation_picture.setPixmap(pixmap)
@@ -225,7 +226,7 @@ class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
     def __init__(self, cf: Crazyflie, parent=None):
         super(RecordXYZSpaceSamplesPage, self).__init__(cf, show_fill_in_field=True, show_add_measurements=False)
         self.explanation_text.setText('Step 4. Move the Crazyflie around, try to cover all of the space,\n make sure ' +
-                                      'all the base stations are received\n')
+                                      'all the base stations are received')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_4.png")
         pixmap = pixmap.scaledToWidth(640)
         self.explanation_picture.setPixmap(pixmap)
