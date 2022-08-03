@@ -4,6 +4,7 @@ import cfclient
 
 from PyQt5 import QtCore, QtWidgets, QtGui
 from cflib.crazyflie import Crazyflie
+from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleAverageReader
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleReader
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVectors
@@ -12,7 +13,6 @@ from cflib.localization.lighthouse_sample_matcher import LighthouseSampleMatcher
 from cflib.localization.lighthouse_system_aligner import LighthouseSystemAligner
 from cflib.localization.lighthouse_geometry_solver import LighthouseGeometrySolver
 from cflib.localization.lighthouse_system_scaler import LighthouseSystemScaler
-from cflib.localization.lighthouse_config_manager import LighthouseConfigWriter
 from cflib.localization.lighthouse_types import Pose, LhDeck4SensorPositions, LhMeasurement, LhCfPoseSample
 
 import time
@@ -289,10 +289,10 @@ class EstimateGeometryThread(QtCore.QObject):
         self.samples = samples
 
     def run(self):
-        self.bs_poses = self._estimate_geometry(self.origin, self.x_axis, self.xy_plane, self.samples)
-        if (self.bs_poses):
+        try:
+            self.bs_poses = self._estimate_geometry(self.origin, self.x_axis, self.xy_plane, self.samples)
             self.finished.emit()
-        else:
+        except:
             self.failed.emit()
 
     def get_poses(self):
@@ -319,7 +319,7 @@ class EstimateGeometryThread(QtCore.QObject):
 
         solution = LighthouseGeometrySolver.solve(initial_guess, matched_samples, LhDeck4SensorPositions.positions)
         if not solution.success:
-            return None
+            raise Exception("Error! Name should be a String value!")
 
         start_x_axis = 1
         start_xy_plane = 1 + len(x_axis)
