@@ -32,7 +32,7 @@ from PyQt5.QtCore import pyqtSignal, Qt
 import time
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 from cfclient.ui.widgets.super_slider import SuperSlider
 from cflib.crazyflie import Crazyflie, Param
 from cflib.utils.callbacks import Syncer
@@ -106,7 +106,7 @@ class SliderParamMapper:
                 self.cf.param.set_value(self.full_param_name, value)
 
 
-class TuningTab(Tab, tuning_tab_class):
+class TuningTab(TabToolbox, tuning_tab_class):
     """Tab for plotting logging data"""
 
     _connected_signal = pyqtSignal(str)
@@ -114,15 +114,9 @@ class TuningTab(Tab, tuning_tab_class):
 
     _param_updated_signal = pyqtSignal(str, object)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(TuningTab, self).__init__(*args)
+    def __init__(self, helper):
+        super(TuningTab, self).__init__(helper, 'Tuning')
         self.setupUi(self)
-
-        self.tabName = "Tuning"
-        self.menuName = "Tuning tab"
-        self.tabWidget = tabWidget
-
-        self._helper = helper
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it

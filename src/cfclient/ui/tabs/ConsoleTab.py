@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -36,7 +36,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QTextCursor
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ConsoleTab']
@@ -47,22 +47,16 @@ console_tab_class = uic.loadUiType(cfclient.module_path +
                                    "/ui/tabs/consoleTab.ui")[0]
 
 
-class ConsoleTab(Tab, console_tab_class):
+class ConsoleTab(TabToolbox, console_tab_class):
     """Console tab for showing printouts from Crazyflie"""
     _link_established_signal = pyqtSignal(str)
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
     _update = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(ConsoleTab, self).__init__(*args)
+    def __init__(self, helper):
+        super(ConsoleTab, self).__init__(helper, 'Console')
         self.setupUi(self)
-
-        self.tabName = "Console"
-        self.menuName = "Console"
-
-        self.tabWidget = tabWidget
-        self._helper = helper
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it

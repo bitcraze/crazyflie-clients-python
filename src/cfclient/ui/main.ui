@@ -281,7 +281,7 @@
            <number>0</number>
           </property>
           <item row="0" column="0">
-           <widget class="QTabWidget" name="tabs">
+           <widget class="QTabWidget" name="tab_widget">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>

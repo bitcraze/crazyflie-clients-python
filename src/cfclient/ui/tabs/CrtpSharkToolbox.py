@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -38,25 +38,23 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtCore import Qt
 
 import cfclient
+from cfclient.ui.tab_toolbox import TabToolbox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['CrtpSharkToolbox']
 
-param_tab_class = uic.loadUiType(
-    cfclient.module_path + "/ui/toolboxes/crtpSharkToolbox.ui")[0]
+param_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/crtpSharkToolbox.ui")[0]
 
 
-class CrtpSharkToolbox(QtWidgets.QWidget, param_tab_class):
+class CrtpSharkToolbox(TabToolbox, param_tab_class):
     """Show packets that is sent vie the communication link"""
     nameModified = pyqtSignal()
     _incoming_packet_signal = pyqtSignal(object)
     _outgoing_packet_signal = pyqtSignal(object)
 
-    def __init__(self, helper, *args):
-        super(CrtpSharkToolbox, self).__init__(*args)
+    def __init__(self, helper):
+        super(CrtpSharkToolbox, self).__init__(helper, 'Crtp sniffer')
         self.setupUi(self)
-
-        self.helper = helper
 
         # Init the tree widget
         self.logTree.setHeaderLabels(['ms', 'Direction', 'Port/Chan', 'Data'])
@@ -95,12 +93,6 @@ class CrtpSharkToolbox(QtWidgets.QWidget, param_tab_class):
         self.logTree.clear()
         self._data = []
 
-    def getName(self):
-        return 'Crtp sniffer'
-
-    def getTabName(self):
-        return 'Crtp sniffer'
-
     def _incoming_packet(self, pk):
         self._incoming_packet_signal.emit(pk)
 
@@ -108,19 +100,12 @@ class CrtpSharkToolbox(QtWidgets.QWidget, param_tab_class):
         self._outgoing_packet_signal.emit(pk)
 
     def enable(self):
-        self.helper.cf.packet_received.add_callback(
-            self._incoming_packet)
-        self.helper.cf.packet_sent.add_callback(
-            self._outgoing_packet)
+        self._helper.cf.packet_received.add_callback(self._incoming_packet)
+        self._helper.cf.packet_sent.add_callback(self._outgoing_packet)
 
     def disable(self):
-        self.helper.cf.packet_received.remove_callback(
-            self._incoming_packet)
-        self.helper.cf.packet_sent.remove_callback(
-            self._outgoing_packet)
-
-    def preferedDockArea(self):
-        return Qt.RightDockWidgetArea
+        self._helper.cf.packet_received.remove_callback(self._incoming_packet)
+        self._helper.cf.packet_sent.remove_callback(self._outgoing_packet)
 
     def _save_data(self):
         dir = os.path.join(cfclient.config_path, "logdata")

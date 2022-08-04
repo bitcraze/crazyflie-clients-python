@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -43,7 +43,7 @@ from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 from cfclient.utils.config import Config
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.syncLogger import SyncLogger
@@ -59,8 +59,7 @@ __all__ = ['QualisysTab']
 
 logger = logging.getLogger(__name__)
 
-qualisys_tab_class, _ = uic.loadUiType(cfclient.module_path +
-                                       "/ui/tabs/qualisysTab.ui")
+qualisys_tab_class, _ = uic.loadUiType(cfclient.module_path + "/ui/tabs/qualisysTab.ui")
 
 
 class FlightModeEvent(QEvent):
@@ -137,7 +136,7 @@ class QDiscovery(QObject):
         self.discovering = False
 
 
-class QualisysTab(Tab, qualisys_tab_class):
+class QualisysTab(TabToolbox, qualisys_tab_class):
     """
         Tab for controlling the crazyflie using
         Qualisys Motion Capturing system
@@ -159,8 +158,8 @@ class QualisysTab(Tab, qualisys_tab_class):
     cfStatusChanged = pyqtSignal(str)
     qtmStatusChanged = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(QualisysTab, self).__init__(*args)
+    def __init__(self, helper):
+        super(QualisysTab, self).__init__(helper, 'Qualisys')
 
         # Setting self._qtm_status should not be required here, but for some
         # reason python 3.7.5 crashes without it.
@@ -172,11 +171,7 @@ class QualisysTab(Tab, qualisys_tab_class):
         self._setup_states()
         self._event = threading.Event()
 
-        self.tabName = "Qualisys"
-        self.menuName = "Qualisys Tab"
-        self.tabWidget = tabWidget
         self.qtm_6DoF_labels = None
-        self._helper = helper
         self._qtm_connection = None
         self._cf = None
         self.model = QStandardItemModel(10, 4)

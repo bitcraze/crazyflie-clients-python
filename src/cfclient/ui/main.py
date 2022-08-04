@@ -32,8 +32,8 @@ import usb
 
 import cfclient
 from cfclient.ui.pose_logger import PoseLogger
+from cfclient.ui.tab_toolbox import TabToolbox
 import cfclient.ui.tabs
-import cfclient.ui.toolboxes
 import cflib.crtp
 from cfclient.ui.dialogs.about import AboutDialog
 from cfclient.ui.dialogs.bootloader import BootloaderDialog
@@ -78,14 +78,6 @@ logger = logging.getLogger(__name__)
 (main_window_class,
  main_windows_base_class) = (uic.loadUiType(cfclient.module_path +
                                             '/ui/main.ui'))
-
-
-class MyDockWidget(QtWidgets.QDockWidget):
-    closed = pyqtSignal()
-
-    def closeEvent(self, event):
-        super(MyDockWidget, self).closeEvent(event)
-        self.closed.emit()
 
 
 class UIState:
@@ -266,65 +258,16 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._initial_scan = True
         self._scan(self._connectivity_manager.get_address())
 
-        # Load and connect tabs
-        self.tabsMenuItem = QMenu("Tabs", self.menuView, enabled=True)
-        self.menuView.addMenu(self.tabsMenuItem)
+        self.tabs_menu_item = QMenu("Tabs", self.menuView, enabled=True)
+        self.menuView.addMenu(self.tabs_menu_item)
 
-        tabItems = {}
-        self.loadedTabs = []
-        for tabClass in cfclient.ui.tabs.available:
-            tab = tabClass(self.tabs, cfclient.ui.pluginhelper)
+        self.toolboxes_menu_item = QMenu("Toolboxes", self.menuView, enabled=True)
+        self.menuView.addMenu(self.toolboxes_menu_item)
 
-            # Set reference for plot-tab.
-            if isinstance(tab, cfclient.ui.tabs.PlotTab):
-                cfclient.ui.pluginhelper.plotTab = tab
-
-            item = QtWidgets.QAction(tab.getMenuName(), self, checkable=True)
-            item.toggled.connect(tab.toggleVisibility)
-            self.tabsMenuItem.addAction(item)
-            tabItems[tab.getTabName()] = item
-            self.loadedTabs.append(tab)
-            if not tab.enabled:
-                item.setEnabled(False)
-
-        # First instantiate all tabs and then open them in the correct order
-        try:
-            for tName in Config().get("open_tabs").split(","):
-                try:
-                    t = tabItems[tName]
-                    if (t is not None and t.isEnabled()):
-                        # Toggle though menu so it's also marked as open there
-                        t.toggle()
-                except Exception as e:
-                    logger.warning("Exception while opening tab [{}]".format(e))
-        except KeyError as e:
-            logger.warning("Failed to get open_tabs: {}".format(e))
-
-        # Loading toolboxes (A bit of magic for a lot of automatic)
-        self.toolboxesMenuItem = QMenu("Toolboxes", self.menuView,
-                                       enabled=True)
-        self.menuView.addMenu(self.toolboxesMenuItem)
-
-        self.toolboxes = []
-        for t_class in cfclient.ui.toolboxes.toolboxes:
-            toolbox = t_class(cfclient.ui.pluginhelper)
-            dockToolbox = MyDockWidget(toolbox.getName())
-            dockToolbox.setWidget(toolbox)
-            self.toolboxes += [dockToolbox, ]
-
-            # Add menu item for the toolbox
-            item = QtWidgets.QAction(toolbox.getName(), self)
-            item.setCheckable(True)
-            item.triggered.connect(self.toggleToolbox)
-            self.toolboxesMenuItem.addAction(item)
-
-            dockToolbox.closed.connect(lambda: self.toggleToolbox(False))
-
-            # Setup some introspection
-            item.dockToolbox = dockToolbox
-            item.menuItem = item
-            dockToolbox.dockToolbox = dockToolbox
-            dockToolbox.menuItem = item
+        self.loaded_tab_toolboxes = self.create_tab_toolboxes(self.tabs_menu_item,
+                                                              self.toolboxes_menu_item,
+                                                              self.tab_widget)
+        self.read_tab_toolbox_config(self.loaded_tab_toolboxes)
 
         # References to all the device sub-menus in the "Input device" menu
         self._all_role_menus = ()
@@ -373,6 +316,49 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         # We only want to warn about USB permission once
         self._permission_warned = False
+
+    def create_tab_toolboxes(self, tabs_menu_item, toolboxes_menu_item, tab_widget):
+        loaded_tab_toolboxes = {}
+
+        for tab_class in cfclient.ui.tabs.available:
+            tab_toolbox = tab_class(cfclient.ui.pluginhelper)
+            loaded_tab_toolboxes[tab_toolbox.get_tab_toolbox_name()] = tab_toolbox
+
+            # Set reference for plot-tab.
+            if isinstance(tab_toolbox, cfclient.ui.tabs.PlotTab):
+                cfclient.ui.pluginhelper.plotTab = tab_toolbox
+
+            # Add to tabs menu
+            tab_action_item = QtWidgets.QAction(tab_toolbox.get_tab_toolbox_name())
+            tab_action_item.setCheckable(True)
+            tab_action_item.triggered.connect(self.toggle_tab_visibility)
+            tab_action_item.tab_toolbox = tab_toolbox
+            tab_toolbox.tab_action_item = tab_action_item
+
+            tabs_menu_item.addAction(tab_action_item)
+
+            # Add to toolbox menu
+            toolbox_action_item = QtWidgets.QAction(tab_toolbox.get_tab_toolbox_name())
+            toolbox_action_item.setCheckable(True)
+            toolbox_action_item.triggered.connect(self.toggle_toolbox_visibility)
+            toolbox_action_item.tab_toolbox = tab_toolbox
+            tab_toolbox.toolbox_action_item = toolbox_action_item
+            tab_toolbox.dock_widget.closed.connect(lambda: self.toggle_toolbox_visibility(False))
+            tab_toolbox.dock_widget.dockLocationChanged.connect(lambda area: self.set_preferred_dock_area(area))
+
+            toolboxes_menu_item.addAction(toolbox_action_item)
+
+        return loaded_tab_toolboxes
+
+    def read_tab_toolbox_config(self, loaded_tab_toolboxes):
+        # Add tabs in the correct order
+        for name in TabToolbox.read_open_tab_config():
+            if name in loaded_tab_toolboxes.keys():
+                self._tab_toolbox_show_as_tab(loaded_tab_toolboxes[name])
+
+        for name in TabToolbox.read_open_toolbox_config():
+            if name in loaded_tab_toolboxes.keys():
+                self._tab_toolbox_show_as_toolbox(loaded_tab_toolboxes[name])
 
     def _set_address(self):
         address = 0xE7E7E7E7E7
@@ -489,20 +475,73 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._connectivity_manager.set_state(ConnectivityManager.UIState.SCANNING)
 
     @pyqtSlot(bool)
-    def toggleToolbox(self, display):
-        menuItem = self.sender().menuItem
-        dockToolbox = self.sender().dockToolbox
+    def toggle_tab_visibility(self, checked):
+        tab_action_item = self.sender()
+        tab_toolbox = tab_action_item.tab_toolbox
 
-        if display and not dockToolbox.isVisible():
-            dockToolbox.widget().enable()
-            self.addDockWidget(dockToolbox.widget().preferedDockArea(),
-                               dockToolbox)
-            dockToolbox.show()
-        elif not display:
-            dockToolbox.widget().disable()
-            self.removeDockWidget(dockToolbox)
-            dockToolbox.hide()
-            menuItem.setChecked(False)
+        if checked:
+            self._tab_toolbox_show_as_tab(tab_toolbox)
+        else:
+            self._tab_toolbox_hide(tab_toolbox)
+
+    @pyqtSlot(bool)
+    def toggle_toolbox_visibility(self, checked):
+        toolbox_action_item = self.sender()
+        tab_toolbox = toolbox_action_item.tab_toolbox
+
+        if checked:
+            self._tab_toolbox_show_as_toolbox(tab_toolbox)
+        else:
+            self._tab_toolbox_hide(tab_toolbox)
+
+    def _tab_toolbox_show_as_tab(self, tab_toolbox):
+        if tab_toolbox.get_display_state() == TabToolbox.DS_TOOLBOX:
+            dock_widget = tab_toolbox.dock_widget
+            self.removeDockWidget(dock_widget)
+            dock_widget.hide()
+
+        if tab_toolbox.get_display_state() != TabToolbox.DS_TAB:
+            tab_toolbox_name = tab_toolbox.get_tab_toolbox_name()
+            self.tab_widget.addTab(tab_toolbox, tab_toolbox_name)
+
+        tab_toolbox.tab_action_item.setChecked(True)
+        tab_toolbox.toolbox_action_item.setChecked(False)
+        tab_toolbox.set_display_state(TabToolbox.DS_TAB)
+
+    def _tab_toolbox_show_as_toolbox(self, tab_toolbox):
+        dock_widget = tab_toolbox.dock_widget
+
+        if tab_toolbox.get_display_state() == TabToolbox.DS_TAB:
+            self.tab_widget.removeTab(self.tab_widget.indexOf(tab_toolbox))
+
+        if tab_toolbox.get_display_state() != TabToolbox.DS_TOOLBOX:
+            self.addDockWidget(tab_toolbox.preferred_dock_area(), dock_widget)
+            dock_widget.setWidget(tab_toolbox)
+            dock_widget.show()
+
+        tab_toolbox.tab_action_item.setChecked(False)
+        tab_toolbox.toolbox_action_item.setChecked(True)
+        tab_toolbox.set_display_state(TabToolbox.DS_TOOLBOX)
+
+    def _tab_toolbox_hide(self, tab_toolbox):
+        dock_widget = tab_toolbox.dock_widget
+
+        if tab_toolbox.get_display_state() == TabToolbox.DS_TAB:
+            self.tab_widget.removeTab(self.tab_widget.indexOf(tab_toolbox))
+        elif tab_toolbox.get_display_state() == TabToolbox.DS_TOOLBOX:
+            self.removeDockWidget(dock_widget)
+            dock_widget.hide()
+            tab_toolbox.toolbox_action_item.setChecked(False)
+
+        tab_toolbox.tab_action_item.setChecked(False)
+        tab_toolbox.toolbox_action_item.setChecked(False)
+        tab_toolbox.set_display_state(TabToolbox.DS_HIDDEN)
+
+    @pyqtSlot(Qt.DockWidgetArea)
+    def set_preferred_dock_area(self, area):
+        dock_widget = self.sender()
+        tab_toolbox = dock_widget.tab_toolbox
+        tab_toolbox.set_preferred_dock_area(area)
 
     def _rescan_devices(self):
         self._statusbar_label.setText("No inputdevice connected!")
@@ -590,9 +629,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._update_ui_state()
 
     def closeEvent(self, event):
-        self.hide()
-        self.cf.close_link()
         Config().save_file()
+        self.cf.close_link()
+        self.hide()
 
     def resizeEvent(self, event):
         Config().set("window_size", [event.size().width(),

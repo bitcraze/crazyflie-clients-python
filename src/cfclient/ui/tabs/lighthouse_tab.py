@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2021 Bitcraze AB
+#  Copyright (C) 2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -39,7 +39,7 @@ from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QLabel
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import LighthouseMemHelper
@@ -60,8 +60,7 @@ __all__ = ['LighthouseTab']
 
 logger = logging.getLogger(__name__)
 
-lighthouse_tab_class = uic.loadUiType(
-    cfclient.module_path + "/ui/tabs/lighthouse_tab.ui")[0]
+lighthouse_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/lighthouse_tab.ui")[0]
 
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
@@ -260,7 +259,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
         return col1 * mix + col2 * (1.0 - mix)
 
 
-class LighthouseTab(Tab, lighthouse_tab_class):
+class LighthouseTab(TabToolbox, lighthouse_tab_class):
     """Tab for plotting Lighthouse data"""
 
     # Update period of log data in ms
@@ -290,15 +289,9 @@ class LighthouseTab(Tab, lighthouse_tab_class):
     _geometry_read_signal = pyqtSignal(object)
     _calibration_read_signal = pyqtSignal(object)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(LighthouseTab, self).__init__(*args)
+    def __init__(self, helper):
+        super(LighthouseTab, self).__init__(helper, 'Lighthouse Positioning')
         self.setupUi(self)
-
-        self.tabName = "Lighthouse Positioning"
-        self.menuName = "Lighthouse Positioning Tab"
-        self.tabWidget = tabWidget
-
-        self._helper = helper
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it

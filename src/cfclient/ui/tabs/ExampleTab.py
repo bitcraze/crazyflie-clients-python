@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -39,18 +39,17 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ExampleTab']
 
 logger = logging.getLogger(__name__)
 
-example_tab_class = uic.loadUiType(cfclient.module_path +
-                                   "/ui/tabs/exampleTab.ui")[0]
+example_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/exampleTab.ui")[0]
 
 
-class ExampleTab(Tab, example_tab_class):
+class ExampleTab(TabToolbox, example_tab_class):
     """Tab for plotting logging data"""
 
     _connected_signal = pyqtSignal(str)
@@ -59,15 +58,9 @@ class ExampleTab(Tab, example_tab_class):
     _log_error_signal = pyqtSignal(object, str)
     _param_updated_signal = pyqtSignal(str, str)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(ExampleTab, self).__init__(*args)
+    def __init__(self, helper):
+        super(ExampleTab, self).__init__(helper, 'Example')
         self.setupUi(self)
-
-        self.tabName = "Example"
-        self.menuName = "Example Tab"
-        self.tabWidget = tabWidget
-
-        self._helper = helper
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it

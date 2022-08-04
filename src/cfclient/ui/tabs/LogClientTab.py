@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2021 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -35,15 +35,14 @@ from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LogClientTab']
 
 logger = logging.getLogger(__name__)
 
-log_client_tab_class = uic.loadUiType(cfclient.module_path +
-                                      "/ui/tabs/logClientTab.ui")[0]
+log_client_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/logClientTab.ui")[0]
 
 
 class LogHandler(logging.StreamHandler):
@@ -61,21 +60,16 @@ class LogHandler(logging.StreamHandler):
         self._signal.emit(formatter.format(record))
 
 
-class LogClientTab(Tab, log_client_tab_class):
+class LogClientTab(TabToolbox, log_client_tab_class):
     """
     A tab for showing client logging information, such
     as USB Gamepad connections or scan feedback.
     """
     _update = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(LogClientTab, self).__init__(*args)
+    def __init__(self, helper):
+        super(LogClientTab, self).__init__(helper, 'Log Client')
         self.setupUi(self)
-
-        self.tabName = "Log Client"
-        self.menuName = "Log Client"
-
-        self.tabWidget = tabWidget
 
         self._update.connect(self.printText)
         self._clearButton.clicked.connect(self.clear)

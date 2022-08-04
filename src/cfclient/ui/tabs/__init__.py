@@ -30,6 +30,7 @@ Dropping a new .py file into this directory will automatically list and load
 it into the UI when it is started.
 """
 from .ConsoleTab import ConsoleTab
+from .CrtpSharkToolbox import CrtpSharkToolbox
 # from .ExampleTab import ExampleTab
 from .FlightTab import FlightTab
 # from .GpsTab import GpsTab
@@ -62,4 +63,5 @@ available = [
     QualisysTab,
     LogClientTab,
     TuningTab,
+    CrtpSharkToolbox,
 ]

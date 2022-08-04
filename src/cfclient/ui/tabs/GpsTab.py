@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -33,7 +33,7 @@ import logging
 import cfclient
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 from cflib.crazyflie.log import LogConfig
 from PyQt5 import QtCore
 from PyQt5 import QtGui
@@ -50,7 +50,7 @@ gps_tab_class = uic.loadUiType(cfclient.module_path +
                                "/ui/tabs/gpsTab.ui")[0]
 
 
-class GpsTab(Tab, gps_tab_class):
+class GpsTab(TabToolbox, gps_tab_class):
     """Tab for plotting logging data"""
 
     _log_data_signal = pyqtSignal(int, object, object)
@@ -60,15 +60,9 @@ class GpsTab(Tab, gps_tab_class):
     _connected_signal = pyqtSignal(str)
     _console_signal = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(GpsTab, self).__init__(*args)
+    def __init__(self, helper):
+        super(GpsTab, self).__init__(helper, 'GPS')
         self.setupUi(self)
-
-        self.tabName = "GPS"
-        self.menuName = "GPS"
-
-        self.tabWidget = tabWidget
-        self.helper = helper
         self._cf = helper.cf
 
         view = self.view = QtWebKit.QWebView()
@@ -95,9 +89,9 @@ class GpsTab(Tab, gps_tab_class):
         self._disconnected_signal.connect(self._disconnected)
 
         # Connect the callbacks from the Crazyflie API
-        self.helper.cf.disconnected.add_callback(
+        self._helper.cf.disconnected.add_callback(
             self._disconnected_signal.emit)
-        self.helper.cf.connected.add_callback(
+        self._helper.cf.connected.add_callback(
             self._connected_signal.emit)
 
         self._max_speed = 0.0

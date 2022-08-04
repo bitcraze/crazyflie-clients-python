@@ -57,12 +57,15 @@ For more info on LED indicators etc. have a look at the [Crazyflie 2.X](https://
 4. Tabs with specific functionality (see below for details)
 5. The selected and used input interface
 
-### Tabs
+### Tabs and toolboxes
 
-The main interface is built up of different tabs that can be
-shown/hidden from the *View-\>Tabs* menu.
+The main interface is built up of different tabs that can be shown/hidden from the *View-\>Tabs* menu. The tabs can
+also be used as toolboxes, that is small windows that can be docked to the sides of the main window. This makes it possible
+to display multiple windows at the same time, the console log can for instance be visible as a toolbox at the same time
+as the parameter tab is open to set a value. To open a toolbox, use the *View-\>Toolboxes* menu, if the toolbox is
+already open as a tab, the tab will be removed and it will be opened as a toolbox instead.
 
-The following tabs are currently available:
+The following tabs/toolboxes are currently available:
 
 * [Flightcontrol Tab](./flightcontrol_tab.md)
 * [Plotter Tab](./plotter_tab.md)

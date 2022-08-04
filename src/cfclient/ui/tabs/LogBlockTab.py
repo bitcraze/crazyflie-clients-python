@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2013 Bitcraze AB
+#  Copyright (C) 2013-2022 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -35,7 +35,7 @@ from PyQt5 import uic
 from PyQt5.QtCore import Qt, pyqtSignal
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 
 import logging
 
@@ -48,8 +48,7 @@ from cfclient.utils.logdatawriter import LogWriter
 __author__ = 'Bitcraze AB'
 __all__ = ['LogBlockTab']
 
-logblock_tab_class = uic.loadUiType(
-    cfclient.module_path + "/ui/tabs/logBlockTab.ui")[0]
+logblock_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/logBlockTab.ui")[0]
 
 logger = logging.getLogger(__name__)
 
@@ -319,7 +318,7 @@ class CheckboxDelegate(QStyledItemDelegate):
         painter.restore()
 
 
-class LogBlockTab(Tab, logblock_tab_class):
+class LogBlockTab(TabToolbox, logblock_tab_class):
     """
     Used to show debug-information about logblock status.
     """
@@ -327,16 +326,10 @@ class LogBlockTab(Tab, logblock_tab_class):
     _blocks_updated_signal = pyqtSignal(bool)
     _disconnected_signal = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
+    def __init__(self, helper):
         """Initialize the tab"""
-        super(LogBlockTab, self).__init__(*args)
+        super(LogBlockTab, self).__init__(helper, 'Log Blocks')
         self.setupUi(self)
-
-        self.tabName = "Log Blocks"
-        self.menuName = "Log Blocks"
-
-        self._helper = helper
-        self.tabWidget = tabWidget
 
         self._helper.cf.log.block_added_cb.add_callback(self._block_added)
         self._disconnected_signal.connect(self._disconnected)

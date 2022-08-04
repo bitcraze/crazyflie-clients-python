@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2012 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -28,7 +28,7 @@ Shows the Log TOC of available variables in the Crazyflie.
 """
 
 import cfclient
-from cfclient.ui.tab import Tab
+from cfclient.ui.tab_toolbox import TabToolbox
 from PyQt5 import QtWidgets
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal
@@ -38,23 +38,16 @@ from PyQt5.QtCore import Qt
 __author__ = 'Bitcraze AB'
 __all__ = ['LogTab']
 
-param_tab_class = uic.loadUiType(cfclient.module_path +
-                                 "/ui/tabs/logTab.ui")[0]
+param_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/logTab.ui")[0]
 
 
-class LogTab(Tab, param_tab_class):
+class LogTab(TabToolbox, param_tab_class):
     connectedSignal = pyqtSignal(str)
     disconnectedSignal = pyqtSignal(str)
 
-    def __init__(self, tabWidget, helper, *args):
-        super(LogTab, self).__init__(*args)
+    def __init__(self, helper):
+        super(LogTab, self).__init__(helper, 'Log TOC')
         self.setupUi(self)
-
-        self.tabName = "Log TOC"
-        self.menuName = "Log TOC"
-
-        self.helper = helper
-        self.tabWidget = tabWidget
 
         self.cf = helper.cf
 
