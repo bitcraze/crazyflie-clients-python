@@ -129,7 +129,6 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         self.explanation_text.setText(' ')
         self.explanation_text.setAlignment(QtCore.Qt.AlignCenter)
         self.layout.addWidget(self.explanation_text)
-        
         self.status_text = QtWidgets.QLabel()
         self.status_text.setFont(QtGui.QFont('Courier New', 10))
         self.status_text.setText(string_padding(''))
