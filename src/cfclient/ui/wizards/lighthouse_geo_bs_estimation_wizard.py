@@ -1,10 +1,36 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#     ||          ____  _ __
+#  +------+      / __ )(_) /_______________ _____  ___
+#  | 0xBC |     / __  / / __/ ___/ ___/ __ `/_  / / _ \
+#  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
+#   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
+#
+#  Copyright (C) 2022 Bitcraze AB
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA  02110-1301, USA.
+
+"""
+Wizard to estimate the geometry of the lighthouse basestations.
+Used in the lighthouse tab from the manage geometry dialog
+"""
 
 from __future__ import annotations
 
 import cfclient
 
-from PyQt5 import QtCore, QtWidgets, QtGui
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleAverageReader
@@ -17,6 +43,7 @@ from cflib.localization.lighthouse_geometry_solver import LighthouseGeometrySolv
 from cflib.localization.lighthouse_system_scaler import LighthouseSystemScaler
 from cflib.localization.lighthouse_types import Pose, LhDeck4SensorPositions, LhMeasurement, LhCfPoseSample
 
+from PyQt5 import QtCore, QtWidgets, QtGui
 import time
 
 
@@ -25,6 +52,10 @@ ITERATION_MAX_NR = 2
 DEFAULT_RECORD_TIME = 20
 TIMEOUT_TIME = 2000
 STRING_PAD_TOTAL = 6
+WINDOW_STARTING_WIDTH = 780
+WINDOW_STARTING_HEIGHT = 720
+SPACER_LABEL_HEIGHT = 27
+PICTURE_WIDTH = 640
 
 
 def string_padding(string_msg):
@@ -60,7 +91,8 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
             self.removePage(2)
             self.removePage(3)
             self.removePage(4)
-            del self.get_origin_page, self.get_xaxis_page, self.get_xyplane_page, self.get_xyzspace_page, self.get_geometry_page
+            del self.get_origin_page, self.get_xaxis_page, self.get_xyplane_page
+            del self.get_xyzspace_page, self.get_geometry_page
         else:
             self.wizard_opened_first_time = False
 
@@ -78,7 +110,7 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
         self.addPage(self.get_geometry_page)
 
         self.setWindowTitle("Lighthouse Basestation Geometry Wizard")
-        self.resize(780, 720)
+        self.resize(WINDOW_STARTING_WIDTH, WINDOW_STARTING_HEIGHT)
 
 
 class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
@@ -113,15 +145,13 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
             h_box.addWidget(self.fill_record_times_line_edit)
             h_box.addStretch()
             self.layout.addLayout(h_box)
-
-        if show_fill_in_field is False:
+        else:
             self.spacer = QtWidgets.QLabel()
             self.spacer.setText(' ')
-            self.spacer.setFixedSize(50, 27)
+            self.spacer.setFixedSize(50, SPACER_LABEL_HEIGHT)
             self.layout.addWidget(self.spacer)
 
         self.layout.addWidget(self.start_action_button)
-
         self.setLayout(self.layout)
         self.is_done = False
         self.too_few_bs = False
@@ -161,7 +191,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         amount_of_basestations = len(recorded_angles.keys())
 
         if amount_of_basestations < 2:
-            self.status_text.setText(string_padding(f'Recording Done!' +
+            self.status_text.setText(string_padding('Recording Done!' +
                                                     f' Visible Basestations: {self.visible_basestations}\n' +
                                      'Received too few base stations, we need at least two. Please try again!'))
             self.too_few_bs = True
@@ -198,7 +228,7 @@ class RecordOriginSamplePage(LighthouseBasestationGeometryWizardBasePage):
         self.explanation_text.setText(
             'Step 1. Put the Crazyflie where you want the origin of your coordinate system.\n')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_1.png")
-        pixmap = pixmap.scaledToWidth(640)
+        pixmap = pixmap.scaledToWidth(PICTURE_WIDTH)
         self.explanation_picture.setPixmap(pixmap)
 
 
@@ -208,7 +238,7 @@ class RecordXAxisSamplePage(LighthouseBasestationGeometryWizardBasePage):
         self.explanation_text.setText('Step 2. Put the Crazyflie on the positive X-axis,' +
                                       f'  exactly {REFERENCE_DIST} meters from the origin.\n')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_2.png")
-        pixmap = pixmap.scaledToWidth(640)
+        pixmap = pixmap.scaledToWidth(PICTURE_WIDTH)
         self.explanation_picture.setPixmap(pixmap)
 
 
@@ -217,7 +247,7 @@ class RecordXYPlaneSamplesPage(LighthouseBasestationGeometryWizardBasePage):
         super(RecordXYPlaneSamplesPage, self).__init__(cf, show_add_measurements=True)
         self.explanation_text.setText('Step 3. Put the Crazyflie somehere in the XY-plane, but not on the X-axis.\n ')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_3.png")
-        pixmap = pixmap.scaledToWidth(640)
+        pixmap = pixmap.scaledToWidth(PICTURE_WIDTH)
         self.explanation_picture.setPixmap(pixmap)
 
     def get_samples(self):
@@ -230,10 +260,9 @@ class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
         self.explanation_text.setText('Step 4. Move the Crazyflie around, try to cover all of the space,\n make sure ' +
                                       'all the base stations are received')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_4.png")
-        pixmap = pixmap.scaledToWidth(640)
+        pixmap = pixmap.scaledToWidth(PICTURE_WIDTH)
         self.explanation_picture.setPixmap(pixmap)
 
-        self.recorded_angles_result: list[LhCfPoseSample] = []
         self.show_fill_in_field = True
         self.record_timer = QtCore.QTimer()
         self.record_timer.timeout.connect(self._record_timer_cb)
@@ -294,22 +323,12 @@ class EstimateGeometryThread(QtCore.QObject):
         try:
             self.bs_poses = self._estimate_geometry(self.origin, self.x_axis, self.xy_plane, self.samples)
             self.finished.emit()
-        except:
+        except Exception as ex:
+            print(ex)
             self.failed.emit()
 
     def get_poses(self):
         return self.bs_poses
-
-    def _print_base_stations_poses(self, base_stations: dict[int, Pose]):
-        """Pretty print of base stations pose"""
-        bs_string = ''
-        for bs_id, pose in sorted(base_stations.items()):
-            pos = pose.translation
-            temp_string = f'    {bs_id + 1}: ({pos[0]}, {pos[1]}, {pos[2]})'
-            print(temp_string)
-            bs_string += '\n' + temp_string
-
-        return bs_string
 
     def _estimate_geometry(self, origin: LhCfPoseSample,
                            x_axis: list[LhCfPoseSample],
@@ -321,7 +340,7 @@ class EstimateGeometryThread(QtCore.QObject):
 
         solution = LighthouseGeometrySolver.solve(initial_guess, matched_samples, LhDeck4SensorPositions.positions)
         if not solution.success:
-            raise Exception("Error! Name should be a String value!")
+            raise Exception("No lighthouse basestation geometry solution could be found!")
 
         start_x_axis = 1
         start_xy_plane = 1 + len(x_axis)
@@ -399,7 +418,6 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
         for bs_id, pose in sorted(base_stations.items()):
             pos = pose.translation
             temp_string = f'    {bs_id + 1}: ({pos[0]}, {pos[1]}, {pos[2]})'
-            print(temp_string)
             bs_string += '\n' + temp_string
 
         return bs_string
