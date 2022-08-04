@@ -145,10 +145,7 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._basestation_geometery_received_signal.connect(self._basestation_geometry_received_signal_cb)
         self._close_button.clicked.connect(self.close)
 
-        try:
-            import cv2
-        except ModuleNotFoundError:
-            self._estimate_geometry_old_button.setEnabled(False)
+        self._estimate_geometry_old_button.setEnabled(False)
 
         self._sweep_angle_reader = LighthouseSweepAngleAverageReader(
             self._lighthouse_tab._helper.cf, self._sweep_angles_received_and_averaged_signal.emit)
