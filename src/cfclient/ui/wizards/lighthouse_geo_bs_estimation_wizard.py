@@ -379,7 +379,7 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
 
         super(EstimateBSGeometryPage, self).__init__(cf)
         self.explanation_text.setText('Step 5.Press the button to estimate the geometry and check the result.\n' +
-                                      'If it all looks good, press finish')
+                                      'If the position looks good, press finish to close the wizard')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_5.png")
         pixmap = pixmap.scaledToWidth(640)
         self.explanation_picture.setPixmap(pixmap)
@@ -388,6 +388,7 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
         self.xaxis_page = xaxis_page
         self.xyplane_page = xyplane_page
         self.xyzspace_page = xyzspace_page
+        self.bs_poses = {}
 
     def _action_btn_clicked(self):
         self.start_action_button.setDisabled(True)
@@ -410,7 +411,7 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
     def _geometry_estimated_finished(self):
         self.bs_poses = self.worker.get_poses()
         self.start_action_button.setDisabled(False)
-        self.status_text.setText(string_padding('Geometry estimated! \n' +
+        self.status_text.setText(string_padding('Geometry estimated! (X,Y,Z) in meters \n' +
                                  self._print_base_stations_poses(self.bs_poses)))
         self.is_done = True
         self.completeChanged.emit()
@@ -418,7 +419,7 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
     def _geometry_estimated_failed(self):
         self.bs_poses = self.worker.get_poses()
         self.status_text.setText(string_padding('Geometry estimate failed! \n' +
-                                                'Hit Cancel and restart the wizard'))
+                                                'Hit Cancel to close the wizard and start again'))
 
     def _print_base_stations_poses(self, base_stations: dict[int, Pose]):
         """Pretty print of base stations pose"""
