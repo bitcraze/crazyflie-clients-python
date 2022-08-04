@@ -119,26 +119,27 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         super(LighthouseBasestationGeometryWizardBasePage, self).__init__(parent)
         self.show_add_measurements = show_add_measurements
         self.cf = cf
+        self.layout = QtWidgets.QVBoxLayout()
+
         self.explanation_picture = QtWidgets.QLabel()
+        self.explanation_picture.setAlignment(QtCore.Qt.AlignCenter)
+        self.layout.addWidget(self.explanation_picture)
+
         self.explanation_text = QtWidgets.QLabel()
         self.explanation_text.setText(' ')
+        self.explanation_text.setAlignment(QtCore.Qt.AlignCenter)
+        self.layout.addWidget(self.explanation_text)
+        
         self.status_text = QtWidgets.QLabel()
         self.status_text.setFont(QtGui.QFont('Courier New', 10))
         self.status_text.setText(string_padding(''))
         self.status_text.setFrameStyle(QtWidgets.QFrame.Panel | QtWidgets.QFrame.Plain)
-
-        self.start_action_button = QtWidgets.QPushButton("Start Measurement")
-        self.start_action_button.clicked.connect(self._action_btn_clicked)
-        self.seconds_explanation_text = QtWidgets.QLabel()
-        self.fill_record_times_line_edit = QtWidgets.QLineEdit(str(DEFAULT_RECORD_TIME))
-        self.layout = QtWidgets.QVBoxLayout()
-        self.layout.addWidget(self.explanation_picture)
-        self.layout.addWidget(self.explanation_text)
-
         self.layout.addStretch()
-        self.layout.addWidget(self.status_text)
+
         if show_fill_in_field:
             h_box = QtWidgets.QHBoxLayout()
+            self.seconds_explanation_text = QtWidgets.QLabel()
+            self.fill_record_times_line_edit = QtWidgets.QLineEdit(str(DEFAULT_RECORD_TIME))
             self.seconds_explanation_text.setText('Enter the number of seconds you want to record:')
             h_box.addStretch()
             h_box.addWidget(self.seconds_explanation_text)
@@ -151,7 +152,15 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
             self.spacer.setFixedSize(50, SPACER_LABEL_HEIGHT)
             self.layout.addWidget(self.spacer)
 
-        self.layout.addWidget(self.start_action_button)
+        self.layout.addWidget(self.status_text)
+
+        self.start_action_button = QtWidgets.QPushButton("Start Measurement")
+        self.start_action_button.clicked.connect(self._action_btn_clicked)
+        action_botton_h_box = QtWidgets.QHBoxLayout()
+        action_botton_h_box.addStretch()
+        action_botton_h_box.addWidget(self.start_action_button)
+        action_botton_h_box.addStretch()
+        self.layout.addLayout(action_botton_h_box)
         self.setLayout(self.layout)
         self.is_done = False
         self.too_few_bs = False
