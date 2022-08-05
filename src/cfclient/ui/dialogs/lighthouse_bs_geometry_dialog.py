@@ -129,7 +129,7 @@ class LighthouseBsGeometryTableModel(QAbstractTableModel):
 class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_class):
 
     _sweep_angles_received_and_averaged_signal = pyqtSignal(object)
-    _basestation_geometery_received_signal = pyqtSignal(object)
+    _base_station_geometery_received_signal = pyqtSignal(object)
 
     def __init__(self, lighthouse_tab, *args):
         super(LighthouseBsGeometryDialog, self).__init__(*args)
@@ -138,20 +138,18 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._lighthouse_tab = lighthouse_tab
 
         self._estimate_geometry_button.clicked.connect(self._estimate_geometry_button_clicked)
-        self._estimate_geometry_old_button.clicked.connect(self._estimate_geometry_old_button_clicked)
+        self._estimate_geometry_opencv_button.clicked.connect(self._estimate_geometry_opencv_button_clicked)
         self._write_to_cf_button.clicked.connect(self._write_to_cf_button_clicked)
 
         self._sweep_angles_received_and_averaged_signal.connect(self._sweep_angles_received_and_averaged_cb)
-        self._basestation_geometery_received_signal.connect(self._basestation_geometry_received_signal_cb)
+        self._base_station_geometery_received_signal.connect(self._basestation_geometry_received_signal_cb)
         self._close_button.clicked.connect(self.close)
-
-        self._estimate_geometry_old_button.setEnabled(False)
 
         self._sweep_angle_reader = LighthouseSweepAngleAverageReader(
             self._lighthouse_tab._helper.cf, self._sweep_angles_received_and_averaged_signal.emit)
 
-        self._basestation_geometry_wizard = LighthouseBasestationGeometryWizard(
-            self._lighthouse_tab._helper.cf, self._basestation_geometery_received_signal.emit)
+        self._base_station_geometry_wizard = LighthouseBasestationGeometryWizard(
+            self._lighthouse_tab._helper.cf, self._base_station_geometery_received_signal.emit)
 
         self._lh_geos = None
         self._newly_estimated_geometry = {}
@@ -197,11 +195,11 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._update_ui()
 
     def _estimate_geometry_button_clicked(self):
-        self._basestation_geometry_wizard.reset()
-        self._basestation_geometry_wizard.show()
+        self._base_station_geometry_wizard.reset()
+        self._base_station_geometry_wizard.show()
         self.hide()
 
-    def _estimate_geometry_old_button_clicked(self):
+    def _estimate_geometry_opencv_button_clicked(self):
         self._sweep_angle_reader.start_angle_collection()
         self._update_ui()
 

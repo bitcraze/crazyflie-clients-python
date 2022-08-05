@@ -58,14 +58,7 @@ SPACER_LABEL_HEIGHT = 27
 PICTURE_WIDTH = 640
 
 
-def string_padding(string_msg):
-    new_string_msg = string_msg
 
-    if string_msg.count('\n') < STRING_PAD_TOTAL:
-        for i in range(STRING_PAD_TOTAL-string_msg.count('\n')):
-            new_string_msg += '\n'
-
-    return new_string_msg
 
 
 class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
@@ -115,7 +108,7 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
 
 class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
 
-    def __init__(self, cf: Crazyflie, show_fill_in_field=False, show_add_measurements=False, parent=None):
+    def __init__(self, cf: Crazyflie, show_add_measurements=False, parent=None):
         super(LighthouseBasestationGeometryWizardBasePage, self).__init__(parent)
         self.show_add_measurements = show_add_measurements
         self.cf = cf
@@ -129,37 +122,24 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         self.explanation_text.setText(' ')
         self.explanation_text.setAlignment(QtCore.Qt.AlignCenter)
         self.layout.addWidget(self.explanation_text)
-        self.status_text = QtWidgets.QLabel()
-        self.status_text.setFont(QtGui.QFont('Courier New', 10))
-        self.status_text.setText(string_padding(''))
-        self.status_text.setFrameStyle(QtWidgets.QFrame.Panel | QtWidgets.QFrame.Plain)
+
         self.layout.addStretch()
 
-        if show_fill_in_field:
-            h_box = QtWidgets.QHBoxLayout()
-            self.seconds_explanation_text = QtWidgets.QLabel()
-            self.fill_record_times_line_edit = QtWidgets.QLineEdit(str(DEFAULT_RECORD_TIME))
-            self.seconds_explanation_text.setText('Enter the number of seconds you want to record:')
-            h_box.addStretch()
-            h_box.addWidget(self.seconds_explanation_text)
-            h_box.addWidget(self.fill_record_times_line_edit)
-            h_box.addStretch()
-            self.layout.addLayout(h_box)
-        else:
-            self.spacer = QtWidgets.QLabel()
-            self.spacer.setText(' ')
-            self.spacer.setFixedSize(50, SPACER_LABEL_HEIGHT)
-            self.layout.addWidget(self.spacer)
+        self.extra_layout_field()
 
+        self.status_text = QtWidgets.QLabel()
+        self.status_text.setFont(QtGui.QFont('Courier New', 10))
+        self.status_text.setText(self.str_pad(''))
+        self.status_text.setFrameStyle(QtWidgets.QFrame.Panel | QtWidgets.QFrame.Plain)
         self.layout.addWidget(self.status_text)
 
         self.start_action_button = QtWidgets.QPushButton("Start Measurement")
         self.start_action_button.clicked.connect(self._action_btn_clicked)
-        action_botton_h_box = QtWidgets.QHBoxLayout()
-        action_botton_h_box.addStretch()
-        action_botton_h_box.addWidget(self.start_action_button)
-        action_botton_h_box.addStretch()
-        self.layout.addLayout(action_botton_h_box)
+        action_button_h_box = QtWidgets.QHBoxLayout()
+        action_button_h_box.addStretch()
+        action_button_h_box.addWidget(self.start_action_button)
+        action_button_h_box.addStretch()
+        self.layout.addLayout(action_button_h_box)
         self.setLayout(self.layout)
         self.is_done = False
         self.too_few_bs = False
@@ -172,17 +152,23 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
     def isComplete(self):
         return self.is_done and (self.too_few_bs is not True)
 
+    def extra_layout_field(self):
+        self.spacer = QtWidgets.QLabel()
+        self.spacer.setText(' ')
+        self.spacer.setFixedSize(50, SPACER_LABEL_HEIGHT)
+        self.layout.addWidget(self.spacer)
+
     def _action_btn_clicked(self):
         self.is_done = False
         self.reader.start_angle_collection()
         self.timeout_timer.start(TIMEOUT_TIME)
-        self.status_text.setText(string_padding('Collecting sweep angles...'))
+        self.status_text.setText(self.str_pad('Collecting sweep angles...'))
         self.start_action_button.setDisabled(True)
 
     def _timeout_cb(self):
         if self.is_done is not True:
-            self.status_text.setText(string_padding('No sweep angles recorded! \n' +
-                                     'Make sure that the lighthouse basestations are turned on!'))
+            self.status_text.setText(self.str_pad('No sweep angles recorded! \n' +
+                                     'Make sure that the lighthouse base stations are turned on!'))
             self.reader.stop_angle_collection()
             self.start_action_button.setText("Restart Measurement")
             self.start_action_button.setDisabled(False)
@@ -190,6 +176,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
             self.timeout_timer.stop()
 
     def _ready_cb(self, averages):
+        print(self.show_add_measurements)
         recorded_angles = averages
         angles_calibrated = {}
         for bs_id, data in recorded_angles.items():
@@ -199,7 +186,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         amount_of_basestations = len(recorded_angles.keys())
 
         if amount_of_basestations < 2:
-            self.status_text.setText(string_padding('Recording Done!' +
+            self.status_text.setText(self.str_pad('Recording Done!' +
                                                     f' Visible Basestations: {self.visible_basestations}\n' +
                                      'Received too few base stations, we need at least two. Please try again!'))
             self.too_few_bs = True
@@ -215,7 +202,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
             if self.show_add_measurements:
                 self.recorded_angles_result.append(self.get_sample())
                 status_text_string += f'Total measurements added: {len(self.recorded_angles_result)}\n'
-            self.status_text.setText(string_padding(status_text_string))
+            self.status_text.setText(self.str_pad(status_text_string))
             self.is_done = True
             self.completeChanged.emit()
 
@@ -224,11 +211,19 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
                 self.start_action_button.setDisabled(False)
             else:
                 self.start_action_button.setText("Restart Measurement")
-                self.start_action_button.setDisabled(False)
+            self.start_action_button.setDisabled(False)
 
     def get_sample(self):
         return self.recorded_angle_result
 
+    def str_pad(self, string_msg):
+        new_string_msg = string_msg
+
+        if string_msg.count('\n') < STRING_PAD_TOTAL:
+            for i in range(STRING_PAD_TOTAL-string_msg.count('\n')):
+                new_string_msg += '\n'
+
+        return new_string_msg
 
 class RecordOriginSamplePage(LighthouseBasestationGeometryWizardBasePage):
     def __init__(self, cf: Crazyflie, parent=None):
@@ -264,14 +259,13 @@ class RecordXYPlaneSamplesPage(LighthouseBasestationGeometryWizardBasePage):
 
 class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
     def __init__(self, cf: Crazyflie, parent=None):
-        super(RecordXYZSpaceSamplesPage, self).__init__(cf, show_fill_in_field=True, show_add_measurements=False)
+        super(RecordXYZSpaceSamplesPage, self).__init__(cf)
         self.explanation_text.setText('Step 4. Move the Crazyflie around, try to cover all of the space,\n make sure ' +
                                       'all the base stations are received')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_4.png")
         pixmap = pixmap.scaledToWidth(PICTURE_WIDTH)
         self.explanation_picture.setPixmap(pixmap)
 
-        self.show_fill_in_field = True
         self.record_timer = QtCore.QTimer()
         self.record_timer.timeout.connect(self._record_timer_cb)
         self.record_time_total = DEFAULT_RECORD_TIME
@@ -279,14 +273,25 @@ class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
         self.reader = LighthouseSweepAngleReader(self.cf, self._ready_single_sample_cb)
         self.bs_seen = set()
 
+    def extra_layout_field(self):
+        h_box = QtWidgets.QHBoxLayout()
+        self.seconds_explanation_text = QtWidgets.QLabel()
+        self.fill_record_times_line_edit = QtWidgets.QLineEdit(str(DEFAULT_RECORD_TIME))
+        self.seconds_explanation_text.setText('Enter the number of seconds you want to record:')
+        h_box.addStretch()
+        h_box.addWidget(self.seconds_explanation_text)
+        h_box.addWidget(self.fill_record_times_line_edit)
+        h_box.addStretch()
+        self.layout.addLayout(h_box)
+
     def _record_timer_cb(self):
         self.record_time_current += 1
-        self.status_text.setText(string_padding('Collecting sweep angles...' +
+        self.status_text.setText(self.str_pad('Collecting sweep angles...' +
                                  f' seconds remaining: {self.record_time_total-self.record_time_current}'))
 
         if self.record_time_current == self.record_time_total:
             self.reader.stop()
-            self.status_text.setText(string_padding(
+            self.status_text.setText(self.str_pad(
                 'Recording Done!'+f' Got {len(self.recorded_angles_result)} samples!'))
             self.start_action_button.setText("Restart measurements")
             self.start_action_button.setDisabled(False)
@@ -300,7 +305,7 @@ class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
         self.record_time_current = 0
         self.record_time_total = int(self.fill_record_times_line_edit.text())
         self.record_timer.start(1000)
-        self.status_text.setText(string_padding('Collecting sweep angles...' +
+        self.status_text.setText(self.str_pad('Collecting sweep angles...' +
                                  f' seconds remaining: {self.record_time_total}'))
 
         self.start_action_button.setDisabled(True)
@@ -326,6 +331,7 @@ class EstimateGeometryThread(QtCore.QObject):
         self.x_axis = x_axis
         self.xy_plane = xy_plane
         self.samples = samples
+        self.bs_poses = {}
 
     def run(self):
         try:
@@ -392,7 +398,7 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
 
     def _action_btn_clicked(self):
         self.start_action_button.setDisabled(True)
-        self.status_text.setText(string_padding('Estimating geometry...'))
+        self.status_text.setText(self.str_pad('Estimating geometry...'))
         origin = self.origin_page.get_sample()
         x_axis = [self.xaxis_page.get_sample()]
         xy_plane = self.xyplane_page.get_samples()
@@ -411,14 +417,14 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
     def _geometry_estimated_finished(self):
         self.bs_poses = self.worker.get_poses()
         self.start_action_button.setDisabled(False)
-        self.status_text.setText(string_padding('Geometry estimated! (X,Y,Z) in meters \n' +
+        self.status_text.setText(self.str_pad('Geometry estimated! (X,Y,Z) in meters \n' +
                                  self._print_base_stations_poses(self.bs_poses)))
         self.is_done = True
         self.completeChanged.emit()
 
     def _geometry_estimated_failed(self):
         self.bs_poses = self.worker.get_poses()
-        self.status_text.setText(string_padding('Geometry estimate failed! \n' +
+        self.status_text.setText(self.str_pad('Geometry estimate failed! \n' +
                                                 'Hit Cancel to close the wizard and start again'))
 
     def _print_base_stations_poses(self, base_stations: dict[int, Pose]):
