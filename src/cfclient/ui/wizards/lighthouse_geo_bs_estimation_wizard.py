@@ -58,9 +58,6 @@ SPACER_LABEL_HEIGHT = 27
 PICTURE_WIDTH = 640
 
 
-
-
-
 class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
     def __init__(self, cf, ready_cb, parent=None, *args):
         super(LighthouseBasestationGeometryWizard, self).__init__(parent)
@@ -187,8 +184,9 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
 
         if amount_of_basestations < 2:
             self.status_text.setText(self.str_pad('Recording Done!' +
-                                                    f' Visible Basestations: {self.visible_basestations}\n' +
-                                     'Received too few base stations, we need at least two. Please try again!'))
+                                                  f' Visible Basestations: {self.visible_basestations}\n' +
+                                                  'Received too few base stations,' +
+                                                  'we need at least two. Please try again!'))
             self.too_few_bs = True
             self.is_done = True
             if self.show_add_measurements and len(self.recorded_angles_result) > 0:
@@ -224,6 +222,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
                 new_string_msg += '\n'
 
         return new_string_msg
+
 
 class RecordOriginSamplePage(LighthouseBasestationGeometryWizardBasePage):
     def __init__(self, cf: Crazyflie, parent=None):
@@ -425,7 +424,7 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
     def _geometry_estimated_failed(self):
         self.bs_poses = self.worker.get_poses()
         self.status_text.setText(self.str_pad('Geometry estimate failed! \n' +
-                                                'Hit Cancel to close the wizard and start again'))
+                                              'Hit Cancel to close the wizard and start again'))
 
     def _print_base_stations_poses(self, base_stations: dict[int, Pose]):
         """Pretty print of base stations pose"""
