@@ -288,6 +288,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     _new_system_config_written_to_cf_signal = pyqtSignal(bool)
     _geometry_read_signal = pyqtSignal(object)
     _calibration_read_signal = pyqtSignal(object)
+    _system_type_changed_signal = pyqtSignal(object)
+
 
     def __init__(self, helper):
         super(LighthouseTab, self).__init__(helper, 'Lighthouse Positioning')
@@ -302,6 +304,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._new_system_config_written_to_cf_signal.connect(self._new_system_config_written_to_cf)
         self._geometry_read_signal.connect(self._geometry_read_cb)
         self._calibration_read_signal.connect(self._calibration_read_cb)
+        self._system_type_changed_signal.connect(self._system_type_changed_cb)
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(self._connected_signal.emit)
@@ -342,7 +345,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
         self._basestation_geometry_dialog = LighthouseBsGeometryDialog(self)
         self._basestation_mode_dialog = LighthouseBsModeDialog(self)
-        self._system_type_dialog = LighthouseSystemTypeDialog(helper)
+        self._system_type_dialog = LighthouseSystemTypeDialog(helper, self._system_type_changed_signal.emit)
 
         self._manage_estimate_geometry_button.clicked.connect(self._show_basestation_geometry_dialog)
         self._change_system_type_button.clicked.connect(lambda: self._system_type_dialog.show())
@@ -432,6 +435,9 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._basestation_geometry_dialog.geometry_updated(self._lh_geos)
         self._is_geometry_read_ongoing = False
 
+    def _system_type_changed_cb(self):
+        self._update_basestation_status_indicators()
+
     def _is_matching_current_geo_data(self, geometries):
         return geometries == self._lh_geos.keys()
 
@@ -445,6 +451,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
     def _status_report_received(self, timestamp, data, logconf):
         """Callback from the logging system when the status is updated."""
+        bs_available_mask = int(self._helper.cf.param.get_value('lighthouse.bsAvailable'))
+        self._mask_status_matrix(bs_available_mask)
 
         if self.LOG_RECEIVE in data:
             bit_mask = data[self.LOG_RECEIVE]
@@ -608,6 +616,24 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             for i in range(1, 5):
                 container.addWidget(self._create_label(), i, bs + 1)
 
+
+    def _mask_status_matrix(self, bs_available_mask):
+        container = self._basestation_stats_container
+
+        # Find the nr of base stations by looking for the highest bit that is set
+        # Assume all bs up to that bit are available
+        for bs in range(0, 16):
+            bs_available = bs_available_mask & (1 << bs)
+            bs_indicator_id = bs + 1
+            for stats_indicator_id in range(1, 5):
+                item = container.itemAtPosition(stats_indicator_id, bs_indicator_id)
+                if item is not None:
+                    label = item.widget()
+                    if bs_available:
+                        label.setHidden(False)
+                    else:
+                        label.setHidden(True)
+
     def _create_label(self, text=None):
         label = QLabel()
         label.setMinimumSize(30, 0)
@@ -625,6 +651,9 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         """Handling the basestation status label handles to indicate
             the state of received data per basestation"""
         container = self._basestation_stats_container
+        
+        bs_available_mask = int(self._helper.cf.param.get_value('lighthouse.bsAvailable'))
+        self._mask_status_matrix(bs_available_mask)
 
         # Ports the label number to the first index of the statistic id
         stats_id_port = {1: 0, 2: 1, 3: 4, 4: 5}
