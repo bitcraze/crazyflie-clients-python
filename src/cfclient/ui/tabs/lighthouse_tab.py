@@ -291,7 +291,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     _calibration_read_signal = pyqtSignal(object)
     _system_type_changed_signal = pyqtSignal(object)
 
-
     def __init__(self, helper):
         super(LighthouseTab, self).__init__(helper, 'Lighthouse Positioning')
         self.setupUi(self)
@@ -611,7 +610,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             container.addWidget(self._create_label(str(bs + 1)), 0, bs + 1)
             for i in range(1, 5):
                 container.addWidget(self._create_label(), i, bs + 1)
-
 
     def _mask_status_matrix(self, bs_available_mask):
         container = self._basestation_stats_container
