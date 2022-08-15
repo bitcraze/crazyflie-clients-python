@@ -138,7 +138,11 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._lighthouse_tab = lighthouse_tab
 
         self._estimate_geometry_button.clicked.connect(self._estimate_geometry_button_clicked)
-        self._estimate_geometry_opencv_button.clicked.connect(self._estimate_geometry_opencv_button_clicked)
+        self._opencv_estimator = LighthouseBsGeoEstimator()
+        if self._opencv_estimator.lighthouse_bs_geo_estimator_available():
+            self._estimate_geometry_opencv_button.clicked.connect(self._estimate_geometry_opencv_button_clicked)
+        else:
+            self._estimate_geometry_opencv_button.setEnabled(False)
         self._write_to_cf_button.clicked.connect(self._write_to_cf_button_clicked)
 
         self._sweep_angles_received_and_averaged_signal.connect(self._sweep_angles_received_and_averaged_cb)
@@ -150,6 +154,7 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
 
         self._base_station_geometry_wizard = LighthouseBasestationGeometryWizard(
             self._lighthouse_tab._helper.cf, self._base_station_geometery_received_signal.emit)
+
 
         self._lh_geos = None
         self._newly_estimated_geometry = {}
@@ -180,12 +185,11 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
 
     def _sweep_angles_received_and_averaged_cb(self, averaged_angles):
         self._averaged_angles = averaged_angles
-        estimator = LighthouseBsGeoEstimator()
         self._newly_estimated_geometry = {}
 
         for id, average_data in averaged_angles.items():
             sensor_data = average_data[1]
-            rotation_bs_matrix, position_bs_vector = estimator.estimate_geometry(sensor_data)
+            rotation_bs_matrix, position_bs_vector = self._opencv_estimator.estimate_geometry(sensor_data)
             geo = LighthouseBsGeometry()
             geo.rotation_matrix = rotation_bs_matrix
             geo.origin = position_bs_vector
