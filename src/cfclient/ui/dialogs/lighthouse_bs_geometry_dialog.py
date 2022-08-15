@@ -138,7 +138,14 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._lighthouse_tab = lighthouse_tab
 
         self._estimate_geometry_button.clicked.connect(self._estimate_geometry_button_clicked)
-        self._estimate_geometry_opencv_button.clicked.connect(self._estimate_geometry_opencv_button_clicked)
+        self._simple_estimator = LighthouseBsGeoEstimator()
+        self._estimate_geometry_simple_button.clicked.connect(self._estimate_geometry_simple_button_clicked)
+        try:
+            if not self._simple_estimator.is_available():
+                self._estimate_geometry_simple_button.setEnabled(False)
+        except Exception as e:
+            print(e)
+
         self._write_to_cf_button.clicked.connect(self._write_to_cf_button_clicked)
 
         self._sweep_angles_received_and_averaged_signal.connect(self._sweep_angles_received_and_averaged_cb)
@@ -180,12 +187,11 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
 
     def _sweep_angles_received_and_averaged_cb(self, averaged_angles):
         self._averaged_angles = averaged_angles
-        estimator = LighthouseBsGeoEstimator()
         self._newly_estimated_geometry = {}
 
         for id, average_data in averaged_angles.items():
             sensor_data = average_data[1]
-            rotation_bs_matrix, position_bs_vector = estimator.estimate_geometry(sensor_data)
+            rotation_bs_matrix, position_bs_vector = self._simple_estimator.estimate_geometry(sensor_data)
             geo = LighthouseBsGeometry()
             geo.rotation_matrix = rotation_bs_matrix
             geo.origin = position_bs_vector
@@ -199,7 +205,7 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._base_station_geometry_wizard.show()
         self.hide()
 
-    def _estimate_geometry_opencv_button_clicked(self):
+    def _estimate_geometry_simple_button_clicked(self):
         self._sweep_angle_reader.start_angle_collection()
         self._update_ui()
 
