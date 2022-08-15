@@ -139,10 +139,13 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
 
         self._estimate_geometry_button.clicked.connect(self._estimate_geometry_button_clicked)
         self._opencv_estimator = LighthouseBsGeoEstimator()
-        if self._opencv_estimator.lighthouse_bs_geo_estimator_available():
-            self._estimate_geometry_opencv_button.clicked.connect(self._estimate_geometry_opencv_button_clicked)
-        else:
-            self._estimate_geometry_opencv_button.setEnabled(False)
+        self._estimate_geometry_opencv_button.clicked.connect(self._estimate_geometry_opencv_button_clicked)
+        try:
+            if not self._opencv_estimator.is_lighthouse_bs_geo_estimator_available():
+                self._estimate_geometry_opencv_button.setEnabled(False)
+        except Exception as e:
+            print(e)  
+
         self._write_to_cf_button.clicked.connect(self._write_to_cf_button_clicked)
 
         self._sweep_angles_received_and_averaged_signal.connect(self._sweep_angles_received_and_averaged_cb)
