@@ -280,6 +280,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     LOG_CALIBRATION_UPDATED = "lighthouse.bsCalUd"
     LOG_GEOMETERY_EXISTS = "lighthouse.bsGeoVal"
     LOG_ACTIVE = "lighthouse.bsActive"
+    LOG_AVAILABLE = "lighthouse.bsAvailable"
 
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
@@ -322,6 +323,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._bs_calibration_data_updated = set()
         self._bs_geometry_data_exists = set()
         self._bs_data_to_estimator = set()
+        self._bs_available = set()
 
         self._clear_state_indicator()
 
@@ -331,7 +333,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             self._bs_calibration_data_confirmed,
             self._bs_calibration_data_updated,
             self._bs_geometry_data_exists,
-            self._bs_data_to_estimator]
+            self._bs_data_to_estimator,
+            self._bs_available]
 
         self._lh_status = self.STATUS_NOT_RECEIVING
 
@@ -400,7 +403,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
                 self._register_logblock(
                     "lhStatus",
                     [self.LOG_STATUS, self.LOG_RECEIVE, self.LOG_CALIBRATION_EXISTS, self.LOG_CALIBRATION_CONFIRMED,
-                        self.LOG_CALIBRATION_UPDATED, self.LOG_GEOMETERY_EXISTS, self.LOG_ACTIVE],
+                        self.LOG_CALIBRATION_UPDATED, self.LOG_GEOMETERY_EXISTS, self.LOG_ACTIVE, self.LOG_AVAILABLE],
                     self._status_report_signal.emit,
                     self._log_error_signal.emit)
             except KeyError as e:
@@ -408,14 +411,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             except AttributeError as e:
                 logger.warning(str(e))
 
-            try:
-                bs_available_mask = int(self._helper.cf.param.get_value('lighthouse.bsAvailable'))
-            except KeyError as e:
-                # Old firmware that does not support lighthouse.bsAvailable, set to bs 1 and 2 for backwards
-                # compatibility
-                bs_available_mask = 0x3
-                logger.warning(str(e))
-            self._populate_status_matrix(bs_available_mask)
+            self._populate_status_matrix()
 
             # Now that we know we have a lighthouse deck, setup the memory helper and config writer
             self._lh_memory_helper = LighthouseMemHelper(self._helper.cf)
@@ -471,6 +467,10 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         if self.LOG_STATUS in data:
             self._lh_status = data[self.LOG_STATUS]
 
+        if self.LOG_AVAILABLE in data:
+            bit_mask = data[self.LOG_AVAILABLE]
+            self._adjust_bitmask(bit_mask, self._bs_available)
+
         self._update_basestation_status_indicators()
 
     def _disconnected(self, link_uri):
@@ -522,6 +522,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             self._plot_3d.update_base_station_visibility(self._bs_data_to_estimator)
             self._update_position_label(self._helper.pose_logger.position)
             self._update_status_label(self._lh_status)
+            self._mask_status_matrix(self._bs_available)
 
     def _update_ui(self):
         enabled = self._is_connected and self.is_lighthouse_deck_active
@@ -595,18 +596,31 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
         return np.array(r)
 
-    def _populate_status_matrix(self, bs_available_mask):
+    def _populate_status_matrix(self):
         container = self._basestation_stats_container
 
         # Find the nr of base stations by looking for the highest bit that is set
         # Assume all bs up to that bit are available
         for bs in range(0, 16):
-            if bs_available_mask & (1 << bs) == 0:
-                break
-
             container.addWidget(self._create_label(str(bs + 1)), 0, bs + 1)
             for i in range(1, 5):
                 container.addWidget(self._create_label(), i, bs + 1)
+
+    def _mask_status_matrix(self, bs_available_mask):
+        container = self._basestation_stats_container
+
+        # Find the nr of base stations by looking for the highest bit that is set
+        # Assume all bs up to that bit are available
+        for bs in range(0, 16):
+            bs_indicator_id = bs + 1
+            for stats_indicator_id in range(0, 5):
+                item = container.itemAtPosition(stats_indicator_id, bs_indicator_id)
+                if item is not None:
+                    label = item.widget()
+                    if bs_indicator_id - 1 in bs_available_mask:
+                        label.setHidden(False)
+                    else:
+                        label.setHidden(True)
 
     def _create_label(self, text=None):
         label = QLabel()
