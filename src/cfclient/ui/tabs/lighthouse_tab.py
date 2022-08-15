@@ -280,6 +280,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     LOG_CALIBRATION_UPDATED = "lighthouse.bsCalUd"
     LOG_GEOMETERY_EXISTS = "lighthouse.bsGeoVal"
     LOG_ACTIVE = "lighthouse.bsActive"
+    LOG_AVAILABLE = "lighthouse.bsAvailable"
 
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
@@ -325,6 +326,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._bs_calibration_data_updated = set()
         self._bs_geometry_data_exists = set()
         self._bs_data_to_estimator = set()
+        self._bs_available = set()
 
         self._clear_state_indicator()
 
@@ -334,7 +336,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             self._bs_calibration_data_confirmed,
             self._bs_calibration_data_updated,
             self._bs_geometry_data_exists,
-            self._bs_data_to_estimator]
+            self._bs_data_to_estimator,
+            self._bs_available]
 
         self._lh_status = self.STATUS_NOT_RECEIVING
 
@@ -403,7 +406,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
                 self._register_logblock(
                     "lhStatus",
                     [self.LOG_STATUS, self.LOG_RECEIVE, self.LOG_CALIBRATION_EXISTS, self.LOG_CALIBRATION_CONFIRMED,
-                        self.LOG_CALIBRATION_UPDATED, self.LOG_GEOMETERY_EXISTS, self.LOG_ACTIVE],
+                        self.LOG_CALIBRATION_UPDATED, self.LOG_GEOMETERY_EXISTS, self.LOG_ACTIVE, self.LOG_AVAILABLE],
                     self._status_report_signal.emit,
                     self._log_error_signal.emit)
             except KeyError as e:
@@ -451,8 +454,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
     def _status_report_received(self, timestamp, data, logconf):
         """Callback from the logging system when the status is updated."""
-        bs_available_mask = int(self._helper.cf.param.get_value('lighthouse.bsAvailable'))
-        self._mask_status_matrix(bs_available_mask)
 
         if self.LOG_RECEIVE in data:
             bit_mask = data[self.LOG_RECEIVE]
@@ -478,6 +479,10 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
         if self.LOG_STATUS in data:
             self._lh_status = data[self.LOG_STATUS]
+
+        if self.LOG_AVAILABLE in data:
+            bit_mask = data[self.LOG_AVAILABLE]
+            self._adjust_bitmask(bit_mask, self._bs_available)
 
         self._update_basestation_status_indicators()
 
@@ -530,6 +535,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             self._plot_3d.update_base_station_visibility(self._bs_data_to_estimator)
             self._update_position_label(self._helper.pose_logger.position)
             self._update_status_label(self._lh_status)
+            self._mask_status_matrix(self._bs_available)
 
     def _update_ui(self):
         enabled = self._is_connected and self.is_lighthouse_deck_active
@@ -623,13 +629,12 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         # Find the nr of base stations by looking for the highest bit that is set
         # Assume all bs up to that bit are available
         for bs in range(0, 16):
-            bs_available = bs_available_mask & (1 << bs)
             bs_indicator_id = bs + 1
-            for stats_indicator_id in range(1, 5):
+            for stats_indicator_id in range(0, 5):
                 item = container.itemAtPosition(stats_indicator_id, bs_indicator_id)
                 if item is not None:
                     label = item.widget()
-                    if bs_available:
+                    if bs_indicator_id - 1 in bs_available_mask:
                         label.setHidden(False)
                     else:
                         label.setHidden(True)
@@ -651,9 +656,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         """Handling the basestation status label handles to indicate
             the state of received data per basestation"""
         container = self._basestation_stats_container
-        
-        bs_available_mask = int(self._helper.cf.param.get_value('lighthouse.bsAvailable'))
-        self._mask_status_matrix(bs_available_mask)
 
         # Ports the label number to the first index of the statistic id
         stats_id_port = {1: 0, 2: 1, 3: 4, 4: 5}
