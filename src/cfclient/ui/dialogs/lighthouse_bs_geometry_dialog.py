@@ -138,11 +138,11 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._lighthouse_tab = lighthouse_tab
 
         self._estimate_geometry_button.clicked.connect(self._estimate_geometry_button_clicked)
-        self._opencv_estimator = LighthouseBsGeoEstimator()
-        self._estimate_geometry_opencv_button.clicked.connect(self._estimate_geometry_opencv_button_clicked)
+        self._simple_estimator = LighthouseBsGeoEstimator()
+        self._estimate_geometry_simple_button.clicked.connect(self._estimate_geometry_simple_button_clicked)
         try:
-            if not self._opencv_estimator.is_lighthouse_bs_geo_estimator_available():
-                self._estimate_geometry_opencv_button.setEnabled(False)
+            if not self._simple_estimator.is_available():
+                self._estimate_geometry_simple_button.setEnabled(False)
         except Exception as e:
             print(e)
 
@@ -191,7 +191,7 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
 
         for id, average_data in averaged_angles.items():
             sensor_data = average_data[1]
-            rotation_bs_matrix, position_bs_vector = self._opencv_estimator.estimate_geometry(sensor_data)
+            rotation_bs_matrix, position_bs_vector = self._simple_estimator.estimate_geometry(sensor_data)
             geo = LighthouseBsGeometry()
             geo.rotation_matrix = rotation_bs_matrix
             geo.origin = position_bs_vector
@@ -205,7 +205,7 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._base_station_geometry_wizard.show()
         self.hide()
 
-    def _estimate_geometry_opencv_button_clicked(self):
+    def _estimate_geometry_simple_button_clicked(self):
         self._sweep_angle_reader.start_angle_collection()
         self._update_ui()
 

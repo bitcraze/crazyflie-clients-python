@@ -42,9 +42,9 @@
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="_estimate_geometry_opencv_button">
+        <widget class="QPushButton" name="_estimate_geometry_simple_button">
          <property name="text">
-          <string>Estimate Geometry OpenCV</string>
+          <string>Estimate Geometry Simple</string>
          </property>
         </widget>
        </item>
