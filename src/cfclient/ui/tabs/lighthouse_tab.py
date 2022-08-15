@@ -289,7 +289,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     _new_system_config_written_to_cf_signal = pyqtSignal(bool)
     _geometry_read_signal = pyqtSignal(object)
     _calibration_read_signal = pyqtSignal(object)
-    _system_type_changed_signal = pyqtSignal(object)
 
     def __init__(self, helper):
         super(LighthouseTab, self).__init__(helper, 'Lighthouse Positioning')
@@ -304,7 +303,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._new_system_config_written_to_cf_signal.connect(self._new_system_config_written_to_cf)
         self._geometry_read_signal.connect(self._geometry_read_cb)
         self._calibration_read_signal.connect(self._calibration_read_cb)
-        self._system_type_changed_signal.connect(self._system_type_changed_cb)
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(self._connected_signal.emit)
@@ -347,7 +345,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
         self._basestation_geometry_dialog = LighthouseBsGeometryDialog(self)
         self._basestation_mode_dialog = LighthouseBsModeDialog(self)
-        self._system_type_dialog = LighthouseSystemTypeDialog(helper, self._system_type_changed_signal.emit)
+        self._system_type_dialog = LighthouseSystemTypeDialog(helper)
 
         self._manage_estimate_geometry_button.clicked.connect(self._show_basestation_geometry_dialog)
         self._change_system_type_button.clicked.connect(lambda: self._system_type_dialog.show())
@@ -429,9 +427,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._lh_geos = dict(filter(lambda key_value: key_value[1].valid, geometries.items()))
         self._basestation_geometry_dialog.geometry_updated(self._lh_geos)
         self._is_geometry_read_ongoing = False
-
-    def _system_type_changed_cb(self):
-        self._update_basestation_status_indicators()
 
     def _is_matching_current_geo_data(self, geometries):
         return geometries == self._lh_geos.keys()

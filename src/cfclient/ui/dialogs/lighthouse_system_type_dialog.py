@@ -50,23 +50,18 @@ class LighthouseSystemTypeDialog(QtWidgets.QWidget, lighthouse_system_widget_cla
     VALUE_V1 = 1
     VALUE_V2 = 2
 
-    def __init__(self, helper, ready_cb, *args):
+    def __init__(self, helper, *args):
         super(LighthouseSystemTypeDialog, self).__init__(*args)
         self.setupUi(self)
-        self.ready_cb = ready_cb
 
         self._helper = helper
 
-        self._close_button.clicked.connect(self.close_button_clicked)
+        self._close_button.clicked.connect(self.close)
 
         self._radio_btn_v1.toggled.connect(self._type_toggled)
         self._radio_btn_v2.toggled.connect(self._type_toggled)
 
         self._curr_type = 0
-
-    def close_button_clicked(self):
-        self.ready_cb(True)
-        self.close()
 
     def get_system_type(self):
         system_type = self.VALUE_V2
