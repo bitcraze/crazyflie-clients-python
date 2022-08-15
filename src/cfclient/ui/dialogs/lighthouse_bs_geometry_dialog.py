@@ -144,7 +144,7 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
             if not self._opencv_estimator.is_lighthouse_bs_geo_estimator_available():
                 self._estimate_geometry_opencv_button.setEnabled(False)
         except Exception as e:
-            print(e)  
+            print(e)
 
         self._write_to_cf_button.clicked.connect(self._write_to_cf_button_clicked)
 
@@ -157,7 +157,6 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
 
         self._base_station_geometry_wizard = LighthouseBasestationGeometryWizard(
             self._lighthouse_tab._helper.cf, self._base_station_geometery_received_signal.emit)
-
 
         self._lh_geos = None
         self._newly_estimated_geometry = {}
