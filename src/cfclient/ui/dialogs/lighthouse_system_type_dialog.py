@@ -96,6 +96,3 @@ class LighthouseSystemTypeDialog(QtWidgets.QWidget, lighthouse_system_widget_cla
         if new_type != self._curr_type:
             self._curr_type = new_type
             self._helper.cf.param.set_value(self.PARAM_GROUP + '.' + self.PARAM_NAME, self._curr_type)
-
-
-        
