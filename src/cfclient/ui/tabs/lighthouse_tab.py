@@ -414,14 +414,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             except AttributeError as e:
                 logger.warning(str(e))
 
-            try:
-                bs_available_mask = int(self._helper.cf.param.get_value('lighthouse.bsAvailable'))
-            except KeyError as e:
-                # Old firmware that does not support lighthouse.bsAvailable, set to bs 1 and 2 for backwards
-                # compatibility
-                bs_available_mask = 0x3
-                logger.warning(str(e))
-            self._populate_status_matrix(bs_available_mask)
+            self._populate_status_matrix()
 
             # Now that we know we have a lighthouse deck, setup the memory helper and config writer
             self._lh_memory_helper = LighthouseMemHelper(self._helper.cf)
@@ -609,15 +602,12 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
         return np.array(r)
 
-    def _populate_status_matrix(self, bs_available_mask):
+    def _populate_status_matrix(self):
         container = self._basestation_stats_container
 
         # Find the nr of base stations by looking for the highest bit that is set
         # Assume all bs up to that bit are available
         for bs in range(0, 16):
-            if bs_available_mask & (1 << bs) == 0:
-                break
-
             container.addWidget(self._create_label(str(bs + 1)), 0, bs + 1)
             for i in range(1, 5):
                 container.addWidget(self._create_label(), i, bs + 1)
