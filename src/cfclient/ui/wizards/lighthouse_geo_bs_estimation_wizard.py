@@ -23,7 +23,7 @@
 #  MA  02110-1301, USA.
 
 """
-Wizard to estimate the geometry of the lighthouse basestations.
+Wizard to estimate the geometry of the lighthouse base stations.
 Used in the lighthouse tab from the manage geometry dialog
 """
 
@@ -349,11 +349,14 @@ class EstimateGeometryThread(QtCore.QObject):
                            samples: list[LhCfPoseSample]) -> dict[int, Pose]:
         """Estimate the geometry of the system based on samples recorded by a Crazyflie"""
         matched_samples = [origin] + x_axis + xy_plane + LighthouseSampleMatcher.match(samples, min_nr_of_bs_in_match=2)
-        initial_guess = LighthouseInitialEstimator.estimate(matched_samples, LhDeck4SensorPositions.positions)
+        initial_guess, cleaned_matched_samples = LighthouseInitialEstimator.estimate(matched_samples,
+                                                                                     LhDeck4SensorPositions.positions)
 
-        solution = LighthouseGeometrySolver.solve(initial_guess, matched_samples, LhDeck4SensorPositions.positions)
+        solution = LighthouseGeometrySolver.solve(initial_guess,
+                                                  cleaned_matched_samples,
+                                                  LhDeck4SensorPositions.positions)
         if not solution.success:
-            raise Exception("No lighthouse basestation geometry solution could be found!")
+            raise Exception("No lighthouse base station geometry solution could be found!")
 
         start_x_axis = 1
         start_xy_plane = 1 + len(x_axis)
