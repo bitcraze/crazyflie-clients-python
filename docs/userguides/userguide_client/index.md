@@ -20,7 +20,7 @@ where the front is, so you will need to know [Crazyflie's coordinate system](htt
 
 ---
 
-## How to get flying
+## How to get flying with a controller
 
 -   Start up the application
 -   Insert the joystick and Crazyradio (PA)

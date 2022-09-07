@@ -53,10 +53,10 @@ Below is a list of controllers and the status for different OSs. The
 list is far from complete so if you have more info please edit or drop
 us an email.
 
- | **Controller**    | **Linux USB** |   **Linux BT** |**Win XP USB**  | **Win XP BT**  |**Win7 USB**     |   **Win7 BT** |  **Win8 USB** |**Win10 USB** |**Mac OSX USB**  | **Mac OSX BT**|
-|--|--|--|--|--|--|--|--|--|--|--|
- | Playstation 3 (or copy)  | Works  | Works |  Works |  Works | Works  | Works  | Works,  | Not Tested | Works   |  Works|
-  Xbox 360 (or copy)   |  Works  | N/A  | Works    |   N/A    |   Works    |    N/A  |  Not tested | Works | Not tested    |  Not tested|
+ | **Controller**    | **Linux USB** |   **Linux BT** |**Win XP USB**  | **Win XP BT**  |**Win7 USB**     |   **Win7 BT** |  **Win8 USB** |**Win10 USB** | **Win 11 USB** | **Mac OSX USB**  | **Mac OSX BT**|
+|--|--|--|--|--|--|--|--|--|--|--|--|
+ | Playstation 3 (or copy)  | Works  | Works |  Works |  Works | Works  | Works  | Works,  | Works | Not tested | Works   |  Works|
+  Xbox 360 (or copy)   |  Works  | N/A  | Works    |   N/A    |   Works    |    N/A  |  Works | Works | Works| Not tested    |  Not tested|
 
 
 ### Playstation 3 controller
