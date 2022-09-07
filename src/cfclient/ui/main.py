@@ -673,6 +673,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                     msg.setWindowTitle("Crazyradio permissions")
                     msg.exec()
                     self._permission_warned = True
+            except Exception as e:
+                # For other Crazyradio exceptions (for instance if it's not attached)
+                # ignore and keep scanning other link drivers.
+                logger.warning(e)
 
         self._scan(address)
 
