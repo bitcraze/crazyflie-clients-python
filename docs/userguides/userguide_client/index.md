@@ -1,6 +1,7 @@
 ---
 title: Userguide cfclient GUI
 page_id: userguide_client
+sort_order: 1
 ---
 
 This page is intended to give an overview on how to use the Crazyflie
@@ -19,7 +20,7 @@ where the front is, so you will need to know [Crazyflie's coordinate system](htt
 
 ---
 
-## How to get flying
+## How to get flying with a controller
 
 -   Start up the application
 -   Insert the joystick and Crazyradio (PA)
@@ -67,14 +68,7 @@ already open as a tab, the tab will be removed and it will be opened as a toolbo
 
 The following tabs/toolboxes are currently available:
 
-* [Flightcontrol Tab](./flightcontrol_tab.md)
-* [Plotter Tab](./plotter_tab.md)
-* [Parameter Tab](./parameters_tab.md)
-* [Log Blocks Tab](./logblocks_tab.md)
-* [Loco Positioning Tab](./loco_tab.md)
-* [Lighthouse Positioning Tab](./lighthouse_tab.md)
-* [Console Tab](./console_tab.md)
-
+{% sub_page_menu %}
 ---
 
 ## Functionality

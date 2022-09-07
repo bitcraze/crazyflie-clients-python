@@ -50,7 +50,7 @@ attributes:
 
 |  Attribute  | Values                            |Comments|
 | --------------- | ------------------------------------- | ---------------------- |
-|  platform       | cf2, tag                              |Select the target platform (tag = Roadrunner) |
+|  platform       | cf2, bolt, tag                        |Select the target platform (tag = Roadrunner) |
 |  target         | stm32, nrf51                          |Select the target MCU on the target platform|
 |  type           | fw, bootloader, softdevice, userapp   |Describe what\'s contained in the binary|
 |  origin         | N/A                                   |Set the address where the app should be flashed|
