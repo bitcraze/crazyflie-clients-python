@@ -24,7 +24,7 @@ pip3 install --upgrade pip
 ### Setting udev permissions
 
 Using Crazyradio on Linux requires that you set udev permissions. See the cflib
-[installation guide](https://github.com/bitcraze/crazyflie-lib-python/blob/master/docs/installation/install.md#setting-udev-permissions)
+[installation guide](https://www.bitcraze.io/documentation/repository/crazyflie-lib-python/master/installation/usb_permissions/)
 for more information.
 
 ## Windows
@@ -47,7 +47,7 @@ git --version
 
 ### Install crazyradio drivers
 
-To use Crazyradio you will have to [install the drivers](https://github.com/bitcraze/crazyradio-firmware/blob/master/docs/building/usbwindows.md)
+To use Crazyradio you will have to [install the drivers](https://www.bitcraze.io/documentation/repository/crazyradio-firmware/master/building/usbwindows/)
 
 ## Mac
 
@@ -98,7 +98,7 @@ The sections bellow describes how to install the client from source on various p
 Make sure to also install the [cflib](https://github.com/bitcraze/crazyflie-lib-python) from source as it is common to
 modify or examine this code as well when working with the client.
 
-When you have installed the client according to the instructions bellow, you can run the clients with the following commands:
+When you have installed the client according to the instructions below, you can run the clients with the following commands:
 ```
 cfclient
 cfheadless
@@ -143,7 +143,7 @@ the administrator password, you should run the command with ```--user```
 (for example ```python3 -m pip install --user -e .```). This should not be required on modern python distribution
 though since the *--user*  flag seems to be the default behavior.
 
-## Windows (7/8/10)
+## Windows (7/8/10/11)
 
 Assuming git is installed such that you can use it from powershell/cmd, cd to a desired folder and git clone the project:
 
@@ -175,10 +175,15 @@ pip3 install -e .
 
 # Extra
 
-## Pre commit hooks
+## Pre commit hooks (ubuntu)
 If you want some extra help with keeping to the mandated python coding style you can install hooks that verify your style at commit time. This is done by running:
 ```
+$ pip3 install pre-commit
+```
+go to crazyflie-lib-python root folder and run
+```
 $ pre-commit install
+$ pre-commit run --all-files
 ```
 This will run the lint checkers defined in `.pre-commit-config-yaml` on your proposed changes and alert you if you need to change anything.
 
