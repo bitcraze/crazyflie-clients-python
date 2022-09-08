@@ -99,7 +99,7 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
         self.addPage(self.get_xyzspace_page)
         self.addPage(self.get_geometry_page)
 
-        self.setWindowTitle("Lighthouse Basestation Geometry Wizard")
+        self.setWindowTitle("Lighthouse Base Station Geometry Wizard")
         self.resize(WINDOW_STARTING_WIDTH, WINDOW_STARTING_HEIGHT)
 
 
@@ -184,7 +184,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
 
         if amount_of_basestations < 2:
             self.status_text.setText(self.str_pad('Recording Done!' +
-                                                  f' Visible Basestations: {self.visible_basestations}\n' +
+                                                  f' Visible Base stations: {self.visible_basestations}\n' +
                                                   'Received too few base stations,' +
                                                   'we need at least two. Please try again!'))
             self.too_few_bs = True
@@ -196,7 +196,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
             self.start_action_button.setDisabled(False)
         else:
             self.too_few_bs = False
-            status_text_string = f'Recording Done! Visible Basestations: {self.visible_basestations}\n'
+            status_text_string = f'Recording Done! Visible Base stations: {self.visible_basestations}\n'
             if self.show_add_measurements:
                 self.recorded_angles_result.append(self.get_sample())
                 status_text_string += f'Total measurements added: {len(self.recorded_angles_result)}\n'
@@ -238,7 +238,8 @@ class RecordXAxisSamplePage(LighthouseBasestationGeometryWizardBasePage):
     def __init__(self, cf: Crazyflie, parent=None):
         super(RecordXAxisSamplePage, self).__init__(cf)
         self.explanation_text.setText('Step 2. Put the Crazyflie on the positive X-axis,' +
-                                      f'  exactly {REFERENCE_DIST} meters from the origin.\n')
+                                      f'  exactly {REFERENCE_DIST} meters from the origin.\n' +
+                                      'This will be used to define the X-axis as well as scaling of the system.')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_2.png")
         pixmap = pixmap.scaledToWidth(PICTURE_WIDTH)
         self.explanation_picture.setPixmap(pixmap)
@@ -247,7 +248,9 @@ class RecordXAxisSamplePage(LighthouseBasestationGeometryWizardBasePage):
 class RecordXYPlaneSamplesPage(LighthouseBasestationGeometryWizardBasePage):
     def __init__(self, cf: Crazyflie, parent=None):
         super(RecordXYPlaneSamplesPage, self).__init__(cf, show_add_measurements=True)
-        self.explanation_text.setText('Step 3. Put the Crazyflie somehere in the XY-plane, but not on the X-axis.\n ')
+        self.explanation_text.setText('Step 3. Put the Crazyflie somewhere in the XY-plane, but not on the X-axis.\n' +
+                                      'This position is used to map the the XY-plane to the floor.\n' +
+                                      'You can sample multiple positions to get a more precise definition.')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_3.png")
         pixmap = pixmap.scaledToWidth(PICTURE_WIDTH)
         self.explanation_picture.setPixmap(pixmap)
@@ -259,8 +262,9 @@ class RecordXYPlaneSamplesPage(LighthouseBasestationGeometryWizardBasePage):
 class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
     def __init__(self, cf: Crazyflie, parent=None):
         super(RecordXYZSpaceSamplesPage, self).__init__(cf)
-        self.explanation_text.setText('Step 4. Move the Crazyflie around, try to cover all of the space,\n make sure ' +
-                                      'all the base stations are received')
+        self.explanation_text.setText('Step 4. Move the Crazyflie around, try to cover all of the flying space,\n' +
+                                      'make sure all the base stations are received.\n' +
+                                      'Avoid moving too fast, you can increase the record time if needed.\n')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_4.png")
         pixmap = pixmap.scaledToWidth(PICTURE_WIDTH)
         self.explanation_picture.setPixmap(pixmap)
@@ -386,8 +390,10 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
                  xyplane_page: RecordXYPlaneSamplesPage, xyzspace_page: RecordXYZSpaceSamplesPage, parent=None):
 
         super(EstimateBSGeometryPage, self).__init__(cf)
-        self.explanation_text.setText('Step 5.Press the button to estimate the geometry and check the result.\n' +
-                                      'If the position looks good, press finish to close the wizard')
+        self.explanation_text.setText('Step 5. Press the button to estimate the geometry and check the result.\n' +
+                                      'If the positions of the base stations look reasonable, press finish to close ' +
+                                      'the wizard,\n' +
+                                      'if not restart the wizard.')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_5.png")
         pixmap = pixmap.scaledToWidth(640)
         self.explanation_picture.setPixmap(pixmap)
