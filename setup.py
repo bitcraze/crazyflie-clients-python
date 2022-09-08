@@ -89,7 +89,8 @@ package_data = {
                  relative(glob('src/cfclient/configs/input/*.json'), 'configs/input/') +  # noqa
                  relative(glob('src/cfclient/configs/log/*.json'), 'configs/log/') +  # noqa
                  relative(glob('src/cfclient/resources/*'), 'resources/') +  # noqa
-                 relative(glob('src/cfclient/ui/icons/*.png'), 'ui/icons/'),  # noqa
+                 relative(glob('src/cfclient/ui/icons/*.png'), 'ui/icons/') +  # noqa
+                 relative(glob('src/cfclient/ui/wizards/*.png'), 'ui/wizards/'),  # noqa
     '': ['README.md']
 }
 data_files = [
