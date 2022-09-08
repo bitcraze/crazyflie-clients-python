@@ -78,8 +78,19 @@ client.
 
 ### Firmware upgrade
 
-For updating the Crazyflie firmware you can keep being connected to the crazyflie. This will open up a seperate dialog that will guide you through the process.
-Please note that you need to use a Crazyradio dongle to connect to the Crazyflie when doing firmware upgrades. Upgrading using USB is not possible.
+For updating the Crazyflie firmware you can keep being connected to the crazyflie. This will open up a separate dialog
+that will guide you through the process.
+
+Please note that you need to use a Crazyradio dongle to connect to the Crazyflie when doing firmware upgrades.
+Upgrading using USB is **not** possible.
+
+#### Deck firmware
+
+Some decks have a CPUs or other chips that runs firmware that needs to be updated from time to time as well. The Crazyflie
+firmware verifies that it is compatible with the deck firmware during start up. If the firmware in a deck that is
+installed needs to be upgraded this will be logged in the console log. Deck firmware is upgraded as a part of the
+Crazyflie firmware upgrade process, just make sure the deck is mounted when you run the upgrade.
+
 
 ![CFclient bootloading](/docs/images/firmware-upgrade.png)
 
