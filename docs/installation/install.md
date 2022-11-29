@@ -89,6 +89,12 @@ Each release of the client is pushed to the [pypi repository](https://pypi.org/p
 ```
 pip3 install cfclient
 ```
+> **_NOTE:_**
+> On some, mainly Windows 11 Machines it is possible, that a `CRITICAL:cfclient.gui:No pysdl2 installation found, exiting!` error occurs. Until this dependency is fixed please run the following powershell command as a workaround.
+> 
+>       pip install pysdl2, pysdl2-dll
+
+
 # Installing from source
 
 If you are planning to do development work with the cfclient, you are at right spot!
