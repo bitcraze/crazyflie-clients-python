@@ -49,6 +49,7 @@ from cflib.localization import LighthouseConfigFileManager
 from cfclient.ui.dialogs.lighthouse_bs_geometry_dialog import LighthouseBsGeometryDialog
 from cfclient.ui.dialogs.basestation_mode_dialog import LighthouseBsModeDialog
 from cfclient.ui.dialogs.lighthouse_system_type_dialog import LighthouseSystemTypeDialog
+from cfclient.utils.logconfigreader import FILE_REGEX_YAML
 
 from vispy import scene
 import numpy as np
@@ -676,7 +677,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
                         label.setToolTip('')
 
     def _load_sys_config_button_clicked(self):
-        names = QFileDialog.getOpenFileName(self, 'Open file', self._helper.current_folder, "*.yaml;;*.*")
+        names = QFileDialog.getOpenFileName(self, 'Open file', self._helper.current_folder, FILE_REGEX_YAML)
 
         if names[0] == '':
             return
@@ -698,7 +699,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._save_sys_config(self._lh_geos, calibs, system_type)
 
     def _save_sys_config(self, geos, calibs, system_type):
-        names = QFileDialog.getSaveFileName(self, 'Save file', self._helper.current_folder, "*.yaml;;*.*")
+        names = QFileDialog.getSaveFileName(self, 'Save file', self._helper.current_folder, FILE_REGEX_YAML)
 
         if names[0] == '':
             return

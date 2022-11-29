@@ -35,8 +35,6 @@ import cflib.crtp
 from cflib.bootloader import Bootloader, Target
 from cflib.bootloader.boottypes import BootVersion
 
-from typing import Optional, List
-
 
 def main():
     # Initialise the CRTP link driver

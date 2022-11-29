@@ -28,6 +28,7 @@ Dialog box used to configure anchor positions. Used from the LPS tab.
 import logging
 
 import cfclient
+from cfclient.utils.logconfigreader import FILE_REGEX_YAML
 from PyQt5 import QtWidgets
 from PyQt5 import uic
 from PyQt5.QtCore import QAbstractTableModel, QVariant, Qt
@@ -212,7 +213,7 @@ class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
         self._data_model.anchor_postions_updated(anchor_positions)
 
     def _load_button_clicked(self):
-        names = QFileDialog.getOpenFileName(self, 'Open file', self._helper.current_folder, "*.yaml;*.*")
+        names = QFileDialog.getOpenFileName(self, 'Open file', self._helper.current_folder, FILE_REGEX_YAML)
 
         if names[0] == '':
             return
@@ -234,7 +235,7 @@ class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
         for id, pos in anchor_positions.items():
             data[id] = {'x': pos[0], 'y': pos[1], 'z': pos[2]}
 
-        names = QFileDialog.getSaveFileName(self, 'Save file', self._helper.current_folder, "*.yaml;*.*")
+        names = QFileDialog.getSaveFileName(self, 'Save file', self._helper.current_folder, FILE_REGEX_YAML)
 
         if names[0] == '':
             return

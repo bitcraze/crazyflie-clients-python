@@ -55,6 +55,8 @@ logger = logging.getLogger(__name__)
 DEFAULT_CONF_NAME = 'log_config'
 DEFAULT_CATEGORY_NAME = 'category'
 
+FILE_REGEX_YAML = "Config *.yaml;;All *.*"
+
 
 class LogConfigReader():
     """Reads logging configurations from file"""
