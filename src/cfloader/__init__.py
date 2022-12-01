@@ -52,6 +52,8 @@ def main():
     targets = None  # type: Optional[List[Target]]
     bl = None  # type: Optional[Bootloader]
 
+    exit_result = 0
+
     if len(sys.argv) < 2:
         print()
         print("==============================")
@@ -153,6 +155,7 @@ def main():
                 bl.flash_full(None, filename, warm_boot, targets)
             except Exception as e:
                 print("Failed to flash: {}".format(e))
+                exit_result = -1
         elif action == "reset":
             bl.reset_to_firmware()
         else:
@@ -162,6 +165,7 @@ def main():
 
         traceback.print_exc(file=sys.stdout)
         print(e)
+        exit_result = -1
 
     finally:
         #########################
@@ -169,3 +173,5 @@ def main():
         #########################
         if bl:
             bl.close()
+
+    sys.exit(exit_result)
