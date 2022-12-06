@@ -54,12 +54,7 @@ before you proceed to the next one.
 ### System Management
 This section us used to configure the system.
 
-* **Manage Geometry** - Opens a dialog box displaying the current geometry data. It
-    also contains a button to **Estimate Geometry** which calculates the position and
-    orientation of the base stations, using the Crazyflie postition as the origin.
-    The result is displayed together with the current geometry data. Click the
-    **Write to Crazyflie** button to use the new geometry data, the new data is
-    also stored in the Crazyflie persistent storage to make it available after reboot.
+* **Manage Geometry** - Opens a dialog box displaying the current geometry data. See the [Basestation Geometry Management](#basestation-geometry-management) section.
 
 * **Change system type** - Opens a dialog box where the system type can be changed.
     Possible options are **Lighthouse V1** and **Lighthouse V2**.
@@ -76,3 +71,12 @@ This section us used to configure the system.
     written to the Crazyflie (and is stored in persistent memory). This is a
     useful feature when configuring multiple Crazyflies for a system to make sure
     they all share the same coordinate system.
+
+### Basestation Geometry Management
+
+![cfclient positioning](/docs/images/base_station_geo_dialog.png){:align-center width="700"}
+
+1. This shows the current geometry of the basestations that are saved in the Crazyflie's memory. Either it is empty (no geometry in memory), or there are positions, or there are replacement postions. If you see an arrow like `N/A -> 2.3` or `2.0 -> 2.3`, that means that you just estimated a (new) basestation geometry but it has not been saved to the Crazyflie's permanent memory yet.
+2. *Estimate geometry*: This will open a wizard that will follow you through the steps of estimating the positions of the installed basestations. Check out the [getting started tutorial](https://www.bitcraze.io/documentation/tutorials/getting-started-with-lighthouse/) for more instructions. This is meant for 2+ basestations
+3. *Estimate geometry simple*. This is a simplerer basetation geometry estimation based on the PnP function of OpenCV. This is meant only for 1-2 basestations. If it is grayed out, install `pip3 install opencv-python-headless`, but just beware of the incompatibility issues with the regular opencv python packages. This is meant for 1-2 basestations.
+4. *Write to Crazyflie*: This will write the just estimated basestation geometry (in (1) behind the arrow)) to the permanent memory of the Crazyflie.
