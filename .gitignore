@@ -9,9 +9,6 @@ src/cfclient.egg-info/*
 src/cfclient/third_party/*
 version.json
 log_param_doc.json
-win32install/*.exe
-win32install/cfclient.nsi
-*.snap
 
 # PC client settings
 conf/*
