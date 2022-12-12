@@ -6,46 +6,10 @@ import json
 import codecs
 import sys
 import os
-import platform
 
 from gitversion import get_version
 
 from pathlib import Path
-
-
-if sys.argv[1] in ('build', 'bdist_msi', 'bdist_mac', 'bdist_dmg',
-                   'install_exe'):
-    from cx_Freeze import setup, Executable  # noqa
-
-    cxfreeze_options = {
-        'options': {
-            'build_exe': {
-                'includes': ['numpy.core._methods',
-                             'numpy.lib.format',
-                             'pyqtgraph.debug',
-                             'pyqtgraph.ThreadsafeTimer',
-                             'vispy.app.backends._pyqt5',
-                             ],
-                'include_files': [],
-                'packages': ['asyncio'],
-                'excludes': ['tkinter']
-            },
-            'bdist_mac': {
-                'iconfile': 'icon-256.icns',
-                'bundle_name': 'Crazyflie client',
-            },
-        },
-        'executables': [Executable("bin/cfclient", icon='bitcraze.ico')],
-    }
-    if platform.system() == 'Darwin':
-        cxfreeze_options['options']['build_exe']['include_files'] = [
-                ('/usr/local/lib/libusb-1.0.0.dylib', 'libusb.dylib'),
-                ('/usr/local/lib/libSDL2-2.0.0.dylib', 'libSDL2.dylib'),
-            ]
-else:
-    cxfreeze_options = {}
-# except:
-#     pass
 
 if sys.version_info < (3, 7):
     raise "must use python 3.7 or greater"
@@ -156,7 +120,4 @@ setup(
     package_data=package_data,
 
     data_files=data_files,
-
-    # cx_freeze options
-    **cxfreeze_options
 )
