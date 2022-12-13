@@ -355,35 +355,42 @@ class ParamTab(TabToolbox, param_tab_class):
             self.currentValue.setStyleSheet('border: 1px solid red')
 
     def _paramChanged(self):
-        indexes = self.paramTree.selectionModel().selectedIndexes()
-        selectedIndex = indexes[0]
 
+        group = None
+        param = None
+        indexes = self.paramTree.selectionModel().selectedIndexes()
+        if len(indexes) > 0:
+            selectedIndex = indexes[0]
+            if selectedIndex.parent().isValid():
+                group = selectedIndex.parent().data()
+                param = selectedIndex.data()
+            else:
+                group = selectedIndex.data()
+
+        # Made visible in _persistent_state_cb()
         self.persistentFrame.setVisible(False)
 
-        param = None
-        if selectedIndex.parent().isValid():
-            group = selectedIndex.parent().data()
-            param = selectedIndex.data()
-        else:
-            group = selectedIndex.data()
+        are_details_visible = param is not None
+        self.valueFrame.setVisible(are_details_visible)
+        self.paramDetailsLabel.setVisible(are_details_visible)
+        self.paramDetailsDescription.setVisible(are_details_visible)
 
-        self.paramDetailsLabel.setText(f'{group}.{param}' if param is not None else group)
-        if cfclient.log_param_doc is not None:
-            try:
-                desc = str()
-                group_doc = cfclient.log_param_doc['params'][group]
-                if param is None:
-                    desc = group_doc['desc']
-                else:
-                    desc = group_doc['variables'][param]['short_desc']
-
-                self.paramDetailsDescription.setWordWrap(True)
-                self.paramDetailsDescription.setText(desc.replace('\n', ''))
-            except:  # noqa
-                self.paramDetailsDescription.setText('')
-
-        self.valueFrame.setVisible(param is not None)
         if param:
+            self.paramDetailsLabel.setText(f'{group}.{param}' if param is not None else group)
+            if cfclient.log_param_doc is not None:
+                try:
+                    desc = str()
+                    group_doc = cfclient.log_param_doc['params'][group]
+                    if param is None:
+                        desc = group_doc['desc']
+                    else:
+                        desc = group_doc['variables'][param]['short_desc']
+
+                    self.paramDetailsDescription.setWordWrap(True)
+                    self.paramDetailsDescription.setText(desc.replace('\n', ''))
+                except:  # noqa
+                    self.paramDetailsDescription.setText('')
+
             complete = f'{group}.{param}'
             elem = self.cf.param.toc.get_element_by_complete_name(complete)
             value = round_if_float(self.cf.param.get_value(complete))
@@ -408,7 +415,7 @@ class ParamTab(TabToolbox, param_tab_class):
         self._helper.cf.param.request_update_of_all_params()
 
     def _disconnected(self, link_uri):
-        #
-        # This will gray out all rows
-        #
+
+        self._model.reset()
+        self._paramChanged()
         self._model.set_enabled(False)
