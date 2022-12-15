@@ -2,7 +2,7 @@
 
 name: CI
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
 
@@ -38,5 +38,3 @@ jobs:
 
       - name: CI checks
         run: docker run --rm -v ${PWD}:/module bitcraze/builder ./tools/build/build
-
-
