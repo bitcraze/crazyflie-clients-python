@@ -9,6 +9,9 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  schedule:
+    # Weekly build to make sure dependencies are OK
+    - cron:  '30 16 * * 3'
 
 jobs:
   checks:
@@ -16,7 +19,7 @@ jobs:
 
     steps:
       # Checkout, fetch-depth=0 fetches the full repos (required for automatic versioning to work)
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
