@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: Check out sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Checkout crazyflie-firmware
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: bitcraze/crazyflie-firmware
           path: firmware
