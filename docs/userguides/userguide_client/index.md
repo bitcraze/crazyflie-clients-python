@@ -10,7 +10,7 @@ client, not for installing it. For install instructions go
 
 The Crazyflie client is used for controlling the Crazyflie, flashing
 firmware, setting parameters and logging data. The main UI is built up
-of a number of [tabs](index.md#tabs), where each tab is used for a specific
+of a number of [tabs](index.md#tabs-and-toolboxes), where each tab is used for a specific
 functionality.
 
 This page uses the terms
