@@ -131,7 +131,7 @@ $ pip3 install -e .
 
 If you plan to do development on the client you should run:
 ```
-$ pip3 -e .[dev]
+$ pip3 install -e .[dev]
 ```
 
 The client can now be run if the local pip bin directory is in the path (it should be in a
