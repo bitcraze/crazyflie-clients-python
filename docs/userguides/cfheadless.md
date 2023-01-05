@@ -39,5 +39,5 @@ pressing Ctrl+C
 Connect to a Crazyflie at channel 100 and speed 250Kbit using input
 mapping *PS3\_Mode\_1*
 ```
-crazyflie-clients-python$ bin/cfheadless -u radio://0/100/250K -PS1_Mode_1
+crazyflie-clients-python$ bin/cfheadless -u radio://0/100/250K -PS3_Mode_1
 ```
