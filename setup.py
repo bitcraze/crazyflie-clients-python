@@ -37,13 +37,6 @@ else:
     with codecs.open('src/cfclient/version.json', 'w', encoding='utf8') as f:
         f.write(json.dumps({'version': VERSION}))
 
-platform_requires = []
-platform_dev_requires = ['pre-commit']
-if sys.platform == 'win32' or sys.platform == 'darwin':
-    platform_requires.extend(['pysdl2~=0.9.14', 'pysdl2-dll==2.24.0'])
-if sys.platform == 'win32':
-    platform_dev_requires.extend(['cx_freeze==5.1.1', 'jinja2==2.10.3'])
-
 package_data = {
     'cfclient.ui':  relative(glob('src/cfclient/ui/*.ui')),
     'cfclient.ui.tabs': relative(glob('src/cfclient/ui/tabs/*.ui')),
@@ -97,24 +90,29 @@ setup(
         ],
     },
 
-    install_requires=platform_requires + ['cflib>=0.1.21',
-                                          'appdirs~=1.4.0',
-                                          'pyzmq~=22.3',
-                                          'pyqtgraph~=0.11',
-                                          'PyYAML~=5.3',
-                                          'qasync~=0.23.0',
-                                          'qtm~=2.1.1',
-                                          'numpy>=1.20,<1.25',
-                                          'vispy~=0.9.0',
-                                          'pyserial~=3.5',
-                                          'pyqt5~=5.15.0',
-                                          'PyQt5-sip>=12.9.0'],
+    install_requires=['cflib>=0.1.21',
+                      'appdirs~=1.4.0',
+                      'pyzmq~=22.3',
+                      'pyqtgraph~=0.11',
+                      'PyYAML~=5.3',
+                      'qasync~=0.23.0',
+                      'qtm~=2.1.1',
+                      'numpy>=1.20,<1.25',
+                      'vispy~=0.9.0',
+                      'pyserial~=3.5',
+                      'pyqt5~=5.15.0',
+                      'PyQt5-sip>=12.9.0',
+
+                      'pysdl2~=0.9.14 ; platform_system=="Windows" or platform_system=="Darwin"',
+                      'pysdl2-dll==2.24.0 ; platform_system=="Windows" or platform_system=="Darwin"'],
 
     # List of dev dependencies
     # You can install them by running
     # $ pip install -e .[dev]
     extras_require={
-        'dev': platform_dev_requires + [],
+        'dev': ['pre-commit',
+                'cx_freeze==5.1.1 ; platform_system=="Windows"',
+                'jinja2==2.10.3 ; platform_system=="Windows"'],
     },
 
     package_data=package_data,
