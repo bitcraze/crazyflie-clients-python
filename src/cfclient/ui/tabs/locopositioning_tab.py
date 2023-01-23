@@ -532,8 +532,9 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
         def register(group, param):
             if self._is_in_param_toc(group, param):
                 logger.info("Requesting loco deck parameter")
-                self._helper.cf.param.add_update_callback(group=group, name=param,
-                    cb=self._cb_param_to_detect_loco_deck_signal.emit)
+                self._helper.cf.param.add_update_callback(group=group,
+                                                          name=param,
+                                                          cb=self._cb_param_to_detect_loco_deck_signal.emit)
 
         register(group, 'bcLoco')
         register(group, 'bcDWM1000')  # For backwards compatibility
