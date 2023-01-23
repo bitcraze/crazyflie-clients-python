@@ -360,7 +360,7 @@ class FlightTab(TabToolbox, flight_tab_class):
             return
 
         #                  flowV1    flowV2     LightHouse       LPS
-        position_decks = ['bcFlow', 'bcFlow2', 'bcLighthouse4', 'bcDWM1000']
+        position_decks = ['bcFlow', 'bcFlow2', 'bcLighthouse4', 'bcLoco', 'bcDWM1000']
         for deck in position_decks:
             if int(self._helper.cf.param.values['deck'][deck]) == 1:
                 self.commanderBox.setEnabled(True)
