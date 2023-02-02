@@ -37,7 +37,7 @@ pip --version
 
 upgrade pip as well:
 ```
-pip3 install --upgrade pip.
+pip3 install --upgrade pip
 ```
 
 Install git from the [official git website](https://git-scm.com/). Make sure it is in PATH as well, which can be checked also with:
