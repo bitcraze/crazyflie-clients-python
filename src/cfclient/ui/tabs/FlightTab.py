@@ -171,7 +171,6 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         # Command Based Flight Control
         self._can_fly = 0
-        self._hlCommander = None
         self.commanderTakeOffButton.clicked.connect(lambda: self._flight_command(CommanderAction.TAKE_OFF))
         self.commanderLandButton.clicked.connect(lambda: self._flight_command(CommanderAction.LAND))
         self.commanderLeftButton.clicked.connect(lambda: self._flight_command(CommanderAction.LEFT))
@@ -244,31 +243,28 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)
 
     def _flight_command(self, action):
-        if self._hlCommander is None:
-            return
+        current_z = self._helper.pose_logger.position[2]
+        move_dist = 0.5
+        move_vel = 0.5
 
         if action == CommanderAction.TAKE_OFF:
-            #
-            # Reset the Kalman filter before taking off, to avoid
-            # positional confusion.
-            #
-            self._helper.cf.param.set_value('kalman.resetEstimation', '1')
-            time.sleep(1)
-            self._hlCommander.take_off()
+            self._helper.cf.param.set_value('commander.enHighLevel', '1')
+            z_target = current_z + move_dist
+            self._helper.cf.high_level_commander.takeoff(z_target, move_dist / move_vel)
         elif action == CommanderAction.LAND:
-            self._hlCommander.land()
+            self._helper.cf.high_level_commander.land(0, current_z / move_vel)
         elif action == CommanderAction.LEFT:
-            self._hlCommander.left(0.5)
+            self._helper.cf.high_level_commander.go_to(0, move_dist, 0, 0, move_dist / move_vel, relative=True)
         elif action == CommanderAction.RIGHT:
-            self._hlCommander.right(0.5)
+            self._helper.cf.high_level_commander.go_to(0, -move_dist, 0, 0, move_dist / move_vel, relative=True)
         elif action == CommanderAction.FORWARD:
-            self._hlCommander.forward(0.5)
+            self._helper.cf.high_level_commander.go_to(move_dist, 0, 0, 0, move_dist / move_vel, relative=True)
         elif action == CommanderAction.BACK:
-            self._hlCommander.back(0.5)
+            self._helper.cf.high_level_commander.go_to(-move_dist, 0, 0, 0, move_dist / move_vel, relative=True)
         elif action == CommanderAction.UP:
-            self._hlCommander.up(0.5)
+            self._helper.cf.high_level_commander.go_to(0, 0, move_dist, 0, move_dist / move_vel, relative=True)
         elif action == CommanderAction.DOWN:
-            self._hlCommander.down(0.5)
+            self._helper.cf.high_level_commander.go_to(0, 0, -move_dist, 0, move_dist / move_vel, relative=True)
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error",
@@ -389,14 +385,6 @@ class FlightTab(TabToolbox, flight_tab_class):
         lg.add_variable("motor.m3")
         lg.add_variable("motor.m4")
         lg.add_variable("sys.canfly")
-
-        self._hlCommander = PositionHlCommander(
-            self._helper.cf,
-            x=0.0, y=0.0, z=0.0,
-            default_velocity=0.3,
-            default_height=0.5,
-            controller=int(self._helper.cf.param.get_value('stabilizer.controller'))
-        )
 
         try:
             self._helper.cf.log.add_config(lg)
