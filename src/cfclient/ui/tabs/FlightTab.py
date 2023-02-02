@@ -30,7 +30,6 @@ The flight control tab shows telemetry data and flight settings.
 """
 
 import logging
-import time
 from enum import Enum
 
 from PyQt5 import uic
@@ -42,7 +41,6 @@ from cfclient.ui.widgets.ai import AttitudeIndicator
 
 from cfclient.utils.config import Config
 from cflib.crazyflie.log import LogConfig
-from cflib.positioning.position_hl_commander import PositionHlCommander
 
 from cfclient.utils.input import JoystickReader
 
