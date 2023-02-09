@@ -255,7 +255,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
                 # Ignore old releases that do not use the standard file naming convention
                 if platform:
                     widget_name = '%s - %s' % (release_name, download_name)
-                    if not platform in self._platform_widget_names:
+                    if platform not in self._platform_widget_names:
                         self._platform_widget_names[platform] = []
                     self._platform_widget_names[platform].append(widget_name)
                     self._releases[widget_name] = download_link
@@ -290,7 +290,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
     def _extract_platform(self, download_name: str) -> str | None:
         # Download name is something like 'firmware-cf2-2022.12.zip'
-        found = re.search('firmware-(\w+)-', download_name)
+        found = re.search('firmware-(\\w+)-', download_name)
         if found:
             groups = found.groups()
             if len(groups) == 1:
