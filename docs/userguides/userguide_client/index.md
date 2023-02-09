@@ -100,8 +100,10 @@ To update the firmware in the Crazyflie 2.X do the following:
 the decks contain their own firmware which will also be updated during the firmware update. Also make sure there is a battery attached.
 -   Go to the menu *Connect-\>Bootloader*
 -   Connect to the crazyflie in this dialog, if it is not already connected in the flighttab.
--   Select the latest release from the drop down menu or select it if you have downloaded it from the [Github release page](https://github.com/bitcraze/crazyflie-release/releases). Make sure to select the right platform (cf2 is the Crazyflie 2.X)
--   Click \"Program\" and wait for both the STM and NRF to be flashed.
+-   Chose what to flash
+    - Use the "From release" tab to automatically use an [official release](https://github.com/bitcraze/crazyflie-release/releases). Make sure to select the right platform (cf2 is the Crazyflie 2.X)
+    - Use the "From file" tab if you have some other release file you want to flash.
+-   Click \"Program\" and wait for both the STM, NRF and decks to be flashed. Note: the Crazyflie may restart multiple times during this process.
 -   Your crazyflie will automatically restart a couple of times.
 -   Do not touch or restart your crazyflie untill all flashing is done and you see \"status: idle\" at the bottom.
 - To check the firmware version, under the *View* menu, open up *Tabs-\>Console* tab and look at the output when connecting to the
