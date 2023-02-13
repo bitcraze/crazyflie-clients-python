@@ -29,6 +29,8 @@
 The bootloader dialog is used to update the Crazyflie firmware and to
 read/write the configuration block in the Crazyflie flash.
 """
+from __future__ import annotations
+
 from cflib.bootloader import Bootloader
 from cfclient.ui.connectivity_manager import ConnectivityManager
 
@@ -36,6 +38,7 @@ import tempfile
 import logging
 import json
 import os
+import re
 import threading
 from urllib.request import urlopen
 from urllib.error import URLError
@@ -118,6 +121,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self._state = self.UIState.DISCONNECTED
 
         self._releases = {}
+        self._platform_widget_names = {}
         self._release_firmwares_found.connect(self._populate_firmware_dropdown)
         self._release_downloaded.connect(self.release_zip_downloaded)
         self.firmware_downloader = FirmwareDownloader(self._release_firmwares_found, self._release_downloaded)
@@ -125,6 +129,8 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
         self.firmware_downloader.start()
         self.clt.start()
+
+        self._platform_filter_checkboxes = []
 
     def _ui_connection_fail(self, message):
         self._cold_boot_error_message = message
@@ -238,6 +244,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         """ Callback from firmware-downloader that retrieves all
             the latest firmware-releases.
         """
+        platforms = set()
         for release in releases:
             release_name = release[0]
             downloads = release[1:]
@@ -246,9 +253,51 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
             for download in downloads:
                 download_name, download_link = download
-                widget_name = '%s - %s' % (release_name, download_name)
-                self._releases[widget_name] = download_link
-                self.firmwareDropdown.addItem(widget_name)
+                platform = self._extract_platform(download_name)
+                # Ignore old releases that do not use the standard file naming convention
+                if platform:
+                    widget_name = '%s - %s' % (release_name, download_name)
+                    if platform not in self._platform_widget_names:
+                        self._platform_widget_names[platform] = []
+                    self._platform_widget_names[platform].append(widget_name)
+                    self._releases[widget_name] = download_link
+
+                    platforms.add(platform)
+
+        for platform in sorted(platforms, reverse=True):
+            radio_button = QtWidgets.QRadioButton(platform)
+
+            # Use cf2 as default platform
+            if platform == 'cf2':
+                radio_button.setChecked(True)
+
+            radio_button.toggled.connect(self._update_firmware_dropdown)
+
+            self._platform_filter_checkboxes.append(radio_button)
+            self.filterLayout.insertWidget(0, radio_button)
+
+        self._update_firmware_dropdown(True)
+
+    def _update_firmware_dropdown(self, active: bool):
+        if active:
+            platform = None
+            for button in self._platform_filter_checkboxes:
+                if button.isChecked():
+                    platform = button.text()
+
+            if platform:
+                self.firmwareDropdown.clear()
+                for widget_name in self._platform_widget_names[platform]:
+                    self.firmwareDropdown.addItem(widget_name)
+
+    def _extract_platform(self, download_name: str) -> str | None:
+        # Download name is something like 'firmware-cf2-2022.12.zip'
+        found = re.search('firmware-(\\w+)-', download_name)
+        if found:
+            groups = found.groups()
+            if len(groups) == 1:
+                return groups[0]
+        return None
 
     def download_sorter(self, element):
         '''Sort downloads to display cf2 before bolt and tag'''
@@ -486,8 +535,7 @@ class FirmwareDownloader(QThread):
             if release_name:
                 releases = [release_name]
                 for download in release['assets']:
-                    releases.append(
-                        (download['name'], download['browser_download_url']))
+                    releases.append((download['name'], download['browser_download_url']))
                 release_list.append(releases)
 
         if release_list:
