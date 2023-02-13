@@ -29,6 +29,8 @@
 The bootloader dialog is used to update the Crazyflie firmware and to
 read/write the configuration block in the Crazyflie flash.
 """
+from __future__ import annotations
+
 from cflib.bootloader import Bootloader
 from cfclient.ui.connectivity_manager import ConnectivityManager
 
