@@ -90,7 +90,7 @@ setup(
         ],
     },
 
-    install_requires=['cflib>=0.1.21',
+    install_requires=['cflib>=0.1.22',
                       'appdirs~=1.4.0',
                       'pyzmq~=22.3',
                       'pyqtgraph~=0.11',
