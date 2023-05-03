@@ -150,7 +150,11 @@ def main():
             # flash_full called with no filename will not flash, just call
             # our info callback
             bl.flash_full(None, None, warm_boot, None, print_info)
-        elif action == "flash" and filename and targets:
+        elif action == "flash" and filename:
+            is_target_required = not filename.endswith('.zip')
+            if (is_target_required and not targets):
+                print("The flash action with a non .zip file requires a target")
+                sys.exit(-1)
             try:
                 bl.flash_full(None, filename, warm_boot, targets)
             except Exception as e:
