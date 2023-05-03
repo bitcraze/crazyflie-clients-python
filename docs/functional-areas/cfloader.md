@@ -99,7 +99,7 @@ Flashing new firmware for the STM32 MCU with warmbooting with a known uri:
     Flashing 1 of 1 to stm32 (fw): 76435 bytes (75 pages) ..........10..........10..........10..........10..........10..........10..........10.....5
     Reset in firmware mode ..
 
-Flash a new firmware package (containing both nRF51 and STM32 firmware):
+Flash a new firmware package (containing both nRF51, STM32 and deck firmwares):
 
     crazyflie-clients-python$ bin/cfloader flash cf2_dev_update.zip
     Restart the Crazyflie you want to bootload in the next  10 seconds ...  done!
@@ -121,20 +121,31 @@ The AI-deck should be mounted on the Crazyflie when running the cfloader.
 
 Flash a new firmware to the ESP on the AI-deck:
 
-    crazyflie-clients-python$ bin/cfloader flash myApp.bin deck-bcAI:esp-fw -w radio://0/30/2M
+    crazyflie-clients-python$ bin/cfloader flash myEspApp.bin deck-bcAI:esp-fw -w radio://0/30/2M
     Reset to bootloader mode ...
     | 4% Writing to bcAI:esp deck memory
     / 9% Writing to bcAI:esp deck memory
     - 14% Writing to bcAI:esp deck memory
     \ 19% Writing to bcAI:esp deck memory
+    ...
 
 Flash a new firmware to the GAP8 on the AI-deck:
 
-    crazyflie-clients-python$ bin/cfloader flash myApp.bin deck-bcAI:gap8-fw -w radio://0/30/2M
+    crazyflie-clients-python$ bin/cfloader flash myGap8App.bin deck-bcAI:gap8-fw -w radio://0/30/2M
     Reset to bootloader mode ...
     Skipping bcAI:esp
     | 4% Writing to bcAI:gap8 deck memory
     / 9% Writing to bcAI:gap8 deck memory
     - 14% Writing to bcAI:gap8 deck memory
     \ 19% Writing to bcAI:gap8 deck memory
+    ...
+
+Flash a new firmware to the ESP on the AI-deck from a release zip.
+
+    crazyflie-clients-python$ bin/cfloader flash a-release.zip deck-bcAI:esp-fw -w radio://0/30/2M
+    Reset to bootloader mode ...
+    Deck bcAI:esp, reset to bootloader
+    | 0% Writing to bcAI:esp deck memory
+    / 1% Writing to bcAI:esp deck memory
+    - 2% Writing to bcAI:esp deck memory
     ...
