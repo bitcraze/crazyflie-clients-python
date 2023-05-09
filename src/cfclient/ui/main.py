@@ -208,7 +208,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.joystickReader.hover_input_updated.add_callback(
             self.cf.commander.send_hover_setpoint)
 
-        #Emergency stop button
+        # Emergency stop button
         self.esButton.clicked.connect(self._emergency_stop)
 
         # Connection callbacks and signal wrappers for UI protection
@@ -455,7 +455,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._menu_cf2_config.setEnabled(False)
             self.linkQualityBar.setValue(0)
             self.logConfigAction.setEnabled(False)
-            self.esButton.setStyleSheet("")                    
+            self.esButton.setStyleSheet("")
             self.esButton.setEnabled(False)
         elif self.uiState == UIState.CONNECTED:
             s = "Connected on %s" % self._connectivity_manager.get_interface()
@@ -465,7 +465,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._connectivity_manager.set_state(ConnectivityManager.UIState.CONNECTED)
             self.logConfigAction.setEnabled(True)
             self.esButton.setEnabled(True)
-            self.esButton.setStyleSheet("background-color: red")                    
+            self.esButton.setStyleSheet("background-color: red")
             # Find out if there's an I2C EEPROM, otherwise don't show the
             # dialog.
             if len(self.cf.mem.get_mems(MemoryElement.TYPE_I2C)) > 0:
@@ -570,10 +570,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.logConfigDialogue.show()
 
     def _emergency_stop(self):
-        #send disarming command
+        # send disarming command
         if (self.uiState == UIState.CONNECTED):
             self.cf.param.set_value("system.arm", int(False))
-
 
     def _update_battery(self, timestamp, data, logconf):
         self.batteryBar.setValue(int(data["pm.vbat"] * 1000))

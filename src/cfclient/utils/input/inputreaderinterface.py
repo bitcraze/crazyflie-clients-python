@@ -50,8 +50,8 @@ class InputData:
     def __init__(self):
         # self._toggled = {}
         self._axes = ("roll", "pitch", "yaw", "thrust")
-        self._buttons = ("pitchNeg","pitchPos", "rollNeg", "rollPos", 
-                         "assistedControl", "estop", "arm", 
+        self._buttons = ("pitchNeg", "pitchPos", "rollNeg", "rollPos",
+                         "assistedControl", "estop", "arm",
                          "exitapp", "alt1", "alt2", "muxswitch")
         for axis in self._axes:
             self.__dict__[axis] = 0.0

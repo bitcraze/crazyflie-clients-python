@@ -147,8 +147,8 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
             self.detectPitchPos, self.detectPitchNeg,
             self.detectRollPos, self.detectRollNeg,
             self.detectKillswitch, self.detectArm,
-            self.detectExitapp, self._detect_assisted_control, 
-            self.detectAlt1, self.detectAlt2, 
+            self.detectExitapp, self._detect_assisted_control,
+            self.detectAlt1, self.detectAlt2,
             self.detectMuxswitch]
 
         self._button_to_detect = ""

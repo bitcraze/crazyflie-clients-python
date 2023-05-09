@@ -420,7 +420,7 @@ class JoystickReader(object):
                     except Exception as e:
                         logger.warning("Exception while doing callback from"
                                        "input-device for estop: {}".format(e))
-                if data.toggled.arm and data._prev_btn_values["arm"] == True:
+                if data.toggled.arm and data._prev_btn_values["arm"]:
                     try:
                         self.arm_updated.call(data.arm)
                     except Exception as e:
