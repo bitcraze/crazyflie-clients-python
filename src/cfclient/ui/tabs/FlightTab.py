@@ -100,6 +100,7 @@ class FlightTab(TabToolbox, flight_tab_class):
     _input_updated_signal = pyqtSignal(float, float, float, float)
     _rp_trim_updated_signal = pyqtSignal(float, float)
     _emergency_stop_updated_signal = pyqtSignal(bool)
+    _arm_updated_signal = pyqtSignal(bool)
     _assisted_control_updated_signal = pyqtSignal(bool)
     _heighthold_input_updated_signal = pyqtSignal(float, float, float, float)
     _hover_input_updated_signal = pyqtSignal(float, float, float, float)
@@ -133,6 +134,9 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._emergency_stop_updated_signal.connect(self.updateEmergencyStop)
         self._helper.inputDeviceReader.emergency_stop_updated.add_callback(
             self._emergency_stop_updated_signal.emit)
+        self._arm_updated_signal.connect(self.updateArm)
+        self._helper.inputDeviceReader.arm_updated.add_callback(
+            self._arm_updated_signal.emit)
 
         self._helper.inputDeviceReader.heighthold_input_updated.add_callback(
             self._heighthold_input_updated_signal.emit)
@@ -176,8 +180,13 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.commanderForwardButton.clicked.connect(lambda: self._flight_command(CommanderAction.FORWARD))
         self.commanderBackButton.clicked.connect(lambda: self._flight_command(CommanderAction.BACK))
         self.commanderUpButton.clicked.connect(lambda: self._flight_command(CommanderAction.UP))
-        self.commanderDownButton.clicked.connect(lambda: self._flight_command(CommanderAction.DOWN))
+        self.commanderDownButton.clicked.connect(lambda: self._flight_command(CommanderAction.DOWN))       
+        self._update_flight_commander(False)
 
+        #Arming
+        self.armButton.clicked.connect(self.updateArm)
+        self._update_arm_button(False)
+        
         self.uiSetupReady()
 
         self._led_ring_headlight.clicked.connect(
@@ -238,7 +247,7 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.flightModeCombo.currentIndexChanged.emit(0)
         else:
             self.flightModeCombo.setCurrentIndex(flightComboIndex)
-            self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)
+            self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)        
 
     def _flight_command(self, action):
         current_z = self._helper.pose_logger.position[2]
@@ -282,7 +291,12 @@ class FlightTab(TabToolbox, flight_tab_class):
             if data["sys.canfly"] != self._can_fly:
                 self._can_fly = data["sys.canfly"]
                 self._update_flight_commander(True)
-
+                self._update_arm_button(True)
+                
+            if data["sys.armed"] != self._armed:
+                self._armed = data["sys.armed"]
+                self._update_arm_button(True)
+                
     def _pose_data_received(self, pose_logger, pose):
         if self.isVisible():
             estimated_z = pose[2]
@@ -335,6 +349,33 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.inputRollLabel.setText(roll)
         self.inputYawLabel.setText(yaw)
 
+    def _update_arm_button(self, connected):
+        if not connected:
+            self.armButton.setStyleSheet("")                    
+            self.armButton.setEnabled(False)
+            self._armed = None
+            return
+
+        if self._can_fly == 0:
+            if self._armed:
+                self.armButton.setEnabled(True)
+                self.armButton.setText("Disarm")
+                self.armButton.setStyleSheet("background-color: red")                    
+            else:
+                self.armButton.setEnabled(False)
+                self.armButton.setText("Arm")
+                self.armButton.setStyleSheet("")                    
+        else:
+            if self._armed:
+                self.armButton.setEnabled(True)
+                self.armButton.setText("Disarm")
+                self.armButton.setStyleSheet("background-color: red")                    
+            else:
+                self.armButton.setEnabled(True)
+                self.armButton.setText("Arm")
+                self.armButton.setStyleSheet("background-color: lightgreen")                    
+        
+
     def _update_flight_commander(self, connected):
         self.commanderBox.setToolTip(str())
         if not connected:
@@ -383,6 +424,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         lg.add_variable("motor.m3")
         lg.add_variable("motor.m4")
         lg.add_variable("sys.canfly")
+        lg.add_variable("sys.armed")
 
         try:
             self._helper.cf.log.add_config(lg)
@@ -393,6 +435,8 @@ class FlightTab(TabToolbox, flight_tab_class):
             logger.warning(str(e))
         except AttributeError as e:
             logger.warning(str(e))
+            
+        
 
     def _enable_estimators(self, should_enable):
         self.estimateX.setEnabled(should_enable)
@@ -449,6 +493,8 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._assist_mode_combo.clear()
 
         self._update_flight_commander(False)
+        self._update_arm_button(False)
+
 
     def minMaxThrustChanged(self):
         self._helper.inputDeviceReader.min_thrust = self.minThrust.value()
@@ -518,8 +564,29 @@ class FlightTab(TabToolbox, flight_tab_class):
     def updateEmergencyStop(self, emergencyStop):
         if emergencyStop:
             self.setMotorLabelsEnabled(False)
+            try:
+                #send disarming command
+                self._helper.cf.param.set_value("system.arm", int(False))
+            except Exception: 
+                pass
         else:
             self.setMotorLabelsEnabled(True)
+
+    def updateArm(self):        
+        if (self._armed):
+            try:
+                #send disarming command
+                self._helper.cf.param.set_value("system.arm", int(False))                
+            except Exception: 
+                pass
+        else:
+            if self._can_fly:
+                self.armButton.setStyleSheet("background-color: orange")                    
+                try:
+                    #send arming commend
+                    self._helper.cf.param.set_value("system.arm", int(True))
+                except Exception: 
+                    pass
 
     def flightmodeChange(self, item):
         Config().set("flightmode", str(self.flightModeCombo.itemText(item)))
@@ -598,6 +665,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._ring_populate_dropdown()
         self._populate_assisted_mode_dropdown()
         self._update_flight_commander(True)
+        self._update_arm_button(True)
 
     def _ring_populate_dropdown(self):
         try:

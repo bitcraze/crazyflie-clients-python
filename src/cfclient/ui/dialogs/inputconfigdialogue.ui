@@ -505,37 +505,14 @@
           <property name="geometry">
            <rect>
             <x>600</x>
-            <y>158</y>
+            <y>150</y>
             <width>292</width>
-            <height>202</height>
+            <height>221</height>
            </rect>
           </property>
           <layout class="QGridLayout" name="gridLayout_5">
-           <item row="5" column="1">
+           <item row="6" column="1">
             <widget class="QPushButton" name="detectAlt2">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string>Detect</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QCheckBox" name="alt1">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string>Alt 1</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QPushButton" name="detectExitapp">
              <property name="enabled">
               <bool>false</bool>
              </property>
@@ -554,26 +531,49 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
-            <widget class="QCheckBox" name="killswitch">
+           <item row="7" column="0">
+            <widget class="QCheckBox" name="muxswitch">
              <property name="enabled">
               <bool>false</bool>
              </property>
              <property name="text">
-              <string>Killswitch</string>
+              <string>Mux switch</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
              </property>
             </widget>
            </item>
-           <item row="3" column="0">
-            <widget class="QCheckBox" name="exitapp">
+           <item row="5" column="0">
+            <widget class="QCheckBox" name="alt1">
              <property name="enabled">
               <bool>false</bool>
              </property>
              <property name="text">
-              <string>Exit app</string>
+              <string>Alt 1</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QPushButton" name="_detect_assisted_control">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Detect</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QCheckBox" name="alt2">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Alt 2</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -593,8 +593,34 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="1">
-            <widget class="QPushButton" name="_detect_assisted_control">
+           <item row="4" column="0">
+            <widget class="QCheckBox" name="exitapp">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Exit app</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QCheckBox" name="killswitch">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Disarm/kill</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="1">
+            <widget class="QPushButton" name="detectMuxswitch">
              <property name="enabled">
               <bool>false</bool>
              </property>
@@ -603,20 +629,7 @@
              </property>
             </widget>
            </item>
-           <item row="5" column="0">
-            <widget class="QCheckBox" name="alt2">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string>Alt 2</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
+           <item row="5" column="1">
             <widget class="QPushButton" name="detectAlt1">
              <property name="enabled">
               <bool>false</bool>
@@ -626,21 +639,31 @@
              </property>
             </widget>
            </item>
-           <item row="6" column="0">
-            <widget class="QCheckBox" name="muxswitch">
+           <item row="4" column="1">
+            <widget class="QPushButton" name="detectExitapp">
              <property name="enabled">
               <bool>false</bool>
              </property>
              <property name="text">
-              <string>Mux switch</string>
+              <string>Detect</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QCheckBox" name="arm">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Arm</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
              </property>
             </widget>
            </item>
-           <item row="6" column="1">
-            <widget class="QPushButton" name="detectMuxswitch">
+           <item row="3" column="1">
+            <widget class="QPushButton" name="detectArm">
              <property name="enabled">
               <bool>false</bool>
              </property>

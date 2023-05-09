@@ -172,6 +172,7 @@ class JoystickReader(object):
         self.hover_input_updated = Caller()
         self.rp_trim_updated = Caller()
         self.emergency_stop_updated = Caller()
+        self.arm_updated = Caller()
         self.device_discovery = Caller()
         self.device_error = Caller()
         self.assisted_control_updated = Caller()
@@ -419,7 +420,12 @@ class JoystickReader(object):
                     except Exception as e:
                         logger.warning("Exception while doing callback from"
                                        "input-device for estop: {}".format(e))
-
+                if data.toggled.arm and data._prev_btn_values["arm"] == True:
+                    try:
+                        self.arm_updated.call(data.arm)
+                    except Exception as e:
+                        logger.warning("Exception while doing callback from"
+                                       "input-device for arm: {}".format(e))
                 if data.toggled.alt1:
                     try:
                         self.alt1_updated.call(data.alt1)
