@@ -184,6 +184,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._update_flight_commander(False)
 
         #Arming
+        self._can_arm = 0        
         self.armButton.clicked.connect(self.updateArm)
         self._update_arm_button(False)
         
@@ -291,6 +292,9 @@ class FlightTab(TabToolbox, flight_tab_class):
             if data["sys.canfly"] != self._can_fly:
                 self._can_fly = data["sys.canfly"]
                 self._update_flight_commander(True)
+                
+            if data["sys.canArm"] != self._can_arm:
+                self._can_arm = data["sys.canArm"]
                 self._update_arm_button(True)
                 
             if data["sys.armed"] != self._armed:
@@ -356,20 +360,15 @@ class FlightTab(TabToolbox, flight_tab_class):
             self._armed = None
             return
 
-        if self._can_fly == 0:
-            if self._armed:
-                self.armButton.setEnabled(True)
-                self.armButton.setText("Disarm")
-                self.armButton.setStyleSheet("background-color: red")                    
-            else:
-                self.armButton.setEnabled(False)
-                self.armButton.setText("Arm")
-                self.armButton.setStyleSheet("")                    
+        if self._armed:
+            self.armButton.setEnabled(True)
+            self.armButton.setText("Disarm")
+            self.armButton.setStyleSheet("background-color: red")                    
         else:
-            if self._armed:
-                self.armButton.setEnabled(True)
-                self.armButton.setText("Disarm")
-                self.armButton.setStyleSheet("background-color: red")                    
+            if self._can_arm == 0:
+                self.armButton.setStyleSheet("")                    
+                self.armButton.setEnabled(False)
+                self._armed = None
             else:
                 self.armButton.setEnabled(True)
                 self.armButton.setText("Arm")
@@ -425,6 +424,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         lg.add_variable("motor.m4")
         lg.add_variable("sys.canfly")
         lg.add_variable("sys.armed")
+        lg.add_variable("sys.canArm")
 
         try:
             self._helper.cf.log.add_config(lg)
@@ -580,7 +580,7 @@ class FlightTab(TabToolbox, flight_tab_class):
             except Exception: 
                 pass
         else:
-            if self._can_fly:
+            if self._can_arm:
                 self.armButton.setStyleSheet("background-color: orange")                    
                 try:
                     #send arming commend

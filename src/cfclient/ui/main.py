@@ -455,6 +455,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._menu_cf2_config.setEnabled(False)
             self.linkQualityBar.setValue(0)
             self.logConfigAction.setEnabled(False)
+            self.esButton.setStyleSheet("")                    
+            self.esButton.setEnabled(False)
         elif self.uiState == UIState.CONNECTED:
             s = "Connected on %s" % self._connectivity_manager.get_interface()
             self.setWindowTitle(s)
@@ -462,6 +464,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.menuItemConnect.setEnabled(True)
             self._connectivity_manager.set_state(ConnectivityManager.UIState.CONNECTED)
             self.logConfigAction.setEnabled(True)
+            self.esButton.setEnabled(True)
+            self.esButton.setStyleSheet("background-color: red")                    
             # Find out if there's an I2C EEPROM, otherwise don't show the
             # dialog.
             if len(self.cf.mem.get_mems(MemoryElement.TYPE_I2C)) > 0:
