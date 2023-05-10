@@ -158,6 +158,8 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         self._log_error_signal.connect(self._logging_error)
 
+        self._isConnected = False
+
         # Connect UI signals that are in this tab
         self.flightModeCombo.currentIndexChanged.connect(self.flightmodeChange)
         self.minThrust.valueChanged.connect(self.minMaxThrustChanged)
@@ -280,7 +282,7 @@ class FlightTab(TabToolbox, flight_tab_class):
                               log_conf.name, msg))
 
     def _log_data_received(self, timestamp, data, logconf):
-        if self.isVisible():
+        if self.isVisible() and self._isConnected:
             self.actualM1.setValue(data["motor.m1"])
             self.actualM2.setValue(data["motor.m2"])
             self.actualM3.setValue(data["motor.m3"])
@@ -414,6 +416,7 @@ class FlightTab(TabToolbox, flight_tab_class):
             return
 
     def connected(self, linkURI):
+        self._isConnected = True
         # MOTOR & THRUST
         lg = LogConfig("Motors", Config().get("ui_update_period"))
         lg.add_variable("stabilizer.thrust", "uint16_t")
@@ -448,6 +451,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._helper.inputDeviceReader.set_alt_hold_available(available)
 
     def disconnected(self, linkURI):
+        self._isConnected = False
         self.ai.setRollPitch(0, 0)
         self.actualM1.setValue(0)
         self.actualM2.setValue(0)
