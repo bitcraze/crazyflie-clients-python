@@ -46,10 +46,6 @@ from cfclient.utils.input import JoystickReader
 
 from cfclient.ui.tab_toolbox import TabToolbox
 
-LOG_NAME_ESTIMATE_X = 'stateEstimate.x'
-LOG_NAME_ESTIMATE_Y = 'stateEstimate.y'
-LOG_NAME_ESTIMATE_Z = 'stateEstimate.z'
-
 __author__ = 'Bitcraze AB'
 __all__ = ['FlightTab']
 
@@ -114,6 +110,14 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     _limiting_updated = pyqtSignal(bool, bool, bool)
 
+    LOG_NAME_THRUST = 'stabilizer.thrust'
+    LOG_NAME_MOTOR_1 = 'motor.m1'
+    LOG_NAME_MOTOR_2 = 'motor.m2'
+    LOG_NAME_MOTOR_3 = 'motor.m3'
+    LOG_NAME_MOTOR_4 = 'motor.m4'
+    LOG_NAME_CAN_FLY = 'sys.canfly'
+    LOG_NAME_SUPERVISOR_INFO = 'superv.info'
+
     def __init__(self, helper):
         super(FlightTab, self).__init__(helper, 'Flight Control')
         self.setupUi(self)
@@ -135,8 +139,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._helper.inputDeviceReader.emergency_stop_updated.add_callback(
             self._emergency_stop_updated_signal.emit)
         self._arm_updated_signal.connect(self.updateArm)
-        self._helper.inputDeviceReader.arm_updated.add_callback(
-            self._arm_updated_signal.emit)
+        self._helper.inputDeviceReader.arm_updated.add_callback(self._arm_updated_signal.emit)
 
         self._helper.inputDeviceReader.heighthold_input_updated.add_callback(
             self._heighthold_input_updated_signal.emit)
@@ -174,7 +177,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.isInCrazyFlightmode = False
 
         # Command Based Flight Control
-        self._can_fly = 0
+        self._can_fly_deprecated = 0
         self.commanderTakeOffButton.clicked.connect(lambda: self._flight_command(CommanderAction.TAKE_OFF))
         self.commanderLandButton.clicked.connect(lambda: self._flight_command(CommanderAction.LAND))
         self.commanderLeftButton.clicked.connect(lambda: self._flight_command(CommanderAction.LEFT))
@@ -185,8 +188,8 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.commanderDownButton.clicked.connect(lambda: self._flight_command(CommanderAction.DOWN))
         self._update_flight_commander(False)
 
-        # Arming
-        self._can_arm = 0
+        # Supervisor
+        self._supervisor_info_bitfield = 0
         self.armButton.clicked.connect(self.updateArm)
         self._update_arm_button(False)
 
@@ -283,25 +286,21 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     def _log_data_received(self, timestamp, data, logconf):
         if self.isVisible() and self._isConnected:
-            self.actualM1.setValue(data["motor.m1"])
-            self.actualM2.setValue(data["motor.m2"])
-            self.actualM3.setValue(data["motor.m3"])
-            self.actualM4.setValue(data["motor.m4"])
+            self.actualM1.setValue(data[self.LOG_NAME_MOTOR_1])
+            self.actualM2.setValue(data[self.LOG_NAME_MOTOR_2])
+            self.actualM3.setValue(data[self.LOG_NAME_MOTOR_3])
+            self.actualM4.setValue(data[self.LOG_NAME_MOTOR_1])
 
             self.estimateThrust.setText(
-                "%.2f%%" % self.thrustToPercentage(data["stabilizer.thrust"]))
+                "%.2f%%" % self.thrustToPercentage(data[self.LOG_NAME_THRUST]))
 
-            if data["sys.canfly"] != self._can_fly:
-                self._can_fly = data["sys.canfly"]
+            if data[self.LOG_NAME_CAN_FLY] != self._can_fly_deprecated:
+                self._can_fly_deprecated = data[self.LOG_NAME_CAN_FLY]
                 self._update_flight_commander(True)
 
-            if data["sys.canArm"] != self._can_arm:
-                self._can_arm = data["sys.canArm"]
-                self._update_arm_button(True)
+            self._supervisor_info_bitfield = data[self.LOG_NAME_SUPERVISOR_INFO]
 
-            if data["sys.armed"] != self._armed:
-                self._armed = data["sys.armed"]
-                self._update_arm_button(True)
+            self._update_arm_button(True)
 
     def _pose_data_received(self, pose_logger, pose):
         if self.isVisible():
@@ -358,23 +357,32 @@ class FlightTab(TabToolbox, flight_tab_class):
     def _update_arm_button(self, connected):
         if not connected:
             self.armButton.setStyleSheet("")
+            self.armButton.setText("Arm")
             self.armButton.setEnabled(False)
-            self._armed = None
             return
 
-        if self._armed:
+        if self._is_flying():
             self.armButton.setEnabled(True)
-            self.armButton.setText("Disarm")
+            self.armButton.setText("Emergency stop")
             self.armButton.setStyleSheet("background-color: red")
-        else:
-            if self._can_arm == 0:
-                self.armButton.setStyleSheet("")
+            return
+
+        if self._is_armed():
+            self.armButton.setStyleSheet("background-color: red")
+            if self._auto_arming():
                 self.armButton.setEnabled(False)
-                self._armed = None
+                self.armButton.setText("Auto armed")
             else:
                 self.armButton.setEnabled(True)
-                self.armButton.setText("Arm")
+                self.armButton.setText("Disarm")
+        else:
+            self.armButton.setText("Arm")
+            if self._can_arm():
+                self.armButton.setEnabled(True)
                 self.armButton.setStyleSheet("background-color: lightgreen")
+            else:
+                self.armButton.setStyleSheet("")
+                self.armButton.setEnabled(False)
 
     def _update_flight_commander(self, connected):
         self.commanderBox.setToolTip(str())
@@ -382,11 +390,9 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.commanderBox.setEnabled(False)
             return
 
-        if self._can_fly == 0:
+        if self._can_fly_deprecated == 0:
             self.commanderBox.setEnabled(False)
-            self.commanderBox.setToolTip(
-                'The Crazyflie reports that flight is not possible'
-            )
+            self.commanderBox.setToolTip('The Crazyflie reports that flight is not possible')
             return
 
         # We cannot know if we have a positioning deck until we get params
@@ -401,9 +407,7 @@ class FlightTab(TabToolbox, flight_tab_class):
                 self.commanderBox.setEnabled(True)
                 break
         else:
-            self.commanderBox.setToolTip(
-                'You need a positioning deck to use Command Based Flight'
-            )
+            self.commanderBox.setToolTip('You need a positioning deck to use Command Based Flight')
             self.commanderBox.setEnabled(False)
             return
 
@@ -419,14 +423,13 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._isConnected = True
         # MOTOR & THRUST
         lg = LogConfig("Motors", Config().get("ui_update_period"))
-        lg.add_variable("stabilizer.thrust", "uint16_t")
-        lg.add_variable("motor.m1")
-        lg.add_variable("motor.m2")
-        lg.add_variable("motor.m3")
-        lg.add_variable("motor.m4")
-        lg.add_variable("sys.canfly")
-        lg.add_variable("sys.armed")
-        lg.add_variable("sys.canArm")
+        lg.add_variable(self.LOG_NAME_THRUST, "uint16_t")
+        lg.add_variable(self.LOG_NAME_MOTOR_1)
+        lg.add_variable(self.LOG_NAME_MOTOR_2)
+        lg.add_variable(self.LOG_NAME_MOTOR_3)
+        lg.add_variable(self.LOG_NAME_MOTOR_4)
+        lg.add_variable(self.LOG_NAME_CAN_FLY)
+        lg.add_variable(self.LOG_NAME_SUPERVISOR_INFO)
 
         try:
             self._helper.cf.log.add_config(lg)
@@ -494,7 +497,27 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._assist_mode_combo.clear()
 
         self._update_flight_commander(False)
+
+        self._supervisor_info_bitfield = 0
         self._update_arm_button(False)
+
+    def _can_arm(self):
+        return bool(self._supervisor_info_bitfield & 0x0001)
+
+    def _is_armed(self):
+        return bool(self._supervisor_info_bitfield & 0x0002)
+
+    def _auto_arming(self):
+        return bool(self._supervisor_info_bitfield & 0x0004)
+
+    def _can_fly(self):
+        return bool(self._supervisor_info_bitfield & 0x0008)
+
+    def _is_flying(self):
+        return bool(self._supervisor_info_bitfield & 0x0010)
+
+    def _is_tumbled(self):
+        return bool(self._supervisor_info_bitfield & 0x0020)
 
     def minMaxThrustChanged(self):
         self._helper.inputDeviceReader.min_thrust = self.minThrust.value()
@@ -564,29 +587,22 @@ class FlightTab(TabToolbox, flight_tab_class):
     def updateEmergencyStop(self, emergencyStop):
         if emergencyStop:
             self.setMotorLabelsEnabled(False)
-            try:
-                # send disarming command
-                self._helper.cf.param.set_value("system.arm", int(False))
-            except Exception:
-                pass
+            self._helper.cf.loc.send_emergency_stop()
+            # TODO krri disarm?
         else:
             self.setMotorLabelsEnabled(True)
 
     def updateArm(self):
-        if (self._armed):
-            try:
-                # send disarming command
-                self._helper.cf.param.set_value("system.arm", int(False))
-            except Exception:
-                pass
+        if self._is_flying():
+            self._helper.cf.loc.send_emergency_stop()
+            # TODO krri disarm?
         else:
-            if self._can_arm:
-                self.armButton.setStyleSheet("background-color: orange")
-                try:
-                    # send arming commend
-                    self._helper.cf.param.set_value("system.arm", int(True))
-                except Exception:
-                    pass
+            if self._is_armed():
+                self._helper.cf.platform.send_arming_request(False)
+            else:
+                if self._can_arm():
+                    self.armButton.setStyleSheet("background-color: orange")
+                    self._helper.cf.platform.send_arming_request(True)
 
     def flightmodeChange(self, item):
         Config().set("flightmode", str(self.flightModeCombo.itemText(item)))
