@@ -39,7 +39,7 @@
              <item row="1" column="0">
               <widget class="QLabel" name="label_2">
                <property name="text">
-                <string>Copyright (c) 2011-2020, Bitcraze AB</string>
+                <string>Copyright (c) 2011-2023, Bitcraze AB</string>
                </property>
               </widget>
              </item>
