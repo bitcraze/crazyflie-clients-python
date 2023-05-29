@@ -429,7 +429,10 @@ class FlightTab(TabToolbox, flight_tab_class):
         lg.add_variable(self.LOG_NAME_MOTOR_3)
         lg.add_variable(self.LOG_NAME_MOTOR_4)
         lg.add_variable(self.LOG_NAME_CAN_FLY)
-        lg.add_variable(self.LOG_NAME_SUPERVISOR_INFO)
+
+        # Add supervisor info if it exists to keep backwards compatibility
+        if self._helper.cf.log.toc.get_element_by_complete_name(self.LOG_NAME_SUPERVISOR_INFO):
+            lg.add_variable(self.LOG_NAME_SUPERVISOR_INFO)
 
         try:
             self._helper.cf.log.add_config(lg)
