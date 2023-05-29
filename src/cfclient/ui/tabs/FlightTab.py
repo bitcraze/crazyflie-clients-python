@@ -289,7 +289,7 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.actualM1.setValue(data[self.LOG_NAME_MOTOR_1])
             self.actualM2.setValue(data[self.LOG_NAME_MOTOR_2])
             self.actualM3.setValue(data[self.LOG_NAME_MOTOR_3])
-            self.actualM4.setValue(data[self.LOG_NAME_MOTOR_1])
+            self.actualM4.setValue(data[self.LOG_NAME_MOTOR_4])
 
             self.estimateThrust.setText(
                 "%.2f%%" % self.thrustToPercentage(data[self.LOG_NAME_THRUST]))
