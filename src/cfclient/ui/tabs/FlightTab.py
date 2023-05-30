@@ -451,7 +451,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.estimateZ.setEnabled(should_enable)
 
     def _set_available_sensors(self, name, available):
-        logger.info("[%s]: %s", name, available)
+        logger.debug("[%s]: %s", name, available)
         available = eval(available)
 
         self._enable_estimators(True)
@@ -740,7 +740,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._ring_effect = index
         if index > -1:
             i = self._led_ring_effect.itemData(index)
-            logger.info("Changed effect to {}".format(i))
+            logger.debug("Changed effect to {}".format(i))
             if i != int(self._helper.cf.param.values["ring"]["effect"]):
                 self._helper.cf.param.set_value("ring.effect", str(i))
 
