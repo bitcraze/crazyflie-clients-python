@@ -1392,7 +1392,7 @@ class QualisysTab(TabToolbox, qualisys_tab_class):
         # Threadsafe call
         self._machine.postEvent(FlightModeEvent(mode))
 
-        logger.info('Switching Flight Mode to: %s', mode)
+        logger.debug('Switching Flight Mode to: %s', mode)
 
     def send_setpoint(self, pos):
         # Wraps the send command to the crazyflie

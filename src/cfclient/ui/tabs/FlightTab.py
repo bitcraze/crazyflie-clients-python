@@ -116,7 +116,7 @@ class FlightTab(TabToolbox, flight_tab_class):
     LOG_NAME_MOTOR_3 = 'motor.m3'
     LOG_NAME_MOTOR_4 = 'motor.m4'
     LOG_NAME_CAN_FLY = 'sys.canfly'
-    LOG_NAME_SUPERVISOR_INFO = 'superv.info'
+    LOG_NAME_SUPERVISOR_INFO = 'supervisor.info'
 
     def __init__(self, helper):
         super(FlightTab, self).__init__(helper, 'Flight Control')
@@ -298,7 +298,8 @@ class FlightTab(TabToolbox, flight_tab_class):
                 self._can_fly_deprecated = data[self.LOG_NAME_CAN_FLY]
                 self._update_flight_commander(True)
 
-            self._supervisor_info_bitfield = data[self.LOG_NAME_SUPERVISOR_INFO]
+            if self.LOG_NAME_SUPERVISOR_INFO in data:
+                self._supervisor_info_bitfield = data[self.LOG_NAME_SUPERVISOR_INFO]
 
             self._update_arm_button(True)
 
@@ -450,7 +451,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.estimateZ.setEnabled(should_enable)
 
     def _set_available_sensors(self, name, available):
-        logger.info("[%s]: %s", name, available)
+        logger.debug("[%s]: %s", name, available)
         available = eval(available)
 
         self._enable_estimators(True)
@@ -739,7 +740,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._ring_effect = index
         if index > -1:
             i = self._led_ring_effect.itemData(index)
-            logger.info("Changed effect to {}".format(i))
+            logger.debug("Changed effect to {}".format(i))
             if i != int(self._helper.cf.param.values["ring"]["effect"]):
                 self._helper.cf.param.set_value("ring.effect", str(i))
 

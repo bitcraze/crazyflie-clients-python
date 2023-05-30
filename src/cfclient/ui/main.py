@@ -369,7 +369,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             link_uri = Config().get("link_uri")
             if link_uri.startswith("radio://"):
                 if len(link_uri) > 0:
-                    address = int(link_uri.split('/')[-1], 16)
+                    parts = link_uri.split('/')
+                    # The uri might not contain an address
+                    if len(parts) == 6:
+                        address = int(parts[-1], 16)
         except Exception as err:
             logger.warn('failed to parse address from config: %s' % str(err))
         finally:

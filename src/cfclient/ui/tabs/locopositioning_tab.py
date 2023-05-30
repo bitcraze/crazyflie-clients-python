@@ -522,7 +522,7 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
 
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
-        logger.info("Crazyflie connected to {}".format(link_uri))
+        logger.debug("Crazyflie connected to {}".format(link_uri))
         self._request_param_to_detect_loco_deck()
 
     def _request_param_to_detect_loco_deck(self):
@@ -531,7 +531,7 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
 
         def register(group, param):
             if self._is_in_param_toc(group, param):
-                logger.info("Requesting loco deck parameter")
+                logger.debug("Requesting loco deck parameter")
                 self._helper.cf.param.add_update_callback(group=group,
                                                           name=param,
                                                           cb=self._cb_param_to_detect_loco_deck_signal.emit)
@@ -543,10 +543,10 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
         """Callback from the parameter sub system when the Loco deck detection
         parameter has been updated"""
         if value == '1':
-            logger.info("Loco deck installed, enabling LPS tab")
+            logger.debug("Loco deck installed, enabling LPS tab")
             self._loco_deck_detected()
         else:
-            logger.info("No Loco deck installed")
+            logger.debug("No Loco deck installed")
 
     def _loco_deck_detected(self):
         """Called when the loco deck has been detected. Enables the tab,
