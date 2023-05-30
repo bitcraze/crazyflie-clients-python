@@ -298,7 +298,8 @@ class FlightTab(TabToolbox, flight_tab_class):
                 self._can_fly_deprecated = data[self.LOG_NAME_CAN_FLY]
                 self._update_flight_commander(True)
 
-            self._supervisor_info_bitfield = data[self.LOG_NAME_SUPERVISOR_INFO]
+            if self.LOG_NAME_SUPERVISOR_INFO in data:
+                self._supervisor_info_bitfield = data[self.LOG_NAME_SUPERVISOR_INFO]
 
             self._update_arm_button(True)
 
