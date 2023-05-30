@@ -116,7 +116,7 @@ class FlightTab(TabToolbox, flight_tab_class):
     LOG_NAME_MOTOR_3 = 'motor.m3'
     LOG_NAME_MOTOR_4 = 'motor.m4'
     LOG_NAME_CAN_FLY = 'sys.canfly'
-    LOG_NAME_SUPERVISOR_INFO = 'superv.info'
+    LOG_NAME_SUPERVISOR_INFO = 'supervisor.info'
 
     def __init__(self, helper):
         super(FlightTab, self).__init__(helper, 'Flight Control')
