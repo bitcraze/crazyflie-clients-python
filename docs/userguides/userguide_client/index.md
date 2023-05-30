@@ -47,16 +47,16 @@ For more info on LED indicators etc. have a look at the [Crazyflie 2.X](https://
 1.  The window title will show the connection status
 2.  Connect/disconnect, scan and the drop-down connection list as well
     as Address and auto reconnect.
-
-
-
        * *Scan:* Will scan for availible Crazyflies within the chosen address.
        * *Connect:* Will connect to the selected URI in the connection list
        * *Disconnect:* Will disconnect the current Crazyflie
        * *Address:* The address to scan for. If you didn't change this [in the configuration]( #firmware-configuration), then leave the default of 0xE7E7E7E7E7
 3. Battery and link quality (from 0% to 100%)
 4. Tabs with specific functionality (see below for details)
-5. The selected and used input interface
+5. The content for the active tab
+6. Toolboxes can be docked to the edges, making their content visible all the time.
+7. The selected and used input interface
+8. Emergency stop button. The motors will stop when clicked.
 
 ### Tabs and toolboxes
 
