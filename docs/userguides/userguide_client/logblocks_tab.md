@@ -1,14 +1,14 @@
 ---
 title: Log Blocks Tab
 page_id: logblocks_tab
+sort_order: 5
 ---
 
 The log blocks tab shows all log configurations that are saved and if
 they are started. It\'s also possible to start/stop them as well as
 write the logged data to file.
 
-![cfclient log blocks](/docs/images/cfclient_logblocks_marked.png){:align-center
-width="700"}
+![cfclient log blocks](/docs/images/cfclient_logblocks_marked.png)
 
 1.  Fields
     -   *ID:* Block id in Crazyflie

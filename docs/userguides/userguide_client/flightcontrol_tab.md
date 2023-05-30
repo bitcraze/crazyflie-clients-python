@@ -1,11 +1,12 @@
 ---
 title: Flightcontrol Tab
 page_id: flightcontrol_tab
+sort_order: 1
 ---
 
 The normal view used when flying is the one seen below.
 
-![cfclient flighttab](/docs/images/cfclient_flightab.png){:align-center}
+![cfclient flighttab](/docs/images/cfclient_flightab.png)
 
 1.  Flight mode selector (Normal and Advanced)
     * *Normal:* Recommended for beginners
