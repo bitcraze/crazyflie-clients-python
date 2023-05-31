@@ -612,7 +612,7 @@
               <bool>false</bool>
              </property>
              <property name="text">
-              <string>Disarm/kill</string>
+              <string>Emergency stop</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -655,7 +655,7 @@
               <bool>false</bool>
              </property>
              <property name="text">
-              <string>Arm</string>
+              <string>Arm/disarm</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
