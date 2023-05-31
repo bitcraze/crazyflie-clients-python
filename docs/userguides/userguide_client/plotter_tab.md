@@ -1,12 +1,12 @@
 ---
 title: Plotter Tab
 page_id: plotter_tab
+sort_order: 3
 ---
 
 The plotter tab can be used to visualize data logged from the Crazyflie.
 
-![cfclient plotter](/docs/images/cfclient_ploter.png){:align-center
-width="700"}
+![cfclient plotter](/docs/images/cfclient_ploter.png)
 
 1.  Select logging configuration to plot. Read about how to create
     configurations [here](/docs/userguides/userguide_client/#logging).

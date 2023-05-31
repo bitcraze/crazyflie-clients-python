@@ -1,11 +1,12 @@
 ---
 title: Flightcontrol Tab
 page_id: flightcontrol_tab
+sort_order: 1
 ---
 
 The normal view used when flying is the one seen below.
 
-![cfclient flighttab](/docs/images/cfclient_flightab.png){:align-center}
+![cfclient flighttab](/docs/images/cfclient_flightab.png)
 
 1.  Flight mode selector (Normal and Advanced)
     * *Normal:* Recommended for beginners
@@ -34,3 +35,4 @@ The normal view used when flying is the one seen below.
 8. Motor output on the Crazyflie
 9. Horizon indicator
 10. Command based flight control, allow controlled flight if, and only if, a positioning deck such as the [Flow deck](https://store.bitcraze.io/collections/decks/products/flow-deck-v2), the [Loco deck](https://store.bitcraze.io/collections/decks/products/loco-positioning-deck) or the [Lighthouse deck](https://store.bitcraze.io/collections/decks/products/lighthouse-positioning-deck) is present.
+11. Arming/disarming button. Pressing this will send a arming or disarming event to the Crazyflie which will arm or disarm the system if this is possible. This button can also say "Auto arming" which indicates the crazyflie is configured to arm the system automatically if system checks have passed. More info in [crazyflie firmware arming documentation](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/supervisor/arming/). 

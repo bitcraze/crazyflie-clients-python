@@ -107,8 +107,12 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
                 "Press the button for Roll negative calibration"))
         self.detectKillswitch.clicked.connect(
             lambda: self._button_detect(
-                "killswitch", "Killswitch",
-                "Press the button for the killswitch (will disable motors)"))
+                "estop", "Disarm/Kill",
+                "Press the button to disarm/kill (will disable motors)"))
+        self.detectArm.clicked.connect(
+            lambda: self._button_detect(
+                "arm", "Arm system",
+                "Press the button to arm the system (will enable motor ouput)"))
         self.detectAlt1.clicked.connect(
             lambda: self._button_detect(
                 "alt1", "Alternative function 1",
@@ -142,9 +146,10 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
             self.detectYaw, self.detectThrust,
             self.detectPitchPos, self.detectPitchNeg,
             self.detectRollPos, self.detectRollNeg,
-            self.detectKillswitch, self.detectExitapp,
-            self._detect_assisted_control, self.detectAlt1,
-            self.detectAlt2, self.detectMuxswitch]
+            self.detectKillswitch, self.detectArm,
+            self.detectExitapp, self._detect_assisted_control,
+            self.detectAlt1, self.detectAlt2,
+            self.detectMuxswitch]
 
         self._button_to_detect = ""
         self._axis_to_detect = ""
@@ -178,7 +183,8 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
             "pitchNeg": self.pitchNeg,
             "rollPos": self.rollPos,
             "rollNeg": self.rollNeg,
-            "killswitch": self.killswitch,
+            "estop": self.killswitch,
+            "arm": self.arm,
             "alt1": self.alt1,
             "alt2": self.alt2,
             "exitapp": self.exitapp,

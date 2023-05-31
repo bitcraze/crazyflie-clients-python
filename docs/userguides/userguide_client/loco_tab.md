@@ -1,6 +1,7 @@
 ---
 title: Loco Positioning Tab
 page_id: loco_tab
+sort_order: 7
 ---
 
 The Loco Positioning tab shows information from the Loco Positioning
@@ -22,8 +23,7 @@ Displays the configured anchor positions and the estimated position of
 the Crazyflie. Can be used to make sure the system is set up correctly
 and that the estimated position is reasonable.
 
-![cfclient positioning](/docs/images/cfclient_position_estimate.png){:align-center
-width="700"}
+![cfclient positioning](/docs/images/cfclient_position_estimate.png)
 
 1.  Plot showing anchors and Crazyflie
 2.  Sets the graph mode

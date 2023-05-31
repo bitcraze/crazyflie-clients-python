@@ -208,6 +208,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.joystickReader.hover_input_updated.add_callback(
             self.cf.commander.send_hover_setpoint)
 
+        # Emergency stop button
+        self.esButton.clicked.connect(self._emergency_stop)
+
         # Connection callbacks and signal wrappers for UI protection
         self.cf.connected.add_callback(self.connectionDoneSignal.emit)
         self.connectionDoneSignal.connect(self._connected)
@@ -366,7 +369,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             link_uri = Config().get("link_uri")
             if link_uri.startswith("radio://"):
                 if len(link_uri) > 0:
-                    address = int(link_uri.split('/')[-1], 16)
+                    parts = link_uri.split('/')
+                    # The uri might not contain an address
+                    if len(parts) == 6:
+                        address = int(parts[-1], 16)
         except Exception as err:
             logger.warn('failed to parse address from config: %s' % str(err))
         finally:
@@ -452,6 +458,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._menu_cf2_config.setEnabled(False)
             self.linkQualityBar.setValue(0)
             self.logConfigAction.setEnabled(False)
+            self.esButton.setStyleSheet("")
+            self.esButton.setEnabled(False)
         elif self.uiState == UIState.CONNECTED:
             s = "Connected on %s" % self._connectivity_manager.get_interface()
             self.setWindowTitle(s)
@@ -459,6 +467,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.menuItemConnect.setEnabled(True)
             self._connectivity_manager.set_state(ConnectivityManager.UIState.CONNECTED)
             self.logConfigAction.setEnabled(True)
+            self.esButton.setEnabled(True)
+            self.esButton.setStyleSheet("background-color: red")
             # Find out if there's an I2C EEPROM, otherwise don't show the
             # dialog.
             if len(self.cf.mem.get_mems(MemoryElement.TYPE_I2C)) > 0:
@@ -561,6 +571,13 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     def _show_connect_dialog(self):
         self.logConfigDialogue.show()
+
+    def _emergency_stop(self):
+        # send disarming command
+        if (self.uiState == UIState.CONNECTED):
+            # Send both emergency stop and disarm
+            # TODO krri Disarm?
+            self.cf.loc.send_emergency_stop()
 
     def _update_battery(self, timestamp, data, logconf):
         self.batteryBar.setValue(int(data["pm.vbat"] * 1000))

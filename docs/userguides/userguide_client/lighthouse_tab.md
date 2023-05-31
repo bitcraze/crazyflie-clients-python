@@ -1,6 +1,7 @@
 ---
 title: Lighthouse Positioning Tab
 page_id: lighthouse_tab
+sort_order: 6
 ---
 
 The Lighthouse Positioning tab shows information from the Lighthouse Positioning
@@ -8,7 +9,7 @@ system when present. It is also used to configure and manage the system.
 For more information on how the Lighthouse system works, please see
 [the firmware documentation](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/lighthouse/).
 
-![cfclient positioning](/docs/images/cfclient_lh_main.png){:align-center width="700"}
+![cfclient positioning](/docs/images/cfclient_lh_main.png)
 
 The tab is divided into four sections:
 1.  3D view of the Crazyfle and the base stations

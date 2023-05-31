@@ -383,7 +383,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
-        logger.info("Crazyflie connected to {}".format(link_uri))
+        logger.debug("Crazyflie connected to {}".format(link_uri))
 
         self._basestation_geometry_dialog.reset()
         self._is_connected = True
