@@ -1,3 +1,4 @@
+RELEASE-VERSION
 syntax: glob
 *.pyc
 *~
