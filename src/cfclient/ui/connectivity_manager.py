@@ -28,6 +28,8 @@
 from collections import namedtuple
 from PyQt5.QtCore import pyqtSignal, QObject
 
+from sys import stdout
+
 __author__ = 'Bitcraze AB'
 __all__ = ['ConnectivityManager']
 

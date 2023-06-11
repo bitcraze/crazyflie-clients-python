@@ -662,6 +662,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.uiState = UIState.DISCONNECTED
             self._update_ui_state()
         else:
+            print("******************************* OPEN LINK ******************************")
+            sys.stdout.flush()
             self.cf.open_link(self._connectivity_manager.get_interface())
 
     def _scan(self, address):
