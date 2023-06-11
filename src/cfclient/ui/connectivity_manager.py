@@ -108,6 +108,7 @@ class ConnectivityManager(QObject):
 
             combo.clear()
             combo.addItem(self.INTERFACE_PROMPT_TEXT)
+            combo.addItem('MulticopterSim')
             combo.addItems(interface_items)
             combo.setCurrentIndex(new_index)
 
