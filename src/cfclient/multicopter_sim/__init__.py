@@ -17,10 +17,13 @@
 
 from sys import stdout
 import socket
+import numpy as np
 
 class MulticopterSimClient:
 
-    def __init__(self, host='127.0.0.1', port=5000):
+    def __init__(self, connectButton, host='127.0.0.1', port=5000):
+
+        self._debug(connectButton)
 
         self.host = host
         self.port = port
