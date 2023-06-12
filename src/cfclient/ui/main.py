@@ -662,9 +662,12 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.uiState = UIState.DISCONNECTED
             self._update_ui_state()
         else:
-            print("******************************* OPEN LINK ******************************")
-            sys.stdout.flush()
-            self.cf.open_link(self._connectivity_manager.get_interface())
+            interface = self._connectivity_manager.get_interface()
+            if interface == "MulticopterSim":
+                print('*************************************************')
+                sys.stdout.flush()
+            else:
+                self.cf.open_link(interface)
 
     def _scan(self, address):
         self.uiState = UIState.SCANNING
