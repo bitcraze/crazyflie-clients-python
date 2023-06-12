@@ -23,9 +23,7 @@ from time import sleep
 
 class MulticopterSimClient:
 
-    def __init__(self, main_ui, host='127.0.0.1', port=5000):
-
-        self.main_ui = main_ui
+    def __init__(self, host='127.0.0.1', port=5000):
 
         self.connected = False
 
@@ -33,6 +31,8 @@ class MulticopterSimClient:
 
         self.host = host
         self.port = port
+
+        self.pose = [0, 0, 0, 0, 0, 0]
 
     def connect(self):
         '''
@@ -63,6 +63,10 @@ class MulticopterSimClient:
 
         self.connected = False
 
+    def getPose(self):
+
+        return tuple(self.pose)
+
     def _run_thread(self):
 
         while self.connected:
@@ -75,7 +79,7 @@ class MulticopterSimClient:
 
             telemetry = np.frombuffer(telemetry_bytes)
 
-            self.main_ui.setPoseFromSim(np.random.randn())
+            self.pose[0] = np.random.randn()
 
             sleep(0)  # yield to main thread
 
