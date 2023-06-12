@@ -29,6 +29,7 @@ The main file for the Crazyflie control application.
 import logging
 import sys
 import usb
+from sys import stdout
 
 from cfclient.multicopter_sim import MulticopterSimClient
 
@@ -365,6 +366,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             if name in loaded_tab_toolboxes.keys():
                 self._tab_toolbox_show_as_toolbox(loaded_tab_toolboxes[name])
 
+    def _debug(self, msg):
+        print(msg)
+        stdout.flush()
+
     def _set_address(self):
         address = 0xE7E7E7E7E7
         try:
@@ -657,6 +662,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                                      event.size().height()])
 
     def _connect(self):
+
+        self._debug("*********** CONNECT " + str(self.uiState))
+
         if self.uiState == UIState.CONNECTED:
             self.cf.close_link()
         elif self.uiState == UIState.CONNECTING:

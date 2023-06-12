@@ -41,7 +41,7 @@ class MulticopterSimClient:
 
                 self.connect_button.setText('Disconnect')
 
-                thread = Thread(target=self._run_thread)
+                thread = Thread(target=self._run_thread, args=(sock,))
 
                 thread.start()
 
@@ -50,7 +50,10 @@ class MulticopterSimClient:
                 self._debug(
                         'Connection error; did you start the server first?')
 
-    def _run_thread(self):
+    def _run_thread(self, sock):
+
+        self._debug(sock)
+        exit(0)
 
         while True:
 
@@ -61,8 +64,6 @@ class MulticopterSimClient:
                 break
 
             telemetry = np.frombuffer(telemetry_bytes)
-
-            # self._debug(telemetry)
 
     def _debug(self, msg):
 
