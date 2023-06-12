@@ -67,7 +67,9 @@ class MulticopterSimClient:
 
         self.sticks = values
 
-    def step(self):
+    def step(self, sticks):
+
+        self._debug(sticks)
 
         if self.connected:
 
