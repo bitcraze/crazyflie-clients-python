@@ -678,8 +678,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             interface = self._connectivity_manager.get_interface()
             if interface == "MulticopterSim":
                 self.sim_client = MulticopterSimClient(self.connectButton)
-                self.uiState = UIState.CONNECTED
-                if not self.sim_client.connect():
+                if self.sim_client.connect():
+                    self.uiState = UIState.CONNECTED
+                else:
 
                     QMessageBox.about(self, 
                         "Connection error" ,

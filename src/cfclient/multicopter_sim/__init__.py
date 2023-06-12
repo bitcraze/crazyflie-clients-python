@@ -69,7 +69,12 @@ class MulticopterSimClient:
 
     def _run_thread(self):
 
+        count = 0
+
         while self.connected:
+
+            print(count)
+            count += 1
 
             try:
                 telemetry_bytes = self.sock.recv(8*13)
@@ -79,7 +84,7 @@ class MulticopterSimClient:
 
             telemetry = np.frombuffer(telemetry_bytes)
 
-            self._debug(telemetry[0])
+            # self._debug(telemetry[0])
 
             sleep(0)  # yield to main thread
 
