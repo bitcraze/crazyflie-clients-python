@@ -125,6 +125,8 @@ class FlightTab(TabToolbox, flight_tab_class):
         super(FlightTab, self).__init__(helper, 'Flight Control')
         self.setupUi(self)
 
+        self._sticks_for_sim = None
+
         self.disconnectedSignal.connect(self.disconnected)
         self.connectionFinishedSignal.connect(self.connected)
         # Incomming signals
@@ -276,6 +278,9 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     def setPoseFromSim(self, pose):
         self._pose_data_received(None, pose)
+
+    def getSticksForSim(self):
+        return self._sticks_for_sim
 
     def _flight_command(self, action):
         current_z = self._helper.pose_logger.position[2]
@@ -602,6 +607,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.targetCalPitch.setValue(pitchCal)
 
     def updateInputControl(self, roll, pitch, yaw, thrust):
+        self._sticks_for_sim = (thrust, roll, pitch, yaw)
         self.targetRoll.setText(("%0.2f deg" % roll))
         self.targetPitch.setText(("%0.2f deg" % pitch))
         self.targetYaw.setText(("%0.2f deg/s" % yaw))
