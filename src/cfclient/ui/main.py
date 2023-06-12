@@ -30,6 +30,8 @@ import logging
 import sys
 import usb
 
+from cfclient.multicopter_sim import MulticopterSimClient
+
 import cfclient
 from cfclient.ui.pose_logger import PoseLogger
 from cfclient.ui.tab_toolbox import TabToolbox
