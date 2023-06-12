@@ -32,7 +32,6 @@ class MulticopterSimClient:
         self.port = port
 
         self.pose = None
-        self.sticks = None
 
     def connect(self):
         '''
@@ -63,27 +62,16 @@ class MulticopterSimClient:
 
         return tuple(self.pose)
 
-    def setSticks(self, values):
-
-        self.sticks = values
-
     def step(self, sticks):
-
-        self._debug(sticks)
 
         if self.connected:
 
             try:
                 pose_bytes = self.sock.recv(8*6)
 
-                '''
-                self._debug('%3.3f  %3.3f  %3.3f  %3.3f' % (
-                    self.sticks[0],
-                    self.sticks[1],
-                    self.sticks[2],
-                    self.sticks[3]))
+                self._debug('t=%3.3f  r=%3.3f  p=%3.3f  y=%3.3f' % (
+                    sticks[0], sticks[1], sticks[2], sticks[3]))
 
-                '''
             except socket.timeout:
 
                 return None
