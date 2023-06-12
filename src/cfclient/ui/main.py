@@ -380,7 +380,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     def _sim_update_function(self):
         if self.sim_client is not None:
-            pose = self.sim_client.getPose()
+            # self._debug(self.joystickReader.read_input)
+            pose = self.sim_client.step()
             if pose is not None:
                 self.loaded_tab_toolboxes['Flight Control'].setPoseFromSim(pose)
                     

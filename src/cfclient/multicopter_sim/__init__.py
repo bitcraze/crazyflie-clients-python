@@ -18,8 +18,7 @@
 from sys import stdout
 import socket
 import numpy as np
-from threading import Thread
-from time import sleep
+
 
 class MulticopterSimClient:
 
@@ -51,11 +50,11 @@ class MulticopterSimClient:
 
         self.sock.settimeout(0.5)
 
-        thread = Thread(target=self._run_thread)
+        # thread = Thread(target=self._run_thread)
 
         self.connected = True
 
-        thread.start()
+        # thread.start()
 
         return True
 
@@ -67,22 +66,22 @@ class MulticopterSimClient:
 
         return tuple(self.pose)
 
-    def _run_thread(self):
+    def step(self):
 
-        while self.connected:
+        if self.connected:
 
             try:
                 pose_bytes = self.sock.recv(8*6)
 
             except socket.timeout:
-                break
 
-            self.pose = np.frombuffer(pose_bytes)
+                return None
 
-            sleep(0)  # yield to main thread
+            return np.frombuffer(pose_bytes)
+
+        return None
 
     def _debug(self, msg):
 
         print(msg)
         stdout.flush()
-
