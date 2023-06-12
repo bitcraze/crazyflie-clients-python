@@ -46,6 +46,9 @@ from cfclient.utils.input import JoystickReader
 
 from cfclient.ui.tab_toolbox import TabToolbox
 
+from sys import stdout
+import traceback
+
 __author__ = 'Bitcraze AB'
 __all__ = ['FlightTab']
 
@@ -303,7 +306,11 @@ class FlightTab(TabToolbox, flight_tab_class):
 
             self._update_arm_button(True)
 
-    def _pose_data_received(self, pose_logger, pose):
+    def _debug(self, msg):
+        print(msg)
+        stdout.flush()
+
+    def _pose_data_received(self, _, pose):
         if self.isVisible():
             estimated_z = pose[2]
             roll = pose[3]

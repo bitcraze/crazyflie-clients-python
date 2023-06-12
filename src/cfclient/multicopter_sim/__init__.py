@@ -23,9 +23,9 @@ from time import sleep
 
 class MulticopterSimClient:
 
-    def __init__(self, connect_button, host='127.0.0.1', port=5000):
+    def __init__(self, main_ui, host='127.0.0.1', port=5000):
 
-        self.connect_button = connect_button
+        self.main_ui = main_ui
 
         self.connected = False
 
@@ -47,7 +47,7 @@ class MulticopterSimClient:
 
             self.sock.settimeout(0.5)
 
-            self.connect_button.setText('Disconnect')
+            self.main_ui.setConnectedStatusFromMultiSim(False)
 
             self.connected = True
 
@@ -63,7 +63,7 @@ class MulticopterSimClient:
 
     def disconnect(self):
 
-        self.connect_button.setText('Connect')
+        self.main_ui.setConnectedStatusFromMultiSim(True)
 
         self.connected = False
 

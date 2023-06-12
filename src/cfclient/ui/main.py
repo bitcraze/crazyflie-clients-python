@@ -328,6 +328,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     def create_tab_toolboxes(self, tabs_menu_item, toolboxes_menu_item, tab_widget):
         loaded_tab_toolboxes = {}
 
+        self._debug('**************************** ' + str(cfclient.ui.tabs.FlightTab))
+
         for tab_class in cfclient.ui.tabs.available:
             tab_toolbox = tab_class(cfclient.ui.pluginhelper)
             loaded_tab_toolboxes[tab_toolbox.get_tab_toolbox_name()] = tab_toolbox
@@ -351,8 +353,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             toolbox_action_item.triggered.connect(self.toggle_toolbox_visibility)
             toolbox_action_item.tab_toolbox = tab_toolbox
             tab_toolbox.toolbox_action_item = toolbox_action_item
-            tab_toolbox.dock_widget.closed.connect(lambda: self.toggle_toolbox_visibility(False))
-            tab_toolbox.dock_widget.dockLocationChanged.connect(lambda area: self.set_preferred_dock_area(area))
+            tab_toolbox.dock_widget.closed.connect(
+                    lambda: self.toggle_toolbox_visibility(False))
+            tab_toolbox.dock_widget.dockLocationChanged.connect(
+                    lambda area: self.set_preferred_dock_area(area))
 
             toolboxes_menu_item.addAction(toolbox_action_item)
 
@@ -663,6 +667,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         Config().set("window_size", [event.size().width(),
                                      event.size().height()])
 
+    def setConnectedStatusFromMultiSim(self, is_connected):
+        self.connectButton.setText("Connected" if is_connected else "Disconnected")
+
     def _connect(self):
 
         if self.uiState == UIState.CONNECTED:
@@ -675,15 +682,16 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.uiState = UIState.DISCONNECTED
             self._update_ui_state()
         else:
+
             interface = self._connectivity_manager.get_interface()
+
             if interface == "MulticopterSim":
-                self.sim_client = MulticopterSimClient(self.connectButton)
+                self.sim_client = MulticopterSimClient(self)
                 if self.sim_client.connect():
                     self.uiState = UIState.CONNECTED
                 else:
-
-                    QMessageBox.about(self, 
-                        "Connection error" ,
+                    QMessageBox.warning(self, 
+                        "Connection error",
                         "Did you start the server first?")
 
             else:
