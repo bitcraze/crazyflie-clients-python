@@ -59,6 +59,8 @@ class MulticopterSimClient:
 
     def disconnect(self):
 
+        self.connect_button.setText('Connect')
+
         self.connected = False
 
     def _run_thread(self):
