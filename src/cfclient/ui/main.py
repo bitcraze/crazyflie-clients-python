@@ -666,9 +666,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                                      event.size().height()])
 
     def setPoseFromSim(self, x):
-        return
         self._debug(x)
-        self._debug('**************************** ' + str(cfclient.ui.tabs.FlightTab))
+        # self._debug('**************************** ' + str(cfclient.ui.tabs.FlightTab))
 
     def _connect(self):
 

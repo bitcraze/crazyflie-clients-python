@@ -53,9 +53,9 @@ class MulticopterSimClient:
 
         thread = Thread(target=self._run_thread)
 
-        thread.start()
-
         self.connected = True
+
+        thread.start()
 
         return True
 
@@ -74,6 +74,8 @@ class MulticopterSimClient:
                 break
 
             telemetry = np.frombuffer(telemetry_bytes)
+
+            self._debug(telemetry[0])
 
             self.main_ui.setPoseFromSim(np.random.randn())
 
