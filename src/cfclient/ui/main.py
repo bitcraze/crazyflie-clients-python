@@ -31,7 +31,7 @@ import sys
 import usb
 from sys import stdout
 
-from cfclient.multicopter_sim import MulticopterSimClient
+from cfclient.multicopter_sim import MulticopterSimClient as SimClient
 
 import cfclient
 from cfclient.ui.pose_logger import PoseLogger
@@ -688,14 +688,14 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
             interface = self._connectivity_manager.get_interface()
 
-            if interface == "MulticopterSim":
-                self.sim_client = MulticopterSimClient(self)
+            if interface == "sim":
+                self.sim_client = SimClient(self)
                 if self.sim_client.connect():
                     self.uiState = UIState.CONNECTED
                 else:
                     QMessageBox.warning(self, 
                         "Connection error",
-                        "Did you start the server first?")
+                        "Did you start the simulator?")
 
             else:
                 self.cf.open_link(interface)
