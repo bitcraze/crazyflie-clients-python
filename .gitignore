@@ -1,5 +1,6 @@
 RELEASE-VERSION
 syntax: glob
+*.swp
 *.pyc
 *~
 config.json

@@ -666,8 +666,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         else:
             interface = self._connectivity_manager.get_interface()
             if interface == "MulticopterSim":
-                print('*************************************************')
-                sys.stdout.flush()
+                mcsclient = MulticopterSimClient()
+                mcsclient.connect()
             else:
                 self.cf.open_link(interface)
 
