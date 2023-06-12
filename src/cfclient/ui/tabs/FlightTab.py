@@ -181,14 +181,22 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         # Command Based Flight Control
         self._can_fly_deprecated = 0
-        self.commanderTakeOffButton.clicked.connect(lambda: self._flight_command(CommanderAction.TAKE_OFF))
-        self.commanderLandButton.clicked.connect(lambda: self._flight_command(CommanderAction.LAND))
-        self.commanderLeftButton.clicked.connect(lambda: self._flight_command(CommanderAction.LEFT))
-        self.commanderRightButton.clicked.connect(lambda: self._flight_command(CommanderAction.RIGHT))
-        self.commanderForwardButton.clicked.connect(lambda: self._flight_command(CommanderAction.FORWARD))
-        self.commanderBackButton.clicked.connect(lambda: self._flight_command(CommanderAction.BACK))
-        self.commanderUpButton.clicked.connect(lambda: self._flight_command(CommanderAction.UP))
-        self.commanderDownButton.clicked.connect(lambda: self._flight_command(CommanderAction.DOWN))
+        self.commanderTakeOffButton.clicked.connect(
+                lambda: self._flight_command(CommanderAction.TAKE_OFF))
+        self.commanderLandButton.clicked.connect(
+                lambda: self._flight_command(CommanderAction.LAND))
+        self.commanderLeftButton.clicked.connect(
+                lambda: self._flight_command(CommanderAction.LEFT))
+        self.commanderRightButton.clicked.connect(
+                lambda: self._flight_command(CommanderAction.RIGHT))
+        self.commanderForwardButton.clicked.connect(
+                lambda: self._flight_command(CommanderAction.FORWARD))
+        self.commanderBackButton.clicked.connect(
+                lambda: self._flight_command(CommanderAction.BACK))
+        self.commanderUpButton.clicked.connect(
+                lambda: self._flight_command(CommanderAction.UP))
+        self.commanderDownButton.clicked.connect(
+                lambda: self._flight_command(CommanderAction.DOWN))
         self._update_flight_commander(False)
 
         # Supervisor
@@ -233,7 +241,8 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         self._helper.pose_logger.data_received_cb.add_callback(self._pose_data_signal.emit)
 
-    def _set_limiting_enabled(self, rp_limiting_enabled, yaw_limiting_enabled, thrust_limiting_enabled):
+    def _set_limiting_enabled(
+            self, rp_limiting_enabled, yaw_limiting_enabled, thrust_limiting_enabled):
 
         self.targetCalRoll.setEnabled(rp_limiting_enabled)
         self.targetCalPitch.setEnabled(rp_limiting_enabled)
@@ -244,13 +253,15 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.maxThrust.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
         self.minThrust.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
         self.slewEnableLimit.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
-        self.thrustLoweringSlewRateLimit.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
+        self.thrustLoweringSlewRateLimit.setEnabled(
+                thrust_limiting_enabled and advanced_is_enabled)
 
     def thrustToPercentage(self, thrust):
         return ((thrust / MAX_THRUST) * 100.0)
 
     def uiSetupReady(self):
-        flightComboIndex = self.flightModeCombo.findText(Config().get("flightmode"), Qt.MatchFixedString)
+        flightComboIndex = self.flightModeCombo.findText(
+                Config().get("flightmode"), Qt.MatchFixedString)
         if (flightComboIndex < 0):
             self.flightModeCombo.setCurrentIndex(0)
             self.flightModeCombo.currentIndexChanged.emit(0)
@@ -270,17 +281,23 @@ class FlightTab(TabToolbox, flight_tab_class):
         elif action == CommanderAction.LAND:
             self._helper.cf.high_level_commander.land(0, current_z / move_vel)
         elif action == CommanderAction.LEFT:
-            self._helper.cf.high_level_commander.go_to(0, move_dist, 0, 0, move_dist / move_vel, relative=True)
+            self._helper.cf.high_level_commander.go_to(
+                    0, move_dist, 0, 0, move_dist / move_vel, relative=True)
         elif action == CommanderAction.RIGHT:
-            self._helper.cf.high_level_commander.go_to(0, -move_dist, 0, 0, move_dist / move_vel, relative=True)
+            self._helper.cf.high_level_commander.go_to(
+                    0, -move_dist, 0, 0, move_dist / move_vel, relative=True)
         elif action == CommanderAction.FORWARD:
-            self._helper.cf.high_level_commander.go_to(move_dist, 0, 0, 0, move_dist / move_vel, relative=True)
+            self._helper.cf.high_level_commander.go_to(
+                    move_dist, 0, 0, 0, move_dist / move_vel, relative=True)
         elif action == CommanderAction.BACK:
-            self._helper.cf.high_level_commander.go_to(-move_dist, 0, 0, 0, move_dist / move_vel, relative=True)
+            self._helper.cf.high_level_commander.go_to(
+                    -move_dist, 0, 0, 0, move_dist / move_vel, relative=True)
         elif action == CommanderAction.UP:
-            self._helper.cf.high_level_commander.go_to(0, 0, move_dist, 0, move_dist / move_vel, relative=True)
+            self._helper.cf.high_level_commander.go_to(
+                    0, 0, move_dist, 0, move_dist / move_vel, relative=True)
         elif action == CommanderAction.DOWN:
-            self._helper.cf.high_level_commander.go_to(0, 0, -move_dist, 0, move_dist / move_vel, relative=True)
+            self._helper.cf.high_level_commander.go_to(
+                    0, 0, -move_dist, 0, move_dist / move_vel, relative=True)
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error",
@@ -415,7 +432,8 @@ class FlightTab(TabToolbox, flight_tab_class):
                 self.commanderBox.setEnabled(True)
                 break
         else:
-            self.commanderBox.setToolTip('You need a positioning deck to use Command Based Flight')
+            self.commanderBox.setToolTip(
+                    'You need a positioning deck to use Command Based Flight')
             self.commanderBox.setEnabled(False)
             return
 
