@@ -65,8 +65,7 @@ class MulticopterSimClient:
             try:
                 pose_bytes = self.sock.recv(8*6)
 
-                self._debug('t=%3.3f  r=%3.3f  p=%3.3f  y=%3.3f' % (
-                    sticks[0], sticks[1], sticks[2], sticks[3]))
+                self.sock.send(np.ndarray.tobytes(np.array(sticks)))
 
             except socket.timeout:
 
