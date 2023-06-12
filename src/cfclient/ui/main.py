@@ -667,8 +667,11 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         Config().set("window_size", [event.size().width(),
                                      event.size().height()])
 
-    def setConnectedStatusFromMultiSim(self, is_connected):
-        self.connectButton.setText("Connected" if is_connected else "Disconnected")
+    def setConnectedStatusFromSim(self, is_connected):
+        self.connectButton.setText("Disonnect" if is_connected else "Connect")
+
+    def setPoseFromSim(self, x):
+        self._debug(x)
 
     def _connect(self):
 

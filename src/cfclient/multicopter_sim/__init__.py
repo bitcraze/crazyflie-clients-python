@@ -47,7 +47,7 @@ class MulticopterSimClient:
 
             self.sock.settimeout(0.5)
 
-            self.main_ui.setConnectedStatusFromMultiSim(False)
+            self.main_ui.setConnectedStatusFromSim(True)
 
             self.connected = True
 
@@ -63,7 +63,7 @@ class MulticopterSimClient:
 
     def disconnect(self):
 
-        self.main_ui.setConnectedStatusFromMultiSim(True)
+        self.main_ui.setConnectedStatusFromSim(False)
 
         self.connected = False
 
@@ -79,7 +79,7 @@ class MulticopterSimClient:
 
             telemetry = np.frombuffer(telemetry_bytes)
 
-            self._debug(telemetry[0])
+            self.main_ui.setPoseFromSim(np.random.randn())
 
             sleep(0)  # yield to main thread
 
