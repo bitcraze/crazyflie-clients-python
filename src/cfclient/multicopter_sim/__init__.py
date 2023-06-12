@@ -75,8 +75,6 @@ class MulticopterSimClient:
 
             telemetry = np.frombuffer(telemetry_bytes)
 
-            self._debug(telemetry[0])
-
             self.main_ui.setPoseFromSim(np.random.randn())
 
             sleep(0)  # yield to main thread
