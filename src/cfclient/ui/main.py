@@ -328,8 +328,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     def create_tab_toolboxes(self, tabs_menu_item, toolboxes_menu_item, tab_widget):
         loaded_tab_toolboxes = {}
 
-        self._debug('**************************** ' + str(cfclient.ui.tabs.FlightTab))
-
         for tab_class in cfclient.ui.tabs.available:
             tab_toolbox = tab_class(cfclient.ui.pluginhelper)
             loaded_tab_toolboxes[tab_toolbox.get_tab_toolbox_name()] = tab_toolbox
@@ -667,17 +665,18 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         Config().set("window_size", [event.size().width(),
                                      event.size().height()])
 
-    def setConnectedStatusFromSim(self, is_connected):
-        self.connectButton.setText("Disonnect" if is_connected else "Connect")
-
     def setPoseFromSim(self, x):
+        return
         self._debug(x)
+        self._debug('**************************** ' + str(cfclient.ui.tabs.FlightTab))
 
     def _connect(self):
 
         if self.uiState == UIState.CONNECTED:
             if self.sim_client is not None:
                 self.sim_client.disconnect()
+                self.uiState = UIState.DISCONNECTED
+                self._update_ui_state()
             else:
                 self.cf.close_link()
         elif self.uiState == UIState.CONNECTING:
@@ -692,6 +691,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 self.sim_client = SimClient(self)
                 if self.sim_client.connect():
                     self.uiState = UIState.CONNECTED
+                    self._update_ui_state()
                 else:
                     QMessageBox.warning(self, 
                         "Connection error",
@@ -717,7 +717,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 radio.close()
             except usb.core.USBError as e:
                 if e.errno == 13:  # Permission denied
-                    link = "<a href='https://www.bitcraze.io/documentation/repository/crazyflie-lib-python/master/installation/usb_permissions/'>Install USB Permissions</a>" # noqa
+                    link = ("<a href='https://www.bitcraze.io/documentation/repository/" + 
+                            "crazyflie-lib-python/master/installation/usb_permissions/'>" + 
+                            " Install USB Permissions</a>") # noqa
                     msg = QMessageBox()
                     msg.setIcon(QMessageBox.Information)
                     msg.setTextFormat(Qt.RichText)

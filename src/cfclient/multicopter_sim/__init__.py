@@ -45,25 +45,21 @@ class MulticopterSimClient:
 
             self.sock.connect((self.host, self.port))
 
-            self.sock.settimeout(0.5)
-
-            self.main_ui.setConnectedStatusFromSim(True)
-
-            self.connected = True
-
-            thread = Thread(target=self._run_thread)
-
-            thread.start()
-
         except ConnectionRefusedError:
 
             return False
 
+        self.sock.settimeout(0.5)
+
+        thread = Thread(target=self._run_thread)
+
+        thread.start()
+
+        self.connected = True
+
         return True
 
     def disconnect(self):
-
-        self.main_ui.setConnectedStatusFromSim(False)
 
         self.connected = False
 
