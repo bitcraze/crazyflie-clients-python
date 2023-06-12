@@ -29,45 +29,51 @@ class MulticopterSimClient:
 
         self.connected = False
 
+        self.sock = None
+
         self.host = host
         self.port = port
 
     def connect(self):
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-            try:
+        try:
 
-                sock.connect((self.host, self.port))
+            self.sock.connect((self.host, self.port))
 
-                sock.settimeout(0.5)
+            self.sock.settimeout(0.5)
 
-                self.connect_button.setText('Disconnect')
+            self.connect_button.setText('Disconnect')
 
-                self.connected = True
+            self.connected = True
 
-                thread = Thread(target=self._run_thread, args=(sock,))
+            thread = Thread(target=self._run_thread)
 
-                thread.start()
+            thread.start()
 
-            except ConnectionRefusedError:
+        except ConnectionRefusedError:
 
-                self._debug(
-                        'Connection error; did you start the server first?')
+            self._debug(
+                    'Connection error; did you start the server first?')
 
-    def _run_thread(self, sock):
+    def disconnect(self):
+
+        self.connected = False
+
+    def _run_thread(self):
 
         while self.connected:
 
-            '''
             try:
-                telemetry_bytes = sock.recv(8*13)
+                telemetry_bytes = self.sock.recv(8*13)
 
             except socket.timeout:
                 break
 
             telemetry = np.frombuffer(telemetry_bytes)
-            '''
+
+            self._debug(telemetry[0])
 
             sleep(0)  # yield to main thread
 

@@ -665,11 +665,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     def _connect(self):
 
-        self._debug("********************* uiState: " + str(self.uiState))
-
         if self.uiState == UIState.CONNECTED:
             if self.sim_client is not None:
-                self._debug("*********** DISCONNECT SIM *****************" )
+                self.sim_client.disconnect()
             else:
                 self.cf.close_link()
         elif self.uiState == UIState.CONNECTING:
