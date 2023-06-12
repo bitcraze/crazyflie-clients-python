@@ -111,6 +111,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         super(MainUI, self).__init__(*args)
         self.setupUi(self)
 
+        self.sim_client = None
+
         # Restore window size if present in the config file
         try:
             size = Config().get("window_size")
@@ -663,10 +665,13 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     def _connect(self):
 
-        self._debug("*********** CONNECT " + str(self.uiState))
+        self._debug("********************* uiState: " + str(self.uiState))
 
         if self.uiState == UIState.CONNECTED:
-            self.cf.close_link()
+            if self.sim_client is not None:
+                self._debug("*********** DISCONNECT SIM *****************" )
+            else:
+                self.cf.close_link()
         elif self.uiState == UIState.CONNECTING:
             self.cf.close_link()
             self.uiState = UIState.DISCONNECTED
@@ -674,8 +679,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         else:
             interface = self._connectivity_manager.get_interface()
             if interface == "MulticopterSim":
-                mcsclient = MulticopterSimClient(self.connectButton)
-                mcsclient.connect()
+                self.sim_client = MulticopterSimClient(self.connectButton)
+                self.uiState = UIState.CONNECTED
+                self.sim_client.connect()
             else:
                 self.cf.open_link(interface)
 

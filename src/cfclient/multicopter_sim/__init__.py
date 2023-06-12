@@ -19,12 +19,15 @@ from sys import stdout
 import socket
 import numpy as np
 from threading import Thread
+from time import sleep
 
 class MulticopterSimClient:
 
     def __init__(self, connect_button, host='127.0.0.1', port=5000):
 
         self.connect_button = connect_button
+
+        self.connected = False
 
         self.host = host
         self.port = port
@@ -41,6 +44,8 @@ class MulticopterSimClient:
 
                 self.connect_button.setText('Disconnect')
 
+                self.connected = True
+
                 thread = Thread(target=self._run_thread, args=(sock,))
 
                 thread.start()
@@ -52,11 +57,9 @@ class MulticopterSimClient:
 
     def _run_thread(self, sock):
 
-        self._debug(sock)
-        exit(0)
+        while self.connected:
 
-        while True:
-
+            '''
             try:
                 telemetry_bytes = sock.recv(8*13)
 
@@ -64,6 +67,9 @@ class MulticopterSimClient:
                 break
 
             telemetry = np.frombuffer(telemetry_bytes)
+            '''
+
+            sleep(0)  # yield to main thread
 
     def _debug(self, msg):
 
