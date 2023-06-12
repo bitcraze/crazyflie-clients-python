@@ -605,15 +605,17 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.targetCalPitch.setValue(pitchCal)
 
     def updateInputControl(self, roll, pitch, yaw, thrust):
-        self._sticks_for_sim = (thrust, roll, pitch, yaw)
+        thrustPercent = self.thrustToPercentage(thrust)
         self.targetRoll.setText(("%0.2f deg" % roll))
         self.targetPitch.setText(("%0.2f deg" % pitch))
         self.targetYaw.setText(("%0.2f deg/s" % yaw))
-        self.targetThrust.setText(("%0.2f %%" %
-                                   self.thrustToPercentage(thrust)))
+        self.targetThrust.setText(("%0.2f %%" % thrustPercent))
+                                   
         self.thrustProgress.setValue(int(thrust))
 
         self._change_input_labels(using_hover_assist=False)
+
+        self._sticks_for_sim = (thrustPercent, roll, pitch, yaw)
 
     def setMotorLabelsEnabled(self, enabled):
         self.M1label.setEnabled(enabled)
