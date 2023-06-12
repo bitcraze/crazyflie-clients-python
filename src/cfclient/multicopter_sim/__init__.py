@@ -35,6 +35,9 @@ class MulticopterSimClient:
         self.port = port
 
     def connect(self):
+        '''
+        Returns True on success, False on failure
+        '''
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -54,8 +57,9 @@ class MulticopterSimClient:
 
         except ConnectionRefusedError:
 
-            self._debug(
-                    'Connection error; did you start the server first?')
+            return False
+
+        return True
 
     def disconnect(self):
 

@@ -679,7 +679,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             if interface == "MulticopterSim":
                 self.sim_client = MulticopterSimClient(self.connectButton)
                 self.uiState = UIState.CONNECTED
-                self.sim_client.connect()
+                if not self.sim_client.connect():
+                    self._debug(
+                            'Connection error; did you start the server first?')
             else:
                 self.cf.open_link(interface)
 
