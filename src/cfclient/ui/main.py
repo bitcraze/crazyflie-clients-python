@@ -53,6 +53,7 @@ from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import MemoryElement
 from PyQt5 import QtWidgets
 from PyQt5 import uic
+from PyQt5.QtCore import QTimer
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtCore import QDir
@@ -112,6 +113,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.setupUi(self)
 
         self.sim_client = None
+        self.sim_timer = QTimer(self)
+        self.sim_timer.timeout.connect(self._sim_update_function)
+        self._start_sim_timer()
 
         # Restore window size if present in the config file
         try:
@@ -370,6 +374,16 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         for name in TabToolbox.read_open_toolbox_config():
             if name in loaded_tab_toolboxes.keys():
                 self._tab_toolbox_show_as_toolbox(loaded_tab_toolboxes[name])
+
+    def _start_sim_timer(self):
+        self.sim_timer.start(1000) # time in milliseconds.
+
+    def _sim_update_function(self):
+        self._debug("************************************** UPDATE")
+        if self.sim_client is not None:
+            self.loaded_tab_toolboxes['Flight Control'].setPoseFromSim(
+                    self.sim_client.getPose())
+        self._start_sim_timer()
 
     def _debug(self, msg):
         print(msg)
@@ -686,8 +700,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             if interface == "sim":
                 self.sim_client = SimClient()
                 if self.sim_client.connect():
-                    self.loaded_tab_toolboxes['Flight Control'].setPoseFromSim(
-                            self.sim_client.getPose())
                     self.uiState = UIState.CONNECTED
                     self._update_ui_state()
                 else:
