@@ -326,6 +326,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._permission_warned = False
 
     def create_tab_toolboxes(self, tabs_menu_item, toolboxes_menu_item, tab_widget):
+
         loaded_tab_toolboxes = {}
 
         for tab_class in cfclient.ui.tabs.available:
@@ -369,6 +370,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         for name in TabToolbox.read_open_toolbox_config():
             if name in loaded_tab_toolboxes.keys():
                 self._tab_toolbox_show_as_toolbox(loaded_tab_toolboxes[name])
+
+    def setPoseFromSim(self, x):
+        self.loaded_tab_toolboxes['Flight Control'].setPoseFromSim(x)
 
     def _debug(self, msg):
         print(msg)
@@ -664,10 +668,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     def resizeEvent(self, event):
         Config().set("window_size", [event.size().width(),
                                      event.size().height()])
-
-    def setPoseFromSim(self, x):
-        self._debug(x)
-        # self._debug('**************************** ' + str(cfclient.ui.tabs.FlightTab))
 
     def _connect(self):
 

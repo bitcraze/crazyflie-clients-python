@@ -170,7 +170,8 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.flightModeCombo.currentIndexChanged.connect(self.flightmodeChange)
         self.minThrust.valueChanged.connect(self.minMaxThrustChanged)
         self.maxThrust.valueChanged.connect(self.minMaxThrustChanged)
-        self.thrustLoweringSlewRateLimit.valueChanged.connect(self.thrustLoweringSlewRateLimitChanged)
+        self.thrustLoweringSlewRateLimit.valueChanged.connect(
+                self.thrustLoweringSlewRateLimitChanged)
         self.slewEnableLimit.valueChanged.connect(self.thrustLoweringSlewRateLimitChanged)
         self.targetCalRoll.valueChanged.connect(self._trim_roll_changed)
         self.targetCalPitch.valueChanged.connect(self._trim_pitch_changed)
@@ -207,7 +208,8 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.uiSetupReady()
 
         self._led_ring_headlight.clicked.connect(
-            lambda enabled: self._helper.cf.param.set_value("ring.headlightEnable", int(enabled)))
+            lambda enabled: self._helper.cf.param.set_value(
+                "ring.headlightEnable", int(enabled)))
 
         self._helper.cf.param.add_update_callback(
             group="ring", name="headlightEnable",
@@ -215,9 +217,11 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         self._ledring_nbr_effects = 0
 
-        self._helper.cf.param.add_update_callback(group="ring", name="effect", cb=self._ring_effect_updated)
+        self._helper.cf.param.add_update_callback(
+                group="ring", name="effect", cb=self._ring_effect_updated)
 
-        self._helper.cf.param.add_update_callback(group="imu_sensors", cb=self._set_available_sensors)
+        self._helper.cf.param.add_update_callback(
+                group="imu_sensors", cb=self._set_available_sensors)
 
         self._helper.cf.param.all_updated.add_callback(self._all_params_updated)
 
@@ -236,7 +240,8 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._ring_effect = 0
 
         # Connect callbacks for input device limiting of roll/pitch/yaw/thrust
-        self._helper.inputDeviceReader.limiting_updated.add_callback(self._limiting_updated.emit)
+        self._helper.inputDeviceReader.limiting_updated.add_callback(
+                self._limiting_updated.emit)
         self._limiting_updated.connect(self._set_limiting_enabled)
 
         self._helper.pose_logger.data_received_cb.add_callback(self._pose_data_signal.emit)
@@ -268,6 +273,9 @@ class FlightTab(TabToolbox, flight_tab_class):
         else:
             self.flightModeCombo.setCurrentIndex(flightComboIndex)
             self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)
+
+    def setPoseFromSim(self, x):
+        self._debug('*********************** setPose: ' + str(x))
 
     def _flight_command(self, action):
         current_z = self._helper.pose_logger.position[2]
@@ -666,6 +674,10 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.thrustLoweringSlewRateLimit.setEnabled(newState)
         self.slewEnableLimit.setEnabled(newState)
         self.maxYawRate.setEnabled(newState)
+
+    def _debug(self, msg):
+        print(msg)
+        stdout.flush()
 
     def _assist_mode_changed(self, item):
         mode = None
