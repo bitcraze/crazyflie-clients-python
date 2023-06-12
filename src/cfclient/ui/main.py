@@ -371,8 +371,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             if name in loaded_tab_toolboxes.keys():
                 self._tab_toolbox_show_as_toolbox(loaded_tab_toolboxes[name])
 
-    def setPoseFromSim(self, x):
-        self.loaded_tab_toolboxes['Flight Control'].setPoseFromSim(x)
+    # def setPoseFromSim(self, x):
+    #     self.loaded_tab_toolboxes['Flight Control'].setPoseFromSim(x)
 
     def _debug(self, msg):
         print(msg)
@@ -687,6 +687,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             interface = self._connectivity_manager.get_interface()
 
             if interface == "sim":
+                self.loaded_tab_toolboxes['Flight Control'].setPoseFromSim(99)
                 self.sim_client = SimClient(self)
                 if self.sim_client.connect():
                     self.uiState = UIState.CONNECTED

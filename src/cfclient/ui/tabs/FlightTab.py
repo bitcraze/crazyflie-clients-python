@@ -275,7 +275,8 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)
 
     def setPoseFromSim(self, x):
-        self._debug('*********************** setPose: ' + str(x))
+        self._pose_data_received(None, (x, 0, 0, 0, 0, 0))
+        # self._debug(dir(self._pose_data_signal))
 
     def _flight_command(self, action):
         current_z = self._helper.pose_logger.position[2]
