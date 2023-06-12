@@ -380,8 +380,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     def _sim_update_function(self):
         if self.sim_client is not None:
-            self.loaded_tab_toolboxes['Flight Control'].setPoseFromSim(
-                    self.sim_client.getPose())
+            pose = self.sim_client.getPose()
+            if pose is not None:
+                self.loaded_tab_toolboxes['Flight Control'].setPoseFromSim(pose)
+                    
         self._start_sim_timer()
 
     def _debug(self, msg):

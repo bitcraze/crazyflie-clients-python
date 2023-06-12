@@ -32,7 +32,7 @@ class MulticopterSimClient:
         self.host = host
         self.port = port
 
-        self.pose = [0, 0, 0, 0, 0, 0]
+        self.pose = None
 
     def connect(self):
         '''
@@ -72,14 +72,12 @@ class MulticopterSimClient:
         while self.connected:
 
             try:
-                telemetry_bytes = self.sock.recv(8*17)
+                pose_bytes = self.sock.recv(8*6)
 
             except socket.timeout:
                 break
 
-            telemetry = np.frombuffer(telemetry_bytes)
-
-            self.pose[0] = np.random.randn()
+            self.pose = np.frombuffer(pose_bytes)
 
             sleep(0)  # yield to main thread
 
