@@ -48,7 +48,7 @@ class MulticopterSimClient:
 
                     telemetry = np.frombuffer(telemetry_bytes)
 
-                    self._debug(telemetry)
+                    # self._debug(telemetry)
 
             except ConnectionRefusedError:
 
