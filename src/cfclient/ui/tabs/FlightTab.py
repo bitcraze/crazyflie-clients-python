@@ -337,6 +337,7 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     def _pose_data_received(self, _, pose):
         if self.isVisible():
+
             estimated_z = pose[2]
             roll = pose[3]
             pitch = pose[4]

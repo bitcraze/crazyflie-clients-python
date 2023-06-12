@@ -376,10 +376,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 self._tab_toolbox_show_as_toolbox(loaded_tab_toolboxes[name])
 
     def _start_sim_timer(self):
-        self.sim_timer.start(1000) # time in milliseconds.
+        self.sim_timer.start(4) # time in milliseconds, based on actual Crazyflie
 
     def _sim_update_function(self):
-        self._debug("************************************** UPDATE")
         if self.sim_client is not None:
             self.loaded_tab_toolboxes['Flight Control'].setPoseFromSim(
                     self.sim_client.getPose())
