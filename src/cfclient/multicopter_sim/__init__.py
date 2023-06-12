@@ -66,6 +66,10 @@ class MulticopterSimClient:
 
         return tuple(self.pose)
 
+    def setSticks(self, values):
+
+        self._debug(values)
+
     def step(self):
 
         if self.connected:

@@ -114,7 +114,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         self.sim_client = None
         self.sim_timer = QTimer(self)
-        self.sim_timer.timeout.connect(self._sim_update_function)
+        self.sim_timer.timeout.connect(self._sim_update)
         self._start_sim_timer()
 
         # Restore window size if present in the config file
@@ -205,6 +205,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.joystickReader.input_updated.add_callback(
             lambda *args: self._disable_input or
             self.cf.commander.send_setpoint(*args))
+
+        self.joystickReader.input_updated.add_callback(
+            lambda *args: self._disable_input or
+            self._set_sim_stickvals(args))
 
         self.joystickReader.assisted_input_updated.add_callback(
             lambda *args: self._disable_input or
@@ -375,12 +379,15 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             if name in loaded_tab_toolboxes.keys():
                 self._tab_toolbox_show_as_toolbox(loaded_tab_toolboxes[name])
 
+    def _set_sim_stickvals(self, vals):
+        if self.sim_client is not None:
+            self.sim_client.setSticks(vals)
+
     def _start_sim_timer(self):
         self.sim_timer.start(4) # time in milliseconds, based on actual Crazyflie
 
-    def _sim_update_function(self):
+    def _sim_update(self):
         if self.sim_client is not None:
-            # self._debug(self.joystickReader.read_input)
             pose = self.sim_client.step()
             if pose is not None:
                 self.loaded_tab_toolboxes['Flight Control'].setPoseFromSim(pose)
