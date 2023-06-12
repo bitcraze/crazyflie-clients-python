@@ -58,10 +58,6 @@ class MulticopterSimClient:
 
         self.connected = False
 
-    def getPose(self):
-
-        return tuple(self.pose)
-
     def step(self, sticks):
 
         if self.connected:
