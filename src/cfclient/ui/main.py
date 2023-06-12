@@ -383,8 +383,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             pose = self.sim_client.step()
             if pose is not None:
                 flightControl = self.loaded_tab_toolboxes['Flight Control']
-                flightControl.setPoseFromSim(pose)
-                self._debug(flightControl.getSticksForSim())
+                sticks = flightControl.updateFromSim(pose)
+                self._debug(sticks)
                     
         self._start_sim_timer()
 
