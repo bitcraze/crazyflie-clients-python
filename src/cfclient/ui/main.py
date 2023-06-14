@@ -376,7 +376,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 self._tab_toolbox_show_as_toolbox(loaded_tab_toolboxes[name])
 
     def _start_sim_timer(self):
-        self.sim_timer.start(4) # time in milliseconds, based on actual Crazyflie
+        self.sim_timer.start(4) # time in msec, based on actual Crazyflie
 
     def _sim_update(self):
         if self.sim_client is not None:

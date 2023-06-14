@@ -34,8 +34,6 @@ class MulticopterSimClient:
         self.host = host
         self.port = port
 
-        self.pose = None
-
     def connect(self):
         '''
         Returns True on success, False on failure
@@ -65,15 +63,23 @@ class MulticopterSimClient:
 
         if self.connected:
 
+            pose_bytes = None
+
             try:
 
                 pose_bytes = self.sock.recv(8*6)
 
                 self.sock.send(np.ndarray.tobytes(np.array(sticks)))
 
-            except Exception:  # socket.timeout:
+            except socket.timeout:
 
                 return None
+
+            except Exception as e:
+
+                self._debug('*************** EXEPTION: ' + str(e))
+
+                exit(0)
 
             return np.frombuffer(pose_bytes)
 
