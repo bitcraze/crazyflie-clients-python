@@ -1,6 +1,9 @@
-#  Copyright (C) 2023 Simon D. Levy
 #
 #  MulticopterSim client for Crazyflie client GUI
+#  
+#  Uses a TCP socket to accept vehicle pose and send back stick demands
+
+#  Copyright (C) 2023 Simon D. Levy
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -63,6 +66,7 @@ class MulticopterSimClient:
         if self.connected:
 
             try:
+
                 pose_bytes = self.sock.recv(8*6)
 
                 self.sock.send(np.ndarray.tobytes(np.array(sticks)))

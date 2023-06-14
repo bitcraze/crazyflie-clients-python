@@ -384,7 +384,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             sticks = flightControl.getSticksForSim()
             pose = self.sim_client.step(sticks)
             if pose is not None:
-                flightControl.updatePoseFromSim(pose)
+                self._debug(pose)
+                # flightControl.updatePoseFromSim(pose)
         self._start_sim_timer()
 
     def _debug(self, msg):
