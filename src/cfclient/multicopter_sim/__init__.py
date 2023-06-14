@@ -71,7 +71,7 @@ class MulticopterSimClient:
 
                 self.sock.send(np.ndarray.tobytes(np.array(sticks)))
 
-            except socket.timeout:
+            except Exception:  # socket.timeout:
 
                 return None
 
