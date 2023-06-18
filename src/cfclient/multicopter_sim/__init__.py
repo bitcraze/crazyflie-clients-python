@@ -53,23 +53,33 @@ class MulticopterSimClient:
 
         self.connected = True
 
+        self.fakepose = np.zeros(6, dtype=np.float32)
+
         return True
 
     def disconnect(self):
 
         self.connected = False
 
-    def step(self, sticks):
+    def getSticks(self):
+
+        return (1, 2, 3, 4, 5, 6)
+
+    def step(self):
 
         if self.connected:
 
-            pose_bytes = None
+            stick_bytes = None
 
             try:
 
-                pose_bytes = self.sock.recv(8*6)
+                # Get stick demands from server as six floats
+                stick_bytes = self.sock.recv(6*4)
 
-                self.sock.send(np.ndarray.tobytes(np.array(sticks)))
+                # XXX run dynamics and flight control to get pose
+                self.fakepose[2] += .001
+
+                self.sock.send(np.ndarray.tobytes(self.fakepose))
 
             except socket.timeout:
 
@@ -81,7 +91,10 @@ class MulticopterSimClient:
 
                 exit(0)
 
-            return np.frombuffer(pose_bytes)
+            sticks = (.1, .2, .3, .4)
+            return sticks, self.fakepose
+
+            # return np.frombuffer(pose_bytes)
 
         return None
 
