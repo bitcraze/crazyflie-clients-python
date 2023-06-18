@@ -61,10 +61,6 @@ class MulticopterSimClient:
 
         self.connected = False
 
-    def getSticks(self):
-
-        return (1, 2, 3, 4, 5, 6)
-
     def step(self):
 
         if self.connected:
@@ -91,8 +87,8 @@ class MulticopterSimClient:
 
                 exit(0)
 
-            sticks = (10, 20, 30, 60)  # r, p, y, t
-            return sticks, self.fakepose
+            fakesticks = 1, 0, 0, 0  # t, r, p, y
+            return fakesticks, self.fakepose
 
             # return np.frombuffer(pose_bytes)
 
