@@ -91,7 +91,7 @@ class MulticopterSimClient:
 
                 exit(0)
 
-            sticks = (.1, .2, .3, .4)
+            sticks = (10, 20, 30, 60)  # r, p, y, t
             return sticks, self.fakepose
 
             # return np.frombuffer(pose_bytes)

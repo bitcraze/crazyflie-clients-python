@@ -279,6 +279,13 @@ class FlightTab(TabToolbox, flight_tab_class):
     def updatePoseFromSim(self, pose):
         self._pose_data_received(None, pose)
 
+    def updateSticksFromSim(self, sticks):
+        self.updateInputControl(
+                sticks[0], 
+                sticks[1], 
+                sticks[2], 
+                self.thrustToPercentage(sticks[3] * MAX_THRUST))
+
     def _flight_command(self, action):
         current_z = self._helper.pose_logger.position[2]
         move_dist = 0.5
@@ -604,6 +611,8 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.targetCalPitch.setValue(pitchCal)
 
     def updateInputControl(self, roll, pitch, yaw, thrust):
+        self._debug((roll, pitch, yaw, thrust))
+        self._debug('')
         thrustPercent = self.thrustToPercentage(thrust)
         self.targetRoll.setText(("%0.2f deg" % roll))
         self.targetPitch.setText(("%0.2f deg" % pitch))
