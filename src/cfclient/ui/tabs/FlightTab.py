@@ -276,7 +276,7 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.flightModeCombo.setCurrentIndex(flightComboIndex)
             self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)
 
-    def updateFromSim(self, sticks, pose):
+    def updatePoseFromSim(self, pose):
         self._pose_data_received(None, pose)
 
     def _flight_command(self, action):
