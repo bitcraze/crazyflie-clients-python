@@ -144,7 +144,8 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._helper.inputDeviceReader.emergency_stop_updated.add_callback(
             self._emergency_stop_updated_signal.emit)
         self._arm_updated_signal.connect(self.updateArm)
-        self._helper.inputDeviceReader.arm_updated.add_callback(self._arm_updated_signal.emit)
+        self._helper.inputDeviceReader.arm_updated.add_callback(
+                self._arm_updated_signal.emit)
 
         self._helper.inputDeviceReader.heighthold_input_updated.add_callback(
             self._heighthold_input_updated_signal.emit)
@@ -174,7 +175,8 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.maxThrust.valueChanged.connect(self.minMaxThrustChanged)
         self.thrustLoweringSlewRateLimit.valueChanged.connect(
                 self.thrustLoweringSlewRateLimitChanged)
-        self.slewEnableLimit.valueChanged.connect(self.thrustLoweringSlewRateLimitChanged)
+        self.slewEnableLimit.valueChanged.connect(
+                self.thrustLoweringSlewRateLimitChanged)
         self.targetCalRoll.valueChanged.connect(self._trim_roll_changed)
         self.targetCalPitch.valueChanged.connect(self._trim_pitch_changed)
         self.maxAngle.valueChanged.connect(self.maxAngleChanged)
@@ -215,7 +217,8 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         self._helper.cf.param.add_update_callback(
             group="ring", name="headlightEnable",
-            cb=(lambda name, checked: self._led_ring_headlight.setChecked(bool(int(checked)))))
+            cb=(lambda name, checked: 
+                self._led_ring_headlight.setChecked(bool(int(checked)))))
 
         self._ledring_nbr_effects = 0
 
@@ -236,8 +239,10 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.targetCalPitch.setValue(Config().get("trim_pitch"))
         self.targetCalRoll.setValue(Config().get("trim_roll"))
 
-        self._helper.inputDeviceReader.alt1_updated.add_callback(self.alt1_updated)
-        self._helper.inputDeviceReader.alt2_updated.add_callback(self.alt2_updated)
+        self._helper.inputDeviceReader.alt1_updated.add_callback(
+                self.alt1_updated)
+        self._helper.inputDeviceReader.alt2_updated.add_callback(
+                self.alt2_updated)
         self._tf_state = 0
         self._ring_effect = 0
 
@@ -246,20 +251,26 @@ class FlightTab(TabToolbox, flight_tab_class):
                 self._limiting_updated.emit)
         self._limiting_updated.connect(self._set_limiting_enabled)
 
-        self._helper.pose_logger.data_received_cb.add_callback(self._pose_data_signal.emit)
+        self._helper.pose_logger.data_received_cb.add_callback(
+                self._pose_data_signal.emit)
 
     def _set_limiting_enabled(
-            self, rp_limiting_enabled, yaw_limiting_enabled, thrust_limiting_enabled):
+            self, rp_limiting_enabled, yaw_limiting_enabled, 
+            thrust_limiting_enabled):
 
         self.targetCalRoll.setEnabled(rp_limiting_enabled)
         self.targetCalPitch.setEnabled(rp_limiting_enabled)
 
         advanced_is_enabled = self.isInCrazyFlightmode
         self.maxAngle.setEnabled(rp_limiting_enabled and advanced_is_enabled)
-        self.maxYawRate.setEnabled(yaw_limiting_enabled and advanced_is_enabled)
-        self.maxThrust.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
-        self.minThrust.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
-        self.slewEnableLimit.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
+        self.maxYawRate.setEnabled(
+                yaw_limiting_enabled and advanced_is_enabled)
+        self.maxThrust.setEnabled(
+                thrust_limiting_enabled and advanced_is_enabled)
+        self.minThrust.setEnabled(
+                thrust_limiting_enabled and advanced_is_enabled)
+        self.slewEnableLimit.setEnabled(
+                thrust_limiting_enabled and advanced_is_enabled)
         self.thrustLoweringSlewRateLimit.setEnabled(
                 thrust_limiting_enabled and advanced_is_enabled)
 
@@ -287,7 +298,8 @@ class FlightTab(TabToolbox, flight_tab_class):
         if action == CommanderAction.TAKE_OFF:
             self._helper.cf.param.set_value('commander.enHighLevel', '1')
             z_target = current_z + move_dist
-            self._helper.cf.high_level_commander.takeoff(z_target, move_dist / move_vel)
+            self._helper.cf.high_level_commander.takeoff(
+                    z_target, move_dist / move_vel)
         elif action == CommanderAction.LAND:
             self._helper.cf.high_level_commander.land(0, current_z / move_vel)
         elif action == CommanderAction.LEFT:
@@ -329,7 +341,8 @@ class FlightTab(TabToolbox, flight_tab_class):
                 self._update_flight_commander(True)
 
             if self.LOG_NAME_SUPERVISOR_INFO in data:
-                self._supervisor_info_bitfield = data[self.LOG_NAME_SUPERVISOR_INFO]
+                self._supervisor_info_bitfield = (
+                        data[self.LOG_NAME_SUPERVISOR_INFO])
 
             self._update_arm_button(True)
 
@@ -428,7 +441,8 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         if self._can_fly_deprecated == 0:
             self.commanderBox.setEnabled(False)
-            self.commanderBox.setToolTip('The Crazyflie reports that flight is not possible')
+            self.commanderBox.setToolTip(
+                    'The Crazyflie reports that flight is not possible')
             return
 
         # We cannot know if we have a positioning deck until we get params
@@ -437,7 +451,8 @@ class FlightTab(TabToolbox, flight_tab_class):
             return
 
         #                  flowV1    flowV2     LightHouse       LPS
-        position_decks = ['bcFlow', 'bcFlow2', 'bcLighthouse4', 'bcLoco', 'bcDWM1000']
+        position_decks = [
+                'bcFlow', 'bcFlow2', 'bcLighthouse4', 'bcLoco', 'bcDWM1000']
         for deck in position_decks:
             if int(self._helper.cf.param.values['deck'][deck]) == 1:
                 self.commanderBox.setEnabled(True)
@@ -448,7 +463,8 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.commanderBox.setEnabled(False)
             return
 
-        # To prevent conflicting commands from the controller and the flight panel
+        # To prevent conflicting commands from the controller and the flight
+        # panel
         if JoystickReader().available_devices():
             self.commanderBox.setToolTip(
                 'Cant use both an controller and Command Based Flight'
@@ -468,7 +484,8 @@ class FlightTab(TabToolbox, flight_tab_class):
         lg.add_variable(self.LOG_NAME_CAN_FLY)
 
         # Add supervisor info if it exists to keep backwards compatibility
-        if self._helper.cf.log.toc.get_element_by_complete_name(self.LOG_NAME_SUPERVISOR_INFO):
+        if self._helper.cf.log.toc.get_element_by_complete_name(
+                self.LOG_NAME_SUPERVISOR_INFO):
             lg.add_variable(self.LOG_NAME_SUPERVISOR_INFO)
 
         try:
