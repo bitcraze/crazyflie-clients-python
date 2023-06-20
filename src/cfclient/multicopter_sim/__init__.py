@@ -1,8 +1,6 @@
-#
 #  MulticopterSim client for Crazyflie client GUI
-#  
 #  Uses a TCP socket to accept vehicle pose and send back stick demands
-
+#
 #  Copyright (C) 2023 Simon D. Levy
 #
 #  This program is free software; you can redistribute it and/or
@@ -21,39 +19,39 @@
 from sys import stdout
 import socket
 import numpy as np
+from threading import Thread
+from time import sleep
 
 
 class MulticopterSimClient:
 
-    def __init__(self, host='127.0.0.1', port=5000):
+    def __init__(self, host='127.0.0.1', motor_port=5000, telemetry_port=5001):
 
         self.connected = False
 
-        self.sock = None
-
         self.host = host
-        self.port = port
+        self.motor_port = motor_port
+        self.telemetry_port = telemetry_port
 
     def connect(self):
         '''
         Returns True on success, False on failure
         '''
 
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        motorClientSocket = self._make_udpsocket()
 
-        try:
-
-            self.sock.connect((self.host, self.port))
-
-        except ConnectionRefusedError:
-
-            return False
-
-        self.sock.settimeout(0.5)
+        telemetryServerSocket = self._make_udpsocket()
+        telemetryServerSocket.bind((self.host, self.telemetry_port))
 
         self.connected = True
 
-        self.fakepose = np.zeros(6, dtype=np.float32)
+        self.sticks = np.zeros(4, dtype=np.float32)
+        self.pose = np.zeros(6, dtype=np.float32)
+
+        thread = Thread(target=self._run_thread,
+                        args=(telemetryServerSocket, motorClientSocket))
+
+        thread.start()
 
         return True
 
@@ -63,36 +61,58 @@ class MulticopterSimClient:
 
     def step(self):
 
-        if self.connected:
+        return self.sticks, self.pose
 
-            stick_bytes = None
+    def _run_thread(self, telemetryServerSocket, motorClientSocket):
+
+        running = False
+
+        while True:
 
             try:
+                telemetry_bytes, _ = telemetryServerSocket.recvfrom(8*17)
+            except Exception:
+                self.done = True
+                break
 
-                # Get stick demands from server as six floats
-                stick_bytes = self.sock.recv(6*4)
+            telemetryServerSocket.settimeout(.1)
 
-                # XXX run dynamics and flight control to get pose
-                self.fakepose[2] += .001
+            telemetry = np.frombuffer(telemetry_bytes)
 
-                self.sock.send(np.ndarray.tobytes(self.fakepose))
+            if not running:
+                _debug('Running')
+                running = True
 
-            except socket.timeout:
+            if telemetry[0] < 0:
+                self.done = True
+                break
 
-                return None
+            self.pose[0] = telemetry[1]
+            self.pose[1] = telemetry[3]
+            self.pose[2] = telemetry[5]
+            self.pose[3] = telemetry[7]
+            self.pose[4] = telemetry[9]
+            self.pose[5] = telemetry[11]
 
-            except Exception as e:
+            self.sticks[0] = telemetry[13]
+            self.sticks[1] = telemetry[14]
+            self.sticks[1] = telemetry[15]
+            self.sticks[3] = telemetry[16]
 
-                self._debug('*************** EXEPTION: ' + str(e))
+            motorvals = 0, 0, 0, 0  # XXX
 
-                exit(0)
+            motorClientSocket.sendto(
+                    np.ndarray.tobytes(np.ndarray.astype(motorvals, np.float32)),
+                    (self.host, self.motor_port))
 
-            fakesticks = 0, 0, 0, 0  # t, r, p, y
-            return fakesticks, self.fakepose
+            sleep(0)  # yield to other thread
 
-            # return np.frombuffer(pose_bytes)
+    def _make_udpsocket(self):
 
-        return None
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+
+        return sock    
 
     def _debug(self, msg):
 
