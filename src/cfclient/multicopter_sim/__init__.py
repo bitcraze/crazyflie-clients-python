@@ -22,7 +22,6 @@ import numpy as np
 from threading import Thread
 from time import sleep
 
-
 class MulticopterSimClient:
 
     def __init__(self, host='127.0.0.1', motor_port=5000, telemetry_port=5001):
@@ -80,26 +79,27 @@ class MulticopterSimClient:
             telemetry = np.frombuffer(telemetry_bytes)
 
             if not running:
-                _debug('Running')
                 running = True
 
+            # When sim quits it sends bogus -1 value for time
             if telemetry[0] < 0:
                 self.done = True
                 break
 
-            self.pose[0] = telemetry[1]
-            self.pose[1] = telemetry[3]
-            self.pose[2] = telemetry[5]
-            self.pose[3] = telemetry[7]
-            self.pose[4] = telemetry[9]
-            self.pose[5] = telemetry[11]
+            self.pose[0] = telemetry[1]   # x
+            self.pose[1] = telemetry[3]   # y
+            self.pose[2] = telemetry[5]   # z
+            self.pose[3] = telemetry[7]   # phi
+            self.pose[4] = telemetry[9]   # theta
+            self.pose[5] = telemetry[11]  # psi
 
-            self.sticks[0] = telemetry[13]
-            self.sticks[1] = telemetry[14]
-            self.sticks[1] = telemetry[15]
-            self.sticks[3] = telemetry[16]
+            # Sim sends stick demands as (throttle, roll, pitch, yaw)
+            self.sticks[3] = telemetry[13] * 65536  # thrust
+            self.sticks[0] = telemetry[14] * 31     # roll
+            self.sticks[1] = telemetry[15] * 31     # pitch
+            self.sticks[2] = telemetry[16] * 200    # yaw
 
-            motorvals = 0, 0, 0, 0  # XXX
+            motorvals = np.zeros(4)  # XXX
 
             motorClientSocket.sendto(
                     np.ndarray.tobytes(np.ndarray.astype(motorvals, np.float32)),
@@ -112,7 +112,7 @@ class MulticopterSimClient:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
 
-        return sock    
+        return sock
 
     def _debug(self, msg):
 

@@ -279,13 +279,6 @@ class FlightTab(TabToolbox, flight_tab_class):
     def updatePoseFromSim(self, pose):
         self._pose_data_received(None, pose)
 
-    def updateSticksFromSim(self, sticks):
-        self.updateInputControl(
-                sticks[1] * 31,  # roll
-                sticks[2] * 31,  # pitch
-                sticks[3] * 200, # yaw
-                sticks[0] * MAX_THRUST)  # throttle
-
     def _flight_command(self, action):
         current_z = self._helper.pose_logger.position[2]
         move_dist = 0.5

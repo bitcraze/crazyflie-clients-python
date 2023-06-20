@@ -385,7 +385,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 sticks, pose = sim_data
                 flightControl = self.loaded_tab_toolboxes['Flight Control']
                 flightControl.updatePoseFromSim(pose)
-                flightControl.updateSticksFromSim(sticks)
+                flightControl.updateInputControl(*sticks)
         self._start_sim_timer()
 
     def _debug(self, msg):
