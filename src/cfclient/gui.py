@@ -38,6 +38,7 @@ import logging
 
 from qasync import QEventLoop
 import cfclient
+from .webots import WebotsConnection
 
 __author__ = 'Bitcraze AB'
 __all__ = []
@@ -189,7 +190,7 @@ def main():
         except Exception:
             pass
 
-    main_window = MainUI()
+    main_window = MainUI(WebotsConnection)
     app.setFont(UiUtils.FONT)
     main_window.show()
     main_window.set_default_theme()

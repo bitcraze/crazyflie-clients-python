@@ -29,6 +29,7 @@ The main file for the Crazyflie control application.
 import logging
 import sys
 import usb
+from sys import stdout
 
 import cfclient
 from cfclient.ui.pose_logger import PoseLogger
@@ -50,6 +51,7 @@ from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import MemoryElement
 from PyQt5 import QtWidgets
 from PyQt5 import uic
+from PyQt5.QtCore import QTimer
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtCore import QDir
@@ -104,9 +106,20 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     _input_discovery_signal = pyqtSignal(object)
     _log_error_signal = pyqtSignal(object, str)
 
-    def __init__(self, *args):
-        super(MainUI, self).__init__(*args)
+    def __init__(self, WebotsConnection):
+
+        self._input_device = None
+
+        self.WebotsConnection = WebotsConnection
+
+        super(MainUI, self).__init__()
         self.setupUi(self)
+
+        self.webots_connection = None
+
+        self.sim_timer = QTimer(self)
+        self.sim_timer.timeout.connect(self._sim_update)
+        self._start_sim_timer()
 
         # Restore window size if present in the config file
         try:
@@ -154,7 +167,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         # TODO: Need to reload configs
         # ConfigManager().conf_needs_reload.add_callback(self._reload_configs)
 
-        self.connect_input = QShortcut("Ctrl+I", self.connectButton, self._connect)
+        self.connect_input = QShortcut("Ctrl+I", self.connectButton, 
+                                       self._hit_connect_button)
         self.cf.connection_failed.add_callback(
             self.connectionFailedSignal.emit)
         self.connectionFailedSignal.connect(self._connection_failed)
@@ -169,7 +183,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         # Connect UI signals
         self.logConfigAction.triggered.connect(self._show_connect_dialog)
-        self.menuItemConnect.triggered.connect(self._connect)
+        self.menuItemConnect.triggered.connect(self._hit_connect_button)
         self.menuItemConfInputDevice.triggered.connect(
             self._show_input_device_config_dialog)
         self.menuItemExit.triggered.connect(self.closeAppRequest)
@@ -188,7 +202,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 connect_button=self.connectButton,
                 scan_button=self.scanButton))
 
-        self._connectivity_manager.connect_button_clicked.connect(self._connect)
+        self._connectivity_manager.connect_button_clicked.connect(self._hit_connect_button)
         self._connectivity_manager.scan_button_clicked.connect(self._scan_from_button)
 
         self._disable_input = False
@@ -213,9 +227,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         # Connection callbacks and signal wrappers for UI protection
         self.cf.connected.add_callback(self.connectionDoneSignal.emit)
-        self.connectionDoneSignal.connect(self._connected)
+        self.connectionDoneSignal.connect(self._set_connected)
         self.cf.disconnected.add_callback(self.disconnectedSignal.emit)
-        self.disconnectedSignal.connect(self._disconnected)
+        self.disconnectedSignal.connect(self._set_disconnected)
         self.cf.connection_lost.add_callback(self.connectionLostSignal.emit)
         self.connectionLostSignal.connect(self._connection_lost)
         self.cf.connection_requested.add_callback(
@@ -320,7 +334,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         # We only want to warn about USB permission once
         self._permission_warned = False
 
+        self.flightControl = self.loaded_tab_toolboxes['Flight Control']
+
     def create_tab_toolboxes(self, tabs_menu_item, toolboxes_menu_item, tab_widget):
+
         loaded_tab_toolboxes = {}
 
         for tab_class in cfclient.ui.tabs.available:
@@ -346,8 +363,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             toolbox_action_item.triggered.connect(self.toggle_toolbox_visibility)
             toolbox_action_item.tab_toolbox = tab_toolbox
             tab_toolbox.toolbox_action_item = toolbox_action_item
-            tab_toolbox.dock_widget.closed.connect(lambda: self.toggle_toolbox_visibility(False))
-            tab_toolbox.dock_widget.dockLocationChanged.connect(lambda area: self.set_preferred_dock_area(area))
+            tab_toolbox.dock_widget.closed.connect(
+                    lambda: self.toggle_toolbox_visibility(False))
+            tab_toolbox.dock_widget.dockLocationChanged.connect(
+                    lambda area: self.set_preferred_dock_area(area))
 
             toolboxes_menu_item.addAction(toolbox_action_item)
 
@@ -362,6 +381,23 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         for name in TabToolbox.read_open_toolbox_config():
             if name in loaded_tab_toolboxes.keys():
                 self._tab_toolbox_show_as_toolbox(loaded_tab_toolboxes[name])
+
+    def _start_sim_timer(self):
+        self.sim_timer.start(4) # time in msec, based on actual Crazyflie
+
+    def _sim_update(self):
+
+        if self.webots_connection is not None:
+            if self.webots_connection.isOpen():
+                rawInput = self._input_device.read(include_raw=True)
+                rawThrottle = -rawInput[0][1]
+                mode = self.flightControl.getMode()
+                sticks = self.flightControl.getSticks()
+                self.webots_connection.setModeAndSticks(mode,
+                    (rawThrottle, sticks[0], sticks[1], sticks[2]))
+                self.flightControl.updatePoseFromSim(self.webots_connection.getPose())
+
+        self._start_sim_timer()
 
     def _set_address(self):
         address = 0xE7E7E7E7E7
@@ -442,7 +478,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             except ValueError:
                 pass
 
-        self._connectivity_manager.set_interfaces(formatted_interfaces, newIndex)
+        self._connectivity_manager.set_interfaces(
+                formatted_interfaces, newIndex)
 
         self.uiState = UIState.DISCONNECTED
         self._update_ui_state()
@@ -593,10 +630,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.batteryBar.setStyleSheet(UiUtils.progressbar_stylesheet(color))
         self._aff_volts.setText(("%.3f" % data["pm.vbat"]))
 
-    def _connected(self):
-        self.uiState = UIState.CONNECTED
-        self._update_ui_state()
-
         Config().set("link_uri", str(self._connectivity_manager.get_interface()))
 
         lg = LogConfig("Battery", 1000)
@@ -629,7 +662,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         QMessageBox.about(self, "Log error", "Error when starting log config"
                                              " [{}]: {}".format(log_conf.name,
                                                                 msg))
-
     def _connection_lost(self, linkURI, msg):
         if self.isActiveWindow():
             warningCaption = "Communication failure"
@@ -654,15 +686,49 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         Config().set("window_size", [event.size().width(),
                                      event.size().height()])
 
-    def _connect(self):
+    def _hit_connect_button(self):
+
+        # Disconnect
         if self.uiState == UIState.CONNECTED:
-            self.cf.close_link()
+
+            if self.webots_connection is not None:
+                self._stop_sim(self.webots_connection)
+
+            else:
+                self.cf.close_link()
+
         elif self.uiState == UIState.CONNECTING:
             self.cf.close_link()
-            self.uiState = UIState.DISCONNECTED
-            self._update_ui_state()
+            self._set_disconnected()
+
+        # Connect
         else:
-            self.cf.open_link(self._connectivity_manager.get_interface())
+
+            interface = self._connectivity_manager.get_interface()
+
+            if interface == 'webots':
+                self.webots_connection = self.WebotsConnection()
+                if self.webots_connection.start():
+                    self._set_connected()
+                    self.flightControl.enableAssistedModesFromSim()
+                else:
+                    QMessageBox.critical(self, 'Communication failure',
+                                         'Did you start Webots?')
+
+            else:
+                self.cf.open_link(interface)
+
+    def _set_connected(self):
+        self.uiState = UIState.CONNECTED
+        self._update_ui_state()
+
+    def _set_disconnected(self):
+        self.uiState = UIState.DISCONNECTED
+        self._update_ui_state()
+
+    def _stop_sim(self, connection):
+        connection.stop()
+        self._set_disconnected()
 
     def _scan(self, address):
         self.uiState = UIState.SCANNING
@@ -681,7 +747,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 radio.close()
             except usb.core.USBError as e:
                 if e.errno == 13:  # Permission denied
-                    link = "<a href='https://www.bitcraze.io/documentation/repository/crazyflie-lib-python/master/installation/usb_permissions/'>Install USB Permissions</a>" # noqa
+                    link = ("<a href='https://www.bitcraze.io/documentation/repository/" + 
+                            "crazyflie-lib-python/master/installation/usb_permissions/'>" + 
+                            " Install USB Permissions</a>") # noqa
                     msg = QMessageBox()
                     msg.setIcon(QMessageBox.Information)
                     msg.setTextFormat(Qt.RichText)
@@ -800,6 +868,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         selected_mapping = str(self.sender().text())
         device = self.sender().data().data()[1]
+        self._input_device = device
         self.joystickReader.set_input_map(device.name, selected_mapping)
         self._update_input_device_footer()
 
