@@ -28,6 +28,8 @@
 from collections import namedtuple
 from PyQt5.QtCore import pyqtSignal, QObject
 
+from sys import stdout
+
 __author__ = 'Bitcraze AB'
 __all__ = ['ConnectivityManager']
 
@@ -108,6 +110,7 @@ class ConnectivityManager(QObject):
 
             combo.clear()
             combo.addItem(self.INTERFACE_PROMPT_TEXT)
+            combo.addItem('webots')
             combo.addItems(interface_items)
             combo.setCurrentIndex(new_index)
 
