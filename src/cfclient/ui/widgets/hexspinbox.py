@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -30,9 +30,10 @@ This class provides a spin box with hexadecimal numbers and arbitrarily length
 (i.e. not limited by 32 bit).
 """
 
-from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QAbstractSpinBox
+from PyQt6.QtGui import QRegularExpressionValidator
+from PyQt6.QtCore import QRegularExpression
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QAbstractSpinBox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['HexSpinBox']
@@ -41,10 +42,10 @@ __all__ = ['HexSpinBox']
 class HexSpinBox(QAbstractSpinBox):
     valueChanged = pyqtSignal(object)
 
-    def __init__(self, *args):
-        QAbstractSpinBox.__init__(self, *args)
-        regexp = QtCore.QRegExp('^0x[0-9A-Fa-f]{1,10}$')
-        self.validator = QtGui.QRegExpValidator(regexp)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        regexp = QRegularExpression('^0x[0-9A-Fa-f]{1,10}$')
+        self.validator = QRegularExpressionValidator(regexp)
         self.setValue(0)
 
     def validate(self, text, pos):
@@ -69,8 +70,7 @@ class HexSpinBox(QAbstractSpinBox):
         self.setValue(self._value + steps)
 
     def stepEnabled(self):
-        return (QAbstractSpinBox.StepUpEnabled |
-                QAbstractSpinBox.StepDownEnabled)
+        return (QAbstractSpinBox.StepEnabledFlag.StepUpEnabled | QAbstractSpinBox.StepEnabledFlag.StepDownEnabled)
 
     def is_text_different_from_value(self):
         return self._value != self.valueFromText(self.lineEdit().text())

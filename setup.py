@@ -98,8 +98,8 @@ setup(
                       'numpy>=1.20,<1.25',
                       'vispy~=0.13.0',
                       'pyserial~=3.5',
-                      'pyqt5~=5.15.0',
-                      'PyQt5-sip>=12.9.0',
+                      'pyqt6~=6.5',
+                      'PyQt6-sip~=13.5',
 
                       'pysdl2~=0.9.14 ; platform_system=="Windows" or platform_system=="Darwin"',
                       'pysdl2-dll==2.24.0 ; platform_system=="Windows" or platform_system=="Darwin"'],

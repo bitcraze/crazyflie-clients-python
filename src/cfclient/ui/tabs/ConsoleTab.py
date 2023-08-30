@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2022 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -31,9 +31,9 @@ The console tab is used as a console for printouts from the Crazyflie.
 
 import logging
 
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QTextCursor
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import QTextCursor
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
@@ -97,7 +97,7 @@ class ConsoleTab(TabToolbox, console_tab_class):
         prev_cursor = self.console.textCursor()
         was_maximum = prev_scroll == scrollbar.maximum()
 
-        self.console.moveCursor(QTextCursor.End)
+        self.console.moveCursor(QTextCursor.MoveOperation.End)
         self.console.insertPlainText(text)
 
         self.console.setTextCursor(prev_cursor)

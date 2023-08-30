@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -44,8 +44,8 @@ from urllib.request import urlopen
 from urllib.error import URLError
 import zipfile
 
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import pyqtSlot, pyqtSignal, QThread
+from PyQt6 import QtWidgets, uic
+from PyQt6.QtCore import pyqtSlot, pyqtSignal, QThread
 
 import cfclient
 import cflib.crazyflie

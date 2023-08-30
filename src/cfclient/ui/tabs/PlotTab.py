@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2022 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -32,12 +32,12 @@ import logging
 
 from cfclient.ui.tab_toolbox import TabToolbox
 from cfclient.ui.widgets.plotwidget import PlotWidget
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtCore import QAbstractItemModel
-from PyQt5.QtCore import QModelIndex
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import QAbstractItemModel
+from PyQt6.QtCore import QModelIndex
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMessageBox
 
 import cfclient
 
@@ -99,7 +99,7 @@ class LogConfigModel(QAbstractItemModel):
         node = index.internalPointer()  # noqa
         if not index.isValid() or not 0 <= index.row() < len(self._nodes):
             return None
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             return self._nodes[index.row()].name
         return None
 

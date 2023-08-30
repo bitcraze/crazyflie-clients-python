@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2022 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -32,11 +32,11 @@ to edit them.
 
 import logging
 
-from PyQt5 import uic, QtCore
-from PyQt5.QtCore import QSortFilterProxyModel, Qt, pyqtSignal
-from PyQt5.QtCore import QAbstractItemModel, QModelIndex, QVariant
-from PyQt5.QtGui import QBrush, QColor
-from PyQt5.QtWidgets import QHeaderView
+from PyQt6 import uic, QtCore
+from PyQt6.QtCore import QSortFilterProxyModel, Qt, pyqtSignal
+from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QVariant
+from PyQt6.QtGui import QBrush, QColor
+from PyQt6.QtWidgets import QHeaderView
 
 from cflib.crazyflie.param import PersistentParamState
 
@@ -167,7 +167,7 @@ class ParamBlockModel(QAbstractItemModel):
 
     def headerData(self, section, orientation, role):
         """Re-implemented method to get the headers"""
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             return self._column_headers[section]
 
     def rowCount(self, parent):
@@ -195,7 +195,7 @@ class ParamBlockModel(QAbstractItemModel):
     def data(self, index, role):
         """Re-implemented method to get the data for a given index and role"""
 
-        if role == Qt.BackgroundColorRole:
+        if role == Qt.ItemDataRole.BackgroundRole:
             if index.row() % 2 == 0:
                 return QVariant(self._mainUI.bgColor)
             else:
@@ -211,9 +211,9 @@ class ParamBlockModel(QAbstractItemModel):
         node = index.internalPointer()
         parent = node.parent
         if not parent:
-            if role == Qt.DisplayRole and index.column() == 0:
+            if role == Qt.ItemDataRole.DisplayRole and index.column() == 0:
                 return node.name
-        elif role == Qt.DisplayRole:
+        elif role == Qt.ItemDataRole.DisplayRole:
             if index.column() == 0:
                 return node.name
             if index.column() == 1:
@@ -224,7 +224,7 @@ class ParamBlockModel(QAbstractItemModel):
                 return 'Yes' if node.persistent else 'No'
             if index.column() == 4:
                 return node.value
-        elif (role == Qt.BackgroundRole and index.column() == 4 and
+        elif (role == Qt.ItemDataRole.BackgroundRole and index.column() == 4 and
               node.is_updating):
             return self._red_brush
 
@@ -235,7 +235,7 @@ class ParamBlockModel(QAbstractItemModel):
         flag = super(ParamBlockModel, self).flags(index)
 
         if not self._enabled:
-            return Qt.NoItemFlags
+            return Qt.ItemFlag.NoItemFlags
 
         return flag
 
@@ -313,7 +313,7 @@ class ParamTab(TabToolbox, param_tab_class):
         self.filterBox.textChanged.connect(onFilterChanged)
 
         self.paramTree.setModel(self.proxyModel)
-        self.paramTree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.paramTree.header().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.paramTree.selectionModel().selectionChanged.connect(self._paramChanged)
 
     def _param_default_cb(self, default_value):

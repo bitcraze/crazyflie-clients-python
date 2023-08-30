@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -31,10 +31,10 @@ Superclass for all tabs that implements common functions.
 
 import logging
 
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QCloseEvent
+from PyQt6 import QtWidgets
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QCloseEvent
 
 from cfclient.utils.config import Config
 
@@ -90,7 +90,7 @@ class TabToolbox(QtWidgets.QWidget):
                 self.enable()
 
     def preferred_dock_area(self):
-        return self._dock_area
+        return Qt.DockWidgetArea(self._dock_area)
 
     def set_preferred_dock_area(self, area):
         self._dock_area = area
@@ -154,7 +154,7 @@ class TabToolbox(QtWidgets.QWidget):
         Config().set(key, value)
 
     def _get_toolbox_area_config(self):
-        result = Qt.RightDockWidgetArea
+        result = Qt.DockWidgetArea.RightDockWidgetArea
 
         config = self._read_toolbox_area_config()
 
@@ -179,12 +179,13 @@ class TabToolbox(QtWidgets.QWidget):
             logger.info(f'No config found for {key}')
 
         config = {}
-        for composite in composite_config:
-            try:
-                parts = composite.split(':')
-                config[parts[0]] = int(parts[1])
-            except KeyError:
-                logger.info(f'Can not understand config {composite}')
+        # for composite in composite_config:
+        #     try:
+        #         parts = composite.split(':')
+        #         # TODO krri qt6 convert: parts[1] can be something like DockWidgetArea.blablaright
+        #         config[parts[0]] = int(parts[1])
+        #     except KeyError:
+        #         logger.info(f'Can not understand config {composite}')
 
         return config
 

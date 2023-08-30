@@ -6,7 +6,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2022 Bitcraze AB
+#  Copyright (C) 2022-2023 Bitcraze AB
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -43,7 +43,7 @@ from cflib.localization.lighthouse_geometry_solver import LighthouseGeometrySolv
 from cflib.localization.lighthouse_system_scaler import LighthouseSystemScaler
 from cflib.localization.lighthouse_types import Pose, LhDeck4SensorPositions, LhMeasurement, LhCfPoseSample
 
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt6 import QtCore, QtWidgets, QtGui
 import time
 
 
@@ -66,14 +66,14 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
         self.wizard_opened_first_time = True
         self.reset()
 
-        self.button(QtWidgets.QWizard.FinishButton).clicked.connect(self._finish_button_clicked_callback)
+        self.button(QtWidgets.QWizard.WizardButton.FinishButton).clicked.connect(self._finish_button_clicked_callback)
 
     def _finish_button_clicked_callback(self):
         self.ready_cb(self.get_geometry_page.get_geometry())
 
     def reset(self):
-        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
-        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowCloseButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowType.WindowContextHelpButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowType.WindowCloseButtonHint)
 
         if not self.wizard_opened_first_time:
             self.removePage(0)
@@ -112,12 +112,12 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         self.layout = QtWidgets.QVBoxLayout()
 
         self.explanation_picture = QtWidgets.QLabel()
-        self.explanation_picture.setAlignment(QtCore.Qt.AlignCenter)
+        self.explanation_picture.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(self.explanation_picture)
 
         self.explanation_text = QtWidgets.QLabel()
         self.explanation_text.setText(' ')
-        self.explanation_text.setAlignment(QtCore.Qt.AlignCenter)
+        self.explanation_text.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(self.explanation_text)
 
         self.layout.addStretch()
@@ -127,7 +127,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         self.status_text = QtWidgets.QLabel()
         self.status_text.setFont(QtGui.QFont('Courier New', 10))
         self.status_text.setText(self.str_pad(''))
-        self.status_text.setFrameStyle(QtWidgets.QFrame.Panel | QtWidgets.QFrame.Plain)
+        self.status_text.setFrameStyle(QtWidgets.QFrame.Shape.Panel | QtWidgets.QFrame.Shadow.Plain)
         self.layout.addWidget(self.status_text)
 
         self.start_action_button = QtWidgets.QPushButton("Start Measurement")
@@ -462,4 +462,4 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     wizard = LighthouseBasestationGeometryWizard()
     wizard.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

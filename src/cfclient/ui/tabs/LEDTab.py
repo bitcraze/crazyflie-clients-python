@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2022 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -32,9 +32,9 @@ Basic tab to be able to set (and test) colors in the LED-ring.
 
 import logging
 
-from PyQt5 import QtGui, uic
-from PyQt5.QtCore import pyqtSignal
-from PyQt5 import QtWidgets
+from PyQt6 import QtGui, uic
+from PyQt6.QtCore import pyqtSignal
+from PyQt6 import QtWidgets
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox

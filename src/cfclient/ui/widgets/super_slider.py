@@ -6,7 +6,7 @@
 # | / ,--'  |    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #    +------`   /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-# Copyright (C) 2022 Bitcraze AB
+# Copyright (C) 2022-2023 Bitcraze AB
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 Slider widget with advanced features
 """
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt6 import QtWidgets, QtCore
 from cflib.utils.callbacks import Caller
 
 
@@ -59,8 +59,8 @@ class SuperSlider(QtWidgets.QWidget):
 
     def _initUI(self):
         # Create controls
-        self.slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, self)
-        self.slider.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
+        self.slider.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         self.slider.setRange(int(self.min * self.slider_scaling), int(self.max * self.slider_scaling))
         self.slider.setValue(int(self.value * self.slider_scaling))
         self.slider.setTickInterval(self.slider_scaling)

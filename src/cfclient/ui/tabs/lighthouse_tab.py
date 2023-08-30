@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2022 Bitcraze AB
+#  Copyright (C) 2022-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -32,11 +32,11 @@ Shows data for the Lighthouse Positioning system
 
 import logging
 
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtWidgets import QFileDialog
-from PyQt5.QtWidgets import QLabel
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QFileDialog
+from PyQt6.QtWidgets import QLabel
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
@@ -626,7 +626,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     def _create_label(self, text=None):
         label = QLabel()
         label.setMinimumSize(30, 0)
-        label.setAlignment(Qt.AlignCenter)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         if text:
             label.setText(str(text))

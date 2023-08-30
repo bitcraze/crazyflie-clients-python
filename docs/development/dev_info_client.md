@@ -10,7 +10,7 @@ same kind of information is available here for the Crazyflie Python API.
 
 Here\'s a quick overview:
 
--   The GUI is made in QT5 (using QTDesigner 4 and loading the .ui files
+-   The GUI is made in QT6 (using QTDesigner and loading the .ui files
     at runtime)
 -   It uses the SDL2 to read input devices on Windows/Mac OSX and raw
     jsdevs on Linux. It also supports custom input from
