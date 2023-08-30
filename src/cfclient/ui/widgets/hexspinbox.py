@@ -42,8 +42,8 @@ __all__ = ['HexSpinBox']
 class HexSpinBox(QAbstractSpinBox):
     valueChanged = pyqtSignal(object)
 
-    def __init__(self, *args):
-        QAbstractSpinBox.__init__(self, *args)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         regexp = QRegularExpression('^0x[0-9A-Fa-f]{1,10}$')
         self.validator = QRegularExpressionValidator(regexp)
         self.setValue(0)

@@ -36,7 +36,6 @@ import signal
 
 import logging
 
-from asyncqt import QEventLoop
 import cfclient
 
 __author__ = 'Bitcraze AB'
@@ -171,10 +170,6 @@ def main():
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     from cfclient.utils.ui import UiUtils
-
-    # Create and set an event loop that combines qt and asyncio
-    loop = QEventLoop(app)
-    asyncio.set_event_loop(loop)
 
     app.setWindowIcon(QIcon(cfclient.module_path + "/ui/icons/icon-256.png"))
     app.setApplicationName("Crazyflie client")

@@ -39,7 +39,6 @@ from .LogTab import LogTab
 from .ParamTab import ParamTab
 from .PlotTab import PlotTab
 from .locopositioning_tab import LocoPositioningTab
-# from .QualisysTab import QualisysTab
 from .LogClientTab import LogClientTab
 from .lighthouse_tab import LighthouseTab
 
@@ -58,7 +57,5 @@ available = [
     PlotTab,
     LocoPositioningTab,
     LighthouseTab,
-    # TODO KRRI Removed
-    # QualisysTab,
     LogClientTab,
 ]
