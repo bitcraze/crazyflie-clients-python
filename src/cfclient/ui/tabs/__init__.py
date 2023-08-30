@@ -40,7 +40,6 @@ from .LogTab import LogTab
 from .ParamTab import ParamTab
 from .PlotTab import PlotTab
 from .locopositioning_tab import LocoPositioningTab
-from .QualisysTab import QualisysTab
 from .LogClientTab import LogClientTab
 from .lighthouse_tab import LighthouseTab
 from .TuningTab import TuningTab
@@ -60,7 +59,6 @@ available = [
     PlotTab,
     LocoPositioningTab,
     LighthouseTab,
-    QualisysTab,
     LogClientTab,
     TuningTab,
     CrtpSharkToolbox,

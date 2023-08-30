@@ -95,8 +95,6 @@ setup(
                       'pyzmq~=25.0',
                       'pyqtgraph~=0.11',
                       'PyYAML~=6.0.1',
-                      'qasync~=0.23.0',
-                      'qtm~=2.1.1',
                       'numpy>=1.20,<1.25',
                       'vispy~=0.13.0',
                       'pyserial~=3.5',
