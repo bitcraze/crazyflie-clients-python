@@ -165,7 +165,7 @@ class TabToolbox(QtWidgets.QWidget):
 
     def _store_toolbox_area_config(self, area):
         config = self._read_toolbox_area_config()
-        config[self.tab_toolbox_name] = area
+        config[self.tab_toolbox_name] = area.value
         self._write_toolbox_area_config(config)
 
     def _read_toolbox_area_config(self):
@@ -179,13 +179,12 @@ class TabToolbox(QtWidgets.QWidget):
             logger.info(f'No config found for {key}')
 
         config = {}
-        # for composite in composite_config:
-        #     try:
-        #         parts = composite.split(':')
-        #         # TODO krri qt6 convert: parts[1] can be something like DockWidgetArea.blablaright
-        #         config[parts[0]] = int(parts[1])
-        #     except KeyError:
-        #         logger.info(f'Can not understand config {composite}')
+        for composite in composite_config:
+            try:
+                parts = composite.split(':')
+                config[parts[0]] = int(parts[1])
+            except (KeyError, ValueError):
+                logger.info(f'Can not understand config {composite}')
 
         return config
 
