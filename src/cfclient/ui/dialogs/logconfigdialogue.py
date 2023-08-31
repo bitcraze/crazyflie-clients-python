@@ -118,8 +118,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                                                     self.menuContextTree)
 
         # keyboard shortcuts
-        shortcut_delete = QShortcut(QKeySequence("Delete"),
-                                              self)
+        shortcut_delete = QShortcut(QKeySequence("Delete"), self)
         shortcut_delete.activated.connect(self._delete_config)
 
         shortcut_f2 = QShortcut(QKeySequence("F2"), self)
@@ -263,7 +262,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
             self._edit_name()
 
     def _select_category(self, category):
-        items = self.categoryTree.findItems(category,Qt.MatchFlag.MatchFixedString | Qt.MatchFlag.MatchRecursive)
+        items = self.categoryTree.findItems(category, Qt.MatchFlag.MatchFixedString | Qt.MatchFlag.MatchRecursive)
         if items:
             category = items[0]
             self.categoryTree.setCurrentItem(category)

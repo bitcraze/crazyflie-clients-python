@@ -30,7 +30,7 @@ Shows all the parameters available in the Crazyflie and also gives the ability
 to edit them.
 """
 
-from PyQt6 import QtCore, QtWidgets, uic
+from PyQt6 import QtWidgets, uic
 from PyQt6.QtCore import Qt, pyqtSignal
 
 import cfclient
