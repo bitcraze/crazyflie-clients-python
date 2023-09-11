@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -36,8 +36,9 @@ import struct
 
 import cfclient
 from cfclient.utils.ui import UiUtils
-from PyQt5 import QtWidgets, uic, QtGui
-from PyQt5.QtCore import Qt, QTimer
+from PyQt6 import QtWidgets, uic
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QShortcut, QKeySequence
 
 from cflib.crazyflie.log import LogConfig
 
@@ -112,16 +113,15 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         self.deleteBtn.setToolTip('Delete category')
 
         # enable right-click context-menu
-        self.categoryTree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.categoryTree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.categoryTree.customContextMenuRequested.connect(
                                                     self.menuContextTree)
 
         # keyboard shortcuts
-        shortcut_delete = QtWidgets.QShortcut(QtGui.QKeySequence("Delete"),
-                                              self)
+        shortcut_delete = QShortcut(QKeySequence("Delete"), self)
         shortcut_delete.activated.connect(self._delete_config)
 
-        shortcut_f2 = QtWidgets.QShortcut(QtGui.QKeySequence("F2"), self)
+        shortcut_f2 = QShortcut(QKeySequence("F2"), self)
         shortcut_f2.activated.connect(self._edit_name)
 
         self._config_saved_timer = QTimer()
@@ -262,9 +262,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
             self._edit_name()
 
     def _select_category(self, category):
-        items = self.categoryTree.findItems(category,
-                                            Qt.MatchFixedString
-                                            | Qt.MatchRecursive)
+        items = self.categoryTree.findItems(category, Qt.MatchFlag.MatchFixedString | Qt.MatchFlag.MatchRecursive)
         if items:
             category = items[0]
             self.categoryTree.setCurrentItem(category)
@@ -272,9 +270,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
     def _select_item(self, conf_name, category):
         """ loads the given config in the correct category """
-        items = self.categoryTree.findItems(conf_name,
-                                            Qt.MatchFixedString
-                                            | Qt.MatchRecursive)
+        items = self.categoryTree.findItems(conf_name, Qt.MatchFlag.MatchFixedString | Qt.MatchFlag.MatchRecursive)
         for item in items:
             if item.parent().text(0) == category:
                 self._last_pressed_item = item, conf_name
@@ -317,8 +313,8 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
             # Create category-tree.
             for conf_category in config:
                 category = QtWidgets.QTreeWidgetItem()
-                category.setData(NAME_FIELD, Qt.DisplayRole, conf_category)
-                category.setFlags(category.flags() | Qt.ItemIsEditable)
+                category.setData(NAME_FIELD, Qt.ItemDataRole.DisplayRole, conf_category)
+                category.setFlags(category.flags() | Qt.ItemFlag.ItemIsEditable)
 
                 # Copulate category-tree with log configurations.
                 for conf in config[conf_category]:
@@ -332,11 +328,11 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                     else:
                         conf_name = conf.name
 
-                    item.setData(NAME_FIELD, Qt.DisplayRole, conf_name)
+                    item.setData(NAME_FIELD, Qt.ItemDataRole.DisplayRole, conf_name)
                     category.addChild(item)
 
                     # Enable item-editing.
-                    item.setFlags(item.flags() | Qt.ItemIsEditable)
+                    item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
 
                 self.categoryTree.addTopLevelItem(category)
                 self.categoryTree.expandItem(category)
@@ -379,9 +375,9 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
     def sortTrees(self):
         """ Sorts all trees by their name. """
         for tree in [self.logTree, self.varTree, self.categoryTree]:
-            tree.sortItems(NAME_FIELD, Qt.AscendingOrder)
+            tree.sortItems(NAME_FIELD, Qt.SortOrder.AscendingOrder)
             for node in self.getNodeChildren(tree.invisibleRootItem()):
-                node.sortChildren(NAME_FIELD, Qt.AscendingOrder)
+                node.sortChildren(NAME_FIELD, Qt.SortOrder.AscendingOrder)
 
     def getNodeChildren(self, treeNode):
         children = []
@@ -414,13 +410,13 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
     def addNewVar(self, logTreeItem, target):
         parentName = logTreeItem.parent().text(NAME_FIELD)
-        varParent = target.findItems(parentName, Qt.MatchExactly, NAME_FIELD)
+        varParent = target.findItems(parentName, Qt.MatchFlag.MatchExactly, NAME_FIELD)
 
         item = logTreeItem.clone()
 
         if (len(varParent) == 0):
             newParent = QtWidgets.QTreeWidgetItem()
-            newParent.setData(0, Qt.DisplayRole, parentName)
+            newParent.setData(0, Qt.ItemDataRole.DisplayRole, parentName)
             newParent.addChild(item)
             target.addTopLevelItem(newParent)
             target.expandItem(newParent)
@@ -455,7 +451,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         self.moveNodeItem(source, target, source.currentItem())
 
     def moveNodeByName(self, source, target, parentName, itemName):
-        parents = source.findItems(parentName, Qt.MatchExactly, NAME_FIELD)
+        parents = source.findItems(parentName, Qt.MatchFlag.MatchExactly, NAME_FIELD)
         node = None
         if (len(parents) > 0):
             parent = parents[0]
@@ -484,7 +480,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
         self.box.setWindowTitle(caption)
         self.box.setText(message)
         # self.box.setButtonText(1, "Ok")
-        self.box.setWindowFlags(Qt.Dialog | Qt.MSWindowsFixedSizeDialogHint)
+        self.box.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.MSWindowsFixedSizeDialogHint)
         self.box.show()
 
     def updateToc(self):
@@ -493,15 +489,15 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
 
         for group in list(toc.toc.keys()):
             groupItem = QtWidgets.QTreeWidgetItem()
-            groupItem.setData(NAME_FIELD, Qt.DisplayRole, group)
+            groupItem.setData(NAME_FIELD, Qt.ItemDataRole.DisplayRole, group)
             for param in list(toc.toc[group].keys()):
                 item = QtWidgets.QTreeWidgetItem()
-                item.setData(NAME_FIELD, Qt.DisplayRole, param)
-                item.setData(ID_FIELD, Qt.DisplayRole,
+                item.setData(NAME_FIELD, Qt.ItemDataRole.DisplayRole, param)
+                item.setData(ID_FIELD, Qt.ItemDataRole.DisplayRole,
                              toc.toc[group][param].ident)
-                item.setData(TYPE_FIELD, Qt.DisplayRole,
+                item.setData(TYPE_FIELD, Qt.ItemDataRole.DisplayRole,
                              toc.toc[group][param].ctype)
-                item.setData(SIZE_FIELD, Qt.DisplayRole,
+                item.setData(SIZE_FIELD, Qt.ItemDataRole.DisplayRole,
                              struct.calcsize(toc.toc[group][param].pytype))
                 groupItem.addChild(item)
 

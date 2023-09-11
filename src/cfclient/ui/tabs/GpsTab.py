@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2022 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -31,15 +31,15 @@ pre-configured.
 import logging
 
 import cfclient
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QMessageBox
 from cfclient.ui.tab_toolbox import TabToolbox
 from cflib.crazyflie.log import LogConfig
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtNetwork
-from PyQt5 import QtWebKit
-from PyQt5 import uic
+from PyQt6 import QtCore
+from PyQt6 import QtGui
+from PyQt6 import QtNetwork
+from PyQt6 import QtWebKit
+from PyQt6 import uic
 
 __author__ = 'Bitcraze AB'
 __all__ = ['GpsTab']

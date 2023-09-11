@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2021 Bitcraze AB
+#  Copyright (C) 2021-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -26,7 +26,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #  02110-1301, USA.
 from collections import namedtuple
-from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt6.QtCore import pyqtSignal, QObject
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ConnectivityManager']
@@ -66,8 +66,7 @@ class ConnectivityManager(QObject):
         ui_elements.address_spinner.valueChanged.connect(self._address_changed_handler)
         ui_elements.address_spinner.editingFinished.connect(self._address_edited_handler)
 
-        ui_elements.interface_combo.currentIndexChanged['QString'].connect(
-            self._interface_combo_current_index_changed_handler)
+        ui_elements.interface_combo.currentIndexChanged.connect(self._interface_combo_current_index_changed_handler)
 
     def set_state(self, state):
         if self._state != state:
@@ -149,11 +148,12 @@ class ConnectivityManager(QObject):
                     ui_elements.address_spinner.setValue(value)
 
     def _interface_combo_current_index_changed_handler(self, interface):
+        interface_s = str(interface)
         can_connect = interface != self.INTERFACE_PROMPT_TEXT
         for ui_elements in self._ui_elements:
             combo = ui_elements.interface_combo
-            if combo.currentText != interface:
-                combo.setCurrentText(interface)
+            if combo.currentText != interface_s:
+                combo.setCurrentText(interface_s)
             ui_elements.connect_button.setEnabled(can_connect)
 
     def _update_ui(self):

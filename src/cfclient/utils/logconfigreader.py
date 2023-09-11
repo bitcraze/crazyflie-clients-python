@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -45,7 +45,7 @@ import shutil
 import cfclient
 from cflib.crazyflie.log import LogVariable, LogConfig
 
-from PyQt5 import QtGui
+from PyQt6 import QtGui
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LogVariable', 'LogConfigReader']

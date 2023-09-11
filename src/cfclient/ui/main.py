@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2021 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -48,22 +48,22 @@ from cfclient.utils.zmq_param import ZMQParamAccess
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import MemoryElement
-from PyQt5 import QtWidgets
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtCore import QDir
-from PyQt5.QtCore import QThread
-from PyQt5.QtCore import QUrl
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QAction
-from PyQt5.QtWidgets import QActionGroup
-from PyQt5.QtWidgets import QShortcut
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtGui import QPalette
-from PyQt5.QtWidgets import QLabel
-from PyQt5.QtWidgets import QMenu
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6 import QtWidgets
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSlot
+from PyQt6.QtCore import QDir
+from PyQt6.QtCore import QThread
+from PyQt6.QtCore import QUrl
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QActionGroup
+from PyQt6.QtGui import QShortcut
+from PyQt6.QtGui import QDesktopServices
+from PyQt6.QtGui import QPalette
+from PyQt6.QtWidgets import QLabel
+from PyQt6.QtWidgets import QMenu
+from PyQt6.QtWidgets import QMessageBox
 
 from .dialogs.cf2config import Cf2ConfigDialog
 from .dialogs.inputconfigdialogue import InputConfigDialogue
@@ -140,8 +140,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         # figure out what bgcolor to set from that. We always use the current
         # palette forgreound.
         #
-        self.textColor = self._statusbar_label.palette().color(QPalette.WindowText)
-        self.bgColor = self._statusbar_label.palette().color(QPalette.Background)
+        self.textColor = self._statusbar_label.palette().color(QPalette.ColorRole.WindowText)
+        self.bgColor = self._statusbar_label.palette().color(QPalette.ColorRole.Window)
         self.isDark = self.textColor.value() > self.bgColor.value()
 
         self.joystickReader = JoystickReader()
@@ -332,7 +332,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 cfclient.ui.pluginhelper.plotTab = tab_toolbox
 
             # Add to tabs menu
-            tab_action_item = QtWidgets.QAction(tab_toolbox.get_tab_toolbox_name())
+            tab_action_item = QAction(tab_toolbox.get_tab_toolbox_name())
             tab_action_item.setCheckable(True)
             tab_action_item.triggered.connect(self.toggle_tab_visibility)
             tab_action_item.tab_toolbox = tab_toolbox
@@ -341,7 +341,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             tabs_menu_item.addAction(tab_action_item)
 
             # Add to toolbox menu
-            toolbox_action_item = QtWidgets.QAction(tab_toolbox.get_tab_toolbox_name())
+            toolbox_action_item = QAction(tab_toolbox.get_tab_toolbox_name())
             toolbox_action_item.setCheckable(True)
             toolbox_action_item.triggered.connect(self.toggle_toolbox_visibility)
             toolbox_action_item.tab_toolbox = tab_toolbox

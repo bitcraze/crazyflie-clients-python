@@ -6,7 +6,7 @@
 # | / ,--'  |    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #    +------`   /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-# Copyright (C) 2022 Bitcraze AB
+# Copyright (C) 2022-2023 Bitcraze AB
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,9 +26,9 @@ Tab for tuning PID controller, mainly for larger quads.
 
 import logging
 
-from PyQt5 import QtWidgets
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt6 import QtWidgets
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal, Qt
 import time
 
 import cfclient

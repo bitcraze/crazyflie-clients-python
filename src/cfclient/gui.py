@@ -6,7 +6,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -29,14 +29,12 @@
 import platform
 import sys
 import os
-import asyncio
 import argparse
 import datetime
 import signal
 
 import logging
 
-from qasync import QEventLoop
 import cfclient
 
 __author__ = 'Bitcraze AB'
@@ -69,8 +67,8 @@ def main():
         os.environ['DYLD_FALLBACK_LIBRARY_PATH'] = os.path.dirname(
             sys.executable)
 
-    # Set ERROR level for PyQt5 logger
-    qtlogger = logging.getLogger('PyQt5')
+    # Set ERROR level for PyQt logger
+    qtlogger = logging.getLogger('PyQt6')
     qtlogger.setLevel(logging.ERROR)
 
     parser = argparse.ArgumentParser(
@@ -125,9 +123,9 @@ def main():
             sys.exit(1)
 
     try:
-        import PyQt5  # noqa
+        import PyQt6  # noqa
     except ImportError:
-        logger.critical("No PyQT5 installation found, exiting!")
+        logger.critical("No PyQT6 installation found, exiting!")
         sys.exit(1)
 
     # Disable printouts from STL
@@ -162,8 +160,8 @@ def main():
 
     # Start up the main user-interface
     from .ui.main import MainUI
-    from PyQt5.QtWidgets import QApplication
-    from PyQt5.QtGui import QIcon
+    from PyQt6.QtWidgets import QApplication
+    from PyQt6.QtGui import QIcon
 
     if os.name == 'posix':
         logger.info('If startup fails because of "xcb", install dependency with `sudo apt install libxcb-xinerama0`.')
@@ -171,10 +169,6 @@ def main():
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     from cfclient.utils.ui import UiUtils
-
-    # Create and set an event loop that combines qt and asyncio
-    loop = QEventLoop(app)
-    asyncio.set_event_loop(loop)
 
     app.setWindowIcon(QIcon(cfclient.module_path + "/ui/icons/icon-256.png"))
     app.setApplicationName("Crazyflie client")
@@ -193,7 +187,7 @@ def main():
     app.setFont(UiUtils.FONT)
     main_window.show()
     main_window.set_default_theme()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

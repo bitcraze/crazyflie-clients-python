@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2023 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -27,9 +27,9 @@
 Toolbox used to interact with the Basestation to set it in a certain channel
 """
 
-from PyQt5 import QtWidgets
-from PyQt5 import uic
-from PyQt5.QtCore import Qt
+from PyQt6 import QtWidgets
+from PyQt6 import uic
+from PyQt6.QtCore import Qt
 
 import io
 import serial
@@ -154,7 +154,7 @@ class LighthouseBsModeDialog(QtWidgets.QWidget, basestation_mode_widget_class):
         return
 
     def preferedDockArea(self):
-        return Qt.RightDockWidgetArea
+        return Qt.DockWidgetArea.RightDockWidgetArea
 
     def _find_basestation(self):
         ports = comports()
