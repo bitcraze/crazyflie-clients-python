@@ -93,7 +93,7 @@ setup(
     install_requires=['cflib>=0.1.23',
                       'appdirs~=1.4.0',
                       'pyzmq~=25.0',
-                      'pyqtgraph~=0.11',
+                      'pyqtgraph~=0.13',
                       'PyYAML~=6.0.1',
                       'numpy>=1.20,<1.25',
                       'vispy~=0.13.0',
