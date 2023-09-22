@@ -42,7 +42,8 @@ before you proceed to the next one.
 
 1.  **Receiving** - green = light is received from the base station, red = no reception
 2.  **Calibration** - indicates if there is calibration data for the base station or not.
-    * Red = no calibration data, blue = calibration data from persistent storage but not yet confirmed
+    * Red = no calibration data
+    * blue = calibration data from persistent storage but not yet confirmed
     * green = calibration data has been received from the base station and matched previous data
     * orange = calibration data has been received from the base station but did **not** match the previous data, this means that you probably should redo the geometry estimation.
 3. **Geometry** - indicates whether geometry data is available or not.
