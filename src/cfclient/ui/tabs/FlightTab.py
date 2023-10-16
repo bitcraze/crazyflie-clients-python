@@ -39,9 +39,9 @@ from PyQt6.QtWidgets import QMessageBox
 import cfclient
 from cfclient.ui.widgets.ai import AttitudeIndicator
 
-from cfclient.utils.config import Config
 from cflib.crazyflie.log import LogConfig
 
+from cfclient.utils.config import Config
 from cfclient.utils.input import JoystickReader
 
 from cfclient.ui.tab_toolbox import TabToolbox
@@ -191,7 +191,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         # Supervisor
         self._supervisor_info_bitfield = 0
         self.armButton.clicked.connect(self.updateArm)
-        self._update_arm_button(False)
+        self._update_supervisor_and_arming(False)
 
         self.uiSetupReady()
 
@@ -301,7 +301,7 @@ class FlightTab(TabToolbox, flight_tab_class):
             if self.LOG_NAME_SUPERVISOR_INFO in data:
                 self._supervisor_info_bitfield = data[self.LOG_NAME_SUPERVISOR_INFO]
 
-            self._update_arm_button(True)
+            self._update_supervisor_and_arming(True)
 
     def _pose_data_received(self, pose_logger, pose):
         if self.isVisible():
@@ -355,18 +355,35 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.inputRollLabel.setText(roll)
         self.inputYawLabel.setText(yaw)
 
-    def _update_arm_button(self, connected):
+    def _update_supervisor_and_arming(self, connected):
         if not connected:
             self.armButton.setStyleSheet("")
             self.armButton.setText("Arm")
             self.armButton.setEnabled(False)
+            self._supervisor_state.setText("")
+            self._supervisor_state.setStyleSheet("")
+            self._supervisor_state.setText("")
             return
+
+        # We could set the text to "ready" or similar here, but an empty string is better for backwards compatibility as
+        # it would show "Ready" when locked for an older firmware.
+        self._supervisor_state.setText("")
 
         if self._is_flying():
             self.armButton.setEnabled(True)
             self.armButton.setText("Emergency stop")
             self.armButton.setStyleSheet("background-color: red")
+            self._supervisor_state.setText("Flying")
             return
+
+        if self._is_tumbled():
+            self._supervisor_state.setText("Tumbled")
+
+        if self._is_locked():
+            self._supervisor_state.setText("Locked - reboot")
+            self._supervisor_state.setStyleSheet("background-color: red")
+        else:
+            self._supervisor_state.setStyleSheet("")
 
         if self._is_armed():
             self.armButton.setStyleSheet("background-color: red")
@@ -503,7 +520,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._update_flight_commander(False)
 
         self._supervisor_info_bitfield = 0
-        self._update_arm_button(False)
+        self._update_supervisor_and_arming(False)
 
     def _can_arm(self):
         return bool(self._supervisor_info_bitfield & 0x0001)
@@ -522,6 +539,9 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     def _is_tumbled(self):
         return bool(self._supervisor_info_bitfield & 0x0020)
+
+    def _is_locked(self):
+        return bool(self._supervisor_info_bitfield & 0x0040)
 
     def minMaxThrustChanged(self):
         self._helper.inputDeviceReader.min_thrust = self.minThrust.value()
@@ -685,7 +705,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._ring_populate_dropdown()
         self._populate_assisted_mode_dropdown()
         self._update_flight_commander(True)
-        self._update_arm_button(True)
+        self._update_supervisor_and_arming(True)
 
     def _ring_populate_dropdown(self):
         try:
