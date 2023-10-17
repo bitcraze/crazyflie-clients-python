@@ -362,12 +362,17 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.armButton.setEnabled(False)
             self._supervisor_state.setText("")
             self._supervisor_state.setStyleSheet("")
-            self._supervisor_state.setText("")
             return
 
-        # We could set the text to "ready" or similar here, but an empty string is better for backwards compatibility as
-        # it would show "Ready" when locked for an older firmware.
         self._supervisor_state.setText("")
+        if self._is_tumbled():
+            self._supervisor_state.setText("Tumbled")
+
+        if self._is_locked():
+            self._supervisor_state.setText("Locked-please reboot")
+            self._supervisor_state.setStyleSheet("background-color: red")
+        else:
+            self._supervisor_state.setStyleSheet("")
 
         if self._is_flying():
             self.armButton.setEnabled(True)
@@ -375,15 +380,6 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.armButton.setStyleSheet("background-color: red")
             self._supervisor_state.setText("Flying")
             return
-
-        if self._is_tumbled():
-            self._supervisor_state.setText("Tumbled")
-
-        if self._is_locked():
-            self._supervisor_state.setText("Locked - reboot")
-            self._supervisor_state.setStyleSheet("background-color: red")
-        else:
-            self._supervisor_state.setStyleSheet("")
 
         if self._is_armed():
             self.armButton.setStyleSheet("background-color: red")
@@ -451,6 +447,11 @@ class FlightTab(TabToolbox, flight_tab_class):
         # Add supervisor info if it exists to keep backwards compatibility
         if self._helper.cf.log.toc.get_element_by_complete_name(self.LOG_NAME_SUPERVISOR_INFO):
             lg.add_variable(self.LOG_NAME_SUPERVISOR_INFO)
+        # Full supervisor info available after V7, hide supervisor info for earlier versions
+        update_supervisor_info = self._helper.cf.platform.get_protocol_version() >= 7
+        self._supervisor_state.setVisible(update_supervisor_info)
+        self._supervisor_label1.setVisible(update_supervisor_info)
+        self._supervisor_label2.setVisible(update_supervisor_info)
 
         try:
             self._helper.cf.log.add_config(lg)

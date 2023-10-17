@@ -1128,13 +1128,37 @@
               </item>
               <item row="7" column="2">
                <widget class="QLineEdit" name="_supervisor_state">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>180</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="cursorPosition">
+                 <number>0</number>
+                </property>
                 <property name="readOnly">
                  <bool>true</bool>
+                </property>
+                <property name="placeholderText">
+                 <string/>
                 </property>
                </widget>
               </item>
               <item row="6" column="2">
-               <widget class="QLabel" name="label_12">
+               <widget class="QLabel" name="_supervisor_label2">
                 <property name="text">
                  <string>Supervisor</string>
                 </property>
@@ -1144,7 +1168,7 @@
                </widget>
               </item>
               <item row="7" column="0">
-               <widget class="QLabel" name="label_13">
+               <widget class="QLabel" name="_supervisor_label1">
                 <property name="text">
                  <string>Info</string>
                 </property>
