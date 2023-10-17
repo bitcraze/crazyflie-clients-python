@@ -76,7 +76,6 @@ class TabToolbox(QtWidgets.QWidget):
         if self._dock_area == Qt.DockWidgetArea.NoDockWidgetArea:
             self._dock_area = Qt.DockWidgetArea.RightDockWidgetArea
 
-
     def get_tab_toolbox_name(self):
         """Return the name that will be shown in the tab or toolbox"""
         return self.tab_toolbox_name
