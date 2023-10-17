@@ -69,6 +69,14 @@ class TabToolbox(QtWidgets.QWidget):
 
         self._dock_area = self._get_toolbox_area_config()
 
+        # Do not allow floating toolboxes, it seems to be buggy
+        self.dock_widget.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable |
+                                     QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        # If floating is set in the config, change to right docking area
+        if self._dock_area == Qt.DockWidgetArea.NoDockWidgetArea:
+            self._dock_area = Qt.DockWidgetArea.RightDockWidgetArea
+
+
     def get_tab_toolbox_name(self):
         """Return the name that will be shown in the tab or toolbox"""
         return self.tab_toolbox_name
@@ -90,7 +98,7 @@ class TabToolbox(QtWidgets.QWidget):
                 self.enable()
 
     def preferred_dock_area(self):
-        return Qt.DockWidgetArea(self._dock_area)
+        return self._dock_area
 
     def set_preferred_dock_area(self, area):
         self._dock_area = area
@@ -159,7 +167,7 @@ class TabToolbox(QtWidgets.QWidget):
         config = self._read_toolbox_area_config()
 
         if self.tab_toolbox_name in config.keys():
-            result = config[self.tab_toolbox_name]
+            result = Qt.DockWidgetArea(config[self.tab_toolbox_name])
 
         return result
 
