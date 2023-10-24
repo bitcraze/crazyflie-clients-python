@@ -21,6 +21,8 @@ sudo apt install git python3-pip libxcb-xinerama0
 pip3 install --upgrade pip
 ```
 
+> For some versions of Ubuntu 22.04 you might need to install more packes like `libxcb-cursor0`. Check out [QT6 package dependency list]( https://doc.qt.io/qt-6/linux-requirements.html).
+
 #### Setting udev permissions
 
 Using Crazyradio on Linux requires that you set udev permissions. See the cflib
