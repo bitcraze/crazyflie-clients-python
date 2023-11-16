@@ -7,7 +7,7 @@ page_id: install
 
 This project requires Python 3.7 - 3.11. 
 
-> Python 3.12 is not supported still has issues (see [this ticket](https://github.com/bitcraze/crazyflie-lib-python/issues/425))
+> Python 3.12 is not supported as it has issues with missing packages (see [this ticket](https://github.com/bitcraze/crazyflie-lib-python/issues/425))
 
 There are a few things to sort out on your machine before you can install the client. Please see the appropriate
 section depending on your environment.
