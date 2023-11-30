@@ -16,14 +16,14 @@ section depending on your environment.
 
 For <  Ubuntu 20.04 you will need to check first if which version your python is on and if you have 'python3' on your system.
 
-From a fresh Ubuntu 20.04 system, running the client form source requires git, pip and a lib for the Qt GUI.
+From a fresh Ubuntu 20.04 system and up, running the client form source requires git, pip and a lib for the Qt GUI.
 
 ```
-sudo apt install git python3-pip libxcb-xinerama0
+sudo apt install git python3-pip libxcb-xinerama0 libxcb-cursor0
 pip3 install --upgrade pip
 ```
 
-> For some versions of Ubuntu 22.04 you might need to install more packes like `libxcb-cursor0`. Check out [QT6 package dependency list]( https://doc.qt.io/qt-6/linux-requirements.html).
+> For some versions of Ubuntu 20.04 you might need to install more packes like `libxcb-cursor0`. Check out [QT6 package dependency list]( https://doc.qt.io/qt-6/linux-requirements.html).
 
 #### Setting udev permissions
 
