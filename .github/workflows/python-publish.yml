@@ -18,9 +18,7 @@ jobs:
   deploy:
 
     runs-on: ubuntu-latest
-    permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
-      id-token: write
+    
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python
@@ -35,3 +33,6 @@ jobs:
       run: python -m build
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        username: __token__
+        password: ${{ secrets.PYPI_TOKEN }}
