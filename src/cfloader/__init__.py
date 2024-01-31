@@ -111,10 +111,10 @@ def main():
         for t in sys.argv[2:]:
             if t.startswith("deck-"):
                 [deck, target, type] = t.split("-")
-                targets.append(Target("deck", target, type))
+                targets.append(Target("deck", target, type, [], []))
             else:
                 [target, type] = t.split("-")
-                targets.append(Target("cf2", target, type))
+                targets.append(Target("cf2", target, type, [], []))
     else:
         print("Action", sys.argv[0], "unknown!")
         sys.exit(-1)
