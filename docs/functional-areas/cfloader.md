@@ -52,6 +52,15 @@ script:
 
 python3 -m cfloader flash cf2.bin stm32-fw -w radio://0/10/2M/E7E7E7E701
 
+## Supported targets
+
+When flashing a .bin, the correct target needs to be specified. The followind targets are currently supported:
+
+ - stm32-fw: Stm32 firmware
+ - nrf51-fw: nRF51 firmware
+ - nrf51-bootloader+softdevice: nRF51 bootloader and softdevice bundle binary
+ - Various decks-fw: Some deck can be flashed over the air. See the deck documentation.
+
 ## Crazyflie 2.X examples
 
 Flashing new firmware for the nRF51 MCU:
