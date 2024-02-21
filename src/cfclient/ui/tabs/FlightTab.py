@@ -387,7 +387,7 @@ class FlightTab(TabToolbox, flight_tab_class):
             else:
                 self.armButton.setEnabled(True)
                 self.armButton.setStyleSheet("background-color: red")
-                self._supervisor_state.setText("Crashed, recover")
+                self._supervisor_state.setText("Crashed, click Recover")
 
             self._supervisor_state.setStyleSheet("background-color: red")
             return
