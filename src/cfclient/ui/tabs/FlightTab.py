@@ -369,10 +369,28 @@ class FlightTab(TabToolbox, flight_tab_class):
             self._supervisor_state.setText("Tumbled")
 
         if self._is_locked():
+            self.armButton.setText("")
+            self.armButton.setEnabled(False)
+            self.armButton.setStyleSheet("")
             self._supervisor_state.setText("Locked-please reboot")
             self._supervisor_state.setStyleSheet("background-color: red")
+            return
         else:
             self._supervisor_state.setStyleSheet("")
+
+        if self._is_crashed():
+            self.armButton.setText("Recover")
+            if self._is_tumbled():
+                self.armButton.setEnabled(False)
+                self.armButton.setStyleSheet("")
+                self._supervisor_state.setText("Crashed, flip over to recover")
+            else:
+                self.armButton.setEnabled(True)
+                self.armButton.setStyleSheet("background-color: red")
+                self._supervisor_state.setText("Crashed, click Recover")
+
+            self._supervisor_state.setStyleSheet("background-color: red")
+            return
 
         if self._is_flying():
             self.armButton.setEnabled(True)
@@ -544,6 +562,9 @@ class FlightTab(TabToolbox, flight_tab_class):
     def _is_locked(self):
         return bool(self._supervisor_info_bitfield & 0x0040)
 
+    def _is_crashed(self):
+        return bool(self._supervisor_info_bitfield & 0x0080)
+
     def minMaxThrustChanged(self):
         self._helper.inputDeviceReader.min_thrust = self.minThrust.value()
         self._helper.inputDeviceReader.max_thrust = self.maxThrust.value()
@@ -621,6 +642,8 @@ class FlightTab(TabToolbox, flight_tab_class):
         if self._is_flying():
             self._helper.cf.loc.send_emergency_stop()
             # TODO krri disarm?
+        if self._is_crashed():
+            self._helper.cf.platform.send_crash_recovery_request()
         else:
             if self._is_armed():
                 self._helper.cf.platform.send_arming_request(False)
