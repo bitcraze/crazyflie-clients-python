@@ -68,6 +68,10 @@ class UiUtils:
                 border-radius: 2px;
                 background-color: """ + COLOR_BLUE + """;
             }
+
+            QAbstractButton:disabled {
+                color: gray;
+            }
     """
 
     _THEME_HACKER = """
