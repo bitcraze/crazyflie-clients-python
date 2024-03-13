@@ -31,17 +31,20 @@ to edit them.
 """
 
 import logging
+from threading import Event
 
 from PyQt6 import uic, QtCore
 from PyQt6.QtCore import QSortFilterProxyModel, Qt, pyqtSignal
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QVariant
 from PyQt6.QtGui import QBrush, QColor
-from PyQt6.QtWidgets import QHeaderView
+from PyQt6.QtWidgets import QHeaderView, QFileDialog
 
 from cflib.crazyflie.param import PersistentParamState
+from cflib.localization import ParamFileManager
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
+from cfclient.utils.logconfigreader import FILE_REGEX_YAML
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ParamTab']
@@ -316,6 +319,12 @@ class ParamTab(TabToolbox, param_tab_class):
         self.paramTree.header().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.paramTree.selectionModel().selectionChanged.connect(self._paramChanged)
 
+        self._load_param_button.clicked.connect(self._load_param_button_clicked)
+        self._save_param_button.clicked.connect(self._save_param_button_clicked)
+
+        self._is_connected = False
+        self._update_param_io_buttons()
+
     def _param_default_cb(self, default_value):
         if default_value is not None:
             self.defaultValue.setText(str(default_value))
@@ -408,14 +417,77 @@ class ParamTab(TabToolbox, param_tab_class):
             if elem.is_persistent():
                 self.cf.param.persistent_get_state(complete, lambda _, state: self._persistent_state_signal.emit(state))
 
+    def _update_param_io_buttons(self):
+        enabled = self._is_connected
+        self._load_param_button.setEnabled(enabled)
+        self._save_param_button.setEnabled(enabled)
+
+    def _load_param_button_clicked(self):
+        names = QFileDialog.getOpenFileName(self, 'Open file', cfclient.config_path, FILE_REGEX_YAML)
+
+        if names[0] == '':
+            return
+        filename = names[0]
+        
+        parameters = ParamFileManager.read(filename)
+
+        for param, state in parameters.items():
+            # print("Param type: ", type(param), "State: ", state)
+            if state.is_stored:
+                self.cf.param.set_value(param, state.stored_value)
+                self.cf.param.persistent_store(param, lambda _, success: print(f'store {success}!'))
+
+        self._update_param_io_buttons()
+
+    @staticmethod
+    def get_persistent_state(cf, complete_param_name):
+        wait_for_callback_event = Event()
+        state_value = None
+
+        def state_callback(complete_name, value):
+            nonlocal state_value
+            state_value = value
+            wait_for_callback_event.set()
+
+        cf.param.persistent_get_state(complete_param_name, state_callback)
+        wait_for_callback_event.wait()
+        return state_value
+        
+    def _save_param_button_clicked(self):
+        if self._model._enabled == True:
+            persistent_params = []
+            for group_name, params in self._helper.cf.param.toc.toc.items():
+                for param_name, element in params.items():
+                    if element.is_persistent():
+                        complete_name = group_name + '.' + param_name
+                        persistent_params.append(complete_name)
+            
+            all_states = {}
+            for complete_name in persistent_params:
+                state = self.get_persistent_state(self._helper.cf, complete_name)
+                all_states[complete_name] = state
+
+            names = QFileDialog.getSaveFileName(self, 'Save file', cfclient.config_path, FILE_REGEX_YAML)
+            if names[0] == '':
+                return
+            if not names[0].endswith(".yaml") and names[0].find(".") < 0:
+                filename = names[0] + ".yaml"
+            else:
+                filename = names[0]
+
+            ParamFileManager.write(filename, all_states)
+
     def _connected(self, link_uri):
         self._model.reset()
         self._model.set_toc(self.cf.param.toc.toc, self._helper.cf)
         self._model.set_enabled(True)
         self._helper.cf.param.request_update_of_all_params()
+        self._is_connected = True
+        self._update_param_io_buttons()
 
     def _disconnected(self, link_uri):
-
+        self._is_connected = False
+        self._update_param_io_buttons()
         self._model.reset()
         self._paramChanged()
         self._model.set_enabled(False)
