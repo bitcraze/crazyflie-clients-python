@@ -320,7 +320,7 @@ class ParamTab(TabToolbox, param_tab_class):
         self.paramTree.selectionModel().selectionChanged.connect(self._paramChanged)
 
         self._load_param_button.clicked.connect(self._load_param_button_clicked)
-        self._save_param_button.clicked.connect(self._save_param_button_clicked)
+        self._dump_param_button.clicked.connect(self._dump_param_button_clicked)
         self._clear_param_button.clicked.connect(self._clear_stored_persistent_params_button_clicked)
 
         self._is_connected = False
@@ -421,7 +421,7 @@ class ParamTab(TabToolbox, param_tab_class):
     def _update_param_io_buttons(self):
         enabled = self._is_connected
         self._load_param_button.setEnabled(enabled)
-        self._save_param_button.setEnabled(enabled)
+        self._dump_param_button.setEnabled(enabled)
         self._clear_param_button.setEnabled(enabled)
 
     def _load_param_button_clicked(self):
