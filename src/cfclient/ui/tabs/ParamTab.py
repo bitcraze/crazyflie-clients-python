@@ -487,18 +487,17 @@ class ParamTab(TabToolbox, param_tab_class):
                 stored_params[complete_name] = state
         return stored_params
 
-    def _save_param_button_clicked(self):
-        if self._model._enabled:
-            stored_persistent_params = self._get_all_stored_persistent_params()
-            names = QFileDialog.getSaveFileName(self, 'Save file', cfclient.config_path, FILE_REGEX_YAML)
-            if names[0] == '':
-                return
-            if not names[0].endswith(".yaml"):
-                filename = names[0] + ".yaml"
-            else:
-                filename = names[0]
+    def _dump_param_button_clicked(self):
+        stored_persistent_params = self._get_all_stored_persistent_params()
+        names = QFileDialog.getSaveFileName(self, 'Save file', cfclient.config_path, FILE_REGEX_YAML)
+        if names[0] == '':
+            return
+        if not names[0].endswith(".yaml"):
+            filename = names[0] + ".yaml"
+        else:
+            filename = names[0]
 
-            ParamFileManager.write(filename, stored_persistent_params)
+        ParamFileManager.write(filename, stored_persistent_params)
 
     def _clear_persistent_parameter(self, complete_param_name):
         wait_for_callback_event = Event()
