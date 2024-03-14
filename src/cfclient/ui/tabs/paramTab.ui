@@ -22,24 +22,6 @@
     </item>
     <item row="1" column="0">
         <widget class="QTreeView" name="paramTree"/>
-   </item>
-    <item row="0" column="1">
-        <layout class="QGridLayout" name="paramLoaderLayout">
-            <item row="0" column="0">
-                <widget class="QPushButton" name="_save_param_button">
-                    <property name="text">
-                        <string>Save params</string>
-                    </property>
-                </widget>
-            </item>
-            <item row="0" column="1">
-                <widget class="QPushButton" name="_load_param_button">
-                    <property name="text">
-                        <string>Load params</string>
-                    </property>
-                </widget>
-            </item>
-        </layout>
     </item>
    <item row="1" column="1" rowspan="2">
     <widget class="QFrame" name="paramDetails">
@@ -199,6 +181,42 @@
             </item>
         </layout>
     </widget>
+   </item>
+   <item row="0" column="1">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Persistent Parameter IO</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QPushButton" name="_save_param_button">
+         <property name="text">
+          <string>Save</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="_load_param_button">
+         <property name="text">
+          <string>Load</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="_reset_param_button">
+         <property name="text">
+          <string>Reset</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

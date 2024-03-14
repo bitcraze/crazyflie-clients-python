@@ -321,6 +321,7 @@ class ParamTab(TabToolbox, param_tab_class):
 
         self._load_param_button.clicked.connect(self._load_param_button_clicked)
         self._save_param_button.clicked.connect(self._save_param_button_clicked)
+        self._reset_param_button.clicked.connect(self._reset_param_button_clicked)
 
         self._is_connected = False
         self._update_param_io_buttons()
@@ -421,6 +422,7 @@ class ParamTab(TabToolbox, param_tab_class):
         enabled = self._is_connected
         self._load_param_button.setEnabled(enabled)
         self._save_param_button.setEnabled(enabled)
+        self._reset_param_button.setEnabled(enabled)
 
     def _load_param_button_clicked(self):
         names = QFileDialog.getOpenFileName(self, 'Open file', cfclient.config_path, FILE_REGEX_YAML)
@@ -428,19 +430,16 @@ class ParamTab(TabToolbox, param_tab_class):
         if names[0] == '':
             return
         filename = names[0]
-        
         parameters = ParamFileManager.read(filename)
 
         for param, state in parameters.items():
-            # print("Param type: ", type(param), "State: ", state)
             if state.is_stored:
                 self.cf.param.set_value(param, state.stored_value)
                 self.cf.param.persistent_store(param, lambda _, success: print(f'store {success}!'))
 
         self._update_param_io_buttons()
 
-    @staticmethod
-    def get_persistent_state(cf, complete_param_name):
+    def _get_persistent_state(self, complete_param_name):
         wait_for_callback_event = Event()
         state_value = None
 
@@ -449,33 +448,68 @@ class ParamTab(TabToolbox, param_tab_class):
             state_value = value
             wait_for_callback_event.set()
 
-        cf.param.persistent_get_state(complete_param_name, state_callback)
+        self.cf.param.persistent_get_state(complete_param_name, state_callback)
         wait_for_callback_event.wait()
         return state_value
-        
-    def _save_param_button_clicked(self):
-        if self._model._enabled == True:
-            persistent_params = []
-            for group_name, params in self._helper.cf.param.toc.toc.items():
-                for param_name, element in params.items():
-                    if element.is_persistent():
-                        complete_name = group_name + '.' + param_name
-                        persistent_params.append(complete_name)
-            
-            all_states = {}
-            for complete_name in persistent_params:
-                state = self.get_persistent_state(self._helper.cf, complete_name)
-                all_states[complete_name] = state
 
+    def _get_all_persistent_param_names(self):
+        persistent_params = []
+        for group_name, params in self.cf.param.toc.toc.items():
+            for param_name, element in params.items():
+                if element.is_persistent():
+                    complete_name = group_name + '.' + param_name
+                    persistent_params.append(complete_name)
+
+        return persistent_params
+
+    def _get_all_stored_persistent_param_names(self):
+        persistent_params = self._get_all_persistent_param_names()
+        stored_params = []
+        for complete_name in persistent_params:
+            state = self._get_persistent_state(complete_name)
+            if state.is_stored:
+                stored_params.append(complete_name)
+        return stored_params
+
+    def _get_all_stored_persistent_params(self):
+        persistent_params = self._get_all_persistent_param_names()
+        stored_params = {}
+        for complete_name in persistent_params:
+            state = self._get_persistent_state(complete_name)
+            if state.is_stored:
+                stored_params[complete_name] = state
+        return stored_params
+
+    def _save_param_button_clicked(self):
+        if self._model._enabled:
+            stored_persistent_params = self._get_all_stored_persistent_params()
             names = QFileDialog.getSaveFileName(self, 'Save file', cfclient.config_path, FILE_REGEX_YAML)
             if names[0] == '':
                 return
-            if not names[0].endswith(".yaml") and names[0].find(".") < 0:
+            if not names[0].endswith(".yaml"):
                 filename = names[0] + ".yaml"
             else:
                 filename = names[0]
 
-            ParamFileManager.write(filename, all_states)
+            ParamFileManager.write(filename, stored_persistent_params)
+
+    def _clear_persistent_parameter(self, complete_param_name):
+        wait_for_callback_event = Event()
+
+        def is_stored_cleared(complete_name, success):
+            if success:
+                print(f'Cleared {complete_name}!')
+            else:
+                print(f'Failed to clear {complete_name}!')
+            wait_for_callback_event.set()
+
+        self.cf.param.persistent_clear(complete_param_name, callback=is_stored_cleared)
+        wait_for_callback_event.wait()
+
+    def _reset_param_button_clicked(self):
+        stored_persistent_params = self._get_all_stored_persistent_param_names()
+        for complete_name in stored_persistent_params:
+            self._clear_persistent_parameter(complete_name)
 
     def _connected(self, link_uri):
         self._model.reset()
