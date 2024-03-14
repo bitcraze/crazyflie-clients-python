@@ -321,7 +321,7 @@ class ParamTab(TabToolbox, param_tab_class):
 
         self._load_param_button.clicked.connect(self._load_param_button_clicked)
         self._save_param_button.clicked.connect(self._save_param_button_clicked)
-        self._reset_param_button.clicked.connect(self._reset_param_button_clicked)
+        self._clear_param_button.clicked.connect(self._clear_stored_persistent_params_button_clicked)
 
         self._is_connected = False
         self._update_param_io_buttons()
@@ -422,7 +422,7 @@ class ParamTab(TabToolbox, param_tab_class):
         enabled = self._is_connected
         self._load_param_button.setEnabled(enabled)
         self._save_param_button.setEnabled(enabled)
-        self._reset_param_button.setEnabled(enabled)
+        self._clear_param_button.setEnabled(enabled)
 
     def _load_param_button_clicked(self):
         names = QFileDialog.getOpenFileName(self, 'Open file', cfclient.config_path, FILE_REGEX_YAML)
@@ -440,7 +440,7 @@ class ParamTab(TabToolbox, param_tab_class):
             if state.is_stored:
                 try:
                     self.cf.param.set_value(param, state.stored_value)
-                except Exception as e:
+                except Exception:
                     QMessageBox.about(self, 'Warning', f'Failed to set {param}!')
                 self.cf.param.persistent_store(param, _is_persistent_stored_callback)
 
@@ -513,7 +513,7 @@ class ParamTab(TabToolbox, param_tab_class):
         self.cf.param.persistent_clear(complete_param_name, callback=is_stored_cleared)
         wait_for_callback_event.wait()
 
-    def _reset_param_button_clicked(self):
+    def _clear_stored_persistent_params_button_clicked(self):
         stored_persistent_params = self._get_all_stored_persistent_param_names()
         for complete_name in stored_persistent_params:
             self._clear_persistent_parameter(complete_name)

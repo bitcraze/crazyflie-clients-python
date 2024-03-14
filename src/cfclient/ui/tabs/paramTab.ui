@@ -208,9 +208,9 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="_reset_param_button">
+        <widget class="QPushButton" name="_clear_param_button">
          <property name="text">
-          <string>Reset</string>
+          <string>Clear</string>
          </property>
         </widget>
        </item>
