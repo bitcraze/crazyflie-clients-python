@@ -37,7 +37,7 @@ from PyQt6 import uic, QtCore
 from PyQt6.QtCore import QSortFilterProxyModel, Qt, pyqtSignal
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QVariant
 from PyQt6.QtGui import QBrush, QColor
-from PyQt6.QtWidgets import QHeaderView, QFileDialog
+from PyQt6.QtWidgets import QHeaderView, QFileDialog, QMessageBox
 
 from cflib.crazyflie.param import PersistentParamState
 from cflib.localization import ParamFileManager
@@ -432,10 +432,17 @@ class ParamTab(TabToolbox, param_tab_class):
         filename = names[0]
         parameters = ParamFileManager.read(filename)
 
+        def _is_persistent_stored_callback(complete_name, success):
+            if not success:
+                QMessageBox.about(self, 'Warning', f'Failed to persistently store {complete_name}!')
+
         for param, state in parameters.items():
             if state.is_stored:
-                self.cf.param.set_value(param, state.stored_value)
-                self.cf.param.persistent_store(param, lambda _, success: print(f'store {success}!'))
+                try:
+                    self.cf.param.set_value(param, state.stored_value)
+                except Exception as e:
+                    QMessageBox.about(self, 'Warning', f'Failed to set {param}!')
+                self.cf.param.persistent_store(param, _is_persistent_stored_callback)
 
         self._update_param_io_buttons()
 
