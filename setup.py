@@ -97,7 +97,8 @@ setup(
                       'pyqtgraph~=0.13',
                       'PyYAML~=6.0.1',
                       'numpy~=1.20',
-                      'vispy~=0.13',
+                      'vispy~=0.14.2',
+                      'pyopengl~=3.1.7',   # Requires for Vispy to work on MacOS Sonoma
                       'pyserial~=3.5',
                       'pyqt6>=6.4',
                       'PyQt6-sip>=13.4',
