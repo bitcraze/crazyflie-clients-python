@@ -16,7 +16,7 @@ On Raspberry bookwork it is required to create a *python venv* to install the cl
 
 Install dependencies:
 ```
-sudo apt install python3-pyqt6 pyqt6-dev-tools
+sudo apt install -y pipx python3-pyqt6 pyqt6-dev-tools
 ```
 
 Then, to install the client:
@@ -26,6 +26,7 @@ pipx install --system-site-packages .
 
 The ```--system-site-packages``` is the most important there since it allows to use pyqt we installed just above.
 The same flag can be passes to ```python3 -m venv``` in order to create a python venv that can run the client.
+The first time ```pipx``` will complain about binaries not being in the path. Rebooting the pie solves the problem and then the client can be launched by typing ```cfclient``` in a console.
 
 Permission for USB needs to be set as described bellow for Debian/Ubuntu
 
