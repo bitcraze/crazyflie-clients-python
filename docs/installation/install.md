@@ -10,9 +10,27 @@ This project requires Python 3.8 - 3.12.
 There are a few things to sort out on your machine before you can install the client. Please see the appropriate
 section depending on your environment.
 
-### Debian/Ubuntu
+### Raspberrypy Bookworm+
 
-For <  Ubuntu 20.04 you will need to check first if which version your python is on and if you have 'python3' on your system.
+On Raspberry bookwork it is required to create a *python venv* to install the client but the system's pyqt6 should still be used.
+
+Install dependencies:
+```
+sudo apt install python3-pyqt6 pyqt6-dev-tools
+```
+
+Then, to install the client:
+```
+pipx install --system-site-packages .
+```
+
+The ```--system-site-packages``` is the most important there since it allows to use pyqt we installed just above.
+The same flag can be passes to ```python3 -m venv``` in order to create a python venv that can run the client.
+
+Permission for USB needs to be set as described bellow for Debian/Ubuntu
+
+
+### Debian/Ubuntu
 
 From a fresh Ubuntu 20.04 system and up, running the client form source requires git, pip and a lib for the Qt GUI.
 
