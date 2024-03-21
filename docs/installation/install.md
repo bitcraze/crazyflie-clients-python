@@ -72,28 +72,17 @@ To use Crazyradio you will have to [install the drivers](https://www.bitcraze.io
 
 ### Mac
 
-#### Intel X86
+The Client requires MacOS 11 (Big Sur) or more recent. It works both on x86 and Apple-silicon macs.
 
-Python3 and required libs can be installed with brew:
+The client works both with the Apple-provided python3 (as long as it is python >= 3.8), and with python installed with brew.
+
+The client can be installed on command line with pip:
+
 ```
-brew install python3 libusb
-brew link python3   # This makes sure the latest python3 is used
-# if "which python3" does not return "/usr/local/bin/python3", relaunch your terminal
-pip3 install --upgrade pip.
-```
-
-#### Apple M1
-
-On Apple M1 Macs, care should be taken to use the X86 version of Brew since not all required dependencies compiles for the native `arm64` architecture of the M1 macs. This can be done by using the `arch` commands when installing brew:
-``` bash
-# Installing brew for x86_64, it will be installed in /usr/local by default
-arch --x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-# Now we have to use brew and then python from /usr/local ...
-arch --x86_64 brew install python@3.9 libusb
-# The arch command is not required anymore since everything brew installed are x86 executables
+python3 -m pip install cfclient
 ```
 
-From there, you can either add `/usr/local/bin` up in your path variable or run `/usr/local/bin/pip3` and `/usr/local/bin/python3` instead of `pip3` and `python3`.
+The client can then be lauched from a console, wither with ```cfclient``` or ```python3 -m cfclient.gui```.
 
 ## Installing from latest release
 
