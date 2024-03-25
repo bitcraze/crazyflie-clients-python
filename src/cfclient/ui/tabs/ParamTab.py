@@ -434,7 +434,10 @@ class ParamTab(TabToolbox, param_tab_class):
 
         def _is_persistent_stored_callback(complete_name, success):
             if not success:
+                print(f'Persistent params: failed to store {complete_name}!')
                 QMessageBox.about(self, 'Warning', f'Failed to persistently store {complete_name}!')
+            else:
+                print(f'Persistent params: stored {complete_name}!')
 
         _set_param_names = []
         for param, state in parameters.items():
@@ -443,7 +446,9 @@ class ParamTab(TabToolbox, param_tab_class):
                     self.cf.param.set_value(param, state.stored_value)
                     _set_param_names.append(param)
                 except Exception:
+                    print(f'Failed to set {param}!')
                     QMessageBox.about(self, 'Warning', f'Failed to set {param}!')
+                print(f'Set {param}!')
                 self.cf.param.persistent_store(param, _is_persistent_stored_callback)
 
         self._update_param_io_buttons()
@@ -516,9 +521,9 @@ class ParamTab(TabToolbox, param_tab_class):
 
         def is_stored_cleared(complete_name, success):
             if success:
-                print(f'Cleared {complete_name}!')
+                print(f'Persistent params: cleared {complete_name}!')
             else:
-                print(f'Failed to clear {complete_name}!')
+                print(f'Persistent params: failed to clear {complete_name}!')
             wait_for_callback_event.set()
 
         self.cf.param.persistent_clear(complete_param_name, callback=is_stored_cleared)
