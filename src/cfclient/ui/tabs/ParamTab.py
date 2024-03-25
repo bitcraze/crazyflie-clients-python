@@ -436,15 +436,22 @@ class ParamTab(TabToolbox, param_tab_class):
             if not success:
                 QMessageBox.about(self, 'Warning', f'Failed to persistently store {complete_name}!')
 
+        _set_param_names = []
         for param, state in parameters.items():
             if state.is_stored:
                 try:
                     self.cf.param.set_value(param, state.stored_value)
+                    _set_param_names.append(param)
                 except Exception:
                     QMessageBox.about(self, 'Warning', f'Failed to set {param}!')
                 self.cf.param.persistent_store(param, _is_persistent_stored_callback)
 
         self._update_param_io_buttons()
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Info")
+        dlg.setText('Loaded persistent parameters from file:\n' + "\n".join([f"{_param_name}: {parameters[_param_name].stored_value}" for _param_name in _set_param_names]))
+        dlg.setIcon(QMessageBox.Icon.NoIcon)
+        dlg.exec()
 
     def _get_persistent_state(self, complete_param_name):
         wait_for_callback_event = Event()
@@ -498,6 +505,11 @@ class ParamTab(TabToolbox, param_tab_class):
             filename = names[0]
 
         ParamFileManager.write(filename, stored_persistent_params)
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle('Info')
+        dlg.setText('Dumped persistent parameters to file:\n' + "\n".join([f"{_param_name}: {stored_persistent_params[_param_name].stored_value}" for _param_name in stored_persistent_params.keys()]))
+        dlg.setIcon(QMessageBox.Icon.NoIcon)
+        dlg.exec()
 
     def _clear_persistent_parameter(self, complete_param_name):
         wait_for_callback_event = Event()
