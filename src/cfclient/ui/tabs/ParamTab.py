@@ -513,9 +513,16 @@ class ParamTab(TabToolbox, param_tab_class):
         wait_for_callback_event.wait()
 
     def _clear_stored_persistent_params_button_clicked(self):
-        stored_persistent_params = self._get_all_stored_persistent_param_names()
-        for complete_name in stored_persistent_params:
-            self._clear_persistent_parameter(complete_name)
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Clear Stored Parameters Confirmation")
+        dlg.setText("Are you sure you want to clear your stored persistent parameter?")
+        dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        button = dlg.exec()
+
+        if button == QMessageBox.StandardButton.Yes:
+            stored_persistent_params = self._get_all_stored_persistent_param_names()
+            for complete_name in stored_persistent_params:
+                self._clear_persistent_parameter(complete_name)
 
     def _connected(self, link_uri):
         self._model.reset()
