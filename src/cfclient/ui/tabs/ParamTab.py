@@ -31,17 +31,20 @@ to edit them.
 """
 
 import logging
+from threading import Event
 
 from PyQt6 import uic, QtCore
 from PyQt6.QtCore import QSortFilterProxyModel, Qt, pyqtSignal
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QVariant
 from PyQt6.QtGui import QBrush, QColor
-from PyQt6.QtWidgets import QHeaderView
+from PyQt6.QtWidgets import QHeaderView, QFileDialog, QMessageBox
 
 from cflib.crazyflie.param import PersistentParamState
+from cflib.localization import ParamFileManager
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
+from cfclient.utils.logconfigreader import FILE_REGEX_YAML
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ParamTab']
@@ -316,6 +319,13 @@ class ParamTab(TabToolbox, param_tab_class):
         self.paramTree.header().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.paramTree.selectionModel().selectionChanged.connect(self._paramChanged)
 
+        self._load_param_button.clicked.connect(self._load_param_button_clicked)
+        self._dump_param_button.clicked.connect(self._dump_param_button_clicked)
+        self._clear_param_button.clicked.connect(self._clear_stored_persistent_params_button_clicked)
+
+        self._is_connected = False
+        self._update_param_io_buttons()
+
     def _param_default_cb(self, default_value):
         if default_value is not None:
             self.defaultValue.setText(str(default_value))
@@ -408,14 +418,144 @@ class ParamTab(TabToolbox, param_tab_class):
             if elem.is_persistent():
                 self.cf.param.persistent_get_state(complete, lambda _, state: self._persistent_state_signal.emit(state))
 
+    def _update_param_io_buttons(self):
+        enabled = self._is_connected
+        self._load_param_button.setEnabled(enabled)
+        self._dump_param_button.setEnabled(enabled)
+        self._clear_param_button.setEnabled(enabled)
+
+    def _load_param_button_clicked(self):
+        names = QFileDialog.getOpenFileName(self, 'Open file', cfclient.config_path, FILE_REGEX_YAML)
+
+        if names[0] == '':
+            return
+        filename = names[0]
+        parameters = ParamFileManager.read(filename)
+
+        def _is_persistent_stored_callback(complete_name, success):
+            if not success:
+                print(f'Persistent params: failed to store {complete_name}!')
+                QMessageBox.about(self, 'Warning', f'Failed to persistently store {complete_name}!')
+            else:
+                print(f'Persistent params: stored {complete_name}!')
+
+        _set_param_names = []
+        for param, state in parameters.items():
+            if state.is_stored:
+                try:
+                    self.cf.param.set_value(param, state.stored_value)
+                    _set_param_names.append(param)
+                except Exception:
+                    print(f'Failed to set {param}!')
+                    QMessageBox.about(self, 'Warning', f'Failed to set {param}!')
+                print(f'Set {param}!')
+                self.cf.param.persistent_store(param, _is_persistent_stored_callback)
+
+        self._update_param_io_buttons()
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Info")
+        _parameters_and_values = [f"{_param_name}:{parameters[_param_name].stored_value}"
+                                  for _param_name in _set_param_names]
+        dlg.setText('Loaded persistent parameters from file:\n' + "\n".join(_parameters_and_values))
+        dlg.setIcon(QMessageBox.Icon.NoIcon)
+        dlg.exec()
+
+    def _get_persistent_state(self, complete_param_name):
+        wait_for_callback_event = Event()
+        state_value = None
+
+        def state_callback(complete_name, value):
+            nonlocal state_value
+            state_value = value
+            wait_for_callback_event.set()
+
+        self.cf.param.persistent_get_state(complete_param_name, state_callback)
+        wait_for_callback_event.wait()
+        return state_value
+
+    def _get_all_persistent_param_names(self):
+        persistent_params = []
+        for group_name, params in self.cf.param.toc.toc.items():
+            for param_name, element in params.items():
+                if element.is_persistent():
+                    complete_name = group_name + '.' + param_name
+                    persistent_params.append(complete_name)
+
+        return persistent_params
+
+    def _get_all_stored_persistent_param_names(self):
+        persistent_params = self._get_all_persistent_param_names()
+        stored_params = []
+        for complete_name in persistent_params:
+            state = self._get_persistent_state(complete_name)
+            if state.is_stored:
+                stored_params.append(complete_name)
+        return stored_params
+
+    def _get_all_stored_persistent_params(self):
+        persistent_params = self._get_all_persistent_param_names()
+        stored_params = {}
+        for complete_name in persistent_params:
+            state = self._get_persistent_state(complete_name)
+            if state.is_stored:
+                stored_params[complete_name] = state
+        return stored_params
+
+    def _dump_param_button_clicked(self):
+        stored_persistent_params = self._get_all_stored_persistent_params()
+        names = QFileDialog.getSaveFileName(self, 'Save file', cfclient.config_path, FILE_REGEX_YAML)
+        if names[0] == '':
+            return
+        if not names[0].endswith(".yaml"):
+            filename = names[0] + ".yaml"
+        else:
+            filename = names[0]
+
+        ParamFileManager.write(filename, stored_persistent_params)
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle('Info')
+        _parameters_and_values = [f"{_param_name}: {stored_persistent_params[_param_name].stored_value}"
+                                  for _param_name in stored_persistent_params.keys()]
+        dlg.setText('Dumped persistent parameters to file:\n' + "\n".join(_parameters_and_values))
+        dlg.setIcon(QMessageBox.Icon.NoIcon)
+        dlg.exec()
+
+    def _clear_persistent_parameter(self, complete_param_name):
+        wait_for_callback_event = Event()
+
+        def is_stored_cleared(complete_name, success):
+            if success:
+                print(f'Persistent params: cleared {complete_name}!')
+            else:
+                print(f'Persistent params: failed to clear {complete_name}!')
+            wait_for_callback_event.set()
+
+        self.cf.param.persistent_clear(complete_param_name, callback=is_stored_cleared)
+        wait_for_callback_event.wait()
+
+    def _clear_stored_persistent_params_button_clicked(self):
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Clear Stored Parameters Confirmation")
+        dlg.setText("Are you sure you want to clear your stored persistent parameter?")
+        dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        button = dlg.exec()
+
+        if button == QMessageBox.StandardButton.Yes:
+            stored_persistent_params = self._get_all_stored_persistent_param_names()
+            for complete_name in stored_persistent_params:
+                self._clear_persistent_parameter(complete_name)
+
     def _connected(self, link_uri):
         self._model.reset()
         self._model.set_toc(self.cf.param.toc.toc, self._helper.cf)
         self._model.set_enabled(True)
         self._helper.cf.param.request_update_of_all_params()
+        self._is_connected = True
+        self._update_param_io_buttons()
 
     def _disconnected(self, link_uri):
-
+        self._is_connected = False
+        self._update_param_io_buttons()
         self._model.reset()
         self._paramChanged()
         self._model.set_enabled(False)
