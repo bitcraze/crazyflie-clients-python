@@ -454,7 +454,9 @@ class ParamTab(TabToolbox, param_tab_class):
         self._update_param_io_buttons()
         dlg = QMessageBox(self)
         dlg.setWindowTitle("Info")
-        dlg.setText('Loaded persistent parameters from file:\n' + "\n".join([f"{_param_name}: {parameters[_param_name].stored_value}" for _param_name in _set_param_names]))
+        _parameters_and_values = [f"{_param_name}:{parameters[_param_name].stored_value}"
+                                  for _param_name in _set_param_names]
+        dlg.setText('Loaded persistent parameters from file:\n' + "\n".join(_parameters_and_values))
         dlg.setIcon(QMessageBox.Icon.NoIcon)
         dlg.exec()
 
@@ -512,7 +514,9 @@ class ParamTab(TabToolbox, param_tab_class):
         ParamFileManager.write(filename, stored_persistent_params)
         dlg = QMessageBox(self)
         dlg.setWindowTitle('Info')
-        dlg.setText('Dumped persistent parameters to file:\n' + "\n".join([f"{_param_name}: {stored_persistent_params[_param_name].stored_value}" for _param_name in stored_persistent_params.keys()]))
+        _parameters_and_values = [f"{_param_name}: {stored_persistent_params[_param_name].stored_value}"
+                                  for _param_name in stored_persistent_params.keys()]
+        dlg.setText('Dumped persistent parameters to file:\n' + "\n".join(_parameters_and_values))
         dlg.setIcon(QMessageBox.Icon.NoIcon)
         dlg.exec()
 
