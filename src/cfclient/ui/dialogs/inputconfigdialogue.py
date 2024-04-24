@@ -210,7 +210,7 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
         self._combined_button = QtWidgets.QPushButton('Combined Axis ' +
                                                       'Detection')
         self.cancelButton = QtWidgets.QPushButton('Cancel')
-        self._popup.addButton(self.cancelButton, QMessageBox.DestructiveRole)
+        self._popup.addButton(self.cancelButton, QMessageBox.ButtonRole.DestructiveRole)
         self._popup.setWindowTitle(caption)
         self._popup.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.MSWindowsFixedSizeDialogHint)
         if len(directions) > 1:
@@ -219,7 +219,7 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
             self._combined_button.setCheckable(True)
             self._combined_button.blockSignals(True)
             self._popup.addButton(self._combined_button,
-                                  QMessageBox.ActionRole)
+                                  QMessageBox.ButtonRole.ActionRole)
         self._popup.setText(message)
         self._popup.show()
 
