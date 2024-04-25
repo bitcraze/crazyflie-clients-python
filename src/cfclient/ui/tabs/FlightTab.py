@@ -715,7 +715,7 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.targetHeight.setEnabled(enabled)
             print('Chaning enable for target height: %s' % enabled)
         else:
-            self._helper.cf.param.set_value("flightmode.althold", str(enabled))
+            self._helper.cf.param.set_value("flightmode.althold", int(enabled))
 
     def alt1_updated(self, state):
         if state:
