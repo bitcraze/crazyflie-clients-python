@@ -28,7 +28,7 @@ The ```--system-site-packages``` is the most important there since it allows to 
 The same flag can be passes to ```python3 -m venv``` in order to create a python venv that can run the client.
 The first time ```pipx``` will complain about binaries not being in the path. Rebooting the pie solves the problem and then the client can be launched by typing ```cfclient``` in a console.
 
-Permission for USB needs to be set as described bellow for Debian/Ubuntu
+Permission for USB needs to be set as described below for Debian/Ubuntu
 
 
 ### Debian/Ubuntu
@@ -40,7 +40,7 @@ sudo apt install git python3-pip libxcb-xinerama0 libxcb-cursor0
 pip3 install --upgrade pip
 ```
 
-> For some versions of Ubuntu 20.04 you might need to install more packes like `libxcb-cursor0`. Check out [QT6 package dependency list]( https://doc.qt.io/qt-6/linux-requirements.html).
+> For some versions of Ubuntu 20.04 you might need to install more packages like `libxcb-cursor0`. Check out [QT6 package dependency list]( https://doc.qt.io/qt-6/linux-requirements.html).
 
 #### Setting udev permissions
 
@@ -90,7 +90,7 @@ If you plan to use the client to control the Crazyflie, we highly recommend you 
 as this is a well tested and stable. Please see next section.
 
 On the other hand, if you intend to do development work on the client and modify the source code, please see
-[Installing from source](#installing-from-source) bellow.
+[Installing from source](#installing-from-source) below.
 
 ### From Pypi (Windows, Mac, Linux, ..., with python3)
 
@@ -103,7 +103,7 @@ pip3 install cfclient
 
 If you are planning to do development work with the cfclient, you are at right spot!
 
-The sections bellow describes how to install the client from source on various platforms.
+The sections below describes how to install the client from source on various platforms.
 
 Make sure to also install the [cflib](https://github.com/bitcraze/crazyflie-lib-python) from source as it is common to
 modify or examine this code as well when working with the client.
@@ -199,7 +199,7 @@ This will run the lint checkers defined in `.pre-commit-config-yaml` on your pro
 
 ### Working with the GUI .ui files
 
-you can edit the .ui files for the GUI with QtCreator. For Windows and Mac You can the Qt development kit from the [Qt website](https://www.qt.io/download-open-source/). On linux QtCreator is usually available as package, for example on Ubuntu it can be installed with ```sudo apt install qtcreator```.
+you can edit the .ui files for the GUI with QtCreator. For Windows and Mac you can download the Qt development kit from the [Qt website](https://www.qt.io/download-open-source/). On linux QtCreator is usually available as package, for example on Ubuntu it can be installed with ```sudo apt install qtcreator```.
 
 ### Debugging the client from an IDE
 
