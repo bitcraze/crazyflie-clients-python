@@ -35,7 +35,6 @@ Currently it can just use the PySdl2 driver but in the future there will be a
 Linux and Windows driver that can bypass PySdl2.
 """
 
-import glob
 import json
 import logging
 import os
@@ -68,10 +67,7 @@ class LogConfigReader():
         # Check if user config exists, otherwise copy files
         if (not os.path.exists(cfclient.config_path + "/log")):
             logger.info("No user config found, copying dist files")
-            os.makedirs(cfclient.config_path + "/log")
-            for f in glob.glob(
-                    cfclient.module_path + "/configs/log/[A-Za-z]*.json"):
-                shutil.copy2(f, cfclient.config_path + "/log")
+            shutil.copytree(cfclient.module_path + "/configs/log", cfclient.config_path + "/log")
         self._cf = crazyflie
         self._cf.connected.add_callback(self._connected)
 
