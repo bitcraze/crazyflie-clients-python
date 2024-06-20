@@ -156,12 +156,17 @@ class PlotWidget(QtWidgets.QWidget, plot_widget_class):
         self._enable_samples_x.setChecked(True)
         self._last_ts = None
         self._dtime = None
+        self._first_ts = None
 
         self._x_range = (
             float(self._range_x_min.text()), float(self._range_x_max.text()))
         self._nbr_samples = int(self._nbr_of_samples_x.text())
-
         self._nbr_of_samples_x.valueChanged.connect(self._nbr_samples_changed)
+        self._nbr_seconds = int(self._nbr_of_seconds_x.text())
+        self._nbr_of_seconds_x.valueChanged.connect(self._nbr_of_seconds_changed)
+        self._range_x_min.valueChanged.connect(self._x_range_changed)
+        self._range_x_max.valueChanged.connect(self._x_range_changed)
+
         self._range_y_min.valueChanged.connect(self._y_range_changed)
         self._range_y_max.valueChanged.connect(self._y_range_changed)
 
@@ -175,8 +180,8 @@ class PlotWidget(QtWidgets.QWidget, plot_widget_class):
         self._x_btn_group.addButton(self._enable_range_x)
         self._x_btn_group.addButton(self._enable_samples_x)
         self._x_btn_group.addButton(self._enable_seconds_x)
-        self._x_btn_group.addButton(self._enable_manual_x)
         self._x_btn_group.setExclusive(True)
+        self._x_btn_group.buttonClicked.connect(self._x_mode_change)
 
         self._draw_graph = True
         self._auto_redraw.stateChanged.connect(self._auto_redraw_change)
@@ -187,6 +192,20 @@ class PlotWidget(QtWidgets.QWidget, plot_widget_class):
             self._draw_graph = False
         else:
             self._draw_graph = True
+
+    def _x_mode_change(self, box):
+        """Callback when user changes the X-axis mode"""
+        self._nbr_of_samples_x.setEnabled(False)
+        self._nbr_of_seconds_x.setEnabled(False)
+        self._range_x_min.setEnabled(False)
+        self._range_x_max.setEnabled(False)
+        if box == self._enable_range_x:
+            self._range_x_min.setEnabled(True)
+            self._range_x_max.setEnabled(True)
+        elif box == self._enable_samples_x:
+            self._nbr_of_samples_x.setEnabled(True)
+        elif box == self._enable_seconds_x:
+            self._nbr_of_seconds_x.setEnabled(True)
 
     def _y_mode_change(self, box):
         """Callback when user changes the Y-axis mode"""
@@ -228,6 +247,14 @@ class PlotWidget(QtWidgets.QWidget, plot_widget_class):
         """Callback when user changes the number of samples to be shown"""
         self._nbr_samples = val
 
+    def _nbr_of_seconds_changed(self, val):
+        """Callback when user changes the number of seconds to be shown"""
+        self._nbr_seconds = val
+
+    def _x_range_changed(self, val):
+        self._range_x_min.setMaximum(self._range_x_max.value()-1)
+        self._range_x_max.setMinimum(self._range_x_min.value()+1)
+
     def set_title(self, title):
         """
         Set the title of the plot.
@@ -254,11 +281,15 @@ class PlotWidget(QtWidgets.QWidget, plot_widget_class):
                pairs
         ts - timestamp of the data in ms
         """
-        if not self._last_ts:
-            self._last_ts = ts
-        elif not self._last_ts:
+
+        if self._first_ts is None:
+            self._first_ts = ts
+
+        if self._last_ts is None:
+            self._dtime = 1e12
+        else:
             self._dtime = ts - self._last_ts
-            self._last_ts = ts
+        self._last_ts = ts
 
         x_min_limit = 0
         x_max_limit = 0
@@ -266,6 +297,17 @@ class PlotWidget(QtWidgets.QWidget, plot_widget_class):
         if self._enable_samples_x.isChecked():
             x_min_limit = max(0, self._last_item - self._nbr_samples)
             x_max_limit = max(self._last_item, self._nbr_samples)
+            self._range_x_min.setValue(int(self._first_ts + x_min_limit * self._dtime)/1000.)
+            self._range_x_max.setValue(int(self._first_ts + x_max_limit * self._dtime)/1000.)
+        elif self._enable_seconds_x.isChecked():
+            x_min_limit = max(0, int(((self._last_ts - self._first_ts) - self._nbr_seconds * 1000.) / self._dtime))
+            x_max_limit = max(0, self._last_item)
+            print(self._first_ts, x_min_limit, x_max_limit, self._dtime, self._nbr_seconds)
+            self._range_x_min.setValue((self._first_ts + x_min_limit * self._dtime)/1000.)
+            self._range_x_max.setValue((self._first_ts + x_min_limit * self._dtime)/1000. + self._nbr_seconds)
+        elif self._enable_range_x.isChecked():
+            x_min_limit = max(0, int((self._range_x_min.value() * 1000. - self._first_ts) / self._dtime))
+            x_max_limit = max(0, int((self._range_x_max.value() * 1000. - self._first_ts) / self._dtime))
 
         for name in self._items:
             self._items[name].add_point(data[name], ts)
@@ -277,6 +319,11 @@ class PlotWidget(QtWidgets.QWidget, plot_widget_class):
         if (self._enable_samples_x.isChecked() and self._dtime and
                 self._last_item < self._nbr_samples):
             self._x_max = self._x_min + self._nbr_samples * self._dtime
+        elif (self._enable_seconds_x.isChecked() and self._dtime and
+                self._last_item < int(self._nbr_seconds * 1000. / self._dtime)):
+            self._x_max = self._x_min + self._nbr_seconds * 1000.
+        elif (self._enable_range_x.isChecked() and self._dtime) and self._last_item < x_max_limit:
+            self._x_max = self._x_min + (x_max_limit - x_min_limit) * self._dtime
 
         self._last_item = self._last_item + 1
         self._plot_widget.getViewBox().setRange(
@@ -292,6 +339,7 @@ class PlotWidget(QtWidgets.QWidget, plot_widget_class):
         self._items = {}
         self._last_item = 0
         self._last_ts = None
+        self._first_ts = None
         self._dtime = None
         self._plot_widget.clear()
 
