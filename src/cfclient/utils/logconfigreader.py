@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2023 Bitcraze AB
+#  Copyright (C) 2011-2024 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -27,15 +27,11 @@
 #  MA  02110-1301, USA.
 
 """
-The input module that will read joysticks/input devices and send control set-
-points to the Crazyflie. It will also accept settings from the UI.
-
-This module can use different drivers for reading the input device data.
-Currently it can just use the PySdl2 driver but in the future there will be a
-Linux and Windows driver that can bypass PySdl2.
+The logconfigreader module is responsible for reading and parsing log
+configuration data. This data is used to control what information is logged
+in the client.
 """
 
-import glob
 import json
 import logging
 import os
@@ -68,10 +64,7 @@ class LogConfigReader():
         # Check if user config exists, otherwise copy files
         if (not os.path.exists(cfclient.config_path + "/log")):
             logger.info("No user config found, copying dist files")
-            os.makedirs(cfclient.config_path + "/log")
-            for f in glob.glob(
-                    cfclient.module_path + "/configs/log/[A-Za-z]*.json"):
-                shutil.copy2(f, cfclient.config_path + "/log")
+            shutil.copytree(cfclient.module_path + "/configs/log", cfclient.config_path + "/log")
         self._cf = crazyflie
         self._cf.connected.add_callback(self._connected)
 
@@ -206,27 +199,27 @@ class LogConfigReader():
         self._log_configs = {'Default': []}
         log_path = os.path.join(cfclient.config_path, 'log')
 
-        for cathegory in os.listdir(log_path):
+        for category in os.listdir(log_path):
 
-            cathegory_path = os.path.join(log_path, cathegory)
+            category_path = os.path.join(log_path, category)
 
             try:
-                if (os.path.isdir(cathegory_path)):
+                if (os.path.isdir(category_path)):
                     # create a new cathegory
-                    self._log_configs[cathegory] = []
-                    for conf in os.listdir(cathegory_path):
+                    self._log_configs[category] = []
+                    for conf in os.listdir(category_path):
                         if conf.endswith('.json'):
-                            conf_path = os.path.join(cathegory_path, conf)
+                            conf_path = os.path.join(category_path, conf)
                             log_conf = self._get_conf(conf_path)
 
                         # add the log configuration to the cathegory
-                        self._log_configs[cathegory].append(log_conf)
+                        self._log_configs[category].append(log_conf)
 
                 else:
                     # if it's not a directory, the log config is placed
                     # in the 'Default' cathegory
-                    if cathegory_path.endswith('.json'):
-                        log_conf = self._get_conf(cathegory_path)
+                    if category_path.endswith('.json'):
+                        log_conf = self._get_conf(category_path)
                         self._log_configs['Default'].append(log_conf)
 
             except Exception as e:

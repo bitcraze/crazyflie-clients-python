@@ -1,0 +1,22 @@
+{
+  "logconfig": {
+    "logblock": {
+      "variables": [
+        {
+          "name": "controller.yawRate",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        },
+        {
+          "name": "gyro.z",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        }
+      ],
+      "name": "Yaw rate",
+      "period": 10
+    }
+  }
+}

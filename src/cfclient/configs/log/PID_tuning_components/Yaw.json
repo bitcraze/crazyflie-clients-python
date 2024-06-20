@@ -1,0 +1,22 @@
+{
+  "logconfig": {
+    "logblock": {
+      "variables": [
+        {
+          "name": "controller.yaw",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        },
+        {
+          "name": "stateEstimate.yaw",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        }
+      ],
+      "name": "Yaw",
+      "period": 10
+    }
+  }
+}

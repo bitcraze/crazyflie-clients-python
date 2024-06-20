@@ -1,0 +1,22 @@
+{
+  "logconfig": {
+    "logblock": {
+      "variables": [
+        {
+          "name": "controller.pitchRate",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        },
+        {
+          "name": "gyro.y",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        }
+      ],
+      "name": "Pitch rate",
+      "period": 10
+    }
+  }
+}

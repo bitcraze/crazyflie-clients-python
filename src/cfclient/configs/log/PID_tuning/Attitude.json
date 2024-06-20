@@ -1,0 +1,46 @@
+{
+  "logconfig": {
+    "logblock": {
+      "variables": [
+        {
+          "name": "controller.pitch",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        },
+        {
+          "name": "controller.roll",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        },
+        {
+          "name": "controller.yaw",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        },
+        {
+          "name": "stateEstimate.pitch",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        },
+        {
+          "name": "stateEstimate.roll",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        },
+        {
+          "name": "stateEstimate.yaw",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        }
+      ],
+      "name": "Attitude",
+      "period": 10
+    }
+  }
+}

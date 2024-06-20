@@ -1,0 +1,22 @@
+{
+  "logconfig": {
+    "logblock": {
+      "variables": [
+        {
+          "name": "posCtl.targetVX",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        },
+        {
+          "name": "stateEstimate.vx",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        }
+      ],
+      "name": "Velocity x",
+      "period": 10
+    }
+  }
+}

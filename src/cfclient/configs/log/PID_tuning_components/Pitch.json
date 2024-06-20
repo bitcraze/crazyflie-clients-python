@@ -1,0 +1,22 @@
+{
+  "logconfig": {
+    "logblock": {
+      "variables": [
+        {
+          "name": "controller.pitch",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        },
+        {
+          "name": "stateEstimate.pitch",
+          "stored_as": "",
+          "fetch_as": "float",
+          "type": "TOC"
+        }
+      ],
+      "name": "Pitch",
+      "period": 10
+    }
+  }
+}
