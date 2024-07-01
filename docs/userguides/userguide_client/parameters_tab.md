@@ -19,4 +19,5 @@ and update parameters. For more information about parameters see
        * *Value:* The value of the parameter
 2. Group: To make things easier each group has it's members organized as sub-nodes to the group
 3. Parameters: The full name of each parameter is the group combined with the name (group.name)
-4. The parameter sidebar, here you can set the current value of a parameter. And also store the value to, or clear value from, eeprom if the parameter is persistent
+4. Persistent parameter management functions. Dump all persistent parameters to a file, load persistent parameters from a file, or clear all persistent parameters from the drone.
+5. The parameter sidebar, here you can set the current value of a parameter. And also store the value to, or clear value from, eeprom if the parameter is persistent
