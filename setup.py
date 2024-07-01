@@ -90,7 +90,7 @@ setup(
         ],
     },
 
-    install_requires=['cflib>=0.1.25.1',
+    install_requires=['cflib>=0.1.26',
                       'setuptools',
                       'appdirs~=1.4.0',
                       'pyzmq~=25.0',
