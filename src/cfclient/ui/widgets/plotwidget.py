@@ -159,7 +159,8 @@ class PlotWidget(QtWidgets.QWidget, plot_widget_class):
         self._first_ts = None
 
         self._x_range = (
-            float(self._range_x_min.text()), float(self._range_x_max.text()))
+            float(self._range_x_min.text().replace(',', '.')), float(self._range_x_max.text().replace(',', '.'))
+        )
         self._nbr_samples = int(self._nbr_of_samples_x.text())
         self._nbr_of_samples_x.valueChanged.connect(self._nbr_samples_changed)
         self._nbr_seconds = int(self._nbr_of_seconds_x.text())
