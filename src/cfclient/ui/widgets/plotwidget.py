@@ -303,7 +303,6 @@ class PlotWidget(QtWidgets.QWidget, plot_widget_class):
         elif self._enable_seconds_x.isChecked():
             x_min_limit = max(0, int(((self._last_ts - self._first_ts) - self._nbr_seconds * 1000.) / self._dtime))
             x_max_limit = max(0, self._last_item)
-            print(self._first_ts, x_min_limit, x_max_limit, self._dtime, self._nbr_seconds)
             self._range_x_min.setValue((self._first_ts + x_min_limit * self._dtime)/1000.)
             self._range_x_max.setValue((self._first_ts + x_min_limit * self._dtime)/1000. + self._nbr_seconds)
         elif self._enable_range_x.isChecked():
