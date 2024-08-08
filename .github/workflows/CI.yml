@@ -19,7 +19,7 @@ jobs:
 
     steps:
       # Checkout, fetch-depth=0 fetches the full repos (required for automatic versioning to work)
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
