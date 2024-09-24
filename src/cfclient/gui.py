@@ -167,7 +167,6 @@ def main():
         logger.info('If startup fails because of "xcb", install dependency with `sudo apt install libxcb-xinerama0`.')
 
     app = QApplication(sys.argv)
-    app.setStyle("Fusion")
     from cfclient.utils.ui import UiUtils
 
     app.setWindowIcon(QIcon(cfclient.module_path + "/ui/icons/icon-256.png"))
