@@ -70,9 +70,9 @@ git --version
 
 To use Crazyradio you will have to [install the drivers](https://www.bitcraze.io/documentation/repository/crazyradio-firmware/master/building/usbwindows/)
 
-### Mac
+### macOS
 
-The Client requires MacOS 11 (Big Sur) or more recent. It works both on x86 and Apple-silicon macs.
+The Client requires macOS 11 (Big Sur) or more recent. It works both on x86 and Apple-silicon macs.
 
 The client works both with the Apple-provided python3 (as long as it is python >= 3.8), and with python installed with brew.
 
@@ -171,7 +171,7 @@ or install the client in development mode:
 pip install -e .[dev]
 ```
 
-### Mac OSX
+### macOS
 
 ```
 git clone https://github.com/bitcraze/crazyflie-clients-python
