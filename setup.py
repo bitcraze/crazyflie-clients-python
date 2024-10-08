@@ -11,8 +11,8 @@ from gitversion import get_version
 
 from pathlib import Path
 
-if sys.version_info < (3, 7):
-    raise "must use python 3.7 or greater"
+if sys.version_info < (3, 8):
+    raise "must use python 3.8 or greater"
 
 
 def relative(lst, base=''):
