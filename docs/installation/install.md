@@ -5,7 +5,7 @@ page_id: install
 
 ## Prerequisites
 
-This project requires Python 3.8 - 3.12.
+This project requires Python 3.10+.
 
 There are a few things to sort out on your machine before you can install the client. Please see the appropriate
 section depending on your environment.
