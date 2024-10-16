@@ -36,7 +36,7 @@ where the front is, so you will need to know [Crazyflie's coordinate system](htt
 -   When the handshake is done you can start flying the Crazyflie.
     Remember the most tricky part is the thrust so start out easy\...
 
-For more info on LED indicators etc. have a look at the [Crazyflie 2.X](https://www.bitcraze.io/documentation/tutorials/getting-started-with-crazyflie-2-x/#understanding-leds) user guide.
+For more info on LED indicators etc. have a look at the [Crazyflie 2.0 and Crazyflie 2.1(+) getting started guide](https://www.bitcraze.io/documentation/tutorials/getting-started-with-crazyflie-2-x/#understanding-leds) user guide.
 
 ---
 
@@ -94,26 +94,26 @@ Crazyflie firmware upgrade process, just make sure the deck is mounted when you 
 
 ![CFclient bootloading](/docs/images/firmware-upgrade.png)
 
-To update the firmware in the Crazyflie 2.X do the following:
+To update the firmware in the Crazyflie 2.x do the following:
 
 -   Make sure to have any decks you will be using attached during the update, since some of
 the decks contain their own firmware which will also be updated during the firmware update. Also make sure there is a battery attached.
 -   Go to the menu *Connect-\>Bootloader*
 -   Connect to the crazyflie in this dialog, if it is not already connected in the flighttab.
 -   Chose what to flash
-    - Use the "From release" tab to automatically use an [official release](https://github.com/bitcraze/crazyflie-release/releases). Make sure to select the right platform (cf2 is the Crazyflie 2.X)
+    - Use the "From release" tab to automatically use an [official release](https://github.com/bitcraze/crazyflie-release/releases). Make sure to select the right platform (cf2 is the Crazyflie 2.x)
     - Use the "From file" tab if you have some other release file you want to flash.
 -   Click \"Program\" and wait for both the STM, NRF and decks to be flashed. Note: the Crazyflie may restart multiple times during this process.
 -   Your crazyflie will automatically restart a couple of times.
 -   Do not touch or restart your crazyflie untill all flashing is done and you see \"status: idle\" at the bottom.
 - To check the firmware version, under the *View* menu, open up *Tabs-\>Console* tab and look at the output when connecting to the
-Crazyflie 2.X.
+Crazyflie 2.x.
 
 If you accidently restarted your crazyflie during flashing or anything else happend which caused your crazyflie to not start up properly, follow [the instructions for recovery mode](/docs/userguides/recovery-mode.md).
 
 ### Firmware configuration
 
-It is possible to set another channel to communicate with the Crazyflie 2.X. It can be wise to do this if there exist other wireless
+It is possible to set another channel to communicate with the Crazyflie 2.x. It can be wise to do this if there exist other wireless
 networks that can interfere, especially WiFi. It is also possible to
 permanently store the trim values for pitch and roll.
 
@@ -140,11 +140,11 @@ stored in a none volatile memory:
 The procedure is described below and the parameters can be changed again
 any time the same way.
 
-First connect to the Crazyflie 2.X with the normal connect button. Then open "Connect->Configure 2.X" to reach the configure 2.X dialog
+First connect to the Crazyflie 2.x with the normal connect button. Then open "Connect->Configure 2.x" to reach the configure 2.x dialog
 
 ![CF2 config](/docs/images/cfclient_cf2_config.png){:width="500"}
 
-Once the settings has been made press the write button to save them permanently in the Crazyflie 2.X EEPROM.  Then restart the Crazyflie and connect to the new address.
+Once the settings has been made press the write button to save them permanently in the Crazyflie 2.x EEPROM.  Then restart the Crazyflie and connect to the new address.
 
 ### Logging
 

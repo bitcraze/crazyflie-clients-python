@@ -14,7 +14,7 @@ a wrong firmware is flashed the process can just be started again.
 
 ![CFclient bootloading](/docs/images/bootloader-recovery.png)
 
-To update the firmware in the Crazyflie 2.X do the following:
+To update the firmware in the Crazyflie 2.x do the following:
 
 -   Make sure that the Crazyflie is disconnected from the client and
     powered off.

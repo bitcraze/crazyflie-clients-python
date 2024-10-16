@@ -1,12 +1,12 @@
 ---
-title: Bootload the Crazyflie 2.X
+title: Bootload the Crazyflie 2.x
 page_id: cfloader
 ---
 
 The Crazyflie as well as decks that has a firmware can be bootloaded from the command line using the
 *cfloader* script.
 
-**Note:** To enter the bootloader for the Crazyflie 2.X power off the
+**Note:** To enter the bootloader for the Crazyflie 2.x power off the
 platform and start it again by pressing the power button for at least
 1.5 seconds, but not more than 5.
 
@@ -61,7 +61,7 @@ When flashing a .bin, the correct target needs to be specified. The followind ta
  - nrf51-bootloader+softdevice: nRF51 bootloader and softdevice bundle binary
  - Various decks-fw: Some deck can be flashed over the air. See the deck documentation.
 
-## Crazyflie 2.X examples
+## Crazyflie 2.x examples
 
 Flashing new firmware for the nRF51 MCU:
 

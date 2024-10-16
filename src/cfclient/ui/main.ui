@@ -545,7 +545,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Configure 2.X</string>
+    <string>Configure 2.x</string>
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>
