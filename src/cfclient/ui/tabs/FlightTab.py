@@ -138,7 +138,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._emergency_stop_updated_signal.connect(self.updateEmergencyStop)
         self._helper.inputDeviceReader.emergency_stop_updated.add_callback(
             self._emergency_stop_updated_signal.emit)
-        self._arm_updated_signal.connect(self.updateArm)
+        self._arm_updated_signal.connect(lambda: self.updateArm(from_controller=True))
         self._helper.inputDeviceReader.arm_updated.add_callback(self._arm_updated_signal.emit)
 
         self._helper.inputDeviceReader.heighthold_input_updated.add_callback(
@@ -638,19 +638,16 @@ class FlightTab(TabToolbox, flight_tab_class):
         else:
             self.setMotorLabelsEnabled(True)
 
-    def updateArm(self):
-        if self._is_flying():
+    def updateArm(self, from_controller=False):
+        if self._is_flying() and not from_controller:
             self._helper.cf.loc.send_emergency_stop()
-            # TODO krri disarm?
-        if self._is_crashed():
+        elif self._is_crashed():
             self._helper.cf.platform.send_crash_recovery_request()
-        else:
-            if self._is_armed():
-                self._helper.cf.platform.send_arming_request(False)
-            else:
-                if self._can_arm():
-                    self.armButton.setStyleSheet("background-color: orange")
-                    self._helper.cf.platform.send_arming_request(True)
+        elif self._is_armed():
+            self._helper.cf.platform.send_arming_request(False)
+        elif self._can_arm():
+            self.armButton.setStyleSheet("background-color: orange")
+            self._helper.cf.platform.send_arming_request(True)
 
     def flightmodeChange(self, item):
         Config().set("flightmode", str(self.flightModeCombo.itemText(item)))
