@@ -7,27 +7,53 @@ on:
   workflow_dispatch:
 
 jobs:
-  checks:
+  pytest:
     runs-on: ubuntu-latest
+    strategy:
+        matrix:
+          python_version: ["3.8","3.9", "3.10", "3.11","3.12"]
+        fail-fast: false
+    env:
+      TEST_FILE: client-sanity-${{github.run_number}}-${{ matrix.python_version }}
+      timeout-minutes: 120
+      container:
+        image: python:${{ matrix.python_version }}-bullseye
+        options: --privileged
+        steps:
+    - name: Upgrade pip
+      run:  |
+        pip3 install --upgrade pip
 
-    steps:
-      # Checkout, fetch-depth=0 fetches the full repos (required for automatic versioning to work)
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    - name: install dependencies
+      run: |
+        pip3 install pytest
+        pip3 install pytest-qt
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.12
+    - name: Check out sources
+      uses: actions/checkout@v4
+    
+    - name: Install client
+      run: |
+        pip3 install -e .
 
-      - name: Check build and install
-        run: |
-          pip install setuptools
-          python3 setup.py sdist
-          pip install dist/*.tar.gz
+     - name: Run test suite
+      run: pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml
+      
+    - name: Upload test file
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{env.TEST_FILE}}_results
+        if-no-files-found: warn
+        path: |
+          ${{env.TEST_FILE}}.html
+          ${{env.TEST_FILE}}.xml
+          assets/style.css
 
-      - run: docker pull bitcraze/builder
-
-      - name: CI checks
-        run: docker run --rm -v ${PWD}:/module bitcraze/builder ./tools/build/build
+    - name: Pretty print test results
+      if: always()
+      uses: pmeier/pytest-results-action@main
+      with:
+        path: ${{env.TEST_FILE}}.xml
+        summary: true
+        title: Test results

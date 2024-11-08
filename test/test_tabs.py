@@ -1,25 +1,15 @@
-import pytest
-import cfclient
-cfclient.config_path  = "test/cache"
-
-from PyQt6 import QtCore
-from PyQt6.QtWidgets import QTabWidget, QWidget, QTreeWidget, QMenuBar, QMenu
-import cfclient
+from PyQt6 import QtWidgets
 
 def test_main_ui_window(qtbot, main_window,local):
-    # Create an instance of the main UI window
 
     qtbot.addWidget(main_window)
-
-    # Show the main window and perform assertions
     main_window.show()
     assert main_window.isVisible()
-
-    # Close the window after a delay to end the test
     if local:
         qtbot.wait(1000)
     main_window.close()
     assert not main_window.isVisible()
+
 
 
 def test_tab_visibility(qtbot,main_window,local):
@@ -38,5 +28,5 @@ def test_tab_visibility(qtbot,main_window,local):
     tab_list = ["Console","Parameters","Loco Positioning","Lighthouse Positioning","Crtp sniffer","Log TOC", "LED","Log Blocks","Plotter", "Tuning", "Log Client"]
     for tab_name in tab_list:
         test_tab(tab_name)
-        if local:
-            qtbot.wait(1000)
+    if local:
+        qtbot.wait(1000)
