@@ -1,0 +1,33 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI experiment
+
+# Controls when the action will run.
+on:
+  workflow_dispatch:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout, fetch-depth=0 fetches the full repos (required for automatic versioning to work)
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Check build and install
+        run: |
+          pip install setuptools
+          python3 setup.py sdist
+          pip install dist/*.tar.gz
+
+      - run: docker pull bitcraze/builder
+
+      - name: CI checks
+        run: docker run --rm -v ${PWD}:/module bitcraze/builder ./tools/build/build
