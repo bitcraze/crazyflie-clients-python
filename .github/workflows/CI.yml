@@ -15,7 +15,11 @@ on:
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
 
     steps:
       # Checkout, fetch-depth=0 fetches the full repos (required for automatic versioning to work)
