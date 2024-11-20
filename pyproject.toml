@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cfclient"
+dynamic = ["version"]
+description = "Crazyflie PC client"
+authors = [
+    { name = "Bitcraze and contributors", email = "contact@bitcraze.io" },
+]
+
+readme = {file = "README.md", content-type = "text/markdown"}
+license = { text = "GPLv2+" }
+keywords = ["quadcopter", "crazyflie"]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+    "Topic :: Scientific/Engineering :: Robotics",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Software Development :: User Interfaces",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Intended Audience :: Developers",
+    "Operating System :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+
+    # Supported Python versions
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">= 3.10"
+
+dependencies = [
+        "cflib>=0.1.27",
+        "setuptools",
+        "appdirs~=1.4.0",
+        "pyzmq~=26.0",
+        "pyqtgraph~=0.13",
+        "PyYAML~=6.0.1",
+        "numpy~=1.26",
+        "vispy~=0.14.3",
+        "pyopengl~=3.1.7",  # Required for Vispy to work on MacOS Sonoma
+        "pyserial~=3.5",
+        "PyQt6~=6.7",
+        "PyQt6-sip~=13.8",
+        "pysdl2~=0.9.14 ; platform_system=='Windows' or platform_system=='Darwin'",
+        "pysdl2-dll==2.24.0 ; platform_system=='Windows' or platform_system=='Darwin'"
+]
+
+[project.urls]
+Homepage = "https://www.bitcraze.io"
+Documentation = "https://www.bitcraze.io/documentation/repository/crazyflie-clients-python/master/"
+Repository = "https://github.com/bitcraze/crazyflie-clients-python"
+Issues = "https://github.com/bitcraze/crazyflie-clients-python/issues"
+
+[project.optional-dependencies]
+dev = ['pre-commit',
+       'cx_freeze==5.1.1 ; platform_system=="Windows"',
+       'jinja2==2.10.3 ; platform_system=="Windows"'
+       ]
+
+[project.scripts]
+cfclient = "cfclient.gui:main"
+cfheadless = "cfclient.headless:main"
+cfloader = "cfloader:main"
+cfzmq = "cfzmq:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools_scm]
+write_to = "src/cfclient/version.py"

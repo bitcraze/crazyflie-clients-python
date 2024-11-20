@@ -7,7 +7,7 @@ build/*
 cache
 src/cfclient.egg-info/*
 src/cfclient/third_party/*
-version.json
+version.py
 log_param_doc.json
 
 # PC client settings

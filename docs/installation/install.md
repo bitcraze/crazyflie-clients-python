@@ -7,6 +7,8 @@ page_id: install
 
 This project requires Python 3.10+.
 
+To install on Python 3.13, build tools and Python development headers are required.
+
 There are a few things to sort out on your machine before you can install the client. Please see the appropriate
 section depending on your environment.
 
@@ -65,6 +67,9 @@ Install git from the [official git website](https://git-scm.com/). Make sure it 
 ```
 git --version
 ```
+
+If you're using Python 3.13, you need to install [Visual Studio](https://visualstudio.microsoft.com/downloads/). During the installation process, you only need to select the C++ Windows Development workload in the Visual Studio Installer.
+
 
 #### Install crazyradio drivers
 
