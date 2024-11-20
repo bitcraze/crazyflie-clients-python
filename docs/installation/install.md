@@ -68,7 +68,7 @@ Install git from the [official git website](https://git-scm.com/). Make sure it 
 git --version
 ```
 
-If you're using Python 3.13, you need to install [Visual Studio](https://visualstudio.microsoft.com/downloads/). During the installation process, you only need to select the C++ Windows Development workload in the Visual Studio Installer.
+If you're using Python 3.13, you need to install [Visual Studio](https://visualstudio.microsoft.com/downloads/). During the installation process, you only need to select the Desktop Development with C++ workload in the Visual Studio Installer.
 
 
 #### Install crazyradio drivers
