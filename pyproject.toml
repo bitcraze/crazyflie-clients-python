@@ -75,4 +75,5 @@ cfzmq = "cfzmq:main"
 include-package-data = true
 
 [tool.setuptools_scm]
-write_to = "src/cfclient/version.py"
+version_file = "src/cfclient/version.py"
+version_scheme = "no-guess-dev"
