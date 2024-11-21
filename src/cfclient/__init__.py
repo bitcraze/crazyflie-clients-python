@@ -44,9 +44,11 @@ if not hasattr(sys, 'frozen'):
     except pkg_resources.DistributionNotFound:
         VERSION = "dev"
 else:
-    with open(os.path.join(module_path, "version.json")) as f:
-        VERSION = json.load(f)['version']
-
+    try:
+        from .version import __version__ as imported_version
+        VERSION = imported_version
+    except ImportError:
+        VERSION = "dev"
 try:
     with open(os.path.join(module_path, "resources/log_param_doc.json")) as f:
         log_param_doc = json.load(f)
