@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
         matrix:
-          python_version: ["3.9", "3.10", "3.11","3.12"]
+          python_version: ["3.11"]
         fail-fast: false
     env:
       TEST_FILE: client-sanity-${{github.run_number}}-${{ matrix.python_version }}
@@ -32,6 +32,9 @@ jobs:
 
       - name: Check out sources
         uses: actions/checkout@v4
+        
+      - name: Display current directory
+        run: pwd  # This will print the root of the repository
       
       - name: Install client
         run: |
