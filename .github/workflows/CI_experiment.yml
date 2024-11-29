@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
         matrix:
-          python_version: ["3.8","3.9", "3.10", "3.11","3.12"]
+          python_version: ["3.9", "3.10", "3.11","3.12"]
         fail-fast: false
     env:
       TEST_FILE: client-sanity-${{github.run_number}}-${{ matrix.python_version }}
@@ -28,6 +28,7 @@ jobs:
         run: |
           pip3 install pytest
           pip3 install pytest-qt
+          apt-get update && apt-get install -y libgl1 libglx0 libxrender1 libxext6 libxcb-xinerama0 libxcb-cursor0 libxkbcommon0 && apt-get clean
 
       - name: Check out sources
         uses: actions/checkout@v4
