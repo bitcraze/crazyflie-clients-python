@@ -25,6 +25,11 @@ def pytest_addoption(parser):
         "--local", action="store_true", default=False, help="Run in local mode i.e show UI for a bit longer"
     )
 
+class WindowWithSettings():
+    def __init__(self):
+        self.window = None
+        self.tabs_toolbox = ["Console","Parameters","Loco Positioning","Lighthouse Positioning","Crtp sniffer","Log TOC", "LED","Log Blocks","Plotter", "Tuning", "Log Client"]
+
 @pytest.fixture
 def local(request):
     return request.config.getoption("--local")
@@ -36,4 +41,6 @@ def main_window():
         shutil.rmtree(cache_dir)
     os.makedirs(cache_dir)  # Re-create the empty cache directory
     from cfclient.ui.main import MainUI #Need to import here to avoid setting up the cache at the wrong place
-    yield MainUI()
+    main_window = WindowWithSettings()
+    main_window.window = MainUI()
+    yield main_window
