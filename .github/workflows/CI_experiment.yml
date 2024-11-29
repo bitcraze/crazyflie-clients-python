@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  pytest:
+  test_run:
     runs-on: ubuntu-latest
     strategy:
         matrix:
@@ -38,7 +38,7 @@ jobs:
 
      - name: Run test suite
       run: pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml
-      
+
     - name: Upload test file
       if: always()
       uses: actions/upload-artifact@v4
