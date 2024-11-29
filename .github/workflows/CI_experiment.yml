@@ -15,11 +15,11 @@ jobs:
         fail-fast: false
     env:
       TEST_FILE: client-sanity-${{github.run_number}}-${{ matrix.python_version }}
-      timeout-minutes: 120
-      container:
-        image: python:${{ matrix.python_version }}-bullseye
-        options: --privileged
-        steps:
+    timeout-minutes: 120
+    container:
+      image: python:${{ matrix.python_version }}-bullseye
+      options: --privileged
+    steps:
     - name: Upgrade pip
       run:  |
         pip3 install --upgrade pip
