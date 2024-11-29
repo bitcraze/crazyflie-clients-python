@@ -17,7 +17,7 @@ jobs:
       TEST_FILE: client-sanity-${{github.run_number}}-${{ matrix.python_version }}
     timeout-minutes: 120
     container:
-      image: python:${{ matrix.python_version }}-bullseye
+      image: python:${{ matrix.python_version }}-slim-bullseye
       options: --privileged
     steps:
       - name: Upgrade pip
