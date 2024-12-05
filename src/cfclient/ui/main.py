@@ -99,6 +99,12 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     connectionFailedSignal = pyqtSignal(str, str)
     disconnectedSignal = pyqtSignal(str)
     linkQualitySignal = pyqtSignal(float)
+    latencySignal = pyqtSignal(float)
+    uplinkRSSISignal = pyqtSignal(float)
+    uplinkRateSignal = pyqtSignal(float)
+    downlinkRateSignal = pyqtSignal(float)
+    uplinkCongestionSignal = pyqtSignal(float)
+    downlinkCongestionSignal = pyqtSignal(float)
 
     _input_device_error_signal = pyqtSignal(str)
     _input_discovery_signal = pyqtSignal(object)
@@ -226,10 +232,36 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.batteryBar.setTextVisible(False)
         self.linkQualityBar.setTextVisible(False)
 
-        # Connect link quality feedback
+        # Connect radio link statistics callbacks
         self.cf.link_quality_updated.add_callback(self.linkQualitySignal.emit)
+        self.cf.link_statistics.latency.latency_updated.add_callback(self.latencySignal.emit)
+        self.cf.uplink_rssi_updated.add_callback(self.uplinkRSSISignal.emit)
+        self.cf.uplink_rate_updated.add_callback(self.uplinkRateSignal.emit)
+        self.cf.downlink_rate_updated.add_callback(self.downlinkRateSignal.emit)
+        self.cf.uplink_congestion_updated.add_callback(self.uplinkCongestionSignal.emit)
+        self.cf.downlink_congestion_updated.add_callback(self.downlinkCongestionSignal.emit)
+
         self.linkQualitySignal.connect(
-            lambda percentage: self.linkQualityBar.setValue(int(percentage)))
+            lambda percentage: self.linkQualityBar.setValue(int(percentage))
+        )
+        self.latencySignal.connect(
+            lambda latency: self.latencyLineEdit.setText(f"{int(latency)} ms")
+        )
+        self.uplinkRSSISignal.connect(
+            lambda rssi: self.uplinkRSSILineEdit.setText(f"-{int(rssi)} dBm")
+        )
+        self.uplinkRateSignal.connect(
+            lambda rate: self.uplinkRateLineEdit.setText(f"{int(rate)} p/s")
+        )
+        self.downlinkRateSignal.connect(
+            lambda rate: self.downlinkRateLineEdit.setText(f"{int(rate)} p/s")
+        )
+        self.uplinkCongestionSignal.connect(
+            lambda congestion: self.uplinkCongestionBar.setValue(int(congestion*100))
+        )
+        self.downlinkCongestionSignal.connect(
+            lambda congestion: self.downlinkCongestionBar.setValue(int(congestion*100))
+        )
 
         # Parse the log configuration files
         self.logConfigReader = LogConfigReader(self.cf)
