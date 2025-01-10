@@ -25,19 +25,19 @@ jobs:
 
       - name: Upgrade pip
         run:  |
-          pip3 install --upgrade pip
+          venv/bin/pip install --upgrade pip
 
       - name: install dependencies
         run: |
-          pip3 install pytest
-          pip3 install pytest-qt
+          venv/bin/pip install pytest
+          venv/bin/pip install pytest-qt
 
       - name: Check out sources
         uses: actions/checkout@v4
 
       - name: Install client
         run: |
-          pip3 install -e .
+          venv/bin/pip install -e .
 
       - name: Run test suite
         run: pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml
