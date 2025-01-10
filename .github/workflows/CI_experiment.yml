@@ -15,6 +15,7 @@ jobs:
         fail-fast: false
     env:
       TEST_FILE: client-sanity-${{github.run_number}}-${{ matrix.python_version }}
+      PYTHON_VERSION: ${{ matrix.python_version }}
     timeout-minutes: 120
     steps:
       - name: Setup python environment
