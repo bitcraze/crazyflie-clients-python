@@ -8,7 +8,7 @@ on:
 
 jobs:
   test_run:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, macOS]
     strategy:
         matrix:
           python_version: ["3.11"]
@@ -16,10 +16,13 @@ jobs:
     env:
       TEST_FILE: client-sanity-${{github.run_number}}-${{ matrix.python_version }}
     timeout-minutes: 120
-    container:
-      image: python:${{ matrix.python_version }}-slim-bullseye
-      options: --privileged
     steps:
+      steps:
+      - name: Setup python environment
+        run: |
+          $(brew --prefix)/bin/python${PYTHON_VERSION} -m venv venv
+          source venv/bin/activate
+
       - name: Upgrade pip
         run:  |
           pip3 install --upgrade pip
@@ -28,14 +31,10 @@ jobs:
         run: |
           pip3 install pytest
           pip3 install pytest-qt
-          apt-get update && apt-get install -y libgl1 libglx0 libxrender1 libxext6 libxcb-xinerama0 libxcb-cursor0 libxkbcommon0 && apt-get clean
 
       - name: Check out sources
         uses: actions/checkout@v4
-        
-      - name: Display current directory
-        run: pwd  # This will print the root of the repository
-      
+
       - name: Install client
         run: |
           pip3 install -e .
