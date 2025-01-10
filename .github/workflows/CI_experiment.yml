@@ -8,7 +8,7 @@ on:
 
 jobs:
   test_run:
-    runs-on: [self-hosted, macOS]
+    runs-on: [lab-mac]
     strategy:
         matrix:
           python_version: ["3.11"]
@@ -17,7 +17,6 @@ jobs:
       TEST_FILE: client-sanity-${{github.run_number}}-${{ matrix.python_version }}
     timeout-minutes: 120
     steps:
-      steps:
       - name: Setup python environment
         run: |
           $(brew --prefix)/bin/python${PYTHON_VERSION} -m venv venv
