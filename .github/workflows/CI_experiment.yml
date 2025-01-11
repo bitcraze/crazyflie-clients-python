@@ -44,18 +44,7 @@ jobs:
           venv/bin/pip install -e .
 
       - name: Run test suite
-        run: venv/bin/python -m pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml
-
-      - name: Upload test file
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{env.TEST_FILE}}_results
-          if-no-files-found: warn
-          path: |
-            ${{env.TEST_FILE}}.html
-            ${{env.TEST_FILE}}.xml
-            assets/style.css
+        run: venv/bin/python -m pytest --verbose --junit-xml ${{env.TEST_FILE}}.xml
 
       - name: Pretty print test results
         if: always()
