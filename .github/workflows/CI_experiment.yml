@@ -44,7 +44,7 @@ jobs:
           venv/bin/pip install -e .
 
       - name: Run test suite
-        run: venv/bin/python -m pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml
+        run: venv/bin/python -m pytest --verbose
 
       - name: Upload test file
         if: always()
