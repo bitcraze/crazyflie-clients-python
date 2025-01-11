@@ -11,11 +11,11 @@ jobs:
     runs-on: [lab-mac]
     strategy:
         matrix:
-          python_version: ["3.11"]
+          python_version: ["3.10", "3.11", "3.12"]
         fail-fast: false
     env:
-      TEST_FILE: client-sanity-${{github.run_number}}-${{ matrix.python_version }}
       PYTHON_VERSION: ${{ matrix.python_version }}
+      TEST_FILE: Client_sanity_mac-${{github.run_number}}-${{ matrix.python_version }}
     timeout-minutes: 120
     steps:
       - name: Check out sources
@@ -44,7 +44,7 @@ jobs:
           venv/bin/pip install -e .
 
       - name: Run test suite
-        run: venv/bin/python -m pytest --verbose
+        run: venv/bin/python -m pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml
 
       - name: Upload test file
         if: always()
@@ -64,4 +64,3 @@ jobs:
           path: ${{env.TEST_FILE}}.xml
           summary: true
           title: Test results
-      
