@@ -20,7 +20,7 @@ jobs:
     steps:
       - name: Check out sources
         uses: actions/checkout@v4
-        
+
       - name: Setup python environment
         run: |
           $(brew --prefix)/bin/python${PYTHON_VERSION} -m venv venv
@@ -35,12 +35,16 @@ jobs:
           venv/bin/pip install pytest
           venv/bin/pip install pytest-qt
 
+      - name: install dependencies
+        run: |
+          venv/bin/pip list
+
       - name: Install client
         run: |
           venv/bin/pip install -e .
 
       - name: Run test suite
-        run: pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml
+        run: venv/bin/python -m pytest --verbose --html=${{env.TEST_FILE}}.html --junit-xml ${{env.TEST_FILE}}.xml
 
       - name: Upload test file
         if: always()
