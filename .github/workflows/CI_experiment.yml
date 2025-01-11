@@ -44,7 +44,7 @@ jobs:
           venv/bin/pip install -e .
 
       - name: Run test suite
-        run: venv/bin/python -m pytest --verbose --junit-xml ${{env.TEST_FILE}}.xml
+        run: venv/bin/python -m pytest --local --verbose --junit-xml ${{env.TEST_FILE}}.xml 
 
       - name: Pretty print test results
         if: always()
