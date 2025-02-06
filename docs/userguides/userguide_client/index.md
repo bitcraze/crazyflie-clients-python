@@ -146,6 +146,18 @@ First connect to the Crazyflie 2.x with the normal connect button. Then open "Co
 
 Once the settings has been made press the write button to save them permanently in the Crazyflie 2.x EEPROM.  Then restart the Crazyflie and connect to the new address.
 
+### Radio Address Configuration
+
+If you can't connect to your Crazyflie via the Crazyradio, you may be searching for the wrong radio address.
+It is possible to find out the current address of your Crazyflie by following these steps:
+
+-   Plug your Crazyflie to your computer via a USB cable. Make sure the cable you are using is not charging-only.
+-   Press the Scan button and select the usb://0 interface.
+-   Press the Connect button. The Crazyflie is now connected.
+-   Open “Connect->Configure 2.x” to reach the configure 2.x dialog, where you can find out the radio address.
+
+![cfclient usb radio config](/docs/images/cfclient_usb_radio_config.png){:width="500"}
+
 ### Logging
 
 The Crazyflie logging framework allows to log the state of Crazyflie
