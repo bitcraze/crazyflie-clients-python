@@ -36,9 +36,11 @@ int main()
     sleep(1);
   }
 
-  sprintf(message, messageFmt, 0);
+  sprintf(message, messageFmt, 0.0f);
   zmq_send(socket_zmq, message, strlen(message), 0);
   printf("\rThrust = %f%%\n", 0.0);
+  fflush(stdout);
+  sleep(1);
 
   zmq_close(socket_zmq);
   zmq_ctx_destroy(context);
