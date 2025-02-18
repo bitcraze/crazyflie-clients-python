@@ -47,7 +47,7 @@ dependencies = [
         "vispy~=0.14.3",
         "pyopengl~=3.1.7",  # Required for Vispy to work on MacOS Sonoma
         "pyserial~=3.5",
-        "PyQt6~=6.7",
+        "PyQt6~=6.7.1",
         "PyQt6-sip~=13.8",
         "pysdl2~=0.9.14 ; platform_system=='Windows' or platform_system=='Darwin'",
         "pysdl2-dll==2.24.0 ; platform_system=='Windows' or platform_system=='Darwin'"
