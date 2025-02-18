@@ -227,7 +227,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.linkQualityBar.setTextVisible(False)
 
         # Connect link quality feedback
-        self.cf.link_quality_updated.add_callback(self.linkQualitySignal.emit)
+        self.cf.link_statistics.link_quality_updated.add_callback(self.linkQualitySignal.emit)
         self.linkQualitySignal.connect(
             lambda percentage: self.linkQualityBar.setValue(int(percentage)))
 
