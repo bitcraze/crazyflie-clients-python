@@ -453,7 +453,7 @@ class JoystickReader(object):
                     vx = data.roll
                     vy = data.pitch
                     vz = data.thrust
-                    yawrate = data.yaw
+                    yawrate = -data.yaw
                     # The odd use of vx and vy is to map forward on the
                     # physical joystick to positive X-axis
                     self.assisted_input_updated.call(vy, -vx, vz, yawrate)
@@ -473,7 +473,7 @@ class JoystickReader(object):
                     if self._target_height < MIN_HOVER_HEIGHT:
                         self._target_height = MIN_HOVER_HEIGHT
 
-                    yawrate = data.yaw
+                    yawrate = -data.yaw
                     # The odd use of vx and vy is to map forward on the
                     # physical joystick to positive X-axis
                     self.hover_input_updated.call(vy, -vx, yawrate,
@@ -499,7 +499,7 @@ class JoystickReader(object):
                             and data.assistedControl:
                         roll = data.roll + self.trim_roll
                         pitch = data.pitch + self.trim_pitch
-                        yawrate = data.yaw
+                        yawrate = -data.yaw
                         # Scale thrust to a value between -1.0 to 1.0
                         vz = (data.thrust - 32767) / 32767.0
                         # Integrate velocity setpoint
