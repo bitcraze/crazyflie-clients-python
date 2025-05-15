@@ -30,6 +30,8 @@ Used in the lighthouse tab from the manage geometry dialog
 from __future__ import annotations
 
 import cfclient
+import logging
+import time
 
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
@@ -45,10 +47,10 @@ from cflib.localization.lighthouse_types import Pose, LhDeck4SensorPositions, Lh
 from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample
 from cflib.localization.lighthouse_geo_estimation_manager import LhGeoInputContainer
 
-
 from PyQt6 import QtCore, QtWidgets, QtGui
-import time
 
+
+logger = logging.getLogger(__name__)
 
 REFERENCE_DIST = 1.0
 ITERATION_MAX_NR = 2
@@ -335,10 +337,12 @@ class EstimateGeometryThread(QtCore.QObject):
 
     def run(self):
         try:
+            logger.debug("Start estimation")
             self.bs_poses = self._estimate_geometry(self.container)
+            logger.debug("Estimation done")
             self.finished.emit()
         except Exception as ex:
-            print(ex)
+            logger.error("Estimation exception: " + str(ex))
             self.failed.emit()
 
     def get_poses(self):
