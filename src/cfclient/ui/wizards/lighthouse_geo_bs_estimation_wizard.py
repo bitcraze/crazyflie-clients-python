@@ -41,7 +41,10 @@ from cflib.localization.lighthouse_sample_matcher import LighthouseSampleMatcher
 from cflib.localization.lighthouse_system_aligner import LighthouseSystemAligner
 from cflib.localization.lighthouse_geometry_solver import LighthouseGeometrySolver
 from cflib.localization.lighthouse_system_scaler import LighthouseSystemScaler
-from cflib.localization.lighthouse_types import Pose, LhDeck4SensorPositions, LhMeasurement, LhCfPoseSample
+from cflib.localization.lighthouse_types import Pose, LhDeck4SensorPositions, LhMeasurement
+from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample
+from cflib.localization.lighthouse_geo_estimation_manager import LhGeoInputContainer
+
 
 from PyQt6 import QtCore, QtWidgets, QtGui
 import time
@@ -173,7 +176,6 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
             self.timeout_timer.stop()
 
     def _ready_cb(self, averages):
-        print(self.show_add_measurements)
         recorded_angles = averages
         angles_calibrated = {}
         for bs_id, data in recorded_angles.items():
@@ -327,18 +329,15 @@ class EstimateGeometryThread(QtCore.QObject):
     finished = QtCore.pyqtSignal()
     failed = QtCore.pyqtSignal()
 
-    def __init__(self, origin, x_axis, xy_plane, samples):
+    def __init__(self, container: LhGeoInputContainer):
         super(EstimateGeometryThread, self).__init__()
 
-        self.origin = origin
-        self.x_axis = x_axis
-        self.xy_plane = xy_plane
-        self.samples = samples
+        self.container = container
         self.bs_poses = {}
 
     def run(self):
         try:
-            self.bs_poses = self._estimate_geometry(self.origin, self.x_axis, self.xy_plane, self.samples)
+            self.bs_poses = self._estimate_geometry(self.container)
             self.finished.emit()
         except Exception as ex:
             print(ex)
@@ -347,27 +346,21 @@ class EstimateGeometryThread(QtCore.QObject):
     def get_poses(self):
         return self.bs_poses
 
-    def _estimate_geometry(self, origin: LhCfPoseSample,
-                           x_axis: list[LhCfPoseSample],
-                           xy_plane: list[LhCfPoseSample],
-                           samples: list[LhCfPoseSample]) -> dict[int, Pose]:
+    def _estimate_geometry(self, container: LhGeoInputContainer) -> dict[int, Pose]:
         """Estimate the geometry of the system based on samples recorded by a Crazyflie"""
-        matched_samples = [origin] + x_axis + xy_plane + LighthouseSampleMatcher.match(samples, min_nr_of_bs_in_match=2)
-        initial_guess, cleaned_matched_samples = LighthouseInitialEstimator.estimate(matched_samples,
-                                                                                     LhDeck4SensorPositions.positions)
+        matched_samples = container.get_matched_samples()
+        initial_guess, cleaned_matched_samples = LighthouseInitialEstimator.estimate(matched_samples)
 
-        solution = LighthouseGeometrySolver.solve(initial_guess,
-                                                  cleaned_matched_samples,
-                                                  LhDeck4SensorPositions.positions)
+        solution = LighthouseGeometrySolver.solve(initial_guess, cleaned_matched_samples, container.sensor_positions)
         if not solution.success:
             raise Exception("No lighthouse base station geometry solution could be found!")
 
         start_x_axis = 1
-        start_xy_plane = 1 + len(x_axis)
+        start_xy_plane = 1 + len(container.x_axis)
         origin_pos = solution.cf_poses[0].translation
-        x_axis_poses = solution.cf_poses[start_x_axis:start_x_axis + len(x_axis)]
+        x_axis_poses = solution.cf_poses[start_x_axis:start_x_axis + len(container.x_axis)]
         x_axis_pos = list(map(lambda x: x.translation, x_axis_poses))
-        xy_plane_poses = solution.cf_poses[start_xy_plane:start_xy_plane + len(xy_plane)]
+        xy_plane_poses = solution.cf_poses[start_xy_plane:start_xy_plane + len(container.xy_plane)]
         xy_plane_pos = list(map(lambda x: x.translation, xy_plane_poses))
 
         # Align the solution
@@ -407,12 +400,15 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
     def _action_btn_clicked(self):
         self.start_action_button.setDisabled(True)
         self.status_text.setText(self.str_pad('Estimating geometry...'))
-        origin = self.origin_page.get_sample()
-        x_axis = [self.xaxis_page.get_sample()]
-        xy_plane = self.xyplane_page.get_samples()
-        samples = self.xyzspace_page.get_samples()
+
+        container = LhGeoInputContainer(LhDeck4SensorPositions.positions)
+        container.set_origin_sample(self.origin_page.get_sample())
+        container.set_x_axis_sample(self.xaxis_page.get_sample())
+        container.set_xy_plane_samples(self.xyplane_page.get_samples())
+        container.set_xyz_space_samples(self.xyzspace_page.get_samples())
+
         self.thread_estimator = QtCore.QThread()
-        self.worker = EstimateGeometryThread(origin, x_axis, xy_plane, samples)
+        self.worker = EstimateGeometryThread(container)
         self.worker.moveToThread(self.thread_estimator)
         self.thread_estimator.started.connect(self.worker.run)
         self.worker.finished.connect(self.thread_estimator.quit)
