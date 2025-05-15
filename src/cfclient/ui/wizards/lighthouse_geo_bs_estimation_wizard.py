@@ -180,7 +180,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         angles_calibrated = {}
         for bs_id, data in recorded_angles.items():
             angles_calibrated[bs_id] = data[1]
-        self.recorded_angle_result = LhCfPoseSample(angles_calibrated=angles_calibrated)
+        self.recorded_angle_result = LhCfPoseSample(angles_calibrated)
         self.visible_basestations = ', '.join(map(lambda x: str(x + 1), recorded_angles.keys()))
         amount_of_basestations = len(recorded_angles.keys())
 
@@ -276,7 +276,6 @@ class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
         self.record_time_total = DEFAULT_RECORD_TIME
         self.record_time_current = 0
         self.reader = LighthouseSweepAngleReader(self.cf, self._ready_single_sample_cb)
-        self.bs_seen = set()
 
     def extra_layout_field(self):
         h_box = QtWidgets.QHBoxLayout()
@@ -319,7 +318,6 @@ class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
         now = time.time()
         measurement = LhMeasurement(timestamp=now, base_station_id=bs_id, angles=angles)
         self.recorded_angles_result.append(measurement)
-        self.bs_seen.add(str(bs_id + 1))
 
     def get_samples(self):
         return self.recorded_angles_result
@@ -406,6 +404,12 @@ class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
         container.set_x_axis_sample(self.xaxis_page.get_sample())
         container.set_xy_plane_samples(self.xyplane_page.get_samples())
         container.set_xyz_space_samples(self.xyzspace_page.get_samples())
+
+        # Enable to write to file. This can be used for debugging in examples/lighthouse/multi_bs_geometry_estimation.py
+        # found in the python lib
+        # import pickle
+        # with open('lh_geo_input_dump.pickle', 'wb') as handle:
+        #     pickle.dump(container, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         self.thread_estimator = QtCore.QThread()
         self.worker = EstimateGeometryThread(container)
