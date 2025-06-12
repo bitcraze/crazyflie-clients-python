@@ -46,6 +46,8 @@ from cflib.crazyflie.mem import LighthouseMemHelper
 from cflib.localization import LighthouseConfigWriter
 from cflib.localization import LighthouseConfigFileManager
 
+from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
+
 from cfclient.ui.dialogs.lighthouse_bs_geometry_dialog import LighthouseBsGeometryDialog
 from cfclient.ui.dialogs.basestation_mode_dialog import LighthouseBsModeDialog
 from cfclient.ui.dialogs.lighthouse_system_type_dialog import LighthouseSystemTypeDialog
@@ -358,7 +360,9 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._is_connected = False
         self._update_ui()
 
-    def write_and_store_geometry(self, geometries):
+    def write_and_store_geometry(self, geometries: dict[int, LighthouseBsGeometry]):
+        # TODO krri Hanlde repeated quick writes. This is called from the geo wizard and write_and_store_config() will
+        # throw if there is an ongoing write
         if self._lh_config_writer:
             self._lh_config_writer.write_and_store_config(self._new_system_config_written_to_cf_signal.emit,
                                                           geos=geometries)

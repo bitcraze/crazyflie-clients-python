@@ -38,11 +38,10 @@ from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleAverageReader
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleReader
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVectors
-from cflib.localization.lighthouse_initial_estimator import LighthouseInitialEstimator
-from cflib.localization.lighthouse_geometry_solver import LighthouseGeometrySolver
-from cflib.localization.lighthouse_types import Pose, LhDeck4SensorPositions, LhMeasurement
+from cflib.localization.lighthouse_types import LhDeck4SensorPositions, LhMeasurement, LhBsCfPoses
 from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample
 from cflib.localization.lighthouse_geo_estimation_manager import LhGeoInputContainer, LhGeoEstimationManager
+
 
 from PyQt6 import QtCore, QtWidgets, QtGui
 
@@ -61,19 +60,18 @@ PICTURE_WIDTH = 640
 
 
 class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
-    def __init__(self, cf, ready_cb, parent=None, *args):
+    def __init__(self, lighthouse_tab, ready_cb, parent=None, *args):
         super(LighthouseBasestationGeometryWizard, self).__init__(parent)
-        self.cf = cf
+        self.lighthouse_tab = lighthouse_tab
+        self.cf = lighthouse_tab._helper.cf
+        self.container = LhGeoInputContainer(LhDeck4SensorPositions.positions)
+        self.solver_thread = LhGeoEstimationManager.SolverThread(self.container, is_done_cb=self.solution_handler)
+        self.solver_thread.start()
         self.ready_cb = ready_cb
         self.wizard_opened_first_time = True
         self.reset()
 
-        self.button(QtWidgets.QWizard.WizardButton.FinishButton).clicked.connect(self._finish_button_clicked_callback)
-
         logger.info("Wizard started")
-
-    def _finish_button_clicked_callback(self):
-        self.ready_cb(self.get_geometry_page.get_geometry())
 
     def reset(self):
         self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowType.WindowContextHelpButtonHint)
@@ -84,35 +82,44 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
             self.removePage(1)
             self.removePage(2)
             self.removePage(3)
-            self.removePage(4)
-            del self.get_origin_page, self.get_xaxis_page, self.get_xyplane_page
-            del self.get_xyzspace_page, self.get_geometry_page
+            del self._origin_page, self._xaxis_page, self._xyplane_page
+            del self._xyzspace_page
         else:
             self.wizard_opened_first_time = False
 
-        self.get_origin_page = RecordOriginSamplePage(self.cf, self)
-        self.get_xaxis_page = RecordXAxisSamplePage(self.cf, self)
-        self.get_xyplane_page = RecordXYPlaneSamplesPage(self.cf, self)
-        self.get_xyzspace_page = RecordXYZSpaceSamplesPage(self.cf, self)
-        self.get_geometry_page = EstimateBSGeometryPage(
-            self.cf, self.get_origin_page, self.get_xaxis_page, self.get_xyplane_page, self.get_xyzspace_page, self)
+        self._origin_page = RecordOriginSamplePage(self.cf, self.container, self)
+        self._xaxis_page = RecordXAxisSamplePage(self.cf, self.container, self)
+        self._xyplane_page = RecordXYPlaneSamplesPage(self.cf, self.container, self)
+        self._xyzspace_page = RecordXYZSpaceSamplesPage(self.cf, self.container, self)
 
-        self.addPage(self.get_origin_page)
-        self.addPage(self.get_xaxis_page)
-        self.addPage(self.get_xyplane_page)
-        self.addPage(self.get_xyzspace_page)
-        self.addPage(self.get_geometry_page)
+        self.addPage(self._origin_page)
+        self.addPage(self._xaxis_page)
+        self.addPage(self._xyplane_page)
+        self.addPage(self._xyzspace_page)
 
         self.setWindowTitle("Lighthouse Base Station Geometry Wizard")
         self.resize(WINDOW_STARTING_WIDTH, WINDOW_STARTING_HEIGHT)
 
+    def solution_handler(self, scaled_solution: LhBsCfPoses):
+        """Upload the geometry to the Crazyflie"""
+        geo_dict = {}
+        for bs_id, pose in scaled_solution.bs_poses.items():
+            geo = LighthouseBsGeometry()
+            geo.origin = pose.translation.tolist()
+            geo.rotation_matrix = pose.rot_matrix.tolist()
+            geo.valid = True
+            geo_dict[bs_id] = geo
+
+        self.lighthouse_tab.write_and_store_geometry(geo_dict)
+
 
 class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
 
-    def __init__(self, cf: Crazyflie, show_add_measurements=False, parent=None):
+    def __init__(self, cf: Crazyflie, container: LhGeoInputContainer, show_add_measurements=False, parent=None):
         super(LighthouseBasestationGeometryWizardBasePage, self).__init__(parent)
         self.show_add_measurements = show_add_measurements
         self.cf = cf
+        self.container = container
         self.layout = QtWidgets.QVBoxLayout()
 
         self.explanation_picture = QtWidgets.QLabel()
@@ -181,7 +188,6 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
         angles_calibrated = {}
         for bs_id, data in recorded_angles.items():
             angles_calibrated[bs_id] = data[1]
-        self.recorded_angle_result = LhCfPoseSample(angles_calibrated)
         self.visible_basestations = ', '.join(map(lambda x: str(x + 1), recorded_angles.keys()))
         amount_of_basestations = len(recorded_angles.keys())
 
@@ -198,6 +204,7 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
             self.start_action_button.setText("Restart Measurement")
             self.start_action_button.setDisabled(False)
         else:
+            self.store_sample(angles_calibrated)
             self.too_few_bs = False
             status_text_string = f'Recording Done! Visible Base stations: {self.visible_basestations}\n'
             if self.show_add_measurements:
@@ -214,6 +221,9 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
                 self.start_action_button.setText("Restart Measurement")
             self.start_action_button.setDisabled(False)
 
+    def store_sample(self, angles: LhCfPoseSample) -> None:
+        self.recorded_angle_result = angles
+
     def get_sample(self):
         return self.recorded_angle_result
 
@@ -228,18 +238,22 @@ class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
 
 
 class RecordOriginSamplePage(LighthouseBasestationGeometryWizardBasePage):
-    def __init__(self, cf: Crazyflie, parent=None):
-        super(RecordOriginSamplePage, self).__init__(cf)
+    def __init__(self, cf: Crazyflie, container: LhGeoInputContainer, parent=None):
+        super(RecordOriginSamplePage, self).__init__(cf, container)
         self.explanation_text.setText(
             'Step 1. Put the Crazyflie where you want the origin of your coordinate system.\n')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_1.png")
         pixmap = pixmap.scaledToWidth(PICTURE_WIDTH)
         self.explanation_picture.setPixmap(pixmap)
 
+    def store_sample(self, angles: LhCfPoseSample) -> None:
+        self.container.set_origin_sample(LhCfPoseSample(angles))
+        super().store_sample(angles)
+
 
 class RecordXAxisSamplePage(LighthouseBasestationGeometryWizardBasePage):
-    def __init__(self, cf: Crazyflie, parent=None):
-        super(RecordXAxisSamplePage, self).__init__(cf)
+    def __init__(self, cf: Crazyflie, container: LhGeoInputContainer, parent=None):
+        super(RecordXAxisSamplePage, self).__init__(cf, container)
         self.explanation_text.setText('Step 2. Put the Crazyflie on the positive X-axis,' +
                                       f'  exactly {REFERENCE_DIST} meters from the origin.\n' +
                                       'This will be used to define the X-axis as well as scaling of the system.')
@@ -247,10 +261,14 @@ class RecordXAxisSamplePage(LighthouseBasestationGeometryWizardBasePage):
         pixmap = pixmap.scaledToWidth(PICTURE_WIDTH)
         self.explanation_picture.setPixmap(pixmap)
 
+    def store_sample(self, angles: LhCfPoseSample) -> None:
+        self.container.set_x_axis_sample(LhCfPoseSample(angles))
+        super().store_sample(angles)
+
 
 class RecordXYPlaneSamplesPage(LighthouseBasestationGeometryWizardBasePage):
-    def __init__(self, cf: Crazyflie, parent=None):
-        super(RecordXYPlaneSamplesPage, self).__init__(cf, show_add_measurements=True)
+    def __init__(self, cf: Crazyflie, container: LhGeoInputContainer, parent=None):
+        super(RecordXYPlaneSamplesPage, self).__init__(cf, container, show_add_measurements=True)
         self.explanation_text.setText('Step 3. Put the Crazyflie somewhere in the XY-plane, but not on the X-axis.\n' +
                                       'This position is used to map the the XY-plane to the floor.\n' +
                                       'You can sample multiple positions to get a more precise definition.')
@@ -258,13 +276,18 @@ class RecordXYPlaneSamplesPage(LighthouseBasestationGeometryWizardBasePage):
         pixmap = pixmap.scaledToWidth(PICTURE_WIDTH)
         self.explanation_picture.setPixmap(pixmap)
 
+    def store_sample(self, angles: LighthouseBsVectors) -> None:
+        # measurement = LhMeasurement(timestamp=now, base_station_id=bs_id, angles=angles)
+        self.container.append_xy_plane_sample(LhCfPoseSample(angles))
+        super().store_sample(angles)
+
     def get_samples(self):
         return self.recorded_angles_result
 
 
 class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
-    def __init__(self, cf: Crazyflie, parent=None):
-        super(RecordXYZSpaceSamplesPage, self).__init__(cf)
+    def __init__(self, cf: Crazyflie, container: LhGeoInputContainer, parent=None):
+        super(RecordXYZSpaceSamplesPage, self).__init__(cf, container)
         self.explanation_text.setText('Step 4. Move the Crazyflie around, try to cover all of the flying space,\n' +
                                       'make sure all the base stations are received.\n' +
                                       'Avoid moving too fast, you can increase the record time if needed.\n')
@@ -319,147 +342,7 @@ class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
         now = time.time()
         measurement = LhMeasurement(timestamp=now, base_station_id=bs_id, angles=angles)
         self.recorded_angles_result.append(measurement)
+        self.container.append_xyz_space_samples([measurement])
 
     def get_samples(self):
         return self.recorded_angles_result
-
-
-class EstimateGeometryThread(QtCore.QObject):
-    finished = QtCore.pyqtSignal()
-    failed = QtCore.pyqtSignal()
-
-    def __init__(self, container: LhGeoInputContainer):
-        super(EstimateGeometryThread, self).__init__()
-
-        self.container = container
-        self.bs_poses = {}
-
-    def run(self):
-        try:
-            logger.info("Start estimation")
-            self.bs_poses = self._estimate_geometry(self.container)
-            logger.info("Estimation done")
-            self.finished.emit()
-        except Exception as ex:
-            logger.error("Estimation exception: " + str(ex))
-            self.failed.emit()
-
-    def get_poses(self):
-        return self.bs_poses
-
-    def _estimate_geometry(self, container: LhGeoInputContainer) -> dict[int, Pose]:
-        """Estimate the geometry of the system based on samples recorded by a Crazyflie"""
-
-        matched_samples = container.get_matched_samples()
-        logger.info("start initial guess")
-        initial_guess, cleaned_matched_samples = LighthouseInitialEstimator.estimate(matched_samples)
-        logger.info("initial guess done")
-
-        scaled_initial_guess = LhGeoEstimationManager.align_and_scale_solution(container, initial_guess, REFERENCE_DIST)
-        for bs_id, pose in sorted(scaled_initial_guess.bs_poses.items()):
-            pos = pose.translation
-            logger.info(f'    {bs_id + 1}: ({pos[0]}, {pos[1]}, {pos[2]})')
-
-        logger.info(f"Len cleaned samples: {len(cleaned_matched_samples)}")
-
-        logger.info("Start solver")
-        solution = LighthouseGeometrySolver.solve(initial_guess, cleaned_matched_samples, container.sensor_positions)
-        logger.info("Solver done")
-        logger.info(f"Success: {solution.success}")
-        if not solution.success:
-            raise Exception("No lighthouse base station geometry solution could be found!")
-
-        scaled_solution = LhGeoEstimationManager.align_and_scale_solution(container, solution.poses, REFERENCE_DIST)
-        return scaled_solution.bs_poses
-
-
-class EstimateBSGeometryPage(LighthouseBasestationGeometryWizardBasePage):
-    def __init__(self, cf: Crazyflie, origin_page: RecordOriginSamplePage, xaxis_page: RecordXAxisSamplePage,
-                 xyplane_page: RecordXYPlaneSamplesPage, xyzspace_page: RecordXYZSpaceSamplesPage, parent=None):
-
-        super(EstimateBSGeometryPage, self).__init__(cf)
-        self.explanation_text.setText('Step 5. Press the button to estimate the geometry and check the result.\n' +
-                                      'If the positions of the base stations look reasonable, press finish to close ' +
-                                      'the wizard,\n' +
-                                      'if not restart the wizard.')
-        pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_5.png")
-        pixmap = pixmap.scaledToWidth(640)
-        self.explanation_picture.setPixmap(pixmap)
-        self.start_action_button.setText('Estimate Geometry')
-        self.origin_page = origin_page
-        self.xaxis_page = xaxis_page
-        self.xyplane_page = xyplane_page
-        self.xyzspace_page = xyzspace_page
-        self.bs_poses = {}
-
-    def _action_btn_clicked(self):
-        self.start_action_button.setDisabled(True)
-        self.status_text.setText(self.str_pad('Estimating geometry...'))
-
-        container = LhGeoInputContainer(LhDeck4SensorPositions.positions)
-        container.set_origin_sample(self.origin_page.get_sample())
-        container.set_x_axis_sample(self.xaxis_page.get_sample())
-        container.set_xy_plane_samples(self.xyplane_page.get_samples())
-        container.set_xyz_space_samples(self.xyzspace_page.get_samples())
-
-        # Enable to write to file. This can be used for debugging in examples/lighthouse/multi_bs_geometry_estimation.py
-        # found in the python lib
-        # import pickle
-        # with open('lh_geo_input_dump.pickle', 'wb') as handle:
-        #     pickle.dump(container, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        # with open('lh_geo_input_dump.pickle', 'rb') as handle:
-        #     container = pickle.load(handle)
-
-
-        self.thread_estimator = QtCore.QThread()
-        self.worker = EstimateGeometryThread(container)
-        self.worker.moveToThread(self.thread_estimator)
-        self.thread_estimator.started.connect(self.worker.run)
-        self.worker.finished.connect(self.thread_estimator.quit)
-        self.worker.finished.connect(self._geometry_estimated_finished)
-        self.worker.failed.connect(self._geometry_estimated_failed)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.thread_estimator.finished.connect(self.thread_estimator.deleteLater)
-        self.thread_estimator.start()
-
-    def _geometry_estimated_finished(self):
-        self.bs_poses = self.worker.get_poses()
-        self.start_action_button.setDisabled(False)
-        self.status_text.setText(self.str_pad('Geometry estimated! (X,Y,Z) in meters \n' +
-                                 self._print_base_stations_poses(self.bs_poses)))
-        self.is_done = True
-        self.completeChanged.emit()
-
-    def _geometry_estimated_failed(self):
-        self.bs_poses = self.worker.get_poses()
-        self.status_text.setText(self.str_pad('Geometry estimate failed! \n' +
-                                              'Hit Cancel to close the wizard and start again'))
-
-    def _print_base_stations_poses(self, base_stations: dict[int, Pose]):
-        """Pretty print of base stations pose"""
-        bs_string = ''
-        for bs_id, pose in sorted(base_stations.items()):
-            pos = pose.translation
-            temp_string = f'    {bs_id + 1}: ({pos[0]}, {pos[1]}, {pos[2]})'
-            bs_string += '\n' + temp_string
-
-        return bs_string
-
-    def get_geometry(self):
-        geo_dict = {}
-        for bs_id, pose in self.bs_poses.items():
-            geo = LighthouseBsGeometry()
-            geo.origin = pose.translation.tolist()
-            geo.rotation_matrix = pose.rot_matrix.tolist()
-            geo.valid = True
-            geo_dict[bs_id] = geo
-
-        return geo_dict
-
-
-if __name__ == '__main__':
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    wizard = LighthouseBasestationGeometryWizard()
-    wizard.show()
-    sys.exit(app.exec())
