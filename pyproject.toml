@@ -37,14 +37,14 @@ classifiers = [
 requires-python = ">= 3.10"
 
 dependencies = [
-        "cflib>=0.1.28",
+        "cflib @ git+https://github.com/bitcraze/crazyflie-lib-python.git@dc585966e251a83dc0dc071bbb138d4271316609",
         "setuptools",
         "appdirs~=1.4.0",
         "pyzmq~=26.0",
         "pyqtgraph~=0.13",
         "PyYAML~=6.0.1",
-        "numpy~=1.26",
-        "vispy~=0.14.3",
+        "numpy~=2.3",
+        "vispy~=0.15.2",
         "pyopengl~=3.1.7",  # Required for Vispy to work on MacOS Sonoma
         "pyserial~=3.5",
         "PyQt6~=6.7.1",
