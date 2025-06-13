@@ -38,9 +38,10 @@ from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleAverageReader
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleReader
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVectors
-from cflib.localization.lighthouse_types import LhDeck4SensorPositions, LhMeasurement, LhBsCfPoses
+from cflib.localization.lighthouse_types import LhDeck4SensorPositions, LhMeasurement
 from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample
 from cflib.localization.lighthouse_geo_estimation_manager import LhGeoInputContainer, LhGeoEstimationManager
+from cflib.localization.lighthouse_geometry_solution import LighthouseGeometrySolution
 
 
 from PyQt6 import QtCore, QtWidgets, QtGui
@@ -100,10 +101,10 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
         self.setWindowTitle("Lighthouse Base Station Geometry Wizard")
         self.resize(WINDOW_STARTING_WIDTH, WINDOW_STARTING_HEIGHT)
 
-    def solution_handler(self, scaled_solution: LhBsCfPoses):
+    def solution_handler(self, solution: LighthouseGeometrySolution):
         """Upload the geometry to the Crazyflie"""
         geo_dict = {}
-        for bs_id, pose in scaled_solution.bs_poses.items():
+        for bs_id, pose in solution.poses.bs_poses.items():
             geo = LighthouseBsGeometry()
             geo.origin = pose.translation.tolist()
             geo.rotation_matrix = pose.rot_matrix.tolist()
