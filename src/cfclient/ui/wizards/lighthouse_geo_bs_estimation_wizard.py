@@ -67,7 +67,6 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
         self.cf = lighthouse_tab._helper.cf
         self.container = LhGeoInputContainer(LhDeck4SensorPositions.positions)
         self.solver_thread = LhGeoEstimationManager.SolverThread(self.container, is_done_cb=self.solution_handler)
-        self.solver_thread.start()
         self.ready_cb = ready_cb
         self.wizard_opened_first_time = True
         self.reset()
@@ -112,6 +111,12 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
             geo_dict[bs_id] = geo
 
         self.lighthouse_tab.write_and_store_geometry(geo_dict)
+
+    def showEvent(self, event):
+        self.solver_thread.start()
+
+    def closeEvent(self, event):
+        self.solver_thread.stop()
 
 
 class LighthouseBasestationGeometryWizardBasePage(QtWidgets.QWizardPage):
