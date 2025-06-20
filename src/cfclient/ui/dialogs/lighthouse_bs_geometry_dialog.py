@@ -156,7 +156,7 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
             self._lighthouse_tab._helper.cf, self._sweep_angles_received_and_averaged_signal.emit)
 
         self._base_station_geometry_wizard = LighthouseBasestationGeometryWizard(
-            self._lighthouse_tab._helper.cf, self._base_station_geometery_received_signal.emit)
+            self._lighthouse_tab, self._base_station_geometery_received_signal.emit)
 
         self._lh_geos = None
         self._newly_estimated_geometry = {}
