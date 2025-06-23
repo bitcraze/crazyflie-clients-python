@@ -31,17 +31,17 @@ from __future__ import annotations
 
 import cfclient
 import logging
-import time
 
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleAverageReader
-from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleReader
+from cflib.localization.lighthouse_sweep_angle_reader import LighthouseMatchedSweepAngleReader
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVectors
-from cflib.localization.lighthouse_types import LhDeck4SensorPositions, LhMeasurement
+from cflib.localization.lighthouse_types import LhDeck4SensorPositions
 from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample
 from cflib.localization.lighthouse_geo_estimation_manager import LhGeoInputContainer, LhGeoEstimationManager
 from cflib.localization.lighthouse_geometry_solution import LighthouseGeometrySolution
+from cflib.localization.user_action_detector import UserActionDetector
 
 
 from PyQt6 import QtCore, QtWidgets, QtGui
@@ -101,7 +101,17 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
         self.resize(WINDOW_STARTING_WIDTH, WINDOW_STARTING_HEIGHT)
 
     def solution_handler(self, solution: LighthouseGeometrySolution):
-        """Upload the geometry to the Crazyflie"""
+        logger.info('Solution ready --------------------------------------')
+        logger.info(f'Converged: {solution.has_converged}')
+        logger.info(f'Progress info: {solution.progress_info}')
+        logger.info(f'Progress is ok: {solution.progress_is_ok}')
+        logger.info(f'Origin: {solution.is_origin_sample_valid}, {solution.origin_sample_info}')
+        logger.info(f'X-axis: {solution.is_x_axis_samples_valid}, {solution.x_axis_samples_info}')
+        logger.info(f'XY-plane: {solution.is_xy_plane_samples_valid}, {solution.xy_plane_samples_info}')
+        logger.info(f'XYZ space: {solution.xyz_space_samples_info}')
+        logger.info(f'General info: {solution.general_failure_info}')
+
+        # Upload the geometry to the Crazyflie
         geo_dict = {}
         for bs_id, pose in solution.poses.bs_poses.items():
             geo = LighthouseBsGeometry()
@@ -110,6 +120,7 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
             geo.valid = True
             geo_dict[bs_id] = geo
 
+        logger.info('Uploading geometry to Crazyflie')
         self.lighthouse_tab.write_and_store_geometry(geo_dict)
 
     def showEvent(self, event):
@@ -294,61 +305,36 @@ class RecordXYPlaneSamplesPage(LighthouseBasestationGeometryWizardBasePage):
 class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
     def __init__(self, cf: Crazyflie, container: LhGeoInputContainer, parent=None):
         super(RecordXYZSpaceSamplesPage, self).__init__(cf, container)
-        self.explanation_text.setText('Step 4. Move the Crazyflie around, try to cover all of the flying space,\n' +
-                                      'make sure all the base stations are received.\n' +
-                                      'Avoid moving too fast, you can increase the record time if needed.\n')
+        self.explanation_text.setText('Step 4. Sample points in the space that will be used.\n' +
+                                      'Make sure all the base stations are received, you need at least two base \n' +
+                                      'stations in each sample. Sample by rotating the Crazyflie quickly \n' +
+                                      'left-right around the Z-axis and then holding it still for a second.\n')
         pixmap = QtGui.QPixmap(cfclient.module_path + "/ui/wizards/bslh_4.png")
         pixmap = pixmap.scaledToWidth(PICTURE_WIDTH)
         self.explanation_picture.setPixmap(pixmap)
 
-        self.record_timer = QtCore.QTimer()
-        self.record_timer.timeout.connect(self._record_timer_cb)
-        self.record_time_total = DEFAULT_RECORD_TIME
-        self.record_time_current = 0
-        self.reader = LighthouseSweepAngleReader(self.cf, self._ready_single_sample_cb)
-
-    def extra_layout_field(self):
-        h_box = QtWidgets.QHBoxLayout()
-        self.seconds_explanation_text = QtWidgets.QLabel()
-        self.fill_record_times_line_edit = QtWidgets.QLineEdit(str(DEFAULT_RECORD_TIME))
-        self.seconds_explanation_text.setText('Enter the number of seconds you want to record:')
-        h_box.addStretch()
-        h_box.addWidget(self.seconds_explanation_text)
-        h_box.addWidget(self.fill_record_times_line_edit)
-        h_box.addStretch()
-        self.layout.addLayout(h_box)
-
-    def _record_timer_cb(self):
-        self.record_time_current += 1
-        self.status_text.setText(self.str_pad('Collecting sweep angles...' +
-                                 f' seconds remaining: {self.record_time_total-self.record_time_current}'))
-
-        if self.record_time_current == self.record_time_total:
-            self.reader.stop()
-            self.status_text.setText(self.str_pad(
-                'Recording Done!'+f' Got {len(self.recorded_angles_result)} samples!'))
-            self.start_action_button.setText("Restart measurements")
-            self.start_action_button.setDisabled(False)
-            self.is_done = True
-            self.completeChanged.emit()
-            self.record_timer.stop()
+        self.reader = LighthouseMatchedSweepAngleReader(self.cf, self._ready_single_sample_cb)
+        self.detector = UserActionDetector(self.cf, cb=self.user_action_cb)
 
     def _action_btn_clicked(self):
-        self.is_done = False
-        self.reader.start()
-        self.record_time_current = 0
-        self.record_time_total = int(self.fill_record_times_line_edit.text())
-        self.record_timer.start(1000)
-        self.status_text.setText(self.str_pad('Collecting sweep angles...' +
-                                 f' seconds remaining: {self.record_time_total}'))
-
+        self.is_done = True
         self.start_action_button.setDisabled(True)
+        self.detector.start()
 
-    def _ready_single_sample_cb(self, bs_id: int, angles: LighthouseBsVectors):
-        now = time.time()
-        measurement = LhMeasurement(timestamp=now, base_station_id=bs_id, angles=angles)
-        self.recorded_angles_result.append(measurement)
-        self.container.append_xyz_space_samples([measurement])
+    def user_action_cb(self):
+        self.reader.start()
+
+    def _ready_single_sample_cb(self, sample: LhCfPoseSample):
+        self.container.append_xyz_space_samples([sample])
 
     def get_samples(self):
         return self.recorded_angles_result
+
+    def _stop_all(self):
+        self.reader.stop()
+        if self.detector is not None:
+            self.detector.stop()
+
+    def cleanupPage(self):
+        self._stop_all()
+        super().cleanupPage()
