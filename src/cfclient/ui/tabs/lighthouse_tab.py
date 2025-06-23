@@ -31,6 +31,7 @@ Shows data for the Lighthouse Positioning system
 """
 
 import logging
+from enum import Enum
 
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
@@ -262,6 +263,10 @@ class Plot3dLighthouse(scene.SceneCanvas):
         return col1 * mix + col2 * (1.0 - mix)
 
 
+class UiMode(Enum):
+    flying = 1
+    geo_estimation = 2
+
 class LighthouseTab(TabToolbox, lighthouse_tab_class):
     """Tab for plotting Lighthouse data"""
 
@@ -357,6 +362,9 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._load_sys_config_button.clicked.connect(self._load_sys_config_button_clicked)
         self._save_sys_config_button.clicked.connect(self._save_sys_config_button_clicked)
 
+        self._ui_mode = UiMode.flying
+        self._geo_mode_button.toggled.connect(lambda enabled: self._change_ui_mode(enabled))
+
         self._is_connected = False
         self._update_ui()
 
@@ -390,6 +398,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         logger.debug("Crazyflie connected to {}".format(link_uri))
 
         self._basestation_geometry_dialog.reset()
+        self._flying_mode_button.setChecked(True)
         self._is_connected = True
 
         if self._helper.cf.param.get_value('deck.bcLighthouse4') == '1':
@@ -485,6 +494,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._update_graphics()
         self._plot_3d.clear()
         self._basestation_geometry_dialog.close()
+        self._flying_mode_button.setChecked(True)
         self.is_lighthouse_deck_active = False
         self._is_connected = False
         self._update_ui()
@@ -519,6 +529,14 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
                           "Error when using log config",
                           " [{0}]: {1}".format(log_conf.name, msg))
 
+    def _change_ui_mode(self, is_geo_mode: bool):
+        if is_geo_mode:
+            self._ui_mode = UiMode.geo_estimation
+        else:
+            self._ui_mode = UiMode.flying
+
+        self._update_ui()
+
     def _update_graphics(self):
         if self.is_visible() and self.is_lighthouse_deck_active:
             self._plot_3d.update_cf_pose(self._helper.pose_logger.position,
@@ -535,6 +553,10 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._change_system_type_button.setEnabled(enabled)
         self._load_sys_config_button.setEnabled(enabled)
         self._save_sys_config_button.setEnabled(enabled)
+
+        self._mode_group.setEnabled(enabled)
+        self._geometry_area.setEnabled(enabled)
+        self._geometry_area.setVisible(self._ui_mode == UiMode.geo_estimation)
 
     def _update_position_label(self, position):
         if len(position) == 3:
