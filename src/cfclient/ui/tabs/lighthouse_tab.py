@@ -42,6 +42,7 @@ from PyQt6.QtWidgets import QLabel
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
 
+from cfclient.ui.widgets.geo_estimator_widget import GeoEstimatorWidget
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import LighthouseMemHelper
 from cflib.localization import LighthouseConfigWriter
@@ -302,6 +303,10 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         super(LighthouseTab, self).__init__(helper, 'Lighthouse Positioning')
         self.setupUi(self)
 
+        self._geo_estimator_widget = GeoEstimatorWidget(self)
+        self._geometry_area.addWidget(self._geo_estimator_widget)
+
+
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
         self._connected_signal.connect(self._connected)
@@ -555,8 +560,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._save_sys_config_button.setEnabled(enabled)
 
         self._mode_group.setEnabled(enabled)
-        self._geometry_area.setEnabled(enabled)
-        self._geometry_area.setVisible(self._ui_mode == UiMode.geo_estimation)
+
+        self._geo_estimator_widget.setVisible(self._ui_mode == UiMode.geo_estimation and enabled)
 
     def _update_position_label(self, position):
         if len(position) == 3:

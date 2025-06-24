@@ -404,9 +404,9 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="_plot_area">
+    <layout class="QHBoxLayout" name="_lower_section">
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_15">
+      <layout class="QHBoxLayout" name="_plot_area">
        <item>
         <layout class="QVBoxLayout" name="_plot_layout">
          <item>
@@ -427,26 +427,7 @@
       </layout>
      </item>
      <item>
-      <widget class="QFrame" name="_geometry_area">
-       <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_12">
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_14"/>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_3">
-          <property name="text">
-           <string>TextLabel</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
+      <layout class="QVBoxLayout" name="_geometry_area"/>
      </item>
      <item>
       <spacer name="verticalSpacer">
