@@ -268,6 +268,7 @@ class UiMode(Enum):
     flying = 1
     geo_estimation = 2
 
+
 class LighthouseTab(TabToolbox, lighthouse_tab_class):
     """Tab for plotting Lighthouse data"""
 
@@ -305,7 +306,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
         self._geo_estimator_widget = GeoEstimatorWidget(self)
         self._geometry_area.addWidget(self._geo_estimator_widget)
-
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
@@ -374,7 +374,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._update_ui()
 
     def write_and_store_geometry(self, geometries: dict[int, LighthouseBsGeometry]):
-        # TODO krri Hanlde repeated quick writes. This is called from the geo wizard and write_and_store_config() will
+        # TODO krri Handle repeated quick writes. This is called from the geo wizard and write_and_store_config() will
         # throw if there is an ongoing write
         if self._lh_config_writer:
             self._lh_config_writer.write_and_store_config(self._new_system_config_written_to_cf_signal.emit,
