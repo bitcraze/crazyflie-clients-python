@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>753</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -54,7 +54,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="_step_info">
+       <widget class="QLabel" name="_step_solution_info">
         <property name="text">
          <string>TextLabel</string>
         </property>
@@ -70,6 +70,16 @@
         </property>
         <property name="text">
          <string>Start measurement</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="_step_info">
+        <property name="frameShape">
+         <enum>QFrame::Panel</enum>
+        </property>
+        <property name="text">
+         <string>TextLabel</string>
         </property>
        </widget>
       </item>
@@ -111,6 +121,102 @@
        </layout>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QGroupBox" name="groupBox_2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="title">
+        <string>Data status</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QLabel" name="_data_status_origin">
+          <property name="text">
+           <string>Origin</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="_data_status_x_axis">
+          <property name="text">
+           <string>X-axis</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="_data_status_xy_plane">
+          <property name="text">
+           <string>XY-plane</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="_data_status_xyz_space">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>XYZ-space</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_3">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="title">
+        <string>Solution status</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <widget class="QLabel" name="_solution_status_is_ok">
+          <property name="text">
+           <string>TextLabel</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="_solution_status_info">
+          <property name="text">
+           <string>TextLabel</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="_solution_status_uploaded">
+          <property name="text">
+           <string>TextLabel</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QPushButton" name="_clear_all_button">
+     <property name="text">
+      <string>Clear all</string>
+     </property>
     </widget>
    </item>
    <item>

@@ -31,6 +31,8 @@ Container for the geometry estimation functionality in the lighthouse tab.
 
 from typing import Callable
 from PyQt6 import QtCore, QtWidgets, uic, QtGui
+from PyQt6.QtWidgets import QMessageBox
+
 
 import logging
 from enum import Enum
@@ -126,6 +128,12 @@ class _CollectionStep(Enum):
         return self.previous() != self
 
 
+STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
+STYLE_RED_BACKGROUND = "background-color: lightpink;"
+
+
+# TODO krri Sample XYZ-space
+
 class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     """Widget for the geometry estimator UI"""
 
@@ -143,19 +151,22 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._step_previous_button.clicked.connect(lambda: self._update_step(self._current_step.previous()))
         self._step_measure.clicked.connect(self._measure)
 
+        self._clear_all_button.clicked.connect(self._clear_all)
+
         self._timeout_reader = TimeoutAngleReader(self._helper.cf, self._timeout_reader_signal.emit)
         self._timeout_reader_signal.connect(self._average_available_cb)
         self._timeout_reader_result_setter = None
+
+        self._container = LhGeoInputContainer(LhDeck4SensorPositions.positions)
+
+        self._latest_solution: LighthouseGeometrySolution = LighthouseGeometrySolution()
 
         self._current_step = _CollectionStep.ORIGIN
         self._populate_step()
         self._update_ui_reading(False)
 
-        self._container = LhGeoInputContainer(LhDeck4SensorPositions.positions)
         self._solution_ready_signal.connect(self._solution_ready_cb)
         self._solver_thread = None
-
-        # TODO krri handĺe disconnects
 
     def setVisible(self, visible: bool):
         super(GeoEstimatorWidget, self).setVisible(visible)
@@ -170,6 +181,19 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                 logger.info("Stopping solver thread")
                 self._solver_thread.stop(do_join=False)
                 self._solver_thread = None
+
+    def clear_state(self):
+        self._container.clear_all_samples()
+
+    def _clear_all(self):
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Clear samples Confirmation")
+        dlg.setText("Are you sure you want to clear all samples and start over?")
+        dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        button = dlg.exec()
+
+        if button == QMessageBox.StandardButton.Yes:
+            self.clear_state()
 
     def _update_step(self, step):
         """Update the widget to display the new step"""
@@ -188,17 +212,59 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._step_info.setText('')
 
         self._step_measure.setVisible(step != _CollectionStep.XYZ_SPACE)
+        self._update_solution_info()
 
         self._step_previous_button.setEnabled(step.has_previous())
         self._step_next_button.setEnabled(step.has_next())
 
     def _update_ui_reading(self, is_reading: bool):
-        """Update the UI to reflect whether a reading is in progress"""
+        """Update the UI to reflect whether a reading is in progress, that is enable/disable buttons"""
         is_enabled = not is_reading
 
         self._step_measure.setEnabled(is_enabled)
         self._step_next_button.setEnabled(is_enabled)
         self._step_previous_button.setEnabled(is_enabled)
+
+    def _update_solution_info(self):
+        solution = self._latest_solution
+
+        match self._current_step:
+            case _CollectionStep.ORIGIN:
+                self._step_solution_info.setText(
+                    'OK' if solution.is_origin_sample_valid else solution.origin_sample_info)
+            case _CollectionStep.X_AXIS:
+                self._step_solution_info.setText(
+                    'OK' if solution.is_x_axis_samples_valid else solution.x_axis_samples_info)
+            case _CollectionStep.XY_PLANE:
+                self._step_solution_info.setText(
+                    'OK' if solution.is_xy_plane_samples_valid else solution.xy_plane_samples_info)
+            case _CollectionStep.XYZ_SPACE:
+                self._step_solution_info.setText(solution.xyz_space_samples_info)
+
+        self._set_background_color(self._data_status_origin, solution.is_origin_sample_valid)
+        self._set_background_color(self._data_status_x_axis, solution.is_x_axis_samples_valid)
+        self._set_background_color(self._data_status_xy_plane, solution.is_xy_plane_samples_valid)
+        # TODO krri XYZ-space
+
+        if solution.progress_is_ok:
+            self._solution_status_is_ok.setText('Solution is OK')
+            self._solution_status_uploaded.setText('Uploaded')
+        else:
+            self._solution_status_is_ok.setText('No solution')
+            self._solution_status_uploaded.setText('Not uploaded')
+        self._set_background_color(self._solution_status_is_ok, solution.progress_is_ok)
+
+        self._solution_status_info.setText(solution.general_failure_info)
+
+    def _set_background_color(self, widget: QtWidgets.QWidget, is_valid: bool):
+        """Set the background color of a widget based on validity"""
+        if is_valid:
+            widget.setStyleSheet(STYLE_GREEN_BACKGROUND)
+        else:
+            widget.setStyleSheet(STYLE_RED_BACKGROUND)
+
+        # Force a repaint to ensure the style is applied immediately
+        widget.repaint()
 
     def _measure(self):
         """Trigger the measurement for the current step"""
@@ -261,15 +327,18 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._timeout_reader_result_setter = None
 
     def _solution_ready_cb(self, solution: LighthouseGeometrySolution):
-        logger.info('Solution ready --------------------------------------')
-        logger.info(f'Converged: {solution.has_converged}')
-        logger.info(f'Progress info: {solution.progress_info}')
-        logger.info(f'Progress is ok: {solution.progress_is_ok}')
-        logger.info(f'Origin: {solution.is_origin_sample_valid}, {solution.origin_sample_info}')
-        logger.info(f'X-axis: {solution.is_x_axis_samples_valid}, {solution.x_axis_samples_info}')
-        logger.info(f'XY-plane: {solution.is_xy_plane_samples_valid}, {solution.xy_plane_samples_info}')
-        logger.info(f'XYZ space: {solution.xyz_space_samples_info}')
-        logger.info(f'General info: {solution.general_failure_info}')
+        self._latest_solution = solution
+        self._update_solution_info()
+
+        logger.debug('Solution ready --------------------------------------')
+        logger.debug(f'Converged: {solution.has_converged}')
+        logger.debug(f'Progress info: {solution.progress_info}')
+        logger.debug(f'Progress is ok: {solution.progress_is_ok}')
+        logger.debug(f'Origin: {solution.is_origin_sample_valid}, {solution.origin_sample_info}')
+        logger.debug(f'X-axis: {solution.is_x_axis_samples_valid}, {solution.x_axis_samples_info}')
+        logger.debug(f'XY-plane: {solution.is_xy_plane_samples_valid}, {solution.xy_plane_samples_info}')
+        logger.debug(f'XYZ space: {solution.xyz_space_samples_info}')
+        logger.debug(f'General info: {solution.general_failure_info}')
 
         if solution.progress_is_ok:
             self._upload_geometry(solution.poses.bs_poses)
@@ -329,7 +398,7 @@ class TimeoutAngleReader:
                 return
             self.is_collecting = False
 
-        # TODO krri Can not stop the timer from this thread
+        # Can not stop the timer from this thread, let it run.
         # self.timeout_timer.stop()
 
         angles_calibrated: dict[int, LighthouseBsVectors] = {}
