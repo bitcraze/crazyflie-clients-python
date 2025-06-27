@@ -213,6 +213,18 @@
     </layout>
    </item>
    <item>
+    <widget class="QGroupBox" name="groupBox_4">
+     <property name="title">
+      <string>Base station links</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_5">
+      <item>
+       <widget class="QPlainTextEdit" name="_bs_link_text"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QPushButton" name="_clear_all_button">
      <property name="text">
       <string>Clear all</string>

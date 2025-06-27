@@ -272,6 +272,16 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._solution_status_info.setText(solution.general_failure_info)
 
+        link_info = ''
+        for bs, link_map in solution.link_count.items():
+            count = len(link_map)
+            if count > 0:
+                seen_bs = ', '.join(map(lambda x: str(x + 1), link_map.keys()))
+                link_info += f'Base station {bs + 1}: {count} link(s), id {seen_bs}\n'
+            else:
+                link_info += f'Base station {bs + 1}: No link\n'
+        self._bs_link_text.setPlainText(link_info)
+
     def _set_background_color(self, widget: QtWidgets.QWidget, is_valid: bool):
         """Set the background color of a widget based on validity"""
         if is_valid:
