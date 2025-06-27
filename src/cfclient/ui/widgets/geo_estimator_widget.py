@@ -78,7 +78,7 @@ class _CollectionStep(Enum):
                 'This position is used to map the the XY-plane to the floor.\n' +
                 'You can sample multiple positions to get a more precise definition.')
     XYZ_SPACE = ('bslh_4.png',
-                 'Step 4. Flight space',
+                 'Step 4. XYZ-space',
                  'Sample points in the space that will be used.\n' +
                  'Make sure all the base stations are received, you need at least two base \n' +
                  'stations in each sample. Sample by rotating the Crazyflie quickly \n' +
@@ -136,6 +136,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     """Widget for the geometry estimator UI"""
 
     _timeout_reader_signal = QtCore.pyqtSignal(object)
+    _container_updated_signal = QtCore.pyqtSignal()
     _solution_ready_signal = QtCore.pyqtSignal(object)
 
     def __init__(self, lighthouse_tab):
@@ -154,6 +155,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._timeout_reader = TimeoutAngleReader(self._helper.cf, self._timeout_reader_signal.emit)
         self._timeout_reader_signal.connect(self._average_available_cb)
         self._timeout_reader_result_setter = None
+
+        self._container_updated_signal.connect(self._update_solution_info)
 
         self._action_detector = UserActionDetector(self._helper.cf, cb=self._user_action_detected_cb)
         self._matched_reader = LighthouseMatchedSweepAngleReader(self._helper.cf, self._single_sample_ready_cb)
@@ -374,7 +377,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
     def _single_sample_ready_cb(self, sample: LhCfPoseSample):
         self._container.append_xyz_space_samples([sample])
-        self._update_solution_info()
+        self._container_updated_signal.emit()
+        # self._update_solution_info()
 
 
 class TimeoutAngleReader:
