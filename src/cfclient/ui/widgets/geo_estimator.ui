@@ -27,7 +27,10 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QGroupBox" name="_sample_collection_box">
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
      <property name="title">
       <string>Sample collection</string>
      </property>
@@ -41,6 +44,9 @@
       </item>
       <item>
        <widget class="QLabel" name="_step_image">
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
         <property name="text">
          <string>Image</string>
         </property>
@@ -138,36 +144,54 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="QLabel" name="_data_status_origin">
+         <widget class="QPushButton" name="_data_status_origin">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
           <property name="text">
            <string>Origin</string>
           </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="_data_status_x_axis">
+         <widget class="QPushButton" name="_data_status_x_axis">
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
           <property name="text">
            <string>X-axis</string>
           </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="_data_status_xy_plane">
+         <widget class="QPushButton" name="_data_status_xy_plane">
           <property name="text">
            <string>XY-plane</string>
           </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="_data_status_xyz_space">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
+         <widget class="QPushButton" name="_data_status_xyz_space">
           <property name="text">
            <string>XYZ-space</string>
+          </property>
+          <property name="flat">
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -219,7 +243,12 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_5">
       <item>
-       <widget class="QPlainTextEdit" name="_bs_link_text"/>
+       <widget class="QPlainTextEdit" name="_bs_link_text">
+        <property name="plainText">
+         <string>qwe
+</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>

@@ -32,6 +32,7 @@ Container for the geometry estimation functionality in the lighthouse tab.
 from typing import Callable
 from PyQt6 import QtCore, QtWidgets, uic, QtGui
 from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtCore import QTimer
 
 
 import logging
@@ -128,8 +129,15 @@ class _CollectionStep(Enum):
         return self.previous() != self
 
 
+class _UserNotificationType(Enum):
+    SUCCESS = "success"
+    FAILURE = "failure"
+    PENDING = "pending"
+
+
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
+STYLE_YELLOW_BACKGROUND = "background-color: lightyellow;"
 
 
 class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
@@ -137,6 +145,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
     _timeout_reader_signal = QtCore.pyqtSignal(object)
     _container_updated_signal = QtCore.pyqtSignal()
+    _user_notification_signal = QtCore.pyqtSignal(object)
     _solution_ready_signal = QtCore.pyqtSignal(object)
 
     def __init__(self, lighthouse_tab):
@@ -158,8 +167,14 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._container_updated_signal.connect(self._update_solution_info)
 
+        self._user_notification_signal.connect(self._notify_user)
+        self._user_notification_clear_timer = QTimer()
+        self._user_notification_clear_timer.setSingleShot(True)
+        self._user_notification_clear_timer.timeout.connect(self._user_notification_clear)
+
         self._action_detector = UserActionDetector(self._helper.cf, cb=self._user_action_detected_cb)
-        self._matched_reader = LighthouseMatchedSweepAngleReader(self._helper.cf, self._single_sample_ready_cb)
+        self._matched_reader = LighthouseMatchedSweepAngleReader(self._helper.cf, self._single_sample_ready_cb,
+                                                                 timeout_cb=self._single_sample_timeout_cb)
 
         self._container = LhGeoInputContainer(LhDeck4SensorPositions.positions)
 
@@ -172,6 +187,11 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._solution_ready_signal.connect(self._solution_ready_cb)
         self._solver_thread = None
+
+        self._data_status_origin.clicked.connect(lambda: self._change_step(_CollectionStep.ORIGIN))
+        self._data_status_x_axis.clicked.connect(lambda: self._change_step(_CollectionStep.X_AXIS))
+        self._data_status_xy_plane.clicked.connect(lambda: self._change_step(_CollectionStep.XY_PLANE))
+        self._data_status_xyz_space.clicked.connect(lambda: self._change_step(_CollectionStep.XYZ_SPACE))
 
     def setVisible(self, visible: bool):
         super(GeoEstimatorWidget, self).setVisible(visible)
@@ -282,6 +302,23 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                 link_info += f'Base station {bs + 1}: No link\n'
         self._bs_link_text.setPlainText(link_info)
 
+    def _notify_user(self, notification_type: _UserNotificationType):
+        match notification_type:
+            case _UserNotificationType.SUCCESS:
+                self._helper.cf.platform.send_user_notification(True)
+                self._sample_collection_box.setStyleSheet(STYLE_GREEN_BACKGROUND)
+            case _UserNotificationType.FAILURE:
+                self._helper.cf.platform.send_user_notification(False)
+                self._sample_collection_box.setStyleSheet(STYLE_RED_BACKGROUND)
+            case _UserNotificationType.PENDING:
+                self._sample_collection_box.setStyleSheet(STYLE_YELLOW_BACKGROUND)
+
+        self._user_notification_clear_timer.stop()
+        self._user_notification_clear_timer.start(1000)
+
+    def _user_notification_clear(self):
+        self._sample_collection_box.setStyleSheet('')
+
     def _set_background_color(self, widget: QtWidgets.QWidget, is_valid: bool):
         """Set the background color of a widget based on validity"""
         if is_valid:
@@ -343,13 +380,16 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         if bs_count == 0:
             self._step_info.setText("No base stations seen, please try again.")
+            self._user_notification_signal.emit(_UserNotificationType.FAILURE)
         elif bs_count < 2:
             self._step_info.setText(f"Only one base station (nr {bs_seen}) was seen, " +
                                     "we need at least two. Please try again.")
+            self._user_notification_signal.emit(_UserNotificationType.FAILURE)
         else:
             if self._timeout_reader_result_setter is not None:
                 self._timeout_reader_result_setter(sample)
             self._step_info.setText(f"Base stations {bs_seen} were seen. Sample stored.")
+            self._user_notification_signal.emit(_UserNotificationType.SUCCESS)
 
         self._timeout_reader_result_setter = None
 
@@ -383,12 +423,16 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._lighthouse_tab.write_and_store_geometry(geo_dict)
 
     def _user_action_detected_cb(self):
-        self._matched_reader.start()
+        self._user_notification_signal.emit(_UserNotificationType.PENDING)
+        self._matched_reader.start(timeout=1.0)
 
     def _single_sample_ready_cb(self, sample: LhCfPoseSample):
-        self._container.append_xyz_space_samples([sample])
+        self._user_notification_signal.emit(_UserNotificationType.SUCCESS)
         self._container_updated_signal.emit()
-        # self._update_solution_info()
+        self._container.append_xyz_space_samples([sample])
+
+    def _single_sample_timeout_cb(self):
+        self._user_notification_signal.emit(_UserNotificationType.FAILURE)
 
 
 class TimeoutAngleReader:
