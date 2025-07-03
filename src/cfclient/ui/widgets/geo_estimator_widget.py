@@ -241,7 +241,10 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._step_instructions.setText(step.instructions)
         self._step_info.setText('')
 
-        self._step_measure.setVisible(step != _CollectionStep.XYZ_SPACE)
+        if step == _CollectionStep.XYZ_SPACE:
+            self._step_measure.setText('Sample position')
+        else:
+            self._step_measure.setText('Start measurement')
 
         self._step_previous_button.setEnabled(step.has_previous())
         self._step_next_button.setEnabled(step.has_next())
@@ -339,25 +342,28 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
             case _CollectionStep.XY_PLANE:
                 self._measure_xy_plane()
             case _CollectionStep.XYZ_SPACE:
-                pass
+                self._measure_xyz_space()
 
     def _measure_origin(self):
         """Measure the origin position"""
-        # Placeholder for actual measurement logic
-        logger.info("Measuring origin position...")
+        logger.debug("Measuring origin position...")
         self._start_timeout_average_read(self._container.set_origin_sample)
 
     def _measure_x_axis(self):
         """Measure the X-axis position"""
-        # Placeholder for actual measurement logic
-        logger.info("Measuring X-axis position...")
+        logger.debug("Measuring X-axis position...")
         self._start_timeout_average_read(self._container.set_x_axis_sample)
 
     def _measure_xy_plane(self):
         """Measure the XY-plane position"""
-        # Placeholder for actual measurement logic
-        logger.info("Measuring XY-plane position...")
+        logger.debug("Measuring XY-plane position...")
         self._start_timeout_average_read(self._container.append_xy_plane_sample)
+
+    def _measure_xyz_space(self):
+        """Measure the XYZ-space position"""
+        logger.debug("Measuring XYZ-space position...")
+        self._user_notification_signal.emit(_UserNotificationType.PENDING)
+        self._matched_reader.start(timeout=1.0)
 
     def _start_timeout_average_read(self, setter: Callable[[LhCfPoseSample], None]):
         """Start the timeout average angle reader"""
@@ -423,8 +429,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._lighthouse_tab.write_and_store_geometry(geo_dict)
 
     def _user_action_detected_cb(self):
-        self._user_notification_signal.emit(_UserNotificationType.PENDING)
-        self._matched_reader.start(timeout=1.0)
+        self._measure_xyz_space()
 
     def _single_sample_ready_cb(self, sample: LhCfPoseSample):
         self._user_notification_signal.emit(_UserNotificationType.SUCCESS)
