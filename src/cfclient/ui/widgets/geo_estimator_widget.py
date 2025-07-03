@@ -288,9 +288,11 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         if solution.progress_is_ok:
             self._solution_status_is_ok.setText('Solution is OK')
             self._solution_status_uploaded.setText('Uploaded')
+            self._solution_status_max_error.setText(f'Error: {solution.error_stats.max * 1000:.1f} mm')
         else:
             self._solution_status_is_ok.setText('No solution')
             self._solution_status_uploaded.setText('Not uploaded')
+            self._solution_status_max_error.setText('Error: --')
         self._set_background_color(self._solution_status_is_ok, solution.progress_is_ok)
 
         self._solution_status_info.setText(solution.general_failure_info)

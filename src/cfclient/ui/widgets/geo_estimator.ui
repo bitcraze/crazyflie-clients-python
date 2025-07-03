@@ -225,6 +225,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="_solution_status_max_error">
+          <property name="text">
+           <string>TextLabel</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLabel" name="_solution_status_uploaded">
           <property name="text">
            <string>TextLabel</string>
