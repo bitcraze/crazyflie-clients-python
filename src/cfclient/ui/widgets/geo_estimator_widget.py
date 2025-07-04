@@ -29,8 +29,10 @@
 Container for the geometry estimation functionality in the lighthouse tab.
 """
 
+import os
 from typing import Callable
 from PyQt6 import QtCore, QtWidgets, uic, QtGui
+from PyQt6.QtWidgets import QFileDialog
 from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtCore import QTimer
 
@@ -148,6 +150,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     _user_notification_signal = QtCore.pyqtSignal(object)
     _solution_ready_signal = QtCore.pyqtSignal(object)
 
+    FILE_REGEX_YAML = "Config *.yaml;;All *.*"
+
     def __init__(self, lighthouse_tab):
         super(GeoEstimatorWidget, self).__init__()
         self.setupUi(self)
@@ -160,6 +164,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._step_measure.clicked.connect(self._measure)
 
         self._clear_all_button.clicked.connect(self._clear_all)
+        self._load_button.clicked.connect(self._load_from_file)
+        self._save_button.clicked.connect(self._save_to_file)
 
         self._timeout_reader = TimeoutAngleReader(self._helper.cf, self._timeout_reader_signal.emit)
         self._timeout_reader_signal.connect(self._average_available_cb)
@@ -177,6 +183,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                                                                  timeout_cb=self._single_sample_timeout_cb)
 
         self._container = LhGeoInputContainer(LhDeck4SensorPositions.positions)
+        self._session_path = os.path.join(cfclient.config_path, 'lh_geo_sessions')
+        self._container.enable_auto_save(self._session_path)
 
         self._latest_solution: LighthouseGeometrySolution = LighthouseGeometrySolution()
 
@@ -208,7 +216,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                 self._solver_thread.stop(do_join=False)
                 self._solver_thread = None
 
-    def clear_state(self):
+    def new_session(self):
         self._container.clear_all_samples()
 
     def _clear_all(self):
@@ -219,7 +227,34 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         button = dlg.exec()
 
         if button == QMessageBox.StandardButton.Yes:
-            self.clear_state()
+            self.new_session()
+
+    def _load_from_file(self):
+        names = QFileDialog.getOpenFileName(self, 'Load session', self._session_path, self.FILE_REGEX_YAML)
+
+        if names[0] == '':
+            return
+
+        file_name = names[0]
+        with open(file_name, 'r', encoding='UTF8') as handle:
+            self._container.populate_from_file_yaml(handle)
+
+    def _save_to_file(self):
+        """Save the current geometry samples to a file"""
+        names = QFileDialog.getSaveFileName(self, 'Save session', self._helper.current_folder, self.FILE_REGEX_YAML)
+
+        if names[0] == '':
+            return
+
+        self._helper.current_folder = os.path.dirname(names[0])
+
+        if not names[0].endswith(".yaml") and names[0].find(".") < 0:
+            file_name = names[0] + ".yaml"
+        else:
+            file_name = names[0]
+
+        with open(file_name, 'w', encoding='UTF8') as handle:
+            self._container.save_as_yaml_file(handle)
 
     def _change_step(self, step):
         """Update the widget to display the new step"""
@@ -256,8 +291,17 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         is_enabled = not is_reading
 
         self._step_measure.setEnabled(is_enabled)
-        self._step_next_button.setEnabled(is_enabled)
-        self._step_previous_button.setEnabled(is_enabled)
+        self._step_next_button.setEnabled(is_enabled and self._current_step.has_next())
+        self._step_previous_button.setEnabled(is_enabled and self._current_step.has_previous())
+
+        self._data_status_origin.setEnabled(is_enabled)
+        self._data_status_x_axis.setEnabled(is_enabled)
+        self._data_status_xy_plane.setEnabled(is_enabled)
+        self._data_status_xyz_space.setEnabled(is_enabled)
+
+        self._load_button.setEnabled(is_enabled)
+        self._save_button.setEnabled(is_enabled)
+        self._clear_all_button.setEnabled(is_enabled)
 
     def _update_solution_info(self):
         solution = self._latest_solution
@@ -312,11 +356,14 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
             case _UserNotificationType.SUCCESS:
                 self._helper.cf.platform.send_user_notification(True)
                 self._sample_collection_box.setStyleSheet(STYLE_GREEN_BACKGROUND)
+                self._update_ui_reading(False)
             case _UserNotificationType.FAILURE:
                 self._helper.cf.platform.send_user_notification(False)
                 self._sample_collection_box.setStyleSheet(STYLE_RED_BACKGROUND)
+                self._update_ui_reading(False)
             case _UserNotificationType.PENDING:
                 self._sample_collection_box.setStyleSheet(STYLE_YELLOW_BACKGROUND)
+                self._update_ui_reading(True)
 
         self._user_notification_clear_timer.stop()
         self._user_notification_clear_timer.start(1000)
