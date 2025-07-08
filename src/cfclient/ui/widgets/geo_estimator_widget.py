@@ -48,7 +48,7 @@ from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleAverageReader
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseMatchedSweepAngleReader
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVectors
-from cflib.localization.lighthouse_types import LhDeck4SensorPositions
+from cflib.localization.lighthouse_types import LhDeck4SensorPositions, Pose
 from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample
 from cflib.localization.lighthouse_geo_estimation_manager import LhGeoInputContainer, LhGeoEstimationManager
 from cflib.localization.lighthouse_geometry_solution import LighthouseGeometrySolution
@@ -148,7 +148,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     _timeout_reader_signal = QtCore.pyqtSignal(object)
     _container_updated_signal = QtCore.pyqtSignal()
     _user_notification_signal = QtCore.pyqtSignal(object)
-    _solution_ready_signal = QtCore.pyqtSignal(object)
+    solution_ready_signal = QtCore.pyqtSignal(object)
 
     FILE_REGEX_YAML = "Config *.yaml;;All *.*"
 
@@ -193,7 +193,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._update_ui_reading(False)
         self._update_solution_info()
 
-        self._solution_ready_signal.connect(self._solution_ready_cb)
+        self.solution_ready_signal.connect(self._solution_ready_cb)
         self._solver_thread = None
 
         self._data_status_origin.clicked.connect(lambda: self._change_step(_CollectionStep.ORIGIN))
@@ -207,7 +207,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
             if self._solver_thread is None:
                 logger.info("Starting solver thread")
                 self._solver_thread = LhGeoEstimationManager.SolverThread(self._container,
-                                                                          is_done_cb=self._solution_ready_signal.emit)
+                                                                          is_done_cb=self.solution_ready_signal.emit)
                 self._solver_thread.start()
         else:
             self._action_detector.stop()

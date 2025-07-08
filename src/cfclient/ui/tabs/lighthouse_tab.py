@@ -47,6 +47,7 @@ from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import LighthouseMemHelper
 from cflib.localization import LighthouseConfigWriter
 from cflib.localization import LighthouseConfigFileManager
+from cflib.localization import LighthouseGeometrySolution
 
 from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
 
@@ -88,6 +89,7 @@ class MarkerPose():
         self._scene = the_scene
         self._color = color
         self._text = text
+        self._position = [0.0, 0, 0]
 
         self._marker = scene.visuals.Markers(
             pos=np.array([[0, 0, 0]]),
@@ -118,6 +120,10 @@ class MarkerPose():
                 parent=self._scene)
 
     def set_pose(self, position, rot):
+        if np.array_equal(position, self._position):
+            return
+        self._position = position
+
         self._marker.set_data(pos=np.array([position]), face_color=self._color)
 
         if self._label:
@@ -145,11 +151,35 @@ class MarkerPose():
         self._marker.set_data(face_color=self._color)
 
 
-class Plot3dLighthouse(scene.SceneCanvas):
+class CfMarkerPose(MarkerPose):
     POSITION_BRUSH = np.array((0, 0, 1.0))
+
+    def __init__(self, the_scene):
+        super().__init__(the_scene, self.POSITION_BRUSH, None)
+
+
+class BsMarkerPose(MarkerPose):
     BS_BRUSH_VISIBLE = np.array((0.2, 0.5, 0.2))
     BS_BRUSH_NOT_VISIBLE = np.array((0.8, 0.5, 0.5))
 
+    def __init__(self, the_scene, text=None):
+        super().__init__(the_scene, self.BS_BRUSH_NOT_VISIBLE, text)
+
+    def set_visible(self, visible: bool):
+        if visible:
+            self.set_color(self.BS_BRUSH_VISIBLE)
+        else:
+            self.set_color(self.BS_BRUSH_NOT_VISIBLE)
+
+
+class SampleMarkerPose(MarkerPose):
+    POSITION_BRUSH = np.array((1.0, 0, 0))
+
+    def __init__(self, the_scene):
+        super().__init__(the_scene, self.POSITION_BRUSH, None)
+
+
+class Plot3dLighthouse(scene.SceneCanvas):
     VICINITY_DISTANCE = 2.5
     HIGHLIGHT_DISTANCE = 0.5
 
@@ -173,6 +203,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
 
         self._cf = None
         self._base_stations = {}
+        self._samples = []
 
         self.freeze()
 
@@ -230,13 +261,13 @@ class Plot3dLighthouse(scene.SceneCanvas):
 
     def update_cf_pose(self, position, rot):
         if not self._cf:
-            self._cf = MarkerPose(self._view.scene, self.POSITION_BRUSH)
+            self._cf = CfMarkerPose(self._view.scene)
         self._cf.set_pose(position, rot)
 
     def update_base_station_geos(self, geos):
         for id, geo in geos.items():
             if (geo is not None) and (id not in self._base_stations):
-                self._base_stations[id] = MarkerPose(self._view.scene, self.BS_BRUSH_NOT_VISIBLE, text=f"{id + 1}")
+                self._base_stations[id] = BsMarkerPose(self._view.scene, text=f"{id + 1}")
             self._base_stations[id].set_pose(geo.origin, geo.rotation_matrix)
 
         geos_to_remove = self._base_stations.keys() - geos.keys()
@@ -246,10 +277,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
 
     def update_base_station_visibility(self, visibility):
         for id, bs in self._base_stations.items():
-            if id in visibility:
-                bs.set_color(self.BS_BRUSH_VISIBLE)
-            else:
-                bs.set_color(self.BS_BRUSH_NOT_VISIBLE)
+            bs.set_visible(id in visibility)
 
     def clear(self):
         if self._cf:
@@ -259,9 +287,21 @@ class Plot3dLighthouse(scene.SceneCanvas):
         for bs in self._base_stations.values():
             bs.remove()
         self._base_stations = {}
+        self.clear_samples()
 
-    def _mix(self, col1, col2, mix):
-        return col1 * mix + col2 * (1.0 - mix)
+    def update_samples(self, solution: LighthouseGeometrySolution):
+        for i, pose in enumerate(solution.poses.cf_poses):
+            if i >= len(self._samples):
+                self._samples.append(SampleMarkerPose(self._view.scene))
+            self._samples[i].set_pose(pose.translation, pose.rot_matrix)
+
+        for sample in self._samples[len(solution.poses.cf_poses):]:
+            sample.remove()
+
+    def clear_samples(self):
+        for sample in self._samples:
+            sample.remove()
+        self._samples = []
 
 
 class UiMode(Enum):
@@ -282,7 +322,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     STATUS_MISSING_DATA = 1
     STATUS_TO_ESTIMATOR = 2
 
-    # TODO change these names to something more logical
     LOG_STATUS = "lighthouse.status"
     LOG_RECEIVE = "lighthouse.bsReceive"
     LOG_CALIBRATION_EXISTS = "lighthouse.bsCalVal"
@@ -306,6 +345,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
         self._geo_estimator_widget = GeoEstimatorWidget(self)
         self._geometry_area.addWidget(self._geo_estimator_widget)
+        self._geo_estimator_widget.solution_ready_signal.connect(self._solution_updated_cb)
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
@@ -447,6 +487,9 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._basestation_geometry_dialog.geometry_updated(self._lh_geos)
         self._is_geometry_read_ongoing = False
 
+    def _solution_updated_cb(self, solution: LighthouseGeometrySolution):
+        self._latest_solution = solution
+
     def _is_matching_current_geo_data(self, geometries):
         return geometries == self._lh_geos.keys()
 
@@ -548,6 +591,12 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
                                          self._rpy_to_rot(self._helper.pose_logger.rpy_rad))
             self._plot_3d.update_base_station_geos(self._lh_geos)
             self._plot_3d.update_base_station_visibility(self._bs_data_to_estimator)
+
+            if self._ui_mode == UiMode.geo_estimation:
+                self._plot_3d.update_samples(self._latest_solution)
+            else:
+                self._plot_3d.clear_samples()
+
             self._update_position_label(self._helper.pose_logger.position)
             self._update_status_label(self._lh_status)
             self._mask_status_matrix(self._bs_available)
