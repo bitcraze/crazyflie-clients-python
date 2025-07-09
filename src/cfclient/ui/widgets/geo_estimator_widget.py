@@ -164,7 +164,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._step_measure.clicked.connect(self._measure)
 
         self._clear_all_button.clicked.connect(self._clear_all)
-        self._load_button.clicked.connect(self._load_from_file)
+        self._load_button.clicked.connect(lambda: self._load_from_file(use_session_path=False))
+        self._restore_button.clicked.connect(lambda: self._load_from_file(use_session_path=True))
         self._save_button.clicked.connect(self._save_to_file)
 
         self._timeout_reader = TimeoutAngleReader(self._helper.cf, self._timeout_reader_signal.emit)
@@ -229,11 +230,16 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         if button == QMessageBox.StandardButton.Yes:
             self.new_session()
 
-    def _load_from_file(self):
-        names = QFileDialog.getOpenFileName(self, 'Load session', self._session_path, self.FILE_REGEX_YAML)
+    def _load_from_file(self, use_session_path=False):
+        path = self._session_path if use_session_path else self._helper.current_folder
+        names = QFileDialog.getOpenFileName(self, 'Load session', path, self.FILE_REGEX_YAML)
 
         if names[0] == '':
             return
+
+        if not use_session_path:
+            # If not using the session path, update the current folder
+            self._helper.current_folder = os.path.dirname(names[0])
 
         file_name = names[0]
         with open(file_name, 'r', encoding='UTF8') as handle:

@@ -265,27 +265,42 @@
      <property name="title">
       <string>Session management</string>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <layout class="QVBoxLayout" name="verticalLayout_7">
       <item>
-       <widget class="QPushButton" name="_load_button">
-        <property name="text">
-         <string>Load</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QPushButton" name="_load_button">
+          <property name="text">
+           <string>Load</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="_save_button">
+          <property name="text">
+           <string>Save as...</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
-       <widget class="QPushButton" name="_save_button">
-        <property name="text">
-         <string>Save copy as...</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="_clear_all_button">
-        <property name="text">
-         <string>New session</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <item>
+         <widget class="QPushButton" name="_restore_button">
+          <property name="text">
+           <string>Restore sesssion</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="_clear_all_button">
+          <property name="text">
+           <string>New session</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
