@@ -85,7 +85,7 @@ class MarkerPose():
     LABEL_SIZE = 100
     LABEL_OFFSET = np.array((0.0, 0, 0.25))
 
-    def __init__(self, the_scene, color, text=None):
+    def __init__(self, the_scene, color, text=None, axis_visible=False):
         self._scene = the_scene
         self._color = color
         self._text = text
@@ -96,20 +96,25 @@ class MarkerPose():
             parent=self._scene,
             face_color=self._color)
 
-        self._x_axis = scene.visuals.Line(
-            pos=np.array([[0, 0, 0], [0, 0, 0]]),
-            color=self.COL_X_AXIS,
-            parent=self._scene)
+        if axis_visible:
+            self._x_axis = scene.visuals.Line(
+                pos=np.array([[0, 0, 0], [0, 0, 0]]),
+                color=self.COL_X_AXIS,
+                parent=self._scene)
 
-        self._y_axis = scene.visuals.Line(pos=np.array(
-            [[0, 0, 0], [0, 0, 0]]),
-            color=self.COL_Y_AXIS,
-            parent=self._scene)
+            self._y_axis = scene.visuals.Line(pos=np.array(
+                [[0, 0, 0], [0, 0, 0]]),
+                color=self.COL_Y_AXIS,
+                parent=self._scene)
 
-        self._z_axis = scene.visuals.Line(
-            pos=np.array([[0, 0, 0], [0, 0, 0]]),
-            color=self.COL_Z_AXIS,
-            parent=self._scene)
+            self._z_axis = scene.visuals.Line(
+                pos=np.array([[0, 0, 0], [0, 0, 0]]),
+                color=self.COL_Z_AXIS,
+                parent=self._scene)
+        else:
+            self._x_axis = None
+            self._y_axis = None
+            self._z_axis = None
 
         self._label = None
         if self._text:
@@ -129,14 +134,15 @@ class MarkerPose():
         if self._label:
             self._label.pos = self.LABEL_OFFSET + position
 
-        x_tip = np.dot(np.array(rot), np.array([self.AXIS_LEN, 0, 0]))
-        self._x_axis.set_data(np.array([position, x_tip + position]), color=self.COL_X_AXIS)
+        if self._x_axis:
+            x_tip = np.dot(np.array(rot), np.array([self.AXIS_LEN, 0, 0]))
+            self._x_axis.set_data(np.array([position, x_tip + position]), color=self.COL_X_AXIS)
 
-        y_tip = np.dot(np.array(rot), np.array([0, self.AXIS_LEN, 0]))
-        self._y_axis.set_data(np.array([position, y_tip + position]), color=self.COL_Y_AXIS)
+            y_tip = np.dot(np.array(rot), np.array([0, self.AXIS_LEN, 0]))
+            self._y_axis.set_data(np.array([position, y_tip + position]), color=self.COL_Y_AXIS)
 
-        z_tip = np.dot(np.array(rot), np.array([0, 0, self.AXIS_LEN]))
-        self._z_axis.set_data(np.array([position, z_tip + position]), color=self.COL_Z_AXIS)
+            z_tip = np.dot(np.array(rot), np.array([0, 0, self.AXIS_LEN]))
+            self._z_axis.set_data(np.array([position, z_tip + position]), color=self.COL_Z_AXIS)
 
     def remove(self):
         self._marker.parent = None
@@ -155,7 +161,7 @@ class CfMarkerPose(MarkerPose):
     POSITION_BRUSH = np.array((0, 0, 1.0))
 
     def __init__(self, the_scene):
-        super().__init__(the_scene, self.POSITION_BRUSH, None)
+        super().__init__(the_scene, self.POSITION_BRUSH, None, axis_visible=True)
 
 
 class BsMarkerPose(MarkerPose):
@@ -163,7 +169,7 @@ class BsMarkerPose(MarkerPose):
     BS_BRUSH_NOT_VISIBLE = np.array((0.8, 0.5, 0.5))
 
     def __init__(self, the_scene, text=None):
-        super().__init__(the_scene, self.BS_BRUSH_NOT_VISIBLE, text)
+        super().__init__(the_scene, self.BS_BRUSH_NOT_VISIBLE, text, axis_visible=True)
 
     def set_visible(self, visible: bool):
         if visible:
