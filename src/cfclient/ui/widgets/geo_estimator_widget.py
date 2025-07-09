@@ -85,7 +85,8 @@ class _CollectionStep(Enum):
                  'Sample points in the space that will be used.\n' +
                  'Make sure all the base stations are received, you need at least two base \n' +
                  'stations in each sample. Sample by rotating the Crazyflie quickly \n' +
-                 'left-right around the Z-axis and then holding it still for a second.\n')
+                 'left-right around the Z-axis and then holding it still for a second, or \n' +
+                 'optionally by clicking the sample button below.\n')
 
     def __init__(self, image, title, instructions):
         self.image = image
