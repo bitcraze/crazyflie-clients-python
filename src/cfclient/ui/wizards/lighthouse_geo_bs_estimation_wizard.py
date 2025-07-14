@@ -113,7 +113,7 @@ class LighthouseBasestationGeometryWizard(QtWidgets.QWizard):
 
         # Upload the geometry to the Crazyflie
         geo_dict = {}
-        for bs_id, pose in solution.poses.bs_poses.items():
+        for bs_id, pose in solution.bs_poses.items():
             geo = LighthouseBsGeometry()
             geo.origin = pose.translation.tolist()
             geo.rotation_matrix = pose.rot_matrix.tolist()

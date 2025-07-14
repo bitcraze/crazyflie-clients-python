@@ -144,17 +144,23 @@ class MarkerPose():
             z_tip = np.dot(np.array(rot), np.array([0, 0, self.AXIS_LEN]))
             self._z_axis.set_data(np.array([position, z_tip + position]), color=self.COL_Z_AXIS)
 
+    def get_position(self):
+        return self._position
+
     def remove(self):
         self._marker.parent = None
-        self._x_axis.parent = None
-        self._y_axis.parent = None
-        self._z_axis.parent = None
+        if self._x_axis is not None:
+            self._x_axis.parent = None
+        if self._y_axis is not None:
+            self._y_axis.parent = None
+        if self._z_axis is not None:
+            self._z_axis.parent = None
         if self._label:
             self._label.parent = None
 
     def set_color(self, color):
         self._color = color
-        self._marker.set_data(face_color=self._color)
+        self._marker.set_data(pos=np.array([self._position]), face_color=self._color)
 
 
 class CfMarkerPose(MarkerPose):
@@ -171,7 +177,7 @@ class BsMarkerPose(MarkerPose):
     def __init__(self, the_scene, text=None):
         super().__init__(the_scene, self.BS_BRUSH_NOT_VISIBLE, text, axis_visible=True)
 
-    def set_visible(self, visible: bool):
+    def set_receiving_status(self, visible: bool):
         if visible:
             self.set_color(self.BS_BRUSH_VISIBLE)
         else:
@@ -179,11 +185,49 @@ class BsMarkerPose(MarkerPose):
 
 
 class SampleMarkerPose(MarkerPose):
-    POSITION_BRUSH = np.array((1.0, 0, 0))
+    NORMAL_BRUSH = np.array((0.8, 0.8, 0.8))
+    HIGHLIGHT_BRUSH = np.array((0.2, 0.2, 0.2))
+    BS_LINE_COL = np.array((0.0, 0.0, 0.0))
 
     def __init__(self, the_scene):
-        super().__init__(the_scene, self.POSITION_BRUSH, None)
+        super().__init__(the_scene, self.NORMAL_BRUSH, None)
+        self._is_highlighted = False
+        self._bs_lines = []
 
+    def set_highlighted(self, highlighted: bool, bs_positions=[]):
+        if highlighted:
+            # always update lines when highlighted as base station positions may have changed
+            self.set_color(self.HIGHLIGHT_BRUSH)
+            for i, pos in enumerate(bs_positions):
+                if i >= len(self._bs_lines):
+                    line = scene.visuals.Line(
+                        pos=np.array([[0, 0, 0], [0, 0, 0]]),
+                        color=self.BS_LINE_COL,
+                        parent=self._scene)
+                    self._bs_lines.append(line)
+                else:
+                    line = self._bs_lines[i]
+
+                line.set_data(np.array([self._position, pos]), color=self.BS_LINE_COL)
+
+            for _ in range(len(self._bs_lines) - len(bs_positions)):
+                line = self._bs_lines.pop()
+                line.parent = None
+        else:
+            if highlighted != self._is_highlighted:
+                self.set_color(self.NORMAL_BRUSH)
+                self._clear_lines()
+
+        self._is_highlighted = highlighted
+
+    def remove(self):
+        super().remove()
+        self._clear_lines()
+
+    def _clear_lines(self):
+        for line in self._bs_lines:
+            line.parent = None
+        self._bs_lines = []
 
 class Plot3dLighthouse(scene.SceneCanvas):
     VICINITY_DISTANCE = 2.5
@@ -210,6 +254,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
         self._cf = None
         self._base_stations = {}
         self._samples = []
+        self.selected_sample_index = -1
 
         self.freeze()
 
@@ -283,7 +328,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
 
     def update_base_station_visibility(self, visibility):
         for id, bs in self._base_stations.items():
-            bs.set_visible(id in visibility)
+            bs.set_receiving_status(id in visibility)
 
     def clear(self):
         if self._cf:
@@ -296,12 +341,27 @@ class Plot3dLighthouse(scene.SceneCanvas):
         self.clear_samples()
 
     def update_samples(self, solution: LighthouseGeometrySolution):
-        for i, pose in enumerate(solution.poses.cf_poses):
-            if i >= len(self._samples):
-                self._samples.append(SampleMarkerPose(self._view.scene))
-            self._samples[i].set_pose(pose.translation, pose.rot_matrix)
+        marker_idx = 0
+        for smpl_idx, pose_smpl in enumerate(solution.samples):
+            if pose_smpl.is_valid:
+                pose = pose_smpl.pose
+                if marker_idx >= len(self._samples):
+                    self._samples.append(SampleMarkerPose(self._view.scene))
 
-        for sample in self._samples[len(solution.poses.cf_poses):]:
+                self._samples[marker_idx].set_pose(pose.translation, pose.rot_matrix)
+
+                if smpl_idx == self.selected_sample_index:
+                    bs_positions = []
+                    for id in pose_smpl.base_station_ids:
+                        if id in self._base_stations:
+                            bs_positions.append(self._base_stations[id].get_position())
+                    self._samples[marker_idx].set_highlighted(True, bs_positions=bs_positions)
+                else:
+                    self._samples[marker_idx].set_highlighted(False)
+
+                marker_idx += 1
+
+        for sample in self._samples[marker_idx:]:
             sample.remove()
 
     def clear_samples(self):
@@ -352,6 +412,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._geo_estimator_widget = GeoEstimatorWidget(self)
         self._geometry_area.addWidget(self._geo_estimator_widget)
         self._geo_estimator_widget.solution_ready_signal.connect(self._solution_updated_cb)
+        self._geo_estimator_widget.sample_selection_changed_signal.connect(self._sample_selection_changed_cb)
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
@@ -495,6 +556,10 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
     def _solution_updated_cb(self, solution: LighthouseGeometrySolution):
         self._latest_solution = solution
+
+    def _sample_selection_changed_cb(self, sample_index: int):
+        """Callback when the selected sample in the geo estimator widget changes"""
+        self._plot_3d.selected_sample_index = sample_index
 
     def _is_matching_current_geo_data(self, geometries):
         return geometries == self._lh_geos.keys()

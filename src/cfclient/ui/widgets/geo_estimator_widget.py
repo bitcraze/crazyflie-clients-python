@@ -34,7 +34,7 @@ from typing import Callable
 from PyQt6 import QtCore, QtWidgets, uic, QtGui
 from PyQt6.QtWidgets import QFileDialog
 from PyQt6.QtWidgets import QMessageBox
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import QTimer, QAbstractTableModel, QVariant, Qt, QModelIndex
 
 
 import logging
@@ -48,8 +48,8 @@ from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleAverageReader
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseMatchedSweepAngleReader
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVectors
-from cflib.localization.lighthouse_types import LhDeck4SensorPositions, Pose
-from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample
+from cflib.localization.lighthouse_types import LhDeck4SensorPositions
+from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample, LhCfPoseSampleStatus
 from cflib.localization.lighthouse_geo_estimation_manager import LhGeoInputContainer, LhGeoEstimationManager
 from cflib.localization.lighthouse_geometry_solution import LighthouseGeometrySolution
 from cflib.localization.user_action_detector import UserActionDetector
@@ -150,6 +150,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     _container_updated_signal = QtCore.pyqtSignal()
     _user_notification_signal = QtCore.pyqtSignal(object)
     solution_ready_signal = QtCore.pyqtSignal(object)
+    sample_selection_changed_signal = QtCore.pyqtSignal(int)
 
     FILE_REGEX_YAML = "Config *.yaml;;All *.*"
 
@@ -188,7 +189,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._session_path = os.path.join(cfclient.config_path, 'lh_geo_sessions')
         self._container.enable_auto_save(self._session_path)
 
-        self._latest_solution: LighthouseGeometrySolution = LighthouseGeometrySolution()
+        self._latest_solution: LighthouseGeometrySolution = LighthouseGeometrySolution([])
 
         self._current_step = _CollectionStep.ORIGIN
         self._update_step_ui()
@@ -202,6 +203,23 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._data_status_x_axis.clicked.connect(lambda: self._change_step(_CollectionStep.X_AXIS))
         self._data_status_xy_plane.clicked.connect(lambda: self._change_step(_CollectionStep.XY_PLANE))
         self._data_status_xyz_space.clicked.connect(lambda: self._change_step(_CollectionStep.XYZ_SPACE))
+
+        self._samples_details_model = SampleTableModel(self)
+        self._samples_table_view.setModel(self._samples_details_model)
+        self._samples_table_view.selectionModel().currentRowChanged.connect(self._selection_changed)
+
+        header = self._samples_table_view.horizontalHeader()
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+
+        self._sample_details_checkbox.setChecked(False)
+        self._samples_table_view.setVisible(False)
+        self._sample_details_checkbox.stateChanged.connect(self._sample_details_checkbox_state_changed)
+
+    def _selection_changed(self, current: QModelIndex, previous: QModelIndex):
+        self.sample_selection_changed_signal.emit(current.row())
 
     def setVisible(self, visible: bool):
         super(GeoEstimatorWidget, self).setVisible(visible)
@@ -262,6 +280,10 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         with open(file_name, 'w', encoding='UTF8') as handle:
             self._container.save_as_yaml_file(handle)
+
+    def _sample_details_checkbox_state_changed(self, state: int):
+        enabled = state == Qt.CheckState.Checked.value
+        self._samples_table_view.setVisible(enabled)
 
     def _change_step(self, step):
         """Update the widget to display the new step"""
@@ -347,16 +369,6 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._set_background_color(self._solution_status_is_ok, solution.progress_is_ok)
 
         self._solution_status_info.setText(solution.general_failure_info)
-
-        link_info = ''
-        for bs, link_map in solution.link_count.items():
-            count = len(link_map)
-            if count > 0:
-                seen_bs = ', '.join(map(lambda x: str(x + 1), link_map.keys()))
-                link_info += f'Base station {bs + 1}: {count} link(s), id {seen_bs}\n'
-            else:
-                link_info += f'Base station {bs + 1}: No link\n'
-        self._bs_link_text.setPlainText(link_info)
 
     def _notify_user(self, notification_type: _UserNotificationType):
         match notification_type:
@@ -469,8 +481,10 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         logger.debug(f'XYZ space: {solution.xyz_space_samples_info}')
         logger.debug(f'General info: {solution.general_failure_info}')
 
+        self._samples_details_model.setSolution(self._latest_solution)
+
         if solution.progress_is_ok:
-            self._upload_geometry(solution.poses.bs_poses)
+            self._upload_geometry(solution.bs_poses)
 
     def _upload_geometry(self, bs_poses: dict[int, LighthouseBsGeometry]):
         geo_dict = {}
@@ -547,3 +561,54 @@ class TimeoutAngleReader:
 
         result = LhCfPoseSample(angles_calibrated)
         self._ready_cb(result)
+
+class SampleTableModel(QAbstractTableModel):
+    def __init__(self, parent=None, *args):
+        QAbstractTableModel.__init__(self, parent)
+        self._headers = ['Type', 'X', 'Y', 'Z', 'Error']
+        self._table_values = []
+
+    def rowCount(self, parent=None, *args, **kwargs):
+        return len(self._table_values)
+
+    def columnCount(self, parent=None, *args, **kwargs):
+        return len(self._headers)
+
+    def data(self, index, role=None):
+        if index.isValid():
+            value = self._table_values[index.row()][index.column()]
+            if role == Qt.ItemDataRole.DisplayRole:
+                return QVariant(value)
+
+        return QVariant()
+
+    def headerData(self, col, orientation, role=None):
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
+            return QVariant(self._headers[col])
+        return QVariant()
+
+    def setSolution(self, solution: LighthouseGeometrySolution):
+        """Set the solution and update the table values"""
+        self.beginResetModel()
+        self._table_values = []
+
+        for sample in solution.samples:
+            if sample.status == LhCfPoseSampleStatus.OK:
+                error = f'{sample.error_distance * 1000:.1f} mm'
+                pose = sample.pose
+                x = f'{pose.translation[0]:.2f}'
+                y = f'{pose.translation[1]:.2f}'
+                z = f'{pose.translation[2]:.2f}'
+            else:
+                error = f'{sample.status}'
+                x = y = z = '--'
+
+            self._table_values.append([
+                f'{sample.sample_type}',
+                x,
+                y,
+                z,
+                error,
+            ])
+
+        self.endResetModel()
