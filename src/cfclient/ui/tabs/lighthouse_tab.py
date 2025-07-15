@@ -481,18 +481,26 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._is_connected = False
         self._update_ui()
 
+        self._pending_geo_update = None
+
     def write_and_store_geometry(self, geometries: dict[int, LighthouseBsGeometry]):
-        # TODO krri Handle repeated quick writes. This is called from the geo wizard and write_and_store_config() will
-        # throw if there is an ongoing write
         if self._lh_config_writer:
-            self._lh_config_writer.write_and_store_config(self._new_system_config_written_to_cf_signal.emit,
-                                                          geos=geometries)
+            if self._lh_config_writer.is_write_ongoing:
+                self._pending_geo_update = geometries
+            else:
+                self._lh_config_writer.write_and_store_config(self._new_system_config_written_to_cf_signal.emit,
+                                                              geos=geometries)
 
     def _new_system_config_written_to_cf(self, success):
-        # Reset the bit fields for calibration data status to get a fresh view
-        self._helper.cf.param.set_value("lighthouse.bsCalibReset", '1')
-        # New geo data has been written and stored in the CF, read it back to update the UI
-        self._start_read_of_geo_data()
+        if self._pending_geo_update:
+            # If there is a pending update, write it now
+            self.write_and_store_geometry(self._pending_geo_update)
+            self._pending_geo_update = None
+        else:
+            # Reset the bit fields for calibration data status to get a fresh view
+            self._helper.cf.param.set_value("lighthouse.bsCalibReset", '1')
+            # New geo data has been written and stored in the CF, read it back to update the UI
+            self._start_read_of_geo_data()
 
     def _show_basestation_geometry_dialog(self):
         self._basestation_geometry_dialog.reset()
