@@ -141,6 +141,7 @@ class _UserNotificationType(Enum):
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_YELLOW_BACKGROUND = "background-color: lightyellow;"
+STYLE_NO_BACKGROUND = "background-color: ;"
 
 
 class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
@@ -149,6 +150,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     _timeout_reader_signal = QtCore.pyqtSignal(object)
     _container_updated_signal = QtCore.pyqtSignal()
     _user_notification_signal = QtCore.pyqtSignal(object)
+    start_solving_signal = QtCore.pyqtSignal()
     solution_ready_signal = QtCore.pyqtSignal(object)
     sample_selection_changed_signal = QtCore.pyqtSignal(int)
 
@@ -190,14 +192,16 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._container.enable_auto_save(self._session_path)
 
         self._latest_solution: LighthouseGeometrySolution = LighthouseGeometrySolution([])
-
         self._current_step = _CollectionStep.ORIGIN
+
+        self.start_solving_signal.connect(self._start_solving_cb)
+        self.solution_ready_signal.connect(self._solution_ready_cb)
+        self._is_solving = False
+        self._solver_thread = None
+
         self._update_step_ui()
         self._update_ui_reading(False)
         self._update_solution_info()
-
-        self.solution_ready_signal.connect(self._solution_ready_cb)
-        self._solver_thread = None
 
         self._data_status_origin.clicked.connect(lambda: self._change_step(_CollectionStep.ORIGIN))
         self._data_status_x_axis.clicked.connect(lambda: self._change_step(_CollectionStep.X_AXIS))
@@ -227,7 +231,9 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
             if self._solver_thread is None:
                 logger.info("Starting solver thread")
                 self._solver_thread = LhGeoEstimationManager.SolverThread(self._container,
-                                                                          is_done_cb=self.solution_ready_signal.emit)
+                                                                          is_done_cb=self.solution_ready_signal.emit,
+                                                                          is_starting_estimation_cb=(
+                                                                              self.start_solving_signal.emit))
                 self._solver_thread.start()
         else:
             self._action_detector.stop()
@@ -358,15 +364,19 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._set_background_color(self._data_status_x_axis, solution.is_x_axis_samples_valid)
         self._set_background_color(self._data_status_xy_plane, solution.is_xy_plane_samples_valid)
 
-        if solution.progress_is_ok:
-            self._solution_status_is_ok.setText('Solution is OK')
-            self._solution_status_uploaded.setText('Uploaded')
-            self._solution_status_max_error.setText(f'Error: {solution.error_stats.max * 1000:.1f} mm')
+        if self._is_solving:
+            self._solution_status_is_ok.setText('Solving... please wait')
+            self._set_background_none(self._solution_status_is_ok)
         else:
-            self._solution_status_is_ok.setText('No solution')
-            self._solution_status_uploaded.setText('Not uploaded')
-            self._solution_status_max_error.setText('Error: --')
-        self._set_background_color(self._solution_status_is_ok, solution.progress_is_ok)
+            if solution.progress_is_ok:
+                self._solution_status_is_ok.setText('Solution is OK')
+                self._solution_status_uploaded.setText('Uploaded')
+                self._solution_status_max_error.setText(f'Error: {solution.error_stats.max * 1000:.1f} mm')
+            else:
+                self._solution_status_is_ok.setText('No solution')
+                self._solution_status_uploaded.setText('Not uploaded')
+                self._solution_status_max_error.setText('Error: --')
+            self._set_background_color(self._solution_status_is_ok, solution.progress_is_ok)
 
         self._solution_status_info.setText(solution.general_failure_info)
 
@@ -389,6 +399,9 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
     def _user_notification_clear(self):
         self._sample_collection_box.setStyleSheet('')
+
+    def _set_background_none(self, widget: QtWidgets.QWidget):
+        widget.setStyleSheet(STYLE_NO_BACKGROUND)
 
     def _set_background_color(self, widget: QtWidgets.QWidget, is_valid: bool):
         """Set the background color of a widget based on validity"""
@@ -467,7 +480,12 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._timeout_reader_result_setter = None
 
+    def _start_solving_cb(self):
+        self._is_solving = True
+        self._update_solution_info()
+
     def _solution_ready_cb(self, solution: LighthouseGeometrySolution):
+        self._is_solving = False
         self._latest_solution = solution
         self._update_solution_info()
 
