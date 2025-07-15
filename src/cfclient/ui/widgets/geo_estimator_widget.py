@@ -49,7 +49,7 @@ from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngl
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseMatchedSweepAngleReader
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVectors
 from cflib.localization.lighthouse_types import LhDeck4SensorPositions
-from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample, LhCfPoseSampleStatus
+from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample
 from cflib.localization.lighthouse_geo_estimation_manager import LhGeoInputContainer, LhGeoEstimationManager
 from cflib.localization.lighthouse_geometry_solution import LighthouseGeometrySolution
 from cflib.localization.user_action_detector import UserActionDetector
@@ -591,6 +591,7 @@ class _TableRowStatus(Enum):
     OK = 0
     INVALID = 1
     LARGE_ERROR = 2
+
 
 class SampleTableModel(QAbstractTableModel):
     def __init__(self, parent=None, *args):

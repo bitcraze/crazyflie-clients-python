@@ -229,6 +229,7 @@ class SampleMarkerPose(MarkerPose):
             line.parent = None
         self._bs_lines = []
 
+
 class Plot3dLighthouse(scene.SceneCanvas):
     VICINITY_DISTANCE = 2.5
     HIGHLIGHT_DISTANCE = 0.5
