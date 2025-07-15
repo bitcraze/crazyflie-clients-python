@@ -568,11 +568,18 @@ class TimeoutAngleReader:
         result = LhCfPoseSample(angles_calibrated)
         self._ready_cb(result)
 
+
+class _TableRowStatus(Enum):
+    OK = 0
+    INVALID = 1
+    LARGE_ERROR = 2
+
 class SampleTableModel(QAbstractTableModel):
     def __init__(self, parent=None, *args):
         QAbstractTableModel.__init__(self, parent)
         self._headers = ['Type', 'X', 'Y', 'Z', 'Err', 'Action']
         self._table_values = []
+        self._table_highlights: list[_TableRowStatus] = []
 
     def rowCount(self, parent=None, *args, **kwargs):
         return len(self._table_values)
@@ -587,6 +594,13 @@ class SampleTableModel(QAbstractTableModel):
                     value = self._table_values[index.row()][index.column()]
                     return QVariant(value)
 
+            if role == Qt.ItemDataRole.BackgroundRole:
+                if self._table_highlights[index.row()] == _TableRowStatus.INVALID:
+                    return QVariant(QtGui.QBrush(Qt.GlobalColor.gray))
+                elif self._table_highlights[index.row()] == _TableRowStatus.LARGE_ERROR:
+                    if index.column() == 4:
+                        return QVariant(QtGui.QBrush(Qt.GlobalColor.red))
+
         return QVariant()
 
     def headerData(self, col, orientation, role=None):
@@ -598,17 +612,26 @@ class SampleTableModel(QAbstractTableModel):
         """Set the solution and update the table values"""
         self.beginResetModel()
         self._table_values = []
+        self._table_highlights = []
 
         for sample in solution.samples:
-            if sample.is_valid and sample.has_pose:
-                error = f'{sample.error_distance * 1000:.1f} mm'
-                pose = sample.pose
-                x = f'{pose.translation[0]:.2f}'
-                y = f'{pose.translation[1]:.2f}'
-                z = f'{pose.translation[2]:.2f}'
+            status = _TableRowStatus.OK
+            x = y = z = '--'
+            error = '--'
+
+            if sample.is_valid:
+                if sample.has_pose:
+                    error = f'{sample.error_distance * 1000:.1f} mm'
+                    pose = sample.pose
+                    x = f'{pose.translation[0]:.2f}'
+                    y = f'{pose.translation[1]:.2f}'
+                    z = f'{pose.translation[2]:.2f}'
+
+                    if sample.is_error_large:
+                        status = _TableRowStatus.LARGE_ERROR
             else:
                 error = f'{sample.status}'
-                x = y = z = '--'
+                status = _TableRowStatus.INVALID
 
             self._table_values.append([
                 f'{sample.sample_type}',
@@ -617,5 +640,6 @@ class SampleTableModel(QAbstractTableModel):
                 z,
                 error,
             ])
+            self._table_highlights.append(status)
 
         self.endResetModel()
