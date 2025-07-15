@@ -33,7 +33,7 @@ import os
 from typing import Callable
 from PyQt6 import QtCore, QtWidgets, uic, QtGui
 from PyQt6.QtWidgets import QFileDialog
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QMessageBox, QPushButton
 from PyQt6.QtCore import QTimer, QAbstractTableModel, QVariant, Qt, QModelIndex
 
 
@@ -483,6 +483,12 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._samples_details_model.setSolution(self._latest_solution)
 
+        # Add delete buttons
+        for row in range(len(solution.samples)):
+            button = QPushButton('Delete')
+            button.clicked.connect(lambda _, r=row: self._container.remove_sample(r))
+            self._samples_table_view.setIndexWidget(self._samples_details_model.index(row, 5), button)
+
         if solution.progress_is_ok:
             self._upload_geometry(solution.bs_poses)
 
@@ -565,7 +571,7 @@ class TimeoutAngleReader:
 class SampleTableModel(QAbstractTableModel):
     def __init__(self, parent=None, *args):
         QAbstractTableModel.__init__(self, parent)
-        self._headers = ['Type', 'X', 'Y', 'Z', 'Error']
+        self._headers = ['Type', 'X', 'Y', 'Z', 'Err', 'Action']
         self._table_values = []
 
     def rowCount(self, parent=None, *args, **kwargs):
@@ -574,11 +580,12 @@ class SampleTableModel(QAbstractTableModel):
     def columnCount(self, parent=None, *args, **kwargs):
         return len(self._headers)
 
-    def data(self, index, role=None):
+    def data(self, index: QModelIndex, role: Qt.ItemDataRole) -> QVariant:
         if index.isValid():
-            value = self._table_values[index.row()][index.column()]
             if role == Qt.ItemDataRole.DisplayRole:
-                return QVariant(value)
+                if index.column() < len(self._table_values[index.row()]):
+                    value = self._table_values[index.row()][index.column()]
+                    return QVariant(value)
 
         return QVariant()
 
@@ -593,7 +600,7 @@ class SampleTableModel(QAbstractTableModel):
         self._table_values = []
 
         for sample in solution.samples:
-            if sample.status == LhCfPoseSampleStatus.OK:
+            if sample.is_valid and sample.has_pose:
                 error = f'{sample.error_distance * 1000:.1f} mm'
                 pose = sample.pose
                 x = f'{pose.translation[0]:.2f}'

@@ -343,7 +343,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
     def update_samples(self, solution: LighthouseGeometrySolution):
         marker_idx = 0
         for smpl_idx, pose_smpl in enumerate(solution.samples):
-            if pose_smpl.is_valid:
+            if pose_smpl.has_pose:
                 pose = pose_smpl.pose
                 if marker_idx >= len(self._samples):
                     self._samples.append(SampleMarkerPose(self._view.scene))
@@ -363,6 +363,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
 
         for sample in self._samples[marker_idx:]:
             sample.remove()
+        del self._samples[marker_idx:]
 
     def clear_samples(self):
         for sample in self._samples:
