@@ -502,9 +502,9 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._samples_details_model.setSolution(self._latest_solution)
 
         # Add delete buttons
-        for row in range(len(solution.samples)):
+        for row, sample in enumerate(solution.samples):
             button = QPushButton('Delete')
-            button.clicked.connect(lambda _, r=row: self._container.remove_sample(r))
+            button.clicked.connect(lambda _, uid=sample.uid: self._container.remove_sample(uid))
             self._samples_table_view.setIndexWidget(self._samples_details_model.index(row, 5), button)
 
         if solution.progress_is_ok:
