@@ -48,6 +48,7 @@ from cflib.crazyflie.mem import LighthouseMemHelper
 from cflib.localization import LighthouseConfigWriter
 from cflib.localization import LighthouseConfigFileManager
 from cflib.localization import LighthouseGeometrySolution
+from cflib.localization import LhCfPoseSampleType
 
 from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
 
@@ -186,12 +187,14 @@ class BsMarkerPose(MarkerPose):
 
 class SampleMarkerPose(MarkerPose):
     NORMAL_BRUSH = np.array((0.8, 0.8, 0.8))
+    VERIFICATION_BRUSH = np.array((1.0, 1.0, 0.9))
     HIGHLIGHT_BRUSH = np.array((0.2, 0.2, 0.2))
     BS_LINE_COL = np.array((0.0, 0.0, 0.0))
 
     def __init__(self, the_scene):
         super().__init__(the_scene, self.NORMAL_BRUSH, None)
         self._is_highlighted = False
+        self._is_verification = False
         self._bs_lines = []
 
     def set_highlighted(self, highlighted: bool, bs_positions=[]):
@@ -215,10 +218,15 @@ class SampleMarkerPose(MarkerPose):
                 line.parent = None
         else:
             if highlighted != self._is_highlighted:
-                self.set_color(self.NORMAL_BRUSH)
+                self.set_color(self.VERIFICATION_BRUSH) if self._is_verification else self.set_color(self.NORMAL_BRUSH)
                 self._clear_lines()
 
         self._is_highlighted = highlighted
+
+    def set_verification_type(self, is_verification: bool):
+        self._is_verification = is_verification
+        if not self._is_highlighted:
+            self.set_color(self.VERIFICATION_BRUSH) if self._is_verification else self.set_color(self.NORMAL_BRUSH)
 
     def remove(self):
         super().remove()
@@ -350,6 +358,8 @@ class Plot3dLighthouse(scene.SceneCanvas):
                     self._samples.append(SampleMarkerPose(self._view.scene))
 
                 self._samples[marker_idx].set_pose(pose.translation, pose.rot_matrix)
+                self._samples[marker_idx].set_verification_type(
+                    pose_smpl.sample_type == LhCfPoseSampleType.VERIFICATION)
 
                 if smpl_idx == self.selected_sample_index:
                     bs_positions = []

@@ -153,6 +153,8 @@ STYLE_NO_BACKGROUND = "background-color: ;"
 
 MOVE_COLUMN = 5
 DEL_COLUMN = 6
+
+
 class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     """Widget for the geometry estimator UI"""
 
@@ -529,10 +531,11 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                 # Move button
                 if sample.sample_type == LhCfPoseSampleType.VERIFICATION:
                     button = QPushButton('To xyz')
-                    button.clicked.connect(lambda _, uid=sample.uid : self._container.convert_to_xyz_space_sample(uid))
+                    button.clicked.connect(lambda _, uid=sample.uid: self._container.convert_to_xyz_space_sample(uid))
                 else:
                     button = QPushButton('To verif.')
-                    button.clicked.connect(lambda _, uid=sample.uid : self._container.convert_to_verification_sample(uid))
+                    button.clicked.connect(lambda _, uid=sample.uid: self._container.convert_to_verification_sample(
+                        uid))
                 self._samples_table_view.setIndexWidget(self._samples_details_model.index(row, MOVE_COLUMN), button)
 
                 # Delete button
@@ -625,9 +628,9 @@ class TimeoutAngleReader:
 
 
 class _TableRowStatus(Enum):
-    OK = 0
     INVALID = 1
     LARGE_ERROR = 2
+    VERIFICATION = 3
 
 
 class SampleTableModel(QAbstractTableModel):
@@ -635,7 +638,7 @@ class SampleTableModel(QAbstractTableModel):
         QAbstractTableModel.__init__(self, parent)
         self._headers = ['Type', 'X', 'Y', 'Z', 'Err', 'Move', 'Del']
         self._table_values = []
-        self._table_highlights: list[_TableRowStatus] = []
+        self._table_highlights: list[set[_TableRowStatus]] = []
 
     def rowCount(self, parent=None, *args, **kwargs):
         return len(self._table_values)
@@ -651,11 +654,17 @@ class SampleTableModel(QAbstractTableModel):
                     return QVariant(value)
 
             if role == Qt.ItemDataRole.BackgroundRole:
-                if self._table_highlights[index.row()] == _TableRowStatus.INVALID:
-                    return QVariant(QtGui.QBrush(Qt.GlobalColor.gray))
-                elif self._table_highlights[index.row()] == _TableRowStatus.LARGE_ERROR:
+                color = None
+                if _TableRowStatus.VERIFICATION in self._table_highlights[index.row()]:
+                    color = QtGui.QColor(255, 255, 230)
+                if _TableRowStatus.INVALID in self._table_highlights[index.row()]:
+                    color = Qt.GlobalColor.gray
+                if _TableRowStatus.LARGE_ERROR in self._table_highlights[index.row()]:
                     if index.column() == 4:
-                        return QVariant(QtGui.QBrush(Qt.GlobalColor.red))
+                        color = QtGui.QColor(255, 182, 193)
+
+                if color:
+                    return QVariant(QtGui.QBrush(color))
 
         return QVariant()
 
@@ -671,9 +680,12 @@ class SampleTableModel(QAbstractTableModel):
         self._table_highlights = []
 
         for sample in solution.samples:
-            status = _TableRowStatus.OK
+            status: set[_TableRowStatus] = set()
             x = y = z = '--'
             error = '--'
+
+            if sample.sample_type == LhCfPoseSampleType.VERIFICATION:
+                status.add(_TableRowStatus.VERIFICATION)
 
             if sample.is_valid:
                 if sample.has_pose:
@@ -684,10 +696,10 @@ class SampleTableModel(QAbstractTableModel):
                     z = f'{pose.translation[2]:.2f}'
 
                     if sample.is_error_large:
-                        status = _TableRowStatus.LARGE_ERROR
+                        status.add(_TableRowStatus.LARGE_ERROR)
             else:
                 error = f'{sample.status}'
-                status = _TableRowStatus.INVALID
+                status.add(_TableRowStatus.INVALID)
 
             self._table_values.append([
                 f'{sample.sample_type}',

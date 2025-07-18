@@ -234,6 +234,13 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QPushButton" name="_data_status_verification">
+            <property name="text">
+             <string>Verification</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
