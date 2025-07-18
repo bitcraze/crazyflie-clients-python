@@ -49,7 +49,7 @@ from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngl
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseMatchedSweepAngleReader
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVectors
 from cflib.localization.lighthouse_types import LhDeck4SensorPositions
-from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample
+from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample, LhCfPoseSampleType, LhCfPoseSampleStatus
 from cflib.localization.lighthouse_geo_estimation_manager import LhGeoInputContainer, LhGeoEstimationManager
 from cflib.localization.lighthouse_geometry_solution import LighthouseGeometrySolution
 from cflib.localization.user_action_detector import UserActionDetector
@@ -143,7 +143,8 @@ STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_YELLOW_BACKGROUND = "background-color: lightyellow;"
 STYLE_NO_BACKGROUND = "background-color: ;"
 
-
+MOVE_COLUMN = 5
+DEL_COLUMN = 6
 class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     """Widget for the geometry estimator UI"""
 
@@ -372,10 +373,16 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                 self._solution_status_is_ok.setText('Solution is OK')
                 self._solution_status_uploaded.setText('Uploaded')
                 self._solution_status_max_error.setText(f'Error: {solution.error_stats.max * 1000:.1f} mm')
+
+                verification_error = 'No data'
+                if solution.verification_stats:
+                    verification_error = f'{solution.verification_stats.max * 1000:.1f} mm'
+                self._solution_status_verification_error.setText(f'Verification err: {verification_error}')
             else:
                 self._solution_status_is_ok.setText('No solution')
                 self._solution_status_uploaded.setText('Not uploaded')
                 self._solution_status_max_error.setText('Error: --')
+                self._solution_status_verification_error.setText('Verification err: --')
             self._set_background_color(self._solution_status_is_ok, solution.progress_is_ok)
 
         self._solution_status_info.setText(solution.general_failure_info)
@@ -501,11 +508,22 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._samples_details_model.setSolution(self._latest_solution)
 
-        # Add delete buttons
+        # Add action buttons to table
         for row, sample in enumerate(solution.samples):
-            button = QPushButton('Delete')
-            button.clicked.connect(lambda _, uid=sample.uid: self._container.remove_sample(uid))
-            self._samples_table_view.setIndexWidget(self._samples_details_model.index(row, 5), button)
+            if sample.status != LhCfPoseSampleStatus.NO_DATA:
+                # Move button
+                if sample.sample_type == LhCfPoseSampleType.VERIFICATION:
+                    button = QPushButton('To xyz')
+                    button.clicked.connect(lambda _, uid=sample.uid : self._container.convert_to_xyz_space_sample(uid))
+                else:
+                    button = QPushButton('To verif.')
+                    button.clicked.connect(lambda _, uid=sample.uid : self._container.convert_to_verification_sample(uid))
+                self._samples_table_view.setIndexWidget(self._samples_details_model.index(row, MOVE_COLUMN), button)
+
+                # Delete button
+                button = QPushButton('Del')
+                button.clicked.connect(lambda _, uid=sample.uid: self._container.remove_sample(uid))
+                self._samples_table_view.setIndexWidget(self._samples_details_model.index(row, DEL_COLUMN), button)
 
         if solution.progress_is_ok:
             self._upload_geometry(solution.bs_poses)
@@ -596,7 +614,7 @@ class _TableRowStatus(Enum):
 class SampleTableModel(QAbstractTableModel):
     def __init__(self, parent=None, *args):
         QAbstractTableModel.__init__(self, parent)
-        self._headers = ['Type', 'X', 'Y', 'Z', 'Err', 'Action']
+        self._headers = ['Type', 'X', 'Y', 'Z', 'Err', 'Move', 'Del']
         self._table_values = []
         self._table_highlights: list[_TableRowStatus] = []
 
