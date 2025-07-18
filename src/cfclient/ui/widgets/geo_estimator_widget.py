@@ -32,8 +32,8 @@ Container for the geometry estimation functionality in the lighthouse tab.
 import os
 from typing import Callable
 from PyQt6 import QtCore, QtWidgets, uic, QtGui
-from PyQt6.QtWidgets import QFileDialog
-from PyQt6.QtWidgets import QMessageBox, QPushButton
+from PyQt6.QtWidgets import QFileDialog, QGridLayout
+from PyQt6.QtWidgets import QMessageBox, QPushButton, QLabel
 from PyQt6.QtCore import QTimer, QAbstractTableModel, QVariant, Qt, QModelIndex
 
 
@@ -149,7 +149,7 @@ class _UserNotificationType(Enum):
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_YELLOW_BACKGROUND = "background-color: lightyellow;"
-STYLE_NO_BACKGROUND = "background-color: ;"
+STYLE_NO_BACKGROUND = "background-color: none;"
 
 MOVE_COLUMN = 5
 DEL_COLUMN = 6
@@ -233,6 +233,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._sample_details_checkbox.setChecked(False)
         self._samples_table_view.setVisible(False)
         self._sample_details_checkbox.stateChanged.connect(self._sample_details_checkbox_state_changed)
+
+        self._bs_linkage_handler = BsLinkageHandler(self._bs_linkage_grid)
 
     def _selection_changed(self, current: QModelIndex, previous: QModelIndex):
         self.sample_selection_changed_signal.emit(current.row())
@@ -543,6 +545,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                 button.clicked.connect(lambda _, uid=sample.uid: self._container.remove_sample(uid))
                 self._samples_table_view.setIndexWidget(self._samples_details_model.index(row, DEL_COLUMN), button)
 
+        self._bs_linkage_handler.update(solution)
+
         if solution.progress_is_ok:
             self._upload_geometry(solution.bs_poses)
 
@@ -711,3 +715,55 @@ class SampleTableModel(QAbstractTableModel):
             self._table_highlights.append(status)
 
         self.endResetModel()
+
+
+class BsLinkageHandler:
+    STYLE_RED_BACKGROUND = "background-color: lightpink;"
+    STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
+
+    def __init__(self, container: QGridLayout):
+        self._container = container
+
+        for bs in range(0, 16):
+            container.addWidget(self._create_label(str(bs + 1)), 0, bs)
+            container.addWidget(self._create_label(), 1, bs)
+
+    def update(self, solution: LighthouseGeometrySolution):
+        container = self._container
+        link_count = solution.link_count
+        threshold = solution.link_count_ok_threshold
+
+        for bs in range(0, 16):
+            exists = bs in link_count
+            count = 0
+            text = ''
+            if exists:
+                count = len(link_count[bs])
+                text = f'{count}'
+            is_ok = count >= threshold
+
+            label_1 = container.itemAtPosition(0, bs).widget()
+            label_1.setVisible(exists)
+
+            label_2 = container.itemAtPosition(1, bs).widget()
+            label_2.setVisible(exists)
+            label_2.setText(text)
+            if is_ok:
+                label_2.setStyleSheet(self.STYLE_GREEN_BACKGROUND)
+            else:
+                label_2.setStyleSheet(self.STYLE_RED_BACKGROUND)
+
+
+    def _create_label(self, text=None):
+        label = QLabel()
+        label.setMinimumSize(30, 0)
+        label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Preferred)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        if text:
+            label.setText(str(text))
+        else:
+            label.setProperty('frameShape', 'QFrame::Box')
+            label.setStyleSheet(STYLE_NO_BACKGROUND)
+
+        return label
