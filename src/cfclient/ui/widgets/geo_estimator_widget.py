@@ -82,11 +82,18 @@ class _CollectionStep(Enum):
                 'You can sample multiple positions to get a more precise definition.')
     XYZ_SPACE = ('bslh_4.png',
                  'Step 4. XYZ-space',
-                 'Sample points in the space that will be used.\n' +
+                 'Sample points in the space that you will use.\n' +
                  'Make sure all the base stations are received, you need at least two base \n' +
                  'stations in each sample. Sample by rotating the Crazyflie quickly \n' +
                  'left-right around the Z-axis and then holding it still for a second, or \n' +
                  'optionally by clicking the sample button below.\n')
+
+    VERIFICATION = ('bslh_4.png',
+                    'Step 5. Verification',
+                    'Sample points to be used for verification of the geometry.\n' +
+                    'Sample by rotating the Crazyflie quickly \n' +
+                    'left-right around the Z-axis and then holding it still for a second, or \n' +
+                    'optionally by clicking the sample button below.\n')
 
     def __init__(self, image, title, instructions):
         self.image = image
@@ -102,7 +109,8 @@ class _CollectionStep(Enum):
             self._order = [self.ORIGIN,
                            self.X_AXIS,
                            self.XY_PLANE,
-                           self.XYZ_SPACE]
+                           self.XYZ_SPACE,
+                           self.VERIFICATION]
         return self._order
 
     def next(self):
@@ -208,6 +216,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._data_status_x_axis.clicked.connect(lambda: self._change_step(_CollectionStep.X_AXIS))
         self._data_status_xy_plane.clicked.connect(lambda: self._change_step(_CollectionStep.XY_PLANE))
         self._data_status_xyz_space.clicked.connect(lambda: self._change_step(_CollectionStep.XYZ_SPACE))
+        self._data_status_verification.clicked.connect(lambda: self._change_step(_CollectionStep.VERIFICATION))
 
         self._samples_details_model = SampleTableModel(self)
         self._samples_table_view.setModel(self._samples_details_model)
@@ -297,7 +306,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         if step != self._current_step:
             self._current_step = step
             self._update_step_ui()
-            if step == _CollectionStep.XYZ_SPACE:
+            if step in [_CollectionStep.XYZ_SPACE, _CollectionStep.VERIFICATION]:
                 self._action_detector.start()
             else:
                 self._action_detector.stop()
@@ -334,6 +343,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._data_status_x_axis.setEnabled(is_enabled)
         self._data_status_xy_plane.setEnabled(is_enabled)
         self._data_status_xyz_space.setEnabled(is_enabled)
+        self._data_status_verification.setEnabled(is_enabled)
 
         self._load_button.setEnabled(is_enabled)
         self._save_button.setEnabled(is_enabled)
@@ -359,6 +369,9 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                 text = f'OK, {self._container.xyz_space_sample_count()} sample(s)'
                 if solution.xyz_space_samples_info:
                     text += f', {solution.xyz_space_samples_info}'
+                self._step_solution_info.setText(text)
+            case _CollectionStep.VERIFICATION:
+                text = f'OK, {self._container.verification_sample_count()} sample(s)'
                 self._step_solution_info.setText(text)
 
         self._set_background_color(self._data_status_origin, solution.is_origin_sample_valid)
@@ -430,7 +443,9 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
             case _CollectionStep.XY_PLANE:
                 self._measure_xy_plane()
             case _CollectionStep.XYZ_SPACE:
-                self._measure_xyz_space()
+                self._measure_single_sample()
+            case _CollectionStep.VERIFICATION:
+                self._measure_single_sample()
 
     def _measure_origin(self):
         """Measure the origin position"""
@@ -447,9 +462,9 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         logger.debug("Measuring XY-plane position...")
         self._start_timeout_average_read(self._container.append_xy_plane_sample)
 
-    def _measure_xyz_space(self):
-        """Measure the XYZ-space position"""
-        logger.debug("Measuring XYZ-space position...")
+    def _measure_single_sample(self):
+        """Measure a single sample. Used both for xyz-space and verification"""
+        logger.debug("Measuring single sample...")
         self._user_notification_signal.emit(_UserNotificationType.PENDING)
         self._matched_reader.start(timeout=1.0)
 
@@ -541,12 +556,16 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._lighthouse_tab.write_and_store_geometry(geo_dict)
 
     def _user_action_detected_cb(self):
-        self._measure_xyz_space()
+        self._measure_single_sample()
 
     def _single_sample_ready_cb(self, sample: LhCfPoseSample):
         self._user_notification_signal.emit(_UserNotificationType.SUCCESS)
         self._container_updated_signal.emit()
-        self._container.append_xyz_space_samples([sample])
+        match self._current_step:
+            case _CollectionStep.XYZ_SPACE:
+                self._container.append_xyz_space_samples([sample])
+            case _CollectionStep.VERIFICATION:
+                self._container.append_verification_samples([sample])
 
     def _single_sample_timeout_cb(self):
         self._user_notification_signal.emit(_UserNotificationType.FAILURE)
