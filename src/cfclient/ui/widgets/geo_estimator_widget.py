@@ -753,7 +753,6 @@ class BsLinkageHandler:
             else:
                 label_2.setStyleSheet(self.STYLE_RED_BACKGROUND)
 
-
     def _create_label(self, text=None):
         label = QLabel()
         label.setMinimumSize(30, 0)
