@@ -239,6 +239,9 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     def _selection_changed(self, current: QModelIndex, previous: QModelIndex):
         self.sample_selection_changed_signal.emit(current.row())
 
+    def set_selected_sample(self, index: int):
+        self._samples_table_view.selectRow(index)
+
     def setVisible(self, visible: bool):
         super(GeoEstimatorWidget, self).setVisible(visible)
         if visible:

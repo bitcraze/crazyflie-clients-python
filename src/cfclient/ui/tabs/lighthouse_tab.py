@@ -86,7 +86,7 @@ class MarkerPose():
     LABEL_SIZE = 100
     LABEL_OFFSET = np.array((0.0, 0, 0.25))
 
-    def __init__(self, the_scene, color, text=None, axis_visible=False):
+    def __init__(self, the_scene, color, text=None, axis_visible=False, interactive=False):
         self._scene = the_scene
         self._color = color
         self._text = text
@@ -96,6 +96,9 @@ class MarkerPose():
             pos=np.array([[0, 0, 0]]),
             parent=self._scene,
             face_color=self._color)
+
+        if interactive:
+            self._marker.interactive = True
 
         if axis_visible:
             self._x_axis = scene.visuals.Line(
@@ -163,6 +166,9 @@ class MarkerPose():
         self._color = color
         self._marker.set_data(pos=np.array([self._position]), face_color=self._color)
 
+    def is_same_visual(self, visual):
+        return visual == self._marker
+
 
 class CfMarkerPose(MarkerPose):
     POSITION_BRUSH = np.array((0, 0, 1.0))
@@ -192,7 +198,7 @@ class SampleMarkerPose(MarkerPose):
     BS_LINE_COL = np.array((0.0, 0.0, 0.0))
 
     def __init__(self, the_scene):
-        super().__init__(the_scene, self.NORMAL_BRUSH, None)
+        super().__init__(the_scene, self.NORMAL_BRUSH, None, interactive=True)
         self._is_highlighted = False
         self._is_verification = False
         self._bs_lines = []
@@ -249,7 +255,7 @@ class Plot3dLighthouse(scene.SceneCanvas):
 
     TEXT_OFFSET = np.array((0.0, 0, 0.25))
 
-    def __init__(self):
+    def __init__(self, sample_clicked_signal: pyqtSignal(int)):
         scene.SceneCanvas.__init__(self, keys=None)
         self.unfreeze()
 
@@ -265,6 +271,8 @@ class Plot3dLighthouse(scene.SceneCanvas):
         self._samples = []
         self.selected_sample_index = -1
 
+        self.events.mouse_press.connect(self.on_mouse_press)
+        self._sample_clicked_signal = sample_clicked_signal
         self.freeze()
 
         plane_size = 10
@@ -278,6 +286,14 @@ class Plot3dLighthouse(scene.SceneCanvas):
             parent=self._view.scene)
 
         self._addArrows(1, 0.02, 0.1, 0.1, self._view.scene)
+
+    def on_mouse_press(self, event):
+        visual = self.visual_at(event.pos)
+        for index, sample in enumerate(self._samples):
+            if sample.is_same_visual(visual):
+                clicked_index = index
+                self._sample_clicked_signal.emit(clicked_index)
+                break
 
     def _addArrows(self, length, width, head_length, head_width, parent):
         # The Arrow visual in vispy does not seem to work very good,
@@ -416,6 +432,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     _new_system_config_written_to_cf_signal = pyqtSignal(bool)
     _geometry_read_signal = pyqtSignal(object)
     _calibration_read_signal = pyqtSignal(object)
+    _sample_clicked_signal = pyqtSignal(int)
 
     def __init__(self, helper):
         super(LighthouseTab, self).__init__(helper, 'Lighthouse Positioning')
@@ -435,6 +452,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._new_system_config_written_to_cf_signal.connect(self._new_system_config_written_to_cf)
         self._geometry_read_signal.connect(self._geometry_read_cb)
         self._calibration_read_signal.connect(self._calibration_read_cb)
+        self._sample_clicked_signal.connect(self._geo_estimator_widget.set_selected_sample)
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(self._connected_signal.emit)
@@ -522,7 +540,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._basestation_mode_dialog.show()
 
     def _set_up_plots(self):
-        self._plot_3d = Plot3dLighthouse()
+        self._plot_3d = Plot3dLighthouse(self._sample_clicked_signal)
         self._plot_layout.addWidget(self._plot_3d.native)
 
     def _connected(self, link_uri):
