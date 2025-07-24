@@ -86,16 +86,18 @@ class MarkerPose():
     LABEL_SIZE = 100
     LABEL_OFFSET = np.array((0.0, 0, 0.25))
 
-    def __init__(self, the_scene, color, text=None, axis_visible=False, interactive=False):
+    def __init__(self, the_scene, color, text=None, axis_visible=False, interactive=False, symbol: str = 'disc'):
         self._scene = the_scene
         self._color = color
         self._text = text
         self._position = [0.0, 0, 0]
+        self._symbol = symbol
 
         self._marker = scene.visuals.Markers(
             pos=np.array([[0, 0, 0]]),
             parent=self._scene,
-            face_color=self._color)
+            face_color=self._color,
+            symbol=self._symbol)
 
         if interactive:
             self._marker.interactive = True
@@ -133,7 +135,7 @@ class MarkerPose():
             return
         self._position = position
 
-        self._marker.set_data(pos=np.array([position]), face_color=self._color)
+        self._marker.set_data(pos=np.array([position]), face_color=self._color, symbol=self._symbol)
 
         if self._label:
             self._label.pos = self.LABEL_OFFSET + position
@@ -164,7 +166,7 @@ class MarkerPose():
 
     def set_color(self, color):
         self._color = color
-        self._marker.set_data(pos=np.array([self._position]), face_color=self._color)
+        self._marker.set_data(pos=np.array([self._position]), face_color=self._color, symbol=self._symbol)
 
     def is_same_visual(self, visual):
         return visual == self._marker
@@ -198,7 +200,7 @@ class SampleMarkerPose(MarkerPose):
     BS_LINE_COL = np.array((0.0, 0.0, 0.0))
 
     def __init__(self, the_scene):
-        super().__init__(the_scene, self.NORMAL_BRUSH, None, interactive=True)
+        super().__init__(the_scene, self.NORMAL_BRUSH, None, interactive=True, symbol='square')
         self._is_highlighted = False
         self._is_verification = False
         self._bs_lines = []
