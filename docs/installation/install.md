@@ -12,9 +12,9 @@ To install on Python 3.13, build tools and Python development headers are requir
 There are a few things to sort out on your machine before you can install the client. Please see the appropriate
 section depending on your environment.
 
-### Raspberrypy Bookworm+
+### Raspberry Pi Bookworm+
 
-On Raspberry bookwork it is required to create a *python venv* to install the client but the system's pyqt6 should still be used.
+On Raspberry Pi Bookworm it is required to create a *python venv* to install the client but the system's pyqt6 should still be used.
 
 Install dependencies:
 ```
@@ -27,15 +27,15 @@ pipx install --system-site-packages .
 ```
 
 The ```--system-site-packages``` is the most important there since it allows to use pyqt we installed just above.
-The same flag can be passes to ```python3 -m venv``` in order to create a python venv that can run the client.
-The first time ```pipx``` will complain about binaries not being in the path. Rebooting the pie solves the problem and then the client can be launched by typing ```cfclient``` in a console.
+The same flag can be passed to ```python3 -m venv``` in order to create a python venv that can run the client.
+The first time ```pipx``` will complain about binaries not being in the path. Rebooting the Pi solves the problem and then the client can be launched by typing ```cfclient``` in a console.
 
 Permission for USB needs to be set as described below for Debian/Ubuntu
 
 
 ### Debian/Ubuntu
 
-From a fresh Ubuntu 20.04 system and up, running the client form source requires git, pip and a lib for the Qt GUI.
+From a fresh Ubuntu 20.04 system and up, running the client from source requires git, pip and a lib for the Qt GUI.
 
 ```
 sudo apt install git python3-pip libxcb-xinerama0 libxcb-cursor0
