@@ -38,10 +38,10 @@ else:
 config_path = AppDirs("cfclient", "Bitcraze").user_config_dir
 
 if not hasattr(sys, 'frozen'):
-    import pkg_resources
+    from importlib.metadata import version, PackageNotFoundError
     try:
-        VERSION = pkg_resources.require("cfclient")[0].version
-    except pkg_resources.DistributionNotFound:
+        VERSION = version("cfclient")
+    except PackageNotFoundError:
         VERSION = "dev"
 else:
     try:
