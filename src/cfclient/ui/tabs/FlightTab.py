@@ -446,7 +446,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         # To prevent conflicting commands from the controller and the flight panel
         if JoystickReader().available_devices():
             self.commanderBox.setToolTip(
-                'Cant use both an controller and Command Based Flight'
+                'Cannot use both a controller and Command Based Flight'
             )
             self.commanderBox.setEnabled(False)
             return
