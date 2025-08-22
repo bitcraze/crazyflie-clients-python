@@ -398,7 +398,7 @@ class ParamTab(TabToolbox, param_tab_class):
 
                     self.paramDetailsDescription.setWordWrap(True)
                     self.paramDetailsDescription.setText(desc.replace('\n', ''))
-                except:  # noqa
+                except (KeyError, TypeError, AttributeError):
                     self.paramDetailsDescription.setText('')
 
             complete = f'{group}.{param}'
