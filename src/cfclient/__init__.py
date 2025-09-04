@@ -52,5 +52,5 @@ else:
 try:
     with open(os.path.join(module_path, "resources/log_param_doc.json")) as f:
         log_param_doc = json.load(f)
-except:  # noqa
+except (IOError, OSError, json.JSONDecodeError):
     log_param_doc = None
