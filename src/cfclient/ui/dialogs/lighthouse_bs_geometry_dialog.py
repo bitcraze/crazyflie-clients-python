@@ -31,7 +31,6 @@ import cfclient
 from PyQt6 import QtWidgets
 from PyQt6 import uic
 from PyQt6.QtCore import QVariant, Qt, QAbstractTableModel, pyqtSignal
-from cflib.localization import LighthouseBsGeoEstimator
 from cflib.localization import LighthouseSweepAngleAverageReader
 from cflib.crazyflie.mem import LighthouseBsGeometry
 from cfclient.ui.wizards.lighthouse_geo_bs_estimation_wizard import LighthouseBasestationGeometryWizard
@@ -138,13 +137,6 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._lighthouse_tab = lighthouse_tab
 
         self._estimate_geometry_button.clicked.connect(self._estimate_geometry_button_clicked)
-        self._simple_estimator = LighthouseBsGeoEstimator()
-        self._estimate_geometry_simple_button.clicked.connect(self._estimate_geometry_simple_button_clicked)
-        try:
-            if not self._simple_estimator.is_available():
-                self._estimate_geometry_simple_button.setEnabled(False)
-        except Exception as e:
-            print(e)
 
         self._write_to_cf_button.clicked.connect(self._write_to_cf_button_clicked)
 
@@ -204,10 +196,6 @@ class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_
         self._base_station_geometry_wizard.reset()
         self._base_station_geometry_wizard.show()
         self.hide()
-
-    def _estimate_geometry_simple_button_clicked(self):
-        self._sweep_angle_reader.start_angle_collection()
-        self._update_ui()
 
     def _write_to_cf_button_clicked(self):
         if len(self._newly_estimated_geometry) > 0:
