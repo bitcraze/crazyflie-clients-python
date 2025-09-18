@@ -134,7 +134,7 @@ This will run the lint checkers defined in `.pre-commit-config-yaml` on your pro
 
 ### Working with the GUI .ui files
 
-you can edit the .ui files for the GUI with QtCreator. For Windows and Mac you can download the Qt development kit from the [Qt website](https://www.qt.io/download-open-source/). On linux QtCreator is usually available as package, for example on Ubuntu it can be installed with ```sudo apt install qtcreator```.
+You can edit the .ui files for the GUI with QtCreator. For Windows and Mac you can download the Qt development kit from the [Qt website](https://www.qt.io/download-open-source/). On Linux QtCreator is usually available as package, for example on Ubuntu it can be installed with ```sudo apt install qtcreator```.
 
 ### Debugging the client from an IDE
 
