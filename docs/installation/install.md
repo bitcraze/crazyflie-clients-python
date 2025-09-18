@@ -20,8 +20,6 @@ sudo apt install git python3-pip libxcb-xinerama0 libxcb-cursor0
 pip3 install --upgrade pip
 ```
 
-> For some versions of Ubuntu 20.04 you might need to install additional packages like `libxcb-cursor0`. Check out the [Qt6 package dependency list](https://doc.qt.io/qt-6/linux-requirements.html).
-
 #### Setting udev permissions
 
 Using Crazyradio on Ubuntu/Linux requires that you set udev permissions. See the cflib [installation guide](https://www.bitcraze.io/documentation/repository/crazyflie-lib-python/master/installation/usb_permissions/) for more information.
