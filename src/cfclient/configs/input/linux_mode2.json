@@ -2,7 +2,7 @@
   "inputconfig": {
     "inputdevice": {
       "updateperiod": 10,
-      "name": "PS3_Mode_3",
+      "name": "xbox360_mode1_linux",
       "rp_dead_band": 0.1,
       "axis": [
         {
@@ -15,10 +15,7 @@
         {
           "scale": 1.0,
           "type": "Input.AXIS",
-          "ids": [
-            12,
-            13
-          ],
+          "id": 0,
           "key": "yaw",
           "name": "yaw"
         },
@@ -39,42 +36,49 @@
         {
           "scale": -1.0,
           "type": "Input.BUTTON",
-          "id": 6,
+          "id": -1,
           "key": "pitchNeg",
           "name": "pitchNeg"
         },
         {
           "scale": 1.0,
           "type": "Input.BUTTON",
-          "id": 4,
+          "id": -1,
           "key": "pitchPos",
           "name": "pitchPos"
         },
         {
           "scale": 1.0,
           "type": "Input.BUTTON",
-          "id": 14,
+          "id": -1,
           "key": "estop",
           "name": "killswitch"
         },
         {
           "scale": -1.0,
           "type": "Input.BUTTON",
-          "id": 7,
+          "id": -1,
           "key": "rollNeg",
           "name": "rollNeg"
         },
         {
           "scale": 1.0,
           "type": "Input.BUTTON",
-          "id": 5,
+          "id": -1,
           "key": "rollPos",
           "name": "rollPos"
         },
         {
           "scale": 1.0,
           "type": "Input.BUTTON",
-          "id": 12,
+          "id": 5,
+          "key": "althold",
+          "name": "althold"
+        },
+        {
+          "scale": 1.0,
+          "type": "Input.BUTTON",
+          "id": -1,
           "key": "exit",
           "name": "exitapp"
         }
