@@ -1,86 +1,93 @@
 {
   "inputconfig": {
     "inputdevice": {
+      "name": "Linux Mode 3",
       "updateperiod": 10,
-      "name": "xbox360_mode1_linux",
       "rp_dead_band": 0.1,
       "axis": [
         {
-          "scale": -1.0,
-          "type": "Input.AXIS",
-          "id": 3,
-          "key": "thrust",
-          "name": "thrust"
-        },
-        {
-          "scale": 1.0,
-          "type": "Input.AXIS",
-          "id": 2,
-          "key": "yaw",
-          "name": "yaw"
-        },
-        {
-          "scale": 1.0,
+          "name": "Roll",
           "type": "Input.AXIS",
           "id": 0,
-          "key": "roll",
-          "name": "roll"
+          "scale": 1.0,
+          "key": "roll"
         },
         {
-          "scale": -1.0,
+          "name": "Pitch",
           "type": "Input.AXIS",
           "id": 1,
-          "key": "pitch",
-          "name": "pitch"
-        },
-        {
           "scale": -1.0,
-          "type": "Input.BUTTON",
-          "id": -1,
-          "key": "pitchNeg",
-          "name": "pitchNeg"
+          "key": "pitch"
         },
         {
+          "name": "Yaw",
+          "type": "Input.AXIS",
+          "id": 2,
           "scale": 1.0,
-          "type": "Input.BUTTON",
-          "id": -1,
-          "key": "pitchPos",
-          "name": "pitchPos"
+          "key": "yaw"
         },
         {
-          "scale": 1.0,
-          "type": "Input.BUTTON",
-          "id": -1,
-          "key": "estop",
-          "name": "killswitch"
-        },
-        {
+          "name": "Thrust",
+          "type": "Input.AXIS",
+          "id": 3,
           "scale": -1.0,
-          "type": "Input.BUTTON",
-          "id": -1,
-          "key": "rollNeg",
-          "name": "rollNeg"
+          "key": "thrust"
         },
         {
-          "scale": 1.0,
+          "name": "Pitch Cal+",
           "type": "Input.BUTTON",
-          "id": -1,
-          "key": "rollPos",
-          "name": "rollPos"
+          "id": 6,
+          "scale": -1.0,
+          "key": "pitchNeg"
         },
         {
+          "name": "Pitch Cal-",
+          "type": "Input.BUTTON",
+          "id": 4,
           "scale": 1.0,
+          "key": "pitchPos"
+        },
+        {
+          "name": "Roll Cal +",
           "type": "Input.BUTTON",
           "id": 5,
-          "key": "althold",
-          "name": "althold"
+          "scale": 1.0,
+          "key": "rollPos"
+        },
+        {
+          "name": "Roll Cal -",
+          "type": "Input.BUTTON",
+          "id": 7,
+          "scale": -1.0,
+          "key": "rollNeg"
+        },
+        {
+          "name": "Killswtich",
+          "type": "Input.BUTTON",
+          "id": 1,
+          "scale": 1.0,
+          "key": "estop"
         },
         {
           "scale": 1.0,
           "type": "Input.BUTTON",
-          "id": -1,
-          "key": "exit",
-          "name": "exitapp"
+          "id": 0,
+          "key": "arm",
+          "name": "arm"
+        },
+        {
+          "name": "Assisted Control",
+          "type": "Input.BUTTON",
+          "id": 7,
+          "scale": 1.0,
+          "key": "assistedControl"
+        },
+        {
+          "name": "Exit",
+          "type": "Input.BUTTON",
+          "id": 12,
+          "scale": 1.0,
+          "key": "exit"
         }
       ]
     }
