@@ -57,21 +57,7 @@ The client works with both the Apple-provided Python 3 (as long as it is Python 
 
 ### Raspberry Pi
 
-On Raspberry Pi Bookworm it is required to create a Python venv to install the client, but the system's PyQt6 should still be used.
-
-Install dependencies:
-```bash
-sudo apt install -y pipx python3-pyqt6 pyqt6-dev-tools
-```
-
-Then, to install the client:
-```bash
-pipx install --system-site-packages .
-```
-
-The `--system-site-packages` flag is important as it allows using the PyQt6 installed above. The same flag can be passed to `python3 -m venv` to create a Python venv that can run the client.
-
-The first time `pipx` will complain about binaries not being in the path. Rebooting the Pi solves the problem, and then the client can be launched by typing `cfclient` in a console.
+The client requires Raspberry Pi Trixie or more recent. On Raspberry Pi Trixie it is required to create a Python venv to install the client. The client GUI works on both the Raspberry Pi 4 and 5, but it is recommended to be used on a Raspberry Pi 5.
 
 USB permissions need to be set as described above for Ubuntu/Linux.
 
