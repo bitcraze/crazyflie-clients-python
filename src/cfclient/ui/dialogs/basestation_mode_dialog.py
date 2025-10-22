@@ -116,8 +116,13 @@ class LighthouseBsModeDialog(QtWidgets.QWidget, basestation_mode_widget_class):
         dev = self._device
         try:
             ser = serial.Serial(dev, timeout=0.4)
-        except serial.SerialException as e:
-            self._basestation_mode_status.setText('Permission denied: cannot access serial port.\n Try running: \"sudo usermod -aG dialout [username]\" and then restart your computer')
+        except serial.SerialException:
+            self._basestation_mode_status.setText(
+                'Permission denied: cannot access serial port.\n'
+                'Try running: \"sudo usermod -aG dialout [username]\" '
+                'and then restart your computer.'
+            )
+
             self._set_basestation_button.setEnabled(True)
             return
 
