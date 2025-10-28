@@ -92,16 +92,16 @@ installed needs to be upgraded this will be logged in the console log. Deck firm
 Crazyflie firmware upgrade process, just make sure the deck is mounted when you run the upgrade.
 
 
-![CFclient bootloading](/docs/images/firmware-upgrade.png)
+![CFclient bootloading](/docs/images/bootloader_dialog.png)
 
 To update the firmware in the Crazyflie 2.x do the following:
 
 -   Make sure to have any decks you will be using attached during the update, since some of
 the decks contain their own firmware which will also be updated during the firmware update. Also make sure there is a battery attached.
 -   Go to the menu *Connect-\>Bootloader*
--   Connect to the crazyflie in this dialog, if it is not already connected in the flighttab.
--   Chose what to flash
-    - Use the "From release" tab to automatically use an [official release](https://github.com/bitcraze/crazyflie-release/releases). Make sure to select the right platform (cf2 is the Crazyflie 2.x)
+-   Connect to the crazyflie in this dialog, if it is not already connected in the flight tab.
+-   Chose what to flash by selecting a platform and release:
+    - Use the "From release" tab to automatically use an [official release](https://github.com/bitcraze/crazyflie-release/releases). Make sure to select the right platform (cf2 is the Crazyflie 2.x and bl is the Crazyflie 2.1 Brushless).
     - Use the "From file" tab if you have some other release file you want to flash.
 -   Click \"Program\" and wait for both the STM, NRF and decks to be flashed. Note: the Crazyflie may restart multiple times during this process.
 -   Your crazyflie will automatically restart a couple of times.
@@ -109,7 +109,7 @@ the decks contain their own firmware which will also be updated during the firmw
 - To check the firmware version, under the *View* menu, open up *Tabs-\>Console* tab and look at the output when connecting to the
 Crazyflie 2.x.
 
-If you accidently restarted your crazyflie during flashing or anything else happend which caused your crazyflie to not start up properly, follow [the instructions for recovery mode](/docs/userguides/recovery-mode.md).
+> If you accidently restarted your Crazyflie during flashing or something else happend which caused your Crazyflie to not start up properly, follow [the instructions for recovery mode (cold boot)](/docs/userguides/recovery-mode.md).
 
 ### Firmware configuration
 
