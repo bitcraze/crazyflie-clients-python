@@ -144,13 +144,13 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.setUiState(self.UIState.DISCONNECTED)
 
     def _set_image(self, image_label, image_path):
-            pixmap = QPixmap(image_path)
-            scaled_pixmap = pixmap.scaled(
-                100, 100,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation
-            )
-            image_label.setPixmap(scaled_pixmap)
+        pixmap = QPixmap(image_path)
+        scaled_pixmap = pixmap.scaled(
+            100, 100,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation
+        )
+        image_label.setPixmap(scaled_pixmap)
 
     def setUiState(self, state):
         self._state = state
