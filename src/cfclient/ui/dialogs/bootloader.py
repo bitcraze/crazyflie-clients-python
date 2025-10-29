@@ -45,7 +45,8 @@ from urllib.error import URLError
 import zipfile
 
 from PyQt6 import QtWidgets, uic
-from PyQt6.QtCore import pyqtSlot, pyqtSignal, QThread
+from PyQt6.QtCore import pyqtSlot, pyqtSignal, QThread, Qt
+from PyQt6.QtGui import QPixmap
 
 import cfclient
 import cflib.crazyflie
@@ -132,9 +133,32 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
         self._platform_filter_checkboxes = []
 
+        self._set_image(self.image_1, "src/cfclient/ui/icons/bolt.webp")
+        self._set_image(self.image_2, "src/cfclient/ui/icons/cf21.webp")
+        self._set_image(self.image_3, "src/cfclient/ui/icons/bl.webp")
+        self._set_image(self.image_4, "src/cfclient/ui/icons/flapper.webp")
+        self._set_image(self.image_5, "src/cfclient/ui/icons/tag.webp")
+
     def _ui_connection_fail(self, message):
         self._cold_boot_error_message = message
         self.setUiState(self.UIState.DISCONNECTED)
+
+    def _set_image(self, image_label, image_path):
+        IMAGE_WIDTH = 100
+        IMAGE_HEIGHT = 100
+
+        pixmap = QPixmap(image_path)
+
+        if pixmap.isNull():
+            logger.warning(f"Failed to load image: {image_path}")
+            image_label.setText("Missing image")
+        else:
+            scaled_pixmap = pixmap.scaled(
+                IMAGE_WIDTH, IMAGE_HEIGHT,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            image_label.setPixmap(scaled_pixmap)
 
     def setUiState(self, state):
         self._state = state
@@ -163,7 +187,10 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         elif (state == self.UIState.COLD_CONNECTED):
             self._cold_boot_error_message = None
             self.resetButton.setEnabled(True)
-            self.programButton.setEnabled(True)
+            if any(button.isChecked() for button in self._platform_filter_checkboxes):
+                self.programButton.setEnabled(True)
+            else:
+                self.programButton.setToolTip("Select a platform before programming.")
             self.setStatusLabel("Connected to bootloader")
             self.coldBootButton.setEnabled(False)
             self.imagePathBrowseButton.setEnabled(True)
@@ -189,7 +216,10 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
                 self.setStatusLabel("Connected using USB")
                 self.setSourceSelectionUiEnabled(False)
             else:
-                self.programButton.setEnabled(True)
+                if any(button.isChecked() for button in self._platform_filter_checkboxes):
+                    self.programButton.setEnabled(True)
+                else:
+                    self.programButton.setToolTip("Select a platform before programming.")
                 self.setStatusLabel("Connected in firmware mode")
                 self.setSourceSelectionUiEnabled(True)
         elif (state == self.UIState.FW_SCANNING):
@@ -216,6 +246,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             self.coldBootButton.setEnabled(False)
             self.setSourceSelectionUiEnabled(True)
             self._helper.connectivity_manager.set_enable(False)
+        self._update_program_button_state()
 
     def setSourceSelectionUiEnabled(self, enabled):
         self.imagePathBrowseButton.setEnabled(enabled)
@@ -265,18 +296,36 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
                     platforms.add(platform)
 
         for platform in sorted(platforms, reverse=True):
+            RADIO_BUTTON_WIDTH = 100
+
             radio_button = QtWidgets.QRadioButton(platform)
 
-            # Use cf2 as default platform
-            if platform == 'cf2':
-                radio_button.setChecked(True)
+            radio_button.setFixedWidth(RADIO_BUTTON_WIDTH)
 
             radio_button.toggled.connect(self._update_firmware_dropdown)
+            radio_button.toggled.connect(self._update_program_button_state)
 
             self._platform_filter_checkboxes.append(radio_button)
             self.filterLayout.insertWidget(0, radio_button)
 
+        self.firmwareDropdown.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToContents)
         self._update_firmware_dropdown(True)
+
+    def _update_program_button_state(self):
+        any_checked = any(button.isChecked() for button in self._platform_filter_checkboxes)
+        is_connected = self._state in [
+            self.UIState.COLD_CONNECTED,
+            self.UIState.FW_CONNECTED
+        ]
+
+        self.programButton.setEnabled(any_checked and is_connected)
+
+        if not is_connected:
+            self.programButton.setToolTip("Connect your device before programming.")
+        elif not any_checked:
+            self.programButton.setToolTip("Select a platform before programming.")
+        else:
+            self.programButton.setToolTip("")
 
     def _update_firmware_dropdown(self, active: bool):
         if active:
