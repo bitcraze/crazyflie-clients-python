@@ -133,24 +133,32 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
         self._platform_filter_checkboxes = []
 
-        self._set_image(self.image_1, "docs/images/bolt_no_bg.png")
-        self._set_image(self.image_2, "docs/images/cf_no_bg.png")
-        self._set_image(self.image_3, "docs/images/bl_no_bg.png")
-        self._set_image(self.image_4, "docs/images/flapper_no_bg.png")
-        self._set_image(self.image_5, "docs/images/tag_no_bg.png")
+        self._set_image(self.image_1, "src/cfclient/ui/icons/bolt.webp")
+        self._set_image(self.image_2, "src/cfclient/ui/icons/cf21.webp")
+        self._set_image(self.image_3, "src/cfclient/ui/icons/bl.webp")
+        self._set_image(self.image_4, "src/cfclient/ui/icons/flapper.webp")
+        self._set_image(self.image_5, "src/cfclient/ui/icons/tag.webp")
 
     def _ui_connection_fail(self, message):
         self._cold_boot_error_message = message
         self.setUiState(self.UIState.DISCONNECTED)
 
     def _set_image(self, image_label, image_path):
+        IMAGE_WIDTH = 100
+        IMAGE_HEIGHT = 100
+
         pixmap = QPixmap(image_path)
-        scaled_pixmap = pixmap.scaled(
-            100, 100,
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation
-        )
-        image_label.setPixmap(scaled_pixmap)
+
+        if pixmap.isNull():
+            logger.warning(f"Failed to load image: {image_path}")
+            image_label.setText("Missing image")
+        else:
+            scaled_pixmap = pixmap.scaled(
+                IMAGE_WIDTH, IMAGE_HEIGHT,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            image_label.setPixmap(scaled_pixmap)
 
     def setUiState(self, state):
         self._state = state
@@ -288,9 +296,11 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
                     platforms.add(platform)
 
         for platform in sorted(platforms, reverse=True):
+            RADIO_BUTTON_WIDTH = 100
+
             radio_button = QtWidgets.QRadioButton(platform)
 
-            radio_button.setFixedWidth(100)
+            radio_button.setFixedWidth(RADIO_BUTTON_WIDTH)
 
             radio_button.toggled.connect(self._update_firmware_dropdown)
             radio_button.toggled.connect(self._update_program_button_state)
@@ -298,6 +308,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             self._platform_filter_checkboxes.append(radio_button)
             self.filterLayout.insertWidget(0, radio_button)
 
+        self.firmwareDropdown.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToContents)
         self._update_firmware_dropdown(True)
 
     def _update_program_button_state(self):
