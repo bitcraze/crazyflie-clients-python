@@ -101,7 +101,7 @@ the decks contain their own firmware which will also be updated during the firmw
 -   Go to the menu *Connect-\>Bootloader*
 -   Connect to the crazyflie in this dialog, if it is not already connected in the flight tab.
 -   Chose what to flash by selecting a platform and release:
-    - Use the "From release" tab to automatically use an [official release](https://github.com/bitcraze/crazyflie-release/releases). Make sure to select the right platform (cf2 is the Crazyflie 2.x and bl is the Crazyflie 2.1 Brushless).
+    - Use the "From release" tab to automatically use an [official release](https://github.com/bitcraze/crazyflie-release/releases). Make sure to select the right platform (cf2 is the Crazyflie 2.x and cf21bl is the Crazyflie 2.1 Brushless).
     - Use the "From file" tab if you have some other release file you want to flash.
 -   Click \"Program\" and wait for both the STM, NRF and decks to be flashed. Note: the Crazyflie may restart multiple times during this process.
 -   Your crazyflie will automatically restart a couple of times.
