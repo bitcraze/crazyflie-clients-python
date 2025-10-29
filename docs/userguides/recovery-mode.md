@@ -12,7 +12,7 @@ client. The bootloader mode is accessed from the menu
 *Connect-\>Bootloader*. If there is any problem during the flashing or
 a wrong firmware is flashed the process can just be started again.
 
-![CFclient bootloading](/docs/images/cold_bootloader_dialog.png)
+![CFclient Recovery Bootloading](/docs/images/recovery_bootloader_dialog.png)
 
 To update the firmware in the Crazyflie 2.x do the following:
 

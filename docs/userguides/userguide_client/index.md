@@ -92,7 +92,7 @@ installed needs to be upgraded this will be logged in the console log. Deck firm
 Crazyflie firmware upgrade process, just make sure the deck is mounted when you run the upgrade.
 
 
-![CFclient bootloading](/docs/images/bootloader_dialog.png)
+![CFclient Bootloading](/docs/images/bootloader_dialog.png)
 
 To update the firmware in the Crazyflie 2.x do the following:
 
