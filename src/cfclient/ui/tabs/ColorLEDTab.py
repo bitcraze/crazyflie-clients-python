@@ -44,7 +44,7 @@ __all__ = ['ColorLEDTab']
 
 logger = logging.getLogger(__name__)
 
-color_led_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/colorLEDTab.ui")[0]
+color_led_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/colorLEDTab.ui")[0]  # type: ignore
 
 
 class ColorLEDTab(TabToolbox, color_led_tab_class):
