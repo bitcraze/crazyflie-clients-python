@@ -35,9 +35,11 @@ from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QPixmap, QPainter, QLinearGradient, QPen, QPainterPath
 from PyQt6.QtWidgets import QPushButton, QMessageBox
+from cflib.crazyflie.log import LogConfig
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
+from cfclient.utils.config import Config
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ColorLEDTab']
@@ -47,10 +49,44 @@ logger = logging.getLogger(__name__)
 color_led_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/colorLEDTab.ui")[0]  # type: ignore
 
 
+class wrgb_t:
+    def __init__(self, w: int, r: int, g: int, b: int):
+        self.w = w
+        self.r = r
+        self.g = g
+        self.b = b
+
+
+class rgb_t:
+    def __init__(self, r: int, g: int, b: int):
+        self.r = r
+        self.g = g
+        self.b = b
+
+    def __iter__(self):
+        return iter([self.r, self.g, self.b])
+
+
 class ColorLEDTab(TabToolbox, color_led_tab_class):
     """Tab with inline color picker with hue slider, SV area, and hex input."""
 
     _colorChanged = pyqtSignal(QColor)
+    _connectedSignal = pyqtSignal(str)
+    _disconnectedSignal = pyqtSignal(str)
+    _log_data_signal = pyqtSignal(int, object, object)
+    _log_error_signal = pyqtSignal(object, str)
+
+    # Parameter and log names by position
+    PARAMS_BY_POSITION = {
+        0: {  # Bottom
+            'color': 'colorled.rgbw8888',
+            'thermal_log': 'colorled.throttlePct'
+        },
+        1: {  # Top (not yet implemented)
+            'color': 'colorledTop.rgbw8888',  # TODO: confirm actual parameter name
+            'thermal_log': 'colorledTop.throttlePct'  # TODO: confirm actual log name
+        }
+    }
 
     def __init__(self, helper):
         super(ColorLEDTab, self).__init__(helper, 'Color LED')
@@ -61,7 +97,6 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         self._hue = 0
         self._saturation = 1
         self._value = 1
-
 
         self.hue_bar.setMinimum(0)
         self.hue_bar.setMaximum(1000)
@@ -84,6 +119,142 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
                 background-color: #222;
             }
         """)
+
+        self._isConnected = False
+        self._hasBottomColorDeck = False
+        self._hasTopColorDeck = False
+
+        self._connectedSignal.connect(self._connected)
+        self._disconnectedSignal.connect(self._disconnected)
+        self._colorChanged.connect(self._write_color_parameter)
+        self._log_data_signal.connect(self._log_data_received)
+        self._log_error_signal.connect(self._logging_error)
+
+        self._helper.cf.connected.add_callback(self._connectedSignal.emit)
+        self._helper.cf.disconnected.add_callback(self._disconnectedSignal.emit)
+
+    def _logging_error(self, log_conf, msg):
+        QMessageBox.about(self, "Log error",
+                          "Error when starting log config [%s]: %s" % (
+                              log_conf.name, msg))
+
+    def _log_data_received(self, timestamp, data, logconf):
+        if not self.isVisible():
+            return
+
+        position = self.positionDropdown.currentData()
+
+        # Determine which positions to check for throttling
+        positions_to_check = [0, 1] if position == 2 else [position]
+
+        # Check if any selected deck is throttling
+        is_throttling = any(
+            self.PARAMS_BY_POSITION[pos]['thermal_log'] in data and
+            data[self.PARAMS_BY_POSITION[pos]['thermal_log']]
+            for pos in positions_to_check
+            if pos in self.PARAMS_BY_POSITION
+        )
+
+        self.information_text.setText(
+            "Throttling: Lowering intensity to lower temperature." if is_throttling else ""
+        )
+
+    def _setup_thermal_log(self):
+        """Set up thermal logging for each available color LED deck"""
+        # Create separate log configs for each detected deck to avoid TOC errors
+        decks_to_log = []
+        if self._hasBottomColorDeck:
+            decks_to_log.append((0, 'ThermalBottom'))
+        if self._hasTopColorDeck:
+            decks_to_log.append((1, 'ThermalTop'))
+
+        for position, log_name in decks_to_log:
+            params = self.PARAMS_BY_POSITION[position]
+            lg = LogConfig(log_name, Config().get("ui_update_period"))
+            try:
+                lg.add_variable(params['thermal_log'], "uint8_t")
+                self._helper.cf.log.add_config(lg)
+                lg.data_received_cb.add_callback(self._log_data_signal.emit)
+                lg.error_cb.add_callback(self._log_error_signal.emit)
+                lg.start()
+                logger.info(f"Started thermal logging for position {position}: {params['thermal_log']}")
+            except (KeyError, AttributeError) as e:
+                logger.debug(f"Could not start thermal logging for position {position}: {e}")
+
+    def _connected(self, _):
+        self._isConnected = True
+
+        # Check which color LED decks are attached
+        try:
+            bottom_deck_param = self._helper.cf.param.get_value('deck.bcColorLED')
+            self._hasBottomColorDeck = bool(bottom_deck_param)
+            logger.info(f"Bottom color LED deck detected: {self._hasBottomColorDeck}")
+        except KeyError:
+            self._hasBottomColorDeck = False
+            logger.debug("Bottom color LED deck parameter not found")
+
+        # TODO: Check for top color LED deck when parameter name is known
+        # try:
+        #     top_deck_param = self._helper.cf.param.get_value('deck.bcColorLEDTop')
+        #     self._hasTopColorDeck = bool(top_deck_param)
+        # except KeyError:
+        #     self._hasTopColorDeck = False
+
+        # Set up thermal logging for available decks
+        self._setup_thermal_log()
+
+        # Set brightness correction for bottom deck
+        if self._hasBottomColorDeck:
+            self._helper.cf.param.set_value('colorled.brightnessCorr', 0)
+
+    def _disconnected(self, _):
+        self._isConnected = False
+        self._hasBottomColorDeck = False
+        self._hasTopColorDeck = False
+
+        self.information_text.setText("")  # clear thermal throttling warning
+
+    def _extract_white(self, color: rgb_t) -> wrgb_t:
+        white = min(color)
+        return wrgb_t(white, color.r - white, color.g - white, color.b - white)
+
+    def _pack_wrgb(self, input: wrgb_t) -> int:
+        """Pack WRGB values into uint32 format: 0xWWRRGGBB"""
+        return (input.w << 24) | (input.r << 16) | (input.g << 8) | input.b
+
+    def _write_color_to_position(self, position: int, color_uint32: int):
+        """Write color to a specific deck position"""
+        if position not in self.PARAMS_BY_POSITION:
+            logger.warning(f"Unknown position {position}")
+            return
+
+        # Check if the deck is actually present
+        if position == 0 and not self._hasBottomColorDeck:
+            logger.info("Bottom color LED deck not present, skipping color write")
+            return
+        if position == 1 and not self._hasTopColorDeck:
+            logger.info("Top color LED deck not present, skipping color write")
+            return
+
+        param_name = self.PARAMS_BY_POSITION[position]['color']
+        self._helper.cf.param.set_value(param_name, str(color_uint32))
+
+    def _write_color_parameter(self, color: QColor):
+        if not self._isConnected:
+            return
+
+        r, g, b, _ = color.getRgb()
+        rgb = rgb_t(r or 0, g or 0, b or 0)
+        wrgb = self._extract_white(rgb)
+        color_uint32 = self._pack_wrgb(wrgb)
+
+        position = self.positionDropdown.currentData()
+
+        # Determine which positions to write to
+        positions_to_write = [0, 1] if position == 2 else [position]
+
+        for pos in positions_to_write:
+            self._write_color_to_position(pos, color_uint32)
 
     def _populate_position_dropdown(self):
         self.positionDropdown.addItem("Bottom", 0)
@@ -202,7 +373,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         else:
             self.hex_input.setStyleSheet("border: 2px solid red; border-radius: 4px;")
             self.hex_error_label.setText("Invalid hex code.")
-            self.information_text.setText("Throttling: Lowering intensity to lower temperature.")
+            self.information_text.setText("")
             logger.warning(f"Invalid HEX color: {hex_value}")
 
     def _connect_color_buttons(self):
