@@ -92,17 +92,17 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
 
         self.positionDropdown.setCurrentIndex(0)
 
-    def showEvent(self, event):
+    def showEvent(self, a0):
         """ Show event for proper initial SV area sizing """
-        super().showEvent(event)
+        super().showEvent(a0)
         self._update_sv_area(self.sv_area, self._hue)
         self._update_preview()
 
-    def mousePressEvent(self, event):
-        self._handle_mouse_event(event)
+    def mousePressEvent(self, a0):
+        self._handle_mouse_event(a0)
 
-    def mouseMoveEvent(self, event):
-        self._handle_mouse_event(event)
+    def mouseMoveEvent(self, a0):
+        self._handle_mouse_event(a0)
 
     def _handle_mouse_event(self, event):
         sv_pos = self.sv_area.mapFrom(self, event.pos())
@@ -180,7 +180,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         self._update_preview()
 
     def _update_preview(self):
-        color = QColor.fromHsvF(self._hue, self._saturation, self._value)
+        color = QColor.fromHsvF(self._hue or 0, self._saturation or 0, self._value or 0)
         self.color_preview.setStyleSheet(
             f"background-color: {color.name()}; border: 1px solid #444; border-radius: 4px;"
         )
@@ -192,7 +192,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         color = QColor(hex_value)
         if color.isValid():
             h, s, v, _ = color.getHsvF()
-            self._hue, self._saturation, self._value = h, s, v
+            self._hue, self._saturation, self._value = h or 0, s or 0, v or 0
             self.hue_bar.setValue(int(self._hue * 1000))
             self._update_sv_area(self.sv_area, self._hue)
             self._update_preview()
@@ -221,14 +221,14 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
 
     def _on_color_button_clicked(self):
         button = self.sender()
-        style = button.styleSheet()
+        style = button.styleSheet()  # type: ignore
         if "background-color:" not in style:
             return
         hex_color = style.split("background-color:")[-1].split(";")[0].strip()
         color = QColor(hex_color)
         if color.isValid():
             h, s, v, _ = color.getHsvF()
-            self._hue, self._saturation, self._value = h, s, v
+            self._hue, self._saturation, self._value = h or 0, s or 0, v or 0
             self.hue_bar.setValue(int(self._hue * 1000))
             self._update_sv_area(self.sv_area, self._hue)
             self._update_preview()
