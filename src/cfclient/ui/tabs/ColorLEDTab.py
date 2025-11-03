@@ -56,6 +56,8 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         super(ColorLEDTab, self).__init__(helper, 'Color LED')
         self.setupUi(self)
 
+        self._populate_position_dropdown()
+
         self._hue = 0
         self._saturation = 1
         self._value = 1
@@ -82,6 +84,13 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
                 background-color: #222;
             }
         """)
+
+    def _populate_position_dropdown(self):
+        self.positionDropdown.addItem("Bottom", 0)
+        self.positionDropdown.addItem("Top", 1)
+        self.positionDropdown.addItem("Both", 2)
+
+        self.positionDropdown.setCurrentIndex(0)
 
     def showEvent(self, event):
         """ Show event for proper initial SV area sizing """
