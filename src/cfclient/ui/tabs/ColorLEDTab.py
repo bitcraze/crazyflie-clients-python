@@ -79,11 +79,11 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
     # Parameter and log names by position
     PARAMS_BY_POSITION = {
         0: {  # Bottom
-            'color': 'colorled.rgbw8888',
+            'color': 'colorled.wrgb8888',
             'thermal_log': 'colorled.throttlePct'
         },
         1: {  # Top (not yet implemented)
-            'color': 'colorledTop.rgbw8888',  # TODO: confirm actual parameter name
+            'color': 'colorledTop.wrgb8888',  # TODO: confirm actual parameter name
             'thermal_log': 'colorledTop.throttlePct'  # TODO: confirm actual log name
         }
     }
