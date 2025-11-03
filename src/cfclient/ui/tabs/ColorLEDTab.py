@@ -31,7 +31,7 @@ Basic tab to be able to set (and test) color in Color LED.
 """
 
 import logging
-from PyQt6 import uic, QtWidgets
+from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QPixmap, QPainter, QLinearGradient, QPen, QPainterPath
 from PyQt6.QtWidgets import QPushButton, QMessageBox
