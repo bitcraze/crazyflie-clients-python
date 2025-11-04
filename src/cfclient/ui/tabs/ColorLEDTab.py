@@ -158,21 +158,14 @@ class ColorLEDDeckController:
 
     def detect_decks(self):
         """Detect which Color LED decks are present"""
-        # Check bottom deck
-        try:
-            bottom_deck_param = self._helper.cf.param.get_value('deck.bcColorLED')
-            self._deck_present[0] = bool(bottom_deck_param)
-            logger.info(f"Bottom color LED deck detected: {self._deck_present[0]}")
-        except KeyError:
-            self._deck_present[0] = False
-            logger.debug("Bottom color LED deck parameter not found")
-
-        # TODO: Check for top color LED deck when parameter name is known
-        # try:
-        #     top_deck_param = self._helper.cf.param.get_value('deck.bcColorLEDTop')
-        #     self._deck_present[1] = bool(top_deck_param)
-        # except KeyError:
-        #     self._deck_present[1] = False
+        for position, params in self._params_config.items():
+            try:
+                deck_param = self._helper.cf.param.get_value(params['deck_param'])
+                self._deck_present[position] = bool(deck_param)
+                logger.info(f"Color LED deck at position {position} detected: {self._deck_present[position]}")
+            except KeyError:
+                self._deck_present[position] = False
+                logger.debug(f"Color LED deck parameter not found for position {position}")
 
     def is_deck_present(self, position):
         """Check if deck at given position is present"""
@@ -218,12 +211,16 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
     # Parameter and log names by position
     PARAMS_BY_POSITION = {
         0: {  # Bottom
-            'color': 'colorled.wrgb8888',
-            'thermal_log': 'colorled.throttlePct'
+            'color': 'clrledBot.wrgb8888',
+            'thermal_log': 'clrledBot.throttlePct',
+            'brightness': 'clrledBot.brightnessCorr',
+            'deck_param': 'deck.bcClrLEDBot'
         },
-        1: {  # Top (not yet implemented)
-            'color': 'colorledTop.wrgb8888',  # TODO: confirm actual parameter name
-            'thermal_log': 'colorledTop.throttlePct'  # TODO: confirm actual log name
+        1: {  # Top
+            'color': 'clrledTop.wrgb8888',
+            'thermal_log': 'clrledTop.throttlePct',
+            'brightness': 'clrledTop.brightnessCorr',
+            'deck_param': 'deck.bcClrLEDTop'
         }
     }
 
@@ -287,7 +284,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
                           "Error when starting log config [%s]: %s" % (
                               log_conf.name, msg))
 
-    def _log_data_received(self, timestamp, data, logconf):
+    def _log_data_received(self, _timestamp, data, _logconf):
         if not self.isVisible():
             return
 
