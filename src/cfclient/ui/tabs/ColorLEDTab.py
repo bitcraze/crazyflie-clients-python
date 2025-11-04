@@ -56,6 +56,10 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         super(ColorLEDTab, self).__init__(helper, 'Color LED')
         self.setupUi(self)
 
+        is_connected = True
+        self.groupBox_color.setEnabled(is_connected)
+        self.hue_bar.setEnabled(is_connected)
+
         self._populate_position_dropdown()
 
         self._hue = 0
@@ -86,11 +90,35 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         """)
 
     def _populate_position_dropdown(self):
+
         self.positionDropdown.addItem("Bottom", 0)
         self.positionDropdown.addItem("Top", 1)
         self.positionDropdown.addItem("Both", 2)
 
-        self.positionDropdown.setCurrentIndex(0)
+        # is_bottom_attached = int(self._helper.cf.param.values["deck"]["bottomColorLed"])
+        # is_top_attached = int(self._helper.cf.param.values["deck"]["topColorLed"])
+        is_bottom_attached = False
+        is_top_attached = True
+
+        if is_bottom_attached and is_top_attached:
+            self.positionDropdown.model().item(0).setEnabled(True)
+            self.positionDropdown.model().item(1).setEnabled(True)
+            self.positionDropdown.model().item(2).setEnabled(True)
+            self.positionDropdown.setCurrentIndex(2)
+        elif is_bottom_attached:
+            self.positionDropdown.model().item(0).setEnabled(True)
+            self.positionDropdown.model().item(1).setEnabled(False)
+            self.positionDropdown.model().item(2).setEnabled(False)
+            self.positionDropdown.setCurrentIndex(0)
+        elif is_top_attached:
+            self.positionDropdown.model().item(0).setEnabled(False)
+            self.positionDropdown.model().item(1).setEnabled(True)
+            self.positionDropdown.model().item(2).setEnabled(False)
+            self.positionDropdown.setCurrentIndex(1)
+        else:
+            self.positionDropdown.model().item(0).setEnabled(False)
+            self.positionDropdown.model().item(1).setEnabled(False)
+            self.positionDropdown.model().item(2).setEnabled(False)
 
     def showEvent(self, event):
         """ Show event for proper initial SV area sizing """
@@ -105,6 +133,8 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         self._handle_mouse_event(event)
 
     def _handle_mouse_event(self, event):
+        if not self.groupBox_color.isEnabled():
+            return
         sv_pos = self.sv_area.mapFrom(self, event.pos())
         if self.sv_area.rect().contains(sv_pos):
             self._update_sv_from_pos(sv_pos)
@@ -175,19 +205,34 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         sv_area.setPixmap(pixmap)
 
     def _on_hue_slider_changed(self, value):
+        if not self.groupBox_color.isEnabled():
+            return
         self._hue = value / 1000
         self._update_sv_area(self.sv_area, self._hue)
         self._update_preview()
 
     def _update_preview(self):
         color = QColor.fromHsvF(self._hue, self._saturation, self._value)
-        self.color_preview.setStyleSheet(
-            f"background-color: {color.name()}; border: 1px solid #444; border-radius: 4px;"
-        )
+        self.color_preview.setStyleSheet(f"""
+        QFrame#color_preview {{
+            border: 1px solid #444;
+            border-radius: 4px;
+        }}
+
+        QFrame#color_preview:enabled {{
+            background-color: {color.name()};
+        }}
+
+        QFrame#color_preview:disabled {{
+            background-color: #777777;  /* greyed out when disconnected */
+        }}
+        """)
         self.hex_input.setText(color.name().upper())
         self._colorChanged.emit(color)
 
     def _on_hex_changed(self):
+        if not self.groupBox_color.isEnabled():
+            return
         hex_value = self.hex_input.text().strip()
         color = QColor(hex_value)
         if color.isValid():
@@ -215,11 +260,15 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
             self.color_button6,
             self.color_button7,
             self.color_button8,
+            self.color_button9,
+            self.color_button10,
         ]
         for btn in color_buttons:
             btn.clicked.connect(self._on_color_button_clicked)
 
     def _on_color_button_clicked(self):
+        if not self.groupBox_color.isEnabled():
+            return
         button = self.sender()
         style = button.styleSheet()
         if "background-color:" not in style:
@@ -275,7 +324,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         grid = self.gridLayout_5
         plus_button = self.add_color_button
 
-        total_cols = grid.columnCount() or 8
+        total_cols = 8
         row, col = 0, 0
 
         preset_buttons = [
@@ -287,6 +336,8 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
             self.color_button6,
             self.color_button7,
             self.color_button8,
+            self.color_button9,
+            self.color_button10,
         ]
 
         for btn in self.custom_color_buttons + [plus_button]:
