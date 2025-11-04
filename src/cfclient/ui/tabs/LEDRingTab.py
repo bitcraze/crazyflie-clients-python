@@ -80,7 +80,6 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
         # Populate dropdown when all params are updated
         self._helper.cf.param.all_updated.add_callback(self._ring_populate_dropdown)
 
-
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
         self._connected_signal.connect(self._connected)
@@ -128,7 +127,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
             self._intensity_spin.setValue)
         self._intensity_spin.valueChanged.connect(
             self._intensity_slider.setValue)
-        
+
         self._helper.inputDeviceReader.alt1_updated.add_callback(self.alt1_updated)
         self._helper.inputDeviceReader.alt2_updated.add_callback(self.alt2_updated)
 
@@ -179,7 +178,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
                 btn.setStyleSheet("background-color: black")
                 self._intensity_slider.setEnabled(True)
                 self._intensity_spin.setEnabled(True)
-    
+
         self._led_ring_effect.setEnabled(True)
         self._led_ring_headlight.setEnabled(True)
 
@@ -191,7 +190,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
             self._intensity_slider.setEnabled(False)
             self._intensity_spin.setEnabled(False)
             self._intensity_slider.setValue(100)
-        
+
         self._led_ring_effect.setEnabled(False)
         self._led_ring_headlight.setEnabled(False)
 
@@ -264,4 +263,3 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
 
     def alt2_updated(self, state):
         self._helper.cf.param.set_value("ring.headlightEnable", str(state))
-
