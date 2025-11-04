@@ -118,7 +118,7 @@ class ThermalMonitor:
                 lg.data_received_cb.add_callback(self._log_data_signal.emit)
                 lg.error_cb.add_callback(self._log_error_signal.emit)
                 lg.start()
-                logger.info(f"Started thermal logging for position {position}: {params['thermal_log']}")
+                logger.debug(f"Started thermal logging for position {position}: {params['thermal_log']}")
             except (KeyError, AttributeError) as e:
                 logger.debug(f"Could not start thermal logging for position {position}: {e}")
 
@@ -161,11 +161,13 @@ class ColorLEDDeckController:
         for position, params in self._params_config.items():
             try:
                 deck_param = self._helper.cf.param.get_value(params['deck_param'])
-                self._deck_present[position] = bool(deck_param)
-                logger.info(f"Color LED deck at position {position} detected: {self._deck_present[position]}")
-            except KeyError:
+                # Convert to int to handle string values like "0" or "1"
+                self._deck_present[position] = bool(int(deck_param))
+                logger.debug(f"Color LED deck at position {position} ({'Bottom' if position == 0 else 'Top'}) "
+                             f"detected: {self._deck_present[position]} (param: {params['deck_param']}={deck_param})")
+            except (KeyError, ValueError, TypeError) as e:
                 self._deck_present[position] = False
-                logger.debug(f"Color LED deck parameter not found for position {position}")
+                logger.debug(f"Color LED deck parameter not found for position {position}: {e}")
 
     def is_deck_present(self, position):
         """Check if deck at given position is present"""
@@ -188,7 +190,7 @@ class ColorLEDDeckController:
             return
 
         if not self.is_deck_present(position):
-            logger.info(f"Color LED deck at position {position} not present, skipping color write")
+            logger.debug(f"Color LED deck at position {position} not present, skipping color write")
             return
 
         param_name = self._params_config[position]['color']
@@ -228,9 +230,8 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         super(ColorLEDTab, self).__init__(helper, 'Color LED')
         self.setupUi(self)
 
-        is_connected = True
-        self.groupBox_color.setEnabled(is_connected)
-        self.hue_bar.setEnabled(is_connected)
+        self.groupBox_color.setEnabled(False)
+        self.hue_bar.setEnabled(False)
 
         self._populate_position_dropdown()
 
@@ -310,13 +311,31 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         # Detect which color LED decks are attached
         self._deck_controller.detect_decks()
 
-        # Set up thermal logging for available decks
+        # Update dropdown based on detected decks
+        self._update_position_dropdown()
+
+        # Enable UI controls only if at least one deck is present
         present_decks = self._deck_controller.get_present_decks()
-        self._thermal_monitor.start_monitoring(present_decks)
+        has_decks = len(present_decks) > 0
+        self.groupBox_color.setEnabled(has_decks)
+        self.hue_bar.setEnabled(has_decks)
+
+        # Set up thermal logging for available decks
+        if has_decks:
+            self._thermal_monitor.start_monitoring(present_decks)
 
     def _disconnected(self, _):
         self._isConnected = False
         self._deck_controller.clear_deck_state()
+
+        # Disable UI controls
+        self.groupBox_color.setEnabled(False)
+        self.hue_bar.setEnabled(False)
+
+        # Disable all position dropdown items
+        self.positionDropdown.model().item(0).setEnabled(False)
+        self.positionDropdown.model().item(1).setEnabled(False)
+        self.positionDropdown.model().item(2).setEnabled(False)
 
         self.information_text.setText("")  # clear thermal throttling warning
 
@@ -338,18 +357,26 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
             self._deck_controller.write_color(pos, color_uint32)
 
     def _populate_position_dropdown(self):
-
+        """Initialize the position dropdown with items (called once during __init__)"""
         self.positionDropdown.addItem("Bottom", 0)
         self.positionDropdown.addItem("Top", 1)
         self.positionDropdown.addItem("Both", 2)
 
-        is_bottom_attached = False
-        is_top_attached = True
+        # Initially all disabled until we connect and detect decks
+        self.positionDropdown.model().item(0).setEnabled(False)
+        self.positionDropdown.model().item(1).setEnabled(False)
+        self.positionDropdown.model().item(2).setEnabled(False)
+
+    def _update_position_dropdown(self):
+        """Update position dropdown based on detected decks"""
+        is_bottom_attached = self._deck_controller.is_deck_present(0)
+        is_top_attached = self._deck_controller.is_deck_present(1)
 
         if is_bottom_attached and is_top_attached:
             self.positionDropdown.model().item(0).setEnabled(True)
             self.positionDropdown.model().item(1).setEnabled(True)
             self.positionDropdown.model().item(2).setEnabled(True)
+            # Default to "Both" if both attached
             self.positionDropdown.setCurrentIndex(2)
         elif is_bottom_attached:
             self.positionDropdown.model().item(0).setEnabled(True)
@@ -362,6 +389,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
             self.positionDropdown.model().item(2).setEnabled(False)
             self.positionDropdown.setCurrentIndex(1)
         else:
+            # No decks attached
             self.positionDropdown.model().item(0).setEnabled(False)
             self.positionDropdown.model().item(1).setEnabled(False)
             self.positionDropdown.model().item(2).setEnabled(False)
@@ -548,7 +576,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         self.custom_color_buttons.append(new_btn)
 
         self._repack_custom_buttons()
-        logger.info(f"Added new custom color {color_hex}")
+        logger.debug(f"Added new custom color {color_hex}")
 
     def _remove_custom_color_button(self, button):
         reply = QMessageBox.question(
@@ -562,7 +590,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
                 self.custom_color_buttons.remove(button)
             button.setParent(None)
             button.deleteLater()
-            logger.info("Removed custom color button.")
+            logger.debug("Removed custom color button.")
 
             self._repack_custom_buttons()
 
