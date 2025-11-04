@@ -56,6 +56,10 @@ class wrgb_t:
         self.g = g
         self.b = b
 
+    def pack(self) -> int:
+        """Pack WRGB values into uint32 format: 0xWWRRGGBB"""
+        return (self.w << 24) | (self.r << 16) | (self.g << 8) | self.b
+
 
 class rgb_t:
     def __init__(self, r: int, g: int, b: int):
@@ -65,6 +69,141 @@ class rgb_t:
 
     def __iter__(self):
         return iter([self.r, self.g, self.b])
+
+    def extract_white(self) -> wrgb_t:
+        """Extract white channel and return WRGB color"""
+        white = min(self.r, self.g, self.b)
+        return wrgb_t(white, self.r - white, self.g - white, self.b - white)
+
+
+class ThermalMonitor:
+    """Monitors thermal throttling status for Color LED decks"""
+
+    def __init__(self, helper, params_config, log_data_signal, log_error_signal):
+        """
+        Initialize thermal monitor
+
+        Args:
+            helper: Crazyflie helper instance
+            params_config: Dictionary mapping positions to their thermal log names
+            log_data_signal: PyQt signal to emit when log data is received
+            log_error_signal: PyQt signal to emit when log errors occur
+        """
+        self._helper = helper
+        self._params_config = params_config
+        self._log_data_signal = log_data_signal
+        self._log_error_signal = log_error_signal
+        self._active_positions = []
+
+    def start_monitoring(self, positions):
+        """
+        Start thermal monitoring for specified deck positions
+
+        Args:
+            positions: List of position indices to monitor
+        """
+        self._active_positions = positions
+
+        for position in positions:
+            if position not in self._params_config:
+                continue
+
+            params = self._params_config[position]
+            log_name = f"Thermal{['Bottom', 'Top'][position]}"
+            lg = LogConfig(log_name, Config().get("ui_update_period"))
+
+            try:
+                lg.add_variable(params['thermal_log'], "uint8_t")
+                self._helper.cf.log.add_config(lg)
+                lg.data_received_cb.add_callback(self._log_data_signal.emit)
+                lg.error_cb.add_callback(self._log_error_signal.emit)
+                lg.start()
+                logger.info(f"Started thermal logging for position {position}: {params['thermal_log']}")
+            except (KeyError, AttributeError) as e:
+                logger.debug(f"Could not start thermal logging for position {position}: {e}")
+
+    def check_throttling(self, data, positions_to_check):
+        """
+        Check if any of the specified positions are thermally throttling
+
+        Args:
+            data: Log data dictionary
+            positions_to_check: List of position indices to check
+
+        Returns:
+            bool: True if any position is throttling
+        """
+        return any(
+            self._params_config[pos]['thermal_log'] in data and
+            data[self._params_config[pos]['thermal_log']]
+            for pos in positions_to_check
+            if pos in self._params_config
+        )
+
+
+class ColorLEDDeckController:
+    """Manages Color LED deck detection and parameter writes"""
+
+    def __init__(self, helper, params_config):
+        """
+        Initialize deck controller
+
+        Args:
+            helper: Crazyflie helper instance
+            params_config: Dictionary mapping positions to their parameter names
+        """
+        self._helper = helper
+        self._params_config = params_config
+        self._deck_present = {}  # Maps position -> bool
+
+    def detect_decks(self):
+        """Detect which Color LED decks are present"""
+        # Check bottom deck
+        try:
+            bottom_deck_param = self._helper.cf.param.get_value('deck.bcColorLED')
+            self._deck_present[0] = bool(bottom_deck_param)
+            logger.info(f"Bottom color LED deck detected: {self._deck_present[0]}")
+        except KeyError:
+            self._deck_present[0] = False
+            logger.debug("Bottom color LED deck parameter not found")
+
+        # TODO: Check for top color LED deck when parameter name is known
+        # try:
+        #     top_deck_param = self._helper.cf.param.get_value('deck.bcColorLEDTop')
+        #     self._deck_present[1] = bool(top_deck_param)
+        # except KeyError:
+        #     self._deck_present[1] = False
+
+    def is_deck_present(self, position):
+        """Check if deck at given position is present"""
+        return self._deck_present.get(position, False)
+
+    def get_present_decks(self):
+        """Get list of positions where decks are present"""
+        return [pos for pos, present in self._deck_present.items() if present]
+
+    def write_color(self, position, color_uint32):
+        """
+        Write color to a specific deck position
+
+        Args:
+            position: Deck position (0=bottom, 1=top)
+            color_uint32: Packed WRGB color value
+        """
+        if position not in self._params_config:
+            logger.warning(f"Unknown position {position}")
+            return
+
+        if not self.is_deck_present(position):
+            logger.info(f"Color LED deck at position {position} not present, skipping color write")
+            return
+
+        param_name = self._params_config[position]['color']
+        self._helper.cf.param.set_value(param_name, str(color_uint32))
+
+    def clear_deck_state(self):
+        """Clear deck presence state (called on disconnect)"""
+        self._deck_present.clear()
 
 
 class ColorLEDTab(TabToolbox, color_led_tab_class):
@@ -121,8 +260,18 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         """)
 
         self._isConnected = False
-        self._hasBottomColorDeck = False
-        self._hasTopColorDeck = False
+
+        # Initialize thermal monitor and deck controller
+        self._thermal_monitor = ThermalMonitor(
+            self._helper,
+            self.PARAMS_BY_POSITION,
+            self._log_data_signal,
+            self._log_error_signal
+        )
+        self._deck_controller = ColorLEDDeckController(
+            self._helper,
+            self.PARAMS_BY_POSITION
+        )
 
         self._connectedSignal.connect(self._connected)
         self._disconnectedSignal.connect(self._disconnected)
@@ -148,96 +297,27 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         positions_to_check = [0, 1] if position == 2 else [position]
 
         # Check if any selected deck is throttling
-        is_throttling = any(
-            self.PARAMS_BY_POSITION[pos]['thermal_log'] in data and
-            data[self.PARAMS_BY_POSITION[pos]['thermal_log']]
-            for pos in positions_to_check
-            if pos in self.PARAMS_BY_POSITION
-        )
+        is_throttling = self._thermal_monitor.check_throttling(data, positions_to_check)
 
         self.information_text.setText(
             "Throttling: Lowering intensity to lower temperature." if is_throttling else ""
         )
 
-    def _setup_thermal_log(self):
-        """Set up thermal logging for each available color LED deck"""
-        # Create separate log configs for each detected deck to avoid TOC errors
-        decks_to_log = []
-        if self._hasBottomColorDeck:
-            decks_to_log.append((0, 'ThermalBottom'))
-        if self._hasTopColorDeck:
-            decks_to_log.append((1, 'ThermalTop'))
-
-        for position, log_name in decks_to_log:
-            params = self.PARAMS_BY_POSITION[position]
-            lg = LogConfig(log_name, Config().get("ui_update_period"))
-            try:
-                lg.add_variable(params['thermal_log'], "uint8_t")
-                self._helper.cf.log.add_config(lg)
-                lg.data_received_cb.add_callback(self._log_data_signal.emit)
-                lg.error_cb.add_callback(self._log_error_signal.emit)
-                lg.start()
-                logger.info(f"Started thermal logging for position {position}: {params['thermal_log']}")
-            except (KeyError, AttributeError) as e:
-                logger.debug(f"Could not start thermal logging for position {position}: {e}")
-
     def _connected(self, _):
         self._isConnected = True
 
-        # Check which color LED decks are attached
-        try:
-            bottom_deck_param = self._helper.cf.param.get_value('deck.bcColorLED')
-            self._hasBottomColorDeck = bool(bottom_deck_param)
-            logger.info(f"Bottom color LED deck detected: {self._hasBottomColorDeck}")
-        except KeyError:
-            self._hasBottomColorDeck = False
-            logger.debug("Bottom color LED deck parameter not found")
-
-        # TODO: Check for top color LED deck when parameter name is known
-        # try:
-        #     top_deck_param = self._helper.cf.param.get_value('deck.bcColorLEDTop')
-        #     self._hasTopColorDeck = bool(top_deck_param)
-        # except KeyError:
-        #     self._hasTopColorDeck = False
+        # Detect which color LED decks are attached
+        self._deck_controller.detect_decks()
 
         # Set up thermal logging for available decks
-        self._setup_thermal_log()
-
-        # Set brightness correction for bottom deck
-        if self._hasBottomColorDeck:
-            self._helper.cf.param.set_value('colorled.brightnessCorr', 0)
+        present_decks = self._deck_controller.get_present_decks()
+        self._thermal_monitor.start_monitoring(present_decks)
 
     def _disconnected(self, _):
         self._isConnected = False
-        self._hasBottomColorDeck = False
-        self._hasTopColorDeck = False
+        self._deck_controller.clear_deck_state()
 
         self.information_text.setText("")  # clear thermal throttling warning
-
-    def _extract_white(self, color: rgb_t) -> wrgb_t:
-        white = min(color)
-        return wrgb_t(white, color.r - white, color.g - white, color.b - white)
-
-    def _pack_wrgb(self, input: wrgb_t) -> int:
-        """Pack WRGB values into uint32 format: 0xWWRRGGBB"""
-        return (input.w << 24) | (input.r << 16) | (input.g << 8) | input.b
-
-    def _write_color_to_position(self, position: int, color_uint32: int):
-        """Write color to a specific deck position"""
-        if position not in self.PARAMS_BY_POSITION:
-            logger.warning(f"Unknown position {position}")
-            return
-
-        # Check if the deck is actually present
-        if position == 0 and not self._hasBottomColorDeck:
-            logger.info("Bottom color LED deck not present, skipping color write")
-            return
-        if position == 1 and not self._hasTopColorDeck:
-            logger.info("Top color LED deck not present, skipping color write")
-            return
-
-        param_name = self.PARAMS_BY_POSITION[position]['color']
-        self._helper.cf.param.set_value(param_name, str(color_uint32))
 
     def _write_color_parameter(self, color: QColor):
         if not self._isConnected:
@@ -245,8 +325,8 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
 
         r, g, b, _ = color.getRgb()
         rgb = rgb_t(r or 0, g or 0, b or 0)
-        wrgb = self._extract_white(rgb)
-        color_uint32 = self._pack_wrgb(wrgb)
+        wrgb = rgb.extract_white()
+        color_uint32 = wrgb.pack()
 
         position = self.positionDropdown.currentData()
 
@@ -254,7 +334,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         positions_to_write = [0, 1] if position == 2 else [position]
 
         for pos in positions_to_write:
-            self._write_color_to_position(pos, color_uint32)
+            self._deck_controller.write_color(pos, color_uint32)
 
     def _populate_position_dropdown(self):
         self.positionDropdown.addItem("Bottom", 0)
