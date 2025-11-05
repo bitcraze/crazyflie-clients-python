@@ -213,16 +213,16 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
     # Parameter and log names by position
     PARAMS_BY_POSITION = {
         0: {  # Bottom
-            'color': 'clrledBot.wrgb8888',
-            'thermal_log': 'clrledBot.throttlePct',
-            'brightness': 'clrledBot.brightnessCorr',
-            'deck_param': 'deck.bcClrLEDBot'
+            'color': 'colorLedBot.wrgb8888',
+            'thermal_log': 'colorLedBot.throttlePct',
+            'brightness': 'colorLedBot.brightCorr',
+            'deck_param': 'deck.bcColorLedBot'
         },
         1: {  # Top
-            'color': 'clrledTop.wrgb8888',
-            'thermal_log': 'clrledTop.throttlePct',
-            'brightness': 'clrledTop.brightnessCorr',
-            'deck_param': 'deck.bcClrLEDTop'
+            'color': 'colorLedTop.wrgb8888',
+            'thermal_log': 'colorLedTop.throttlePct',
+            'brightness': 'colorLedTop.brightCorr',
+            'deck_param': 'deck.bcColorLedTop'
         }
     }
 
