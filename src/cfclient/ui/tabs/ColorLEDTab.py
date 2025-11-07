@@ -236,8 +236,8 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         self._populate_position_dropdown()
 
         self._hue = 0
-        self._saturation = 1
-        self._value = 1
+        self._saturation = 0
+        self._value = 0
 
         self.hue_bar.setMinimum(0)
         self.hue_bar.setMaximum(1000)

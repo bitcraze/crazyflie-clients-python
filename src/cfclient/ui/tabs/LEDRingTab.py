@@ -252,6 +252,13 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
             if i != int(self._helper.cf.param.values["ring"]["effect"]):
                 self._helper.cf.param.set_value("ring.effect", str(i))
 
+            if i == 13:
+                self._intensity_slider.setEnabled(True)
+                self._intensity_spin.setEnabled(True)
+            else:
+                self._intensity_slider.setEnabled(False)
+                self._intensity_spin.setEnabled(False)
+
     def _ring_effect_updated(self, name, value):
         if self._helper.cf.param.is_updated:
             self._led_ring_effect.setCurrentIndex(int(value))
