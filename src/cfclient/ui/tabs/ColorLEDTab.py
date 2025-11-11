@@ -262,6 +262,8 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         """)
 
         self._isConnected = False
+        self._updating_from_fetch = False  # Flag to prevent writes during color fetch
+        self._throttling_state = {}  # Track last known throttling state per position
 
         # Initialize thermal monitor and deck controller
         self._thermal_monitor = ThermalMonitor(
@@ -284,6 +286,9 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         self._helper.cf.connected.add_callback(self._connectedSignal.emit)
         self._helper.cf.disconnected.add_callback(self._disconnectedSignal.emit)
 
+        # Handle position dropdown changes
+        self.positionDropdown.currentIndexChanged.connect(self._on_position_changed)
+
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error",
                           "Error when starting log config [%s]: %s" % (
@@ -298,12 +303,26 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         # Determine which positions to check for throttling
         positions_to_check = [0, 1] if position == 2 else [position]
 
-        # Check if any selected deck is throttling
-        is_throttling = self._thermal_monitor.check_throttling(data, positions_to_check)
+        # Update throttling state for positions that have data in this update
+        has_thermal_data = False
+        for pos in positions_to_check:
+            if pos in self.PARAMS_BY_POSITION:
+                thermal_log = self.PARAMS_BY_POSITION[pos]['thermal_log']
+                if thermal_log in data:
+                    has_thermal_data = True
+                    # Update state for this position
+                    self._throttling_state[pos] = bool(data[thermal_log])
 
-        self.information_text.setText(
-            "Throttling: Lowering intensity to lower temperature." if is_throttling else ""
-        )
+        if has_thermal_data:
+            # Check if any selected position is currently throttling based on known state
+            is_throttling = any(
+                self._throttling_state.get(pos, False)
+                for pos in positions_to_check
+            )
+
+            self.information_text.setText(
+                "Throttling: Lowering intensity to lower temperature." if is_throttling else ""
+            )
 
     def _connected(self, _):
         self._isConnected = True
@@ -327,6 +346,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
     def _disconnected(self, _):
         self._isConnected = False
         self._deck_controller.clear_deck_state()
+        self._throttling_state.clear()  # Clear throttling state
 
         # Disable UI controls
         self.groupBox_color.setEnabled(False)
@@ -343,6 +363,10 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         if not self._isConnected:
             return
 
+        # Don't write when we're updating UI from a fetch operation
+        if self._updating_from_fetch:
+            return
+
         r, g, b, _ = color.getRgb()
         rgb = rgb_t(r or 0, g or 0, b or 0)
         wrgb = rgb.extract_white()
@@ -355,6 +379,95 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
 
         for pos in positions_to_write:
             self._deck_controller.write_color(pos, color_uint32)
+
+    def _on_position_changed(self, _):
+        """Handle position dropdown changes by fetching current color from Crazyflie"""
+        if not self._isConnected:
+            return
+
+        position = self.positionDropdown.currentData()
+
+        if position == 2:  # Both
+            # Fetch both colors and compare
+            color_bottom = self._fetch_color_from_position(0)
+            color_top = self._fetch_color_from_position(1)
+
+            if color_bottom is not None and color_top is not None:
+                if color_bottom == color_top:
+                    # Both are the same, show that color
+                    self._update_ui_from_rgb(color_bottom)
+                else:
+                    # Different colors, show black
+                    self._update_ui_from_rgb((0, 0, 0))
+            else:
+                # Could not fetch one or both colors, show black
+                self._update_ui_from_rgb((0, 0, 0))
+        else:  # Bottom (0) or Top (1)
+            color = self._fetch_color_from_position(position)
+            if color is not None:
+                self._update_ui_from_rgb(color)
+            else:
+                # Could not fetch color, show black
+                self._update_ui_from_rgb((0, 0, 0))
+
+    def _fetch_color_from_position(self, position):
+        """
+        Fetch current color from Crazyflie for given position
+
+        Args:
+            position: 0 for bottom, 1 for top
+
+        Returns:
+            tuple (r, g, b) or None if fetch failed
+        """
+        if position not in self.PARAMS_BY_POSITION:
+            return None
+
+        if not self._deck_controller.is_deck_present(position):
+            return None
+
+        try:
+            param_name = self.PARAMS_BY_POSITION[position]['color']
+            color_uint32 = int(self._helper.cf.param.get_value(param_name))
+
+            # Unpack WRGB: 0xWWRRGGBB
+            w = (color_uint32 >> 24) & 0xFF
+            r = (color_uint32 >> 16) & 0xFF
+            g = (color_uint32 >> 8) & 0xFF
+            b = color_uint32 & 0xFF
+
+            # Convert WRGB back to RGB by adding white channel back
+            r_full = r + w
+            g_full = g + w
+            b_full = b + w
+
+            return (r_full, g_full, b_full)
+        except (KeyError, ValueError, TypeError) as e:
+            logger.debug(f"Could not fetch color from position {position}: {e}")
+            return None
+
+    def _update_ui_from_rgb(self, rgb):
+        """
+        Update UI controls from RGB values without writing back to Crazyflie
+
+        Args:
+            rgb: tuple (r, g, b)
+        """
+        self._updating_from_fetch = True
+        try:
+            r, g, b = rgb
+            color = QColor(r, g, b)
+            h, s, v, _ = color.getHsvF()
+
+            self._hue = h or 0
+            self._saturation = s or 0
+            self._value = v or 0
+
+            self.hue_bar.setValue(int(self._hue * 1000))
+            self._update_sv_area(self.sv_area, self._hue)
+            self._update_preview()
+        finally:
+            self._updating_from_fetch = False
 
     def _populate_position_dropdown(self):
         """Initialize the position dropdown with items (called once during __init__)"""
@@ -398,7 +511,12 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         """ Show event for proper initial SV area sizing """
         super().showEvent(a0)
         self._update_sv_area(self.sv_area, self._hue)
-        self._update_preview()
+        # Update preview without writing to Crazyflie
+        self._updating_from_fetch = True
+        try:
+            self._update_preview()
+        finally:
+            self._updating_from_fetch = False
 
     def mousePressEvent(self, a0):
         self._handle_mouse_event(a0)
