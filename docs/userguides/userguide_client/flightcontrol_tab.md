@@ -29,10 +29,9 @@ The normal view used when flying is the one seen below.
     * *Min thrust:* Minimum thrust before 0 is sent to the Crazyflie.
     * *Slew limit:* Set the percentage where the thrust is slew controlled (the thrust value lowering will be limited). This makes the Crazyflie a bit easier to fly for beginners.
     * *Slew rate:* When the thrust is below the slew limit, this is the maximum rate of lowering the thrust.
-5. Settings for flight decks, currently the LED-ring effect and headlights can be set (if the ring is attached).
-6. Target values sent from the client for controlling the Crazyflie.
-7. Actual values logged from the Crazyflie.
-8. Motor output on the Crazyflie.
-9. Horizon indicator.
-10. Command based flight control, allow controlled flight if, and only if, a positioning deck such as the [Flow deck](https://store.bitcraze.io/collections/decks/products/flow-deck-v2), the [Loco deck](https://store.bitcraze.io/collections/decks/products/loco-positioning-deck) or the [Lighthouse deck](https://store.bitcraze.io/collections/decks/products/lighthouse-positioning-deck) is present.
-11. Supervisor button and supervisor information. Information will be shown depending on the state of the Crazyflie. Pressing the button will send an arming or disarming event to the Crazyflie which will arm or disarm the system if this is possible. This button can also say "Auto armed" which indicates the Crazyflie is configured to arm the system automatically if system checks have passed. More info in [Crazyflie firmware arming documentation](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/supervisor/arming/). In the event of a crash, pressing the button will recover the Crazyflie. 
+5. Target values sent from the client for controlling the Crazyflie.
+6. Actual values logged from the Crazyflie.
+7. Motor output on the Crazyflie.
+8. Horizon indicator.
+9. Command based flight control, allow controlled flight if, and only if, a positioning deck such as the [Flow deck](https://store.bitcraze.io/collections/decks/products/flow-deck-v2), the [Loco deck](https://store.bitcraze.io/collections/decks/products/loco-positioning-deck) or the [Lighthouse deck](https://store.bitcraze.io/collections/decks/products/lighthouse-positioning-deck) is present.
+10. Supervisor button and supervisor information. Information will be shown depending on the state of the Crazyflie. Pressing the button will send an arming or disarming event to the Crazyflie which will arm or disarm the system if this is possible. This button can also say "Auto armed" which indicates the Crazyflie is configured to arm the system automatically if system checks have passed. More info in [Crazyflie firmware arming documentation](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/supervisor/arming/). In the event of a crash, pressing the button will recover the Crazyflie.
