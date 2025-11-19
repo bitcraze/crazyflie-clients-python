@@ -135,7 +135,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
         self._led_ring_headlight.setEnabled(False)
 
     def _select(self, nbr):
-        col = QtGui.QColor()  # default to invalid
+        col = QtGui.QColor()
 
         if self._mem:
             led = self._mem.leds[nbr]
@@ -144,10 +144,16 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
         col = QtWidgets.QColorDialog.getColor(col)
 
         if col.isValid() and self._mem:
-            logger.info(col.red())
-            self._mem.leds[nbr].set(r=col.red(), g=col.green(), b=col.blue())
-            UiUtils.set_background_color(self.sender(), col.red(), col.green(),
-                                         col.blue())
+            r, g, b = col.red(), col.green(), col.blue()
+            self._mem.leds[nbr].set(r=r, g=g, b=b)
+
+            brightness = 0.299 * r + 0.587 * g + 0.114 * b
+            text_color = "white" if brightness < 128 else "black"
+
+            self.sender().setStyleSheet(
+                f"background-color: rgb({r}, {g}, {b}); color: {text_color};"
+            )
+
             self._write_led_output()
 
     def _intensity_change(self, value):
@@ -175,7 +181,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
         if self._mem:
             for btn in self._btns:
                 btn.setEnabled(True)
-                btn.setStyleSheet("background-color: black")
+                btn.setStyleSheet("background-color: black; color: white")
                 self._intensity_slider.setEnabled(True)
                 self._intensity_spin.setEnabled(True)
 
