@@ -38,7 +38,6 @@ from PyQt6 import QtWidgets
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
-from cfclient.utils.ui import UiUtils
 
 from cflib.crazyflie.mem import MemoryElement
 
