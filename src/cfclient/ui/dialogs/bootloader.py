@@ -135,11 +135,11 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
         self._platform_filter_checkboxes = []
 
-        self._set_image(self.image_1, ICON_PATH + "/bolt.webp")
-        self._set_image(self.image_2, ICON_PATH + "/cf21.webp")
-        self._set_image(self.image_3, ICON_PATH + "/bl.webp")
-        self._set_image(self.image_4, ICON_PATH + "/flapper.webp")
-        self._set_image(self.image_5, ICON_PATH + "/tag.webp")
+        self._set_image(self.image_1, os.path.join(ICON_PATH, "bolt.webp"))
+        self._set_image(self.image_2, os.path.join(ICON_PATH, "cf21.webp"))
+        self._set_image(self.image_3, os.path.join(ICON_PATH, "bl.webp"))
+        self._set_image(self.image_4, os.path.join(ICON_PATH, "flapper.webp"))
+        self._set_image(self.image_5, os.path.join(ICON_PATH, "tag.webp"))
 
     def _ui_connection_fail(self, message):
         self._cold_boot_error_message = message
