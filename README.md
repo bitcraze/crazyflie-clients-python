@@ -1,9 +1,8 @@
-# Crazyflie PC client [![CI](https://github.com/bitcraze/crazyflie-clients-python/workflows/CI/badge.svg)](https://github.com/bitcraze/crazyflie-clients-python/actions?query=workflow%3ACI) [![cfclient](https://snapcraft.io//cfclient/badge.svg)](https://snapcraft.io/cfclient)
+# Crazyflie PC client [![CI](https://github.com/bitcraze/crazyflie-clients-python/workflows/CI/badge.svg)](https://github.com/bitcraze/crazyflie-clients-python/actions?query=workflow%3ACI)
 
-
-The Crazyflie PC client enables flashing and controlling the Crazyflie.
-It implements the user interface and high-level control (for example gamepad handling).
-The communication with Crazyflie and the implementation of the CRTP protocol to control the Crazyflie is handled by the [cflib](https://github.com/bitcraze/crazyflie-lib-python) project.
+This repository contains host applications for the Crazyflie, including the PC client (`cfclient`), headless client (`cfheadless`), firmware loader (`cfloader`), and ZMQ interface (`cfzmq`).
+These applications provide graphical and command-line interfaces for firmware flashing, flight control, parameter configuration, real-time data logging and visualization, and more.
+All applications are built on [`cflib`](https://github.com/bitcraze/crazyflie-lib-python).
 
 ## Installation
 See the [installation instructions](docs/installation/install.md) in the GitHub docs folder.
