@@ -65,6 +65,7 @@ RELEASE_URL = 'https://api.github.com/repos/bitcraze/'\
 
 ICON_PATH = os.path.join(cfclient.module_path, 'ui', 'icons')
 
+
 class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     """Tab for update the Crazyflie firmware and for reading/writing the config
     block in flash"""
