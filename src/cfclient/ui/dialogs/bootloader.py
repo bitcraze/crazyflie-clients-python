@@ -63,6 +63,7 @@ service_dialog_class = uic.loadUiType(cfclient.module_path +
 RELEASE_URL = 'https://api.github.com/repos/bitcraze/'\
               'crazyflie-release/releases'
 
+ICON_PATH = os.path.join(cfclient.module_path, 'ui', 'icons')
 
 class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     """Tab for update the Crazyflie firmware and for reading/writing the config
@@ -133,11 +134,11 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
         self._platform_filter_checkboxes = []
 
-        self._set_image(self.image_1, "src/cfclient/ui/icons/bolt.webp")
-        self._set_image(self.image_2, "src/cfclient/ui/icons/cf21.webp")
-        self._set_image(self.image_3, "src/cfclient/ui/icons/bl.webp")
-        self._set_image(self.image_4, "src/cfclient/ui/icons/flapper.webp")
-        self._set_image(self.image_5, "src/cfclient/ui/icons/tag.webp")
+        self._set_image(self.image_1, ICON_PATH + "/bolt.webp")
+        self._set_image(self.image_2, ICON_PATH + "/cf21.webp")
+        self._set_image(self.image_3, ICON_PATH + "/bl.webp")
+        self._set_image(self.image_4, ICON_PATH + "/flapper.webp")
+        self._set_image(self.image_5, ICON_PATH + "/tag.webp")
 
     def _ui_connection_fail(self, message):
         self._cold_boot_error_message = message
