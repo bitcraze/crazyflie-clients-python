@@ -15,7 +15,7 @@
     "auto_reconnect": false,
     "device_config_mapping": {},
     "enable_debug_driver": false,
-    "input_device_blacklist": "(VirtualBox|VMware)",
+    "input_device_blacklist": "(VirtualBox|VMware|keyd virtual pointer)",
     "ui_update_period": 100,
     "enable_zmq_input": false,
     "enable_zmq_param": false,
