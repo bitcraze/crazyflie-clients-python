@@ -100,6 +100,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.programButton.clicked.connect(self.programAction)
         self.coldBootButton.clicked.connect(self.initiateColdboot)
         self.resetButton.clicked.connect(self.resetCopter)
+        self.sourceTab.currentChanged.connect(self._update_program_button_state)
 
         self._helper.connectivity_manager.register_ui_elements(
             ConnectivityManager.UiElementsContainer(
@@ -313,21 +314,38 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.firmwareDropdown.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToContents)
         self._update_firmware_dropdown(True)
 
+    def _has_selected_file(self) -> bool:
+        return bool(self.imagePathLine.text())
+
     def _update_program_button_state(self):
-        any_checked = any(button.isChecked() for button in self._platform_filter_checkboxes)
-        is_connected = self._state in [
+        is_connected = self._state in (
             self.UIState.COLD_CONNECTED,
             self.UIState.FW_CONNECTED
-        ]
-
-        self.programButton.setEnabled(any_checked and is_connected)
+        )
 
         if not is_connected:
+            self.programButton.setEnabled(False)
             self.programButton.setToolTip("Connect your device before programming.")
-        elif not any_checked:
-            self.programButton.setToolTip("Select a platform before programming.")
+            return
+
+        current_tab = self.sourceTab.currentWidget()
+
+        if current_tab == self.tabFromFile:
+            has_file = bool(self.imagePathLine.text())
+            self.programButton.setEnabled(has_file)
+
+            self.programButton.setToolTip(
+                "" if has_file else "Choose a firmware file to program."
+            )
         else:
-            self.programButton.setToolTip("")
+            any_platform_checked = any(
+                button.isChecked() for button in self._platform_filter_checkboxes
+            )
+
+            self.programButton.setEnabled(any_platform_checked)
+            self.programButton.setToolTip(
+                "" if any_platform_checked else "Select a platform before programming."
+            )
 
     def _update_firmware_dropdown(self, active: bool):
         if active:
@@ -392,6 +410,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
         if filename.endswith('.zip'):
             self.imagePathLine.setText(filename)
+            self._update_program_button_state()
         else:
             msgBox = QtWidgets.QMessageBox()
             msgBox.setText("Wrong file extention. Must be .zip.")
