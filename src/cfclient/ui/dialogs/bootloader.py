@@ -313,7 +313,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
         self.firmwareDropdown.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToContents)
         self._update_firmware_dropdown(True)
-    
+
     def _has_selected_file(self) -> bool:
         return bool(self.imagePathLine.text())
 
