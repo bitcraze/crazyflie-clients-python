@@ -108,13 +108,6 @@ def main():
     logger.debug("Using config path {}".format(cfclient.config_path))
     logger.debug("sys.path={}".format(sys.path))
 
-    # Try all the imports used in the project here to control what happens....
-    try:
-        import usb  # noqa
-    except ImportError:
-        logger.critical("No pyusb installation found, exiting!")
-        sys.exit(1)
-
     if not sys.platform.startswith('linux'):
         try:
             import sdl2  # noqa

@@ -29,39 +29,39 @@ Find all the available tabs so they can be loaded.
 Dropping a new .py file into this directory will automatically list and load
 it into the UI when it is started.
 """
-from .ConsoleTab import ConsoleTab
-from .CrtpSharkToolbox import CrtpSharkToolbox
-# from .ExampleTab import ExampleTab
-from .FlightTab import FlightTab
-# from .GpsTab import GpsTab
-from .LEDRingTab import LEDRingTab
-from .LogBlockTab import LogBlockTab
-from .LogTab import LogTab
-from .ParamTab import ParamTab
-from .PlotTab import PlotTab
-from .locopositioning_tab import LocoPositioningTab
-from .LogClientTab import LogClientTab
-from .lighthouse_tab import LighthouseTab
-from .TuningTab import TuningTab
-from .ColorLEDTab import ColorLEDTab
+# from .ConsoleTab import ConsoleTab
+# from .CrtpSharkToolbox import CrtpSharkToolbox
+# # from .ExampleTab import ExampleTab
+# from .FlightTab import FlightTab
+# # from .GpsTab import GpsTab
+# from .LEDRingTab import LEDRingTab
+# from .LogBlockTab import LogBlockTab
+# from .LogTab import LogTab
+# from .ParamTab import ParamTab
+# from .PlotTab import PlotTab
+# from .locopositioning_tab import LocoPositioningTab
+# from .LogClientTab import LogClientTab
+# from .lighthouse_tab import LighthouseTab
+# from .TuningTab import TuningTab
+# from .ColorLEDTab import ColorLEDTab
 
 __author__ = 'Bitcraze AB'
 __all__ = []
 
 available = [
-    ConsoleTab,
-    # ExampleTab,
-    FlightTab,
-    # GpsTab,
-    LEDRingTab,
-    ColorLEDTab,
-    LogBlockTab,
-    LogTab,
-    ParamTab,
-    PlotTab,
-    LocoPositioningTab,
-    LighthouseTab,
-    LogClientTab,
-    TuningTab,
-    CrtpSharkToolbox,
+    # ConsoleTab,
+    # # ExampleTab,
+    # FlightTab,
+    # # GpsTab,
+    # LEDRingTab,
+    # ColorLEDTab,
+    # LogBlockTab,
+    # LogTab,
+    # ParamTab,
+    # PlotTab,
+    # LocoPositioningTab,
+    # LighthouseTab,
+    # LogClientTab,
+    # TuningTab,
+    # CrtpSharkToolbox,
 ]

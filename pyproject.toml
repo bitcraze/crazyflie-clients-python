@@ -37,14 +37,14 @@ classifiers = [
 requires-python = ">= 3.10"
 
 dependencies = [
-        "cflib~=0.1.30",
+        "cflib",
         "setuptools",
         "appdirs~=1.4.0",
         "pyzmq~=26.0",
         "pyqtgraph~=0.13",
         "PyYAML~=6.0.1",
         "numpy~=2.2",
-        "vispy~=0.15.2",
+        "vispy~=0.16.1",
         "pyopengl~=3.1.7",  # Required for Vispy to work on MacOS Sonoma
         "pyserial~=3.5",
         "PyQt6~=6.7.1",
@@ -53,17 +53,22 @@ dependencies = [
         "pysdl2-dll==2.24.0 ; platform_system=='Windows' or platform_system=='Darwin'"
 ]
 
+[tool.uv.sources]
+cflib = { path = "/home/rik/dev/crazyflie-lib-python", editable = true }
+
 [project.urls]
 Homepage = "https://www.bitcraze.io"
 Documentation = "https://www.bitcraze.io/documentation/repository/crazyflie-clients-python/master/"
 Repository = "https://github.com/bitcraze/crazyflie-clients-python"
 Issues = "https://github.com/bitcraze/crazyflie-clients-python/issues"
 
-[project.optional-dependencies]
-dev = ['pre-commit',
-       'cx_freeze==5.1.1 ; platform_system=="Windows"',
-       'jinja2==2.10.3 ; platform_system=="Windows"'
-       ]
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+]
+
+[tool.ruff.lint]
+select = ["ANN"]
 
 [project.scripts]
 cfclient = "cfclient.gui:main"
@@ -77,3 +82,4 @@ include-package-data = true
 [tool.setuptools_scm]
 version_file = "src/cfclient/version.py"
 version_scheme = "no-guess-dev"
+
