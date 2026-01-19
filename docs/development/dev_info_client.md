@@ -197,9 +197,7 @@ are cached ([more info on logging/parameter frameworks and
 TOC](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/) ). The writable part of the TOC
 cache is located in *<local_config_folder>/cache* where each cache is saved in a file
 named after the CRC32 (in hex) of the TOC CRC32 (for example
-*1CB41680.json*). There\'s also a read-only part of the TOC cache
-that\'s located in */lib/cglib/cache* (NOTE: not sure about this one!) and contains the caches for
-official builds. When the application connects to a Crazyflie the CRC32
+*1CB41680.json*). When the application connects to a Crazyflie the CRC32
 of the log and param TOC is requested. When the client receives it will
 check if a file with the correct name exists (in both the RW and the RO
 TOC cache). If it does it will load the cached TOC, if not it will start
