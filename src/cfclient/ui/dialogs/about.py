@@ -217,7 +217,9 @@ class AboutDialog(QtWidgets.QWidget, about_widget_class):
 
     def _request_deck_data_update(self):
         self._decks_text = ""
+        # Query both 1-Wire and DeckCtrl memories for deck information
         mems = self._helper.cf.mem.get_mems(MemoryElement.TYPE_1W)
+        mems += self._helper.cf.mem.get_mems(MemoryElement.TYPE_DECKCTRL)
         for mem in mems:
             mem.update(self._cb_deck_data_updated_signal.emit)
 
@@ -230,6 +232,8 @@ class AboutDialog(QtWidgets.QWidget, about_widget_class):
         if "Board revision" in deck_data.elements:
             rev = deck_data.elements["Board revision"]
 
-        self._decks_text += DECK_FORMAT.format(name, rev, deck_data.addr)
+        # OWElement has addr attribute, DeckCtrlElement does not
+        addr = getattr(deck_data, 'addr', 'N/A')
+        self._decks_text += DECK_FORMAT.format(name, rev, addr)
 
         self._update_debug_info_view()
