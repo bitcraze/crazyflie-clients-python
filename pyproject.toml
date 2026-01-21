@@ -37,7 +37,7 @@ classifiers = [
 requires-python = ">= 3.10"
 
 dependencies = [
-        "cflib~=0.1.30",
+        "cflib==0.1.31rc1",
         "setuptools",
         "appdirs~=1.4.0",
         "pyzmq~=26.0",
