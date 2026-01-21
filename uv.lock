@@ -46,7 +46,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = "~=1.4.0" },
-    { name = "cflib", specifier = "~=0.1.30rc2" },
+    { name = "cflib", specifier = "==0.1.31rc1" },
     { name = "cx-freeze", marker = "sys_platform == 'win32' and extra == 'dev'", specifier = "==5.1.1" },
     { name = "jinja2", marker = "sys_platform == 'win32' and extra == 'dev'", specifier = "==2.10.3" },
     { name = "numpy", specifier = "~=2.2" },
@@ -158,7 +158,7 @@ wheels = [
 
 [[package]]
 name = "cflib"
-version = "0.1.30rc2"
+version = "0.1.31rc1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "libusb-package" },
@@ -169,9 +169,9 @@ dependencies = [
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.16.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f3/33/2165575030b49e5ac39d2029ea7706d7885005a4c4f91d86d12466024cd9/cflib-0.1.30rc2.tar.gz", hash = "sha256:58370a957c04db98dfb78551e04bffcd077209c1fce8cc635d846fbd5606d2a6", size = 457919, upload-time = "2025-12-16T09:39:24.032Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fc/6c/90b04018b866ee56245b1730429cc80ced317aa35759f946db650b07467a/cflib-0.1.31rc1.tar.gz", hash = "sha256:8e2d744c448ff5bfa17e9f8b26574329b81dc26a14a7552147890a0b10bad972", size = 457969, upload-time = "2026-01-21T09:14:26.447Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/17/08d55782e04752495148d74e44cb6b9e2ff50ccea03fe2ef432181dca481/cflib-0.1.30rc2-py3-none-any.whl", hash = "sha256:53fd5acf82fc0ab027872e9837b371718814a570c94d92aa0ef7213fc67c76c0", size = 625969, upload-time = "2025-12-16T09:39:22.206Z" },
+    { url = "https://files.pythonhosted.org/packages/ee/d2/61a72ec27185c9e7f742c8563ba9682f7f9f162f87b0b0f9547765668979/cflib-0.1.31rc1-py3-none-any.whl", hash = "sha256:fd14874d4c417e79b24c11b3cfb2606f390afb11276728dec94778e8daf05794", size = 625965, upload-time = "2026-01-21T09:14:24.678Z" },
 ]
 
 [[package]]
@@ -191,11 +191,11 @@ wheels = [
 
 [[package]]
 name = "filelock"
-version = "3.20.0"
+version = "3.20.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/58/46/0028a82567109b5ef6e4d2a1f04a583fb513e6cf9527fcdd09afd817deeb/filelock-3.20.0.tar.gz", hash = "sha256:711e943b4ec6be42e1d4e6690b48dc175c822967466bb31c0c293f34334c13f4", size = 18922, upload-time = "2025-10-08T18:03:50.056Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1d/65/ce7f1b70157833bf3cb851b556a37d4547ceafc158aa9b34b36782f23696/filelock-3.20.3.tar.gz", hash = "sha256:18c57ee915c7ec61cff0ecf7f0f869936c7c30191bb0cf406f1341778d0834e1", size = 19485, upload-time = "2026-01-09T17:55:05.421Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/91/7216b27286936c16f5b4d0c530087e4a54eead683e6b0b73dd0c64844af6/filelock-3.20.0-py3-none-any.whl", hash = "sha256:339b4732ffda5cd79b13f4e2711a31b0365ce445d95d243bb996273d072546a2", size = 16054, upload-time = "2025-10-08T18:03:48.35Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/36/7fb70f04bf00bc646cd5bb45aa9eddb15e19437a28b8fb2b4a5249fac770/filelock-3.20.3-py3-none-any.whl", hash = "sha256:4b0dda527ee31078689fc205ec4f1c1bf7d56cf88b6dc9426c4f230e46c2dce1", size = 16701, upload-time = "2026-01-09T17:55:04.334Z" },
 ]
 
 [[package]]
