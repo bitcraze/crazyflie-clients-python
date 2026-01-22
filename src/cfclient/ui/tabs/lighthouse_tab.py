@@ -256,6 +256,8 @@ class SampleMarkerPose(MarkerPose):
                 self.set_color(self.VERIFICATION_BRUSH) if self._is_verification else self.set_color(self.NORMAL_BRUSH)
                 self._clear_lines()
 
+        self.set_axis_visible(highlighted)
+
         self._is_highlighted = highlighted
 
     def set_verification_type(self, is_verification: bool):
