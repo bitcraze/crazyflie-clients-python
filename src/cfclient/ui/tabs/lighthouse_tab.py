@@ -904,6 +904,16 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
                         label.setToolTip('')
 
     def _load_sys_config_button_clicked(self):
+        if not self._geo_estimator_widget.is_container_empty():
+            dlg = QMessageBox(self)
+            dlg.setWindowTitle("Clear samples Confirmation")
+            dlg.setText("Loading a new system configuration will clear all samples. Are you sure?")
+            dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            button = dlg.exec()
+
+            if button != QMessageBox.StandardButton.Yes:
+                return
+
         names = QFileDialog.getOpenFileName(self, 'Open file', self._helper.current_folder, FILE_REGEX_YAML)
 
         if names[0] == '':
@@ -912,8 +922,9 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._helper.current_folder = os.path.dirname(names[0])
 
         if self._lh_config_writer is not None:
-            self._lh_config_writer.write_and_store_config_from_file(self._new_system_config_written_to_cf_signal.emit,
-                                                                    names[0])
+            self._lh_config_writer.write_and_store_config_from_file(self._new_system_config_written_to_cf_signal.emit, names[0])
+            # Clear all samples as the new configuration is based on some other (unknown) set of samples
+            self._geo_estimator_widget.new_session()
 
     def _save_sys_config_button_clicked(self):
         # Get calibration data from the Crazyflie to complete the system config data set

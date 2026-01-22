@@ -282,11 +282,13 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         if button == QMessageBox.StandardButton.Yes:
             self.new_session()
 
+    def is_container_empty(self) -> bool:
+        """Check if the container has any samples"""
+        return self._container.is_empty()
+
     def _load_from_file(self, use_session_path=False):
         path = self._session_path if use_session_path else self._helper.current_folder
-        # names = QFileDialog.getOpenFileName(self, 'Load session', path, self.FILE_REGEX_YAML)
-        names = ['/home/kristoffer/code/tmp/cf-configs/4bs-samples.yaml']  # TODO krri remove
-
+        names = QFileDialog.getOpenFileName(self, 'Load session', path, self.FILE_REGEX_YAML)
 
         if names[0] == '':
             return
