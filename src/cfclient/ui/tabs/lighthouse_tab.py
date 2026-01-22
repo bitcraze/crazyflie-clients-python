@@ -86,12 +86,17 @@ class MarkerPose():
     LABEL_SIZE = 100
     LABEL_OFFSET = np.array((0.0, 0, 0.25))
 
-    def __init__(self, the_scene, color, text=None, axis_visible=False, interactive=False, symbol: str = 'disc'):
+    def __init__(self, the_scene, color, text=None, axis_visible: bool = False, interactive=False, symbol: str = 'disc'):
         self._scene = the_scene
         self._color = color
         self._text = text
         self._position = [0.0, 0, 0]
+        self._rot = np.identity(3)
         self._symbol = symbol
+        self._axis_visible = False
+        self._x_axis = None
+        self._y_axis = None
+        self._z_axis = None
 
         self._marker = scene.visuals.Markers(
             pos=np.array([[0, 0, 0]]),
@@ -102,26 +107,6 @@ class MarkerPose():
         if interactive:
             self._marker.interactive = True
 
-        if axis_visible:
-            self._x_axis = scene.visuals.Line(
-                pos=np.array([[0, 0, 0], [0, 0, 0]]),
-                color=self.COL_X_AXIS,
-                parent=self._scene)
-
-            self._y_axis = scene.visuals.Line(pos=np.array(
-                [[0, 0, 0], [0, 0, 0]]),
-                color=self.COL_Y_AXIS,
-                parent=self._scene)
-
-            self._z_axis = scene.visuals.Line(
-                pos=np.array([[0, 0, 0], [0, 0, 0]]),
-                color=self.COL_Z_AXIS,
-                parent=self._scene)
-        else:
-            self._x_axis = None
-            self._y_axis = None
-            self._z_axis = None
-
         self._label = None
         if self._text:
             self._label = scene.visuals.Text(
@@ -130,25 +115,67 @@ class MarkerPose():
                 pos=self.LABEL_OFFSET,
                 parent=self._scene)
 
-    def set_pose(self, position, rot):
-        if np.array_equal(position, self._position):
-            return
-        self._position = position
+        self.set_axis_visible(axis_visible)
 
-        self._marker.set_data(pos=np.array([position]), face_color=self._color, symbol=self._symbol)
+    def set_axis_visible(self, visible: bool):
+        if visible == self._axis_visible:
+            return
+
+        if visible:
+            if self._x_axis is None:
+                self._x_axis = scene.visuals.Line(
+                    pos=np.array([[0, 0, 0], [0, 0, 0]]),
+                    color=self.COL_X_AXIS,
+                    parent=self._scene)
+
+            if self._y_axis is None:
+                self._y_axis = scene.visuals.Line(
+                    pos=np.array([[0, 0, 0], [0, 0, 0]]),
+                    color=self.COL_Y_AXIS,
+                    parent=self._scene)
+
+            if self._z_axis is None:
+                self._z_axis = scene.visuals.Line(
+                    pos=np.array([[0, 0, 0], [0, 0, 0]]),
+                    color=self.COL_Z_AXIS,
+                    parent=self._scene)
+        else:
+            if self._x_axis is not None:
+                self._x_axis.parent = None
+                self._x_axis = None
+            if self._y_axis is not None:
+                self._y_axis.parent = None
+                self._y_axis = None
+            if self._z_axis is not None:
+                self._z_axis.parent = None
+                self._z_axis = None
+
+        self._axis_visible = visible
+
+        self._update_visuals()
+
+    def set_pose(self, position, rot):
+        if np.array_equal(position, self._position) and np.array_equal(rot, self._rot):
+            return
+
+        self._position = position
+        self._rot = rot
+
+        self._update_visuals()
+
+    def _update_visuals(self):
+        self._marker.set_data(pos=np.array([self._position]), face_color=self._color, symbol=self._symbol)
 
         if self._label:
-            self._label.pos = self.LABEL_OFFSET + position
+            self._label.pos = self.LABEL_OFFSET + self._position
 
-        if self._x_axis:
-            x_tip = np.dot(np.array(rot), np.array([self.AXIS_LEN, 0, 0]))
-            self._x_axis.set_data(np.array([position, x_tip + position]), color=self.COL_X_AXIS)
-
-            y_tip = np.dot(np.array(rot), np.array([0, self.AXIS_LEN, 0]))
-            self._y_axis.set_data(np.array([position, y_tip + position]), color=self.COL_Y_AXIS)
-
-            z_tip = np.dot(np.array(rot), np.array([0, 0, self.AXIS_LEN]))
-            self._z_axis.set_data(np.array([position, z_tip + position]), color=self.COL_Z_AXIS)
+        if self._axis_visible:
+            x_tip = np.dot(np.array(self._rot), np.array([self.AXIS_LEN, 0, 0]))
+            self._x_axis.set_data(np.array([self._position, x_tip + self._position]), color=self.COL_X_AXIS)
+            y_tip = np.dot(np.array(self._rot), np.array([0, self.AXIS_LEN, 0]))
+            self._y_axis.set_data(np.array([self._position, y_tip + self._position]), color=self.COL_Y_AXIS)
+            z_tip = np.dot(np.array(self._rot), np.array([0, 0, self.AXIS_LEN]))
+            self._z_axis.set_data(np.array([self._position, z_tip + self._position]), color=self.COL_Z_AXIS)
 
     def get_position(self):
         return self._position
