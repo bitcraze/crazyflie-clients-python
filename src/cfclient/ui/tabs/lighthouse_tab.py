@@ -35,9 +35,7 @@ from enum import Enum
 
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
-from PyQt6.QtWidgets import QMessageBox
-from PyQt6.QtWidgets import QFileDialog
-from PyQt6.QtWidgets import QLabel
+from PyQt6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
@@ -286,6 +284,8 @@ class Plot3dLighthouse(scene.SceneCanvas):
 
     TEXT_OFFSET = np.array((0.0, 0, 0.25))
 
+    DEFAULT_CAMERA_DISTANCE = 10.0
+
     def __init__(self, sample_clicked_signal: pyqtSignal(int)):
         scene.SceneCanvas.__init__(self, keys=None)
         self.unfreeze()
@@ -293,9 +293,10 @@ class Plot3dLighthouse(scene.SceneCanvas):
         self._view = self.central_widget.add_view()
         self._view.bgcolor = '#ffffff'
         self._view.camera = scene.TurntableCamera(
-            distance=10.0,
+            distance=self.DEFAULT_CAMERA_DISTANCE,
             up='+z',
             center=(0.0, 0.0, 1.0))
+        self._view.camera.set_default_state()
 
         self._cf = None
         self._base_stations = {}
@@ -317,6 +318,10 @@ class Plot3dLighthouse(scene.SceneCanvas):
             parent=self._view.scene)
 
         self._addArrows(1, 0.02, 0.1, 0.1, self._view.scene)
+
+    def move_camera_home(self):
+        self._view.camera.reset()
+        self._view.camera.distance = self.DEFAULT_CAMERA_DISTANCE
 
     def on_mouse_press(self, event):
         visual = self.visual_at(event.pos)
@@ -580,6 +585,10 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     def _set_up_plots(self):
         self._plot_3d = Plot3dLighthouse(self._sample_clicked_signal)
         self._plot_layout.addWidget(self._plot_3d.native)
+
+        home_button = QPushButton('Home', self._plot_3d.native)
+        home_button.move(5, 5)
+        home_button.clicked.connect(self._plot_3d.move_camera_home)
 
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
