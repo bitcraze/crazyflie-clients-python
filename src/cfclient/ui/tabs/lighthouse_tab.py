@@ -298,17 +298,16 @@ class Plot3dLighthouse(scene.SceneCanvas):
             center=(0.0, 0.0, 1.0))
         self._view.camera.set_default_state()
 
-        self._cf = None
-        self._base_stations = {}
-        self._samples = []
-        self.selected_sample_index = -1
+        self._cf: CfMarkerPose | None = None
+        self._base_stations: dict[int, BsMarkerPose] = {}
+        self._samples: list[SampleMarkerPose] = []
+        self.selected_sample_index: int = -1
 
         self.events.mouse_press.connect(self.on_mouse_press)
         self._sample_clicked_signal = sample_clicked_signal
-        self.freeze()
 
         plane_size = 10
-        scene.visuals.Plane(
+        self._plane = scene.visuals.Plane(
             width=plane_size,
             height=plane_size,
             width_segments=plane_size,
@@ -316,8 +315,10 @@ class Plot3dLighthouse(scene.SceneCanvas):
             color=(0.5, 0.5, 0.5, 0.5),
             edge_color="gray",
             parent=self._view.scene)
+        self._plane.interactive = True
 
         self._addArrows(1, 0.02, 0.1, 0.1, self._view.scene)
+        self.freeze()
 
     def move_camera_home(self):
         self._view.camera.reset()
@@ -326,16 +327,19 @@ class Plot3dLighthouse(scene.SceneCanvas):
     def on_mouse_press(self, event):
         visual = self.visual_at(event.pos)
 
-        is_sample_hit = False
+        is_object_hit = False
+
+        if visual == self._plane:
+            is_object_hit = True
 
         for index, sample in enumerate(self._samples):
             if sample.is_same_visual(visual):
                 clicked_index = index
                 self._sample_clicked_signal.emit(clicked_index)
-                is_sample_hit = True
+                is_object_hit = True
                 break
 
-        if not is_sample_hit:
+        if not is_object_hit:
             self._sample_clicked_signal.emit(-1)
 
     def _addArrows(self, length, width, head_length, head_width, parent):
