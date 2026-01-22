@@ -252,7 +252,6 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         else:
             self._samples_table_view.clearSelection()
 
-
     def setVisible(self, visible: bool):
         super(GeoEstimatorWidget, self).setVisible(visible)
         if visible:
@@ -542,6 +541,9 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         logger.debug(f'General info: {solution.general_failure_info}')
 
         self._samples_details_model.setSolution(self._latest_solution)
+
+        # There seems to be some issues with the selection when updating the model. Reset the 3D-graph selection to avoid problems.
+        self.sample_selection_changed_signal.emit(-1)
 
         # Add action buttons to table
         for row, sample in enumerate(solution.samples):
