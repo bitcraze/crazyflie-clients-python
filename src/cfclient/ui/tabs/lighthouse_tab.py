@@ -320,11 +320,18 @@ class Plot3dLighthouse(scene.SceneCanvas):
 
     def on_mouse_press(self, event):
         visual = self.visual_at(event.pos)
+
+        is_sample_hit = False
+
         for index, sample in enumerate(self._samples):
             if sample.is_same_visual(visual):
                 clicked_index = index
                 self._sample_clicked_signal.emit(clicked_index)
+                is_sample_hit = True
                 break
+
+        if not is_sample_hit:
+            self._sample_clicked_signal.emit(-1)
 
     def _addArrows(self, length, width, head_length, head_width, parent):
         # The Arrow visual in vispy does not seem to work very good,

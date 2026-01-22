@@ -33,8 +33,8 @@ import os
 from typing import Callable
 from PyQt6 import QtCore, QtWidgets, uic, QtGui
 from PyQt6.QtWidgets import QFileDialog, QGridLayout
-from PyQt6.QtWidgets import QMessageBox, QPushButton, QLabel
-from PyQt6.QtCore import QTimer, QAbstractTableModel, QVariant, Qt, QModelIndex
+from PyQt6.QtWidgets import QMessageBox, QPushButton, QLabel, QAbstractItemView
+from PyQt6.QtCore import QTimer, QAbstractTableModel, QVariant, Qt, QModelIndex, QItemSelection
 
 
 import logging
@@ -222,7 +222,9 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._samples_details_model = SampleTableModel(self)
         self._samples_table_view.setModel(self._samples_details_model)
-        self._samples_table_view.selectionModel().currentRowChanged.connect(self._selection_changed)
+        self._samples_table_view.selectionModel().selectionChanged.connect(self._selection_changed)
+        self._samples_table_view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self._samples_table_view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
 
         header = self._samples_table_view.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
@@ -236,11 +238,20 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._bs_linkage_handler = BsLinkageHandler(self._bs_linkage_grid)
 
-    def _selection_changed(self, current: QModelIndex, previous: QModelIndex):
-        self.sample_selection_changed_signal.emit(current.row())
+    def _selection_changed(self, current: QItemSelection, previous: QItemSelection):
+        model_indexes = current.indexes()
+
+        if len(model_indexes) > 0:
+            self.sample_selection_changed_signal.emit(model_indexes[0].row())
+        else:
+            self.sample_selection_changed_signal.emit(-1)
 
     def set_selected_sample(self, index: int):
-        self._samples_table_view.selectRow(index)
+        if index >= 0:
+            self._samples_table_view.selectRow(index)
+        else:
+            self._samples_table_view.clearSelection()
+
 
     def setVisible(self, visible: bool):
         super(GeoEstimatorWidget, self).setVisible(visible)
@@ -274,7 +285,9 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
     def _load_from_file(self, use_session_path=False):
         path = self._session_path if use_session_path else self._helper.current_folder
-        names = QFileDialog.getOpenFileName(self, 'Load session', path, self.FILE_REGEX_YAML)
+        # names = QFileDialog.getOpenFileName(self, 'Load session', path, self.FILE_REGEX_YAML)
+        names = ['/home/kristoffer/code/tmp/cf-configs/4bs-samples.yaml']  # TODO krri remove
+
 
         if names[0] == '':
             return
