@@ -29,11 +29,12 @@
 Container for the geometry estimation functionality in the lighthouse tab.
 """
 
+from itertools import count
 import os
 from typing import Callable
 from PyQt6 import QtCore, QtWidgets, uic, QtGui
 from PyQt6.QtWidgets import QFileDialog, QGridLayout
-from PyQt6.QtWidgets import QMessageBox, QPushButton, QLabel, QAbstractItemView
+from PyQt6.QtWidgets import QMessageBox, QPushButton, QLabel
 from PyQt6.QtCore import QTimer, QAbstractTableModel, QVariant, Qt, QModelIndex, QItemSelection
 
 
@@ -164,6 +165,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     start_solving_signal = QtCore.pyqtSignal()
     solution_ready_signal = QtCore.pyqtSignal(object)
     sample_selection_changed_signal = QtCore.pyqtSignal(int)
+    base_station_selection_changed_signal = QtCore.pyqtSignal(int)
 
     FILE_REGEX_YAML = "Config *.yaml;;All *.*"
 
@@ -220,37 +222,78 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._data_status_xyz_space.clicked.connect(lambda: self._change_step(_CollectionStep.XYZ_SPACE))
         self._data_status_verification.clicked.connect(lambda: self._change_step(_CollectionStep.VERIFICATION))
 
+        # Create sample details table
         self._samples_details_model = SampleTableModel(self)
         self._samples_table_view.setModel(self._samples_details_model)
-        self._samples_table_view.selectionModel().selectionChanged.connect(self._selection_changed)
-        self._samples_table_view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-        self._samples_table_view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self._samples_table_view.selectionModel().selectionChanged.connect(self._sample_selection_changed)
 
-        header = self._samples_table_view.horizontalHeader()
-        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header_samples = self._samples_table_view.horizontalHeader()
+        header_samples.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header_samples.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header_samples.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header_samples.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+
+        # Create base station details table
+        self._base_stations_details_model = BaseStationTableModel(self)
+        self._base_stations_table_view.setModel(self._base_stations_details_model)
+        self._base_stations_table_view.selectionModel().selectionChanged.connect(self._base_station_selection_changed)
+
+        header_base_stations = self._base_stations_table_view.horizontalHeader()
+        header_base_stations.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header_base_stations.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header_base_stations.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header_base_stations.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header_base_stations.setSectionResizeMode(4, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
 
         self._sample_details_checkbox.setChecked(False)
-        self._samples_table_view.setVisible(False)
         self._sample_details_checkbox.stateChanged.connect(self._sample_details_checkbox_state_changed)
+        self._details_group_box.setVisible(False)
 
-        self._bs_linkage_handler = BsLinkageHandler(self._bs_linkage_grid)
-
-    def _selection_changed(self, current: QItemSelection, previous: QItemSelection):
+    def _sample_selection_changed(self, current: QItemSelection, previous: QItemSelection):
+        # Called from the sample details table when the selection changes
         model_indexes = current.indexes()
 
         if len(model_indexes) > 0:
-            self.sample_selection_changed_signal.emit(model_indexes[0].row())
+            #  model_indexes contains one index per column, just take the first one
+            row = model_indexes[0].row()
+            self.sample_selection_changed_signal.emit(row)
+
+            self._base_stations_table_view.clearSelection()
         else:
             self.sample_selection_changed_signal.emit(-1)
 
     def set_selected_sample(self, index: int):
+        # Called from the 3D-graph when the selected sample changes
+        self._base_stations_table_view.clearSelection()
+
         if index >= 0:
             self._samples_table_view.selectRow(index)
         else:
             self._samples_table_view.clearSelection()
+
+    def _base_station_selection_changed(self, current: QItemSelection, previous: QItemSelection):
+        # Called from the base station details table when the selection changes
+        model_indexes = current.indexes()
+
+        if len(model_indexes) > 0:
+            #  model_indexes contains one index per column, just take the first one
+            row = model_indexes[0].row()
+            bs_id = self._base_stations_details_model.get_bs_id_of_row(row)
+            self.base_station_selection_changed_signal.emit(bs_id)
+
+            self._samples_table_view.clearSelection()
+        else:
+            self.base_station_selection_changed_signal.emit(-1)
+
+    def set_selected_base_station(self, bs_id: int):
+        # Called from the 3D-graph when the selected base station changes
+        self._samples_table_view.clearSelection()
+
+        if bs_id >= 0:
+            row = self._base_stations_details_model.get_row_of_bs_id(bs_id)
+            self._base_stations_table_view.selectRow(row)
+        else:
+            self._base_stations_table_view.clearSelection()
 
     def setVisible(self, visible: bool):
         super(GeoEstimatorWidget, self).setVisible(visible)
@@ -320,7 +363,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
     def _sample_details_checkbox_state_changed(self, state: int):
         enabled = state == Qt.CheckState.Checked.value
-        self._samples_table_view.setVisible(enabled)
+        self._details_group_box.setVisible(enabled)
 
     def _change_step(self, step):
         """Update the widget to display the new step"""
@@ -543,11 +586,13 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         logger.debug(f'General info: {solution.general_failure_info}')
 
         self._samples_details_model.setSolution(self._latest_solution)
+        self._base_stations_details_model.setSolution(self._latest_solution)
 
         # There seems to be some issues with the selection when updating the model. Reset the 3D-graph selection to avoid problems.
         self.sample_selection_changed_signal.emit(-1)
+        self.base_station_selection_changed_signal.emit(-1)
 
-        # Add action buttons to table
+        # Add action buttons to sample table
         for row, sample in enumerate(solution.samples):
             if sample.status != LhCfPoseSampleStatus.NO_DATA:
                 # Move button
@@ -564,8 +609,6 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                 button = QPushButton('Del')
                 button.clicked.connect(lambda _, uid=sample.uid: self._container.remove_sample(uid))
                 self._samples_table_view.setIndexWidget(self._samples_details_model.index(row, DEL_COLUMN), button)
-
-        self._bs_linkage_handler.update(solution)
 
         if solution.progress_is_ok:
             self._upload_geometry(solution.bs_poses)
@@ -655,6 +698,7 @@ class _TableRowStatus(Enum):
     INVALID = 1
     LARGE_ERROR = 2
     VERIFICATION = 3
+    TOO_FEW_LINKS = 4
 
 
 class SampleTableModel(QAbstractTableModel):
@@ -737,52 +781,86 @@ class SampleTableModel(QAbstractTableModel):
         self.endResetModel()
 
 
-class BsLinkageHandler:
-    STYLE_RED_BACKGROUND = "background-color: lightpink;"
-    STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
+class BaseStationTableModel(QAbstractTableModel):
+    def __init__(self, parent=None, *args):
+        QAbstractTableModel.__init__(self, parent)
+        self._headers = ['Id', 'X', 'Y', 'Z', 'Samples', 'Links']
+        self._table_values = []
+        self._table_highlights: list[set[_TableRowStatus]] = []
 
-    def __init__(self, container: QGridLayout):
-        self._container = container
+    def rowCount(self, parent=None, *args, **kwargs):
+        return len(self._table_values)
 
-        for bs in range(0, 16):
-            container.addWidget(self._create_label(str(bs + 1)), 0, bs)
-            container.addWidget(self._create_label(), 1, bs)
+    def columnCount(self, parent=None, *args, **kwargs):
+        return len(self._headers)
 
-    def update(self, solution: LighthouseGeometrySolution):
-        container = self._container
-        link_count = solution.link_count
-        threshold = solution.link_count_ok_threshold
+    def data(self, index: QModelIndex, role: Qt.ItemDataRole) -> QVariant:
+        if index.isValid():
+            if role == Qt.ItemDataRole.DisplayRole:
+                if index.column() < len(self._table_values[index.row()]):
+                    value = self._table_values[index.row()][index.column()]
+                    return QVariant(value)
 
-        for bs in range(0, 16):
-            exists = bs in link_count
-            count = 0
-            text = ''
-            if exists:
-                count = len(link_count[bs])
-                text = f'{count}'
-            is_ok = count >= threshold
+            if role == Qt.ItemDataRole.BackgroundRole:
+                color = None
+                if _TableRowStatus.TOO_FEW_LINKS in self._table_highlights[index.row()]:
+                    if index.column() == 5:
+                        color = QtGui.QColor(255, 182, 193)
 
-            label_1 = container.itemAtPosition(0, bs).widget()
-            label_1.setVisible(exists)
+                if color:
+                    return QVariant(QtGui.QBrush(color))
 
-            label_2 = container.itemAtPosition(1, bs).widget()
-            label_2.setVisible(exists)
-            label_2.setText(text)
-            if is_ok:
-                label_2.setStyleSheet(self.STYLE_GREEN_BACKGROUND)
-            else:
-                label_2.setStyleSheet(self.STYLE_RED_BACKGROUND)
+        return QVariant()
 
-    def _create_label(self, text=None):
-        label = QLabel()
-        label.setMinimumSize(30, 0)
-        label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Preferred)
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    def headerData(self, col, orientation, role=None):
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
+            return QVariant(self._headers[col])
+        return QVariant()
 
-        if text:
-            label.setText(str(text))
-        else:
-            label.setProperty('frameShape', 'QFrame::Box')
-            label.setStyleSheet(STYLE_NO_BACKGROUND)
+    def setSolution(self, solution: LighthouseGeometrySolution):
+        """Set the solution and update the table values"""
+        self.beginResetModel()
+        self._table_values = []
+        self._table_highlights = []
 
-        return label
+        # Dictionary keys may not be ordered, sort by base station ID
+        for bs_id, pose in sorted(solution.bs_poses.items()):
+            status: set[_TableRowStatus] = set()
+
+            x = f'{pose.translation[0]:.2f}'
+            y = f'{pose.translation[1]:.2f}'
+            z = f'{pose.translation[2]:.2f}'
+
+            link_count = len(solution.link_count[bs_id])
+            if link_count < solution.link_count_ok_threshold:
+                status.add(_TableRowStatus.TOO_FEW_LINKS)
+
+            samples_containing_bs = solution.bs_sample_count[bs_id]
+
+            self._table_values.append([
+                bs_id + 1,
+                x,
+                y,
+                z,
+                samples_containing_bs,
+                link_count,
+            ])
+            self._table_highlights.append(status)
+
+        self.endResetModel()
+
+    def get_bs_id_of_row(self, row: int) -> int:
+        """Get the base station ID for a given row"""
+        if 0 <= row < len(self._table_values):
+            bs_id = self._table_values[row][0] - 1  # IDs are 1-based in the table
+            return bs_id
+
+        return -1
+
+    def get_row_of_bs_id(self, bs_id: int) -> int:
+        """Get the row index for a given base station ID"""
+        for row, values in enumerate(self._table_values):
+            if values[0] - 1 == bs_id:  # IDs are 1-based in the table
+                return row
+
+        return -1
