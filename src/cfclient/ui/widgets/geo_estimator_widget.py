@@ -609,8 +609,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         logger.debug(f'XYZ space: {solution.xyz_space_samples_info}')
         logger.debug(f'General info: {solution.general_failure_info}')
 
-        self._samples_details_model.setSolution(self._latest_solution)
-        self._base_stations_details_model.setSolution(self._latest_solution)
+        self._samples_details_model.set_solution(self._latest_solution)
+        self._base_stations_details_model.set_solution(self._latest_solution)
 
         # There seems to be some issues with the selection when updating the model. Reset the 3D-graph selection to avoid problems.
         self.sample_selection_changed_signal.emit(-1)
@@ -749,7 +749,7 @@ class SampleTableModel(QAbstractTableModel):
             return QVariant(self._headers[col])
         return QVariant()
 
-    def setSolution(self, solution: LighthouseGeometrySolution):
+    def set_solution(self, solution: LighthouseGeometrySolution):
         """Set the solution and update the table values"""
         self.beginResetModel()
         self._table_values = []
@@ -843,7 +843,7 @@ class BaseStationTableModel(QAbstractTableModel):
             return QVariant(self._headers[col])
         return QVariant()
 
-    def setSolution(self, solution: LighthouseGeometrySolution):
+    def set_solution(self, solution: LighthouseGeometrySolution):
         """Set the solution and update the table values"""
         self.beginResetModel()
         self._table_values = []
