@@ -403,9 +403,15 @@
    <item>
     <layout class="QHBoxLayout" name="_lower_section">
      <item>
-      <layout class="QHBoxLayout" name="_plot_area">
+      <layout class="QVBoxLayout" name="_geometry_area"/>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="_right_area">
        <item>
         <layout class="QVBoxLayout" name="_plot_layout">
+         <property name="sizeConstraint">
+          <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
+         </property>
          <item>
           <spacer name="horizontalSpacer_4">
            <property name="orientation">
@@ -421,13 +427,13 @@
          </item>
         </layout>
        </item>
+       <item>
+        <layout class="QVBoxLayout" name="_details_area"/>
+       </item>
       </layout>
      </item>
      <item>
-      <layout class="QVBoxLayout" name="_geometry_area"/>
-     </item>
-     <item>
-      <spacer name="verticalSpacer">
+      <spacer name="verticalSpacer_2">
        <property name="orientation">
         <enum>Qt::Orientation::Vertical</enum>
        </property>

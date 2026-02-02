@@ -41,6 +41,7 @@ import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
 
 from cfclient.ui.widgets.geo_estimator_widget import GeoEstimatorWidget
+from cfclient.ui.widgets.geo_estimator_details_widget import GeoEstimatorDetailsWidget
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import LighthouseMemHelper
 from cflib.localization import LighthouseConfigWriter
@@ -583,11 +584,24 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         super(LighthouseTab, self).__init__(helper, 'Lighthouse Positioning')
         self.setupUi(self)
 
+        # Add the geometry estimator widget
         self._geo_estimator_widget = GeoEstimatorWidget(self)
         self._geometry_area.addWidget(self._geo_estimator_widget)
         self._geo_estimator_widget.solution_ready_signal.connect(self._solution_updated_cb)
-        self._geo_estimator_widget.sample_selection_changed_signal.connect(self._sample_selection_changed_cb)
-        self._geo_estimator_widget.base_station_selection_changed_signal.connect(self._base_station_selection_changed_cb)
+
+        # Add the geometry estimator details widget
+        self._geo_estimator_details_widget = GeoEstimatorDetailsWidget()
+        self._details_area.addWidget(self._geo_estimator_details_widget)
+        self._geo_estimator_details_widget.sample_selection_changed_signal.connect(self._sample_selection_changed_cb)
+        self._geo_estimator_details_widget.base_station_selection_changed_signal.connect(self._base_station_selection_changed_cb)
+
+        # Connect signals between the geo estimator widget and the details widget
+        self._geo_estimator_widget.solution_ready_signal.connect(self._geo_estimator_details_widget.solution_ready_cb)
+        self._geo_estimator_widget._base_station_details_checkbox.stateChanged.connect(self._geo_estimator_details_widget.base_station_details_checkbox_state_changed)
+        self._geo_estimator_widget._sample_details_checkbox.stateChanged.connect(self._geo_estimator_details_widget.sample_details_checkbox_state_changed)
+        self._geo_estimator_details_widget.do_remove_sample_signal.connect(self._geo_estimator_widget.remove_sample)
+        self._geo_estimator_details_widget.do_convert_to_xyz_space_sample_signal.connect(self._geo_estimator_widget.convert_to_xyz_space_sample)
+        self._geo_estimator_details_widget.do_convert_to_verification_sample_signal.connect(self._geo_estimator_widget.convert_to_verification_sample)
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
@@ -598,8 +612,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._new_system_config_written_to_cf_signal.connect(self._new_system_config_written_to_cf)
         self._geometry_read_signal.connect(self._geometry_read_cb)
         self._calibration_read_signal.connect(self._calibration_read_cb)
-        self._sample_clicked_signal.connect(self._geo_estimator_widget.set_selected_sample)
-        self._base_station_clicked_signal.connect(self._geo_estimator_widget.set_selected_base_station)
+        self._sample_clicked_signal.connect(self._geo_estimator_details_widget.set_selected_sample)
+        self._base_station_clicked_signal.connect(self._geo_estimator_details_widget.set_selected_base_station)
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(self._connected_signal.emit)
@@ -862,7 +876,9 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._flying_mode_button.setEnabled(enabled)
         self._geo_mode_button.setEnabled(enabled)
 
-        self._geo_estimator_widget.setVisible(self._ui_mode == UiMode.geo_estimation and enabled)
+        is_geo_visible = self._ui_mode == UiMode.geo_estimation and enabled
+        self._geo_estimator_widget.setVisible(is_geo_visible)
+        self._geo_estimator_details_widget.setVisible(is_geo_visible)
 
     def _update_position_label(self, position):
         if len(position) == 3:
