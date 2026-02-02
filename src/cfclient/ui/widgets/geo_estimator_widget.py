@@ -152,8 +152,6 @@ STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_YELLOW_BACKGROUND = "background-color: lightyellow;"
 STYLE_NO_BACKGROUND = "background-color: none;"
 
-MOVE_COLUMN = 5
-
 
 class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     """Widget for the geometry estimator UI"""
@@ -259,13 +257,21 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         item = self._samples_table_view.indexAt(point)
         row = item.row()
         if row >= 0:
+            uid = self._samples_details_model.get_uid_of_row(item.row())
+            sample_type = self._samples_details_model.get_sample_type_of_row(row)
+
             delete_action = menu.addAction('Delete sample')
+            change_action = menu.addAction('Change type')
 
             action = menu.exec(self._samples_table_view.mapToGlobal(point))
 
             if action == delete_action:
-                uid = self._samples_details_model.get_uid_of_row(item.row())
                 self._container.remove_sample(uid)
+            elif action == change_action:
+                if sample_type == LhCfPoseSampleType.VERIFICATION:
+                    self._container.convert_to_xyz_space_sample(uid)
+                else:
+                    self._container.convert_to_verification_sample(uid)
 
     def _sample_selection_changed(self, current: QItemSelection, previous: QItemSelection):
         # Called from the sample details table when the selection changes
@@ -610,19 +616,6 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self.sample_selection_changed_signal.emit(-1)
         self.base_station_selection_changed_signal.emit(-1)
 
-        # Add action buttons to sample table
-        for row, sample in enumerate(solution.samples):
-            if sample.status != LhCfPoseSampleStatus.NO_DATA:
-                # Move button
-                if sample.sample_type == LhCfPoseSampleType.VERIFICATION:
-                    button = QPushButton('To xyz')
-                    button.clicked.connect(lambda _, uid=sample.uid: self._container.convert_to_xyz_space_sample(uid))
-                else:
-                    button = QPushButton('To verif.')
-                    button.clicked.connect(lambda _, uid=sample.uid: self._container.convert_to_verification_sample(
-                        uid))
-                self._samples_table_view.setIndexWidget(self._samples_details_model.index(row, MOVE_COLUMN), button)
-
         if solution.progress_is_ok:
             self._upload_geometry(solution.bs_poses)
 
@@ -717,9 +710,10 @@ class _TableRowStatus(Enum):
 class SampleTableModel(QAbstractTableModel):
     def __init__(self, parent=None, *args):
         QAbstractTableModel.__init__(self, parent)
-        self._headers = ['Type', 'X', 'Y', 'Z', 'Err', 'Move']
+        self._headers = ['Type', 'X', 'Y', 'Z', 'Err']
         self._table_values = []
-        self._uids: list [int] = []
+        self._uids: list[int] = []
+        self._sample_types: list[LhCfPoseSampleType] = []
         self._table_highlights: list[set[_TableRowStatus]] = []
 
     def rowCount(self, parent=None, *args, **kwargs):
@@ -760,6 +754,7 @@ class SampleTableModel(QAbstractTableModel):
         self.beginResetModel()
         self._table_values = []
         self._uids = []
+        self._sample_types = []
         self._table_highlights = []
 
         for sample in solution.samples:
@@ -792,6 +787,7 @@ class SampleTableModel(QAbstractTableModel):
                 error,
             ])
             self._uids.append(sample.uid)
+            self._sample_types.append(sample.sample_type)
             self._table_highlights.append(status)
 
         self.endResetModel()
@@ -801,7 +797,14 @@ class SampleTableModel(QAbstractTableModel):
         if 0 <= row < len(self._uids):
             return self._uids[row]
 
-        return -1
+        raise IndexError("Row index out of range")
+
+    def get_sample_type_of_row(self, row: int) -> LhCfPoseSampleType:
+        """Get the sample type for a given row"""
+        if 0 <= row < len(self._sample_types):
+            return self._sample_types[row]
+
+        raise IndexError("Row index out of range")
 
 
 class BaseStationTableModel(QAbstractTableModel):
