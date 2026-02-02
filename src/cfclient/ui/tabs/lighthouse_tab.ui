@@ -311,13 +311,6 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_6">
             <item>
-             <widget class="QPushButton" name="_manage_estimate_geometry_button">
-              <property name="text">
-               <string>Manage geometry</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <widget class="QPushButton" name="_change_system_type_button">
               <property name="text">
                <string>Change system type</string>

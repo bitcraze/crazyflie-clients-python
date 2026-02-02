@@ -50,7 +50,6 @@ from cflib.localization import LhCfPoseSampleType
 
 from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
 
-from cfclient.ui.dialogs.lighthouse_bs_geometry_dialog import LighthouseBsGeometryDialog
 from cfclient.ui.dialogs.basestation_mode_dialog import LighthouseBsModeDialog
 from cfclient.ui.dialogs.lighthouse_system_type_dialog import LighthouseSystemTypeDialog
 from cfclient.utils.logconfigreader import FILE_REGEX_YAML
@@ -641,11 +640,9 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._graph_timer.timeout.connect(self._update_graphics)
         self._graph_timer.start()
 
-        self._basestation_geometry_dialog = LighthouseBsGeometryDialog(self)
         self._basestation_mode_dialog = LighthouseBsModeDialog(self)
         self._system_type_dialog = LighthouseSystemTypeDialog(helper)
 
-        self._manage_estimate_geometry_button.clicked.connect(self._show_basestation_geometry_dialog)
         self._change_system_type_button.clicked.connect(lambda: self._system_type_dialog.show())
         self._manage_basestation_mode_button.clicked.connect(self._show_basestation_mode_dialog)
 
@@ -678,10 +675,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             # New geo data has been written and stored in the CF, read it back to update the UI
             self._start_read_of_geo_data()
 
-    def _show_basestation_geometry_dialog(self):
-        self._basestation_geometry_dialog.reset()
-        self._basestation_geometry_dialog.show()
-
     def _show_basestation_mode_dialog(self):
         self._basestation_mode_dialog.reset()
         self._basestation_mode_dialog.show()
@@ -698,7 +691,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         """Callback when the Crazyflie has been connected"""
         logger.debug("Crazyflie connected to {}".format(link_uri))
 
-        self._basestation_geometry_dialog.reset()
         self._flying_mode_button.setChecked(True)
         self._is_connected = True
 
@@ -740,7 +732,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     def _geometry_read_cb(self, geometries):
         # Remove any geo data where the valid flag is False
         self._lh_geos = dict(filter(lambda key_value: key_value[1].valid, geometries.items()))
-        self._basestation_geometry_dialog.geometry_updated(self._lh_geos)
         self._is_geometry_read_ongoing = False
 
     def _solution_updated_cb(self, solution: LighthouseGeometrySolution):
@@ -805,7 +796,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._clear_state()
         self._update_graphics()
         self._plot_3d.clear()
-        self._basestation_geometry_dialog.close()
         self._flying_mode_button.setChecked(True)
         self.is_lighthouse_deck_active = False
         self._is_connected = False
@@ -867,7 +857,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
     def _update_ui(self):
         enabled = self._is_connected and self.is_lighthouse_deck_active
-        self._manage_estimate_geometry_button.setEnabled(enabled)
         self._change_system_type_button.setEnabled(enabled)
 
         self._mode_group.setEnabled(enabled)
