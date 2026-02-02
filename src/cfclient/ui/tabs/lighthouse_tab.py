@@ -859,7 +859,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         enabled = self._is_connected and self.is_lighthouse_deck_active
         self._change_system_type_button.setEnabled(enabled)
 
-        self._mode_group.setEnabled(enabled)
+        self._flying_mode_button.setEnabled(enabled)
+        self._geo_mode_button.setEnabled(enabled)
 
         self._geo_estimator_widget.setVisible(self._ui_mode == UiMode.geo_estimation and enabled)
 
