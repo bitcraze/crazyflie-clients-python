@@ -247,7 +247,11 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._sample_details_checkbox.setChecked(False)
         self._sample_details_checkbox.stateChanged.connect(self._sample_details_checkbox_state_changed)
-        self._details_group_box.setVisible(False)
+        self._samples_table_view.setVisible(False)
+
+        self._base_station_details_checkbox.setChecked(False)
+        self._base_station_details_checkbox.stateChanged.connect(self._base_station_details_checkbox_state_changed)
+        self._base_stations_table_view.setVisible(False)
 
     def _create_sample_table_context_menu(self, point):
         menu = QtWidgets.QMenu()
@@ -387,7 +391,11 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
     def _sample_details_checkbox_state_changed(self, state: int):
         enabled = state == Qt.CheckState.Checked.value
-        self._details_group_box.setVisible(enabled)
+        self._samples_table_view.setVisible(enabled)
+
+    def _base_station_details_checkbox_state_changed(self, state: int):
+        enabled = state == Qt.CheckState.Checked.value
+        self._base_stations_table_view.setVisible(enabled)
 
     def _change_step(self, step):
         """Update the widget to display the new step"""

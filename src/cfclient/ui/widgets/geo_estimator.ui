@@ -358,6 +358,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="_base_station_details_checkbox">
+         <property name="text">
+          <string>Show base station details</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
           <string>Session management</string>
