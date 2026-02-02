@@ -153,7 +153,6 @@ STYLE_YELLOW_BACKGROUND = "background-color: lightyellow;"
 STYLE_NO_BACKGROUND = "background-color: none;"
 
 MOVE_COLUMN = 5
-DEL_COLUMN = 6
 
 
 class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
@@ -233,6 +232,9 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         header_samples.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
         header_samples.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
 
+        self._samples_table_view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self._samples_table_view.customContextMenuRequested.connect(self._create_sample_table_context_menu)
+
         # Create base station details table
         self._base_stations_details_model = BaseStationTableModel(self)
         self._base_stations_table_view.setModel(self._base_stations_details_model)
@@ -248,6 +250,22 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._sample_details_checkbox.setChecked(False)
         self._sample_details_checkbox.stateChanged.connect(self._sample_details_checkbox_state_changed)
         self._details_group_box.setVisible(False)
+
+    def _create_sample_table_context_menu(self, point):
+        menu = QtWidgets.QMenu()
+
+        delete_action = None
+
+        item = self._samples_table_view.indexAt(point)
+        row = item.row()
+        if row >= 0:
+            delete_action = menu.addAction('Delete sample')
+
+            action = menu.exec(self._samples_table_view.mapToGlobal(point))
+
+            if action == delete_action:
+                uid = self._samples_details_model.get_uid_of_row(item.row())
+                self._container.remove_sample(uid)
 
     def _sample_selection_changed(self, current: QItemSelection, previous: QItemSelection):
         # Called from the sample details table when the selection changes
@@ -605,11 +623,6 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                         uid))
                 self._samples_table_view.setIndexWidget(self._samples_details_model.index(row, MOVE_COLUMN), button)
 
-                # Delete button
-                button = QPushButton('Del')
-                button.clicked.connect(lambda _, uid=sample.uid: self._container.remove_sample(uid))
-                self._samples_table_view.setIndexWidget(self._samples_details_model.index(row, DEL_COLUMN), button)
-
         if solution.progress_is_ok:
             self._upload_geometry(solution.bs_poses)
 
@@ -704,8 +717,9 @@ class _TableRowStatus(Enum):
 class SampleTableModel(QAbstractTableModel):
     def __init__(self, parent=None, *args):
         QAbstractTableModel.__init__(self, parent)
-        self._headers = ['Type', 'X', 'Y', 'Z', 'Err', 'Move', 'Del']
+        self._headers = ['Type', 'X', 'Y', 'Z', 'Err', 'Move']
         self._table_values = []
+        self._uids: list [int] = []
         self._table_highlights: list[set[_TableRowStatus]] = []
 
     def rowCount(self, parent=None, *args, **kwargs):
@@ -745,6 +759,7 @@ class SampleTableModel(QAbstractTableModel):
         """Set the solution and update the table values"""
         self.beginResetModel()
         self._table_values = []
+        self._uids = []
         self._table_highlights = []
 
         for sample in solution.samples:
@@ -776,9 +791,17 @@ class SampleTableModel(QAbstractTableModel):
                 z,
                 error,
             ])
+            self._uids.append(sample.uid)
             self._table_highlights.append(status)
 
         self.endResetModel()
+
+    def get_uid_of_row(self, row: int) -> int:
+        """Get the sample UID for a given row"""
+        if 0 <= row < len(self._uids):
+            return self._uids[row]
+
+        return -1
 
 
 class BaseStationTableModel(QAbstractTableModel):
