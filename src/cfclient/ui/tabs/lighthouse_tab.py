@@ -649,9 +649,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._change_system_type_button.clicked.connect(lambda: self._system_type_dialog.show())
         self._manage_basestation_mode_button.clicked.connect(self._show_basestation_mode_dialog)
 
-        self._load_sys_config_button.clicked.connect(self._load_sys_config_button_clicked)
-        self._save_sys_config_button.clicked.connect(self._save_sys_config_button_clicked)
-
         self._ui_mode = UiMode.flying
         self._geo_mode_button.toggled.connect(lambda enabled: self._change_ui_mode(enabled))
 
@@ -872,8 +869,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         enabled = self._is_connected and self.is_lighthouse_deck_active
         self._manage_estimate_geometry_button.setEnabled(enabled)
         self._change_system_type_button.setEnabled(enabled)
-        self._load_sys_config_button.setEnabled(enabled)
-        self._save_sys_config_button.setEnabled(enabled)
 
         self._mode_group.setEnabled(enabled)
 
@@ -1023,7 +1018,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
                         label.setStyleSheet(STYLE_RED_BACKGROUND)
                         label.setToolTip('')
 
-    def _load_sys_config_button_clicked(self):
+    def _load_sys_config_user_action(self):
         if not self._geo_estimator_widget.is_container_empty():
             dlg = QMessageBox(self)
             dlg.setWindowTitle("Clear samples Confirmation")
@@ -1046,7 +1041,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             # Clear all samples as the new configuration is based on some other (unknown) set of samples
             self._geo_estimator_widget.new_session()
 
-    def _save_sys_config_button_clicked(self):
+    def _save_sys_config_user_action(self):
         # Get calibration data from the Crazyflie to complete the system config data set
         # When the data is ready we get a callback on _calibration_read
         self._lh_memory_helper.read_all_calibs(self._calibration_read_signal.emit)

@@ -373,16 +373,16 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
-             <widget class="QPushButton" name="_load_button">
+             <widget class="QPushButton" name="_import_samples_button">
               <property name="text">
-               <string>Load</string>
+               <string>Import samples</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="_save_button">
+             <widget class="QPushButton" name="_export_samples_button">
               <property name="text">
-               <string>Save as...</string>
+               <string>Export samples</string>
               </property>
              </widget>
             </item>
@@ -391,16 +391,23 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_6">
             <item>
-             <widget class="QPushButton" name="_restore_button">
+             <widget class="QPushButton" name="_import_solution_button">
               <property name="text">
-               <string>Restore sesssion</string>
+               <string>Import solution</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="_export_solution_button">
+              <property name="text">
+               <string>Export solution</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="_clear_all_button">
               <property name="text">
-               <string>New session</string>
+               <string>Clear all samples</string>
               </property>
              </widget>
             </item>

@@ -178,9 +178,10 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._step_measure.clicked.connect(self._measure)
 
         self._clear_all_button.clicked.connect(self._clear_all)
-        self._load_button.clicked.connect(lambda: self._load_from_file(use_session_path=False))
-        self._restore_button.clicked.connect(lambda: self._load_from_file(use_session_path=True))
-        self._save_button.clicked.connect(self._save_to_file)
+        self._import_samples_button.clicked.connect(lambda: self._load_from_file(use_session_path=False))
+        self._export_samples_button.clicked.connect(self._save_to_file)
+        self._import_solution_button.clicked.connect(self._lighthouse_tab._load_sys_config_user_action)
+        self._export_solution_button.clicked.connect(self._lighthouse_tab._save_sys_config_user_action)
 
         self._timeout_reader = TimeoutAngleReader(self._helper.cf, self._timeout_reader_signal.emit)
         self._timeout_reader_signal.connect(self._average_available_cb)
@@ -441,8 +442,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._data_status_xyz_space.setEnabled(is_enabled)
         self._data_status_verification.setEnabled(is_enabled)
 
-        self._load_button.setEnabled(is_enabled)
-        self._save_button.setEnabled(is_enabled)
+        self._import_samples_button.setEnabled(is_enabled)
+        self._export_samples_button.setEnabled(is_enabled)
         self._clear_all_button.setEnabled(is_enabled)
 
     def _update_solution_info(self):
