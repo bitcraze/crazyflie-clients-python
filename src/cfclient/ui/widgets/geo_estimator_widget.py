@@ -350,8 +350,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         """Populate the widget with the current step's information"""
         step = self._current_step
 
-        self._step_image.setPixmap(QtGui.QPixmap(
-            cfclient.module_path + '/ui/widgets/geo_estimator_resources/' + step.image))
+        self._set_label_icon(self._step_image, step.image)
         self._step_instructions.setText(step.instructions)
         self._step_info.setText('')
 
@@ -361,6 +360,11 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
             self._step_measure.setText('Start measurement')
 
         self._update_solution_info()
+
+    def _set_label_icon(self, label: QtWidgets.QLabel, icon_file_name: str):
+        """Set the icon of a label widget"""
+        path = cfclient.module_path + '/ui/widgets/geo_estimator_resources/' + icon_file_name
+        label.setPixmap(QtGui.QPixmap(path))
 
     def _update_ui_reading(self, is_reading: bool):
         """Update the UI to reflect whether a reading is in progress, that is enable/disable buttons"""
@@ -380,12 +384,19 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._export_solution_button.setEnabled(is_enabled)
         self._clear_all_button.setEnabled(is_enabled)
 
+    def _get_step_icon(self, is_valid: bool) -> str:
+        """Get the icon file name based on validity"""
+        if is_valid:
+            return 'checkmark.png'
+        else:
+            return 'crossmark.png'
+
     def _update_solution_info(self):
         solution = self._latest_solution
 
-        self._set_background_color(self._origin_icon, solution.is_origin_sample_valid)
-        self._set_background_color(self._x_axis_icon, solution.is_x_axis_samples_valid)
-        self._set_background_color(self._xy_plane_icon, solution.is_xy_plane_samples_valid)
+        self._set_label_icon(self._origin_icon, self._get_step_icon(solution.is_origin_sample_valid))
+        self._set_label_icon(self._x_axis_icon, self._get_step_icon(solution.is_x_axis_samples_valid))
+        self._set_label_icon(self._xy_plane_icon, self._get_step_icon(solution.is_xy_plane_samples_valid))
 
         if self._is_solving:
             self._solution_status_info.setText('Updating...')
