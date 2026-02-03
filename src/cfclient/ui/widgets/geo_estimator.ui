@@ -222,13 +222,6 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_4">
           <item>
-           <widget class="QLabel" name="_solution_status_is_ok">
-            <property name="text">
-             <string>TextLabel</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QLabel" name="_solution_status_info">
             <property name="text">
              <string>TextLabel</string>
@@ -249,29 +242,39 @@
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QLabel" name="_solution_status_uploaded">
-            <property name="text">
-             <string>TextLabel</string>
-            </property>
-           </widget>
-          </item>
          </layout>
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="_sample_details_checkbox">
-         <property name="text">
-          <string>Show sample details</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="_base_station_details_checkbox">
-         <property name="text">
-          <string>Show base station details</string>
-         </property>
-        </widget>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <item>
+          <widget class="QCheckBox" name="_sample_details_checkbox">
+           <property name="text">
+            <string>Show sample details</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="_base_station_details_checkbox">
+           <property name="text">
+            <string>Show base station details</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox">

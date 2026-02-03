@@ -377,26 +377,26 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._set_background_color(self._data_status_xy_plane, solution.is_xy_plane_samples_valid)
 
         if self._is_solving:
-            self._solution_status_is_ok.setText('Solving... please wait')
-            self._set_background_none(self._solution_status_is_ok)
+            self._solution_status_info.setText('Updating...')
+            self._set_background_none(self._solution_status_info)
         else:
+            solution_error_label = 'Solution sample error:'
+            solution_error = '--'
+            verification_error_label = 'Validation sample error:'
+            verification_error = '--'
+
             if solution.progress_is_ok:
-                self._solution_status_is_ok.setText('Solution is OK')
-                self._solution_status_uploaded.setText('Uploaded')
-                self._solution_status_max_error.setText(f'Error: {solution.error_stats.max * 1000:.1f} mm')
+                self._solution_status_info.setText('Uploaded')
+                solution_error = f'{solution.error_stats.max * 1000:.1f} mm (max)'
 
-                verification_error = 'No data'
                 if solution.verification_stats:
-                    verification_error = f'{solution.verification_stats.max * 1000:.1f} mm'
-                self._solution_status_verification_error.setText(f'Verification err: {verification_error}')
+                    verification_error = f'{solution.verification_stats.max * 1000:.1f} mm (max)'
             else:
-                self._solution_status_is_ok.setText('No solution')
-                self._solution_status_uploaded.setText('Not uploaded')
-                self._solution_status_max_error.setText('Error: --')
-                self._solution_status_verification_error.setText('Verification err: --')
-            self._set_background_color(self._solution_status_is_ok, solution.progress_is_ok)
+                self._solution_status_info.setText('Not enough samples')
 
-        self._solution_status_info.setText(solution.general_failure_info)
+            self._solution_status_max_error.setText(f'{solution_error_label} {solution_error}')
+            self._solution_status_verification_error.setText(f'{verification_error_label} {verification_error}')
+            self._set_background_color(self._solution_status_info, solution.progress_is_ok)
 
     def _notify_user(self, notification_type: _UserNotificationType):
         match notification_type:
