@@ -147,6 +147,14 @@ class _UserNotificationType(Enum):
     PENDING = "pending"
 
 
+class _UploadStatus(Enum):
+    NOT_STARTED = "not_started"
+    UPLOADING_SAMPLE_SOLUTION = "uploading_sample_solution"
+    UPLOADING_FILE_CONFIG = "uploading_file_config"
+    SAMPLE_SOLUTION_DONE = "sample_solution_done"
+    FILE_CONFIG_DONE = "file_config_done"
+
+
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_YELLOW_BACKGROUND = "background-color: lightyellow;"
@@ -176,10 +184,13 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._step_measure.clicked.connect(self._measure)
 
         self._clear_all_button.clicked.connect(self._clear_all)
-        self._import_samples_button.clicked.connect(lambda: self._load_from_file(use_session_path=False))
-        self._export_samples_button.clicked.connect(self._save_to_file)
-        self._import_solution_button.clicked.connect(self._lighthouse_tab._load_sys_config_user_action)
-        self._export_solution_button.clicked.connect(self._lighthouse_tab._save_sys_config_user_action)
+        self._import_samples_button.clicked.connect(lambda: self._load_samples_from_file(use_session_path=False))
+        self._export_samples_button.clicked.connect(self._save_samples_to_file)
+
+        self._upload_status = _UploadStatus.NOT_STARTED
+
+        self._import_solution_button.clicked.connect(self._start_geo_file_upload)
+        self._export_solution_button.clicked.connect(self._lighthouse_tab.save_sys_config_user_action)
 
         self._timeout_reader = TimeoutAngleReader(self._helper.cf, self._timeout_reader_signal.emit)
         self._timeout_reader_signal.connect(self._average_available_cb)
@@ -221,6 +232,14 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._sample_details_checkbox.setChecked(False)
         self._base_station_details_checkbox.setChecked(False)
 
+    def _start_geo_file_upload(self):
+        if self._lighthouse_tab.load_sys_config_user_action():
+            self._upload_status = _UploadStatus.UPLOADING_FILE_CONFIG
+
+            # Clear all samples as the new configuration is based on some other (unknown) set of samples
+            self.new_session()
+
+
     def setVisible(self, visible: bool):
         super(GeoEstimatorWidget, self).setVisible(visible)
         if visible:
@@ -242,14 +261,15 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._container.clear_all_samples()
 
     def _clear_all(self):
-        dlg = QMessageBox(self)
-        dlg.setWindowTitle("Clear samples Confirmation")
-        dlg.setText("Are you sure you want to clear all samples and start over?")
-        dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        button = dlg.exec()
+        if not self.is_container_empty():
+            dlg = QMessageBox(self)
+            dlg.setWindowTitle("Clear samples Confirmation")
+            dlg.setText("Are you sure you want to clear all samples and start over?")
+            dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            button = dlg.exec()
 
-        if button == QMessageBox.StandardButton.Yes:
-            self.new_session()
+            if button == QMessageBox.StandardButton.Yes:
+                self.new_session()
 
     def is_container_empty(self) -> bool:
         """Check if the container has any samples"""
@@ -267,7 +287,22 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         """Convert a sample to a verification sample by its unique ID"""
         self._container.convert_to_verification_sample(uid)
 
-    def _load_from_file(self, use_session_path=False):
+    def cf_connected_cb(self, link_uri: str):
+        """Callback when the Crazyflie has connected"""
+        self._upload_status = _UploadStatus.NOT_STARTED
+        self._update_solution_info()
+
+    def geometry_has_been_read_back_cb(self):
+        """Callback when the geometry has been read back from the Crazyflie after an upload, that is the full
+        round-trip is done. Called from the tab."""
+        if self._upload_status == _UploadStatus.UPLOADING_SAMPLE_SOLUTION:
+            self._upload_status = _UploadStatus.SAMPLE_SOLUTION_DONE
+        elif self._upload_status == _UploadStatus.UPLOADING_FILE_CONFIG:
+            self._upload_status = _UploadStatus.FILE_CONFIG_DONE
+
+        self._update_solution_info()
+
+    def _load_samples_from_file(self, use_session_path=False):
         path = self._session_path if use_session_path else self._helper.current_folder
         names = QFileDialog.getOpenFileName(self, 'Load session', path, self.FILE_REGEX_YAML)
 
@@ -282,7 +317,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         with open(file_name, 'r', encoding='UTF8') as handle:
             self._container.populate_from_file_yaml(handle)
 
-    def _save_to_file(self):
+    def _save_samples_to_file(self):
         """Save the current geometry samples to a file"""
         names = QFileDialog.getSaveFileName(self, 'Save session', self._helper.current_folder, self.FILE_REGEX_YAML)
 
@@ -380,23 +415,34 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
             self._solution_status_info.setText('Updating...')
             self._set_background_none(self._solution_status_info)
         else:
+            background_color_is_ok = solution.progress_is_ok
+
             solution_error_label = 'Solution sample error:'
             solution_error = '--'
             verification_error_label = 'Validation sample error:'
             verification_error = '--'
 
             if solution.progress_is_ok:
-                self._solution_status_info.setText('Uploaded')
+                if self._upload_status == _UploadStatus.UPLOADING_SAMPLE_SOLUTION:
+                    self._solution_status_info.setText('Uploading...')
+                elif self._upload_status == _UploadStatus.SAMPLE_SOLUTION_DONE:
+                    self._solution_status_info.setText('Uploaded')
+
                 solution_error = f'{solution.error_stats.max * 1000:.1f} mm (max)'
 
                 if solution.verification_stats:
                     verification_error = f'{solution.verification_stats.max * 1000:.1f} mm (max)'
             else:
-                self._solution_status_info.setText('Not enough samples')
+                no_samples = not solution.contains_samples
+                if no_samples and self._upload_status == _UploadStatus.FILE_CONFIG_DONE:
+                    self._solution_status_info.setText('Uploaded (imported config)')
+                    background_color_is_ok = True
+                else:
+                    self._solution_status_info.setText('Not enough samples')
 
             self._solution_status_max_error.setText(f'{solution_error_label} {solution_error}')
             self._solution_status_verification_error.setText(f'{verification_error_label} {verification_error}')
-            self._set_background_color(self._solution_status_info, solution.progress_is_ok)
+            self._set_background_color(self._solution_status_info, background_color_is_ok)
 
     def _notify_user(self, notification_type: _UserNotificationType):
         match notification_type:
@@ -505,9 +551,9 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._update_solution_info()
 
     def _solution_ready_cb(self, solution: LighthouseGeometrySolution):
+        # Called when the solver thread has a new solution ready
         self._is_solving = False
         self._latest_solution = solution
-        self._update_solution_info()
 
         logger.debug('Solution ready --------------------------------------')
         logger.debug(f'Converged: {solution.has_converged}')
@@ -520,7 +566,18 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         logger.debug(f'General info: {solution.general_failure_info}')
 
         if solution.progress_is_ok:
+            no_samples = not solution.contains_samples
+            if (self._upload_status == _UploadStatus.UPLOADING_FILE_CONFIG or self._upload_status == _UploadStatus.FILE_CONFIG_DONE) and no_samples:
+                # If we imported a config file and started an upload all samples are cleared and we will end up here
+                # when the solver is done. We don't want to change the upload status in this case as the status will
+                # show that there are no samples.
+                pass
+            else:
+                self._upload_status = _UploadStatus.UPLOADING_SAMPLE_SOLUTION
+
             self._upload_geometry(solution.bs_poses)
+
+        self._update_solution_info()
 
     def _upload_geometry(self, bs_poses: dict[int, LighthouseBsGeometry]):
         geo_dict = {}

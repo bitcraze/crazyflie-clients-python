@@ -588,6 +588,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._geo_estimator_widget = GeoEstimatorWidget(self)
         self._geometry_area.addWidget(self._geo_estimator_widget)
         self._geo_estimator_widget.solution_ready_signal.connect(self._solution_updated_cb)
+        self._connected_signal.connect(self._geo_estimator_widget.cf_connected_cb)
+        self._geometry_read_signal.connect(self._geo_estimator_widget.geometry_has_been_read_back_cb)
 
         # Add the geometry estimator details widget
         self._geo_estimator_details_widget = GeoEstimatorDetailsWidget()
@@ -1024,7 +1026,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
                         label.setStyleSheet(STYLE_RED_BACKGROUND)
                         label.setToolTip('')
 
-    def _load_sys_config_user_action(self):
+    def load_sys_config_user_action(self) -> bool:
         if not self._geo_estimator_widget.is_container_empty():
             dlg = QMessageBox(self)
             dlg.setWindowTitle("Clear samples Confirmation")
@@ -1033,21 +1035,23 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             button = dlg.exec()
 
             if button != QMessageBox.StandardButton.Yes:
-                return
+                return False
 
         names = QFileDialog.getOpenFileName(self, 'Open file', self._helper.current_folder, FILE_REGEX_YAML)
 
         if names[0] == '':
-            return
+            return False
 
         self._helper.current_folder = os.path.dirname(names[0])
 
-        if self._lh_config_writer is not None:
-            self._lh_config_writer.write_and_store_config_from_file(self._new_system_config_written_to_cf_signal.emit, names[0])
-            # Clear all samples as the new configuration is based on some other (unknown) set of samples
-            self._geo_estimator_widget.new_session()
+        if self._lh_config_writer is None:
+            return False
 
-    def _save_sys_config_user_action(self):
+        self._lh_config_writer.write_and_store_config_from_file(self._new_system_config_written_to_cf_signal.emit, names[0])
+
+        return True
+
+    def save_sys_config_user_action(self):
         # Get calibration data from the Crazyflie to complete the system config data set
         # When the data is ready we get a callback on _calibration_read
         self._lh_memory_helper.read_all_calibs(self._calibration_read_signal.emit)
