@@ -70,31 +70,37 @@ REFERENCE_DIST = 1.0
 class _CollectionStep(Enum):
     ORIGIN = ('bslh_1.png',
               'Step 1. Origin',
-              'Put the Crazyflie where you want the origin of your coordinate system.\n')
+              'Put the Crazyflie where you want the ' +
+              'origin of your coordinate system.')
     X_AXIS = ('bslh_2.png',
               'Step 2. X-axis',
-              'Put the Crazyflie on the positive X-axis,' +
-              f'  exactly {REFERENCE_DIST} meters from the origin.\n' +
-              'This will be used to define the X-axis as well as scaling of the system.')
+              'Put the Crazyflie on the positive X-axis, ' +
+              f'exactly {REFERENCE_DIST} meters from the ' +
+              'origin. This will be used to define the X-axis ' +
+              'as well as scaling of the system.')
     XY_PLANE = ('bslh_3.png',
                 'Step 3. XY-plane',
-                'Put the Crazyflie somewhere in the XY-plane, but not on the X-axis.\n' +
-                'This position is used to map the the XY-plane to the floor.\n' +
-                'You can sample multiple positions to get a more precise definition.')
+                'Put the Crazyflie somewhere in the XY-plane, ' +
+                'but not on the X-axis. This position is used ' +
+                'to map the the XY-plane to the floor. You can ' +
+                'sample multiple positions to get a more ' +
+                'precise definition.')
     XYZ_SPACE = ('bslh_4.png',
                  'Step 4. XYZ-space',
-                 'Sample points in the space that you will use.\n' +
-                 'Make sure all the base stations are received, you need at least two base \n' +
-                 'stations in each sample. Sample by rotating the Crazyflie quickly \n' +
-                 'left-right around the Z-axis and then holding it still for a second, or \n' +
-                 'optionally by clicking the sample button below.\n')
+                 'Sample points in the space that you will use. ' +
+                 'Make sure all the base stations are received, ' +
+                 'you need at least two base stations in each ' +
+                 'sample. Sample by rotating the Crazyflie quickly ' +
+                 'left-right around the Z-axis and then holding it ' +
+                 'still for a second, or optionally by clicking ' +
+                 'the sample button.')
 
     VERIFICATION = ('bslh_4.png',
                     'Step 5. Verification',
-                    'Sample points to be used for verification of the geometry.\n' +
-                    'Sample by rotating the Crazyflie quickly \n' +
-                    'left-right around the Z-axis and then holding it still for a second, or \n' +
-                    'optionally by clicking the sample button below.\n')
+                    'Sample points to be used for verification of the geometry. ' +
+                    'Sample by rotating the Crazyflie quickly ' +
+                    'left-right around the Z-axis and then holding it still for a second, or ' +
+                    'optionally by clicking the sample button below.')
 
     def __init__(self, image, title, instructions):
         self.image = image
@@ -179,8 +185,6 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._lighthouse_tab = lighthouse_tab
         self._helper = lighthouse_tab._helper
 
-        self._step_next_button.clicked.connect(lambda: self._change_step(self._current_step.next()))
-        self._step_previous_button.clicked.connect(lambda: self._change_step(self._current_step.previous()))
         self._step_measure.clicked.connect(self._measure)
 
         self._clear_all_button.clicked.connect(self._clear_all)
@@ -213,6 +217,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._latest_solution: LighthouseGeometrySolution = LighthouseGeometrySolution([])
         self._current_step = _CollectionStep.ORIGIN
+        self._origin_radio.setChecked(True)
 
         self._start_solving_signal.connect(self._start_solving_cb)
         self.solution_ready_signal.connect(self._solution_ready_cb)
@@ -223,12 +228,11 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._update_ui_reading(False)
         self._update_solution_info()
 
-        self._data_status_origin.clicked.connect(lambda: self._change_step(_CollectionStep.ORIGIN))
-        self._data_status_x_axis.clicked.connect(lambda: self._change_step(_CollectionStep.X_AXIS))
-        self._data_status_xy_plane.clicked.connect(lambda: self._change_step(_CollectionStep.XY_PLANE))
-        self._data_status_xyz_space.clicked.connect(lambda: self._change_step(_CollectionStep.XYZ_SPACE))
-        self._data_status_verification.clicked.connect(lambda: self._change_step(_CollectionStep.VERIFICATION))
-
+        self._origin_radio.clicked.connect(lambda: self._change_step(_CollectionStep.ORIGIN))
+        self._x_axis_radio.clicked.connect(lambda: self._change_step(_CollectionStep.X_AXIS))
+        self._xy_plane_radio.clicked.connect(lambda: self._change_step(_CollectionStep.XY_PLANE))
+        self._xyz_space_radio.clicked.connect(lambda: self._change_step(_CollectionStep.XYZ_SPACE))
+        self._verification_radio.clicked.connect(lambda: self._change_step(_CollectionStep.VERIFICATION))
         self._sample_details_checkbox.setChecked(False)
         self._base_station_details_checkbox.setChecked(False)
 
@@ -348,7 +352,6 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         """Populate the widget with the current step's information"""
         step = self._current_step
 
-        self._step_title.setText(step.title)
         self._step_image.setPixmap(QtGui.QPixmap(
             cfclient.module_path + '/ui/widgets/geo_estimator_resources/' + step.image))
         self._step_instructions.setText(step.instructions)
@@ -359,9 +362,6 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         else:
             self._step_measure.setText('Start measurement')
 
-        self._step_previous_button.setEnabled(step.has_previous())
-        self._step_next_button.setEnabled(step.has_next())
-
         self._update_solution_info()
 
     def _update_ui_reading(self, is_reading: bool):
@@ -369,47 +369,25 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         is_enabled = not is_reading
 
         self._step_measure.setEnabled(is_enabled)
-        self._step_next_button.setEnabled(is_enabled and self._current_step.has_next())
-        self._step_previous_button.setEnabled(is_enabled and self._current_step.has_previous())
 
-        self._data_status_origin.setEnabled(is_enabled)
-        self._data_status_x_axis.setEnabled(is_enabled)
-        self._data_status_xy_plane.setEnabled(is_enabled)
-        self._data_status_xyz_space.setEnabled(is_enabled)
-        self._data_status_verification.setEnabled(is_enabled)
+        self._origin_radio.setEnabled(is_enabled)
+        self._x_axis_radio.setEnabled(is_enabled)
+        self._xy_plane_radio.setEnabled(is_enabled)
+        self._xyz_space_radio.setEnabled(is_enabled)
+        self._verification_radio.setEnabled(is_enabled)
 
         self._import_samples_button.setEnabled(is_enabled)
         self._export_samples_button.setEnabled(is_enabled)
+        self._import_solution_button.setEnabled(is_enabled)
+        self._export_solution_button.setEnabled(is_enabled)
         self._clear_all_button.setEnabled(is_enabled)
 
     def _update_solution_info(self):
         solution = self._latest_solution
 
-        match self._current_step:
-            case _CollectionStep.ORIGIN:
-                self._step_solution_info.setText(
-                    'OK' if solution.is_origin_sample_valid else solution.origin_sample_info)
-            case _CollectionStep.X_AXIS:
-                self._step_solution_info.setText(
-                    'OK' if solution.is_x_axis_samples_valid else solution.x_axis_samples_info)
-            case _CollectionStep.XY_PLANE:
-                if solution.xy_plane_samples_info:
-                    text = f'OK, {self._container.xy_plane_sample_count()} sample(s)'
-                else:
-                    text = solution.xy_plane_samples_info
-                self._step_solution_info.setText(text)
-            case _CollectionStep.XYZ_SPACE:
-                text = f'OK, {self._container.xyz_space_sample_count()} sample(s)'
-                if solution.xyz_space_samples_info:
-                    text += f', {solution.xyz_space_samples_info}'
-                self._step_solution_info.setText(text)
-            case _CollectionStep.VERIFICATION:
-                text = f'OK, {self._container.verification_sample_count()} sample(s)'
-                self._step_solution_info.setText(text)
-
-        self._set_background_color(self._data_status_origin, solution.is_origin_sample_valid)
-        self._set_background_color(self._data_status_x_axis, solution.is_x_axis_samples_valid)
-        self._set_background_color(self._data_status_xy_plane, solution.is_xy_plane_samples_valid)
+        self._set_background_color(self._origin_icon, solution.is_origin_sample_valid)
+        self._set_background_color(self._x_axis_icon, solution.is_x_axis_samples_valid)
+        self._set_background_color(self._xy_plane_icon, solution.is_xy_plane_samples_valid)
 
         if self._is_solving:
             self._solution_status_info.setText('Updating...')
