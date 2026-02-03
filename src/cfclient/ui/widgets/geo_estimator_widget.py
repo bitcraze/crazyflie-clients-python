@@ -29,14 +29,12 @@
 Container for the geometry estimation functionality in the lighthouse tab.
 """
 
-from itertools import count
 import os
 from typing import Callable
 from PyQt6 import QtCore, QtWidgets, uic, QtGui
-from PyQt6.QtWidgets import QFileDialog, QGridLayout
-from PyQt6.QtWidgets import QMessageBox, QPushButton, QLabel
-from PyQt6.QtCore import QTimer, QAbstractTableModel, QVariant, Qt, QModelIndex, QItemSelection
-
+from PyQt6.QtWidgets import QFileDialog
+from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtCore import QTimer
 
 import logging
 from enum import Enum
