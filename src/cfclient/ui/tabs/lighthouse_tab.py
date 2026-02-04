@@ -36,6 +36,7 @@ from enum import Enum
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton
+from vispy.util.event import Event
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
@@ -369,11 +370,22 @@ class Plot3dLighthouse(scene.SceneCanvas):
         self._plane.interactive = True
 
         self._addArrows(1, 0.02, 0.1, 0.1, self._view.scene)
+
+        self._home_button = QPushButton('Home', self.native)
+        self._home_button.clicked.connect(self.move_camera_home)
+
+        self._drone_view_button = QPushButton('Drone view', self.native)
+        self._drone_view_button.clicked.connect(self.camera_follow_drone)
+
         self.freeze()
 
     def move_camera_home(self):
         self._view.camera.reset()
         self._view.camera.distance = self.DEFAULT_CAMERA_DISTANCE
+
+    def camera_follow_drone(self):
+        # TODO
+        pass
 
     def on_mouse_press(self, event):
         visual = self.visual_at(event.pos)
@@ -403,6 +415,15 @@ class Plot3dLighthouse(scene.SceneCanvas):
         if not is_object_hit:
             self._sample_clicked_signal.emit(-1)
             self._base_station_clicked_signal.emit(-1)
+
+    def on_resize(self, event: Event):
+        x = self.native.width() - self._drone_view_button.width() - 5
+        y = 5
+        self._drone_view_button.move(x, y)
+        x -= self._home_button.width() + 5
+        self._home_button.move(x, y)
+
+        return super().on_resize(event)
 
     def _addArrows(self, length, width, head_length, head_width, parent):
         # The Arrow visual in vispy does not seem to work very good,
@@ -702,10 +723,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     def _set_up_plots(self):
         self._plot_3d = Plot3dLighthouse(self._sample_clicked_signal, self._base_station_clicked_signal)
         self._plot_layout.addWidget(self._plot_3d.native)
-
-        home_button = QPushButton('Home', self._plot_3d.native)
-        home_button.move(5, 5)
-        home_button.clicked.connect(self._plot_3d.move_camera_home)
 
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
