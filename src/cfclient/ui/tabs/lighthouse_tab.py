@@ -42,6 +42,7 @@ from cfclient.ui.tab_toolbox import TabToolbox
 
 from cfclient.ui.widgets.geo_estimator_widget import GeoEstimatorWidget
 from cfclient.ui.widgets.geo_estimator_details_widget import GeoEstimatorDetailsWidget
+from cfclient.ui.widgets.info_label import InfoLabel
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import LighthouseMemHelper
 from cflib.localization import LighthouseConfigWriter
@@ -671,6 +672,9 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._update_ui()
 
         self._pending_geo_update = None
+
+        self._base_stations_info_label = InfoLabel("This is information about base station status. TODO update", self._base_station_group_box)
+        self._sys_management_info_label = InfoLabel("This is information about system management. TODO update", self._sys_management_group_box)
 
     def write_and_store_geometry(self, geometries: dict[int, LighthouseBsGeometry]):
         if self._lh_config_writer:

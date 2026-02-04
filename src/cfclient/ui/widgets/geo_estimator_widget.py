@@ -42,6 +42,7 @@ import threading
 
 import cfclient
 
+from cfclient.ui.widgets.info_label import InfoLabel
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngleAverageReader
@@ -233,6 +234,11 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._verification_radio.clicked.connect(lambda: self._change_step(_CollectionStep.VERIFICATION))
         self._sample_details_checkbox.setChecked(False)
         self._base_station_details_checkbox.setChecked(False)
+
+        self._basic_steps_info_label = InfoLabel("This is information about basic steps. TODO update", self._basic_steps_section_label)
+        self._refined_steps_info_label = InfoLabel("This is information about refined steps. TODO update", self._refined_steps_section_label)
+        self._solution_status_info_label = InfoLabel("This is information about the solution status. TODO update", self._solution_status_group_box)
+        self._session_management_info_label = InfoLabel("This is information about session management. TODO update", self._session_management_group_box)
 
     def _start_geo_file_upload(self):
         if self._lighthouse_tab.load_sys_config_user_action():
