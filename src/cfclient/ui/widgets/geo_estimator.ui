@@ -488,32 +488,18 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QCheckBox" name="_details_checkbox">
+            <property name="text">
+             <string>Show sample/basestation details</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_8">
-         <item>
-          <widget class="QCheckBox" name="_details_checkbox">
-           <property name="text">
-            <string>Show sample/basestation details</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
+        <layout class="QHBoxLayout" name="horizontalLayout_8"/>
        </item>
        <item>
         <widget class="QGroupBox" name="_session_management_group_box">
