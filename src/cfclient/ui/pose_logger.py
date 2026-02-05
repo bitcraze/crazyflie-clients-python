@@ -34,6 +34,7 @@ import math
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.log import LogConfig
 from cflib.utils.callbacks import Caller
+from cflib.localization import Pose
 
 __author__ = 'Bitcraze AB'
 __all__ = ['PoseLogger']
@@ -77,6 +78,11 @@ class PoseLogger:
     def rpy_rad(self):
         """Get the roll, pitch and yaw of the full pose in radians"""
         return [math.radians(self.pose[3]), math.radians(self.pose[4]), math.radians(self.pose[5])]
+
+    @property
+    def full_pose(self) -> Pose:
+        """Get the full pose as a Pose object"""
+        return Pose.from_cf_rpy(roll=self.pose[3], pitch=self.pose[4], yaw=self.pose[5], t_vec=self.position)
 
     def _connected(self, link_uri) -> None:
         logConf = LogConfig("Pose", 40)

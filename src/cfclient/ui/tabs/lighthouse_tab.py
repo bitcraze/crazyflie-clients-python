@@ -50,6 +50,7 @@ from cflib.localization import LighthouseConfigWriter
 from cflib.localization import LighthouseConfigFileManager
 from cflib.localization import LighthouseGeometrySolution
 from cflib.localization import LhCfPoseSampleType
+from cflib.localization import Pose
 
 from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
 
@@ -374,18 +375,11 @@ class Plot3dLighthouse(scene.SceneCanvas):
         self._home_button = QPushButton('Home', self.native)
         self._home_button.clicked.connect(self.move_camera_home)
 
-        self._drone_view_button = QPushButton('Drone view', self.native)
-        self._drone_view_button.clicked.connect(self.camera_follow_drone)
-
         self.freeze()
 
     def move_camera_home(self):
         self._view.camera.reset()
         self._view.camera.distance = self.DEFAULT_CAMERA_DISTANCE
-
-    def camera_follow_drone(self):
-        # TODO
-        pass
 
     def on_mouse_press(self, event):
         visual = self.visual_at(event.pos)
@@ -417,10 +411,8 @@ class Plot3dLighthouse(scene.SceneCanvas):
             self._base_station_clicked_signal.emit(-1)
 
     def on_resize(self, event: Event):
-        x = self.native.width() - self._drone_view_button.width() - 5
+        x = self.native.width() - self._home_button.width() - 5
         y = 5
-        self._drone_view_button.move(x, y)
-        x -= self._home_button.width() + 5
         self._home_button.move(x, y)
 
         return super().on_resize(event)
@@ -465,10 +457,43 @@ class Plot3dLighthouse(scene.SceneCanvas):
             [0, -w, 0]],
             width=1.0, color='blue', parent=parent, marker_size=0.0)
 
-    def update_cf_pose(self, position, rot):
+    def update_cf_pose(self, pose: Pose):
         if not self._cf:
             self._cf = CfMarkerPose(self._view.scene)
-        self._cf.set_pose(position, rot)
+        self._cf.set_pose(pose.translation, pose.rot_matrix)
+
+        # if self._follow_drone:
+        #   self._update_cam_to_follow_drone_view(pose)
+
+    def _update_cam_to_follow_drone_view(self, pose: Pose):
+        # Unfortunately this does not fully work as intended yet, not sure why.
+        self._view.camera.center = pose.translation
+
+        elevation, azimuth, roll = self._rotation_to_camera_parameters(pose)
+        self._view.camera.elevation = elevation
+        self._view.camera.azimuth = azimuth
+        self._view.camera.roll = roll
+
+    def _rotation_to_camera_parameters(self, pose: Pose):
+        # This conversion is the inverse of _get_rotation_tr() in turntable.py (in vispy). It has been verified using
+        # _get_rotation_tr() and seems to work correctly.
+        angles = pose.rot_euler(seq='XZY', degrees=True)
+        if abs(angles[0]) < 90:
+            elevation = angles[0]
+            azimuth = -angles[1]
+            roll = -angles[2]
+        else:
+            elevation = 180 + angles[0]
+            if elevation > 180:
+                elevation -= 360
+            azimuth = 180 + angles[1]
+            if azimuth > 180:
+                azimuth -= 360
+            roll = 180 - angles[2]
+            if roll > 180:
+                roll -= 360
+
+        return elevation, azimuth, roll
 
     def update_base_station_geos(self, geos, solution: LighthouseGeometrySolution):
         # Geos are read from the CF (not the solution) to reflect the actual stored data
@@ -878,8 +903,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
     def _update_graphics(self):
         if self.is_visible() and self.is_lighthouse_deck_active:
-            self._plot_3d.update_cf_pose(self._helper.pose_logger.position,
-                                         self._rpy_to_rot(self._helper.pose_logger.rpy_rad))
+            self._plot_3d.update_cf_pose(self._helper.pose_logger.full_pose)
             self._plot_3d.update_base_station_geos(self._lh_geos, self._latest_solution)
             self._plot_3d.update_base_station_visibility(self._bs_data_to_estimator)
 
@@ -945,28 +969,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
                 item = container.itemAtPosition(row, col)
                 if item is not None:
                     item.widget().deleteLater()
-
-    def _rpy_to_rot(self, rpy):
-        # http://planning.cs.uiuc.edu/node102.html
-        # Pitch reversed compared to page above
-        roll = rpy[0]
-        pitch = rpy[1]
-        yaw = rpy[2]
-
-        cg = math.cos(roll)
-        cb = math.cos(-pitch)
-        ca = math.cos(yaw)
-        sg = math.sin(roll)
-        sb = math.sin(-pitch)
-        sa = math.sin(yaw)
-
-        r = [
-            [ca * cb, ca * sb * sg - sa * cg, ca * sb * cg + sa * sg],
-            [sa * cb, sa * sb * sg + ca * cg, sa * sb * cg - ca * sg],
-            [-sb, cb * sg, cb * cg],
-        ]
-
-        return np.array(r)
 
     def _populate_status_matrix(self):
         container = self._basestation_stats_container
