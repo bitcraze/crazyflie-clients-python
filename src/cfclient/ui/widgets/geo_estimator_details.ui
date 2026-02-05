@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>702</width>
-    <height>793</height>
+    <height>319</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,21 +19,17 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
-    <widget class="QWidget" name="_samples_widget" native="true">
+    <widget class="QGroupBox" name="_samples_widget">
+     <property name="title">
+      <string>Samples</string>
+     </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
-      <item>
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>Samples</string>
-        </property>
-       </widget>
-      </item>
       <item>
        <widget class="QTableView" name="_samples_table_view">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+         <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -65,19 +61,15 @@
     </widget>
    </item>
    <item>
-    <widget class="QWidget" name="_base_stations_widget" native="true">
+    <widget class="QGroupBox" name="_base_stations_widget">
+     <property name="title">
+      <string>Base stations</string>
+     </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Base stations</string>
-        </property>
-       </widget>
-      </item>
       <item>
        <widget class="QTableView" name="_base_stations_table_view">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+         <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -104,6 +96,19 @@
       </item>
      </layout>
     </widget>
+   </item>
+   <item>
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Orientation::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>

@@ -646,8 +646,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
         # Connect signals between the geo estimator widget and the details widget
         self._geo_estimator_widget.solution_ready_signal.connect(self._geo_estimator_details_widget.solution_ready_cb)
-        self._geo_estimator_widget._base_station_details_checkbox.stateChanged.connect(self._geo_estimator_details_widget.base_station_details_checkbox_state_changed)
-        self._geo_estimator_widget._sample_details_checkbox.stateChanged.connect(self._geo_estimator_details_widget.sample_details_checkbox_state_changed)
+        self._geo_estimator_widget._details_checkbox.stateChanged.connect(self._geo_estimator_details_widget.details_checkbox_state_changed)
         self._geo_estimator_details_widget.do_remove_sample_signal.connect(self._geo_estimator_widget.remove_sample)
         self._geo_estimator_details_widget.do_convert_to_xyz_space_sample_signal.connect(self._geo_estimator_widget.convert_to_xyz_space_sample)
         self._geo_estimator_details_widget.do_convert_to_verification_sample_signal.connect(self._geo_estimator_widget.convert_to_verification_sample)

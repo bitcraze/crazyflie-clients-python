@@ -494,16 +494,9 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_8">
          <item>
-          <widget class="QCheckBox" name="_sample_details_checkbox">
+          <widget class="QCheckBox" name="_details_checkbox">
            <property name="text">
-            <string>Show sample details</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="_base_station_details_checkbox">
-           <property name="text">
-            <string>Show base station details</string>
+            <string>Show sample/basestation details</string>
            </property>
           </widget>
          </item>

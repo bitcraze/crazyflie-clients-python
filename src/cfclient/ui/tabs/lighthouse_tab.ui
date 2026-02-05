@@ -193,7 +193,7 @@
               <item>
                <widget class="QLabel" name="label">
                 <property name="text">
-                 <string>Geometry mode:</string>
+                 <string>Geometry est mode:</string>
                 </property>
                </widget>
               </item>
@@ -431,19 +431,6 @@
         <layout class="QVBoxLayout" name="_details_area"/>
        </item>
       </layout>
-     </item>
-     <item>
-      <spacer name="verticalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>40</height>
-        </size>
-       </property>
-      </spacer>
      </item>
     </layout>
    </item>

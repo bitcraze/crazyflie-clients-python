@@ -187,7 +187,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._step_measure.clicked.connect(self._measure)
 
         self._clear_all_button.clicked.connect(self._clear_all)
-        self._import_samples_button.clicked.connect(lambda: self._load_samples_from_file(use_session_path=False))
+        self._import_samples_button.clicked.connect(lambda: self._load_samples_from_file(use_session_path=True))
         self._export_samples_button.clicked.connect(self._save_samples_to_file)
 
         self._upload_status = _UploadStatus.NOT_STARTED
@@ -232,8 +232,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._xy_plane_radio.clicked.connect(lambda: self._change_step(_CollectionStep.XY_PLANE))
         self._xyz_space_radio.clicked.connect(lambda: self._change_step(_CollectionStep.XYZ_SPACE))
         self._verification_radio.clicked.connect(lambda: self._change_step(_CollectionStep.VERIFICATION))
-        self._sample_details_checkbox.setChecked(False)
-        self._base_station_details_checkbox.setChecked(False)
+        self._details_checkbox.setChecked(False)
 
         self._basic_steps_info_label = InfoLabel("This is information about basic steps. TODO update", self._basic_steps_section_label)
         self._refined_steps_info_label = InfoLabel("This is information about refined steps. TODO update", self._refined_steps_section_label)
@@ -403,6 +402,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._set_label_icon(self._origin_icon, self._get_step_icon(solution.is_origin_sample_valid))
         self._set_label_icon(self._x_axis_icon, self._get_step_icon(solution.is_x_axis_samples_valid))
         self._set_label_icon(self._xy_plane_icon, self._get_step_icon(solution.is_xy_plane_samples_valid))
+        self._xyz_space_icon.setText(f'({self._container.xyz_space_sample_count()})')
+        self._verification_icon.setText(f'({self._container.verification_sample_count()})')
 
         if self._is_solving:
             self._solution_status_info.setText('Updating...')

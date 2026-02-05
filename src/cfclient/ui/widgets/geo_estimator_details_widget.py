@@ -168,12 +168,9 @@ class GeoEstimatorDetailsWidget(QtWidgets.QWidget, geo_estimator_details_widget_
         else:
             self._base_stations_table_view.clearSelection()
 
-    def sample_details_checkbox_state_changed(self, state: int):
+    def details_checkbox_state_changed(self, state: int):
         enabled = state == Qt.CheckState.Checked.value
         self._samples_widget.setVisible(enabled)
-
-    def base_station_details_checkbox_state_changed(self, state: int):
-        enabled = state == Qt.CheckState.Checked.value
         self._base_stations_widget.setVisible(enabled)
 
 
