@@ -421,6 +421,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
             self._set_background_color(self._solution_status_info, background_color_is_ok)
 
     def _notify_user(self, notification_type: _UserNotificationType):
+        timeout = 1000
         match notification_type:
             case _UserNotificationType.SUCCESS:
                 self._helper.cf.platform.send_user_notification(True)
@@ -433,9 +434,10 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
             case _UserNotificationType.PENDING:
                 self._sample_collection_box.setStyleSheet(STYLE_YELLOW_BACKGROUND)
                 self._update_ui_reading(True)
+                timeout = 3000
 
         self._user_notification_clear_timer.stop()
-        self._user_notification_clear_timer.start(1000)
+        self._user_notification_clear_timer.start(timeout)
 
     def _user_notification_clear(self):
         self._sample_collection_box.setStyleSheet('')
@@ -494,6 +496,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._timeout_reader_result_setter = setter
         self._step_info.setText("Collecting angles...")
         self._update_ui_reading(True)
+        self._user_notification_signal.emit(_UserNotificationType.PENDING)
 
     def _average_available_cb(self, sample: LhCfPoseSample):
         """Callback for when the average angles are available from the reader or after"""
