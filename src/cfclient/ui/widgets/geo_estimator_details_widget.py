@@ -102,7 +102,10 @@ class GeoEstimatorDetailsWidget(QtWidgets.QWidget, geo_estimator_details_widget_
             sample_type = self._samples_details_model.get_sample_type_of_row(row)
 
             delete_action = menu.addAction('Delete sample')
-            change_action = menu.addAction('Change type')
+            if sample_type == LhCfPoseSampleType.VERIFICATION:
+                change_action = menu.addAction('Change to XYZ-space sample')
+            else:
+                change_action = menu.addAction('Change to verification sample')
 
             action = menu.exec(self._samples_table_view.mapToGlobal(point))
 
