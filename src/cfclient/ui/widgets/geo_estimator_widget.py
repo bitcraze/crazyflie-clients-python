@@ -395,9 +395,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         else:
             background_color_is_ok = solution.progress_is_ok
 
-            solution_error_label = 'Solution sample error:'
             solution_error = '--'
-            verification_error_label = 'Validation sample error:'
             verification_error = '--'
 
             if solution.progress_is_ok:
@@ -418,8 +416,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                 else:
                     self._solution_status_info.setText('Not enough samples')
 
-            self._solution_status_max_error.setText(f'{solution_error_label} {solution_error}')
-            self._solution_status_verification_error.setText(f'{verification_error_label} {verification_error}')
+            self._solution_status_max_error.setText(f'{solution_error}')
+            self._solution_status_verification_error.setText(f'{verification_error}')
             self._set_background_color(self._solution_status_info, background_color_is_ok)
 
     def _notify_user(self, notification_type: _UserNotificationType):
