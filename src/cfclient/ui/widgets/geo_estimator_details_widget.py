@@ -148,7 +148,8 @@ class GeoEstimatorDetailsWidget(QtWidgets.QWidget, geo_estimator_details_widget_
         self._samples_details_model.set_solution(solution)
         self._base_stations_details_model.set_solution(solution)
 
-        # There seems to be some issues with the selection when updating the model. Reset the 3D-graph selection to avoid problems.
+        # There seems to be some issues with the selection when updating the model. Reset the 3D-graph selection to
+        # avoid problems.
         self.sample_selection_changed_signal.emit(-1)
         self.base_station_selection_changed_signal.emit(-1)
 

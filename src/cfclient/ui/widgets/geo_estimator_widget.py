@@ -49,7 +49,7 @@ from cflib.localization.lighthouse_sweep_angle_reader import LighthouseSweepAngl
 from cflib.localization.lighthouse_sweep_angle_reader import LighthouseMatchedSweepAngleReader
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVectors
 from cflib.localization.lighthouse_types import LhDeck4SensorPositions
-from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample, LhCfPoseSampleType, LhCfPoseSampleStatus
+from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample
 from cflib.localization.lighthouse_geo_estimation_manager import LhGeoInputContainer, LhGeoEstimationManager
 from cflib.localization.lighthouse_geometry_solution import LighthouseGeometrySolution
 from cflib.localization.user_action_detector import UserActionDetector
@@ -222,10 +222,14 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._verification_radio.clicked.connect(lambda: self._change_step(_CollectionStep.VERIFICATION))
         self._details_checkbox.setChecked(False)
 
-        self._basic_steps_info_label = InfoLabel("This is information about basic steps. TODO update", self._basic_steps_section_label)
-        self._refined_steps_info_label = InfoLabel("This is information about refined steps. TODO update", self._refined_steps_section_label)
-        self._solution_status_info_label = InfoLabel("This is information about the solution status. TODO update", self._solution_status_group_box)
-        self._session_management_info_label = InfoLabel("This is information about session management. TODO update", self._session_management_group_box)
+        self._basic_steps_info_label = InfoLabel("This is information about basic steps. TODO update",
+                                                 self._basic_steps_section_label)
+        self._refined_steps_info_label = InfoLabel("This is information about refined steps. TODO update",
+                                                   self._refined_steps_section_label)
+        self._solution_status_info_label = InfoLabel("This is information about the solution status. TODO update",
+                                                     self._solution_status_group_box)
+        self._session_management_info_label = InfoLabel("This is information about session management. TODO update",
+                                                        self._session_management_group_box)
 
     def _start_geo_file_upload(self):
         if self._lighthouse_tab.load_sys_config_user_action():
@@ -233,7 +237,6 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
             # Clear all samples as the new configuration is based on some other (unknown) set of samples
             self.new_session()
-
 
     def setVisible(self, visible: bool):
         super(GeoEstimatorWidget, self).setVisible(visible)
@@ -546,7 +549,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         if solution.progress_is_ok:
             no_samples = not solution.contains_samples
-            if (self._upload_status == _UploadStatus.UPLOADING_FILE_CONFIG or self._upload_status == _UploadStatus.FILE_CONFIG_DONE) and no_samples:
+            if (self._upload_status == _UploadStatus.UPLOADING_FILE_CONFIG or
+                    self._upload_status == _UploadStatus.FILE_CONFIG_DONE) and no_samples:
                 # If we imported a config file and started an upload all samples are cleared and we will end up here
                 # when the solver is done. We don't want to change the upload status in this case as the status will
                 # show that there are no samples.

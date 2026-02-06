@@ -60,7 +60,6 @@ from cfclient.utils.logconfigreader import FILE_REGEX_YAML
 
 from vispy import scene
 import numpy as np
-import math
 import os
 
 __author__ = 'Bitcraze AB'
@@ -87,7 +86,8 @@ class MarkerPose():
     LABEL_SIZE = 100
     LABEL_OFFSET = np.array((0.0, 0, 0.25))
 
-    def __init__(self, the_scene, color, text=None, axis_visible: bool = False, interactive=False, symbol: str = 'disc'):
+    def __init__(self, the_scene, color, text=None, axis_visible: bool = False, interactive=False,
+                 symbol: str = 'disc'):
         self._scene = the_scene
         self._color = color
         self._text = text
@@ -642,14 +642,18 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._geo_estimator_details_widget = GeoEstimatorDetailsWidget()
         self._details_area.addWidget(self._geo_estimator_details_widget)
         self._geo_estimator_details_widget.sample_selection_changed_signal.connect(self._sample_selection_changed_cb)
-        self._geo_estimator_details_widget.base_station_selection_changed_signal.connect(self._base_station_selection_changed_cb)
+        self._geo_estimator_details_widget.base_station_selection_changed_signal.connect(
+            self._base_station_selection_changed_cb)
 
         # Connect signals between the geo estimator widget and the details widget
         self._geo_estimator_widget.solution_ready_signal.connect(self._geo_estimator_details_widget.solution_ready_cb)
-        self._geo_estimator_widget._details_checkbox.stateChanged.connect(self._geo_estimator_details_widget.details_checkbox_state_changed)
+        self._geo_estimator_widget._details_checkbox.stateChanged.connect(
+            self._geo_estimator_details_widget.details_checkbox_state_changed)
         self._geo_estimator_details_widget.do_remove_sample_signal.connect(self._geo_estimator_widget.remove_sample)
-        self._geo_estimator_details_widget.do_convert_to_xyz_space_sample_signal.connect(self._geo_estimator_widget.convert_to_xyz_space_sample)
-        self._geo_estimator_details_widget.do_convert_to_verification_sample_signal.connect(self._geo_estimator_widget.convert_to_verification_sample)
+        self._geo_estimator_details_widget.do_convert_to_xyz_space_sample_signal.connect(
+            self._geo_estimator_widget.convert_to_xyz_space_sample)
+        self._geo_estimator_details_widget.do_convert_to_verification_sample_signal.connect(
+            self._geo_estimator_widget.convert_to_verification_sample)
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
@@ -718,8 +722,10 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
         self._pending_geo_update = None
 
-        self._base_stations_info_label = InfoLabel("This is information about base station status. TODO update", self._base_station_group_box)
-        self._sys_management_info_label = InfoLabel("This is information about system management. TODO update", self._sys_management_group_box)
+        self._base_stations_info_label = InfoLabel("This is information about base station status. TODO update",
+                                                   self._base_station_group_box)
+        self._sys_management_info_label = InfoLabel("This is information about system management. TODO update",
+                                                    self._sys_management_group_box)
 
     def write_and_store_geometry(self, geometries: dict[int, LighthouseBsGeometry]):
         if self._lh_config_writer:
@@ -1069,7 +1075,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         if self._lh_config_writer is None:
             return False
 
-        self._lh_config_writer.write_and_store_config_from_file(self._new_system_config_written_to_cf_signal.emit, names[0])
+        self._lh_config_writer.write_and_store_config_from_file(self._new_system_config_written_to_cf_signal.emit,
+                                                                names[0])
 
         return True
 

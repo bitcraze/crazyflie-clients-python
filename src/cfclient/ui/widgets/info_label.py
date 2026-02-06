@@ -43,7 +43,8 @@ class InfoLabel(QLabel):
     ICON_HEIGHT = 16
     MARGIN = 0
 
-    def __init__(self, tooltip: str, parent: QWidget, position: Position = Position.TOP_RIGHT, v_margin: int = MARGIN, h_margin: int = MARGIN):
+    def __init__(self, tooltip: str, parent: QWidget, position: Position = Position.TOP_RIGHT,
+                 v_margin: int = MARGIN, h_margin: int = MARGIN):
         super().__init__(parent)
 
         self._v_margin = v_margin
@@ -53,7 +54,10 @@ class InfoLabel(QLabel):
         parent.installEventFilter(self._event_filter)
 
         self.setToolTip(tooltip)
-        self.setPixmap(self.style().standardIcon(self.style().StandardPixmap.SP_MessageBoxInformation).pixmap(self.ICON_WIDTH, self.ICON_HEIGHT))
+
+        info_pixmap = self.style().StandardPixmap.SP_MessageBoxInformation
+        info_icon = self.style().standardIcon(info_pixmap).pixmap(self.ICON_WIDTH, self.ICON_HEIGHT)
+        self.setPixmap(info_icon)
 
     def mousePressEvent(self, event):
         """Override mouse press event to show tooltip on click."""
