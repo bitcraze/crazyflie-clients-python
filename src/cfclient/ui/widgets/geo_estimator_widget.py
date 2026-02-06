@@ -68,43 +68,31 @@ REFERENCE_DIST = 1.0
 
 class _CollectionStep(Enum):
     ORIGIN = ('bslh_1.png',
-              'Step 1. Origin',
-              'Put the Crazyflie where you want the ' +
-              'origin of your coordinate system.')
+              'Put the Crazyflie where you want the origin of your coordinate system.',
+              'Start measurement')
     X_AXIS = ('bslh_2.png',
-              'Step 2. X-axis',
-              'Put the Crazyflie on the positive X-axis, ' +
-              f'exactly {REFERENCE_DIST} meters from the ' +
-              'origin. This will be used to define the X-axis ' +
-              'as well as scaling of the system.')
+              f'Put the Crazyflie on the positive X-axis, exactly {REFERENCE_DIST} meters from the ' +
+              'origin. This sample will be used to define the X-axis as well as scaling of the system.',
+              'Start measurement')
     XY_PLANE = ('bslh_3.png',
-                'Step 3. XY-plane',
-                'Put the Crazyflie somewhere in the XY-plane, ' +
-                'but not on the X-axis. This position is used ' +
-                'to map the the XY-plane to the floor. You can ' +
-                'sample multiple positions to get a more ' +
-                'precise definition.')
-    XYZ_SPACE = ('bslh_4.png',
-                 'Step 4. XYZ-space',
-                 'Sample points in the space that you will use. ' +
-                 'Make sure all the base stations are received, ' +
-                 'you need at least two base stations in each ' +
-                 'sample. Sample by rotating the Crazyflie quickly ' +
-                 'left-right around the Z-axis and then holding it ' +
-                 'still for a second, or optionally by clicking ' +
-                 'the sample button.')
-
+                'Put the Crazyflie somewhere in the XY-plane, but not on the X-axis. This position is used to map ' +
+                'the XY-plane to the floor. You can sample multiple positions to get a more precise definition.',
+                'Start measurement')
     VERIFICATION = ('bslh_4.png',
-                    'Step 5. Verification',
-                    'Sample points to be used for verification of the geometry. ' +
-                    'Sample by rotating the Crazyflie quickly ' +
-                    'left-right around the Z-axis and then holding it still for a second, or ' +
-                    'optionally by clicking the sample button below.')
+                    'Sample points to be used for verification of the geometry. Sample by rotating the Crazyflie ' +
+                    'quickly left-right around the Z-axis and then holding it still for a second, or ' +
+                    'optionally by clicking the button.',
+                    'Sample position')
+    XYZ_SPACE = ('bslh_4.png',
+                 'Sample points in the space to be used for refining the geometry. You need at least two base ' +
+                 'stations visible in each sample. Sample by rotating the Crazyflie quickly left-right around the ' +
+                 'Z-axis and then holding it still for a second, or optionally by clicking the button.',
+                 'Sample position')
 
-    def __init__(self, image, title, instructions):
+    def __init__(self, image, instructions, button_text):
         self.image = image
-        self.title = title
         self.instructions = instructions
+        self.button_text = button_text
 
         self._order = None
 
@@ -358,11 +346,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._set_label_icon(self._step_image, step.image)
         self._step_instructions.setText(step.instructions)
         self._step_info.setText('')
-
-        if step == _CollectionStep.XYZ_SPACE:
-            self._step_measure.setText('Sample position')
-        else:
-            self._step_measure.setText('Start measurement')
+        self._step_measure.setText(step.button_text)
 
         self._update_solution_info()
 
