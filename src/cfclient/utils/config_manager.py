@@ -73,9 +73,20 @@ class ConfigManager(metaclass=Singleton):
         except Exception:
             return None
 
+    def get_display_name(self, config_name):
+        """Get the display name for a config (from the 'name' field in JSON)."""
+        settings = self.get_settings(config_name)
+        if settings and "name" in settings:
+            return settings["name"]
+        # Fallback to config_name if no display name is found
+        return config_name
+
     def get_list_of_configs(self):
         """Reload the configurations from file"""
         try:
+            import platform
+            current_os = platform.system().lower()
+
             configs = [os.path.basename(f) for f in
                        glob.glob(self.configs_dir + "/[A-Za-z]*.json")]
             self._input_config = []
@@ -85,13 +96,28 @@ class ConfigManager(metaclass=Singleton):
                 logger.debug("Parsing [%s]", conf)
                 json_data = open(self.configs_dir + "/%s" % conf)
                 data = json.load(json_data)
+
+                # Check if this config is compatible with current OS
+                device_data = data["inputconfig"]["inputdevice"]
+                if "os" in device_data:
+                    supported_os = device_data["os"]
+                    # Support both string and list formats
+                    if isinstance(supported_os, str):
+                        supported_os = [supported_os]
+                    # Normalize OS names and check compatibility
+                    supported_os = [os_name.lower() for os_name in supported_os]
+                    if current_os not in supported_os:
+                        logger.debug("Skipping [%s] - not compatible with %s", conf, current_os)
+                        json_data.close()
+                        continue
+
                 new_input_device = {}
                 new_input_settings = {"updateperiod": 10,
                                       "springythrottle": True,
                                       "rp_dead_band": 0.05}
-                for s in data["inputconfig"]["inputdevice"]:
+                for s in device_data:
                     if s == "axis":
-                        for a in data["inputconfig"]["inputdevice"]["axis"]:
+                        for a in device_data["axis"]:
                             axis = {}
                             axis["scale"] = a["scale"]
                             axis["offset"] = a[
@@ -117,8 +143,7 @@ class ConfigManager(metaclass=Singleton):
                                 index = "%s-%d" % (a["type"], id)
                                 new_input_device[index] = locaxis
                     else:
-                        new_input_settings[s] = data[
-                            "inputconfig"]["inputdevice"][s]
+                        new_input_settings[s] = device_data[s]
                 self._input_config.append(new_input_device)
                 self._input_settings.append(new_input_settings)
                 json_data.close()
