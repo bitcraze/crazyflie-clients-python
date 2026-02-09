@@ -8,9 +8,9 @@ The normal view used when flying is the one seen below.
 
 ![cfclient flighttab](/docs/images/cfclient_flightab.png)
 
-1.  Flight mode selector (Normal and Advanced)
-    * *Normal:* Recommended for beginners
-    * *Advanced:* Will unlock flight settings in 3
+1.  Flight mode selector (Normal and Advanced):
+    * *Normal:* Recommended for beginners.
+    * *Advanced:* Unlocks flight settings in the advanced flight control (4).
 
 2.  Assisted mode selection. The assisted mode is enabled when the assisted mode
     button is pressed on the Gamepad.
@@ -23,16 +23,15 @@ The normal view used when flying is the one seen below.
 3. Roll/pitch trim can be set either in the UI or using the controller (if the correct buttons are mapped).
     This will offset the input to the Crazyflie for correcting imbalance and reducing drift.
 4. Advanced flight control settings are available if Advanced mode has been selected (settings are in %):
-    * *Max angle:* Set the max roll/pitch angle allowed
-    * *Max yaw rate:*Set the max yaw rate allowed
-    * *Max thrust:* Set the max thrust allowed
-    * *Min thrust:* Minimum thrust before 0 is sent to the Crazyflie
-    * *Slew limit:* Set the percentage where the thrust is slew controlled (the thrust value lowering will be limited). This makes the Crazyflie a bit easier to fly for beginners
-    * *Slew rate:* When the thrust is below the slew limit, this is the maximum rate of lowering the thrust
-5. Settings for flight decks, currently the LED-ring effect and headlights can be set (if the ring is attached)
-6. Target values sent from the client for controlling the Crazyflie
-7. Actual values logged from the Crazyflie
-8. Motor output on the Crazyflie
-9. Horizon indicator
-10. Command based flight control, allow controlled flight if, and only if, a positioning deck such as the [Flow deck](https://store.bitcraze.io/collections/decks/products/flow-deck-v2), the [Loco deck](https://store.bitcraze.io/collections/decks/products/loco-positioning-deck) or the [Lighthouse deck](https://store.bitcraze.io/collections/decks/products/lighthouse-positioning-deck) is present.
-11. Arming/disarming button. Pressing this will send a arming or disarming event to the Crazyflie which will arm or disarm the system if this is possible. This button can also say "Auto arming" which indicates the crazyflie is configured to arm the system automatically if system checks have passed. More info in [crazyflie firmware arming documentation](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/supervisor/arming/). 
+    * *Max angle:* Set the max roll/pitch angle allowed.
+    * *Max yaw rate:* Set the max yaw rate allowed.
+    * *Max thrust:* Set the max thrust allowed.
+    * *Min thrust:* Minimum thrust before 0 is sent to the Crazyflie.
+    * *Slew limit:* Set the percentage where the thrust is slew controlled (the thrust value lowering will be limited). This makes the Crazyflie a bit easier to fly for beginners.
+    * *Slew rate:* When the thrust is below the slew limit, this is the maximum rate of lowering the thrust.
+5. Target values sent from the client for controlling the Crazyflie.
+6. Actual values logged from the Crazyflie.
+7. Motor output on the Crazyflie.
+8. Horizon indicator.
+9. Command based flight control, allow controlled flight if, and only if, a positioning deck such as the [Flow deck](https://store.bitcraze.io/collections/decks/products/flow-deck-v2), the [Loco deck](https://store.bitcraze.io/collections/decks/products/loco-positioning-deck) or the [Lighthouse deck](https://store.bitcraze.io/collections/decks/products/lighthouse-positioning-deck) is present.
+10. Supervisor button and supervisor information. Information will be shown depending on the state of the Crazyflie. Pressing the button will send an arming or disarming event to the Crazyflie which will arm or disarm the system if this is possible. This button can also say "Auto armed" which indicates the Crazyflie is configured to arm the system automatically if system checks have passed. More info in [Crazyflie firmware arming documentation](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/supervisor/arming/). In the event of a crash, pressing the button will recover the Crazyflie.

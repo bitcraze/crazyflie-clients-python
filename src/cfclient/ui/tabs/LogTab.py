@@ -99,7 +99,7 @@ class LogTab(TabToolbox, param_tab_class):
                         log_groups = cfclient.log_param_doc['logs'][group]
                         log_variable = log_groups['variables'][param]
                         item.setData(4, Qt.ItemDataRole.DisplayRole, log_variable['short_desc'])
-                    except:  # noqa
+                    except (KeyError, TypeError, AttributeError):
                         pass
 
                 groupItem.addChild(item)
@@ -112,5 +112,5 @@ class LogTab(TabToolbox, param_tab_class):
                     label = QtWidgets.QLabel(log_groups['desc'])
                     label.setWordWrap(True)
                     self.logTree.setItemWidget(groupItem, 4, label)
-                except:  # noqa
+                except (KeyError, TypeError, AttributeError):
                     pass

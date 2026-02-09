@@ -78,6 +78,7 @@ class ParamChildItem(object):
         self._cf = crazyflie
         self.is_updating = True
         self.state = None
+        self.stored_value = ""
 
     def updated(self, name, value):
         """Callback from the param layer when a parameter has been updated"""
@@ -113,7 +114,7 @@ class ParamBlockModel(QAbstractItemModel):
         """Create the empty model"""
         super(ParamBlockModel, self).__init__(parent)
         self._nodes = []
-        self._column_headers = ['Name', 'Type', 'Access', 'Persistent', 'Value']
+        self._column_headers = ['Name', 'Type', 'Access', 'Persistent', 'Value', 'Stored Value']
         self._red_brush = QBrush(QColor("red"))
         self._enabled = False
         self._mainUI = mainUI
@@ -227,11 +228,67 @@ class ParamBlockModel(QAbstractItemModel):
                 return 'Yes' if node.persistent else 'No'
             if index.column() == 4:
                 return node.value
+            if index.column() == 5:
+                return node.stored_value
         elif (role == Qt.ItemDataRole.BackgroundRole and index.column() == 4 and
               node.is_updating):
             return self._red_brush
 
         return None
+
+    def update_stored_value_and_refresh(self, node):
+        """
+        Fetch the persistent stored value for this node, store it in node.stored_value,
+        and refresh the Stored Value column in the view.
+        """
+        if not node.persistent:
+            node.stored_value = ''
+            return
+
+        # Fetch stored value synchronously
+        complete_name = f"{node.parent.name}.{node.name}"
+        from threading import Event
+        wait_event = Event()
+        state_value = None
+
+        def cb(_, state):
+            nonlocal state_value
+            state_value = state
+            wait_event.set()
+
+        self._mainUI.cf.param.persistent_get_state(complete_name, cb)
+        wait_event.wait(timeout=0.2)
+
+        if state_value and state_value.is_stored:
+            node.stored_value = round_if_float(state_value.stored_value)
+        else:
+            node.stored_value = ''
+
+        # Refresh only column 5 (Stored Value)
+        source_row = node.parent.children.index(node)
+        parent_row = self._nodes.index(node.parent)
+        col = 5
+        row_index = self.index(source_row, col, self.createIndex(parent_row, 0, node.parent))
+        proxy_index = self.proxy.mapFromSource(row_index)
+        self.proxy.dataChanged.emit(proxy_index, proxy_index)
+
+    def update_stored_value_from_state(self, node, state: 'PersistentParamState'):
+        """
+        Update the node's stored_value from a PersistentParamState object
+        and refresh the Stored Value column.
+        """
+        if state and state.is_stored:
+            node.stored_value = round_if_float(state.stored_value)
+        else:
+            node.stored_value = ''
+
+        # Refresh only column 5 (Stored Value)
+        source_row = node.parent.children.index(node)
+        parent_row = self._nodes.index(node.parent)
+        col = 5  # Stored Value column
+        row_index = self.index(source_row, col, self.createIndex(parent_row, 0, node.parent))
+        proxy_index = self.proxy.mapFromSource(row_index)
+        self.proxy.dataChanged.emit(proxy_index, proxy_index)
 
     def flags(self, index):
         """Re-implemented function for getting the flags for a certain index"""
@@ -336,7 +393,17 @@ class ParamTab(TabToolbox, param_tab_class):
         def success_cb(name, success):
             print(f'store {success}!')
             if success:
-                self.cf.param.persistent_get_state(name, lambda _, state: self._persistent_state_signal.emit(state))
+                # Fetch the persistent state after store
+                def state_cb(_, state):
+                    for group in self._model._nodes:
+                        for node in group.children:
+                            if f"{group.name}.{node.name}" == name:
+                                # Update stored value in model
+                                self._model.update_stored_value_from_state(node, state)
+                                # Update the button text immediately
+                                self._persistent_state_signal.emit(state)
+                                break
+            self.cf.param.persistent_get_state(name, state_cb)
 
         complete = self.paramDetailsLabel.text()
         if self.persistentButton.text() == 'Clear':
@@ -398,7 +465,7 @@ class ParamTab(TabToolbox, param_tab_class):
 
                     self.paramDetailsDescription.setWordWrap(True)
                     self.paramDetailsDescription.setText(desc.replace('\n', ''))
-                except:  # noqa
+                except (KeyError, TypeError, AttributeError):
                     self.paramDetailsDescription.setText('')
 
             complete = f'{group}.{param}'
@@ -417,6 +484,9 @@ class ParamTab(TabToolbox, param_tab_class):
 
             if elem.is_persistent():
                 self.cf.param.persistent_get_state(complete, lambda _, state: self._persistent_state_signal.emit(state))
+                source_index = self.proxyModel.mapToSource(indexes[0])
+                node = source_index.internalPointer()
+                self._model.update_stored_value_and_refresh(node)
 
     def _update_param_io_buttons(self):
         enabled = self._is_connected
@@ -536,7 +606,7 @@ class ParamTab(TabToolbox, param_tab_class):
     def _clear_stored_persistent_params_button_clicked(self):
         dlg = QMessageBox(self)
         dlg.setWindowTitle("Clear Stored Parameters Confirmation")
-        dlg.setText("Are you sure you want to clear your stored persistent parameter?")
+        dlg.setText("Are you sure you want to clear your stored persistent parameters?")
         dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         button = dlg.exec()
 
@@ -544,6 +614,22 @@ class ParamTab(TabToolbox, param_tab_class):
             stored_persistent_params = self._get_all_stored_persistent_param_names()
             for complete_name in stored_persistent_params:
                 self._clear_persistent_parameter(complete_name)
+                for group in self._model._nodes:
+                    for node in group.children:
+                        if f"{group.name}.{node.name}" == complete_name:
+                            node.stored_value = ''
+                            # Emit a targeted dataChanged for column 5 only
+                            source_row = group.children.index(node)
+                            parent_row = self._model._nodes.index(group)
+                            col = 5
+
+                            index = self._model.index(
+                                source_row, col,
+                                self._model.index(parent_row, 0, QModelIndex())
+                            )
+                            proxy_index = self._model.proxy.mapFromSource(index)
+                            self._model.proxy.dataChanged.emit(proxy_index, proxy_index)
+                            break
 
     def _connected(self, link_uri):
         self._model.reset()

@@ -37,14 +37,14 @@ classifiers = [
 requires-python = ">= 3.10"
 
 dependencies = [
-        "cflib>=0.1.28",
+        "cflib~=0.1.31",
         "setuptools",
         "appdirs~=1.4.0",
         "pyzmq~=26.0",
         "pyqtgraph~=0.13",
         "PyYAML~=6.0.1",
-        "numpy~=1.26",
-        "vispy~=0.14.3",
+        "numpy~=2.2",
+        "vispy~=0.15.2",
         "pyopengl~=3.1.7",  # Required for Vispy to work on MacOS Sonoma
         "pyserial~=3.5",
         "PyQt6~=6.7.1",
@@ -60,10 +60,7 @@ Repository = "https://github.com/bitcraze/crazyflie-clients-python"
 Issues = "https://github.com/bitcraze/crazyflie-clients-python/issues"
 
 [project.optional-dependencies]
-dev = ['pre-commit',
-       'cx_freeze==5.1.1 ; platform_system=="Windows"',
-       'jinja2==2.10.3 ; platform_system=="Windows"'
-       ]
+dev = ['pre-commit']
 
 [project.scripts]
 cfclient = "cfclient.gui:main"

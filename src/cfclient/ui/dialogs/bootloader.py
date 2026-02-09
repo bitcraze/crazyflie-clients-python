@@ -45,7 +45,8 @@ from urllib.error import URLError
 import zipfile
 
 from PyQt6 import QtWidgets, uic
-from PyQt6.QtCore import pyqtSlot, pyqtSignal, QThread
+from PyQt6.QtCore import pyqtSlot, pyqtSignal, QThread, Qt
+from PyQt6.QtGui import QPixmap
 
 import cfclient
 import cflib.crazyflie
@@ -61,6 +62,8 @@ service_dialog_class = uic.loadUiType(cfclient.module_path +
 # This url is used to fetch all the releases from the FirmwareDownloader
 RELEASE_URL = 'https://api.github.com/repos/bitcraze/'\
               'crazyflie-release/releases'
+
+ICON_PATH = os.path.join(cfclient.module_path, 'ui', 'icons')
 
 
 class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
@@ -97,6 +100,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.programButton.clicked.connect(self.programAction)
         self.coldBootButton.clicked.connect(self.initiateColdboot)
         self.resetButton.clicked.connect(self.resetCopter)
+        self.sourceTab.currentChanged.connect(self._update_program_button_state)
 
         self._helper.connectivity_manager.register_ui_elements(
             ConnectivityManager.UiElementsContainer(
@@ -132,9 +136,32 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
         self._platform_filter_checkboxes = []
 
+        self._set_image(self.image_1, os.path.join(ICON_PATH, "bolt.webp"))
+        self._set_image(self.image_2, os.path.join(ICON_PATH, "cf21.webp"))
+        self._set_image(self.image_3, os.path.join(ICON_PATH, "bl.webp"))
+        self._set_image(self.image_4, os.path.join(ICON_PATH, "flapper.webp"))
+        self._set_image(self.image_5, os.path.join(ICON_PATH, "tag.webp"))
+
     def _ui_connection_fail(self, message):
         self._cold_boot_error_message = message
         self.setUiState(self.UIState.DISCONNECTED)
+
+    def _set_image(self, image_label, image_path):
+        IMAGE_WIDTH = 100
+        IMAGE_HEIGHT = 100
+
+        pixmap = QPixmap(image_path)
+
+        if pixmap.isNull():
+            logger.warning(f"Failed to load image: {image_path}")
+            image_label.setText("Missing image")
+        else:
+            scaled_pixmap = pixmap.scaled(
+                IMAGE_WIDTH, IMAGE_HEIGHT,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            image_label.setPixmap(scaled_pixmap)
 
     def setUiState(self, state):
         self._state = state
@@ -163,7 +190,10 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         elif (state == self.UIState.COLD_CONNECTED):
             self._cold_boot_error_message = None
             self.resetButton.setEnabled(True)
-            self.programButton.setEnabled(True)
+            if any(button.isChecked() for button in self._platform_filter_checkboxes):
+                self.programButton.setEnabled(True)
+            else:
+                self.programButton.setToolTip("Select a platform before programming.")
             self.setStatusLabel("Connected to bootloader")
             self.coldBootButton.setEnabled(False)
             self.imagePathBrowseButton.setEnabled(True)
@@ -189,7 +219,10 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
                 self.setStatusLabel("Connected using USB")
                 self.setSourceSelectionUiEnabled(False)
             else:
-                self.programButton.setEnabled(True)
+                if any(button.isChecked() for button in self._platform_filter_checkboxes):
+                    self.programButton.setEnabled(True)
+                else:
+                    self.programButton.setToolTip("Select a platform before programming.")
                 self.setStatusLabel("Connected in firmware mode")
                 self.setSourceSelectionUiEnabled(True)
         elif (state == self.UIState.FW_SCANNING):
@@ -216,6 +249,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             self.coldBootButton.setEnabled(False)
             self.setSourceSelectionUiEnabled(True)
             self._helper.connectivity_manager.set_enable(False)
+        self._update_program_button_state()
 
     def setSourceSelectionUiEnabled(self, enabled):
         self.imagePathBrowseButton.setEnabled(enabled)
@@ -265,18 +299,53 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
                     platforms.add(platform)
 
         for platform in sorted(platforms, reverse=True):
+            RADIO_BUTTON_WIDTH = 100
+
             radio_button = QtWidgets.QRadioButton(platform)
 
-            # Use cf2 as default platform
-            if platform == 'cf2':
-                radio_button.setChecked(True)
+            radio_button.setFixedWidth(RADIO_BUTTON_WIDTH)
 
             radio_button.toggled.connect(self._update_firmware_dropdown)
+            radio_button.toggled.connect(self._update_program_button_state)
 
             self._platform_filter_checkboxes.append(radio_button)
             self.filterLayout.insertWidget(0, radio_button)
 
+        self.firmwareDropdown.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToContents)
         self._update_firmware_dropdown(True)
+
+    def _has_selected_file(self) -> bool:
+        return bool(self.imagePathLine.text())
+
+    def _update_program_button_state(self):
+        is_connected = self._state in (
+            self.UIState.COLD_CONNECTED,
+            self.UIState.FW_CONNECTED
+        )
+
+        if not is_connected:
+            self.programButton.setEnabled(False)
+            self.programButton.setToolTip("Connect your device before programming.")
+            return
+
+        current_tab = self.sourceTab.currentWidget()
+
+        if current_tab == self.tabFromFile:
+            has_file = bool(self.imagePathLine.text())
+            self.programButton.setEnabled(has_file)
+
+            self.programButton.setToolTip(
+                "" if has_file else "Choose a firmware file to program."
+            )
+        else:
+            any_platform_checked = any(
+                button.isChecked() for button in self._platform_filter_checkboxes
+            )
+
+            self.programButton.setEnabled(any_platform_checked)
+            self.programButton.setToolTip(
+                "" if any_platform_checked else "Select a platform before programming."
+            )
 
     def _update_firmware_dropdown(self, active: bool):
         if active:
@@ -341,6 +410,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
         if filename.endswith('.zip'):
             self.imagePathLine.setText(filename)
+            self._update_program_button_state()
         else:
             msgBox = QtWidgets.QMessageBox()
             msgBox.setText("Wrong file extention. Must be .zip.")

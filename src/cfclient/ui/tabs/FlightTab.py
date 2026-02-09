@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2023 Bitcraze AB
+#  Copyright (C) 2011-2025 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -195,17 +195,6 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         self.uiSetupReady()
 
-        self._led_ring_headlight.clicked.connect(
-            lambda enabled: self._helper.cf.param.set_value("ring.headlightEnable", int(enabled)))
-
-        self._helper.cf.param.add_update_callback(
-            group="ring", name="headlightEnable",
-            cb=(lambda name, checked: self._led_ring_headlight.setChecked(bool(int(checked)))))
-
-        self._ledring_nbr_effects = 0
-
-        self._helper.cf.param.add_update_callback(group="ring", name="effect", cb=self._ring_effect_updated)
-
         self._helper.cf.param.add_update_callback(group="imu_sensors", cb=self._set_available_sensors)
 
         self._helper.cf.param.all_updated.add_callback(self._all_params_updated)
@@ -219,10 +208,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.targetCalPitch.setValue(Config().get("trim_pitch"))
         self.targetCalRoll.setValue(Config().get("trim_roll"))
 
-        self._helper.inputDeviceReader.alt1_updated.add_callback(self.alt1_updated)
-        self._helper.inputDeviceReader.alt2_updated.add_callback(self.alt2_updated)
         self._tf_state = 0
-        self._ring_effect = 0
 
         # Connect callbacks for input device limiting of roll/pitch/yaw/thrust
         self._helper.inputDeviceReader.limiting_updated.add_callback(self._limiting_updated.emit)
@@ -446,7 +432,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         # To prevent conflicting commands from the controller and the flight panel
         if JoystickReader().available_devices():
             self.commanderBox.setToolTip(
-                'Cant use both an controller and Command Based Flight'
+                'Cannot use both a controller and Command Based Flight'
             )
             self.commanderBox.setEnabled(False)
             return
@@ -516,16 +502,6 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._enable_estimators(False)
 
         self.logAltHold = None
-        self._led_ring_effect.setEnabled(False)
-        self._led_ring_effect.clear()
-        try:
-            self._led_ring_effect.currentIndexChanged.disconnect(
-                self._ring_effect_changed)
-        except TypeError:
-            # Signal was not connected
-            pass
-        self._led_ring_effect.setCurrentIndex(-1)
-        self._led_ring_headlight.setEnabled(False)
 
         try:
             self._assist_mode_combo.currentIndexChanged.disconnect(
@@ -714,80 +690,10 @@ class FlightTab(TabToolbox, flight_tab_class):
         else:
             self._helper.cf.param.set_value("flightmode.althold", int(enabled))
 
-    def alt1_updated(self, state):
-        if state:
-            new_index = (self._ring_effect+1) % (self._ledring_nbr_effects+1)
-            self._helper.cf.param.set_value("ring.effect", str(new_index))
-
-    def alt2_updated(self, state):
-        self._helper.cf.param.set_value("ring.headlightEnable", str(state))
-
     def _all_params_updated(self):
-        self._ring_populate_dropdown()
         self._populate_assisted_mode_dropdown()
         self._update_flight_commander(True)
         self._update_supervisor_and_arming(True)
-
-    def _ring_populate_dropdown(self):
-        try:
-            nbr = int(self._helper.cf.param.values["ring"]["neffect"])
-            current = int(self._helper.cf.param.values["ring"]["effect"])
-        except KeyError:
-            return
-
-        # Used only in alt1_updated function
-        self._ring_effect = current
-        self._ledring_nbr_effects = nbr
-
-        hardcoded_names = {
-            0: "Off",
-            1: "White spinner",
-            2: "Color spinner",
-            3: "Tilt effect",
-            4: "Brightness effect",
-            5: "Color spinner 2",
-            6: "Double spinner",
-            7: "Solid color effect",
-            8: "Factory test",
-            9: "Battery status",
-            10: "Boat lights",
-            11: "Alert",
-            12: "Gravity",
-            13: "LED tab",
-            14: "Color fader",
-            15: "Link quality",
-            16: "Location server status",
-            17: "Sequencer",
-            18: "Lighthouse quality",
-        }
-
-        for i in range(nbr + 1):
-            name = "{}: ".format(i)
-            if i in hardcoded_names:
-                name += hardcoded_names[i]
-            else:
-                name += "N/A"
-            self._led_ring_effect.addItem(name, i)
-
-        self._led_ring_effect.currentIndexChanged.connect(
-            self._ring_effect_changed)
-
-        self._led_ring_effect.setCurrentIndex(current)
-        if int(self._helper.cf.param.values["deck"]["bcLedRing"]) == 1:
-            self._led_ring_effect.setEnabled(True)
-            self._led_ring_headlight.setEnabled(True)
-
-    def _ring_effect_changed(self, index):
-        self._ring_effect = index
-        if index > -1:
-            i = self._led_ring_effect.itemData(index)
-            logger.debug("Changed effect to {}".format(i))
-            if i != int(self._helper.cf.param.values["ring"]["effect"]):
-                self._helper.cf.param.set_value("ring.effect", str(i))
-
-    def _ring_effect_updated(self, name, value):
-        if self._helper.cf.param.is_updated:
-            self._led_ring_effect.setCurrentIndex(int(value))
 
     def _populate_assisted_mode_dropdown(self):
         self._assist_mode_combo.addItem("Altitude hold", 0)

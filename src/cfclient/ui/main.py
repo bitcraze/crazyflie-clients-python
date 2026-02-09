@@ -683,8 +683,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 if e.errno == 13:  # Permission denied
                     link = "<a href='https://www.bitcraze.io/documentation/repository/crazyflie-lib-python/master/installation/usb_permissions/'>Install USB Permissions</a>" # noqa
                     msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Information)
-                    msg.setTextFormat(Qt.RichText)
+                    msg.setIcon(QMessageBox.Icon.Information)
+                    msg.setTextFormat(Qt.TextFormat.RichText)
                     msg.setText("Could not access Crazyradio")
                     msg.setInformativeText(link)
                     msg.setWindowTitle("Crazyradio permissions")

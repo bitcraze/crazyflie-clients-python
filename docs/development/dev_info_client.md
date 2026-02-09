@@ -40,8 +40,8 @@ device to sending the control values to the Crazyflie.
 ### InputDevice
 
 There are two ways to get input into the client: Input readers and input
-interfaces. On startup the modules *lib/cfclient/utils/inputreaders* and
-*lib/cfclient/utils/inputinterfaces* are initialized and these
+interfaces. On startup the modules *src/cfclient/utils/input/inputreaders* and
+*src/cfclient/utils/input/inputinterfaces* are initialized and these
 directories are scanned for implementations that can be used. Each
 python file in these directories represent a \"backend\" that handles
 input. Each backend can have zero, one or multiple devices that it can
@@ -81,8 +81,11 @@ the ZMQ interface works read [here](/docs/functional-areas/cfclient_zmq.md#input
 
 To support the application there\'s a number of files around it, such as
 configuration and caching. All these use JSON to store information. All
-of the user configuration files are stored in the */conf* directory.
-Most of the files have default versions in the */lib/configs* directory
+of the user configuration files are stored in a local config directory,
+hereafter refered to as <local_config_folder>.
+Its location is OS specific. To find your config directory, in the Crazyflie
+client, click on "Settings/Open config folder".
+Most of the files have default versions in the *src/cfclient/configs* directory
 that are either copied at the first start up or used in parallel as
 read-only copies to complement what ever is stored in the user
 configuration directory.
@@ -90,7 +93,7 @@ configuration directory.
 ### User configuration file
 
 To save the configuration between runs of the application there\'s a
-configuration file (*/conf/config.json*).The file is updated while the
+configuration file (*<local_config_folder>/config.json*).The file is updated while the
 application runs and settings change. Below is an example of the
 configuration file.
 
@@ -142,15 +145,15 @@ configuration file.
 ### Default configuration file
 
 The source code contains a default configuration file
-(*/lib/cfclient/configs/config.json*). The file contains two parts: The
+(*src/cfclient/configs/config.json*). The file contains two parts: The
 default writable part and the default read-only part. When the
 application is started for the first time (and */conf*/ doesn\'t exists)
 the writable part of this configuration file is copied to the
-*/conf/config.json* file to create the default values. The read-only
+*<local_config_folder>/config.json* file to create the default values. The read-only
 part is used for settings that cannot be changed, but shouldn\'t be
 hardcoded in the code. When the application starts and both the user
-config in */conf/config.json* and the read-only part of
-*/lib/cfclient/configs/config.json* is merged so they can all be
+config in *<local_config_folder>/config.json* and the read-only part of
+*src/cfclient/configs/config.json* is merged so they can all be
 accessed in the application.
 
 ``` {.json}
@@ -192,11 +195,9 @@ accessed in the application.
 In order to speed up the connection procedure for the Crazyflie the TOCs
 are cached ([more info on logging/parameter frameworks and
 TOC](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/) ). The writable part of the TOC
-cache is located in */conf/cache* where each cache is saved in a file
+cache is located in *<local_config_folder>/cache* where each cache is saved in a file
 named after the CRC32 (in hex) of the TOC CRC32 (for example
-*1CB41680.json*). There\'s also a read-only part of the TOC cache
-that\'s located in */lib/cglib/cache* and contains the caches for
-official builds. When the application connects to a Crazyflie the CRC32
+*1CB41680.json*). When the application connects to a Crazyflie the CRC32
 of the log and param TOC is requested. When the client receives it will
 check if a file with the correct name exists (in both the RW and the RO
 TOC cache). If it does it will load the cached TOC, if not it will start
@@ -398,10 +399,10 @@ Below is an example of part of the param TOC cache:
 
 Input device configurations are used to map raw axis (integers) to
 values such as roll/pitch/yaw/thrust (more info above). The
-configurations are stored in */conf/input*, one file for each
+configurations are stored in *<local_config_folder>/input*, one file for each
 configuration. The default configurations are stored in
-*/lib/cfclient/configs*. The first time the configuration starts up (if
-*/conf/input* doesn\'t exist) the default configurations are copied into
+*src/cfclient/configs*. The first time the configuration starts up (if
+*<local_config_folder>/input* doesn\'t exist) the default configurations are copied into
 this directory and can then be used.
 
 A raw axis can be mapped to one or more values, that way it\'s possible
@@ -523,10 +524,10 @@ rotation and the right one controls CCW rotation.
 The user can configure custom logging configurations from the UI (more
 information on logging/parameter
 frameworks (/doc/crazyflie/dev/arch/logparam) ). These will be saved in
-the */conf/log* directory, one file for each configuration. Default
-logging configurations are stored in the */lib/cfclient/configs/log* and
+the *<local_config_folder>/log* directory, one file for each configuration. Default
+logging configurations are stored in the *src/cfclient/configs/log* and
 are copied into the user configuration directory on the first status (if
-*/conf/log* doesn\'t exist).
+*<local_config_folder>/log* doesn\'t exist).
 
 |  Field        | Format  | Comments |     |
 |  ------------ | ------- | -------- | --- |

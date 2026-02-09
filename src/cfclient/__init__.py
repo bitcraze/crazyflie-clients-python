@@ -38,10 +38,10 @@ else:
 config_path = AppDirs("cfclient", "Bitcraze").user_config_dir
 
 if not hasattr(sys, 'frozen'):
-    import pkg_resources
+    from importlib.metadata import version, PackageNotFoundError
     try:
-        VERSION = pkg_resources.require("cfclient")[0].version
-    except pkg_resources.DistributionNotFound:
+        VERSION = version("cfclient")
+    except PackageNotFoundError:
         VERSION = "dev"
 else:
     try:
@@ -52,5 +52,5 @@ else:
 try:
     with open(os.path.join(module_path, "resources/log_param_doc.json")) as f:
         log_param_doc = json.load(f)
-except:  # noqa
+except (IOError, OSError, json.JSONDecodeError):
     log_param_doc = None
