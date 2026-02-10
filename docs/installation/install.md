@@ -63,17 +63,30 @@ USB permissions need to be set as described above for Ubuntu/Linux.
 
 ## Installation Methods
 
-### From PyPI (Recommended)
+Choose the installation method that fits your use case:
 
-If you plan to use the client to control the Crazyflie, we highly recommend installing the latest release using pip, as this is well tested and stable:
+- **For regular use**: Install from PyPI using either `pip` or `uv` (both work equally well)
+- **For development**: Install from source
+
+### From PyPI (Recommended, Regular Use)
+
+If you plan to use the client to control the Crazyflie, install the latest stable release from PyPI. Both `pip` and `uv` are equally good options:
+
+#### Using pip
 
 ```bash
-pip install cfclient
+pip3 install cfclient
 ```
 
 For macOS specifically:
 ```bash
 python3 -m pip install cfclient
+```
+
+#### Or, using uv
+
+```bash
+uv pip install cfclient
 ```
 
 The client can then be launched from a console with `cfclient` or `python3 -m cfclient.gui`.
