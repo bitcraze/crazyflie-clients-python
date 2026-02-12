@@ -104,23 +104,27 @@ For regular use or if you prefer a permanent installation, install from PyPI usi
 
 If you are planning to do development work with the cfclient, install from source.
 
-#### Clone the repository
-```bash
-git clone https://github.com/bitcraze/crazyflie-clients-python
-cd crazyflie-clients-python
-```
+1. Clone the repository
 
-#### Install the client from source
+    ```bash
+    git clone https://github.com/bitcraze/crazyflie-clients-python
+    cd crazyflie-clients-python
+    ```
+2. Create and activate a Python virtual environment to isolate dependencies. See the [official Python venv documentation](https://docs.python.org/3/library/venv.html) for setup instructions.
+3. Install the client from source
 
-For basic installation:
-```bash
-pip install -e .
-```
-
-For development (includes additional tools):
-```bash
-pip install -e .[dev]
-```
+    For basic installation:
+    ```bash
+    pip install -e .
+    ```
+    For development (includes additional tools):
+    ```bash
+    pip install -e .[dev]
+    ```
+4. After installation, run the client with:
+    ```bash
+    cfclient
+    ```
 
 **Note**: Avoid running pip with sudo, as this would install dependencies system-wide and could cause compatibility problems. If pip requests administrator password, you should run the command with `--user` (for example `python3 -m pip install --user -e .`). This should not be required on modern Python distributions though since the `--user` flag seems to be the default behavior.
 
