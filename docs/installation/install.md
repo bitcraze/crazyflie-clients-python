@@ -7,8 +7,6 @@ page_id: install
 
 This project requires Python 3.10+.
 
-> **Recommendation**: Use a Python virtual environment to isolate dependencies. See the [official Python venv documentation](https://docs.python.org/3/library/venv.html) for setup instructions.
-
 ## Platform Prerequisites
 
 ### Ubuntu/Linux
@@ -61,37 +59,48 @@ The client requires Raspberry Pi Trixie or more recent. On Raspberry Pi Trixie i
 
 USB permissions need to be set as described above for Ubuntu/Linux.
 
-## Installation Methods
+## Installation
 
-Choose the installation method that fits your use case:
+#### Which method should I choose?
+- **Just trying it out?** Use the Quick Start with `uvx`.
+- **Regular user?** Use Standard Installation.
+- **Developer?** Use Development Installation.
 
-- **For regular use**: Install from PyPI using either `pip` or `uv` (both work equally well)
-- **For development**: Install from source
+### Quick Start (Recommended)
 
-### From PyPI (Recommended, Regular Use)
+The easiest way to run the client is with `uvx`, which automatically handles installation in a temporary environment:
 
-If you plan to use the client to control the Crazyflie, install the latest stable release from PyPI. Both `pip` and `uv` are equally good options:
-
-#### Using pip
-
+1. Install `uv` by following the [official installation guide](https://docs.astral.sh/uv/getting-started/installation/).
+2. Run the client:
 ```bash
-pip3 install cfclient
+   uvx cfclient
 ```
 
-For macOS specifically:
-```bash
-python3 -m pip install cfclient
-```
+This method requires no manual installation or virtual environment setup. The client runs directly and cleans up afterward.
 
-#### Or, using uv
+### Standard Installation
 
-```bash
-uv pip install cfclient
-```
+For regular use or if you prefer a permanent installation, install from PyPI using `pip`.
 
-The client can then be launched from a console with `cfclient` or `python3 -m cfclient.gui`.
+1. Create and activate a Python virtual environment to isolate dependencies. See the [official Python venv documentation](https://docs.python.org/3/library/venv.html) for setup instructions.
+2. Install the client using pip, either by running:
+    ```bash
+    pip install cfclient
+    ```
+    or, for macOS specifically: 
+    ```bash
+    python3 -m pip install cfclient
+    ```
+3. After installation, run the client with:
+    ```bash
+    cfclient
+    ```
+    or 
+    ```bash
+    python3 -m cfclient.gui
+    ```
 
-### From Source (Development)
+### Development Installation (From Source)
 
 If you are planning to do development work with the cfclient, install from source.
 
