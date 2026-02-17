@@ -68,7 +68,7 @@ USB permissions need to be set as described above for Ubuntu/Linux.
 
 ### Quick Start (Recommended)
 
-The easiest way to run the client is with `uvx`, which automatically handles installation in a temporary environment:
+The easiest way to run the client is with `uvx`, which automatically handles installation and always runs the latest version:
 
 1. Install `uv` by following the [official installation guide](https://docs.astral.sh/uv/getting-started/installation/).
 2. Run the client:
