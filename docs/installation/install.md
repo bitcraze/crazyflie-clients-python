@@ -7,8 +7,6 @@ page_id: install
 
 This project requires Python 3.10+.
 
-> **Recommendation**: Use a Python virtual environment to isolate dependencies. See the [official Python venv documentation](https://docs.python.org/3/library/venv.html) for setup instructions.
-
 ## Platform Prerequisites
 
 ### Ubuntu/Linux
@@ -61,44 +59,72 @@ The client requires Raspberry Pi Trixie or more recent. On Raspberry Pi Trixie i
 
 USB permissions need to be set as described above for Ubuntu/Linux.
 
-## Installation Methods
+## Installation
 
-### From PyPI (Recommended)
+#### Which method should I choose?
+- **Just trying it out?** Use the Quick Start with `uvx`.
+- **Regular user?** Use Standard Installation.
+- **Developer?** Use Development Installation.
 
-If you plan to use the client to control the Crazyflie, we highly recommend installing the latest release using pip, as this is well tested and stable:
+### Quick Start (Recommended)
 
+The easiest way to run the client is with `uvx`, which automatically handles installation and always runs the latest version:
+
+1. Install `uv` by following the [official installation guide](https://docs.astral.sh/uv/getting-started/installation/).
+2. Run the client:
 ```bash
-pip install cfclient
+   uvx cfclient
 ```
 
-For macOS specifically:
-```bash
-python3 -m pip install cfclient
-```
+This method requires no manual installation or virtual environment setup. The client runs directly and cleans up afterward.
 
-The client can then be launched from a console with `cfclient` or `python3 -m cfclient.gui`.
+### Standard Installation
 
-### From Source (Development)
+For regular use or if you prefer a permanent installation, install from PyPI using `pip`.
+
+1. Create and activate a Python virtual environment to isolate dependencies. See the [official Python venv documentation](https://docs.python.org/3/library/venv.html) for setup instructions.
+2. Install the client using pip, either by running:
+    ```bash
+    pip install cfclient
+    ```
+    or, for macOS specifically: 
+    ```bash
+    python3 -m pip install cfclient
+    ```
+3. After installation, run the client with:
+    ```bash
+    cfclient
+    ```
+    or 
+    ```bash
+    python3 -m cfclient.gui
+    ```
+
+### Development Installation (From Source)
 
 If you are planning to do development work with the cfclient, install from source.
 
-#### Clone the repository
-```bash
-git clone https://github.com/bitcraze/crazyflie-clients-python
-cd crazyflie-clients-python
-```
+1. Clone the repository
 
-#### Install the client from source
+    ```bash
+    git clone https://github.com/bitcraze/crazyflie-clients-python
+    cd crazyflie-clients-python
+    ```
+2. Create and activate a Python virtual environment to isolate dependencies. See the [official Python venv documentation](https://docs.python.org/3/library/venv.html) for setup instructions.
+3. Install the client from source
 
-For basic installation:
-```bash
-pip install -e .
-```
-
-For development (includes additional tools):
-```bash
-pip install -e .[dev]
-```
+    For basic installation:
+    ```bash
+    pip install -e .
+    ```
+    For development (includes additional tools):
+    ```bash
+    pip install -e .[dev]
+    ```
+4. After installation, run the client with:
+    ```bash
+    cfclient
+    ```
 
 **Note**: Avoid running pip with sudo, as this would install dependencies system-wide and could cause compatibility problems. If pip requests administrator password, you should run the command with `--user` (for example `python3 -m pip install --user -e .`). This should not be required on modern Python distributions though since the `--user` flag seems to be the default behavior.
 
