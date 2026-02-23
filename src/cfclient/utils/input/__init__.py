@@ -166,6 +166,8 @@ class JoystickReader(object):
 
         ConfigManager().get_list_of_configs()
 
+        self._thrust_interlock = False
+
         self.input_updated = Caller()
         self.assisted_input_updated = Caller()
         self.heighthold_input_updated = Caller()
@@ -182,12 +184,27 @@ class JoystickReader(object):
         # Call with 3 bools (rp_limiting, yaw_limiting, thrust_limiting)
         self.limiting_updated = Caller()
 
+        # Called with True when interlock is engaged, False when released
+        self.thrust_lock_active = Caller()
+
     def _get_device_from_name(self, device_name):
         """Get the raw device from a name"""
         for d in readers.devices():
             if d.name == device_name:
                 return d
         return None
+
+    def require_thrust_zero(self):
+        """Engage the thrust interlock.
+
+        While active, thrust output is forced to zero until the physical
+        throttle is brought to zero by the user. This prevents unexpected
+        take-off when connecting with a bad input mapping or after switching
+        mappings.
+        """
+        if not self._thrust_interlock:
+            self._thrust_interlock = True
+            self.thrust_lock_active.call(True)
 
     def set_hover_max_height(self, height):
         self._hover_max_height = height
@@ -315,6 +332,7 @@ class JoystickReader(object):
         dev.input_map_name = input_map_name
         Config().get("device_config_mapping")[device_name] = input_map_name
         dev.set_dead_band(self._rp_dead_band)
+        self.require_thrust_zero()
 
     def start_input(self, device_name, role="Device", config_name=None):
         """
@@ -330,6 +348,7 @@ class JoystickReader(object):
             self.limiting_updated.call(device.limit_rp,
                                        device.limit_yaw,
                                        device.limit_thrust)
+            self.require_thrust_zero()
             self._read_timer.start()
             return device.supports_mapping
         except Exception:
@@ -515,6 +534,12 @@ class JoystickReader(object):
                     else:
                         # Using alt hold the data is not in a percentage
                         if not data.assistedControl:
+                            if self._thrust_interlock:
+                                if data.thrust < 1:
+                                    self._thrust_interlock = False
+                                    self.thrust_lock_active.call(False)
+                                else:
+                                    data.thrust = 0
                             data.thrust = JoystickReader.p2t(data.thrust)
 
                         # Thrust might be <0 here, make sure it's not otherwise
