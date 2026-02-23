@@ -93,6 +93,8 @@ class FlightTab(TabToolbox, flight_tab_class):
     _log_data_signal = pyqtSignal(int, object, object)
     _pose_data_signal = pyqtSignal(object, object)
 
+    _thrust_lock_signal = pyqtSignal(bool)
+    _gamepad_device_signal = pyqtSignal(str, str, str)
     _input_updated_signal = pyqtSignal(float, float, float, float)
     _rp_trim_updated_signal = pyqtSignal(float, float)
     _emergency_stop_updated_signal = pyqtSignal(bool)
@@ -121,6 +123,14 @@ class FlightTab(TabToolbox, flight_tab_class):
     def __init__(self, helper):
         super(FlightTab, self).__init__(helper, 'Flight Control')
         self.setupUi(self)
+
+        self._thrust_lock_signal.connect(self._thrust_lock_updated)
+        self._helper.inputDeviceReader.thrust_lock_active.add_callback(
+            self._thrust_lock_signal.emit)
+
+        self._gamepad_device_signal.connect(self._gamepad_device_updated)
+        self._helper.mainUI.gamepad_device_updated.connect(
+            self._gamepad_device_signal.emit)
 
         self.disconnectedSignal.connect(self.disconnected)
         self.connectionFinishedSignal.connect(self.connected)
@@ -215,6 +225,19 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._limiting_updated.connect(self._set_limiting_enabled)
 
         self._helper.pose_logger.data_received_cb.add_callback(self._pose_data_signal.emit)
+
+    def _thrust_lock_updated(self, active):
+        if active:
+            self.gamepadStatusLabel.setText("Lower throttle to arm")
+            self.gamepadStatusLabel.setStyleSheet("color: red;")
+        else:
+            self.gamepadStatusLabel.setText("Ready")
+            self.gamepadStatusLabel.setStyleSheet("")
+
+    def _gamepad_device_updated(self, device, mapping, mux):
+        self.gamepadNameLabel.setText(device)
+        self.gamepadMappingLabel.setText(mapping)
+        self.gamepadMuxLabel.setText(mux)
 
     def _set_limiting_enabled(self, rp_limiting_enabled, yaw_limiting_enabled, thrust_limiting_enabled):
 
