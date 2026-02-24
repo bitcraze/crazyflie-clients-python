@@ -109,7 +109,7 @@ def main():
         action = "reset"
     elif sys.argv[0] == "flash":
         action = "flash"
-        
+
         # Parse arguments
         if len(sys.argv) < 2:
             print("The flash action requires a file name.")
