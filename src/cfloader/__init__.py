@@ -61,11 +61,9 @@ def main():
         print(" CrazyLoader Flash Utility")
         print("==============================")
         print()
-        print(" Usage:", sys.argv[0], "[CRTP options] <action> [parameters]")
+        print(" Usage:", sys.argv[0], "<action> [parameters] [CRTP options]")
         print()
-        print("The CRTP options are described above")
-        print()
-        print("Crazyload option:")
+        print("Actions:")
         print("   info                    : Print the info of the bootloader "
               "and quit.")
         print("                             Will let the target in bootloader "
@@ -77,7 +75,7 @@ def main():
               "to firmware")
         print("                             mode.")
         print()
-        print("Crazyload CRTP options:")
+        print("CRTP options:")
         print("   -c, --cold-boot         : Cold boot the Crazyflie (default)")
         print("   -w, --warm-boot <uri>   : Warm boot the Crazyflie with the"
               " given URI")
