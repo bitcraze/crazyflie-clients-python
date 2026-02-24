@@ -29,6 +29,7 @@
 # Crazy Loader bootloader utility
 # Can reset bootload and reset back the bootloader
 
+import os
 import sys
 
 import cflib.crtp
@@ -82,7 +83,7 @@ def main():
               " given URI")
         sys.exit(0)
 
-    # Analyse the command line parameters
+    # Parse command line parameters
     sys.argv = sys.argv[1:]
     argv = []
 
@@ -99,7 +100,7 @@ def main():
         i += 1
     sys.argv = argv
 
-    # Analyse the command
+    # Parse and check the command
     if len(sys.argv) < 1:
         action = "info"
     elif sys.argv[0] == "info":
@@ -107,10 +108,13 @@ def main():
     elif sys.argv[0] == "reset":
         action = "reset"
     elif sys.argv[0] == "flash":
-        if len(sys.argv) < 2:
-            print("The flash action require a file name.")
-            sys.exit(-1)
         action = "flash"
+        
+        # Parse arguments
+        if len(sys.argv) < 2:
+            print("The flash action requires a file name.")
+            sys.exit(-1)
+
         filename = sys.argv[1]
         targets = []  # Dict[Target]
         for t in sys.argv[2:]:
@@ -120,6 +124,15 @@ def main():
             else:
                 [target, type] = t.split("-")
                 targets.append(Target("cf2", target, type, [], []))
+
+        # Check arguments
+        if not os.path.isfile(filename):
+            print("File not found: {}".format(filename))
+            sys.exit(-1)
+        is_target_required = not filename.endswith('.zip')
+        if (is_target_required and not targets):
+            print("The flash action with a non .zip file requires a target")
+            sys.exit(-1)
     else:
         print("Action", sys.argv[0], "unknown!")
         sys.exit(-1)
@@ -155,11 +168,7 @@ def main():
             # flash_full called with no filename will not flash, just call
             # our info callback
             bl.flash_full(None, None, warm_boot, None, print_info)
-        elif action == "flash" and filename:
-            is_target_required = not filename.endswith('.zip')
-            if (is_target_required and not targets):
-                print("The flash action with a non .zip file requires a target")
-                sys.exit(-1)
+        elif action == "flash":
             try:
                 bl.flash_full(None, filename, warm_boot, targets)
             except Exception as e:
