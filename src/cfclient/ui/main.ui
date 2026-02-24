@@ -402,7 +402,6 @@
      <string>Input device</string>
     </property>
     <addaction name="menuItemConfInputDevice"/>
-    <addaction name="_menuitem_rescandevices"/>
     <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuThemes">
@@ -525,14 +524,6 @@
   <action name="actionSdfasdf">
    <property name="text">
     <string>sdfasdf</string>
-   </property>
-  </action>
-  <action name="_menuitem_rescandevices">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Rescan devices</string>
    </property>
   </action>
   <action name="_menuItem_openconfigfolder">
