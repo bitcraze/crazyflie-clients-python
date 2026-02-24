@@ -75,6 +75,11 @@ def main():
         print("                             possible  page in flash and reset "
               "to firmware")
         print("                             mode.")
+        print()
+        print("Crazyload CRTP options:")
+        print("   -c, --cold-boot         : Cold boot the Crazyflie (default)")
+        print("   -w, --warm-boot <uri>   : Warm boot the Crazyflie with the"
+              " given URI")
         sys.exit(0)
 
     # Analyse the command line parameters
