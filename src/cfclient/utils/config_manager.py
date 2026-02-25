@@ -86,6 +86,8 @@ class ConfigManager(metaclass=Singleton):
         try:
             import platform
             current_os = platform.system().lower()
+            if current_os == "darwin":
+                current_os = "macos"
 
             configs = [os.path.basename(f) for f in
                        glob.glob(self.configs_dir + "/[A-Za-z]*.json")]
