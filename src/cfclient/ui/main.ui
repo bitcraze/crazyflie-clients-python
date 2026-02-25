@@ -516,16 +516,6 @@
     <string>Bootloader</string>
    </property>
   </action>
-  <action name="actionAsdfasdf">
-   <property name="text">
-    <string>asdfasdf</string>
-   </property>
-  </action>
-  <action name="actionSdfasdf">
-   <property name="text">
-    <string>sdfasdf</string>
-   </property>
-  </action>
   <action name="_menuItem_openconfigfolder">
    <property name="text">
     <string>Open config folder</string>
