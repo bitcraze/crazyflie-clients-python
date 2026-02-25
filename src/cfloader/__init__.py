@@ -64,23 +64,17 @@ def main():
         print(" Usage:", sys.argv[0], "<action> [parameters] [CRTP options]")
         print()
         print("Actions:")
-        print("   info                    : Print the info of the bootloader "
-              "and quit.")
-        print("                             Will leave the target in bootloader "
-              "mode.")
+        print("   info                    : Print the info of the bootloader and quit.")
+        print("                             Will leave the target in bootloader mode.")
         print("   reset                   : Reset the device in firmware mode.")
-        print("   flash <file> [targets]  : flash the <img> binary file from "
-              "the first")
-        print("                             possible page in flash and reset "
-              "to firmware")
+        print("   flash <file> [targets]  : flash the <img> binary file from the first")
+        print("                             possible page in flash and reset to firmware")
         print("                             mode.")
         print()
         print("CRTP options:")
-        print("   -c, --cold-boot         : Cold boot the Crazyflie (default). "
-              "Restart")
+        print("   -c, --cold-boot         : Cold boot the Crazyflie (default). Restart")
         print("                             Crazyflie to flash.")
-        print("   -w, --warm-boot <uri>   : Warm boot the Crazyflie with the"
-              " given URI.")
+        print("   -w, --warm-boot <uri>   : Warm boot the Crazyflie with the given URI.")
         sys.exit(0)
 
     # Parse command line parameters
