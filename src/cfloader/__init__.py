@@ -113,10 +113,22 @@ def main():
         targets = []  # List[Target]
         for t in sys.argv[2:]:
             if t.startswith("deck-"):
+                if t.count("-") != 2:
+                    print("Invalid deck target format '{}', expected deck-<target>-<type>".format(t))
+                    sys.exit(-1)
                 [deck, target, type] = t.split("-")
+                if not target or not type:
+                    print("Invalid deck target format '{}', expected deck-<target>-<type>".format(t))
+                    sys.exit(-1)
                 targets.append(Target("deck", target, type, [], []))
             else:
+                if t.count("-") != 1:
+                    print("Invalid target format '{}', expected <target>-<type>".format(t))
+                    sys.exit(-1)
                 [target, type] = t.split("-")
+                if not target or not type:
+                    print("Invalid target format '{}', expected <target>-<type>".format(t))
+                    sys.exit(-1)
                 targets.append(Target("cf2", target, type, [], []))
 
         # Check arguments
