@@ -69,6 +69,9 @@ def main():
         print("   flash <file> [targets]  : flash the <img> binary file from the first")
         print("                             possible page in flash and reset to firmware")
         print("                             mode.")
+        print("                             Targets format: <target>-<type> or")
+        print("                             deck-<target>-<type>.")
+        print("                             Example: stm32-fw")
         print()
         print("CRTP options:")
         print("   -c, --cold-boot         : Cold boot the Crazyflie (default). Restart")
@@ -139,7 +142,8 @@ def main():
             sys.exit(-1)
         is_target_required = not filename.endswith('.zip')
         if (is_target_required and not targets):
-            print("The flash action with a non .zip file requires a target")
+            print("The flash action with a non .zip file requires at least one target")
+            print("in the form <target>-<type> or deck-<target>-<type>.")
             sys.exit(-1)
     else:
         print("Action", sys.argv[0], "unknown!")
