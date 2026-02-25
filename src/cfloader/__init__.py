@@ -110,7 +110,7 @@ def main():
             sys.exit(-1)
 
         filename = sys.argv[1]
-        targets = []  # Dict[Target]
+        targets = []  # List[Target]
         for t in sys.argv[2:]:
             if t.startswith("deck-"):
                 [deck, target, type] = t.split("-")
