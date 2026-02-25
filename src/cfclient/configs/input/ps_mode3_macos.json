@@ -82,13 +82,6 @@
           "id": 10,
           "scale": 1.0,
           "key": "assistedControl"
-        },
-        {
-          "name": "Exit",
-          "type": "Input.BUTTON",
-          "id": 12,
-          "scale": 1.0,
-          "key": "exit"
         }
       ]
     }

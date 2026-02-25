@@ -37,28 +37,28 @@
         {
           "name": "Pitch Cal+",
           "type": "Input.BUTTON",
-          "id": 6,
+          "id": 11,
           "scale": -1.0,
           "key": "pitchNeg"
         },
         {
           "name": "Pitch Cal-",
           "type": "Input.BUTTON",
-          "id": 4,
+          "id": 12,
           "scale": 1.0,
           "key": "pitchPos"
         },
         {
           "name": "Roll Cal +",
           "type": "Input.BUTTON",
-          "id": 5,
+          "id": 14,
           "scale": 1.0,
           "key": "rollPos"
         },
         {
           "name": "Roll Cal -",
           "type": "Input.BUTTON",
-          "id": 7,
+          "id": 13,
           "scale": -1.0,
           "key": "rollNeg"
         },
@@ -82,13 +82,6 @@
           "id": 5,
           "scale": 1.0,
           "key": "assistedControl"
-        },
-        {
-          "name": "Exit",
-          "type": "Input.BUTTON",
-          "id": 12,
-          "scale": 1.0,
-          "key": "exit"
         }
       ]
     }

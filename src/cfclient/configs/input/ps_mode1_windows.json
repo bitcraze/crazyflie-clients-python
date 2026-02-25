@@ -9,7 +9,7 @@
         {
           "name": "Roll",
           "type": "Input.AXIS",
-          "id": 3,
+          "id": 2,
           "scale": 1.0,
           "key": "roll"
         },
@@ -30,35 +30,35 @@
         {
           "name": "Thrust",
           "type": "Input.AXIS",
-          "id": 4,
+          "id": 3,
           "scale": -1.0,
           "key": "thrust"
         },
         {
           "name": "Pitch Cal+",
           "type": "Input.BUTTON",
-          "id": 6,
+          "id": 11,
           "scale": -1.0,
           "key": "pitchNeg"
         },
         {
           "name": "Pitch Cal-",
           "type": "Input.BUTTON",
-          "id": 4,
+          "id": 12,
           "scale": 1.0,
           "key": "pitchPos"
         },
         {
           "name": "Roll Cal +",
           "type": "Input.BUTTON",
-          "id": 5,
+          "id": 14,
           "scale": 1.0,
           "key": "rollPos"
         },
         {
           "name": "Roll Cal -",
           "type": "Input.BUTTON",
-          "id": 7,
+          "id": 13,
           "scale": -1.0,
           "key": "rollNeg"
         },
@@ -79,16 +79,9 @@
         {
           "name": "Assisted Control",
           "type": "Input.BUTTON",
-          "id": 5,
+          "id": 10,
           "scale": 1.0,
           "key": "assistedControl"
-        },
-        {
-          "name": "Exit",
-          "type": "Input.BUTTON",
-          "id": 12,
-          "scale": 1.0,
-          "key": "exit"
         }
       ]
     }
