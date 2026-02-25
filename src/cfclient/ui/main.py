@@ -61,7 +61,6 @@ from PyQt6.QtGui import QActionGroup
 from PyQt6.QtGui import QShortcut
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtGui import QPalette
-from PyQt6.QtWidgets import QLabel
 from PyQt6.QtWidgets import QMenu
 from PyQt6.QtWidgets import QMessageBox
 
@@ -100,6 +99,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     disconnectedSignal = pyqtSignal(str)
     linkQualitySignal = pyqtSignal(float)
 
+    gamepad_device_updated = pyqtSignal(str, str, str)
+
     _input_device_error_signal = pyqtSignal(str)
     _input_discovery_signal = pyqtSignal(object)
     _log_error_signal = pyqtSignal(object, str)
@@ -130,18 +131,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.scanner.interfaceFoundSignal.connect(self.foundInterfaces)
         self.scanner.start()
 
-        # Create and start the Input Reader
-        self._statusbar_label = QLabel("No input-device found, insert one to"
-                                       " fly.")
-        self.statusBar().addWidget(self._statusbar_label)
-
-        #
-        # We use this hacky-trick to find out if we are in dark-mode and
-        # figure out what bgcolor to set from that. We always use the current
-        # palette forgreound.
-        #
-        self.textColor = self._statusbar_label.palette().color(QPalette.ColorRole.WindowText)
-        self.bgColor = self._statusbar_label.palette().color(QPalette.ColorRole.Window)
+        self.textColor = self.palette().color(QPalette.ColorRole.WindowText)
+        self.bgColor = self.palette().color(QPalette.ColorRole.Window)
         self.isDark = self.textColor.value() > self.bgColor.value()
 
         self.joystickReader = JoystickReader()
@@ -554,7 +545,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         tab_toolbox.set_preferred_dock_area(area)
 
     def _rescan_devices(self):
-        self._statusbar_label.setText("No inputdevice connected!")
+        self.gamepad_device_updated.emit("No input device connected", "—", "—")
         self._menu_devices.clear()
         self._active_device = ""
         self.joystickReader.stop_input()
@@ -596,6 +587,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     def _connected(self):
         self.uiState = UIState.CONNECTED
         self._update_ui_state()
+        self.joystickReader.require_thrust_zero()
 
         Config().set("link_uri", str(self._connectivity_manager.get_interface()))
 
@@ -722,40 +714,34 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                     if type(dev_node) is QAction and dev_node.isChecked():
                         dev_node.toggled.emit(True)
 
-            self._update_input_device_footer()
+            self._update_input_device_status()
 
-    def _get_dev_status(self, device):
-        msg = "{}".format(device.name)
-        if device.supports_mapping:
-            map_name = "No input mapping"
-            if device.input_map:
-                map_name = device.input_map_name
-            msg += " ({})".format(map_name)
-        return msg
-
-    def _update_input_device_footer(self):
-        """Update the footer in the bottom of the UI with status for the
-        input device and its mapping"""
-
-        msg = ""
+    def _update_input_device_status(self):
+        """Update the gamepad device info in the Flight tab."""
 
         if len(self.joystickReader.available_devices()) > 0:
             mux = self.joystickReader._selected_mux
-            msg = "Using {} mux with ".format(mux.name)
-            for key in list(mux._devs.keys())[:-1]:
-                if mux._devs[key]:
-                    msg += "{}, ".format(self._get_dev_status(mux._devs[key]))
+            mux_name = mux.name
+            device_names = []
+            mapping_names = []
+            for dev in mux._devs.values():
+                if dev:
+                    device_names.append(dev.name)
+                    if dev.supports_mapping:
+                        mapping_names.append(
+                            dev.input_map_name if dev.input_map else "No mapping")
+                    else:
+                        mapping_names.append("N/A")
                 else:
-                    msg += "N/A, "
-            # Last item
-            key = list(mux._devs.keys())[-1]
-            if mux._devs[key]:
-                msg += "{}".format(self._get_dev_status(mux._devs[key]))
-            else:
-                msg += "N/A"
+                    device_names.append("N/A")
+                    mapping_names.append("N/A")
+            device_str = ", ".join(device_names)
+            mapping_str = ", ".join(mapping_names)
         else:
-            msg = "No input device found"
-        self._statusbar_label.setText(msg)
+            device_str = "No input device found"
+            mapping_str = "—"
+            mux_name = "—"
+        self.gamepad_device_updated.emit(device_str, mapping_str, mux_name)
 
     def _inputdevice_selected(self, checked):
         """Called when a new input device has been selected from the menu. The
@@ -789,7 +775,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._mapping_support = self.joystickReader.start_input(
                 device.name,
                 role_in_mux)
-        self._update_input_device_footer()
+        self._update_input_device_status()
 
     def _inputconfig_selected(self, checked):
         """Called when a new configuration has been selected from the menu. The
@@ -801,7 +787,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         selected_mapping = str(self.sender().text())
         device = self.sender().data().data()[1]
         self.joystickReader.set_input_map(device.name, selected_mapping)
-        self._update_input_device_footer()
+        self._update_input_device_status()
 
     def device_discovery(self, devs):
         """Called when new devices have been added"""
@@ -877,7 +863,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._all_role_menus[0]["rolemenu"].actions()[0].setChecked(True)
             logger.info("Select first device")
 
-        self._update_input_device_footer()
+        self._update_input_device_status()
 
     def _open_config_folder(self):
         QDesktopServices.openUrl(
