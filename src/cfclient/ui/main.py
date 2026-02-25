@@ -174,7 +174,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._show_input_device_config_dialog)
         self.menuItemExit.triggered.connect(self.closeAppRequest)
         self.batteryUpdatedSignal.connect(self._update_battery)
-        self._menuitem_rescandevices.triggered.connect(self._rescan_devices)
         self._menuItem_openconfigfolder.triggered.connect(
             self._open_config_folder)
 
@@ -552,18 +551,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         dock_widget = self.sender()
         tab_toolbox = dock_widget.tab_toolbox
         tab_toolbox.set_preferred_dock_area(area)
-
-    def _rescan_devices(self):
-        self._statusbar_label.setText("No inputdevice connected!")
-        self._menu_devices.clear()
-        self._active_device = ""
-        self.joystickReader.stop_input()
-
-        # for c in self._menu_mappings.actions():
-        #    c.setEnabled(False)
-        # devs = self.joystickReader.available_devices()
-        # if (len(devs) > 0):
-        #    self.device_discovery(devs)
 
     def _show_input_device_config_dialog(self):
         self.inputConfig = InputConfigDialogue(self.joystickReader)
