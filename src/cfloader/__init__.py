@@ -60,24 +60,26 @@ def main():
         print(" CrazyLoader Flash Utility")
         print("==============================")
         print()
-        print(" Usage:", sys.argv[0], "[CRTP options] <action> [parameters]")
+        print(" Usage:", sys.argv[0], "<action> [parameters] [CRTP options]")
         print()
-        print("The CRTP options are described above")
-        print()
-        print("Crazyload option:")
-        print("   info                    : Print the info of the bootloader "
-              "and quit.")
-        print("                             Will let the target in bootloader "
-              "mode")
-        print("   reset                   : Reset the device in firmware mode")
-        print("   flash <file> [targets]  : flash the <img> binary file from "
-              "the first")
-        print("                             possible  page in flash and reset "
-              "to firmware")
+        print("Actions:")
+        print("   info                    : Print the info of the bootloader and quit.")
+        print("                             Will leave the target in bootloader mode.")
+        print("   reset                   : Reset the device in firmware mode.")
+        print("   flash <file> [targets]  : flash the <img> binary file from the first")
+        print("                             possible page in flash and reset to firmware")
         print("                             mode.")
+        print("                             Targets format: <target>-<type> or")
+        print("                             deck-<target>-<type>.")
+        print("                             Example: stm32-fw")
+        print()
+        print("CRTP options:")
+        print("   -c, --cold-boot         : Cold boot the Crazyflie (default). Restart")
+        print("                             Crazyflie to flash.")
+        print("   -w, --warm-boot <uri>   : Warm boot the Crazyflie with the given URI.")
         sys.exit(0)
 
-    # Analyse the command line parameters
+    # Parse command line parameters
     sys.argv = sys.argv[1:]
     argv = []
 
@@ -94,7 +96,7 @@ def main():
         i += 1
     sys.argv = argv
 
-    # Analyse the command
+    # Parse and check the command
     if len(sys.argv) < 1:
         action = "info"
     elif sys.argv[0] == "info":
@@ -102,19 +104,47 @@ def main():
     elif sys.argv[0] == "reset":
         action = "reset"
     elif sys.argv[0] == "flash":
-        if len(sys.argv) < 2:
-            print("The flash action require a file name.")
-            sys.exit(-1)
         action = "flash"
+
+        # Parse arguments
+        if len(sys.argv) < 2:
+            print("The flash action requires a file name.")
+            sys.exit(-1)
+
         filename = sys.argv[1]
-        targets = []  # Dict[Target]
+        targets = []  # List[Target]
         for t in sys.argv[2:]:
             if t.startswith("deck-"):
+                if t.count("-") != 2:
+                    print("Invalid deck target format '{}', expected deck-<target>-<type>".format(t))
+                    sys.exit(-1)
                 [deck, target, type] = t.split("-")
+                if not target or not type:
+                    print("Invalid deck target format '{}', expected deck-<target>-<type>".format(t))
+                    sys.exit(-1)
                 targets.append(Target("deck", target, type, [], []))
             else:
+                if t.count("-") != 1:
+                    print("Invalid target format '{}', expected <target>-<type>".format(t))
+                    sys.exit(-1)
                 [target, type] = t.split("-")
+                if not target or not type:
+                    print("Invalid target format '{}', expected <target>-<type>".format(t))
+                    sys.exit(-1)
                 targets.append(Target("cf2", target, type, [], []))
+
+        # Check arguments
+        try:
+            with open(filename, 'rb') as f:
+                f.read(1)
+        except OSError as e:
+            print("Could not open file '{}': {}".format(filename, e))
+            sys.exit(-1)
+        is_target_required = not filename.endswith('.zip')
+        if (is_target_required and not targets):
+            print("The flash action with a non .zip file requires at least one target")
+            print("in the form <target>-<type> or deck-<target>-<type>.")
+            sys.exit(-1)
     else:
         print("Action", sys.argv[0], "unknown!")
         sys.exit(-1)
@@ -150,11 +180,7 @@ def main():
             # flash_full called with no filename will not flash, just call
             # our info callback
             bl.flash_full(None, None, warm_boot, None, print_info)
-        elif action == "flash" and filename:
-            is_target_required = not filename.endswith('.zip')
-            if (is_target_required and not targets):
-                print("The flash action with a non .zip file requires a target")
-                sys.exit(-1)
+        elif action == "flash":
             try:
                 bl.flash_full(None, filename, warm_boot, targets)
             except Exception as e:
