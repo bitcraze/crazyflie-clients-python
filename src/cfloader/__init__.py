@@ -29,7 +29,6 @@
 # Crazy Loader bootloader utility
 # Can reset bootload and reset back the bootloader
 
-import os
 import sys
 
 import cflib.crtp
@@ -132,8 +131,11 @@ def main():
                 targets.append(Target("cf2", target, type, [], []))
 
         # Check arguments
-        if not os.path.isfile(filename):
-            print("File not found: {}".format(filename))
+        try:
+            with open(filename, 'rb') as f:
+                f.read(1)
+        except OSError as e:
+            print("Could not open file '{}': {}".format(filename, e))
             sys.exit(-1)
         is_target_required = not filename.endswith('.zip')
         if (is_target_required and not targets):
