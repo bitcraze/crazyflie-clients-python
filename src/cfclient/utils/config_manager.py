@@ -150,6 +150,14 @@ class ConfigManager(metaclass=Singleton):
                 self._input_settings.append(new_input_settings)
                 json_data.close()
                 self._list_of_configs.append(conf[:-5])
+            # Sort all configs by display name
+            combined = sorted(
+                zip(self._list_of_configs, self._input_config, self._input_settings),
+                key=lambda x: x[2].get("name", x[0]).lower()
+            )
+            if combined:
+                self._list_of_configs, self._input_config, self._input_settings = \
+                    map(list, zip(*combined))
         except Exception as e:
             logger.warning("Exception while parsing inputconfig file: %s ", e)
         return self._list_of_configs
