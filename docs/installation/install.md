@@ -18,6 +18,8 @@ sudo apt install git python3-pip libxcb-xinerama0 libxcb-cursor0
 pip3 install --upgrade pip
 ```
 
+Note that your distribution might mark the system Python installation as externally managed. In this case, it is recommended to set up a Python virtual environment and install the client there. See above.
+
 #### Setting udev permissions
 
 Using Crazyradio on Ubuntu/Linux requires that you set udev permissions. See the cflib [installation guide](https://www.bitcraze.io/documentation/repository/crazyflie-lib-python/master/installation/usb_permissions/) for more information.
