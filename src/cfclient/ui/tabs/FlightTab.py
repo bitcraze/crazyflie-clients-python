@@ -618,12 +618,12 @@ class FlightTab(TabToolbox, flight_tab_class):
         if self._is_flying() and not from_controller:
             self._helper.cf.loc.send_emergency_stop()
         elif self._is_crashed():
-            self._helper.cf.platform.send_crash_recovery_request()
+            self._helper.cf.supervisor.send_crash_recovery_request()
         elif self._is_armed():
-            self._helper.cf.platform.send_arming_request(False)
+            self._helper.cf.supervisor.send_arming_request(False)
         elif self._can_arm():
             self.armButton.setStyleSheet("background-color: orange")
-            self._helper.cf.platform.send_arming_request(True)
+            self._helper.cf.supervisor.send_arming_request(True)
 
     def flightmodeChange(self, item):
         Config().set("flightmode", str(self.flightModeCombo.itemText(item)))
