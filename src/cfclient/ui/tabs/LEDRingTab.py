@@ -32,9 +32,10 @@ Basic tab to be able to set (and test) colors in the LED-ring.
 
 import logging
 
-from PyQt6 import QtGui, uic
-from PyQt6.QtCore import pyqtSignal
-from PyQt6 import QtWidgets
+from PySide6 import QtGui
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Signal
+from PySide6 import QtWidgets
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
@@ -46,14 +47,14 @@ __all__ = ['LEDRingTab']
 
 logger = logging.getLogger(__name__)
 
-led_ring_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/ledRingTab.ui")[0]
+led_ring_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/ledRingTab.ui")[0]
 
 
 class LEDRingTab(TabToolbox, led_ring_tab_class):
     """Tab for plotting logging data"""
 
-    _connected_signal = pyqtSignal(str)
-    _disconnected_signal = pyqtSignal(str)
+    _connected_signal = Signal(str)
+    _disconnected_signal = Signal(str)
 
     def __init__(self, helper):
         super(LEDRingTab, self).__init__(helper, 'LED Ring')

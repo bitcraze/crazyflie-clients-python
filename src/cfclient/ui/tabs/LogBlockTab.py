@@ -31,24 +31,24 @@ This tab shows all log blocks that are registered and can be used to start the
 logging and also to write the logging data to file.
 """
 
-from PyQt6 import uic
-from PyQt6.QtCore import Qt, pyqtSignal
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Qt, Signal
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
 
 import logging
 
-from PyQt6.QtWidgets import QApplication, QStyledItemDelegate
-from PyQt6.QtWidgets import QAbstractItemView, QStyleOptionButton, QStyle
-from PyQt6.QtCore import QAbstractItemModel, QModelIndex
+from PySide6.QtWidgets import QApplication, QStyledItemDelegate
+from PySide6.QtWidgets import QAbstractItemView, QStyleOptionButton, QStyle
+from PySide6.QtCore import QAbstractItemModel, QModelIndex
 
 from cfclient.utils.logdatawriter import LogWriter
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LogBlockTab']
 
-logblock_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/logBlockTab.ui")[0]
+logblock_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/logBlockTab.ui")[0]
 
 logger = logging.getLogger(__name__)
 
@@ -321,8 +321,8 @@ class LogBlockTab(TabToolbox, logblock_tab_class):
     Used to show debug-information about logblock status.
     """
 
-    _blocks_updated_signal = pyqtSignal(bool)
-    _disconnected_signal = pyqtSignal(str)
+    _blocks_updated_signal = Signal(bool)
+    _disconnected_signal = Signal(str)
 
     def __init__(self, helper):
         """Initialize the tab"""

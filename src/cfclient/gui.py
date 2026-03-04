@@ -67,8 +67,8 @@ def main():
         os.environ['DYLD_FALLBACK_LIBRARY_PATH'] = os.path.dirname(
             sys.executable)
 
-    # Set ERROR level for PyQt logger
-    qtlogger = logging.getLogger('PyQt6')
+    # Set ERROR level for PySide6 logger
+    qtlogger = logging.getLogger('PySide6')
     qtlogger.setLevel(logging.ERROR)
 
     parser = argparse.ArgumentParser(
@@ -123,9 +123,9 @@ def main():
             sys.exit(1)
 
     try:
-        import PyQt6  # noqa
+        import PySide6  # noqa
     except ImportError:
-        logger.critical("No PyQT6 installation found, exiting!")
+        logger.critical("No PySide6 installation found, exiting!")
         sys.exit(1)
 
     # Disable printouts from STL
@@ -160,8 +160,8 @@ def main():
 
     # Start up the main user-interface
     from .ui.main import MainUI
-    from PyQt6.QtWidgets import QApplication
-    from PyQt6.QtGui import QIcon
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtGui import QIcon
 
     if os.name == 'posix':
         logger.info('If startup fails because of "xcb", install dependency with `sudo apt install libxcb-xinerama0`.')

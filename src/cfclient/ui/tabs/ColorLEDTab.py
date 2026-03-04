@@ -31,10 +31,10 @@ Basic tab to be able to set (and test) color in Color LED.
 """
 
 import logging
-from PyQt6 import uic
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QPixmap, QPainter, QLinearGradient, QPen, QPainterPath
-from PyQt6.QtWidgets import QPushButton, QMessageBox
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor, QPixmap, QPainter, QLinearGradient, QPen, QPainterPath
+from PySide6.QtWidgets import QPushButton, QMessageBox
 from cflib.crazyflie.log import LogConfig
 
 import cfclient
@@ -46,7 +46,7 @@ __all__ = ['ColorLEDTab']
 
 logger = logging.getLogger(__name__)
 
-color_led_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/colorLEDTab.ui")[0]  # type: ignore
+color_led_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/colorLEDTab.ui")[0]  # type: ignore
 
 
 class wrgb_t:
@@ -204,11 +204,11 @@ class ColorLEDDeckController:
 class ColorLEDTab(TabToolbox, color_led_tab_class):
     """Tab with inline color picker with hue slider, SV area, and hex input."""
 
-    _colorChanged = pyqtSignal(QColor)
-    _connectedSignal = pyqtSignal(str)
-    _disconnectedSignal = pyqtSignal(str)
-    _log_data_signal = pyqtSignal(int, object, object)
-    _log_error_signal = pyqtSignal(object, str)
+    _colorChanged = Signal(QColor)
+    _connectedSignal = Signal(str)
+    _disconnectedSignal = Signal(str)
+    _log_data_signal = Signal(int, object, object)
+    _log_error_signal = Signal(object, str)
 
     # Parameter and log names by position
     PARAMS_BY_POSITION = {

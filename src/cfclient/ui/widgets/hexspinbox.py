@@ -30,17 +30,17 @@ This class provides a spin box with hexadecimal numbers and arbitrarily length
 (i.e. not limited by 32 bit).
 """
 
-from PyQt6.QtGui import QRegularExpressionValidator
-from PyQt6.QtCore import QRegularExpression
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QAbstractSpinBox
+from PySide6.QtGui import QRegularExpressionValidator
+from PySide6.QtCore import QRegularExpression
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QAbstractSpinBox
 
 __author__ = 'Bitcraze AB'
 __all__ = ['HexSpinBox']
 
 
 class HexSpinBox(QAbstractSpinBox):
-    valueChanged = pyqtSignal(object)
+    valueChanged = Signal(object)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -31,9 +31,9 @@ Attitude indicator widget.
 
 import sys
 
-from PyQt6 import QtGui
-from PyQt6 import QtWidgets
-from PyQt6.QtCore import Qt
+from PySide6 import QtGui
+from PySide6 import QtWidgets
+from PySide6.QtCore import Qt
 
 __author__ = 'Bitcraze AB'
 __all__ = ['AttitudeIndicator']

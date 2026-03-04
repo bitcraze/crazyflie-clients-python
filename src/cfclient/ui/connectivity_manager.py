@@ -26,7 +26,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #  02110-1301, USA.
 from collections import namedtuple
-from PyQt6.QtCore import pyqtSignal, QObject
+from PySide6.QtCore import Signal, QObject
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ConnectivityManager']
@@ -47,9 +47,9 @@ class ConnectivityManager(QObject):
 
     INTERFACE_PROMPT_TEXT = 'Select an interface'
 
-    connect_button_clicked = pyqtSignal()
-    scan_button_clicked = pyqtSignal(object)
-    connection_state_changed = pyqtSignal(object)
+    connect_button_clicked = Signal()
+    scan_button_clicked = Signal(object)
+    connection_state_changed = Signal(object)
 
     def __init__(self):
         QObject.__init__(self)

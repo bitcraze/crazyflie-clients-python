@@ -44,9 +44,10 @@ from urllib.request import urlopen
 from urllib.error import URLError
 import zipfile
 
-from PyQt6 import QtWidgets, uic
-from PyQt6.QtCore import pyqtSlot, pyqtSignal, QThread, Qt
-from PyQt6.QtGui import QPixmap
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Slot, Signal, QThread, Qt
+from PySide6.QtGui import QPixmap
 
 import cfclient
 import cflib.crazyflie
@@ -56,7 +57,7 @@ __all__ = ['BootloaderDialog']
 
 logger = logging.getLogger(__name__)
 
-service_dialog_class = uic.loadUiType(cfclient.module_path +
+service_dialog_class = loadUiType(cfclient.module_path +
                                       "/ui/dialogs/bootloader.ui")[0]
 
 # This url is used to fetch all the releases from the FirmwareDownloader
@@ -80,8 +81,8 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         FLASHING = 6
         RESET = 7
 
-    _release_firmwares_found = pyqtSignal(object)
-    _release_downloaded = pyqtSignal(str, object)
+    _release_firmwares_found = Signal(object)
+    _release_downloaded = Signal(str, object)
 
     def __init__(self, helper, *args):
         super(BootloaderDialog, self).__init__(*args)
@@ -398,7 +399,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             elif new_state == ConnectivityManager.UIState.SCANNING:
                 self.setUiState(self.UIState.FW_SCANNING)
 
-    @pyqtSlot()
+    @Slot()
     def pathBrowse(self):
         names = QtWidgets.QFileDialog.getOpenFileName(
             self, 'Release file to flash', self._helper.current_folder, "*.zip")
@@ -416,7 +417,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             msgBox.setText("Wrong file extention. Must be .zip.")
             msgBox.exec_()
 
-    @pyqtSlot()
+    @Slot()
     def programAction(self):
         if self._state == self.UIState.COLD_CONNECTED:
             self.clt.set_boot_mode(self.clt.COLD_BOOT)
@@ -445,7 +446,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             self.downloadStatus.setText('Fetching...')
             self.firmware_downloader.download_release(requested_release, download_url)
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def programDone(self, success):
         if success:
             self.statusLabel.setText('Status: <b>Programing complete!</b>')
@@ -456,7 +457,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.setUiState(self.UIState.DISCONNECTED)
         self.resetCopter()
 
-    @pyqtSlot(str, int)
+    @Slot(str, int)
     def statusUpdate(self, status, progress):
         logger.debug("Status: [%s] | %d", status, progress)
         self.statusLabel.setText('Status: <b>' + status + '</b>')
@@ -471,20 +472,20 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 # event loop which is what we want
 class CrazyloadThread(QThread):
     # Input signals declaration (not sure it should be used like that...)
-    program = pyqtSignal(str, str)
-    initiateColdBootSignal = pyqtSignal(str)
-    resetCopterSignal = pyqtSignal()
-    writeConfigSignal = pyqtSignal(int, int, float, float)
+    program = Signal(str, str)
+    initiateColdBootSignal = Signal(str)
+    resetCopterSignal = Signal()
+    writeConfigSignal = Signal(int, int, float, float)
     # Output signals declaration
-    programmed = pyqtSignal(bool)
-    verified = pyqtSignal()
-    statusChanged = pyqtSignal(str, int)
-    connectedSignal = pyqtSignal()
-    connectingSignal = pyqtSignal()
-    failed_signal = pyqtSignal(str)
-    disconnectedSignal = pyqtSignal()
-    updateConfigSignal = pyqtSignal(int, int, float, float)
-    updateCpuIdSignal = pyqtSignal(str)
+    programmed = Signal(bool)
+    verified = Signal()
+    statusChanged = Signal(str, int)
+    connectedSignal = Signal()
+    connectingSignal = Signal()
+    failed_signal = Signal(str)
+    disconnectedSignal = Signal()
+    updateConfigSignal = Signal(int, int, float, float)
+    updateCpuIdSignal = Signal(str)
 
     radioSpeedPos = 2
 
@@ -562,7 +563,7 @@ class CrazyloadThread(QThread):
 class FirmwareDownloader(QThread):
     """ Uses github API to retrieves firmware-releases. """
 
-    bootload_complete = pyqtSignal()
+    bootload_complete = Signal()
 
     def __init__(self, qtsignal_get_all_firmwares, qtsignal_get_release):
         super(FirmwareDownloader, self).__init__()

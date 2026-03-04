@@ -35,10 +35,10 @@ from enum import Enum
 from collections import namedtuple
 
 import time
-from PyQt6 import uic
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
-from PyQt6.QtWidgets import QMessageBox
-from PyQt6.QtWidgets import QLabel
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QLabel
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
@@ -59,7 +59,7 @@ __all__ = ['LocoPositioningTab']
 
 logger = logging.getLogger(__name__)
 
-locopositioning_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/locopositioning_tab.ui")[0]
+locopositioning_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/locopositioning_tab.ui")[0]
 
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
@@ -365,15 +365,15 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
     # Frame rate (updates per second)
     FPS = 2
 
-    _connected_signal = pyqtSignal(str)
-    _disconnected_signal = pyqtSignal(str)
-    _log_error_signal = pyqtSignal(object, str)
-    _anchor_range_signal = pyqtSignal(int, object, object)
-    _loco_sys_signal = pyqtSignal(int, object, object)
-    _cb_param_to_detect_loco_deck_signal = pyqtSignal(object, object)
+    _connected_signal = Signal(str)
+    _disconnected_signal = Signal(str)
+    _log_error_signal = Signal(object, str)
+    _anchor_range_signal = Signal(int, object, object)
+    _loco_sys_signal = Signal(int, object, object)
+    _cb_param_to_detect_loco_deck_signal = Signal(object, object)
 
-    _anchor_active_id_list_updated_signal = pyqtSignal(object)
-    _anchor_data_updated_signal = pyqtSignal(object)
+    _anchor_active_id_list_updated_signal = Signal(object)
+    _anchor_data_updated_signal = Signal(object)
 
     def __init__(self, helper):
         super(LocoPositioningTab, self).__init__(helper, 'Loco Positioning')

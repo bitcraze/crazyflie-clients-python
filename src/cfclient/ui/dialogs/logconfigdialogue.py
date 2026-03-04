@@ -36,9 +36,10 @@ import struct
 
 import cfclient
 from cfclient.utils.ui import UiUtils
-from PyQt6 import QtWidgets, uic
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QShortcut, QKeySequence
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QShortcut, QKeySequence
 
 from cflib.crazyflie.log import LogConfig
 
@@ -48,7 +49,7 @@ __all__ = ['LogConfigDialogue']
 logger = logging.getLogger(__name__)
 
 (logconfig_widget_class, connect_widget_base_class) = (
-    uic.loadUiType(cfclient.module_path + '/ui/dialogs/logconfigdialogue.ui'))
+    loadUiType(cfclient.module_path + '/ui/dialogs/logconfigdialogue.ui'))
 
 NAME_FIELD = 0
 ID_FIELD = 1

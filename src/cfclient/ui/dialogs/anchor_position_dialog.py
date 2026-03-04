@@ -29,11 +29,11 @@ import logging
 
 import cfclient
 from cfclient.utils.logconfigreader import FILE_REGEX_YAML
-from PyQt6 import QtWidgets
-from PyQt6 import uic
-from PyQt6.QtCore import QAbstractTableModel, QVariant, Qt
-from PyQt6.QtGui import QBrush, QColor
-from PyQt6.QtWidgets import QInputDialog, QFileDialog
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import QAbstractTableModel, Qt
+from PySide6.QtGui import QBrush, QColor
+from PySide6.QtWidgets import QInputDialog, QFileDialog
 import yaml
 import os
 
@@ -43,7 +43,7 @@ __all__ = ['AnchorPositionDialog']
 logger = logging.getLogger(__name__)
 
 (anchor_postiong_widget_class, connect_widget_base_class) = (
-    uic.loadUiType(
+    loadUiType(
         cfclient.module_path + '/ui/dialogs/anchor_position_dialog.ui')
 )
 
@@ -69,19 +69,19 @@ class AnchorPositionConfigTableModel(QAbstractTableModel):
         if index.isValid():
             if index.column() == 0:
                 if role == Qt.ItemDataRole.CheckStateRole:
-                    return QVariant(value)
+                    return value
             elif index.column() == 1:
                 if role == Qt.ItemDataRole.DisplayRole:
-                    return QVariant(value)
+                    return value
             else:
                 if role == Qt.ItemDataRole.DisplayRole:
-                    return QVariant('%.2f' % (value))
+                    return '%.2f' % (value)
                 elif role == Qt.ItemDataRole.EditRole:
-                    return QVariant(value)
+                    return value
                 elif role == Qt.ItemDataRole.BackgroundRole:
                     return self._get_background(index.row(), index.column())
 
-        return QVariant()
+        return 
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
         if not index.isValid():
@@ -92,8 +92,8 @@ class AnchorPositionConfigTableModel(QAbstractTableModel):
 
     def headerData(self, col, orientation, role=None):
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
-            return QVariant(self._headers[col])
-        return QVariant()
+            return self._headers[col]
+        return 
 
     def flags(self, index):
         if not index.isValid():
@@ -157,7 +157,7 @@ class AnchorPositionConfigTableModel(QAbstractTableModel):
             else:
                 return self._red_brush
 
-        return QVariant()
+        return 
 
 
 class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):

@@ -32,15 +32,16 @@ and manipulating the plot.
 For more advanced plotting save the data and use an external application.
 """
 
-from PyQt6 import QtWidgets, uic
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
 
 from time import time
 
 import logging
 
-from PyQt6.QtWidgets import QButtonGroup
-from PyQt6.QtCore import *  # noqa
-from PyQt6.QtWidgets import *  # noqa
+from PySide6.QtWidgets import QButtonGroup
+from PySide6.QtCore import *  # noqa
+from PySide6.QtWidgets import *  # noqa
 
 import cfclient
 
@@ -50,7 +51,7 @@ __all__ = ['PlotWidget']
 logger = logging.getLogger(__name__)
 
 (plot_widget_class, connect_widget_base_class) = (
-    uic.loadUiType(cfclient.module_path + '/ui/widgets/plotter.ui'))
+    loadUiType(cfclient.module_path + '/ui/widgets/plotter.ui'))
 
 # Try the imports for PyQtGraph to see if it is installed
 try:

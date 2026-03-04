@@ -28,9 +28,9 @@ Dialog box used to configure base station geometry. Used from the lighthouse tab
 import logging
 
 import cfclient
-from PyQt6 import QtWidgets
-from PyQt6 import uic
-from PyQt6.QtCore import QVariant, Qt, QAbstractTableModel, pyqtSignal
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Qt, QAbstractTableModel, Signal
 from cflib.localization import LighthouseSweepAngleAverageReader
 from cflib.crazyflie.mem import LighthouseBsGeometry
 from cfclient.ui.wizards.lighthouse_geo_bs_estimation_wizard import LighthouseBasestationGeometryWizard
@@ -41,7 +41,7 @@ __all__ = ['LighthouseBsGeometryDialog']
 logger = logging.getLogger(__name__)
 
 (basestation_geometry_widget_class, connect_widget_base_class) = (
-    uic.loadUiType(
+    loadUiType(
         cfclient.module_path + '/ui/dialogs/lighthouse_bs_geometry_dialog.ui')
 )
 
@@ -64,14 +64,14 @@ class LighthouseBsGeometryTableModel(QAbstractTableModel):
         if index.isValid():
             value = self._table_values[index.row()][index.column()]
             if role == Qt.ItemDataRole.DisplayRole:
-                return QVariant(value)
+                return value
 
-        return QVariant()
+        return 
 
     def headerData(self, col, orientation, role=None):
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
-            return QVariant(self._headers[col])
-        return QVariant()
+            return self._headers[col]
+        return 
 
     def _compile_entry(self, current_geo, estimated_geo, index):
         result = 'N/A'
@@ -127,8 +127,8 @@ class LighthouseBsGeometryTableModel(QAbstractTableModel):
 
 class LighthouseBsGeometryDialog(QtWidgets.QWidget, basestation_geometry_widget_class):
 
-    _sweep_angles_received_and_averaged_signal = pyqtSignal(object)
-    _base_station_geometery_received_signal = pyqtSignal(object)
+    _sweep_angles_received_and_averaged_signal = Signal(object)
+    _base_station_geometery_received_signal = Signal(object)
 
     def __init__(self, lighthouse_tab, *args):
         super(LighthouseBsGeometryDialog, self).__init__(*args)

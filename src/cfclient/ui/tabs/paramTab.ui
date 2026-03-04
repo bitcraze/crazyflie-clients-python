@@ -138,12 +138,12 @@
                     <property name="visible">
                         <bool>False</bool>
                     </property>
-                    <layout class="QGridLayout" name="PersistentLayout">
+                    <layout class="QGridLayout" name="PersistentLayout_2">
                         <property name="verticalSpacing">
                             <number>10</number>
                         </property>
                         <item row="0" column="0" colspan="2">
-                            <widget class="QLabel" name="persistent">
+                            <widget class="QLabel" name="persistent_2">
                                 <property name="text">
                                     <string>Persistent parameter</string>
                                 </property>
@@ -155,7 +155,7 @@
                             </widget>       
                         </item>
                         <item row="2" column="0">
-                            <widget class="QLabel" name="default">
+                            <widget class="QLabel" name="default_2">
                                 <property name="text">
                                     <string>Stored value:</string>
                                 </property>

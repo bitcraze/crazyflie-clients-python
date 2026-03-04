@@ -31,18 +31,18 @@ import sys
 
 import cfclient
 import cflib.crtp
-from PyQt6.QtCore import QT_VERSION_STR
-from PyQt6.QtCore import PYQT_VERSION_STR
-from PyQt6 import QtWidgets
-from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal
+import PySide6
+from PySide6.QtCore import qVersion
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Signal
 from cflib.crazyflie.mem import MemoryElement
 
 __author__ = 'Bitcraze AB'
 __all__ = ['AboutDialog']
 
 (about_widget_class,
- about_widget_base_class) = (uic.loadUiType(cfclient.module_path +
+ about_widget_base_class) = (loadUiType(cfclient.module_path +
                                             '/ui/dialogs/about.ui'))
 
 DEBUG_INFO_FORMAT = """
@@ -51,7 +51,7 @@ Cfclient version: {version}<br>
 System: {system}<br>
 Python: {pmajor}.{pminor}.{pmicro}<br>
 Qt: {qt_version}<br>
-PyQt: {pyqt_version}<br>
+PySide6: {pyside6_version}<br>
 <br>
 <b>Interface status</b><br>
 {interface_status}
@@ -86,8 +86,8 @@ DECK_FORMAT = "{}: rev={}, adr={}<br>"
 
 
 class AboutDialog(QtWidgets.QWidget, about_widget_class):
-    _disconnected_signal = pyqtSignal(str)
-    _cb_deck_data_updated_signal = pyqtSignal(object)
+    _disconnected_signal = Signal(str)
+    _cb_deck_data_updated_signal = Signal(object)
 
     """Crazyflie client About box for debugging and information"""
 
@@ -165,8 +165,8 @@ class AboutDialog(QtWidgets.QWidget, about_widget_class):
                 pmajor=sys.version_info.major,
                 pminor=sys.version_info.minor,
                 pmicro=sys.version_info.micro,
-                qt_version=QT_VERSION_STR,
-                pyqt_version=PYQT_VERSION_STR,
+                qt_version=qVersion(),
+                pyside6_version=PySide6.__version__,
                 interface_status=self._interface_text,
                 input_devices=self._device_text,
                 input_readers=self._input_readers_text,

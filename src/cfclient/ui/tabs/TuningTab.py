@@ -26,9 +26,9 @@ Tab for tuning PID controller, mainly for larger quads.
 
 import logging
 
-from PyQt6 import QtWidgets
-from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal, Qt
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Signal, Qt
 import time
 
 import cfclient
@@ -42,7 +42,7 @@ __all__ = ['TuningTab']
 
 logger = logging.getLogger(__name__)
 
-tuning_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/tuningTab.ui")[0]
+tuning_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/tuningTab.ui")[0]
 
 
 class SliderParamMapper:
@@ -109,10 +109,10 @@ class SliderParamMapper:
 class TuningTab(TabToolbox, tuning_tab_class):
     """Tab for plotting logging data"""
 
-    _connected_signal = pyqtSignal(str)
-    _disconnected_signal = pyqtSignal(str)
+    _connected_signal = Signal(str)
+    _disconnected_signal = Signal(str)
 
-    _param_updated_signal = pyqtSignal(str, object)
+    _param_updated_signal = Signal(str, object)
 
     def __init__(self, helper):
         super(TuningTab, self).__init__(helper, 'Tuning')

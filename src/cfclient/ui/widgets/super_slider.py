@@ -24,7 +24,7 @@
 Slider widget with advanced features
 """
 
-from PyQt6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore
 from cflib.utils.callbacks import Caller
 
 

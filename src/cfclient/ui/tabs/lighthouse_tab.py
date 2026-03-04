@@ -32,11 +32,11 @@ Shows data for the Lighthouse Positioning system
 
 import logging
 
-from PyQt6 import uic
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
-from PyQt6.QtWidgets import QMessageBox
-from PyQt6.QtWidgets import QFileDialog
-from PyQt6.QtWidgets import QLabel
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QLabel
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
@@ -61,7 +61,7 @@ __all__ = ['LighthouseTab']
 
 logger = logging.getLogger(__name__)
 
-lighthouse_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/lighthouse_tab.ui")[0]
+lighthouse_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/lighthouse_tab.ui")[0]
 
 STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_GREEN_BACKGROUND = "background-color: lightgreen;"
@@ -283,13 +283,13 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     LOG_ACTIVE = "lighthouse.bsActive"
     LOG_AVAILABLE = "lighthouse.bsAvailable"
 
-    _connected_signal = pyqtSignal(str)
-    _disconnected_signal = pyqtSignal(str)
-    _log_error_signal = pyqtSignal(object, str)
-    _status_report_signal = pyqtSignal(int, object, object)
-    _new_system_config_written_to_cf_signal = pyqtSignal(bool)
-    _geometry_read_signal = pyqtSignal(object)
-    _calibration_read_signal = pyqtSignal(object)
+    _connected_signal = Signal(str)
+    _disconnected_signal = Signal(str)
+    _log_error_signal = Signal(object, str)
+    _status_report_signal = Signal(int, object, object)
+    _new_system_config_written_to_cf_signal = Signal(bool)
+    _geometry_read_signal = Signal(object)
+    _calibration_read_signal = Signal(object)
 
     def __init__(self, helper):
         super(LighthouseTab, self).__init__(helper, 'Lighthouse Positioning')

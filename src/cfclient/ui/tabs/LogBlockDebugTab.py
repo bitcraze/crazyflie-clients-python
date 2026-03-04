@@ -30,8 +30,9 @@ Shows all the parameters available in the Crazyflie and also gives the ability
 to edit them.
 """
 
-from PyQt6 import QtWidgets, uic
-from PyQt6.QtCore import Qt, pyqtSignal
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Qt, Signal
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
@@ -39,7 +40,7 @@ from cfclient.ui.tab_toolbox import TabToolbox
 __author__ = 'Bitcraze AB'
 __all__ = ['LogBlockDebugTab']
 
-logblock_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/logBlockDebugTab.ui")[0]
+logblock_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/logBlockDebugTab.ui")[0]
 
 
 class LogBlockDebugTab(TabToolbox, logblock_tab_class):
@@ -47,8 +48,8 @@ class LogBlockDebugTab(TabToolbox, logblock_tab_class):
     Used to show debug-information about log status.
     """
 
-    _blocks_updated_signal = pyqtSignal(object, bool)
-    _disconnected_signal = pyqtSignal(str)
+    _blocks_updated_signal = Signal(object, bool)
+    _disconnected_signal = Signal(str)
 
     def __init__(self, helper):
         super(LogBlockDebugTab, self).__init__(helper, 'Log Blocks Debugging')

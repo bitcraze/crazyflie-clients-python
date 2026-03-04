@@ -31,11 +31,11 @@ import os
 from time import time
 from binascii import hexlify
 
-from PyQt6 import QtWidgets
-from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtCore import pyqtSlot
-from PyQt6.QtCore import Qt
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Signal
+from PySide6.QtCore import Slot
+from PySide6.QtCore import Qt
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
@@ -43,14 +43,14 @@ from cfclient.ui.tab_toolbox import TabToolbox
 __author__ = 'Bitcraze AB'
 __all__ = ['CrtpSharkToolbox']
 
-param_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/crtpSharkToolbox.ui")[0]
+param_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/crtpSharkToolbox.ui")[0]
 
 
 class CrtpSharkToolbox(TabToolbox, param_tab_class):
     """Show packets that is sent vie the communication link"""
-    nameModified = pyqtSignal()
-    _incoming_packet_signal = pyqtSignal(object)
-    _outgoing_packet_signal = pyqtSignal(object)
+    nameModified = Signal()
+    _incoming_packet_signal = Signal(object)
+    _outgoing_packet_signal = Signal(object)
 
     def __init__(self, helper):
         super(CrtpSharkToolbox, self).__init__(helper, 'Crtp sniffer')
@@ -88,7 +88,7 @@ class CrtpSharkToolbox(TabToolbox, param_tab_class):
             self.logTree.addTopLevelItem(line)
             self.logTree.scrollToItem(line)
 
-    @pyqtSlot()
+    @Slot()
     def clearLog(self):
         self.logTree.clear()
         self._data = []

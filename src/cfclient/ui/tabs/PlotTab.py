@@ -32,12 +32,12 @@ import logging
 
 from cfclient.ui.tab_toolbox import TabToolbox
 from cfclient.ui.widgets.plotwidget import PlotWidget
-from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtCore import QAbstractItemModel
-from PyQt6.QtCore import QModelIndex
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QMessageBox
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Signal
+from PySide6.QtCore import QAbstractItemModel
+from PySide6.QtCore import QModelIndex
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QMessageBox
 
 import cfclient
 
@@ -46,7 +46,7 @@ __all__ = ['PlotTab']
 
 logger = logging.getLogger(__name__)
 
-plot_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/plotTab.ui")[0]
+plot_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/plotTab.ui")[0]
 
 
 class LogConfigModel(QAbstractItemModel):
@@ -115,10 +115,10 @@ class LogConfigModel(QAbstractItemModel):
 class PlotTab(TabToolbox, plot_tab_class):
     """Tab for plotting logging data"""
 
-    _log_data_signal = pyqtSignal(int, object, object)
-    _log_error_signal = pyqtSignal(object, str)
-    _disconnected_signal = pyqtSignal(str)
-    _connected_signal = pyqtSignal(str)
+    _log_data_signal = Signal(int, object, object)
+    _log_error_signal = Signal(object, str)
+    _disconnected_signal = Signal(str)
+    _connected_signal = Signal(str)
 
     colors = [
         (60, 200, 60),    # green

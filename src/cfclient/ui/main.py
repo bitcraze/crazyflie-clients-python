@@ -48,22 +48,22 @@ from cfclient.utils.zmq_param import ZMQParamAccess
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import MemoryElement
-from PyQt6 import QtWidgets
-from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtCore import pyqtSlot
-from PyQt6.QtCore import QDir
-from PyQt6.QtCore import QThread
-from PyQt6.QtCore import QUrl
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction
-from PyQt6.QtGui import QActionGroup
-from PyQt6.QtGui import QShortcut
-from PyQt6.QtGui import QDesktopServices
-from PyQt6.QtGui import QPalette
-from PyQt6.QtWidgets import QLabel
-from PyQt6.QtWidgets import QMenu
-from PyQt6.QtWidgets import QMessageBox
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Signal
+from PySide6.QtCore import Slot
+from PySide6.QtCore import QDir
+from PySide6.QtCore import QThread
+from PySide6.QtCore import QUrl
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction
+from PySide6.QtGui import QActionGroup
+from PySide6.QtGui import QShortcut
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtGui import QPalette
+from PySide6.QtWidgets import QLabel
+from PySide6.QtWidgets import QMenu
+from PySide6.QtWidgets import QMessageBox
 
 from .dialogs.cf2config import Cf2ConfigDialog
 from .dialogs.inputconfigdialogue import InputConfigDialogue
@@ -76,7 +76,7 @@ __all__ = ['MainUI']
 logger = logging.getLogger(__name__)
 
 (main_window_class,
- main_windows_base_class) = (uic.loadUiType(cfclient.module_path +
+ main_windows_base_class) = (loadUiType(cfclient.module_path +
                                             '/ui/main.ui'))
 
 
@@ -92,17 +92,17 @@ class BatteryStates:
 
 
 class MainUI(QtWidgets.QMainWindow, main_window_class):
-    connectionLostSignal = pyqtSignal(str, str)
-    connectionInitiatedSignal = pyqtSignal(str)
-    batteryUpdatedSignal = pyqtSignal(int, object, object)
-    connectionDoneSignal = pyqtSignal(str)
-    connectionFailedSignal = pyqtSignal(str, str)
-    disconnectedSignal = pyqtSignal(str)
-    linkQualitySignal = pyqtSignal(float)
+    connectionLostSignal = Signal(str, str)
+    connectionInitiatedSignal = Signal(str)
+    batteryUpdatedSignal = Signal(int, object, object)
+    connectionDoneSignal = Signal(str)
+    connectionFailedSignal = Signal(str, str)
+    disconnectedSignal = Signal(str)
+    linkQualitySignal = Signal(float)
 
-    _input_device_error_signal = pyqtSignal(str)
-    _input_discovery_signal = pyqtSignal(object)
-    _log_error_signal = pyqtSignal(object, str)
+    _input_device_error_signal = Signal(str)
+    _input_discovery_signal = Signal(object)
+    _log_error_signal = Signal(object, str)
 
     def __init__(self, *args):
         super(MainUI, self).__init__(*args)
@@ -483,7 +483,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.menuItemConnect.setEnabled(False)
             self._connectivity_manager.set_state(ConnectivityManager.UIState.SCANNING)
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def toggle_tab_visibility(self, checked):
         tab_action_item = self.sender()
         tab_toolbox = tab_action_item.tab_toolbox
@@ -493,7 +493,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         else:
             self._tab_toolbox_hide(tab_toolbox)
 
-    @pyqtSlot(bool)
+    @Slot(bool)
     def toggle_toolbox_visibility(self, checked):
         toolbox_action_item = self.sender()
         tab_toolbox = toolbox_action_item.tab_toolbox
@@ -546,7 +546,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         tab_toolbox.toolbox_action_item.setChecked(False)
         tab_toolbox.set_display_state(TabToolbox.DS_HIDDEN)
 
-    @pyqtSlot(Qt.DockWidgetArea)
+    @Slot(Qt.DockWidgetArea)
     def set_preferred_dock_area(self, area):
         dock_widget = self.sender()
         tab_toolbox = dock_widget.tab_toolbox
@@ -878,8 +878,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
 class ScannerThread(QThread):
 
-    scanSignal = pyqtSignal(object)
-    interfaceFoundSignal = pyqtSignal(object)
+    scanSignal = Signal(object)
+    interfaceFoundSignal = Signal(object)
 
     def __init__(self):
         QThread.__init__(self)

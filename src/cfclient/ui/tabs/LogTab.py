@@ -29,21 +29,21 @@ Shows the Log TOC of available variables in the Crazyflie.
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
-from PyQt6 import QtWidgets
-from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtCore import pyqtSlot
-from PyQt6.QtCore import Qt
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Signal
+from PySide6.QtCore import Slot
+from PySide6.QtCore import Qt
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LogTab']
 
-param_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/logTab.ui")[0]
+param_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/logTab.ui")[0]
 
 
 class LogTab(TabToolbox, param_tab_class):
-    connectedSignal = pyqtSignal(str)
-    disconnectedSignal = pyqtSignal(str)
+    connectedSignal = Signal(str)
+    disconnectedSignal = Signal(str)
 
     def __init__(self, helper):
         super(LogTab, self).__init__(helper, 'Log TOC')
@@ -70,14 +70,14 @@ class LogTab(TabToolbox, param_tab_class):
         self.cf.disconnected.add_callback(self.disconnectedSignal.emit)
         self.disconnectedSignal.connect(self.disconnected)
 
-    @pyqtSlot('QString')
+    @Slot('QString')
     def disconnected(self, linkname):
         root = self.logTree.invisibleRootItem()
         for i in range(root.childCount()):
             item = root.child(i)
             item.setFlags(Qt.ItemFlag.NoItemFlags)
 
-    @pyqtSlot(str)
+    @Slot(str)
     def connected(self, linkURI):
         self.logTree.clear()
 

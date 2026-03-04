@@ -30,14 +30,14 @@ buttons and axis to match controls for the Crazyflie.
 import logging
 
 import cfclient
-from PyQt6.QtCore import Qt
-from PyQt6.QtCore import QThread
-from PyQt6.QtCore import QTimer
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QMessageBox
+from PySide6.QtCore import Qt
+from PySide6.QtCore import QThread
+from PySide6.QtCore import QTimer
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QMessageBox
 from cfclient.utils.config_manager import ConfigManager
-from PyQt6 import QtWidgets
-from PyQt6 import uic
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
 
 __author__ = 'Bitcraze AB'
 __all__ = ['InputConfigDialogue']
@@ -45,7 +45,7 @@ __all__ = ['InputConfigDialogue']
 logger = logging.getLogger(__name__)
 
 (inputconfig_widget_class, connect_widget_base_class) = (
-    uic.loadUiType(cfclient.module_path + '/ui/dialogs/inputconfigdialogue.ui')
+    loadUiType(cfclient.module_path + '/ui/dialogs/inputconfigdialogue.ui')
 )
 
 
@@ -404,9 +404,9 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
 
 class DeviceReader(QThread):
     """Used for polling data from the Input layer during configuration"""
-    raw_axis_data_signal = pyqtSignal(object)
-    raw_button_data_signal = pyqtSignal(object)
-    mapped_values_signal = pyqtSignal(object)
+    raw_axis_data_signal = Signal(object)
+    raw_button_data_signal = Signal(object)
+    mapped_values_signal = Signal(object)
 
     def __init__(self, input):
         QThread.__init__(self)

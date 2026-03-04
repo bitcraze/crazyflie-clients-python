@@ -32,16 +32,16 @@ import logging
 import cfclient
 from cflib.crazyflie.mem import MemoryElement
 
-from PyQt6 import QtWidgets
-from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Signal
 
 __author__ = 'Bitcraze AB'
 __all__ = ['Cf2ConfigDialog']
 
 logger = logging.getLogger(__name__)
 
-service_dialog_class = uic.loadUiType(cfclient.module_path +
+service_dialog_class = loadUiType(cfclient.module_path +
                                       "/ui/dialogs/cf2config.ui")[0]
 
 
@@ -49,8 +49,8 @@ class Cf2ConfigDialog(QtWidgets.QWidget, service_dialog_class):
     """Tab for update the Crazyflie firmware and for reading/writing the config
     block in flash"""
 
-    connected_signal = pyqtSignal(str)
-    disconnected_signal = pyqtSignal(str)
+    connected_signal = Signal(str)
+    disconnected_signal = Signal(str)
 
     def __init__(self, helper, *args):
         super(Cf2ConfigDialog, self).__init__(*args)

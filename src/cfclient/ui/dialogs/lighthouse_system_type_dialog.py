@@ -28,8 +28,8 @@ Dialog box used to change lighthouse system type. Used from the lighthouse tab.
 import logging
 
 import cfclient
-from PyQt6 import QtWidgets
-from PyQt6 import uic
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import loadUiType
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LighthouseSystemTypeDialog']
@@ -37,7 +37,7 @@ __all__ = ['LighthouseSystemTypeDialog']
 logger = logging.getLogger(__name__)
 
 (lighthouse_system_widget_class, connect_widget_base_class) = (
-    uic.loadUiType(
+    loadUiType(
         cfclient.module_path + '/ui/dialogs/lighthouse_system_type_dialog.ui')
 )
 

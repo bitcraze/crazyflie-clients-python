@@ -31,9 +31,9 @@ The console tab is used as a console for printouts from the Crazyflie.
 
 import logging
 
-from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtGui import QTextCursor
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Signal
+from PySide6.QtGui import QTextCursor
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
@@ -43,16 +43,16 @@ __all__ = ['ConsoleTab']
 
 logger = logging.getLogger(__name__)
 
-console_tab_class = uic.loadUiType(cfclient.module_path +
+console_tab_class = loadUiType(cfclient.module_path +
                                    "/ui/tabs/consoleTab.ui")[0]
 
 
 class ConsoleTab(TabToolbox, console_tab_class):
     """Console tab for showing printouts from Crazyflie"""
-    _link_established_signal = pyqtSignal(str)
-    _connected_signal = pyqtSignal(str)
-    _disconnected_signal = pyqtSignal(str)
-    _update = pyqtSignal(str)
+    _link_established_signal = Signal(str)
+    _connected_signal = Signal(str)
+    _disconnected_signal = Signal(str)
+    _update = Signal(str)
 
     def __init__(self, helper):
         super(ConsoleTab, self).__init__(helper, 'Console')

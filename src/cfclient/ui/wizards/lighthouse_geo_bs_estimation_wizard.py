@@ -43,7 +43,7 @@ from cflib.localization.lighthouse_geometry_solver import LighthouseGeometrySolv
 from cflib.localization.lighthouse_system_scaler import LighthouseSystemScaler
 from cflib.localization.lighthouse_types import Pose, LhDeck4SensorPositions, LhMeasurement, LhCfPoseSample
 
-from PyQt6 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets, QtGui
 import time
 
 
@@ -324,8 +324,8 @@ class RecordXYZSpaceSamplesPage(LighthouseBasestationGeometryWizardBasePage):
 
 
 class EstimateGeometryThread(QtCore.QObject):
-    finished = QtCore.pyqtSignal()
-    failed = QtCore.pyqtSignal()
+    finished = QtCore.Signal()
+    failed = QtCore.Signal()
 
     def __init__(self, origin, x_axis, xy_plane, samples):
         super(EstimateGeometryThread, self).__init__()

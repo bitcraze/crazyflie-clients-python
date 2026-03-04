@@ -31,10 +31,10 @@ Superclass for all tabs that implements common functions.
 
 import logging
 
-from PyQt6 import QtWidgets
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QCloseEvent
+from PySide6 import QtWidgets
+from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QCloseEvent
 
 from cfclient.utils.config import Config
 
@@ -201,7 +201,7 @@ class TabToolbox(QtWidgets.QWidget):
         Config().set(key, value)
 
     class ClosingDockWidget(QtWidgets.QDockWidget):
-        closed = pyqtSignal()
+        closed = Signal()
 
         def closeEvent(self, event: QCloseEvent) -> None:
             super(TabToolbox.ClosingDockWidget, self).closeEvent(event)

@@ -31,8 +31,8 @@ Shows information from the Python logging framework
 
 import logging
 
-from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Signal
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
@@ -42,7 +42,7 @@ __all__ = ['LogClientTab']
 
 logger = logging.getLogger(__name__)
 
-log_client_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/logClientTab.ui")[0]
+log_client_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/logClientTab.ui")[0]
 
 
 class LogHandler(logging.StreamHandler):
@@ -65,7 +65,7 @@ class LogClientTab(TabToolbox, log_client_tab_class):
     A tab for showing client logging information, such
     as USB Gamepad connections or scan feedback.
     """
-    _update = pyqtSignal(str)
+    _update = Signal(str)
 
     def __init__(self, helper):
         super(LogClientTab, self).__init__(helper, 'Log Client')

@@ -34,9 +34,9 @@ connects the connected/disconnected callbacks.
 
 import logging
 
-from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QMessageBox
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QMessageBox
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
@@ -46,17 +46,17 @@ __all__ = ['ExampleTab']
 
 logger = logging.getLogger(__name__)
 
-example_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/exampleTab.ui")[0]
+example_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/exampleTab.ui")[0]
 
 
 class ExampleTab(TabToolbox, example_tab_class):
     """Tab for plotting logging data"""
 
-    _connected_signal = pyqtSignal(str)
-    _disconnected_signal = pyqtSignal(str)
-    _log_data_signal = pyqtSignal(int, object, object)
-    _log_error_signal = pyqtSignal(object, str)
-    _param_updated_signal = pyqtSignal(str, str)
+    _connected_signal = Signal(str)
+    _disconnected_signal = Signal(str)
+    _log_data_signal = Signal(int, object, object)
+    _log_error_signal = Signal(object, str)
+    _param_updated_signal = Signal(str, str)
 
     def __init__(self, helper):
         super(ExampleTab, self).__init__(helper, 'Example')

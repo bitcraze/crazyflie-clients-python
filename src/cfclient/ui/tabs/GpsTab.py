@@ -31,34 +31,34 @@ pre-configured.
 import logging
 
 import cfclient
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import QMessageBox
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QMessageBox
 from cfclient.ui.tab_toolbox import TabToolbox
 from cflib.crazyflie.log import LogConfig
-from PyQt6 import QtCore
-from PyQt6 import QtGui
-from PyQt6 import QtNetwork
-from PyQt6 import QtWebKit
-from PyQt6 import uic
+from PySide6 import QtCore
+from PySide6 import QtGui
+from PySide6 import QtNetwork
+from PySide6 import QtWebKit
+from PySide6.QtUiTools import loadUiType
 
 __author__ = 'Bitcraze AB'
 __all__ = ['GpsTab']
 
 logger = logging.getLogger(__name__)
 
-gps_tab_class = uic.loadUiType(cfclient.module_path +
+gps_tab_class = loadUiType(cfclient.module_path +
                                "/ui/tabs/gpsTab.ui")[0]
 
 
 class GpsTab(TabToolbox, gps_tab_class):
     """Tab for plotting logging data"""
 
-    _log_data_signal = pyqtSignal(int, object, object)
-    _log_error_signal = pyqtSignal(object, str)
+    _log_data_signal = Signal(int, object, object)
+    _log_error_signal = Signal(object, str)
 
-    _disconnected_signal = pyqtSignal(str)
-    _connected_signal = pyqtSignal(str)
-    _console_signal = pyqtSignal(str)
+    _disconnected_signal = Signal(str)
+    _connected_signal = Signal(str)
+    _console_signal = Signal(str)
 
     def __init__(self, helper):
         super(GpsTab, self).__init__(helper, 'GPS')
@@ -103,7 +103,7 @@ class GpsTab(TabToolbox, gps_tab_class):
             frame = self.view.page().mainFrame()
             frame.evaluateJavaScript(f.read())
 
-    @QtCore.pyqtSlot(float, float)
+    @QtCore.Slot(float, float)
     def onMapMove(self, lat, lng):
         return
 

@@ -32,9 +32,9 @@ The flight control tab shows telemetry data and flight settings.
 import logging
 from enum import Enum
 
-from PyQt6 import uic
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QMessageBox
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QMessageBox
 
 import cfclient
 from cfclient.ui.widgets.ai import AttitudeIndicator
@@ -51,7 +51,7 @@ __all__ = ['FlightTab']
 
 logger = logging.getLogger(__name__)
 
-flight_tab_class = uic.loadUiType(cfclient.module_path +
+flight_tab_class = loadUiType(cfclient.module_path +
                                   "/ui/tabs/flightTab.ui")[0]
 
 MAX_THRUST = 65536.0
@@ -88,27 +88,27 @@ class CommanderAction(Enum):
 
 
 class FlightTab(TabToolbox, flight_tab_class):
-    uiSetupReadySignal = pyqtSignal()
+    uiSetupReadySignal = Signal()
 
-    _log_data_signal = pyqtSignal(int, object, object)
-    _pose_data_signal = pyqtSignal(object, object)
+    _log_data_signal = Signal(int, object, object)
+    _pose_data_signal = Signal(object, object)
 
-    _input_updated_signal = pyqtSignal(float, float, float, float)
-    _rp_trim_updated_signal = pyqtSignal(float, float)
-    _emergency_stop_updated_signal = pyqtSignal(bool)
-    _arm_updated_signal = pyqtSignal(bool)
-    _assisted_control_updated_signal = pyqtSignal(bool)
-    _heighthold_input_updated_signal = pyqtSignal(float, float, float, float)
-    _hover_input_updated_signal = pyqtSignal(float, float, float, float)
+    _input_updated_signal = Signal(float, float, float, float)
+    _rp_trim_updated_signal = Signal(float, float)
+    _emergency_stop_updated_signal = Signal(bool)
+    _arm_updated_signal = Signal(bool)
+    _assisted_control_updated_signal = Signal(bool)
+    _heighthold_input_updated_signal = Signal(float, float, float, float)
+    _hover_input_updated_signal = Signal(float, float, float, float)
 
-    _log_error_signal = pyqtSignal(object, str)
+    _log_error_signal = Signal(object, str)
 
     # UI_DATA_UPDATE_FPS = 10
 
-    connectionFinishedSignal = pyqtSignal(str)
-    disconnectedSignal = pyqtSignal(str)
+    connectionFinishedSignal = Signal(str)
+    disconnectedSignal = Signal(str)
 
-    _limiting_updated = pyqtSignal(bool, bool, bool)
+    _limiting_updated = Signal(bool, bool, bool)
 
     LOG_NAME_THRUST = 'stabilizer.thrust'
     LOG_NAME_MOTOR_1 = 'motor.m1'

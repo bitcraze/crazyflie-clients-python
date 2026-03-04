@@ -33,11 +33,12 @@ to edit them.
 import logging
 from threading import Event
 
-from PyQt6 import uic, QtCore
-from PyQt6.QtCore import QSortFilterProxyModel, Qt, pyqtSignal
-from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QVariant
-from PyQt6.QtGui import QBrush, QColor
-from PyQt6.QtWidgets import QHeaderView, QFileDialog, QMessageBox
+from PySide6 import QtCore
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import QSortFilterProxyModel, Qt, Signal
+from PySide6.QtCore import QAbstractItemModel, QModelIndex
+from PySide6.QtGui import QBrush, QColor
+from PySide6.QtWidgets import QHeaderView, QFileDialog, QMessageBox
 
 from cflib.crazyflie.param import PersistentParamState
 from cflib.localization import ParamFileManager
@@ -49,7 +50,7 @@ from cfclient.utils.logconfigreader import FILE_REGEX_YAML
 __author__ = 'Bitcraze AB'
 __all__ = ['ParamTab']
 
-param_tab_class = uic.loadUiType(cfclient.module_path + "/ui/tabs/paramTab.ui")[0]
+param_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/paramTab.ui")[0]
 
 logger = logging.getLogger(__name__)
 
@@ -201,15 +202,13 @@ class ParamBlockModel(QAbstractItemModel):
 
         if role == Qt.ItemDataRole.BackgroundRole:
             if index.row() % 2 == 0:
-                return QVariant(self._mainUI.bgColor)
+                return self._mainUI.bgColor
             else:
                 multiplier = 1.15 if self._mainUI.isDark else 0.95
-                return QVariant(
-                    QColor(
-                        int(self._mainUI.bgColor.red() * multiplier),
-                        int(self._mainUI.bgColor.green() * multiplier),
-                        int(self._mainUI.bgColor.blue() * multiplier)
-                    )
+                return QColor(
+                    int(self._mainUI.bgColor.red() * multiplier),
+                    int(self._mainUI.bgColor.green() * multiplier),
+                    int(self._mainUI.bgColor.blue() * multiplier)
                 )
 
         node = index.internalPointer()
@@ -329,14 +328,14 @@ class ParamTab(TabToolbox, param_tab_class):
     Show all the parameters in the TOC and give the user the ability to edit
     them
     """
-    _expand_all_signal = pyqtSignal()
-    _connected_signal = pyqtSignal(str)
-    _disconnected_signal = pyqtSignal(str)
+    _expand_all_signal = Signal()
+    _connected_signal = Signal(str)
+    _disconnected_signal = Signal(str)
 
-    _set_param_value_signal = pyqtSignal()
-    _persistent_state_signal = pyqtSignal(PersistentParamState)
-    _param_default_signal = pyqtSignal(object)
-    _reset_param_signal = pyqtSignal(str)
+    _set_param_value_signal = Signal()
+    _persistent_state_signal = Signal(PersistentParamState)
+    _param_default_signal = Signal(object)
+    _reset_param_signal = Signal(str)
 
     def __init__(self, helper):
         """Create the parameter tab"""
@@ -366,7 +365,7 @@ class ParamTab(TabToolbox, param_tab_class):
         self.proxyModel.setRecursiveFilteringEnabled(True)
         self._model.set_proxy(self.proxyModel)
 
-        @QtCore.pyqtSlot(str)
+        @QtCore.Slot(str)
         def onFilterChanged(text):
             self.proxyModel.setFilterRegExp(text)
 
