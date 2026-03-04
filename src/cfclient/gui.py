@@ -187,7 +187,9 @@ def main():
     app.setFont(UiUtils.FONT)
     main_window.show()
     main_window.set_default_theme()
-    sys.exit(app.exec())
+    # Use os._exit() to avoid PySide6 aborting when Python's GC
+    # destroys QThread objects (e.g. from vispy) in the wrong order.
+    os._exit(app.exec())
 
 
 if __name__ == "__main__":
