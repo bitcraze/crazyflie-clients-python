@@ -38,8 +38,8 @@ from PySide6.QtGui import QCloseEvent
 
 from cfclient.utils.config import Config
 
-__author__ = 'Bitcraze AB'
-__all__ = ['TabToolbox']
+__author__ = "Bitcraze AB"
+__all__ = ["TabToolbox"]
 
 logger = logging.getLogger(__name__)
 
@@ -63,15 +63,16 @@ class TabToolbox(QtWidgets.QWidget):
 
         # Dock widget for toolbox behavior
         self.dock_widget = self.ClosingDockWidget(tab_toolbox_name)
-        self.dock_widget.tab_toolbox = self
 
         self._display_state = self.DS_HIDDEN
 
         self._dock_area = self._get_toolbox_area_config()
 
         # Do not allow floating toolboxes, it seems to be buggy
-        self.dock_widget.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable |
-                                     QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.dock_widget.setFeatures(
+            QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable
+            | QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetMovable
+        )
         # If floating is set in the config, change to right docking area
         if self._dock_area == Qt.DockWidgetArea.NoDockWidgetArea:
             self._dock_area = Qt.DockWidgetArea.RightDockWidgetArea
@@ -125,7 +126,7 @@ class TabToolbox(QtWidgets.QWidget):
             # Python will return a list of an empty string if value is empty, filter it
             config = list(filter(None, value.split(",")))
         except KeyError:
-            logger.info(f'No config found for {key}')
+            logger.info(f"No config found for {key}")
 
         return config
 
@@ -157,7 +158,7 @@ class TabToolbox(QtWidgets.QWidget):
             self._store_open_config(key, config)
 
     def _store_open_config(self, key, config):
-        value = ','.join(config)
+        value = ",".join(config)
         Config().set(key, value)
 
     def _get_toolbox_area_config(self):
@@ -183,21 +184,21 @@ class TabToolbox(QtWidgets.QWidget):
             # Python will return a list of an empty string if value is empty, filter it
             composite_config = list(filter(None, value.split(",")))
         except KeyError:
-            logger.info(f'No config found for {key}')
+            logger.info(f"No config found for {key}")
 
         config = {}
         for composite in composite_config:
             try:
-                parts = composite.split(':')
+                parts = composite.split(":")
                 config[parts[0]] = int(parts[1])
             except (KeyError, ValueError):
-                logger.info(f'Can not understand config {composite}')
+                logger.info(f"Can not understand config {composite}")
 
         return config
 
     def _write_toolbox_area_config(self, config):
         key = self.CONF_KEY_TOOLBOX_AREAS
-        value = ','.join(map(lambda item: f'{item[0]}:{item[1]}', config.items()))
+        value = ",".join(map(lambda item: f"{item[0]}:{item[1]}", config.items()))
         Config().set(key, value)
 
     class ClosingDockWidget(QtWidgets.QDockWidget):

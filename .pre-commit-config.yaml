@@ -1,5 +1,21 @@
 repos:
--   repo: https://github.com/PyCQA/flake8
-    rev: 16f5f28a384f0781bebb37a08aa45e65b9526c50
-    hooks:
-    -   id: flake8
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  # Ruff version.
+  rev: v0.14.2
+  hooks:
+    # Run the linter.
+    - id: ruff-check
+      args: [ --fix ]
+    # Run the formatter.
+    - id: ruff-format
+
+# # Run ty type checker
+# - repo: local
+#   hooks:
+#     - id: ty
+#       name: ty
+#       entry: uv run ty check
+#       language: system
+#       types: [python]
+#       pass_filenames: false
+#       always_run: true

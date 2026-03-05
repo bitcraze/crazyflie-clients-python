@@ -29,15 +29,15 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
 
     # Supported Python versions
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
-requires-python = ">= 3.10"
+requires-python = ">= 3.11"
 
 dependencies = [
-        "cflib~=0.1.31",
+        "cflib2 @ git+https://github.com/bitcraze/cflib2@3436e46306a196740748e7bdbb0fda926899b0c9",
         "setuptools",
         "appdirs~=1.4.0",
         "pyzmq~=26.0",
@@ -52,14 +52,18 @@ dependencies = [
         "pysdl2-dll==2.24.0 ; platform_system=='Windows' or platform_system=='Darwin'"
 ]
 
+
 [project.urls]
 Homepage = "https://www.bitcraze.io"
 Documentation = "https://www.bitcraze.io/documentation/repository/crazyflie-clients-python/master/"
 Repository = "https://github.com/bitcraze/crazyflie-clients-python"
 Issues = "https://github.com/bitcraze/crazyflie-clients-python/issues"
 
-[project.optional-dependencies]
-dev = ['pre-commit']
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+    "ty>=0.0.18",
+]
 
 [project.scripts]
 cfclient = "cfclient.gui:main"
