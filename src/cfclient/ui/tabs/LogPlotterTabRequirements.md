@@ -100,7 +100,7 @@ The three subframes in the left panel are stacked vertically and each divider be
 **Location:** Top of left panel.
 
 **Controls:**
-- **"Add Files…" button** — opens a file dialog in multi-file mode, filtering for `*.csv`. Each invocation can target a different directory.
+- **"Add Files…" button** — opens a file dialog in multi-file mode, filtering for `*.csv`. Each invocation can target a different directory. The file picker should default to the project's directory for storing log files.
 - **"Remove file" button** - remove file from file list. Removes signals from signal picker and plots.
 - **"Clear All" button** — removes all loaded files, resets the signal picker and plots.
 - **File list** — shows the base filename of each loaded file. Hovering shows the full path. Files are listed in the order they were added. Adding a file that is already loaded is silently ignored.
@@ -198,3 +198,5 @@ PyQt6>=6.7
 matplotlib>=3.7
 pandas>=2.0
 ```
+
+These should be added to the projects `pyproject.toml`

@@ -179,8 +179,11 @@ class LogPlotterTab(TabToolbox, log_plotter_tab_class):
     # ------------------------------------------------------------------
 
     def _add_files(self):
+        default_dir = os.path.join(cfclient.config_path, "logdata")
+        if not os.path.isdir(default_dir):
+            default_dir = ""
         paths, _ = QFileDialog.getOpenFileNames(
-            self, "Open Log Files", "", "CSV Files (*.csv)"
+            self, "Open Log Files", default_dir, "CSV Files (*.csv)"
         )
         needs_update = False
         for path in paths:
