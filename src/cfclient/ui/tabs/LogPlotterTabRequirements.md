@@ -14,6 +14,10 @@ A Python desktop tool for visualizing crazyflie log files (CSV format). The user
 
 Code should be well modularized and maintainable.
 
+## Performance
+
+- Signal selection changes must feel responsive: There should be no perceptible lag between a checkbox interaction and the UI acknowledging it, even when many signals are selected.
+
 ---
 
 ## Integration into crazyflie-clients-python

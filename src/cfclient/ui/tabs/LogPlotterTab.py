@@ -34,7 +34,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolb
 from matplotlib.figure import Figure
 
 from PyQt6 import uic
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QCheckBox,
     QFileDialog,
@@ -76,6 +76,12 @@ class LogPlotterTab(TabToolbox, log_plotter_tab_class):
         self._file_data = OrderedDict()
         # Guard against recursive itemChanged signals while building tree
         self._building_tree = False
+
+        # Debounce timer: defers plot re-render so checkbox interactions feel instant
+        self._replot_timer = QTimer(self)
+        self._replot_timer.setSingleShot(True)
+        self._replot_timer.setInterval(150)
+        self._replot_timer.timeout.connect(self._update_plots)
 
         self._setup_ui()
 
@@ -340,7 +346,7 @@ class LogPlotterTab(TabToolbox, log_plotter_tab_class):
             self._cascade_check(item, state)
             self._building_tree = False
 
-        self._update_plots()
+        self._replot_timer.start()
 
     def _cascade_check(self, parent, state):
         for i in range(parent.childCount()):
