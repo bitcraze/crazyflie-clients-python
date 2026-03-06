@@ -1,4 +1,4 @@
-# LogPlotter — Specification
+# LogPlotterTab — Specification
 
 ## Overview
 
@@ -8,13 +8,34 @@ A Python desktop tool for visualizing crazyflie log files (CSV format). The user
 
 ## Implementation and design requirements
 
-- **GUI framework:** PySide6
+- **GUI framework:** PyQt6
 - **Plotting:** matplotlib
 - **Data handling:** pandas
 
 Code should be well modularized and maintainable.
 
-The main python script should be called `logplotter.py`. This file should be placed in the root folder. All other python files should be placed in subfolders.
+---
+
+## Integration into crazyflie-clients-python
+
+The LogPlotter is a tab embedded in the Crazyflie client. The following constraints come from the existing tab architecture.
+
+**File placement:**
+- Python file: `src/cfclient/ui/tabs/LogPlotterTab.py`
+- UI layout file: `src/cfclient/ui/tabs/logPlotterTab.ui` (Qt Designer XML format)
+
+**Tab class:**
+- Must inherit from `TabToolbox` (from `cfclient.ui.tab_toolbox`) and from a UI class loaded via `PyQt6.uic.loadUiType()`.
+- The constructor accepts a single `helper` argument, calls `super().__init__(helper, 'Log Plotter')`, and calls `self.setupUi(self)`.
+
+**Registration:**
+- The tab class must be imported and added to the `available` list in `src/cfclient/ui/tabs/__init__.py`.
+
+**Thread safety:**
+- Any callbacks from the Crazyflie API must be routed through Qt signals/slots, not called directly on the UI.
+
+**No standalone entry point:**
+- The tab has no `main()` function or standalone launch script. Since it operates on offline log files, it does not require connected/disconnected Crazyflie callbacks.
 
 ---
 
@@ -173,9 +194,7 @@ The three subframes in the left panel are stacked vertically and each divider be
 ## Dependencies
 
 ```
-PySide6>=6.4
+PyQt6>=6.7
 matplotlib>=3.7
 pandas>=2.0
 ```
-
-A `requirements.txt` file should be included with these.
