@@ -44,6 +44,7 @@ from .LogClientTab import LogClientTab
 from .lighthouse_tab import LighthouseTab
 from .TuningTab import TuningTab
 from .ColorLEDTab import ColorLEDTab
+from .LogPlotterTab import LogPlotterTab
 
 __author__ = 'Bitcraze AB'
 __all__ = []
@@ -64,4 +65,5 @@ available = [
     LogClientTab,
     TuningTab,
     CrtpSharkToolbox,
+    LogPlotterTab,
 ]
