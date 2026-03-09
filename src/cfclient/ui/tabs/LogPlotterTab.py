@@ -34,7 +34,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolb
 from matplotlib.figure import Figure
 
 from PyQt6 import uic
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QEvent, Qt, QTimer
 from PyQt6.QtWidgets import (
     QCheckBox,
     QFileDialog,
@@ -116,6 +116,7 @@ class LogPlotterTab(TabToolbox, log_plotter_tab_class):
         self._scroll_area.setWidget(self._canvas)
         self._scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self._scroll_area.viewport().installEventFilter(self)
         right_layout.addWidget(self._scroll_area, 1)
 
         main_splitter.addWidget(right_widget)
@@ -380,6 +381,11 @@ class LogPlotterTab(TabToolbox, log_plotter_tab_class):
     # Plot rendering
     # ------------------------------------------------------------------
 
+    def eventFilter(self, obj, event):
+        if obj is self._scroll_area.viewport() and event.type() == QEvent.Type.Resize:
+            self._replot_timer.start()
+        return super().eventFilter(obj, event)
+
     def _update_plots(self, *args):
         checked = self._get_checked_signals()
         self._figure.clear()
@@ -393,7 +399,8 @@ class LogPlotterTab(TabToolbox, log_plotter_tab_class):
                 transform=ax.transAxes,
                 fontsize=14, color='gray',
             )
-            self._canvas.setFixedSize(800, 400)
+            vp_width = self._scroll_area.viewport().width()
+            self._canvas.setFixedSize(max(vp_width - 4, 600), 400)
             self._canvas.draw()
             return
 
