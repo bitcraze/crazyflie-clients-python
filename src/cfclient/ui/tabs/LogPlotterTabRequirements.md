@@ -152,7 +152,7 @@ The three subframes in the left panel are stacked vertically and each divider be
 
 | Setting | Type | Default | Description |
 |---|---|---|---|
-| Start time from zero | Checkbox | On | If on, subtract the global minimum timestamp (across all loaded files) from all time values before plotting, so t=0 is the earliest data point in any file. |
+| Start time from zero | Checkbox | On | If on, subtract the minimum timestamp across all plotted signals from all time values before plotting, so t=0 is the earliest data point in any plot. |
 | Link X axes | Checkbox | On | If on, all subplots share the same x-axis; panning or zooming one plot updates all others. |
 | Grid | Checkbox | On | Show grid lines. |
 
