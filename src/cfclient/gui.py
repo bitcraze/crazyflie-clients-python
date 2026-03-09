@@ -29,18 +29,59 @@
 import platform
 import sys
 import os
-import argparse
+import dataclasses
 import datetime
+from typing import Literal
 
+import asyncio
 import logging
 
 import PySide6.QtAsyncio as QtAsyncio
 
 
+import tyro
+
 import cfclient
 
 __author__ = "Bitcraze AB"
 __all__ = []
+
+logger = logging.getLogger(__name__)
+
+
+@dataclasses.dataclass
+class Args:
+    """cfclient - Crazyflie graphical control client"""
+
+    debug: Literal["minimal", "info", "debug", "debugfile"] = "info"
+    """set debug level"""
+
+    check_imports: bool = False
+    """Check python imports and exit successfully (intended for CI)"""
+
+
+def _task_done_callback(task):
+    if task.cancelled():
+        return
+    try:
+        task.result()
+    except Exception:
+        import traceback
+
+        traceback.print_exc()
+        os._exit(1)
+
+
+def create_task(coro):
+    """Schedule a coroutine as a task with automatic exception logging.
+
+    Use this instead of asyncio.ensure_future() to ensure exceptions
+    are logged immediately rather than silently swallowed.
+    """
+    logger.debug(f"create_task: {coro}")
+    task = asyncio.ensure_future(coro)
+    task.add_done_callback(_task_done_callback)
+    return task
 
 
 def main():
@@ -60,26 +101,7 @@ def main():
     qtlogger = logging.getLogger("PySide6")
     qtlogger.setLevel(logging.ERROR)
 
-    parser = argparse.ArgumentParser(
-        description="cfclient - Crazyflie graphical control client"
-    )
-    parser.add_argument(
-        "--debug",
-        "-d",
-        nargs=1,
-        default="info",
-        type=str,
-        help="set debug level [minimal, info, debug, debugfile]",
-    )
-    parser.add_argument(
-        "--check-imports",
-        type=bool,
-        default=False,
-        const=True,
-        nargs="?",
-        help="Check python imports and exit successfully" + " (intended for CI)",
-    )
-    args = parser.parse_args()
+    args = tyro.cli(Args)
     debug = args.debug
 
     cflogger = logging.getLogger("")
@@ -102,8 +124,6 @@ def main():
         logging.basicConfig(level=logging.WARNING)
     elif "info" in debug:
         logging.basicConfig(level=logging.INFO)
-
-    logger = logging.getLogger(__name__)
 
     logger.debug("Using config path {}".format(cfclient.config_path))
     logger.debug("sys.path={}".format(sys.path))

@@ -104,6 +104,14 @@ class TabToolbox(QtWidgets.QWidget):
         self._dock_area = area
         self._store_toolbox_area_config(area)
 
+    def connected(self, cf):
+        """Called when a Crazyflie is connected. Override in subclasses."""
+        pass
+
+    def disconnected(self):
+        """Called when the Crazyflie is disconnected. Override in subclasses."""
+        pass
+
     def enable(self):
         pass
 

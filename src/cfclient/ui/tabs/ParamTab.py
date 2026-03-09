@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2023 Bitcraze AB
+#  Copyright (C) 2011-2026 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -31,24 +31,21 @@ to edit them.
 """
 
 import logging
-from threading import Event
+from collections import defaultdict
 
 from PySide6 import QtCore
 from PySide6.QtUiTools import loadUiType
-from PySide6.QtCore import QSortFilterProxyModel, Qt, Signal
+from PySide6.QtCore import QSortFilterProxyModel, Qt
 from PySide6.QtCore import QAbstractItemModel, QModelIndex
 from PySide6.QtGui import QBrush, QColor
-from PySide6.QtWidgets import QHeaderView, QFileDialog, QMessageBox
-
-from cflib.crazyflie.param import PersistentParamState
-from cflib.localization import ParamFileManager
+from PySide6.QtWidgets import QHeaderView, QMessageBox
 
 import cfclient
+from cfclient.gui import create_task
 from cfclient.ui.tab_toolbox import TabToolbox
-from cfclient.utils.logconfigreader import FILE_REGEX_YAML
 
-__author__ = 'Bitcraze AB'
-__all__ = ['ParamTab']
+__author__ = "Bitcraze AB"
+__all__ = ["ParamTab"]
 
 param_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/paramTab.ui")[0]
 
@@ -56,55 +53,43 @@ logger = logging.getLogger(__name__)
 
 
 def round_if_float(value):
-    """If the value is float, we limit to 5 significat numbers"""
+    """If the value is float, we limit to 5 significant numbers"""
     try:
         value = float(value)
-        value = f'{value:.5g}'
-    except ValueError:
+        value = f"{value:.5g}"
+    except (ValueError, TypeError):
         pass
     return value
 
 
-class ParamChildItem(object):
+class ParamChildItem:
     """Represents a leaf-node in the tree-view (one parameter)"""
 
-    def __init__(self, parent, name, persistent, crazyflie):
-        """Initialize the node"""
+    def __init__(self, parent, name):
         self.parent = parent
         self.name = name
         self.ctype = None
-        self.access = None
+        self.writable = False
         self.persistent = False
         self.value = ""
-        self._cf = crazyflie
         self.is_updating = True
-        self.state = None
         self.stored_value = ""
 
-    def updated(self, name, value):
-        """Callback from the param layer when a parameter has been updated"""
-        self.value = round_if_float(value)
-        self.is_updating = False
-        self.parent.model.proxy.dataChanged.emit(QModelIndex(), QModelIndex())
-
     def child_count(self):
-        """Return the number of children this node has"""
         return 0
 
 
-class ParamGroupItem(object):
+class ParamGroupItem:
     """Represents a parameter group in the tree-view"""
 
     def __init__(self, name, model):
-        """Initialize the parent node"""
-        super(ParamGroupItem, self).__init__()
+        super().__init__()
         self.parent = None
         self.children = []
         self.name = name
         self.model = model
 
     def child_count(self):
-        """Return the number of children this node has"""
         return len(self.children)
 
 
@@ -112,10 +97,16 @@ class ParamBlockModel(QAbstractItemModel):
     """Model for handling the parameters in the tree-view"""
 
     def __init__(self, parent, mainUI):
-        """Create the empty model"""
-        super(ParamBlockModel, self).__init__(parent)
+        super().__init__(parent)
         self._nodes = []
-        self._column_headers = ['Name', 'Type', 'Access', 'Persistent', 'Value', 'Stored Value']
+        self._column_headers = [
+            "Name",
+            "Type",
+            "Access",
+            "Persistent",
+            "Value",
+            "Stored Value",
+        ]
         self._red_brush = QBrush(QColor("red"))
         self._enabled = False
         self._mainUI = mainUI
@@ -129,33 +120,30 @@ class ParamBlockModel(QAbstractItemModel):
             self._enabled = enabled
             self.layoutChanged.emit()
 
-    def set_toc(self, toc, crazyflie):
-        """Populate the model with data from the param TOC"""
+    async def set_toc(self, param):
+        """Populate the model with data from the cflib2 param subsystem"""
+        groups = defaultdict(list)
+        for complete_name in param.names():
+            group, name = complete_name.split(".", 1)
+            groups[group].append(name)
 
-        # No luck using proxy sorting, so do it here instead...
-        for group in sorted(toc.keys()):
+        for group in sorted(groups.keys()):
             new_group = ParamGroupItem(group, self)
-            for param in sorted(toc[group].keys()):
-                elem = toc[group][param]
-                is_persistent = elem.is_persistent()
-                new_param = ParamChildItem(new_group, param, is_persistent, crazyflie)
-                new_param.ctype = elem.ctype
-                new_param.access = elem.get_readable_access()
-                new_param.persistent = elem.is_persistent()
-
-                crazyflie.param.add_update_callback(
-                    group=group, name=param, cb=new_param.updated)
+            for name in sorted(groups[group]):
+                complete_name = f"{group}.{name}"
+                new_param = ParamChildItem(new_group, name)
+                new_param.ctype = param.get_type(complete_name)
+                new_param.writable = param.is_writable(complete_name)
+                new_param.persistent = await param.is_persistent(complete_name)
                 new_group.children.append(new_param)
             self._nodes.append(new_group)
 
         self.layoutChanged.emit()
 
     def refresh(self):
-        """Force a refresh of the view though the model"""
         self.layoutChanged.emit()
 
     def parent(self, index):
-        """Re-implemented method to get the parent of the given index"""
         if not index.isValid():
             return QModelIndex()
 
@@ -163,20 +151,16 @@ class ParamBlockModel(QAbstractItemModel):
         if node.parent is None:
             return QModelIndex()
         else:
-            return self.createIndex(self._nodes.index(node.parent), 0,
-                                    node.parent)
+            return self.createIndex(self._nodes.index(node.parent), 0, node.parent)
 
     def columnCount(self, parent):
-        """Re-implemented method to get the number of columns"""
         return len(self._column_headers)
 
     def headerData(self, section, orientation, role):
-        """Re-implemented method to get the headers"""
         if role == Qt.ItemDataRole.DisplayRole:
             return self._column_headers[section]
 
     def rowCount(self, parent):
-        """Re-implemented method to get the number of rows for a given index"""
         parent_item = parent.internalPointer()
         if parent.isValid():
             parent_item = parent.internalPointer()
@@ -185,8 +169,6 @@ class ParamBlockModel(QAbstractItemModel):
             return len(self._nodes)
 
     def index(self, row, column, parent):
-        """Re-implemented method to get the index for a specified
-        row/column/parent combination"""
         if not self._nodes:
             return QModelIndex()
         node = parent.internalPointer()
@@ -198,17 +180,17 @@ class ParamBlockModel(QAbstractItemModel):
             return self.createIndex(row, column, node.children[row])
 
     def data(self, index, role):
-        """Re-implemented method to get the data for a given index and role"""
-
         if role == Qt.ItemDataRole.BackgroundRole:
+            bgColor = self._mainUI.palette().color(self._mainUI.backgroundRole())
             if index.row() % 2 == 0:
-                return self._mainUI.bgColor
+                return bgColor
             else:
-                multiplier = 1.15 if self._mainUI.isDark else 0.95
+                isDark = bgColor.lightness() < 128
+                multiplier = 1.15 if isDark else 0.95
                 return QColor(
-                    int(self._mainUI.bgColor.red() * multiplier),
-                    int(self._mainUI.bgColor.green() * multiplier),
-                    int(self._mainUI.bgColor.blue() * multiplier)
+                    int(bgColor.red() * multiplier),
+                    int(bgColor.green() * multiplier),
+                    int(bgColor.blue() * multiplier),
                 )
 
         node = index.internalPointer()
@@ -222,104 +204,64 @@ class ParamBlockModel(QAbstractItemModel):
             if index.column() == 1:
                 return node.ctype
             if index.column() == 2:
-                return node.access
+                return "RW" if node.writable else "RO"
             if index.column() == 3:
-                return 'Yes' if node.persistent else 'No'
+                return "Yes" if node.persistent else "No"
             if index.column() == 4:
                 return node.value
             if index.column() == 5:
                 return node.stored_value
-        elif (role == Qt.ItemDataRole.BackgroundRole and index.column() == 4 and
-              node.is_updating):
+        elif (
+            role == Qt.ItemDataRole.BackgroundRole
+            and index.column() == 4
+            and node.is_updating
+        ):
             return self._red_brush
 
         return None
 
-    def update_stored_value_and_refresh(self, node):
-        """
-        Fetch the persistent stored value for this node, store it in node.stored_value,
-        and refresh the Stored Value column in the view.
-        """
-        if not node.persistent:
-            node.stored_value = ''
-            return
+    def _emit_value_changed(self, node):
+        """Refresh only column 4 (Value) for the given node."""
+        self._emit_column_changed(node, 4)
 
-        # Fetch stored value synchronously
-        complete_name = f"{node.parent.name}.{node.name}"
-        from threading import Event
-        wait_event = Event()
-        state_value = None
+    def _emit_stored_value_changed(self, node):
+        """Refresh only column 5 (Stored Value) for the given node."""
+        self._emit_column_changed(node, 5)
 
-        def cb(_, state):
-            nonlocal state_value
-            state_value = state
-            wait_event.set()
-
-        self._mainUI.cf.param.persistent_get_state(complete_name, cb)
-        wait_event.wait(timeout=0.2)
-
-        if state_value and state_value.is_stored:
-            node.stored_value = round_if_float(state_value.stored_value)
-        else:
-            node.stored_value = ''
-
-        # Refresh only column 5 (Stored Value)
+    def _emit_column_changed(self, node, col):
         source_row = node.parent.children.index(node)
         parent_row = self._nodes.index(node.parent)
-        col = 5
-        row_index = self.index(source_row, col, self.createIndex(parent_row, 0, node.parent))
+        row_index = self.index(
+            source_row, col, self.createIndex(parent_row, 0, node.parent)
+        )
         proxy_index = self.proxy.mapFromSource(row_index)
-        self.proxy.dataChanged.emit(proxy_index, proxy_index)
-
-    def update_stored_value_from_state(self, node, state: 'PersistentParamState'):
-        """
-        Update the node's stored_value from a PersistentParamState object
-        and refresh the Stored Value column.
-        """
-        if state and state.is_stored:
-            node.stored_value = round_if_float(state.stored_value)
-        else:
-            node.stored_value = ''
-
-        # Refresh only column 5 (Stored Value)
-        source_row = node.parent.children.index(node)
-        parent_row = self._nodes.index(node.parent)
-        col = 5  # Stored Value column
-        row_index = self.index(source_row, col, self.createIndex(parent_row, 0, node.parent))
-        proxy_index = self.proxy.mapFromSource(row_index)
-        self.proxy.dataChanged.emit(proxy_index, proxy_index)
+        if proxy_index.isValid():
+            self.proxy.dataChanged.emit(proxy_index, proxy_index)
 
     def flags(self, index):
-        """Re-implemented function for getting the flags for a certain index"""
-        flag = super(ParamBlockModel, self).flags(index)
-
+        flag = super().flags(index)
         if not self._enabled:
             return Qt.ItemFlag.NoItemFlags
-
         return flag
 
     def reset(self):
-        """Reset the model"""
-        super(ParamBlockModel, self).beginResetModel()
+        super().beginResetModel()
         self._nodes = []
-        super(ParamBlockModel, self).endResetModel()
+        super().endResetModel()
         self.layoutChanged.emit()
 
 
 class ParamTreeFilterProxy(QSortFilterProxyModel):
     """
-    Implement a filtering proxy model that show all children if the group matches.
+    Implement a filtering proxy model that shows all children if the group matches.
     """
+
     def __init__(self, paramTree):
-        super(ParamTreeFilterProxy, self).__init__(paramTree)
+        super().__init__(paramTree)
 
     def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
-        '''
-        When a group match the filter, make sure all children matches as well.
-        '''
         if not source_parent.isValid():
             return super().filterAcceptsRow(source_row, source_parent)
-
         return super().filterAcceptsRow(source_parent.row(), source_parent.parent())
 
 
@@ -328,37 +270,22 @@ class ParamTab(TabToolbox, param_tab_class):
     Show all the parameters in the TOC and give the user the ability to edit
     them
     """
-    _expand_all_signal = Signal()
-    _connected_signal = Signal(str)
-    _disconnected_signal = Signal(str)
-
-    _set_param_value_signal = Signal()
-    _persistent_state_signal = Signal(PersistentParamState)
-    _param_default_signal = Signal(object)
-    _reset_param_signal = Signal(str)
 
     def __init__(self, helper):
-        """Create the parameter tab"""
-        super(ParamTab, self).__init__(helper, 'Parameters')
+        super().__init__(helper, "Parameters")
         self.setupUi(self)
 
-        self.cf = helper.cf
-
-        self.cf.connected.add_callback(self._connected_signal.emit)
-        self._connected_signal.connect(self._connected)
-        self.cf.disconnected.add_callback(self._disconnected_signal.emit)
-        self._disconnected_signal.connect(self._disconnected)
-
+        self._cf = None
+        self._load_params_task = None
         self._model = ParamBlockModel(None, self._helper.mainUI)
-        self._persistent_state_signal.connect(self._persistent_state_cb)
-        self._set_param_value_signal.connect(self._set_param_value)
-        self.setParamButton.clicked.connect(self._set_param_value_signal.emit)
-        self.currentValue.returnPressed.connect(self._set_param_value_signal.emit)
-        self._param_default_signal.connect(self._param_default_cb)
 
-        self._reset_param_signal.connect(lambda text: self.currentValue.setText(text))
-        self.resetDefaultButton.clicked.connect(lambda: self._reset_param_signal.emit(self.defaultValue.text()))
-        self.persistentButton.clicked.connect(self._persistent_button_cb)
+        self.setParamButton.clicked.connect(self._set_param_value_clicked)
+        self.currentValue.returnPressed.connect(self._set_param_value_clicked)
+
+        self.resetDefaultButton.clicked.connect(
+            lambda: self.currentValue.setText(self.defaultValue.text())
+        )
+        self.persistentButton.clicked.connect(self._persistent_button_clicked)
 
         self.proxyModel = ParamTreeFilterProxy(self.paramTree)
         self.proxyModel.setSourceModel(self._model)
@@ -372,66 +299,84 @@ class ParamTab(TabToolbox, param_tab_class):
         self.filterBox.textChanged.connect(onFilterChanged)
 
         self.paramTree.setModel(self.proxyModel)
-        self.paramTree.header().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        self.paramTree.header().setSectionResizeMode(
+            QHeaderView.ResizeMode.ResizeToContents
+        )
         self.paramTree.selectionModel().selectionChanged.connect(self._paramChanged)
 
-        self._load_param_button.clicked.connect(self._load_param_button_clicked)
-        self._dump_param_button.clicked.connect(self._dump_param_button_clicked)
-        self._clear_param_button.clicked.connect(self._clear_stored_persistent_params_button_clicked)
+        # TODO: implement storing and loading of persistent parameters, for now we just disable the buttons
+        self._load_param_button.setEnabled(False)
+        self._dump_param_button.setEnabled(False)
+        self._clear_param_button.clicked.connect(
+            self._clear_stored_persistent_params_button_clicked
+        )
 
         self._is_connected = False
         self._update_param_io_buttons()
 
-    def _param_default_cb(self, default_value):
-        if default_value is not None:
-            self.defaultValue.setText(str(default_value))
-        else:
-            self.defaultValue.setText('-')
+    def connected(self, cf):
+        self._cf = cf
+        param = cf.param()
+        self._model.reset()
+        self._load_params_task = create_task(self._load_params(param))
+        self._is_connected = True
+        self._update_param_io_buttons()
 
-    def _persistent_button_cb(self, _):
-        def success_cb(name, success):
-            print(f'store {success}!')
-            if success:
-                # Fetch the persistent state after store
-                def state_cb(_, state):
-                    for group in self._model._nodes:
-                        for node in group.children:
-                            if f"{group.name}.{node.name}" == name:
-                                # Update stored value in model
-                                self._model.update_stored_value_from_state(node, state)
-                                # Update the button text immediately
-                                self._persistent_state_signal.emit(state)
-                                break
-            self.cf.param.persistent_get_state(name, state_cb)
+    def disconnected(self):
+        if self._load_params_task is not None:
+            self._load_params_task.cancel()
+            self._load_params_task = None
+        self._cf = None
+        self._is_connected = False
+        self._update_param_io_buttons()
+        self._model.reset()
+        self._paramChanged()
+        self._model.set_enabled(False)
 
-        complete = self.paramDetailsLabel.text()
-        if self.persistentButton.text() == 'Clear':
-            self.cf.param.persistent_clear(complete, success_cb)
-        else:
-            self.cf.param.persistent_store(complete, success_cb)
+    async def _load_params(self, param):
+        """Load TOC, then fetch all parameter values."""
+        await self._model.set_toc(param)
+        self._model.set_enabled(True)
+        for group in self._model._nodes:
+            for node in group.children:
+                complete_name = f"{group.name}.{node.name}"
+                value = await param.get(complete_name)
+                node.value = round_if_float(value)
+                node.is_updating = False
+        self._model.layoutChanged.emit()
 
-    def _persistent_state_cb(self, state):
-        print(f'persistent callback! state: {state}')
-        self.persistentFrame.setVisible(True)
-
-        if state.is_stored:
-            self.storedValue.setText(str(state.stored_value))
-        else:
-            self.storedValue.setText('Not stored')
-
-        self.persistentButton.setText('Clear' if state.is_stored else 'Store')
-
-    def _set_param_value(self):
+    def _set_param_value_clicked(self):
         name = self.paramDetailsLabel.text()
         value = self.currentValue.text()
+        create_task(self._async_set_param(name, value))
+
+    async def _async_set_param(self, name, value):
+        if self._cf is None:
+            return
+        # Convert to appropriate numeric type
         try:
-            self.cf.param.set_value(name, value)
-            self.currentValue.setStyleSheet('')
-        except Exception:
-            self.currentValue.setStyleSheet('border: 1px solid red')
+            numeric_value = int(value)
+        except ValueError:
+            numeric_value = float(value)
+        param = self._cf.param()
+        await param.set(name, numeric_value)
+        # Read back updated value
+        new_value = await param.get(name)
+        self._update_node_value(name, new_value)
+
+    def _update_node_value(self, complete_name, value):
+        """Update a node's displayed value after a set."""
+        group_name, param_name = complete_name.split(".", 1)
+        for group in self._model._nodes:
+            if group.name == group_name:
+                for node in group.children:
+                    if node.name == param_name:
+                        node.value = round_if_float(value)
+                        node.is_updating = False
+                        self._model._emit_value_changed(node)
+                        return
 
     def _paramChanged(self):
-
         group = None
         param = None
         indexes = self.paramTree.selectionModel().selectedIndexes()
@@ -443,7 +388,7 @@ class ParamTab(TabToolbox, param_tab_class):
             else:
                 group = selectedIndex.data()
 
-        # Made visible in _persistent_state_cb()
+        # Made visible in _show_persistent_state()
         self.persistentFrame.setVisible(False)
 
         are_details_visible = param is not None
@@ -451,196 +396,130 @@ class ParamTab(TabToolbox, param_tab_class):
         self.paramDetailsLabel.setVisible(are_details_visible)
         self.paramDetailsDescription.setVisible(are_details_visible)
 
-        if param:
-            self.paramDetailsLabel.setText(f'{group}.{param}' if param is not None else group)
+        if param and self._cf is not None:
+            complete = f"{group}.{param}"
+            self.paramDetailsLabel.setText(complete)
+
             if cfclient.log_param_doc is not None:
                 try:
-                    desc = str()
-                    group_doc = cfclient.log_param_doc['params'][group]
-                    if param is None:
-                        desc = group_doc['desc']
-                    else:
-                        desc = group_doc['variables'][param]['short_desc']
-
+                    group_doc = cfclient.log_param_doc["params"][group]
+                    desc = group_doc["variables"][param]["short_desc"]
                     self.paramDetailsDescription.setWordWrap(True)
-                    self.paramDetailsDescription.setText(desc.replace('\n', ''))
+                    self.paramDetailsDescription.setText(desc.replace("\n", ""))
                 except (KeyError, TypeError, AttributeError):
-                    self.paramDetailsDescription.setText('')
+                    self.paramDetailsDescription.setText("")
 
-            complete = f'{group}.{param}'
-            elem = self.cf.param.toc.get_element_by_complete_name(complete)
-            value = round_if_float(self.cf.param.get_value(complete))
-            self.currentValue.setText(value)
-            self.currentValue.setStyleSheet('')
+            # Find the node to get writable status
+            node = self._find_node(group, param)
+            if node is None:
+                return
+
+            self.currentValue.setText(str(node.value))
+            self.currentValue.setStyleSheet("")
             self.currentValue.setCursorPosition(0)
-            self.defaultValue.setText('-')
-            self.cf.param.get_default_value(complete, lambda _, value: self._param_default_signal.emit(value))
+            self.defaultValue.setText("-")
 
-            writable = elem.get_readable_access() == 'RW'
-            self.currentValue.setEnabled(writable)
-            self.setParamButton.setEnabled(writable)
-            self.resetDefaultButton.setEnabled(writable)
+            self.currentValue.setEnabled(node.writable)
+            self.setParamButton.setEnabled(node.writable)
+            self.resetDefaultButton.setEnabled(node.writable)
 
-            if elem.is_persistent():
-                self.cf.param.persistent_get_state(complete, lambda _, state: self._persistent_state_signal.emit(state))
-                source_index = self.proxyModel.mapToSource(indexes[0])
-                node = source_index.internalPointer()
-                self._model.update_stored_value_and_refresh(node)
+            # Fetch default value and persistent state asynchronously
+            create_task(self._async_fetch_param_details(complete, node))
+
+    async def _async_fetch_param_details(self, complete_name, node):
+        """Fetch default value and persistent state for the selected param."""
+        if self._cf is None:
+            return
+        param = self._cf.param()
+
+        if param.is_writable(complete_name):
+            default_value = await param.get_default_value(complete_name)
+            self.defaultValue.setText(
+                str(default_value) if default_value is not None else "-"
+            )
+
+        if node.persistent:
+            state = await param.persistent_get_state(complete_name)
+            self._show_persistent_state(state)
+            if state.is_stored:
+                node.stored_value = round_if_float(state.stored_value)
+            else:
+                node.stored_value = ""
+            self._model._emit_stored_value_changed(node)
+
+    def _show_persistent_state(self, state):
+        self.persistentFrame.setVisible(True)
+        if state.is_stored:
+            self.storedValue.setText(str(state.stored_value))
+        else:
+            self.storedValue.setText("Not stored")
+        self.persistentButton.setText("Clear" if state.is_stored else "Store")
+
+    def _persistent_button_clicked(self, _):
+        complete = self.paramDetailsLabel.text()
+        create_task(self._async_persistent_action(complete))
+
+    async def _async_persistent_action(self, complete_name):
+        if self._cf is None:
+            return
+        param = self._cf.param()
+
+        if self.persistentButton.text() == "Clear":
+            await param.persistent_clear(complete_name)
+        else:
+            await param.persistent_store(complete_name)
+
+        # Refresh state
+        state = await param.persistent_get_state(complete_name)
+        self._show_persistent_state(state)
+
+        # Update model node
+        node = self._find_node_by_complete_name(complete_name)
+        if node:
+            if state.is_stored:
+                node.stored_value = round_if_float(state.stored_value)
+            else:
+                node.stored_value = ""
+            self._model._emit_stored_value_changed(node)
+
+    def _find_node(self, group_name, param_name):
+        for group in self._model._nodes:
+            if group.name == group_name:
+                for node in group.children:
+                    if node.name == param_name:
+                        return node
+        return None
+
+    def _find_node_by_complete_name(self, complete_name):
+        group_name, param_name = complete_name.split(".", 1)
+        return self._find_node(group_name, param_name)
 
     def _update_param_io_buttons(self):
-        enabled = self._is_connected
-        self._load_param_button.setEnabled(enabled)
-        self._dump_param_button.setEnabled(enabled)
-        self._clear_param_button.setEnabled(enabled)
-
-    def _load_param_button_clicked(self):
-        names = QFileDialog.getOpenFileName(self, 'Open file', cfclient.config_path, FILE_REGEX_YAML)
-
-        if names[0] == '':
-            return
-        filename = names[0]
-        parameters = ParamFileManager.read(filename)
-
-        def _is_persistent_stored_callback(complete_name, success):
-            if not success:
-                print(f'Persistent params: failed to store {complete_name}!')
-                QMessageBox.about(self, 'Warning', f'Failed to persistently store {complete_name}!')
-            else:
-                print(f'Persistent params: stored {complete_name}!')
-
-        _set_param_names = []
-        for param, state in parameters.items():
-            if state.is_stored:
-                try:
-                    self.cf.param.set_value(param, state.stored_value)
-                    _set_param_names.append(param)
-                except Exception:
-                    print(f'Failed to set {param}!')
-                    QMessageBox.about(self, 'Warning', f'Failed to set {param}!')
-                print(f'Set {param}!')
-                self.cf.param.persistent_store(param, _is_persistent_stored_callback)
-
-        self._update_param_io_buttons()
-        dlg = QMessageBox(self)
-        dlg.setWindowTitle("Info")
-        _parameters_and_values = [f"{_param_name}:{parameters[_param_name].stored_value}"
-                                  for _param_name in _set_param_names]
-        dlg.setText('Loaded persistent parameters from file:\n' + "\n".join(_parameters_and_values))
-        dlg.setIcon(QMessageBox.Icon.NoIcon)
-        dlg.exec()
-
-    def _get_persistent_state(self, complete_param_name):
-        wait_for_callback_event = Event()
-        state_value = None
-
-        def state_callback(complete_name, value):
-            nonlocal state_value
-            state_value = value
-            wait_for_callback_event.set()
-
-        self.cf.param.persistent_get_state(complete_param_name, state_callback)
-        wait_for_callback_event.wait()
-        return state_value
-
-    def _get_all_persistent_param_names(self):
-        persistent_params = []
-        for group_name, params in self.cf.param.toc.toc.items():
-            for param_name, element in params.items():
-                if element.is_persistent():
-                    complete_name = group_name + '.' + param_name
-                    persistent_params.append(complete_name)
-
-        return persistent_params
-
-    def _get_all_stored_persistent_param_names(self):
-        persistent_params = self._get_all_persistent_param_names()
-        stored_params = []
-        for complete_name in persistent_params:
-            state = self._get_persistent_state(complete_name)
-            if state.is_stored:
-                stored_params.append(complete_name)
-        return stored_params
-
-    def _get_all_stored_persistent_params(self):
-        persistent_params = self._get_all_persistent_param_names()
-        stored_params = {}
-        for complete_name in persistent_params:
-            state = self._get_persistent_state(complete_name)
-            if state.is_stored:
-                stored_params[complete_name] = state
-        return stored_params
-
-    def _dump_param_button_clicked(self):
-        stored_persistent_params = self._get_all_stored_persistent_params()
-        names = QFileDialog.getSaveFileName(self, 'Save file', cfclient.config_path, FILE_REGEX_YAML)
-        if names[0] == '':
-            return
-        if not names[0].endswith(".yaml"):
-            filename = names[0] + ".yaml"
-        else:
-            filename = names[0]
-
-        ParamFileManager.write(filename, stored_persistent_params)
-        dlg = QMessageBox(self)
-        dlg.setWindowTitle('Info')
-        _parameters_and_values = [f"{_param_name}: {stored_persistent_params[_param_name].stored_value}"
-                                  for _param_name in stored_persistent_params.keys()]
-        dlg.setText('Dumped persistent parameters to file:\n' + "\n".join(_parameters_and_values))
-        dlg.setIcon(QMessageBox.Icon.NoIcon)
-        dlg.exec()
-
-    def _clear_persistent_parameter(self, complete_param_name):
-        wait_for_callback_event = Event()
-
-        def is_stored_cleared(complete_name, success):
-            if success:
-                print(f'Persistent params: cleared {complete_name}!')
-            else:
-                print(f'Persistent params: failed to clear {complete_name}!')
-            wait_for_callback_event.set()
-
-        self.cf.param.persistent_clear(complete_param_name, callback=is_stored_cleared)
-        wait_for_callback_event.wait()
+        self._clear_param_button.setEnabled(self._is_connected)
 
     def _clear_stored_persistent_params_button_clicked(self):
         dlg = QMessageBox(self)
         dlg.setWindowTitle("Clear Stored Parameters Confirmation")
         dlg.setText("Are you sure you want to clear your stored persistent parameters?")
-        dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        dlg.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
         button = dlg.exec()
 
         if button == QMessageBox.StandardButton.Yes:
-            stored_persistent_params = self._get_all_stored_persistent_param_names()
-            for complete_name in stored_persistent_params:
-                self._clear_persistent_parameter(complete_name)
-                for group in self._model._nodes:
-                    for node in group.children:
-                        if f"{group.name}.{node.name}" == complete_name:
-                            node.stored_value = ''
-                            # Emit a targeted dataChanged for column 5 only
-                            source_row = group.children.index(node)
-                            parent_row = self._model._nodes.index(group)
-                            col = 5
+            create_task(self._async_clear_all_persistent())
 
-                            index = self._model.index(
-                                source_row, col,
-                                self._model.index(parent_row, 0, QModelIndex())
-                            )
-                            proxy_index = self._model.proxy.mapFromSource(index)
-                            self._model.proxy.dataChanged.emit(proxy_index, proxy_index)
-                            break
+    async def _async_clear_all_persistent(self):
+        if self._cf is None:
+            return
+        param = self._cf.param()
 
-    def _connected(self, link_uri):
-        self._model.reset()
-        self._model.set_toc(self.cf.param.toc.toc, self._helper.cf)
-        self._model.set_enabled(True)
-        self._helper.cf.param.request_update_of_all_params()
-        self._is_connected = True
-        self._update_param_io_buttons()
-
-    def _disconnected(self, link_uri):
-        self._is_connected = False
-        self._update_param_io_buttons()
-        self._model.reset()
-        self._paramChanged()
-        self._model.set_enabled(False)
+        for complete_name in param.names():
+            if await param.is_persistent(complete_name):
+                state = await param.persistent_get_state(complete_name)
+                if state.is_stored:
+                    await param.persistent_clear(complete_name)
+                    node = self._find_node_by_complete_name(complete_name)
+                    if node:
+                        node.stored_value = ""
+                        self._model._emit_stored_value_changed(node)

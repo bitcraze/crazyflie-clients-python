@@ -32,18 +32,20 @@ import logging
 import sys
 
 import cfclient
+from cfclient.gui import create_task
 from cfclient.ui.tab_toolbox import TabToolbox
 import cfclient.ui.tabs
 from cfclient.ui.connectivity_manager import ConnectivityManager
 from cfclient.utils.config import Config
 from cfclient.utils.ui import UiUtils
-from cflib2 import Crazyflie, LinkContext, FileTocCache
+from cflib2 import Crazyflie, DisconnectedError, LinkContext, FileTocCache
 from PySide6 import QtWidgets
 from PySide6.QtUiTools import loadUiType
 from PySide6.QtCore import Slot
 from PySide6.QtCore import QDir
 from PySide6.QtCore import QUrl
 from PySide6.QtCore import Qt
+from PySide6.QtCore import QTimer
 from PySide6.QtGui import QAction
 from PySide6.QtGui import QActionGroup
 from PySide6.QtGui import QShortcut
@@ -78,6 +80,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._link_context = LinkContext()
         self._toc_cache = FileTocCache(cfclient.config_path + "/cache")
         self._connect_task = None
+        self._disconnect_watch_task = None
 
         # Restore window size if present in the config file
         try:
@@ -128,7 +131,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._connectivity_manager.set_address(self.address.value())
 
         self._initial_scan = True
-        self._scan(self._connectivity_manager.get_address())
+        QTimer.singleShot(
+            0, lambda: self._scan(self._connectivity_manager.get_address())
+        )
 
         # Tabs and toolboxes
         self.tabs_menu_item = QMenu("Tabs", self.menuView)
@@ -264,31 +269,28 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         try:
             link_uri = Config().get("link_uri")
             if link_uri.startswith("radio://"):
-                if len(link_uri) > 0:
-                    parts = link_uri.split("/")
-                    if len(parts) == 6:
-                        address = int(parts[-1], 16)
-        except Exception as err:
-            logger.warning("failed to parse address from config: %s" % str(err))
+                parts = link_uri.split("/")
+                if len(parts) == 6:
+                    address = int(parts[-1], 16)
+        except KeyError:
+            pass
+        except ValueError as err:
+            logger.warning("failed to parse address from config: %s", err)
         finally:
             self.address.setValue(address)
 
     # --- Scanning ---
 
     def _scan(self, address):
-        asyncio.ensure_future(self._async_scan(address))
+        create_task(self._async_scan(address))
 
     async def _async_scan(self, address):
         self.uiState = UIState.SCANNING
         self._update_ui_state()
 
-        try:
-            address_bytes = list(address.to_bytes(5, byteorder="big"))
-            uris = await self._link_context.scan(address=address_bytes)
-            interfaces = [(uri, "") for uri in uris]
-        except Exception as e:
-            logger.error(f"Scan failed: {e}")
-            interfaces = []
+        address_bytes = list(address.to_bytes(5, byteorder="big"))
+        uris = await self._link_context.scan(address=address_bytes)
+        interfaces = [(uri, "") for uri in uris]
 
         self._interfaces_found(interfaces)
 
@@ -330,7 +332,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     def _connect(self):
         if self.uiState == UIState.CONNECTED:
-            asyncio.ensure_future(self._async_disconnect())
+            create_task(self._async_disconnect())
         elif self.uiState == UIState.CONNECTING:
             if self._connect_task is not None:
                 self._connect_task.cancel()
@@ -340,7 +342,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 return
             if " - " in uri:
                 uri = uri.split(" - ")[0]
-            self._connect_task = asyncio.ensure_future(self._async_connect(uri))
+            self._connect_task = create_task(self._async_connect(uri))
 
     async def _async_connect(self, uri):
         self.uiState = UIState.CONNECTING
@@ -352,13 +354,15 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             )
             self.uiState = UIState.CONNECTED
             self._update_ui_state()
+            self._notify_tabs_connected()
+            self._disconnect_watch_task = create_task(self._watch_disconnect())
             Config().set("link_uri", uri)
             logger.info(f"Connected to {uri}")
         except asyncio.CancelledError:
             logger.info("Connection cancelled")
             self.uiState = UIState.DISCONNECTED
             self._update_ui_state()
-        except Exception as e:
+        except DisconnectedError as e:
             logger.error(f"Connection failed: {e}")
             QMessageBox.critical(
                 self, "Connection failed", f"Could not connect to Crazyflie:\n{e}"
@@ -368,12 +372,39 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         finally:
             self._connect_task = None
 
+    async def _watch_disconnect(self):
+        try:
+            reason = await self.cf.wait_disconnect()
+            uri = self.cf.uri
+            logger.info(f"Connection lost: {reason}")
+            self._notify_tabs_disconnected()
+            self.cf = None
+            self.uiState = UIState.DISCONNECTED
+            self._update_ui_state()
+            QMessageBox.critical(
+                self, "Communication failure", f"Connection lost to {uri}: {reason}"
+            )
+        except asyncio.CancelledError:
+            pass
+
     async def _async_disconnect(self):
+        if self._disconnect_watch_task is not None:
+            self._disconnect_watch_task.cancel()
+            self._disconnect_watch_task = None
         if self.cf is not None:
+            self._notify_tabs_disconnected()
             await self.cf.disconnect()
             self.cf = None
         self.uiState = UIState.DISCONNECTED
         self._update_ui_state()
+
+    def _notify_tabs_connected(self):
+        for tab_toolbox in self.loaded_tab_toolboxes.values():
+            tab_toolbox.connected(self.cf)
+
+    def _notify_tabs_disconnected(self):
+        for tab_toolbox in self.loaded_tab_toolboxes.values():
+            tab_toolbox.disconnected()
 
     # --- UI state ---
 
@@ -435,7 +466,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     def closeEvent(self, event):
         Config().save_file()
         if self.cf is not None:
-            asyncio.ensure_future(self.cf.disconnect())
+            create_task(self.cf.disconnect())
         self.hide()
 
     def resizeEvent(self, event):

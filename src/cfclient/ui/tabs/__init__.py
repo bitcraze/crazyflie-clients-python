@@ -29,6 +29,7 @@ Find all the available tabs so they can be loaded.
 Dropping a new .py file into this directory will automatically list and load
 it into the UI when it is started.
 """
+
 # from .ConsoleTab import ConsoleTab
 # from .CrtpSharkToolbox import CrtpSharkToolbox
 # from .ExampleTab import ExampleTab
@@ -37,7 +38,7 @@ it into the UI when it is started.
 # from .LEDRingTab import LEDRingTab
 # from .LogBlockTab import LogBlockTab
 # from .LogTab import LogTab
-# from .ParamTab import ParamTab
+from .ParamTab import ParamTab
 # from .PlotTab import PlotTab
 # from .locopositioning_tab import LocoPositioningTab
 # from .LogClientTab import LogClientTab
@@ -57,7 +58,7 @@ available = [
     # ColorLEDTab,
     # LogBlockTab,
     # LogTab,
-    # ParamTab,
+    ParamTab,
     # PlotTab,
     # LocoPositioningTab,
     # LighthouseTab,

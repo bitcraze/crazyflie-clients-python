@@ -37,7 +37,7 @@ classifiers = [
 requires-python = ">= 3.11"
 
 dependencies = [
-        "cflib2 @ git+https://github.com/bitcraze/cflib2@3436e46306a196740748e7bdbb0fda926899b0c9",
+        "cflib2 @ git+https://github.com/bitcraze/cflib2@526d0abdb3cc441a9f3716e15dee340b65d332d4",
         "setuptools",
         "appdirs~=1.4.0",
         "pyzmq~=26.0",
@@ -47,6 +47,7 @@ dependencies = [
         "vispy~=0.15.2",
         "pyopengl~=3.1.7",  # Required for Vispy to work on MacOS Sonoma
         "pyserial~=3.5",
+        "tyro>=1.0.8",
         "PySide6~=6.8",
         "pysdl2~=0.9.14 ; platform_system=='Windows' or platform_system=='Darwin'",
         "pysdl2-dll==2.24.0 ; platform_system=='Windows' or platform_system=='Darwin'"
