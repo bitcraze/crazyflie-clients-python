@@ -357,7 +357,11 @@ class ParamTab(TabToolbox, param_tab_class):
         try:
             numeric_value = int(value)
         except ValueError:
-            numeric_value = float(value)
+            try:
+                numeric_value = float(value)
+            except ValueError:
+                logger.warning("Invalid parameter value: %s", value)
+                return
         param = self._cf.param()
         await param.set(name, numeric_value)
         # Read back updated value
