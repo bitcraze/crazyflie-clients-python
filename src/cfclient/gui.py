@@ -205,7 +205,8 @@ def main():
 
     # Use os._exit() to avoid PySide6 aborting when Python's GC
     # destroys QThread objects (e.g. from vispy) in the wrong order.
-    os._exit(QtAsyncio.run(handle_sigint=True))
+    QtAsyncio.run(handle_sigint=True)
+    os._exit(0)
 
 
 if __name__ == "__main__":
