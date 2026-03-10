@@ -146,13 +146,13 @@ def main():
         stdout = os.dup(1)
         os.dup2(os.open("/dev/null", os.O_WRONLY), 1)
         sys.stdout = os.fdopen(stdout, "w")
-        logger.info("Disabling STL printouts")
+        logger.debug("Disabling STL printouts")
 
     if os.name == "nt":
         stdout = os.dup(1)
         os.dup2(os.open("NUL", os.O_WRONLY), 1)
         sys.stdout = os.fdopen(stdout, "w")
-        logger.info("Disabling STL printouts")
+        logger.debug("Disabling STL printouts")
 
     if sys.platform == "darwin":
         try:
@@ -176,11 +176,6 @@ def main():
     from .ui.main import MainUI
     from PySide6.QtWidgets import QApplication
     from PySide6.QtGui import QIcon
-
-    if os.name == "posix":
-        logger.info(
-            'If startup fails because of "xcb", install dependency with `sudo apt install libxcb-xinerama0`.'
-        )
 
     app = QApplication(sys.argv)
     app.setStyle("Fusion")

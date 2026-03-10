@@ -29,77 +29,78 @@
 """
 Gives access for reading and writing application configuration parameters
 """
+
 import json
 import logging
 from .singleton import Singleton
 
 import cfclient
 
-__author__ = 'Bitcraze AB'
-__all__ = ['Config']
+__author__ = "Bitcraze AB"
+__all__ = ["Config"]
 
 logger = logging.getLogger(__name__)
 
 
 class Config(metaclass=Singleton):
-    """ Singleton class for accessing application configuration """
+    """Singleton class for accessing application configuration"""
 
     def __init__(self):
-        """ Initializes the singleton and reads the config files """
+        """Initializes the singleton and reads the config files"""
         self._dist_config = cfclient.module_path + "/configs/config.json"
         self._config = cfclient.config_path + "/config.json"
 
         [self._readonly, self._data] = self._read_distfile()
 
         user_config = self._read_config()
-        if (user_config):
+        if user_config:
             self._data.update(user_config)
 
     def _read_distfile(self):
-        """ Read the distribution config file containing the defaults """
-        f = open(self._dist_config, 'r')
+        """Read the distribution config file containing the defaults"""
+        f = open(self._dist_config, "r")
         data = json.load(f)
         f.close()
-        logger.info("Dist config read from %s" % self._dist_config)
+        logger.debug("Dist config read from %s" % self._dist_config)
 
         return [data["read-only"], data["writable"]]
 
     def set(self, key, value):
-        """ Set the value of a config parameter """
+        """Set the value of a config parameter"""
         try:
             self._data[key] = value
         except KeyError:
             raise KeyError("Could not set the parameter [%s]" % key)
 
     def get(self, key):
-        """ Get the value of a config parameter """
+        """Get the value of a config parameter"""
         value = None
-        if (key in self._data):
+        if key in self._data:
             value = self._data[key]
-        elif (key in self._readonly):
+        elif key in self._readonly:
             value = self._readonly[key]
         else:
             raise KeyError("Could not get the parameter [%s]" % key)
 
-        if (isinstance(value, str)):
+        if isinstance(value, str):
             value = str(value)
 
         return value
 
     def save_file(self):
-        """ Save the user config to file """
-        json_data = open(self._config, 'w')
+        """Save the user config to file"""
+        json_data = open(self._config, "w")
         json_data.write(json.dumps(self._data, indent=2))
         json_data.close()
         logger.info("Config file saved to [%s]" % self._config)
 
     def _read_config(self):
-        """ Read the user config from file """
+        """Read the user config from file"""
         try:
             json_data = open(self._config)
             data = json.load(json_data)
             json_data.close()
-            logger.info("Config file read from [%s]" % self._config)
+            logger.debug("Config file read from [%s]" % self._config)
         except Exception:
             return None
 
