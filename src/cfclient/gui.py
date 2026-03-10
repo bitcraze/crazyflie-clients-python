@@ -36,6 +36,7 @@ from typing import Literal
 import asyncio
 import logging
 
+from cflib2 import DisconnectedError
 import PySide6.QtAsyncio as QtAsyncio
 
 
@@ -65,6 +66,8 @@ def _task_done_callback(task):
         return
     try:
         task.result()
+    except DisconnectedError:
+        logger.debug("Task interrupted by disconnect: %s", task)
     except Exception:
         import traceback
 
