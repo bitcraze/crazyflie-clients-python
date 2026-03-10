@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2021-2023 Bitcraze AB
+#  Copyright (C) 2021-2026 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -28,16 +28,15 @@
 from collections import namedtuple
 from PySide6.QtCore import Signal, QObject
 
-__author__ = 'Bitcraze AB'
-__all__ = ['ConnectivityManager']
+__author__ = "Bitcraze AB"
+__all__ = ["ConnectivityManager"]
 
 
 class ConnectivityManager(QObject):
-    UiElementsContainer = namedtuple('UiElementContainer', [
-        'interface_combo',
-        'address_spinner',
-        'connect_button',
-        'scan_button'])
+    UiElementsContainer = namedtuple(
+        "UiElementContainer",
+        ["interface_combo", "address_spinner", "connect_button", "scan_button"],
+    )
 
     class UIState:
         DISCONNECTED = 0
@@ -45,7 +44,7 @@ class ConnectivityManager(QObject):
         CONNECTED = 2
         SCANNING = 3
 
-    INTERFACE_PROMPT_TEXT = 'Select an interface'
+    INTERFACE_PROMPT_TEXT = "Select an interface"
 
     connect_button_clicked = Signal()
     scan_button_clicked = Signal(object)
@@ -64,9 +63,13 @@ class ConnectivityManager(QObject):
         ui_elements.scan_button.clicked.connect(self._scan_button_click_handler)
 
         ui_elements.address_spinner.valueChanged.connect(self._address_changed_handler)
-        ui_elements.address_spinner.editingFinished.connect(self._address_edited_handler)
+        ui_elements.address_spinner.editingFinished.connect(
+            self._address_edited_handler
+        )
 
-        ui_elements.interface_combo.currentIndexChanged.connect(self._interface_combo_current_index_changed_handler)
+        ui_elements.interface_combo.currentIndexChanged.connect(
+            self._interface_combo_current_index_changed_handler
+        )
 
     def set_state(self, state):
         if self._state != state:
@@ -111,14 +114,12 @@ class ConnectivityManager(QObject):
             combo.setCurrentIndex(new_index)
 
     def get_interface(self):
-        if len(self._ui_elements) > 0:
-            interface = self._ui_elements[0].interface_combo.currentText()
-            if interface == self.INTERFACE_PROMPT_TEXT:
-                self._selected_interface = None
-            else:
-                return interface
-        else:
+        if not self._ui_elements:
             return None
+        interface = self._ui_elements[0].interface_combo.currentText()
+        if interface == self.INTERFACE_PROMPT_TEXT:
+            return None
+        return interface
 
     def _connect_button_click_handler(self):
         self.connect_button_clicked.emit()
@@ -162,7 +163,9 @@ class ConnectivityManager(QObject):
                 can_connect = self.get_interface() is not None
                 for ui_elements in self._ui_elements:
                     ui_elements.connect_button.setText("Connect")
-                    ui_elements.connect_button.setToolTip("Connect to the Crazyflie on the selected interface (Ctrl+I)")
+                    ui_elements.connect_button.setToolTip(
+                        "Connect to the Crazyflie on the selected interface (Ctrl+I)"
+                    )
                     ui_elements.connect_button.setEnabled(can_connect)
                     ui_elements.scan_button.setText("Scan")
                     ui_elements.scan_button.setEnabled(True)
@@ -171,14 +174,18 @@ class ConnectivityManager(QObject):
             elif self._state == self.UIState.CONNECTED:
                 for ui_elements in self._ui_elements:
                     ui_elements.connect_button.setText("Disconnect")
-                    ui_elements.connect_button.setToolTip("Disconnect from the Crazyflie (Ctrl+I)")
+                    ui_elements.connect_button.setToolTip(
+                        "Disconnect from the Crazyflie (Ctrl+I)"
+                    )
                     ui_elements.scan_button.setEnabled(False)
                     ui_elements.address_spinner.setEnabled(False)
                     ui_elements.interface_combo.setEnabled(False)
             elif self._state == self.UIState.CONNECTING:
                 for ui_elements in self._ui_elements:
                     ui_elements.connect_button.setText("Cancel")
-                    ui_elements.connect_button.setToolTip("Cancel connecting to the Crazyflie")
+                    ui_elements.connect_button.setToolTip(
+                        "Cancel connecting to the Crazyflie"
+                    )
                     ui_elements.scan_button.setEnabled(False)
                     ui_elements.address_spinner.setEnabled(False)
                     ui_elements.interface_combo.setEnabled(False)
