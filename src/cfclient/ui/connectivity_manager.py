@@ -26,6 +26,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #  02110-1301, USA.
 from collections import namedtuple
+from enum import IntEnum
 from PySide6.QtCore import Signal, QObject
 
 __author__ = "Bitcraze AB"
@@ -38,7 +39,7 @@ class ConnectivityManager(QObject):
         ["interface_combo", "address_spinner", "connect_button", "scan_button"],
     )
 
-    class UIState:
+    class UIState(IntEnum):
         DISCONNECTED = 0
         CONNECTING = 1
         CONNECTED = 2

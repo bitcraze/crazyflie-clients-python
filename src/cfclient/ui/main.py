@@ -63,11 +63,7 @@ logger = logging.getLogger(__name__)
 )  # type: ignore[misc]
 
 
-class UIState:
-    DISCONNECTED = 0
-    CONNECTING = 1
-    CONNECTED = 2
-    SCANNING = 3
+UIState = ConnectivityManager.UIState
 
 
 class MainUI(QtWidgets.QMainWindow, main_window_class):
