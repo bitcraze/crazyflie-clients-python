@@ -452,15 +452,22 @@ class ParamTab(TabToolbox, param_tab_class):
         if self._cf is None:
             return
         param = self._cf.param()
+        # Capture our task identity so we can detect if the user selected
+        # a different param while we were awaiting.
+        my_task = self._fetch_details_task
 
         if param.is_writable(complete_name):
             default_value = await param.get_default_value(complete_name)
+            if self._fetch_details_task is not my_task:
+                return  # A newer selection replaced us
             self.defaultValue.setText(
                 str(default_value) if default_value is not None else "-"
             )
 
         if node.persistent:
             state = await param.persistent_get_state(complete_name)
+            if self._fetch_details_task is not my_task:
+                return  # A newer selection replaced us
             self._show_persistent_state(state)
             if state.is_stored:
                 node.stored_value = round_if_float(state.stored_value)
