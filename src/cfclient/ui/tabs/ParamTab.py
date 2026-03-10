@@ -220,11 +220,26 @@ class ParamBlockModel(QAbstractItemModel):
 
         return None
 
-    def _emit_value_changed(self, node):
+    def find_node(self, group_name, param_name):
+        """Find and return a parameter node by group and param name."""
+        for group in self._nodes:
+            if group.name == group_name:
+                for node in group.children:
+                    if node.name == param_name:
+                        return node
+        return None
+
+    def iter_all_nodes(self):
+        """Yield (complete_name, node) for every parameter node."""
+        for group in self._nodes:
+            for node in group.children:
+                yield f"{group.name}.{node.name}", node
+
+    def notify_value_changed(self, node):
         """Refresh only column 4 (Value) for the given node."""
         self._emit_column_changed(node, 4)
 
-    def _emit_stored_value_changed(self, node):
+    def notify_stored_value_changed(self, node):
         """Refresh only column 5 (Stored Value) for the given node."""
         self._emit_column_changed(node, 5)
 
@@ -341,12 +356,10 @@ class ParamTab(TabToolbox, param_tab_class):
         """Load TOC, then fetch all parameter values."""
         await self._model.set_toc(param)
         self._model.set_enabled(True)
-        for group in self._model._nodes:
-            for node in group.children:
-                complete_name = f"{group.name}.{node.name}"
-                value = await param.get(complete_name)
-                node.value = round_if_float(value)
-                node.is_updating = False
+        for complete_name, node in self._model.iter_all_nodes():
+            value = await param.get(complete_name)
+            node.value = round_if_float(value)
+            node.is_updating = False
         self._model.layoutChanged.emit()
 
     def _set_param_value_clicked(self):
@@ -374,15 +387,11 @@ class ParamTab(TabToolbox, param_tab_class):
 
     def _update_node_value(self, complete_name, value):
         """Update a node's displayed value after a set."""
-        group_name, param_name = complete_name.split(".", 1)
-        for group in self._model._nodes:
-            if group.name == group_name:
-                for node in group.children:
-                    if node.name == param_name:
-                        node.value = round_if_float(value)
-                        node.is_updating = False
-                        self._model._emit_value_changed(node)
-                        return
+        node = self._find_node_by_complete_name(complete_name)
+        if node:
+            node.value = round_if_float(value)
+            node.is_updating = False
+            self._model.notify_value_changed(node)
 
     def _paramChanged(self):
         group = None
@@ -418,7 +427,7 @@ class ParamTab(TabToolbox, param_tab_class):
                     self.paramDetailsDescription.setText("")
 
             # Find the node to get writable status
-            node = self._find_node(group, param)
+            node = self._model.find_node(group, param)
             if node is None:
                 return
 
@@ -457,7 +466,7 @@ class ParamTab(TabToolbox, param_tab_class):
                 node.stored_value = round_if_float(state.stored_value)
             else:
                 node.stored_value = ""
-            self._model._emit_stored_value_changed(node)
+            self._model.notify_stored_value_changed(node)
 
     def _show_persistent_state(self, state):
         self.persistentFrame.setVisible(True)
@@ -492,19 +501,11 @@ class ParamTab(TabToolbox, param_tab_class):
                 node.stored_value = round_if_float(state.stored_value)
             else:
                 node.stored_value = ""
-            self._model._emit_stored_value_changed(node)
-
-    def _find_node(self, group_name, param_name):
-        for group in self._model._nodes:
-            if group.name == group_name:
-                for node in group.children:
-                    if node.name == param_name:
-                        return node
-        return None
+            self._model.notify_stored_value_changed(node)
 
     def _find_node_by_complete_name(self, complete_name):
         group_name, param_name = complete_name.split(".", 1)
-        return self._find_node(group_name, param_name)
+        return self._model.find_node(group_name, param_name)
 
     def _update_param_io_buttons(self):
         self._clear_param_button.setEnabled(self._is_connected)
@@ -534,4 +535,4 @@ class ParamTab(TabToolbox, param_tab_class):
                     node = self._find_node_by_complete_name(complete_name)
                     if node:
                         node.stored_value = ""
-                        self._model._emit_stored_value_changed(node)
+                        self._model.notify_stored_value_changed(node)
