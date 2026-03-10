@@ -277,6 +277,7 @@ class ParamTab(TabToolbox, param_tab_class):
 
         self._cf = None
         self._load_params_task = None
+        self._fetch_details_task = None
         self._model = ParamBlockModel(None, self._helper.mainUI)
 
         self.setParamButton.clicked.connect(self._set_param_value_clicked)
@@ -326,6 +327,9 @@ class ParamTab(TabToolbox, param_tab_class):
         if self._load_params_task is not None:
             self._load_params_task.cancel()
             self._load_params_task = None
+        if self._fetch_details_task is not None:
+            self._fetch_details_task.cancel()
+            self._fetch_details_task = None
         self._cf = None
         self._is_connected = False
         self._update_param_io_buttons()
@@ -427,8 +431,12 @@ class ParamTab(TabToolbox, param_tab_class):
             self.setParamButton.setEnabled(node.writable)
             self.resetDefaultButton.setEnabled(node.writable)
 
-            # Fetch default value and persistent state asynchronously
-            create_task(self._async_fetch_param_details(complete, node))
+            # Cancel any in-flight detail fetch before starting a new one
+            if self._fetch_details_task is not None:
+                self._fetch_details_task.cancel()
+            self._fetch_details_task = create_task(
+                self._async_fetch_param_details(complete, node)
+            )
 
     async def _async_fetch_param_details(self, complete_name, node):
         """Fetch default value and persistent state for the selected param."""
