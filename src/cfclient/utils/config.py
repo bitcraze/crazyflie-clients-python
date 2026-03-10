@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2013 Bitcraze AB
+#  Copyright (C) 2011-2026 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -58,10 +58,9 @@ class Config(metaclass=Singleton):
 
     def _read_distfile(self):
         """Read the distribution config file containing the defaults"""
-        f = open(self._dist_config, "r")
-        data = json.load(f)
-        f.close()
-        logger.debug("Dist config read from %s" % self._dist_config)
+        with open(self._dist_config, "r") as f:
+            data = json.load(f)
+        logger.debug("Dist config read from %s", self._dist_config)
 
         return [data["read-only"], data["writable"]]
 
@@ -82,26 +81,25 @@ class Config(metaclass=Singleton):
         else:
             raise KeyError("Could not get the parameter [%s]" % key)
 
-        if isinstance(value, str):
-            value = str(value)
-
         return value
 
     def save_file(self):
         """Save the user config to file"""
-        json_data = open(self._config, "w")
-        json_data.write(json.dumps(self._data, indent=2))
-        json_data.close()
-        logger.info("Config file saved to [%s]" % self._config)
+        with open(self._config, "w") as json_data:
+            json_data.write(json.dumps(self._data, indent=2))
+        logger.info("Config file saved to [%s]", self._config)
 
     def _read_config(self):
         """Read the user config from file"""
         try:
-            json_data = open(self._config)
-            data = json.load(json_data)
-            json_data.close()
-            logger.debug("Config file read from [%s]" % self._config)
-        except Exception:
+            with open(self._config) as json_data:
+                data = json.load(json_data)
+            logger.debug("Config file read from [%s]", self._config)
+        except FileNotFoundError:
+            logger.debug("No user config file found at [%s]", self._config)
+            return None
+        except json.JSONDecodeError:
+            logger.warning("Malformed user config at [%s], ignoring", self._config)
             return None
 
         return data
