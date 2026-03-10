@@ -466,7 +466,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     def closeEvent(self, event):
         Config().save_file()
         if self.cf is not None:
-            create_task(self.cf.disconnect())
+            create_task(self._async_disconnect())
         self.hide()
 
     def resizeEvent(self, event):
