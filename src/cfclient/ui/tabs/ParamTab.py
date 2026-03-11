@@ -34,6 +34,7 @@ import logging
 from collections import defaultdict
 from typing import Any, overload
 
+import yaml
 from PySide6 import QtCore
 from PySide6.QtUiTools import loadUiType
 from PySide6.QtCore import QSortFilterProxyModel, Qt
@@ -44,11 +45,13 @@ from PySide6.QtCore import (
     QPersistentModelIndex,
 )
 from PySide6.QtGui import QBrush, QColor
-from PySide6.QtWidgets import QHeaderView, QMessageBox
+from PySide6.QtWidgets import QFileDialog, QHeaderView, QMessageBox
 
 import cfclient
 from cfclient.gui import create_task
 from cfclient.ui.tab_toolbox import TabToolbox
+
+FILE_REGEX_YAML = "Config *.yaml;;All *.*"
 
 __author__ = "Bitcraze AB"
 __all__ = ["ParamTab"]
@@ -360,9 +363,8 @@ class ParamTab(TabToolbox, param_tab_class):
         )
         self.paramTree.selectionModel().selectionChanged.connect(self._paramChanged)
 
-        # TODO: implement storing and loading of persistent parameters, for now we just disable the buttons
-        self._load_param_button.setEnabled(False)
-        self._dump_param_button.setEnabled(False)
+        self._load_param_button.clicked.connect(self._load_param_button_clicked)
+        self._dump_param_button.clicked.connect(self._dump_param_button_clicked)
         self._clear_param_button.clicked.connect(
             self._clear_stored_persistent_params_button_clicked
         )
@@ -555,6 +557,8 @@ class ParamTab(TabToolbox, param_tab_class):
         return self._model.find_node(group_name, param_name)
 
     def _update_param_io_buttons(self):
+        self._load_param_button.setEnabled(self._is_connected)
+        self._dump_param_button.setEnabled(self._is_connected)
         self._clear_param_button.setEnabled(self._is_connected)
 
     def _clear_stored_persistent_params_button_clicked(self):
@@ -583,3 +587,107 @@ class ParamTab(TabToolbox, param_tab_class):
                     if node:
                         node.stored_value = ""
                         self._model.notify_stored_value_changed(node)
+
+    def _dump_param_button_clicked(self):
+        names = QFileDialog.getSaveFileName(
+            self, "Save file", cfclient.config_path, FILE_REGEX_YAML
+        )
+        if names[0] == "":
+            return
+        filename = names[0]
+        if not filename.endswith(".yaml"):
+            filename += ".yaml"
+        create_task(self._async_dump_params(filename))
+
+    async def _async_dump_params(self, filename):
+        if self._cf is None:
+            return
+        param = self._cf.param()
+        file_params = {}
+        for complete_name in param.names():
+            if await param.is_persistent(complete_name):
+                state = await param.persistent_get_state(complete_name)
+                if state.is_stored:
+                    file_params[complete_name] = state.stored_value
+        data = {
+            "type": "persistent_param_state",
+            "version": "2",
+            "params": file_params,
+        }
+        with open(filename, "w") as f:
+            yaml.dump(data, f)
+
+        if not file_params:
+            QMessageBox.information(
+                self, "Info", "No stored persistent parameters to dump."
+            )
+            return
+
+        param_lines = [f"{name}: {value}" for name, value in file_params.items()]
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Info")
+        dlg.setText("Dumped persistent parameters to file:\n" + "\n".join(param_lines))
+        dlg.exec()
+
+    def _load_param_button_clicked(self):
+        names = QFileDialog.getOpenFileName(
+            self, "Open file", cfclient.config_path, FILE_REGEX_YAML
+        )
+        if names[0] == "":
+            return
+
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Load Parameters Confirmation")
+        dlg.setText(
+            "This will overwrite current parameter values and store them "
+            "persistently on the Crazyflie. Continue?"
+        )
+        dlg.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        if dlg.exec() != QMessageBox.StandardButton.Yes:
+            return
+
+        create_task(self._async_load_params(names[0]))
+
+    async def _async_load_params(self, filename):
+        if self._cf is None:
+            return
+        with open(filename, "r") as f:
+            data = yaml.safe_load(f)
+
+        if not isinstance(data, dict) or data.get("type") != "persistent_param_state":
+            QMessageBox.warning(self, "Error", "Invalid parameter file format")
+            return
+
+        version = data.get("version", "1")
+        params_data = data.get("params", {})
+        param = self._cf.param()
+        loaded = []
+        failed = []
+        for name, entry in params_data.items():
+            if version == "1":
+                if not isinstance(entry, dict) or not entry.get("is_stored"):
+                    continue
+                value = entry["stored_value"]
+            else:
+                value = entry
+            try:
+                await param.set(name, value)
+                await param.persistent_store(name)
+                loaded.append(f"{name}: {value}")
+                node = self._find_node_by_complete_name(name)
+                if node:
+                    node.stored_value = round_if_float(value)
+                    self._model.notify_stored_value_changed(node)
+            except Exception:
+                logger.warning("Failed to set %s", name)
+                failed.append(name)
+
+        message = "Loaded persistent parameters from file:\n" + "\n".join(loaded)
+        if failed:
+            message += "\n\nFailed to set:\n" + "\n".join(failed)
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Info")
+        dlg.setText(message)
+        dlg.exec()
