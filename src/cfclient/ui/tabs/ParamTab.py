@@ -244,8 +244,11 @@ class ParamBlockModel(QAbstractItemModel):
         self._emit_column_changed(node, 5)
 
     def _emit_column_changed(self, node, col):
-        source_row = node.parent.children.index(node)
-        parent_row = self._nodes.index(node.parent)
+        try:
+            source_row = node.parent.children.index(node)
+            parent_row = self._nodes.index(node.parent)
+        except ValueError:
+            return
         row_index = self.index(
             source_row, col, self.createIndex(parent_row, 0, node.parent)
         )
