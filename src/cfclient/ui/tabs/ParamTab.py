@@ -32,11 +32,17 @@ to edit them.
 
 import logging
 from collections import defaultdict
+from typing import Any, overload
 
 from PySide6 import QtCore
 from PySide6.QtUiTools import loadUiType
 from PySide6.QtCore import QSortFilterProxyModel, Qt
-from PySide6.QtCore import QAbstractItemModel, QModelIndex
+from PySide6.QtCore import (
+    QAbstractItemModel,
+    QModelIndex,
+    QObject,
+    QPersistentModelIndex,
+)
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import QHeaderView, QMessageBox
 
@@ -47,7 +53,7 @@ from cfclient.ui.tab_toolbox import TabToolbox
 __author__ = "Bitcraze AB"
 __all__ = ["ParamTab"]
 
-param_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/paramTab.ui")[0]
+param_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/paramTab.ui")[0]  # type: ignore[index]
 
 logger = logging.getLogger(__name__)
 
@@ -143,24 +149,40 @@ class ParamBlockModel(QAbstractItemModel):
     def refresh(self):
         self.layoutChanged.emit()
 
-    def parent(self, index):
-        if not index.isValid():
+    @overload
+    def parent(self, /) -> QObject: ...
+    @overload
+    def parent(self, child: QModelIndex | QPersistentModelIndex, /) -> QModelIndex: ...
+    def parent(self, child=None, /):
+        if child is None:
+            return super().parent()
+        if not child.isValid():
             return QModelIndex()
 
-        node = index.internalPointer()
+        node = child.internalPointer()
         if node.parent is None:
             return QModelIndex()
         else:
             return self.createIndex(self._nodes.index(node.parent), 0, node.parent)
 
-    def columnCount(self, parent):
+    def columnCount(
+        self, /, parent: QModelIndex | QPersistentModelIndex = QModelIndex()
+    ) -> int:
         return len(self._column_headers)
 
-    def headerData(self, section, orientation, role):
+    def headerData(
+        self,
+        section: int,
+        orientation: Qt.Orientation,
+        /,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
         if role == Qt.ItemDataRole.DisplayRole:
             return self._column_headers[section]
 
-    def rowCount(self, parent):
+    def rowCount(
+        self, /, parent: QModelIndex | QPersistentModelIndex = QModelIndex()
+    ) -> int:
         parent_item = parent.internalPointer()
         if parent.isValid():
             parent_item = parent.internalPointer()
@@ -168,7 +190,13 @@ class ParamBlockModel(QAbstractItemModel):
         else:
             return len(self._nodes)
 
-    def index(self, row, column, parent):
+    def index(
+        self,
+        row: int,
+        column: int,
+        /,
+        parent: QModelIndex | QPersistentModelIndex = QModelIndex(),
+    ) -> QModelIndex:
         if not self._nodes:
             return QModelIndex()
         node = parent.internalPointer()
@@ -179,7 +207,12 @@ class ParamBlockModel(QAbstractItemModel):
         else:
             return self.createIndex(row, column, node.children[row])
 
-    def data(self, index, role):
+    def data(
+        self,
+        index: QModelIndex | QPersistentModelIndex,
+        /,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
         if role == Qt.ItemDataRole.BackgroundRole:
             bgColor = self._mainUI.palette().color(self._mainUI.backgroundRole())
             if index.row() % 2 == 0:
@@ -244,6 +277,8 @@ class ParamBlockModel(QAbstractItemModel):
         self._emit_column_changed(node, 5)
 
     def _emit_column_changed(self, node, col):
+        if self.proxy is None:
+            return
         try:
             source_row = node.parent.children.index(node)
             parent_row = self._nodes.index(node.parent)
@@ -277,7 +312,9 @@ class ParamTreeFilterProxy(QSortFilterProxyModel):
     def __init__(self, paramTree):
         super().__init__(paramTree)
 
-    def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
+    def filterAcceptsRow(
+        self, source_row: int, source_parent: QModelIndex | QPersistentModelIndex, /
+    ) -> bool:
         if not source_parent.isValid():
             return super().filterAcceptsRow(source_row, source_parent)
         return super().filterAcceptsRow(source_parent.row(), source_parent.parent())
