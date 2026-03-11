@@ -36,6 +36,7 @@ from typing import Literal
 import asyncio
 import logging
 
+from cflib2 import DisconnectedError
 import PySide6.QtAsyncio as QtAsyncio
 
 
@@ -65,6 +66,8 @@ def _task_done_callback(task):
         return
     try:
         task.result()
+    except DisconnectedError:
+        logger.debug("Task interrupted by disconnect: %s", task)
     except Exception:
         import traceback
 
@@ -205,7 +208,9 @@ def main():
 
     # Use os._exit() to avoid PySide6 aborting when Python's GC
     # destroys QThread objects (e.g. from vispy) in the wrong order.
-    os._exit(QtAsyncio.run(handle_sigint=True))
+    # Hardcode 0: QtAsyncio.run() returns None when keep_running=True (the default).
+    QtAsyncio.run(handle_sigint=True)
+    os._exit(0)
 
 
 if __name__ == "__main__":

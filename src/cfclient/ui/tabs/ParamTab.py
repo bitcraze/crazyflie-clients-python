@@ -32,11 +32,17 @@ to edit them.
 
 import logging
 from collections import defaultdict
+from typing import Any, overload
 
 from PySide6 import QtCore
 from PySide6.QtUiTools import loadUiType
 from PySide6.QtCore import QSortFilterProxyModel, Qt
-from PySide6.QtCore import QAbstractItemModel, QModelIndex
+from PySide6.QtCore import (
+    QAbstractItemModel,
+    QModelIndex,
+    QObject,
+    QPersistentModelIndex,
+)
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import QHeaderView, QMessageBox
 
@@ -47,7 +53,7 @@ from cfclient.ui.tab_toolbox import TabToolbox
 __author__ = "Bitcraze AB"
 __all__ = ["ParamTab"]
 
-param_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/paramTab.ui")[0]
+param_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/paramTab.ui")[0]  # type: ignore[index]
 
 logger = logging.getLogger(__name__)
 
@@ -143,24 +149,40 @@ class ParamBlockModel(QAbstractItemModel):
     def refresh(self):
         self.layoutChanged.emit()
 
-    def parent(self, index):
-        if not index.isValid():
+    @overload
+    def parent(self, /) -> QObject: ...
+    @overload
+    def parent(self, child: QModelIndex | QPersistentModelIndex, /) -> QModelIndex: ...
+    def parent(self, child=None, /):
+        if child is None:
+            return super().parent()
+        if not child.isValid():
             return QModelIndex()
 
-        node = index.internalPointer()
+        node = child.internalPointer()
         if node.parent is None:
             return QModelIndex()
         else:
             return self.createIndex(self._nodes.index(node.parent), 0, node.parent)
 
-    def columnCount(self, parent):
+    def columnCount(
+        self, /, parent: QModelIndex | QPersistentModelIndex = QModelIndex()
+    ) -> int:
         return len(self._column_headers)
 
-    def headerData(self, section, orientation, role):
+    def headerData(
+        self,
+        section: int,
+        orientation: Qt.Orientation,
+        /,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
         if role == Qt.ItemDataRole.DisplayRole:
             return self._column_headers[section]
 
-    def rowCount(self, parent):
+    def rowCount(
+        self, /, parent: QModelIndex | QPersistentModelIndex = QModelIndex()
+    ) -> int:
         parent_item = parent.internalPointer()
         if parent.isValid():
             parent_item = parent.internalPointer()
@@ -168,7 +190,13 @@ class ParamBlockModel(QAbstractItemModel):
         else:
             return len(self._nodes)
 
-    def index(self, row, column, parent):
+    def index(
+        self,
+        row: int,
+        column: int,
+        /,
+        parent: QModelIndex | QPersistentModelIndex = QModelIndex(),
+    ) -> QModelIndex:
         if not self._nodes:
             return QModelIndex()
         node = parent.internalPointer()
@@ -179,7 +207,12 @@ class ParamBlockModel(QAbstractItemModel):
         else:
             return self.createIndex(row, column, node.children[row])
 
-    def data(self, index, role):
+    def data(
+        self,
+        index: QModelIndex | QPersistentModelIndex,
+        /,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
         if role == Qt.ItemDataRole.BackgroundRole:
             bgColor = self._mainUI.palette().color(self._mainUI.backgroundRole())
             if index.row() % 2 == 0:
@@ -220,17 +253,37 @@ class ParamBlockModel(QAbstractItemModel):
 
         return None
 
-    def _emit_value_changed(self, node):
+    def find_node(self, group_name, param_name):
+        """Find and return a parameter node by group and param name."""
+        for group in self._nodes:
+            if group.name == group_name:
+                for node in group.children:
+                    if node.name == param_name:
+                        return node
+        return None
+
+    def iter_all_nodes(self):
+        """Yield (complete_name, node) for every parameter node."""
+        for group in self._nodes:
+            for node in group.children:
+                yield f"{group.name}.{node.name}", node
+
+    def notify_value_changed(self, node):
         """Refresh only column 4 (Value) for the given node."""
         self._emit_column_changed(node, 4)
 
-    def _emit_stored_value_changed(self, node):
+    def notify_stored_value_changed(self, node):
         """Refresh only column 5 (Stored Value) for the given node."""
         self._emit_column_changed(node, 5)
 
     def _emit_column_changed(self, node, col):
-        source_row = node.parent.children.index(node)
-        parent_row = self._nodes.index(node.parent)
+        if self.proxy is None:
+            return
+        try:
+            source_row = node.parent.children.index(node)
+            parent_row = self._nodes.index(node.parent)
+        except ValueError:
+            return
         row_index = self.index(
             source_row, col, self.createIndex(parent_row, 0, node.parent)
         )
@@ -259,7 +312,9 @@ class ParamTreeFilterProxy(QSortFilterProxyModel):
     def __init__(self, paramTree):
         super().__init__(paramTree)
 
-    def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
+    def filterAcceptsRow(
+        self, source_row: int, source_parent: QModelIndex | QPersistentModelIndex, /
+    ) -> bool:
         if not source_parent.isValid():
             return super().filterAcceptsRow(source_row, source_parent)
         return super().filterAcceptsRow(source_parent.row(), source_parent.parent())
@@ -277,6 +332,7 @@ class ParamTab(TabToolbox, param_tab_class):
 
         self._cf = None
         self._load_params_task = None
+        self._fetch_details_task = None
         self._model = ParamBlockModel(None, self._helper.mainUI)
 
         self.setParamButton.clicked.connect(self._set_param_value_clicked)
@@ -326,6 +382,9 @@ class ParamTab(TabToolbox, param_tab_class):
         if self._load_params_task is not None:
             self._load_params_task.cancel()
             self._load_params_task = None
+        if self._fetch_details_task is not None:
+            self._fetch_details_task.cancel()
+            self._fetch_details_task = None
         self._cf = None
         self._is_connected = False
         self._update_param_io_buttons()
@@ -337,12 +396,10 @@ class ParamTab(TabToolbox, param_tab_class):
         """Load TOC, then fetch all parameter values."""
         await self._model.set_toc(param)
         self._model.set_enabled(True)
-        for group in self._model._nodes:
-            for node in group.children:
-                complete_name = f"{group.name}.{node.name}"
-                value = await param.get(complete_name)
-                node.value = round_if_float(value)
-                node.is_updating = False
+        for complete_name, node in self._model.iter_all_nodes():
+            value = await param.get(complete_name)
+            node.value = round_if_float(value)
+            node.is_updating = False
         self._model.layoutChanged.emit()
 
     def _set_param_value_clicked(self):
@@ -357,7 +414,11 @@ class ParamTab(TabToolbox, param_tab_class):
         try:
             numeric_value = int(value)
         except ValueError:
-            numeric_value = float(value)
+            try:
+                numeric_value = float(value)
+            except ValueError:
+                logger.warning("Invalid parameter value: %s", value)
+                return
         param = self._cf.param()
         await param.set(name, numeric_value)
         # Read back updated value
@@ -366,15 +427,11 @@ class ParamTab(TabToolbox, param_tab_class):
 
     def _update_node_value(self, complete_name, value):
         """Update a node's displayed value after a set."""
-        group_name, param_name = complete_name.split(".", 1)
-        for group in self._model._nodes:
-            if group.name == group_name:
-                for node in group.children:
-                    if node.name == param_name:
-                        node.value = round_if_float(value)
-                        node.is_updating = False
-                        self._model._emit_value_changed(node)
-                        return
+        node = self._find_node_by_complete_name(complete_name)
+        if node:
+            node.value = round_if_float(value)
+            node.is_updating = False
+            self._model.notify_value_changed(node)
 
     def _paramChanged(self):
         group = None
@@ -410,7 +467,7 @@ class ParamTab(TabToolbox, param_tab_class):
                     self.paramDetailsDescription.setText("")
 
             # Find the node to get writable status
-            node = self._find_node(group, param)
+            node = self._model.find_node(group, param)
             if node is None:
                 return
 
@@ -423,29 +480,40 @@ class ParamTab(TabToolbox, param_tab_class):
             self.setParamButton.setEnabled(node.writable)
             self.resetDefaultButton.setEnabled(node.writable)
 
-            # Fetch default value and persistent state asynchronously
-            create_task(self._async_fetch_param_details(complete, node))
+            # Cancel any in-flight detail fetch before starting a new one
+            if self._fetch_details_task is not None:
+                self._fetch_details_task.cancel()
+            self._fetch_details_task = create_task(
+                self._async_fetch_param_details(complete, node)
+            )
 
     async def _async_fetch_param_details(self, complete_name, node):
         """Fetch default value and persistent state for the selected param."""
         if self._cf is None:
             return
         param = self._cf.param()
+        # Capture our task identity so we can detect if the user selected
+        # a different param while we were awaiting.
+        my_task = self._fetch_details_task
 
         if param.is_writable(complete_name):
             default_value = await param.get_default_value(complete_name)
+            if self._fetch_details_task is not my_task:
+                return  # A newer selection replaced us
             self.defaultValue.setText(
                 str(default_value) if default_value is not None else "-"
             )
 
         if node.persistent:
             state = await param.persistent_get_state(complete_name)
+            if self._fetch_details_task is not my_task:
+                return  # A newer selection replaced us
             self._show_persistent_state(state)
             if state.is_stored:
                 node.stored_value = round_if_float(state.stored_value)
             else:
                 node.stored_value = ""
-            self._model._emit_stored_value_changed(node)
+            self._model.notify_stored_value_changed(node)
 
     def _show_persistent_state(self, state):
         self.persistentFrame.setVisible(True)
@@ -480,19 +548,11 @@ class ParamTab(TabToolbox, param_tab_class):
                 node.stored_value = round_if_float(state.stored_value)
             else:
                 node.stored_value = ""
-            self._model._emit_stored_value_changed(node)
-
-    def _find_node(self, group_name, param_name):
-        for group in self._model._nodes:
-            if group.name == group_name:
-                for node in group.children:
-                    if node.name == param_name:
-                        return node
-        return None
+            self._model.notify_stored_value_changed(node)
 
     def _find_node_by_complete_name(self, complete_name):
         group_name, param_name = complete_name.split(".", 1)
-        return self._find_node(group_name, param_name)
+        return self._model.find_node(group_name, param_name)
 
     def _update_param_io_buttons(self):
         self._clear_param_button.setEnabled(self._is_connected)
@@ -522,4 +582,4 @@ class ParamTab(TabToolbox, param_tab_class):
                     node = self._find_node_by_complete_name(complete_name)
                     if node:
                         node.stored_value = ""
-                        self._model._emit_stored_value_changed(node)
+                        self._model.notify_stored_value_changed(node)
