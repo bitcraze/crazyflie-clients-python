@@ -33,16 +33,19 @@ import sys
 
 import cfclient
 from cfclient.gui import create_task
+from cfclient.ui.pose_logger import PoseLogger
 from cfclient.ui.tab_toolbox import TabToolbox
 import cfclient.ui.tabs
 from cfclient.ui.connectivity_manager import ConnectivityManager
 from cfclient.utils.config import Config
+from cfclient.utils.input import JoystickReader
 from cfclient.utils.ui import UiUtils
 from cflib2 import Crazyflie, LinkContext
 from cflib2.error import DisconnectedError
 from cflib2.toc_cache import FileTocCache
 from PySide6 import QtWidgets
 from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Signal
 from PySide6.QtCore import Slot
 from PySide6.QtCore import QDir
 from PySide6.QtCore import QUrl
@@ -70,7 +73,13 @@ logger = logging.getLogger(__name__)
 UIState = ConnectivityManager.UIState
 
 
+class BatteryStates:
+    BATTERY, CHARGING, CHARGED, LOW_POWER = list(range(4))
+
+
 class MainUI(QtWidgets.QMainWindow, main_window_class):
+    _battery_signal = Signal(float, int)
+
     def __init__(self, *args: object) -> None:
         super(MainUI, self).__init__(*args)
         self.setupUi(self)
@@ -81,6 +90,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._toc_cache = FileTocCache(cfclient.config_path + "/cache")
         self._connect_task = None
         self._disconnect_watch_task = None
+        self._battery_task = None
+        self._disable_input = False
+        self._loop = None
 
         # Restore window size if present in the config file
         try:
@@ -104,7 +116,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.menuItemConfInputDevice.setEnabled(False)
         self.logConfigAction.setEnabled(False)
         self._menu_inputdevice.setEnabled(False)
+
+        # Emergency stop button
         self.esButton.setEnabled(False)
+        self.esButton.clicked.connect(self._emergency_stop)
 
         self._set_address()
 
@@ -124,16 +139,33 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.batteryBar.setTextVisible(False)
         self.linkQualityBar.setTextVisible(False)
 
+        # Input device reader (joystick)
+        self._joystick_reader = JoystickReader()
+
+        # Connect joystick input to Crazyflie commander
+        self._joystick_reader.input_updated.add_callback(
+            self._send_setpoint)
+        self._joystick_reader.assisted_input_updated.add_callback(
+            self._send_velocity_world)
+        self._joystick_reader.heighthold_input_updated.add_callback(
+            self._send_zdistance)
+        self._joystick_reader.hover_input_updated.add_callback(
+            self._send_hover)
+
         # pluginhelper for tabs
+        self._pose_logger = PoseLogger()
+        cfclient.ui.pluginhelper.inputDeviceReader = self._joystick_reader
+        cfclient.ui.pluginhelper.pose_logger = self._pose_logger
         cfclient.ui.pluginhelper.connectivity_manager = self._connectivity_manager
         cfclient.ui.pluginhelper.mainUI = self
 
         self._connectivity_manager.set_address(self.address.value())
 
         self._initial_scan = True
-        QTimer.singleShot(
-            0, lambda: self._scan(self._connectivity_manager.get_address())
-        )
+        QTimer.singleShot(0, self._on_event_loop_ready)
+
+        # Battery monitoring signal
+        self._battery_signal.connect(self._update_battery)
 
         # Tabs and toolboxes
         self.tabs_menu_item = QMenu("Tabs", self.menuView)
@@ -270,6 +302,84 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self, area: Qt.DockWidgetArea, tab_toolbox: TabToolbox
     ) -> None:
         tab_toolbox.set_preferred_dock_area(area)
+
+    # --- Event loop ---
+
+    def _on_event_loop_ready(self):
+        self._loop = asyncio.get_event_loop()
+        self._scan(self._connectivity_manager.get_address())
+
+    # --- Commander pipeline ---
+
+    async def _safe_send(self, coro):
+        try:
+            await coro
+        except DisconnectedError:
+            pass
+
+    def _send_setpoint(self, roll, pitch, yaw, thrust):
+        cf = self.cf
+        if self._disable_input or cf is None or self._loop is None:
+            return
+        asyncio.run_coroutine_threadsafe(
+            self._safe_send(
+                cf.commander().send_setpoint_rpyt(
+                    roll, pitch, yaw, int(thrust)
+                )
+            ),
+            self._loop,
+        )
+
+    def _send_velocity_world(self, vx, vy, vz, yawrate):
+        cf = self.cf
+        if self._disable_input or cf is None or self._loop is None:
+            return
+        asyncio.run_coroutine_threadsafe(
+            self._safe_send(
+                cf.commander().send_setpoint_velocity_world(
+                    vx, vy, vz, yawrate
+                )
+            ),
+            self._loop,
+        )
+
+    def _send_zdistance(self, roll, pitch, yawrate, zdistance):
+        cf = self.cf
+        if self._disable_input or cf is None or self._loop is None:
+            return
+        asyncio.run_coroutine_threadsafe(
+            self._safe_send(
+                cf.commander().send_setpoint_zdistance(
+                    roll, pitch, yawrate, zdistance
+                )
+            ),
+            self._loop,
+        )
+
+    def _send_hover(self, vx, vy, yawrate, zdistance):
+        cf = self.cf
+        if self._disable_input or cf is None or self._loop is None:
+            return
+        asyncio.run_coroutine_threadsafe(
+            self._safe_send(
+                cf.commander().send_setpoint_hover(
+                    vx, vy, yawrate, zdistance
+                )
+            ),
+            self._loop,
+        )
+
+    def disable_input(self, disable):
+        """Disable gamepad input to allow a tab to send setpoints directly."""
+        self._disable_input = disable
+
+    # --- Emergency stop ---
+
+    def _emergency_stop(self):
+        if self.cf is not None:
+            create_task(
+                self.cf.localization().emergency().send_emergency_stop()
+            )
 
     # --- Address ---
 
@@ -408,12 +518,50 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._update_ui_state()
 
     def _notify_tabs_connected(self) -> None:
+        self._pose_logger.start(self.cf)
+        self._battery_task = create_task(self._stream_battery(self.cf))
         for tab_toolbox in self.loaded_tab_toolboxes.values():
             tab_toolbox.connected(self.cf)
 
     def _notify_tabs_disconnected(self) -> None:
+        self._pose_logger.stop()
+        if self._battery_task is not None:
+            self._battery_task.cancel()
+            self._battery_task = None
         for tab_toolbox in self.loaded_tab_toolboxes.values():
             tab_toolbox.disconnected()
+
+    async def _stream_battery(self, cf):
+        log = cf.log()
+        block = await log.create_block()
+        await block.add_variable("pm.vbat")
+        await block.add_variable("pm.state")
+        stream = await block.start(1000)
+        try:
+            while True:
+                data = await stream.next()
+                self._battery_signal.emit(
+                    data.data["pm.vbat"], int(data.data["pm.state"])
+                )
+        finally:
+            try:
+                await stream.stop()
+            except DisconnectedError:
+                pass
+
+    def _update_battery(self, vbat, state):
+        self.batteryBar.setValue(int(vbat * 1000))
+
+        color = UiUtils.COLOR_BLUE
+        # TODO firmware reports fully-charged state as 'Battery',
+        # rather than 'Charged'
+        if state in [BatteryStates.CHARGING, BatteryStates.CHARGED]:
+            color = UiUtils.COLOR_GREEN
+        elif state == BatteryStates.LOW_POWER:
+            color = UiUtils.COLOR_RED
+
+        self.batteryBar.setStyleSheet(UiUtils.progressbar_stylesheet(color))
+        self._aff_volts.setText("%.3f" % vbat)
 
     # --- UI state ---
 
@@ -427,13 +575,18 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 ConnectivityManager.UIState.DISCONNECTED
             )
             self.batteryBar.setValue(3000)
+            # TODO: cflib2 does not expose link quality statistics
             self.linkQualityBar.setValue(0)
+            self.esButton.setEnabled(False)
+            self.esButton.setStyleSheet("")
         elif self.uiState == UIState.CONNECTED:
             s = "Connected on %s" % self._connectivity_manager.get_interface()
             self.setWindowTitle(s)
             self.menuItemConnect.setText("Disconnect")
             self.menuItemConnect.setEnabled(True)
             self._connectivity_manager.set_state(ConnectivityManager.UIState.CONNECTED)
+            self.esButton.setEnabled(True)
+            self.esButton.setStyleSheet("background-color: red")
         elif self.uiState == UIState.CONNECTING:
             s = "Connecting to {} ...".format(
                 self._connectivity_manager.get_interface()
