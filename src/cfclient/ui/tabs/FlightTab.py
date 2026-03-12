@@ -196,7 +196,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.commanderDownButton.clicked.connect(
             lambda: self._flight_command(CommanderAction.DOWN)
         )
-        self._update_flight_commander(False)
+        self.commanderBox.setEnabled(False)
 
         # Supervisor
         self._supervisor_info_bitfield = 0
@@ -353,7 +353,8 @@ class FlightTab(TabToolbox, flight_tab_class):
 
             if data[self.LOG_NAME_CAN_FLY] != self._can_fly_deprecated:
                 self._can_fly_deprecated = data[self.LOG_NAME_CAN_FLY]
-                self._update_flight_commander(True)
+                if self._cf is not None:
+                    create_task(self._update_flight_commander(self._cf))
 
             if self.LOG_NAME_SUPERVISOR_INFO in data:
                 self._supervisor_info_bitfield = data[self.LOG_NAME_SUPERVISOR_INFO]
@@ -477,24 +478,16 @@ class FlightTab(TabToolbox, flight_tab_class):
                 self.armButton.setStyleSheet("")
                 self.armButton.setEnabled(False)
 
-    def _update_flight_commander(self, connected):
+    async def _update_flight_commander(self, cf):
         self.commanderBox.setToolTip(str())
-        if not connected:
-            self.commanderBox.setEnabled(False)
-            return
+        self.commanderBox.setEnabled(False)
 
         if self._can_fly_deprecated == 0:
-            self.commanderBox.setEnabled(False)
             self.commanderBox.setToolTip(
                 "The Crazyflie reports that flight is not possible"
             )
             return
 
-        # Deck param check is done asynchronously in
-        # _update_flight_commander_async
-        self.commanderBox.setEnabled(False)
-
-    async def _update_flight_commander_async(self, cf):
         param = cf.param()
 
         #                  flowV1    flowV2     LightHouse       LPS
@@ -517,7 +510,6 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.commanderBox.setToolTip(
                 "You need a positioning deck to use Command Based Flight"
             )
-            self.commanderBox.setEnabled(False)
             return
 
         # To prevent conflicting commands from the controller and
@@ -526,7 +518,6 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.commanderBox.setToolTip(
                 "Cannot use both a controller and Command Based Flight"
             )
-            self.commanderBox.setEnabled(False)
             return
 
         self.commanderBox.setEnabled(True)
@@ -582,7 +573,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         await self._populate_assisted_mode_dropdown(cf)
 
         # Update flight commander (reads deck params)
-        await self._update_flight_commander_async(cf)
+        await self._update_flight_commander(cf)
 
         self._update_supervisor_and_arming(True)
 
@@ -641,7 +632,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._assist_mode_combo.setEnabled(False)
         self._assist_mode_combo.clear()
 
-        self._update_flight_commander(False)
+        self.commanderBox.setEnabled(False)
 
         self._supervisor_info_bitfield = 0
         self._update_supervisor_and_arming(False)
