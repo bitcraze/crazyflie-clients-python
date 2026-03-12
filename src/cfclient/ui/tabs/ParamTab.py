@@ -420,7 +420,13 @@ class ParamTab(TabToolbox, param_tab_class):
                 logger.warning("Invalid parameter value: %s", value)
                 return
         param = self._cf.param()
-        await param.set(name, numeric_value)
+        try:
+            await param.set(name, numeric_value)
+            self.currentValue.setStyleSheet("")
+        except OverflowError:
+            logger.warning("Value out of range for parameter %s: %s", name, value)
+            self.currentValue.setStyleSheet("border: 1px solid red")
+            return
         # Read back updated value
         new_value = await param.get(name)
         self._update_node_value(name, new_value)
