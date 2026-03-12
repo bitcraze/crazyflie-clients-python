@@ -33,7 +33,7 @@ it into the UI when it is started.
 # from .ConsoleTab import ConsoleTab
 # from .CrtpSharkToolbox import CrtpSharkToolbox
 # from .ExampleTab import ExampleTab
-# from .FlightTab import FlightTab
+from .FlightTab import FlightTab
 # from .GpsTab import GpsTab
 # from .LEDRingTab import LEDRingTab
 # from .LogBlockTab import LogBlockTab
@@ -52,7 +52,7 @@ __all__ = []
 available = [
     # ConsoleTab,
     # ExampleTab,
-    # FlightTab,
+    FlightTab,
     # GpsTab,
     # LEDRingTab,
     # ColorLEDTab,

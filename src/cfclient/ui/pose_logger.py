@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2021 Bitcraze AB
+#  Copyright (C) 2021-2025 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -28,40 +28,39 @@
 """
 Sets up logging for the the full pose of the Crazyflie
 """
+
 import logging
 import math
 
-from cflib.crazyflie import Crazyflie
-from cflib.crazyflie.log import LogConfig
-from cflib.utils.callbacks import Caller
+from cflib2 import DisconnectedError
 
-__author__ = 'Bitcraze AB'
-__all__ = ['PoseLogger']
+from cfclient.gui import create_task
+from cfclient.utils.callbacks import Caller
+
+__author__ = "Bitcraze AB"
+__all__ = ["PoseLogger"]
 
 logger = logging.getLogger(__name__)
 
 
 class PoseLogger:
-    LOG_NAME_ESTIMATE_X = 'stateEstimate.x'
-    LOG_NAME_ESTIMATE_Y = 'stateEstimate.y'
-    LOG_NAME_ESTIMATE_Z = 'stateEstimate.z'
-    LOG_NAME_ESTIMATE_ROLL = 'stateEstimate.roll'
-    LOG_NAME_ESTIMATE_PITCH = 'stateEstimate.pitch'
-    LOG_NAME_ESTIMATE_YAW = 'stateEstimate.yaw'
+    LOG_NAME_ESTIMATE_X = "stateEstimate.x"
+    LOG_NAME_ESTIMATE_Y = "stateEstimate.y"
+    LOG_NAME_ESTIMATE_Z = "stateEstimate.z"
+    LOG_NAME_ESTIMATE_ROLL = "stateEstimate.roll"
+    LOG_NAME_ESTIMATE_PITCH = "stateEstimate.pitch"
+    LOG_NAME_ESTIMATE_YAW = "stateEstimate.yaw"
     NO_POSE = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
-    def __init__(self, cf: Crazyflie) -> None:
-        self._cf = cf
-        self._cf.connected.add_callback(self._connected)
-        self._cf.disconnected.add_callback(self._disconnected)
-
+    def __init__(self) -> None:
         self.data_received_cb = Caller()
         self.error_cb = Caller()
 
-        # The pose is an array containing
+        # The pose is a tuple containing
         # X, Y, Z, roll, pitch, yaw
         # roll, pitch and yaw in degrees
         self.pose = self.NO_POSE
+        self._stream_task = None
 
     @property
     def position(self):
@@ -76,41 +75,48 @@ class PoseLogger:
     @property
     def rpy_rad(self):
         """Get the roll, pitch and yaw of the full pose in radians"""
-        return [math.radians(self.pose[3]), math.radians(self.pose[4]), math.radians(self.pose[5])]
+        return [
+            math.radians(self.pose[3]),
+            math.radians(self.pose[4]),
+            math.radians(self.pose[5]),
+        ]
 
-    def _connected(self, link_uri) -> None:
-        logConf = LogConfig("Pose", 40)
-        logConf.add_variable(self.LOG_NAME_ESTIMATE_X, "float")
-        logConf.add_variable(self.LOG_NAME_ESTIMATE_Y, "float")
-        logConf.add_variable(self.LOG_NAME_ESTIMATE_Z, "float")
-        logConf.add_variable(self.LOG_NAME_ESTIMATE_ROLL, "float")
-        logConf.add_variable(self.LOG_NAME_ESTIMATE_PITCH, "float")
-        logConf.add_variable(self.LOG_NAME_ESTIMATE_YAW, "float")
+    def start(self, cf):
+        """Start streaming pose data from the Crazyflie."""
+        self._stream_task = create_task(self._stream_loop(cf))
 
-        try:
-            self._cf.log.add_config(logConf)
-            logConf.data_received_cb.add_callback(self._data_received)
-            logConf.error_cb.add_callback(self._error)
-            logConf.start()
-        except KeyError as e:
-            logger.warning(str(e))
-        except AttributeError as e:
-            logger.warning(str(e))
-
-    def _disconnected(self, link_uri) -> None:
+    def stop(self):
+        """Stop streaming pose data."""
+        if self._stream_task is not None:
+            self._stream_task.cancel()
+            self._stream_task = None
         self.pose = self.NO_POSE
 
-    def _data_received(self, timestamp, data, logconf) -> None:
-        self.pose = (
-            data[self.LOG_NAME_ESTIMATE_X],
-            data[self.LOG_NAME_ESTIMATE_Y],
-            data[self.LOG_NAME_ESTIMATE_Z],
-            data[self.LOG_NAME_ESTIMATE_ROLL],
-            data[self.LOG_NAME_ESTIMATE_PITCH],
-            data[self.LOG_NAME_ESTIMATE_YAW],
-        )
+    async def _stream_loop(self, cf):
+        log = cf.log()
+        block = await log.create_block()
+        await block.add_variable(self.LOG_NAME_ESTIMATE_X)
+        await block.add_variable(self.LOG_NAME_ESTIMATE_Y)
+        await block.add_variable(self.LOG_NAME_ESTIMATE_Z)
+        await block.add_variable(self.LOG_NAME_ESTIMATE_ROLL)
+        await block.add_variable(self.LOG_NAME_ESTIMATE_PITCH)
+        await block.add_variable(self.LOG_NAME_ESTIMATE_YAW)
 
-        self.data_received_cb.call(self, self.pose)
-
-    def _error(self, log_conf, msg) -> None:
-        self.error_cb.call(self, msg)
+        stream = await block.start(40)  # 40ms period
+        try:
+            while True:
+                data = await stream.next()
+                self.pose = (
+                    data.data[self.LOG_NAME_ESTIMATE_X],
+                    data.data[self.LOG_NAME_ESTIMATE_Y],
+                    data.data[self.LOG_NAME_ESTIMATE_Z],
+                    data.data[self.LOG_NAME_ESTIMATE_ROLL],
+                    data.data[self.LOG_NAME_ESTIMATE_PITCH],
+                    data.data[self.LOG_NAME_ESTIMATE_YAW],
+                )
+                self.data_received_cb.call(self, self.pose)
+        finally:
+            try:
+                await stream.stop()
+            except DisconnectedError:
+                pass

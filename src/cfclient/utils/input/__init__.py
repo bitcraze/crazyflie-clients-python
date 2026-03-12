@@ -38,6 +38,7 @@ Windows drivers.
 The input device's axes and buttons are mapped to software inputs using a
 configuration file.
 """
+
 import os
 import re
 import glob
@@ -53,13 +54,13 @@ from cfclient.utils.config import Config
 from cfclient.utils.config_manager import ConfigManager
 
 from cfclient.utils.periodictimer import PeriodicTimer
-from cflib.utils.callbacks import Caller
+from cfclient.utils.callbacks import Caller
 from .mux.nomux import NoMux
 from .mux.takeovermux import TakeOverMux
 from .mux.takeoverselectivemux import TakeOverSelectiveMux
 
-__author__ = 'Bitcraze AB'
-__all__ = ['JoystickReader']
+__author__ = "Bitcraze AB"
+__all__ = ["JoystickReader"]
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +77,7 @@ class JoystickReader(object):
     Thread that will read input from devices/joysticks and send control-set
     points to the Crazyflie
     """
+
     inputConfig = []
 
     ASSISTED_CONTROL_ALTHOLD = 0
@@ -86,8 +88,7 @@ class JoystickReader(object):
     def __init__(self, do_device_discovery=True):
         self._input_device = None
 
-        self._mux = [NoMux(self), TakeOverSelectiveMux(self),
-                     TakeOverMux(self)]
+        self._mux = [NoMux(self), TakeOverSelectiveMux(self), TakeOverMux(self)]
         # Set NoMux as default
         self._selected_mux = self._mux[0]
 
@@ -136,10 +137,10 @@ class JoystickReader(object):
 
         self._dev_blacklist = None
         if len(Config().get("input_device_blacklist")) > 0:
-            self._dev_blacklist = re.compile(
-                Config().get("input_device_blacklist"))
-        logger.info("Using device blacklist [{}]".format(
-            Config().get("input_device_blacklist")))
+            self._dev_blacklist = re.compile(Config().get("input_device_blacklist"))
+        logger.info(
+            "Using device blacklist [{}]".format(Config().get("input_device_blacklist"))
+        )
 
         self._available_devices = {}
 
@@ -147,8 +148,7 @@ class JoystickReader(object):
         self._read_timer = PeriodicTimer(INPUT_READ_PERIOD, self.read_input)
 
         if do_device_discovery:
-            self._discovery_timer = PeriodicTimer(1.0,
-                                                  self._do_device_discovery)
+            self._discovery_timer = PeriodicTimer(1.0, self._do_device_discovery)
             self._discovery_timer.start()
 
         # Check if user config exists, otherwise copy files
@@ -156,10 +156,8 @@ class JoystickReader(object):
             logger.info("No user config found, copying dist files")
             os.makedirs(ConfigManager().configs_dir)
 
-        for f in glob.glob(
-                cfclient.module_path + "/configs/input/[A-Za-z]*.json"):
-            dest = os.path.join(ConfigManager().
-                                configs_dir, os.path.basename(f))
+        for f in glob.glob(cfclient.module_path + "/configs/input/[A-Za-z]*.json"):
+            dest = os.path.join(ConfigManager().configs_dir, os.path.basename(f))
             if not os.path.isfile(dest):
                 logger.debug("Copying %s", f)
                 shutil.copy2(f, ConfigManager().configs_dir)
@@ -239,9 +237,9 @@ class JoystickReader(object):
         approved_devs = []
 
         for dev in devs:
-            if ((not self._dev_blacklist) or
-                    (self._dev_blacklist and
-                     not self._dev_blacklist.match(dev.name))):
+            if (not self._dev_blacklist) or (
+                self._dev_blacklist and not self._dev_blacklist.match(dev.name)
+            ):
                 dev.input = self
                 approved_devs.append(dev)
 
@@ -282,9 +280,8 @@ class JoystickReader(object):
             self._input_device = None
 
     def read_raw_values(self):
-        """ Read raw values from the input device."""
-        [axes, buttons, mapped_values] = self._input_device.read(
-            include_raw=True)
+        """Read raw values from the input device."""
+        [axes, buttons, mapped_values] = self._input_device.read(include_raw=True)
         dict_axes = {}
         dict_buttons = {}
 
@@ -327,19 +324,19 @@ class JoystickReader(object):
             device = self._get_device_from_name(device_name)
             self._selected_mux.add_device(device, role)
             # Update the UI with the limiting for this device
-            self.limiting_updated.call(device.limit_rp,
-                                       device.limit_yaw,
-                                       device.limit_thrust)
+            self.limiting_updated.call(
+                device.limit_rp, device.limit_yaw, device.limit_thrust
+            )
             self._read_timer.start()
             return device.supports_mapping
         except Exception:
             self.device_error.call(
-                "Error while opening/initializing  input device\n\n%s" %
-                (traceback.format_exc()))
+                "Error while opening/initializing  input device\n\n%s"
+                % (traceback.format_exc())
+            )
 
         if not self._input_device:
-            self.device_error.call(
-                "Could not find device {}".format(device_name))
+            self.device_error.call("Could not find device {}".format(device_name))
         return False
 
     def resume_input(self):
@@ -368,12 +365,17 @@ class JoystickReader(object):
 
             if data:
                 if data.toggled.assistedControl:
-                    if self._assisted_control == \
-                            JoystickReader.ASSISTED_CONTROL_POSHOLD or \
-                            self._assisted_control == \
-                            JoystickReader.ASSISTED_CONTROL_HOVER:
-                        if data.assistedControl and self._assisted_control != \
-                                JoystickReader.ASSISTED_CONTROL_HOVER:
+                    if (
+                        self._assisted_control
+                        == JoystickReader.ASSISTED_CONTROL_POSHOLD
+                        or self._assisted_control
+                        == JoystickReader.ASSISTED_CONTROL_HOVER
+                    ):
+                        if (
+                            data.assistedControl
+                            and self._assisted_control
+                            != JoystickReader.ASSISTED_CONTROL_HOVER
+                        ):
                             for d in self._selected_mux.devices():
                                 d.limit_thrust = False
                                 d.limit_rp = False
@@ -385,71 +387,82 @@ class JoystickReader(object):
                             for d in self._selected_mux.devices():
                                 d.limit_thrust = True
                                 d.limit_rp = True
-                    if self._assisted_control == \
-                            JoystickReader.ASSISTED_CONTROL_ALTHOLD:
-                        self.assisted_control_updated.call(
-                                            data.assistedControl)
-                    if ((self._assisted_control ==
-                            JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD) or
-                            (self._assisted_control ==
-                             JoystickReader.ASSISTED_CONTROL_HOVER)):
+                    if (
+                        self._assisted_control
+                        == JoystickReader.ASSISTED_CONTROL_ALTHOLD
+                    ):
+                        self.assisted_control_updated.call(data.assistedControl)
+                    if (
+                        self._assisted_control
+                        == JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD
+                    ) or (
+                        self._assisted_control == JoystickReader.ASSISTED_CONTROL_HOVER
+                    ):
                         try:
-                            self.assisted_control_updated.call(
-                                                data.assistedControl)
+                            self.assisted_control_updated.call(data.assistedControl)
                             if not data.assistedControl:
                                 # Reset height controller state to initial
                                 # target height both in the UI and in the
                                 # Crazyflie.
                                 # TODO: Implement a proper state update of the
                                 #       input layer
-                                self.heighthold_input_updated.\
-                                    call(0, 0,
-                                         0, INITAL_TAGET_HEIGHT)
-                                self.hover_input_updated.\
-                                    call(0, 0,
-                                         0, INITAL_TAGET_HEIGHT)
+                                self.heighthold_input_updated.call(
+                                    0, 0, 0, INITAL_TAGET_HEIGHT
+                                )
+                                self.hover_input_updated.call(
+                                    0, 0, 0, INITAL_TAGET_HEIGHT
+                                )
                         except Exception as e:
                             logger.warning(
                                 "Exception while doing callback from "
                                 "input-device for assited "
-                                "control: {}".format(e))
+                                "control: {}".format(e)
+                            )
 
                 if data.toggled.estop:
                     try:
                         self.emergency_stop_updated.call(data.estop)
                     except Exception as e:
-                        logger.warning("Exception while doing callback from"
-                                       "input-device for estop: {}".format(e))
+                        logger.warning(
+                            "Exception while doing callback from"
+                            "input-device for estop: {}".format(e)
+                        )
                 if data.toggled.arm and data._prev_btn_values["arm"]:
                     try:
                         self.arm_updated.call(data.arm)
                     except Exception as e:
-                        logger.warning("Exception while doing callback from"
-                                       "input-device for arm: {}".format(e))
+                        logger.warning(
+                            "Exception while doing callback from"
+                            "input-device for arm: {}".format(e)
+                        )
                 if data.toggled.alt1:
                     try:
                         self.alt1_updated.call(data.alt1)
                     except Exception as e:
-                        logger.warning("Exception while doing callback from"
-                                       "input-device for alt1: {}".format(e))
+                        logger.warning(
+                            "Exception while doing callback from"
+                            "input-device for alt1: {}".format(e)
+                        )
                 if data.toggled.alt2:
                     try:
                         self.alt2_updated.call(data.alt2)
                     except Exception as e:
-                        logger.warning("Exception while doing callback from"
-                                       "input-device for alt2: {}".format(e))
+                        logger.warning(
+                            "Exception while doing callback from"
+                            "input-device for alt2: {}".format(e)
+                        )
 
                 # Reset height target when height-hold is not selected
-                if not data.assistedControl or \
-                        (self._assisted_control !=
-                         JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD and
-                         self._assisted_control !=
-                         JoystickReader.ASSISTED_CONTROL_HOVER):
+                if not data.assistedControl or (
+                    self._assisted_control != JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD
+                    and self._assisted_control != JoystickReader.ASSISTED_CONTROL_HOVER
+                ):
                     self._target_height = INITAL_TAGET_HEIGHT
 
-                if self._assisted_control == \
-                        JoystickReader.ASSISTED_CONTROL_POSHOLD \
-                        and data.assistedControl:
+                if (
+                    self._assisted_control == JoystickReader.ASSISTED_CONTROL_POSHOLD
+                    and data.assistedControl
+                ):
                     vx = data.roll
                     vy = data.pitch
                     vz = data.thrust
@@ -457,9 +470,10 @@ class JoystickReader(object):
                     # The odd use of vx and vy is to map forward on the
                     # physical joystick to positive X-axis
                     self.assisted_input_updated.call(vy, -vx, vz, yawrate)
-                elif self._assisted_control == \
-                        JoystickReader.ASSISTED_CONTROL_HOVER \
-                        and data.assistedControl:
+                elif (
+                    self._assisted_control == JoystickReader.ASSISTED_CONTROL_HOVER
+                    and data.assistedControl
+                ):
                     vx = data.roll
                     vy = data.pitch
 
@@ -476,27 +490,31 @@ class JoystickReader(object):
                     yawrate = -data.yaw
                     # The odd use of vx and vy is to map forward on the
                     # physical joystick to positive X-axis
-                    self.hover_input_updated.call(vy, -vx, yawrate,
-                                                  self._target_height)
+                    self.hover_input_updated.call(vy, -vx, yawrate, self._target_height)
                 else:
                     # Update the user roll/pitch trim from device
                     if data.toggled.pitchNeg and data.pitchNeg:
-                        self.trim_pitch -= .2
+                        self.trim_pitch -= 0.2
                     if data.toggled.pitchPos and data.pitchPos:
-                        self.trim_pitch += .2
+                        self.trim_pitch += 0.2
                     if data.toggled.rollNeg and data.rollNeg:
-                        self.trim_roll -= .2
+                        self.trim_roll -= 0.2
                     if data.toggled.rollPos and data.rollPos:
-                        self.trim_roll += .2
+                        self.trim_roll += 0.2
 
-                    if data.toggled.pitchNeg or data.toggled.pitchPos or \
-                            data.toggled.rollNeg or data.toggled.rollPos:
-                        self.rp_trim_updated.call(self.trim_roll,
-                                                  self.trim_pitch)
+                    if (
+                        data.toggled.pitchNeg
+                        or data.toggled.pitchPos
+                        or data.toggled.rollNeg
+                        or data.toggled.rollPos
+                    ):
+                        self.rp_trim_updated.call(self.trim_roll, self.trim_pitch)
 
-                    if self._assisted_control == \
-                            JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD \
-                            and data.assistedControl:
+                    if (
+                        self._assisted_control
+                        == JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD
+                        and data.assistedControl
+                    ):
                         roll = data.roll + self.trim_roll
                         pitch = data.pitch + self.trim_pitch
                         yawrate = -data.yaw
@@ -509,9 +527,9 @@ class JoystickReader(object):
                             self._target_height = self._hover_max_height
                         if self._target_height < MIN_TARGET_HEIGHT:
                             self._target_height = MIN_TARGET_HEIGHT
-                        self.heighthold_input_updated.call(roll, -pitch,
-                                                           yawrate,
-                                                           self._target_height)
+                        self.heighthold_input_updated.call(
+                            roll, -pitch, yawrate, self._target_height
+                        )
                     else:
                         # Using alt hold the data is not in a percentage
                         if not data.assistedControl:
@@ -524,16 +542,21 @@ class JoystickReader(object):
                         if data.thrust > 0xFFFF:
                             data.thrust = 0xFFFF
 
-                        self.input_updated.call(data.roll + self.trim_roll,
-                                                data.pitch + self.trim_pitch,
-                                                data.yaw, data.thrust)
+                        self.input_updated.call(
+                            data.roll + self.trim_roll,
+                            data.pitch + self.trim_pitch,
+                            data.yaw,
+                            data.thrust,
+                        )
             else:
                 self.input_updated.call(0, 0, 0, 0)
         except Exception:
-            logger.warning("Exception while reading inputdevice: %s",
-                           traceback.format_exc())
-            self.device_error.call("Error reading from input device\n\n%s" %
-                                   traceback.format_exc())
+            logger.warning(
+                "Exception while reading inputdevice: %s", traceback.format_exc()
+            )
+            self.device_error.call(
+                "Error reading from input device\n\n%s" % traceback.format_exc()
+            )
             self.input_updated.call(0, 0, 0, 0)
             self._read_timer.stop()
 

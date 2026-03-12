@@ -28,21 +28,23 @@
 """
 Used for passing objects to tabs and toolboxes.
 """
+
 import os
 
-__author__ = 'Bitcraze AB'
-__all__ = ['PluginHelper']
+__author__ = "Bitcraze AB"
+__all__ = ["PluginHelper"]
 
 
-class PluginHelper():
+class PluginHelper:
     """Used for passing objects to tabs and toolboxes"""
 
     def __init__(self):
         self.cf = None
         self.menu = None
+        self.inputDeviceReader = None
         self.logConfigReader = None
         self.mainUI = None
         self.plotTab = None
         self.pose_logger = None
         self.connectivity_manager = None
-        self.current_folder = os.path.expanduser('~')
+        self.current_folder = os.path.expanduser("~")

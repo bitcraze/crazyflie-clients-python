@@ -34,25 +34,23 @@ from enum import Enum
 
 from PySide6.QtUiTools import loadUiType
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QMessageBox
 
 import cfclient
+from cflib2 import DisconnectedError
+from cfclient.gui import create_task
 from cfclient.ui.widgets.ai import AttitudeIndicator
-
-from cflib.crazyflie.log import LogConfig
 
 from cfclient.utils.config import Config
 from cfclient.utils.input import JoystickReader
 
 from cfclient.ui.tab_toolbox import TabToolbox
 
-__author__ = 'Bitcraze AB'
-__all__ = ['FlightTab']
+__author__ = "Bitcraze AB"
+__all__ = ["FlightTab"]
 
 logger = logging.getLogger(__name__)
 
-flight_tab_class = loadUiType(cfclient.module_path +
-                                  "/ui/tabs/flightTab.ui")[0]
+flight_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/flightTab.ui")[0]
 
 MAX_THRUST = 65536.0
 
@@ -90,7 +88,6 @@ class CommanderAction(Enum):
 class FlightTab(TabToolbox, flight_tab_class):
     uiSetupReadySignal = Signal()
 
-    _log_data_signal = Signal(int, object, object)
     _pose_data_signal = Signal(object, object)
 
     _input_updated_signal = Signal(float, float, float, float)
@@ -101,74 +98,71 @@ class FlightTab(TabToolbox, flight_tab_class):
     _heighthold_input_updated_signal = Signal(float, float, float, float)
     _hover_input_updated_signal = Signal(float, float, float, float)
 
-    _log_error_signal = Signal(object, str)
-
-    # UI_DATA_UPDATE_FPS = 10
-
-    connectionFinishedSignal = Signal(str)
-    disconnectedSignal = Signal(str)
-
     _limiting_updated = Signal(bool, bool, bool)
 
-    LOG_NAME_THRUST = 'stabilizer.thrust'
-    LOG_NAME_MOTOR_1 = 'motor.m1'
-    LOG_NAME_MOTOR_2 = 'motor.m2'
-    LOG_NAME_MOTOR_3 = 'motor.m3'
-    LOG_NAME_MOTOR_4 = 'motor.m4'
-    LOG_NAME_CAN_FLY = 'sys.canfly'
-    LOG_NAME_SUPERVISOR_INFO = 'supervisor.info'
+    LOG_NAME_THRUST = "stabilizer.thrust"
+    LOG_NAME_MOTOR_1 = "motor.m1"
+    LOG_NAME_MOTOR_2 = "motor.m2"
+    LOG_NAME_MOTOR_3 = "motor.m3"
+    LOG_NAME_MOTOR_4 = "motor.m4"
+    LOG_NAME_CAN_FLY = "sys.canfly"
+    LOG_NAME_SUPERVISOR_INFO = "supervisor.info"
 
     def __init__(self, helper):
-        super(FlightTab, self).__init__(helper, 'Flight Control')
+        super(FlightTab, self).__init__(helper, "Flight Control")
         self.setupUi(self)
 
-        self.disconnectedSignal.connect(self.disconnected)
-        self.connectionFinishedSignal.connect(self.connected)
-        # Incomming signals
-        self._helper.cf.connected.add_callback(
-            self.connectionFinishedSignal.emit)
-        self._helper.cf.disconnected.add_callback(self.disconnectedSignal.emit)
+        self._cf = None
+        self._log_task = None
+        self._setup_task = None
+        self._isConnected = False
 
         self._input_updated_signal.connect(self.updateInputControl)
-        self._helper.inputDeviceReader.input_updated.add_callback(
-            self._input_updated_signal.emit)
         self._rp_trim_updated_signal.connect(self.calUpdateFromInput)
-        self._helper.inputDeviceReader.rp_trim_updated.add_callback(
-            self._rp_trim_updated_signal.emit)
         self._emergency_stop_updated_signal.connect(self.updateEmergencyStop)
-        self._helper.inputDeviceReader.emergency_stop_updated.add_callback(
-            self._emergency_stop_updated_signal.emit)
         self._arm_updated_signal.connect(lambda: self.updateArm(from_controller=True))
-        self._helper.inputDeviceReader.arm_updated.add_callback(self._arm_updated_signal.emit)
+        self._heighthold_input_updated_signal.connect(self._heighthold_input_updated)
+        self._hover_input_updated_signal.connect(self._hover_input_updated)
+        self._assisted_control_updated_signal.connect(self._assisted_control_updated)
 
-        self._helper.inputDeviceReader.heighthold_input_updated.add_callback(
-            self._heighthold_input_updated_signal.emit)
-        self._heighthold_input_updated_signal.connect(
-            self._heighthold_input_updated)
-        self._helper.inputDeviceReader.hover_input_updated.add_callback(
-            self._hover_input_updated_signal.emit)
-        self._hover_input_updated_signal.connect(
-            self._hover_input_updated)
-
-        self._helper.inputDeviceReader.assisted_control_updated.add_callback(
-            self._assisted_control_updated_signal.emit)
-
-        self._assisted_control_updated_signal.connect(
-            self._assisted_control_updated)
+        if self._helper.inputDeviceReader is not None:
+            self._helper.inputDeviceReader.input_updated.add_callback(
+                self._input_updated_signal.emit
+            )
+            self._helper.inputDeviceReader.rp_trim_updated.add_callback(
+                self._rp_trim_updated_signal.emit
+            )
+            self._helper.inputDeviceReader.emergency_stop_updated.add_callback(
+                self._emergency_stop_updated_signal.emit
+            )
+            self._helper.inputDeviceReader.arm_updated.add_callback(
+                self._arm_updated_signal.emit
+            )
+            self._helper.inputDeviceReader.heighthold_input_updated.add_callback(
+                self._heighthold_input_updated_signal.emit
+            )
+            self._helper.inputDeviceReader.hover_input_updated.add_callback(
+                self._hover_input_updated_signal.emit
+            )
+            self._helper.inputDeviceReader.assisted_control_updated.add_callback(
+                self._assisted_control_updated_signal.emit
+            )
+            self._helper.inputDeviceReader.limiting_updated.add_callback(
+                self._limiting_updated.emit
+            )
 
         self._pose_data_signal.connect(self._pose_data_received)
-        self._log_data_signal.connect(self._log_data_received)
-
-        self._log_error_signal.connect(self._logging_error)
-
-        self._isConnected = False
 
         # Connect UI signals that are in this tab
         self.flightModeCombo.currentIndexChanged.connect(self.flightmodeChange)
         self.minThrust.valueChanged.connect(self.minMaxThrustChanged)
         self.maxThrust.valueChanged.connect(self.minMaxThrustChanged)
-        self.thrustLoweringSlewRateLimit.valueChanged.connect(self.thrustLoweringSlewRateLimitChanged)
-        self.slewEnableLimit.valueChanged.connect(self.thrustLoweringSlewRateLimitChanged)
+        self.thrustLoweringSlewRateLimit.valueChanged.connect(
+            self.thrustLoweringSlewRateLimitChanged
+        )
+        self.slewEnableLimit.valueChanged.connect(
+            self.thrustLoweringSlewRateLimitChanged
+        )
         self.targetCalRoll.valueChanged.connect(self._trim_roll_changed)
         self.targetCalPitch.valueChanged.connect(self._trim_pitch_changed)
         self.maxAngle.valueChanged.connect(self.maxAngleChanged)
@@ -178,14 +172,30 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         # Command Based Flight Control
         self._can_fly_deprecated = 0
-        self.commanderTakeOffButton.clicked.connect(lambda: self._flight_command(CommanderAction.TAKE_OFF))
-        self.commanderLandButton.clicked.connect(lambda: self._flight_command(CommanderAction.LAND))
-        self.commanderLeftButton.clicked.connect(lambda: self._flight_command(CommanderAction.LEFT))
-        self.commanderRightButton.clicked.connect(lambda: self._flight_command(CommanderAction.RIGHT))
-        self.commanderForwardButton.clicked.connect(lambda: self._flight_command(CommanderAction.FORWARD))
-        self.commanderBackButton.clicked.connect(lambda: self._flight_command(CommanderAction.BACK))
-        self.commanderUpButton.clicked.connect(lambda: self._flight_command(CommanderAction.UP))
-        self.commanderDownButton.clicked.connect(lambda: self._flight_command(CommanderAction.DOWN))
+        self.commanderTakeOffButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.TAKE_OFF)
+        )
+        self.commanderLandButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.LAND)
+        )
+        self.commanderLeftButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.LEFT)
+        )
+        self.commanderRightButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.RIGHT)
+        )
+        self.commanderForwardButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.FORWARD)
+        )
+        self.commanderBackButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.BACK)
+        )
+        self.commanderUpButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.UP)
+        )
+        self.commanderDownButton.clicked.connect(
+            lambda: self._flight_command(CommanderAction.DOWN)
+        )
         self._update_flight_commander(False)
 
         # Supervisor
@@ -194,10 +204,6 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._update_supervisor_and_arming(False)
 
         self.uiSetupReady()
-
-        self._helper.cf.param.add_update_callback(group="imu_sensors", cb=self._set_available_sensors)
-
-        self._helper.cf.param.all_updated.add_callback(self._all_params_updated)
 
         self.logAltHold = None
 
@@ -211,13 +217,16 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._tf_state = 0
 
         # Connect callbacks for input device limiting of roll/pitch/yaw/thrust
-        self._helper.inputDeviceReader.limiting_updated.add_callback(self._limiting_updated.emit)
         self._limiting_updated.connect(self._set_limiting_enabled)
 
-        self._helper.pose_logger.data_received_cb.add_callback(self._pose_data_signal.emit)
+        if self._helper.pose_logger is not None:
+            self._helper.pose_logger.data_received_cb.add_callback(
+                self._pose_data_signal.emit
+            )
 
-    def _set_limiting_enabled(self, rp_limiting_enabled, yaw_limiting_enabled, thrust_limiting_enabled):
-
+    def _set_limiting_enabled(
+        self, rp_limiting_enabled, yaw_limiting_enabled, thrust_limiting_enabled
+    ):
         self.targetCalRoll.setEnabled(rp_limiting_enabled)
         self.targetCalPitch.setEnabled(rp_limiting_enabled)
 
@@ -227,14 +236,18 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.maxThrust.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
         self.minThrust.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
         self.slewEnableLimit.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
-        self.thrustLoweringSlewRateLimit.setEnabled(thrust_limiting_enabled and advanced_is_enabled)
+        self.thrustLoweringSlewRateLimit.setEnabled(
+            thrust_limiting_enabled and advanced_is_enabled
+        )
 
     def thrustToPercentage(self, thrust):
-        return ((thrust / MAX_THRUST) * 100.0)
+        return (thrust / MAX_THRUST) * 100.0
 
     def uiSetupReady(self):
-        flightComboIndex = self.flightModeCombo.findText(Config().get("flightmode"), Qt.MatchFlag.MatchFixedString)
-        if (flightComboIndex < 0):
+        flightComboIndex = self.flightModeCombo.findText(
+            Config().get("flightmode"), Qt.MatchFlag.MatchFixedString
+        )
+        if flightComboIndex < 0:
             self.flightModeCombo.setCurrentIndex(0)
             self.flightModeCombo.currentIndexChanged.emit(0)
         else:
@@ -242,35 +255,92 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.flightModeCombo.currentIndexChanged.emit(flightComboIndex)
 
     def _flight_command(self, action):
-        current_z = self._helper.pose_logger.position[2]
+        if self._cf is not None:
+            create_task(self._async_flight_command(action))
+
+    async def _async_flight_command(self, action):
+        pose_logger = self._helper.pose_logger
+        current_z = pose_logger.position[2] if pose_logger else 0.0
         move_dist = 0.5
         move_vel = 0.5
 
+        hlc = self._cf.high_level_commander()
+        param = self._cf.param()
+
         if action == CommanderAction.TAKE_OFF:
-            self._helper.cf.param.set_value('commander.enHighLevel', '1')
+            await param.set("commander.enHighLevel", 1)
             z_target = current_z + move_dist
-            self._helper.cf.high_level_commander.takeoff(z_target, move_dist / move_vel)
+            await hlc.take_off(z_target, None, move_dist / move_vel, None)
         elif action == CommanderAction.LAND:
-            self._helper.cf.high_level_commander.land(0, current_z / move_vel)
+            await hlc.land(0, None, current_z / move_vel, None)
         elif action == CommanderAction.LEFT:
-            self._helper.cf.high_level_commander.go_to(0, move_dist, 0, 0, move_dist / move_vel, relative=True)
+            await hlc.go_to(
+                0,
+                move_dist,
+                0,
+                0,
+                move_dist / move_vel,
+                relative=True,
+                linear=False,
+                group_mask=None,
+            )
         elif action == CommanderAction.RIGHT:
-            self._helper.cf.high_level_commander.go_to(0, -move_dist, 0, 0, move_dist / move_vel, relative=True)
+            await hlc.go_to(
+                0,
+                -move_dist,
+                0,
+                0,
+                move_dist / move_vel,
+                relative=True,
+                linear=False,
+                group_mask=None,
+            )
         elif action == CommanderAction.FORWARD:
-            self._helper.cf.high_level_commander.go_to(move_dist, 0, 0, 0, move_dist / move_vel, relative=True)
+            await hlc.go_to(
+                move_dist,
+                0,
+                0,
+                0,
+                move_dist / move_vel,
+                relative=True,
+                linear=False,
+                group_mask=None,
+            )
         elif action == CommanderAction.BACK:
-            self._helper.cf.high_level_commander.go_to(-move_dist, 0, 0, 0, move_dist / move_vel, relative=True)
+            await hlc.go_to(
+                -move_dist,
+                0,
+                0,
+                0,
+                move_dist / move_vel,
+                relative=True,
+                linear=False,
+                group_mask=None,
+            )
         elif action == CommanderAction.UP:
-            self._helper.cf.high_level_commander.go_to(0, 0, move_dist, 0, move_dist / move_vel, relative=True)
+            await hlc.go_to(
+                0,
+                0,
+                move_dist,
+                0,
+                move_dist / move_vel,
+                relative=True,
+                linear=False,
+                group_mask=None,
+            )
         elif action == CommanderAction.DOWN:
-            self._helper.cf.high_level_commander.go_to(0, 0, -move_dist, 0, move_dist / move_vel, relative=True)
+            await hlc.go_to(
+                0,
+                0,
+                -move_dist,
+                0,
+                move_dist / move_vel,
+                relative=True,
+                linear=False,
+                group_mask=None,
+            )
 
-    def _logging_error(self, log_conf, msg):
-        QMessageBox.about(self, "Log error",
-                          "Error when starting log config [%s]: %s" % (
-                              log_conf.name, msg))
-
-    def _log_data_received(self, timestamp, data, logconf):
+    def _log_data_received(self, timestamp, data):
         if self.isVisible() and self._isConnected:
             self.actualM1.setValue(data[self.LOG_NAME_MOTOR_1])
             self.actualM2.setValue(data[self.LOG_NAME_MOTOR_2])
@@ -278,7 +348,8 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.actualM4.setValue(data[self.LOG_NAME_MOTOR_4])
 
             self.estimateThrust.setText(
-                "%.2f%%" % self.thrustToPercentage(data[self.LOG_NAME_THRUST]))
+                "%.2f%%" % self.thrustToPercentage(data[self.LOG_NAME_THRUST])
+            )
 
             if data[self.LOG_NAME_CAN_FLY] != self._can_fly_deprecated:
                 self._can_fly_deprecated = data[self.LOG_NAME_CAN_FLY]
@@ -306,10 +377,12 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.ai.setRollPitch(-roll, pitch, self.is_visible())
 
     def _heighthold_input_updated(self, roll, pitch, yaw, height):
-        if (self.isVisible() and
-                (self._helper.inputDeviceReader.get_assisted_control() ==
-                 self._helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD)):
-
+        if self._helper.inputDeviceReader is None:
+            return
+        if self.isVisible() and (
+            self._helper.inputDeviceReader.get_assisted_control()
+            == self._helper.inputDeviceReader.ASSISTED_CONTROL_HEIGHTHOLD
+        ):
             self.targetRoll.setText(("%0.2f deg" % roll))
             self.targetPitch.setText(("%0.2f deg" % pitch))
             self.targetYaw.setText(("%0.2f deg/s" % yaw))
@@ -319,10 +392,12 @@ class FlightTab(TabToolbox, flight_tab_class):
             self._change_input_labels(using_hover_assist=False)
 
     def _hover_input_updated(self, vx, vy, yaw, height):
-        if (self.isVisible() and
-                (self._helper.inputDeviceReader.get_assisted_control() ==
-                 self._helper.inputDeviceReader.ASSISTED_CONTROL_HOVER)):
-
+        if self._helper.inputDeviceReader is None:
+            return
+        if self.isVisible() and (
+            self._helper.inputDeviceReader.get_assisted_control()
+            == self._helper.inputDeviceReader.ASSISTED_CONTROL_HOVER
+        ):
             self.targetRoll.setText(("%0.2f m/s" % vy))
             self.targetPitch.setText(("%0.2f m/s" % vx))
             self.targetYaw.setText(("%0.2f deg/s" % yaw))
@@ -333,9 +408,9 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     def _change_input_labels(self, using_hover_assist):
         if using_hover_assist:
-            pitch, roll, yaw = 'Velocity X', 'Velocity Y', 'Velocity Z'
+            pitch, roll, yaw = "Velocity X", "Velocity Y", "Velocity Z"
         else:
-            pitch, roll, yaw = 'Pitch', 'Roll', 'Yaw'
+            pitch, roll, yaw = "Pitch", "Roll", "Yaw"
 
         self.inputPitchLabel.setText(pitch)
         self.inputRollLabel.setText(roll)
@@ -410,62 +485,106 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         if self._can_fly_deprecated == 0:
             self.commanderBox.setEnabled(False)
-            self.commanderBox.setToolTip('The Crazyflie reports that flight is not possible')
+            self.commanderBox.setToolTip(
+                "The Crazyflie reports that flight is not possible"
+            )
             return
 
-        # We cannot know if we have a positioning deck until we get params
-        if not self._helper.cf.param.is_updated:
-            self.commanderBox.setEnabled(False)
-            return
+        # Deck param check is done asynchronously in
+        # _update_flight_commander_async
+        self.commanderBox.setEnabled(False)
+
+    async def _update_flight_commander_async(self, cf):
+        param = cf.param()
 
         #                  flowV1    flowV2     LightHouse       LPS
-        position_decks = ['bcFlow', 'bcFlow2', 'bcLighthouse4', 'bcLoco', 'bcDWM1000']
+        position_decks = [
+            "bcFlow",
+            "bcFlow2",
+            "bcLighthouse4",
+            "bcLoco",
+            "bcDWM1000",
+        ]
+        has_position_deck = False
         for deck in position_decks:
-            if int(self._helper.cf.param.values['deck'][deck]) == 1:
-                self.commanderBox.setEnabled(True)
-                break
-        else:
-            self.commanderBox.setToolTip('You need a positioning deck to use Command Based Flight')
-            self.commanderBox.setEnabled(False)
-            return
+            name = f"deck.{deck}"
+            if name in param.names():
+                if int(await param.get(name)) == 1:
+                    has_position_deck = True
+                    break
 
-        # To prevent conflicting commands from the controller and the flight panel
-        if JoystickReader().available_devices():
+        if not has_position_deck:
             self.commanderBox.setToolTip(
-                'Cannot use both a controller and Command Based Flight'
+                "You need a positioning deck to use Command Based Flight"
             )
             self.commanderBox.setEnabled(False)
             return
 
-    def connected(self, linkURI):
-        self._isConnected = True
-        # MOTOR & THRUST
-        lg = LogConfig("Motors", Config().get("ui_update_period"))
-        lg.add_variable(self.LOG_NAME_THRUST, "uint16_t")
-        lg.add_variable(self.LOG_NAME_MOTOR_1)
-        lg.add_variable(self.LOG_NAME_MOTOR_2)
-        lg.add_variable(self.LOG_NAME_MOTOR_3)
-        lg.add_variable(self.LOG_NAME_MOTOR_4)
-        lg.add_variable(self.LOG_NAME_CAN_FLY)
+        # To prevent conflicting commands from the controller and
+        # the flight panel
+        if JoystickReader().available_devices():
+            self.commanderBox.setToolTip(
+                "Cannot use both a controller and Command Based Flight"
+            )
+            self.commanderBox.setEnabled(False)
+            return
 
-        # Add supervisor info if it exists to keep backwards compatibility
-        if self._helper.cf.log.toc.get_element_by_complete_name(self.LOG_NAME_SUPERVISOR_INFO):
-            lg.add_variable(self.LOG_NAME_SUPERVISOR_INFO)
-        # Full supervisor info available after V7, hide supervisor info for earlier versions
-        update_supervisor_info = self._helper.cf.platform.get_protocol_version() >= 7
+        self.commanderBox.setEnabled(True)
+
+    def connected(self, cf):
+        self._cf = cf
+        self._isConnected = True
+        self._log_task = create_task(self._stream_motors(cf))
+        self._setup_task = create_task(self._setup_after_connect(cf))
+
+    async def _stream_motors(self, cf):
+        log = cf.log()
+        block = await log.create_block()
+        await block.add_variable(self.LOG_NAME_THRUST)
+        await block.add_variable(self.LOG_NAME_MOTOR_1)
+        await block.add_variable(self.LOG_NAME_MOTOR_2)
+        await block.add_variable(self.LOG_NAME_MOTOR_3)
+        await block.add_variable(self.LOG_NAME_MOTOR_4)
+        await block.add_variable(self.LOG_NAME_CAN_FLY)
+
+        if self.LOG_NAME_SUPERVISOR_INFO in log.names():
+            await block.add_variable(self.LOG_NAME_SUPERVISOR_INFO)
+
+        period_ms = Config().get("ui_update_period")
+        stream = await block.start(period_ms)
+        try:
+            while True:
+                data = await stream.next()
+                self._log_data_received(data.timestamp, data.data)
+        finally:
+            try:
+                await stream.stop()
+            except DisconnectedError:
+                pass
+
+    async def _setup_after_connect(self, cf):
+        param = cf.param()
+        platform = cf.platform()
+
+        # Protocol version check for supervisor UI
+        protocol_version = await platform.get_protocol_version()
+        update_supervisor_info = protocol_version >= 7
         self._supervisor_state.setVisible(update_supervisor_info)
         self._supervisor_label1.setVisible(update_supervisor_info)
         self._supervisor_label2.setVisible(update_supervisor_info)
 
-        try:
-            self._helper.cf.log.add_config(lg)
-            lg.data_received_cb.add_callback(self._log_data_signal.emit)
-            lg.error_cb.add_callback(self._log_error_signal.emit)
-            lg.start()
-        except KeyError as e:
-            logger.warning(str(e))
-        except AttributeError as e:
-            logger.warning(str(e))
+        # Check imu_sensors
+        if "imu_sensors.HMC5883L" in param.names():
+            val = await param.get("imu_sensors.HMC5883L")
+            self._set_available_sensors("imu_sensors.HMC5883L", val)
+
+        # Populate assisted mode dropdown (reads deck params)
+        await self._populate_assisted_mode_dropdown(cf)
+
+        # Update flight commander (reads deck params)
+        await self._update_flight_commander_async(cf)
+
+        self._update_supervisor_and_arming(True)
 
     def _enable_estimators(self, should_enable):
         self.estimateX.setEnabled(should_enable)
@@ -474,13 +593,22 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     def _set_available_sensors(self, name, available):
         logger.debug("[%s]: %s", name, available)
-        available = eval(available)
+        available = int(available)
 
         self._enable_estimators(True)
-        self._helper.inputDeviceReader.set_alt_hold_available(available)
+        if self._helper.inputDeviceReader is not None:
+            self._helper.inputDeviceReader.set_alt_hold_available(available)
 
-    def disconnected(self, linkURI):
+    def disconnected(self):
+        if self._log_task is not None:
+            self._log_task.cancel()
+            self._log_task = None
+        if self._setup_task is not None:
+            self._setup_task.cancel()
+            self._setup_task = None
+        self._cf = None
         self._isConnected = False
+
         self.ai.setRollPitch(0, 0)
         self.actualM1.setValue(0)
         self.actualM2.setValue(0)
@@ -505,7 +633,8 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         try:
             self._assist_mode_combo.currentIndexChanged.disconnect(
-                self._assist_mode_changed)
+                self._assist_mode_changed
+            )
         except TypeError:
             # Signal was not connected
             pass
@@ -542,46 +671,55 @@ class FlightTab(TabToolbox, flight_tab_class):
         return bool(self._supervisor_info_bitfield & 0x0080)
 
     def minMaxThrustChanged(self):
+        if self._helper.inputDeviceReader is None:
+            return
         self._helper.inputDeviceReader.min_thrust = self.minThrust.value()
         self._helper.inputDeviceReader.max_thrust = self.maxThrust.value()
-        if (self.isInCrazyFlightmode is True):
+        if self.isInCrazyFlightmode is True:
             Config().set("min_thrust", self.minThrust.value())
             Config().set("max_thrust", self.maxThrust.value())
 
     def thrustLoweringSlewRateLimitChanged(self):
+        if self._helper.inputDeviceReader is None:
+            return
         self._helper.inputDeviceReader.thrust_slew_rate = (
-            self.thrustLoweringSlewRateLimit.value())
-        self._helper.inputDeviceReader.thrust_slew_limit = (
-            self.slewEnableLimit.value())
-        if (self.isInCrazyFlightmode is True):
+            self.thrustLoweringSlewRateLimit.value()
+        )
+        self._helper.inputDeviceReader.thrust_slew_limit = self.slewEnableLimit.value()
+        if self.isInCrazyFlightmode is True:
             Config().set("slew_limit", self.slewEnableLimit.value())
             Config().set("slew_rate", self.thrustLoweringSlewRateLimit.value())
 
     def maxYawRateChanged(self):
         logger.debug("MaxYawrate changed to %d", self.maxYawRate.value())
-        self._helper.inputDeviceReader.max_yaw_rate = self.maxYawRate.value()
-        if (self.isInCrazyFlightmode is True):
+        if self._helper.inputDeviceReader is not None:
+            self._helper.inputDeviceReader.max_yaw_rate = self.maxYawRate.value()
+        if self.isInCrazyFlightmode is True:
             Config().set("max_yaw", self.maxYawRate.value())
 
     def maxAngleChanged(self):
         logger.debug("MaxAngle changed to %d", self.maxAngle.value())
-        self._helper.inputDeviceReader.max_rp_angle = self.maxAngle.value()
-        if (self.isInCrazyFlightmode is True):
+        if self._helper.inputDeviceReader is not None:
+            self._helper.inputDeviceReader.max_rp_angle = self.maxAngle.value()
+        if self.isInCrazyFlightmode is True:
             Config().set("max_rp", self.maxAngle.value())
 
     def _trim_pitch_changed(self, value):
         logger.debug("Pitch trim updated to [%f]" % value)
-        self._helper.inputDeviceReader.trim_pitch = value
+        if self._helper.inputDeviceReader is not None:
+            self._helper.inputDeviceReader.trim_pitch = value
         Config().set("trim_pitch", value)
 
     def _trim_roll_changed(self, value):
         logger.debug("Roll trim updated to [%f]" % value)
-        self._helper.inputDeviceReader.trim_roll = value
+        if self._helper.inputDeviceReader is not None:
+            self._helper.inputDeviceReader.trim_roll = value
         Config().set("trim_roll", value)
 
     def calUpdateFromInput(self, rollCal, pitchCal):
-        logger.debug("Trim changed on joystick: roll=%.2f, pitch=%.2f",
-                     rollCal, pitchCal)
+        logger.debug(
+            "Trim changed on joystick: roll=%.2f, pitch=%.2f", rollCal, pitchCal
+        )
         self.targetCalRoll.setValue(rollCal)
         self.targetCalPitch.setValue(pitchCal)
 
@@ -589,8 +727,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.targetRoll.setText(("%0.2f deg" % roll))
         self.targetPitch.setText(("%0.2f deg" % pitch))
         self.targetYaw.setText(("%0.2f deg/s" % yaw))
-        self.targetThrust.setText(("%0.2f %%" %
-                                   self.thrustToPercentage(thrust)))
+        self.targetThrust.setText(("%0.2f %%" % self.thrustToPercentage(thrust)))
         self.thrustProgress.setValue(int(thrust))
 
         self._change_input_labels(using_hover_assist=False)
@@ -602,53 +739,56 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.M4label.setEnabled(enabled)
 
     def emergencyStopStringWithText(self, text):
-        return ("<html><head/><body><p>"
-                "<span style='font-weight:600; color:#7b0005;'>{}</span>"
-                "</p></body></html>".format(text))
+        return (
+            "<html><head/><body><p>"
+            "<span style='font-weight:600; color:#7b0005;'>{}</span>"
+            "</p></body></html>".format(text)
+        )
 
     def updateEmergencyStop(self, emergencyStop):
         if emergencyStop:
             self.setMotorLabelsEnabled(False)
-            self._helper.cf.loc.send_emergency_stop()
-            # TODO krri disarm?
+            if self._cf is not None:
+                create_task(self._cf.localization().emergency().send_emergency_stop())
         else:
             self.setMotorLabelsEnabled(True)
 
     def updateArm(self, from_controller=False):
+        if self._cf is not None:
+            create_task(self._async_update_arm(from_controller))
+
+    async def _async_update_arm(self, from_controller):
         if self._is_flying() and not from_controller:
-            self._helper.cf.loc.send_emergency_stop()
+            await self._cf.localization().emergency().send_emergency_stop()
         elif self._is_crashed():
-            self._helper.cf.platform.send_crash_recovery_request()
+            await self._cf.platform().send_crash_recovery_request()
         elif self._is_armed():
-            self._helper.cf.platform.send_arming_request(False)
+            await self._cf.platform().send_arming_request(False)
         elif self._can_arm():
             self.armButton.setStyleSheet("background-color: orange")
-            self._helper.cf.platform.send_arming_request(True)
+            await self._cf.platform().send_arming_request(True)
 
     def flightmodeChange(self, item):
         Config().set("flightmode", str(self.flightModeCombo.itemText(item)))
-        logger.debug("Changed flightmode to %s",
-                     self.flightModeCombo.itemText(item))
+        logger.debug("Changed flightmode to %s", self.flightModeCombo.itemText(item))
         self.isInCrazyFlightmode = False
-        if (item == 0):  # Normal
+        if item == 0:  # Normal
             self.maxAngle.setValue(Config().get("normal_max_rp"))
             self.maxThrust.setValue(Config().get("normal_max_thrust"))
             self.minThrust.setValue(Config().get("normal_min_thrust"))
             self.slewEnableLimit.setValue(Config().get("normal_slew_limit"))
-            self.thrustLoweringSlewRateLimit.setValue(
-                Config().get("normal_slew_rate"))
+            self.thrustLoweringSlewRateLimit.setValue(Config().get("normal_slew_rate"))
             self.maxYawRate.setValue(Config().get("normal_max_yaw"))
-        if (item == 1):  # Advanced
+        if item == 1:  # Advanced
             self.maxAngle.setValue(Config().get("max_rp"))
             self.maxThrust.setValue(Config().get("max_thrust"))
             self.minThrust.setValue(Config().get("min_thrust"))
             self.slewEnableLimit.setValue(Config().get("slew_limit"))
-            self.thrustLoweringSlewRateLimit.setValue(
-                Config().get("slew_rate"))
+            self.thrustLoweringSlewRateLimit.setValue(Config().get("slew_rate"))
             self.maxYawRate.setValue(Config().get("max_yaw"))
             self.isInCrazyFlightmode = True
 
-        if (item == 0):
+        if item == 0:
             newState = False
         else:
             newState = True
@@ -662,71 +802,97 @@ class FlightTab(TabToolbox, flight_tab_class):
     def _assist_mode_changed(self, item):
         mode = None
 
-        if (item == 0):  # Altitude hold
+        if item == 0:  # Altitude hold
             mode = JoystickReader.ASSISTED_CONTROL_ALTHOLD
-        if (item == 1):  # Position hold
+        if item == 1:  # Position hold
             mode = JoystickReader.ASSISTED_CONTROL_POSHOLD
-        if (item == 2):  # Position hold
+        if item == 2:  # Height hold
             mode = JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD
-        if (item == 3):  # Position hold
+        if item == 3:  # Hover
             mode = JoystickReader.ASSISTED_CONTROL_HOVER
 
-        self._helper.inputDeviceReader.set_assisted_control(mode)
+        if self._helper.inputDeviceReader is not None:
+            self._helper.inputDeviceReader.set_assisted_control(mode)
         Config().set("assistedControl", mode)
 
     def _assisted_control_updated(self, enabled):
-        if self._helper.inputDeviceReader.get_assisted_control() == \
-                JoystickReader.ASSISTED_CONTROL_POSHOLD:
+        if self._helper.inputDeviceReader is None:
+            return
+        if (
+            self._helper.inputDeviceReader.get_assisted_control()
+            == JoystickReader.ASSISTED_CONTROL_POSHOLD
+        ):
             self.targetThrust.setEnabled(not enabled)
             self.targetRoll.setEnabled(not enabled)
             self.targetPitch.setEnabled(not enabled)
-        elif ((self._helper.inputDeviceReader.get_assisted_control() ==
-                JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD) or
-                (self._helper.inputDeviceReader.get_assisted_control() ==
-                 JoystickReader.ASSISTED_CONTROL_HOVER)):
+        elif (
+            self._helper.inputDeviceReader.get_assisted_control()
+            == JoystickReader.ASSISTED_CONTROL_HEIGHTHOLD
+        ) or (
+            self._helper.inputDeviceReader.get_assisted_control()
+            == JoystickReader.ASSISTED_CONTROL_HOVER
+        ):
             self.targetThrust.setEnabled(not enabled)
             self.targetHeight.setEnabled(enabled)
-            print('Chaning enable for target height: %s' % enabled)
         else:
-            self._helper.cf.param.set_value("flightmode.althold", int(enabled))
+            if self._cf is not None:
+                create_task(self._cf.param().set("flightmode.althold", int(enabled)))
 
-    def _all_params_updated(self):
-        self._populate_assisted_mode_dropdown()
-        self._update_flight_commander(True)
-        self._update_supervisor_and_arming(True)
+    async def _populate_assisted_mode_dropdown(self, cf):
+        param = cf.param()
 
-    def _populate_assisted_mode_dropdown(self):
         self._assist_mode_combo.addItem("Altitude hold", 0)
         self._assist_mode_combo.addItem("Position hold", 1)
         self._assist_mode_combo.addItem("Height hold", 2)
         self._assist_mode_combo.addItem("Hover", 3)
 
         # Add the tooltips to the assist-mode items.
-        self._assist_mode_combo.setItemData(0, TOOLTIP_ALTITUDE_HOLD, Qt.ItemDataRole.ToolTipRole)
-        self._assist_mode_combo.setItemData(1, TOOLTIP_POSITION_HOLD, Qt.ItemDataRole.ToolTipRole)
-        self._assist_mode_combo.setItemData(2, TOOLTIP_HEIGHT_HOLD, Qt.ItemDataRole.ToolTipRole)
-        self._assist_mode_combo.setItemData(3, TOOLTIP_HOVER, Qt.ItemDataRole.ToolTipRole)
+        self._assist_mode_combo.setItemData(
+            0, TOOLTIP_ALTITUDE_HOLD, Qt.ItemDataRole.ToolTipRole
+        )
+        self._assist_mode_combo.setItemData(
+            1, TOOLTIP_POSITION_HOLD, Qt.ItemDataRole.ToolTipRole
+        )
+        self._assist_mode_combo.setItemData(
+            2, TOOLTIP_HEIGHT_HOLD, Qt.ItemDataRole.ToolTipRole
+        )
+        self._assist_mode_combo.setItemData(
+            3, TOOLTIP_HOVER, Qt.ItemDataRole.ToolTipRole
+        )
 
         heightHoldPossible = False
         hoverPossible = False
 
-        if int(self._helper.cf.param.values["deck"]["bcZRanger"]) == 1:
+        if (
+            "deck.bcZRanger" in param.names()
+            and int(await param.get("deck.bcZRanger")) == 1
+        ):
             heightHoldPossible = True
-            self._helper.inputDeviceReader.set_hover_max_height(1.0)
+            if self._helper.inputDeviceReader is not None:
+                self._helper.inputDeviceReader.set_hover_max_height(1.0)
 
-        if int(self._helper.cf.param.values["deck"]["bcZRanger2"]) == 1:
+        if (
+            "deck.bcZRanger2" in param.names()
+            and int(await param.get("deck.bcZRanger2")) == 1
+        ):
             heightHoldPossible = True
-            self._helper.inputDeviceReader.set_hover_max_height(2.0)
+            if self._helper.inputDeviceReader is not None:
+                self._helper.inputDeviceReader.set_hover_max_height(2.0)
 
-        if int(self._helper.cf.param.values["deck"]["bcFlow"]) == 1:
+        if "deck.bcFlow" in param.names() and int(await param.get("deck.bcFlow")) == 1:
             heightHoldPossible = True
             hoverPossible = True
-            self._helper.inputDeviceReader.set_hover_max_height(1.0)
+            if self._helper.inputDeviceReader is not None:
+                self._helper.inputDeviceReader.set_hover_max_height(1.0)
 
-        if int(self._helper.cf.param.values["deck"]["bcFlow2"]) == 1:
+        if (
+            "deck.bcFlow2" in param.names()
+            and int(await param.get("deck.bcFlow2")) == 1
+        ):
             heightHoldPossible = True
             hoverPossible = True
-            self._helper.inputDeviceReader.set_hover_max_height(2.0)
+            if self._helper.inputDeviceReader is not None:
+                self._helper.inputDeviceReader.set_hover_max_height(2.0)
 
         if not heightHoldPossible:
             self._assist_mode_combo.model().item(2).setEnabled(False)
@@ -738,8 +904,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         else:
             self._assist_mode_combo.model().item(0).setEnabled(False)
 
-        self._assist_mode_combo.currentIndexChanged.connect(
-            self._assist_mode_changed)
+        self._assist_mode_combo.currentIndexChanged.connect(self._assist_mode_changed)
         self._assist_mode_combo.setEnabled(True)
 
         try:
@@ -758,8 +923,7 @@ class FlightTab(TabToolbox, flight_tab_class):
                 self._assist_mode_combo.currentIndexChanged.emit(2)
             else:
                 self._assist_mode_combo.setCurrentIndex(assistmodeComboIndex)
-                self._assist_mode_combo.currentIndexChanged.emit(
-                                                    assistmodeComboIndex)
+                self._assist_mode_combo.currentIndexChanged.emit(assistmodeComboIndex)
         except KeyError:
             defaultOption = 0
             if hoverPossible:
