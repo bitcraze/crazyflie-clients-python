@@ -36,7 +36,7 @@ from .ConsoleTab import ConsoleTab
 # from .ExampleTab import ExampleTab
 from .FlightTab import FlightTab
 # from .GpsTab import GpsTab
-# from .LEDRingTab import LEDRingTab
+from .LEDRingTab import LEDRingTab
 # from .LogBlockTab import LogBlockTab
 # from .LogTab import LogTab
 from .ParamTab import ParamTab
@@ -55,7 +55,7 @@ available = [
     # ExampleTab,
     FlightTab,
     # GpsTab,
-    # LEDRingTab,
+    LEDRingTab,
     # ColorLEDTab,
     # LogBlockTab,
     # LogTab,
