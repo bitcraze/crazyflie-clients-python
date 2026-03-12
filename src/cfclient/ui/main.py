@@ -139,14 +139,14 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._joystick_reader = JoystickReader()
 
         # Connect joystick input to Crazyflie commander
-        self._joystick_reader.input_updated.add_callback(
-            self._send_setpoint)
+        self._joystick_reader.input_updated.add_callback(self._send_setpoint)
         self._joystick_reader.assisted_input_updated.add_callback(
-            self._send_velocity_world)
+            self._send_velocity_world
+        )
         self._joystick_reader.heighthold_input_updated.add_callback(
-            self._send_zdistance)
-        self._joystick_reader.hover_input_updated.add_callback(
-            self._send_hover)
+            self._send_zdistance
+        )
+        self._joystick_reader.hover_input_updated.add_callback(self._send_hover)
 
         # pluginhelper for tabs
         self._pose_logger = PoseLogger()
@@ -310,9 +310,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             return
         asyncio.run_coroutine_threadsafe(
             self._safe_send(
-                cf.commander().send_setpoint_rpyt(
-                    roll, pitch, yaw, int(thrust)
-                )
+                cf.commander().send_setpoint_rpyt(roll, pitch, yaw, int(thrust))
             ),
             self._loop,
         )
@@ -323,9 +321,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             return
         asyncio.run_coroutine_threadsafe(
             self._safe_send(
-                cf.commander().send_setpoint_velocity_world(
-                    vx, vy, vz, yawrate
-                )
+                cf.commander().send_setpoint_velocity_world(vx, vy, vz, yawrate)
             ),
             self._loop,
         )
@@ -336,9 +332,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             return
         asyncio.run_coroutine_threadsafe(
             self._safe_send(
-                cf.commander().send_setpoint_zdistance(
-                    roll, pitch, yawrate, zdistance
-                )
+                cf.commander().send_setpoint_zdistance(roll, pitch, yawrate, zdistance)
             ),
             self._loop,
         )
@@ -349,9 +343,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             return
         asyncio.run_coroutine_threadsafe(
             self._safe_send(
-                cf.commander().send_setpoint_hover(
-                    vx, vy, yawrate, zdistance
-                )
+                cf.commander().send_setpoint_hover(vx, vy, yawrate, zdistance)
             ),
             self._loop,
         )
@@ -364,9 +356,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     def _emergency_stop(self):
         if self.cf is not None:
-            create_task(
-                self.cf.localization().emergency().send_emergency_stop()
-            )
+            create_task(self.cf.localization().emergency().send_emergency_stop())
 
     # --- Address ---
 
@@ -487,9 +477,11 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.cf = None
             self.uiState = UIState.DISCONNECTED
             self._update_ui_state()
-            QMessageBox.critical(
-                self, "Communication failure", f"Connection lost to {uri}: {reason}"
-            )
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Icon.Critical)
+            msg.setWindowTitle("Communication failure")
+            msg.setText(f"Connection lost to {uri}: {reason}")
+            msg.show()
         except asyncio.CancelledError:
             pass
 
