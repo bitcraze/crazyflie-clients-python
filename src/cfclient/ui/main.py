@@ -33,14 +33,19 @@ import sys
 
 import cfclient
 from cfclient.gui import create_task
+from cfclient.ui.pose_logger import PoseLogger
 from cfclient.ui.tab_toolbox import TabToolbox
 import cfclient.ui.tabs
 from cfclient.ui.connectivity_manager import ConnectivityManager
 from cfclient.utils.config import Config
+from cfclient.utils.config_manager import ConfigManager
+from cfclient.utils.input import JoystickReader
 from cfclient.utils.ui import UiUtils
+from cfclient.ui.dialogs.inputconfigdialogue import InputConfigDialogue
 from cflib2 import Crazyflie, DisconnectedError, LinkContext, FileTocCache
 from PySide6 import QtWidgets
 from PySide6.QtUiTools import loadUiType
+from PySide6.QtCore import Signal
 from PySide6.QtCore import Slot
 from PySide6.QtCore import QDir
 from PySide6.QtCore import QUrl
@@ -50,6 +55,7 @@ from PySide6.QtGui import QAction
 from PySide6.QtGui import QActionGroup
 from PySide6.QtGui import QShortcut
 from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import QLabel
 from PySide6.QtWidgets import QMenu
 from PySide6.QtWidgets import QMessageBox
 
@@ -66,7 +72,15 @@ logger = logging.getLogger(__name__)
 UIState = ConnectivityManager.UIState
 
 
+class BatteryStates:
+    BATTERY, CHARGING, CHARGED, LOW_POWER = list(range(4))
+
+
 class MainUI(QtWidgets.QMainWindow, main_window_class):
+    _battery_signal = Signal(float, int)
+    _input_device_error_signal = Signal(str)
+    _input_discovery_signal = Signal(object)
+
     def __init__(self, *args):
         super(MainUI, self).__init__(*args)
         self.setupUi(self)
@@ -77,6 +91,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._toc_cache = FileTocCache(cfclient.config_path + "/cache")
         self._connect_task = None
         self._disconnect_watch_task = None
+        self._battery_task = None
+        self._disable_input = False
+        self._loop = None
 
         # Restore window size if present in the config file
         try:
@@ -97,10 +114,14 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.menuItemAbout.setEnabled(False)
         self.menuItemBootloader.setEnabled(False)
         self._menu_cf2_config.setEnabled(False)
-        self.menuItemConfInputDevice.setEnabled(False)
         self.logConfigAction.setEnabled(False)
-        self._menu_inputdevice.setEnabled(False)
+
+        self.menuItemConfInputDevice.triggered.connect(
+            self._show_input_device_config_dialog)
+
+        # Emergency stop button
         self.esButton.setEnabled(False)
+        self.esButton.clicked.connect(self._emergency_stop)
 
         self._set_address()
 
@@ -120,16 +141,47 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.batteryBar.setTextVisible(False)
         self.linkQualityBar.setTextVisible(False)
 
+        # Input device reader (joystick)
+        self._joystick_reader = JoystickReader()
+        self._active_device = ""
+
+        self._statusbar_label = QLabel(
+            "No input-device found, insert one to fly.")
+        self.statusBar().addWidget(self._statusbar_label)
+
+        # Connect joystick input to Crazyflie commander
+        self._joystick_reader.input_updated.add_callback(
+            self._send_setpoint)
+        self._joystick_reader.assisted_input_updated.add_callback(
+            self._send_velocity_world)
+        self._joystick_reader.heighthold_input_updated.add_callback(
+            self._send_zdistance)
+        self._joystick_reader.hover_input_updated.add_callback(
+            self._send_hover)
+
+        # Input device error and discovery signals
+        self._input_device_error_signal.connect(
+            self._display_input_device_error)
+        self._joystick_reader.device_error.add_callback(
+            self._input_device_error_signal.emit)
+        self._input_discovery_signal.connect(self.device_discovery)
+        self._joystick_reader.device_discovery.add_callback(
+            self._input_discovery_signal.emit)
+
         # pluginhelper for tabs
+        self._pose_logger = PoseLogger()
+        cfclient.ui.pluginhelper.inputDeviceReader = self._joystick_reader
+        cfclient.ui.pluginhelper.pose_logger = self._pose_logger
         cfclient.ui.pluginhelper.connectivity_manager = self._connectivity_manager
         cfclient.ui.pluginhelper.mainUI = self
 
         self._connectivity_manager.set_address(self.address.value())
 
         self._initial_scan = True
-        QTimer.singleShot(
-            0, lambda: self._scan(self._connectivity_manager.get_address())
-        )
+        QTimer.singleShot(0, self._on_event_loop_ready)
+
+        # Battery monitoring signal
+        self._battery_signal.connect(self._update_battery)
 
         # Tabs and toolboxes
         self.tabs_menu_item = QMenu("Tabs", self.menuView)
@@ -142,6 +194,33 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.tabs_menu_item, self.toolboxes_menu_item, self.tab_widget
         )
         self.read_tab_toolbox_config(self.loaded_tab_toolboxes)
+
+        # Input device mux menu
+        self._all_role_menus = ()
+        self._available_devices = ()
+        self._all_mux_nodes = ()
+
+        self._mux_group = QActionGroup(self._menu_inputdevice)
+        self._mux_group.setExclusive(True)
+        for m in self._joystick_reader.available_mux():
+            node = QAction(m.name, self._menu_inputdevice,
+                           checkable=True, enabled=False)
+            node.toggled.connect(self._mux_selected)
+            self._mux_group.addAction(node)
+            self._menu_inputdevice.addAction(node)
+            self._all_mux_nodes += (node,)
+            mux_subnodes = ()
+            for name in m.supported_roles():
+                sub_node = QMenu("    {}".format(name),
+                                 self._menu_inputdevice,
+                                 enabled=False)
+                self._menu_inputdevice.addMenu(sub_node)
+                mux_subnodes += (sub_node,)
+                self._all_role_menus += ({"muxmenu": node,
+                                          "rolemenu": sub_node},)
+            node.setData((m, mux_subnodes))
+
+        self._mapping_support = True
 
         # Theme selection
         self._theme_group = QActionGroup(self.menuThemes)
@@ -257,6 +336,84 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     @Slot(Qt.DockWidgetArea)
     def set_preferred_dock_area(self, area, tab_toolbox):
         tab_toolbox.set_preferred_dock_area(area)
+
+    # --- Event loop ---
+
+    def _on_event_loop_ready(self):
+        self._loop = asyncio.get_event_loop()
+        self._scan(self._connectivity_manager.get_address())
+
+    # --- Commander pipeline ---
+
+    async def _safe_send(self, coro_fn):
+        try:
+            await coro_fn()
+        except DisconnectedError:
+            pass
+
+    def _send_setpoint(self, roll, pitch, yaw, thrust):
+        cf = self.cf
+        if self._disable_input or cf is None or self._loop is None:
+            return
+        asyncio.run_coroutine_threadsafe(
+            self._safe_send(
+                lambda: cf.commander().send_setpoint_rpyt(
+                    roll, pitch, yaw, int(thrust)
+                )
+            ),
+            self._loop,
+        )
+
+    def _send_velocity_world(self, vx, vy, vz, yawrate):
+        cf = self.cf
+        if self._disable_input or cf is None or self._loop is None:
+            return
+        asyncio.run_coroutine_threadsafe(
+            self._safe_send(
+                lambda: cf.commander().send_setpoint_velocity_world(
+                    vx, vy, vz, yawrate
+                )
+            ),
+            self._loop,
+        )
+
+    def _send_zdistance(self, roll, pitch, yawrate, zdistance):
+        cf = self.cf
+        if self._disable_input or cf is None or self._loop is None:
+            return
+        asyncio.run_coroutine_threadsafe(
+            self._safe_send(
+                lambda: cf.commander().send_setpoint_zdistance(
+                    roll, pitch, yawrate, zdistance
+                )
+            ),
+            self._loop,
+        )
+
+    def _send_hover(self, vx, vy, yawrate, zdistance):
+        cf = self.cf
+        if self._disable_input or cf is None or self._loop is None:
+            return
+        asyncio.run_coroutine_threadsafe(
+            self._safe_send(
+                lambda: cf.commander().send_setpoint_hover(
+                    vx, vy, yawrate, zdistance
+                )
+            ),
+            self._loop,
+        )
+
+    def disable_input(self, disable):
+        """Disable gamepad input to allow a tab to send setpoints directly."""
+        self._disable_input = disable
+
+    # --- Emergency stop ---
+
+    def _emergency_stop(self):
+        if self.cf is not None:
+            create_task(
+                self.cf.localization().emergency().send_emergency_stop()
+            )
 
     # --- Address ---
 
@@ -395,12 +552,50 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._update_ui_state()
 
     def _notify_tabs_connected(self):
+        self._pose_logger.start(self.cf)
+        self._battery_task = create_task(self._stream_battery(self.cf))
         for tab_toolbox in self.loaded_tab_toolboxes.values():
             tab_toolbox.connected(self.cf)
 
     def _notify_tabs_disconnected(self):
+        self._pose_logger.stop()
+        if self._battery_task is not None:
+            self._battery_task.cancel()
+            self._battery_task = None
         for tab_toolbox in self.loaded_tab_toolboxes.values():
             tab_toolbox.disconnected()
+
+    async def _stream_battery(self, cf):
+        log = cf.log()
+        block = await log.create_block()
+        await block.add_variable("pm.vbat")
+        await block.add_variable("pm.state")
+        stream = await block.start(1000)
+        try:
+            while True:
+                data = await stream.next()
+                self._battery_signal.emit(
+                    data.data["pm.vbat"], int(data.data["pm.state"])
+                )
+        finally:
+            try:
+                await stream.stop()
+            except DisconnectedError:
+                pass
+
+    def _update_battery(self, vbat, state):
+        self.batteryBar.setValue(int(vbat * 1000))
+
+        color = UiUtils.COLOR_BLUE
+        # TODO firmware reports fully-charged state as 'Battery',
+        # rather than 'Charged'
+        if state in [BatteryStates.CHARGING, BatteryStates.CHARGED]:
+            color = UiUtils.COLOR_GREEN
+        elif state == BatteryStates.LOW_POWER:
+            color = UiUtils.COLOR_RED
+
+        self.batteryBar.setStyleSheet(UiUtils.progressbar_stylesheet(color))
+        self._aff_volts.setText("%.3f" % vbat)
 
     # --- UI state ---
 
@@ -414,13 +609,18 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 ConnectivityManager.UIState.DISCONNECTED
             )
             self.batteryBar.setValue(3000)
+            # TODO: cflib2 does not expose link quality statistics
             self.linkQualityBar.setValue(0)
+            self.esButton.setEnabled(False)
+            self.esButton.setStyleSheet("")
         elif self.uiState == UIState.CONNECTED:
             s = "Connected on %s" % self._connectivity_manager.get_interface()
             self.setWindowTitle(s)
             self.menuItemConnect.setText("Disconnect")
             self.menuItemConnect.setEnabled(True)
             self._connectivity_manager.set_state(ConnectivityManager.UIState.CONNECTED)
+            self.esButton.setEnabled(True)
+            self.esButton.setStyleSheet("background-color: red")
         elif self.uiState == UIState.CONNECTING:
             s = "Connecting to {} ...".format(
                 self._connectivity_manager.get_interface()
@@ -456,6 +656,164 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         except KeyError:
             theme = "Default"
         self._check_theme(theme)
+
+    # --- Input device menu ---
+
+    def _show_input_device_config_dialog(self):
+        self.inputConfig = InputConfigDialogue(self._joystick_reader)
+        self.inputConfig.show()
+
+    def _display_input_device_error(self, error):
+        if self.cf is not None:
+            create_task(self._async_disconnect())
+        QMessageBox.critical(self, "Input device error", error)
+
+    def _mux_selected(self, checked):
+        if not checked:
+            (mux, sub_nodes) = self.sender().data()
+            for s in sub_nodes:
+                s.setEnabled(False)
+        else:
+            (mux, sub_nodes) = self.sender().data()
+            for s in sub_nodes:
+                s.setEnabled(True)
+            self._joystick_reader.set_mux(mux=mux)
+
+            # Go though the tree and select devices/mapping that was
+            # selected before it was disabled.
+            for role_node in sub_nodes:
+                for dev_node in role_node.children():
+                    if type(dev_node) is QAction and dev_node.isChecked():
+                        dev_node.toggled.emit(True)
+
+            self._update_input_device_footer()
+
+    def _get_dev_status(self, device):
+        msg = "{}".format(device.name)
+        if device.supports_mapping:
+            map_name = "No input mapping"
+            if device.input_map:
+                map_name = device.input_map_name
+            msg += " ({})".format(map_name)
+        return msg
+
+    def _update_input_device_footer(self):
+        msg = ""
+
+        if len(self._joystick_reader.available_devices()) > 0:
+            mux = self._joystick_reader._selected_mux
+            msg = "Using {} mux with ".format(mux.name)
+            for key in list(mux._devs.keys())[:-1]:
+                if mux._devs[key]:
+                    msg += "{}, ".format(self._get_dev_status(mux._devs[key]))
+                else:
+                    msg += "N/A, "
+            key = list(mux._devs.keys())[-1]
+            if mux._devs[key]:
+                msg += "{}".format(self._get_dev_status(mux._devs[key]))
+            else:
+                msg += "N/A"
+        else:
+            msg = "No input device found"
+        self._statusbar_label.setText(msg)
+
+    def _inputdevice_selected(self, checked):
+        (map_menu, device, mux_menu) = self.sender().data()
+        if not checked:
+            if map_menu:
+                map_menu.setEnabled(False)
+        else:
+            if map_menu:
+                map_menu.setEnabled(True)
+
+            (mux, sub_nodes) = mux_menu.data()
+            for role_node in sub_nodes:
+                for dev_node in role_node.children():
+                    if type(dev_node) is QAction and dev_node.isChecked():
+                        if device.id == dev_node.data()[1].id \
+                                and dev_node is not self.sender():
+                            dev_node.setChecked(False)
+
+            role_in_mux = str(self.sender().parent().title()).strip()
+            logger.info("Role of {} is {}".format(device.name,
+                                                  role_in_mux))
+
+            Config().set("input_device", str(device.name))
+
+            self._mapping_support = self._joystick_reader.start_input(
+                device.name,
+                role_in_mux)
+        self._update_input_device_footer()
+
+    def _inputconfig_selected(self, checked):
+        if not checked:
+            return
+
+        selected_mapping = str(self.sender().text())
+        device = self.sender().data().data()[1]
+        self._joystick_reader.set_input_map(device.name, selected_mapping)
+        self._update_input_device_footer()
+
+    def device_discovery(self, devs):
+        """Called when new devices have been added"""
+        for menu in self._all_role_menus:
+            role_menu = menu["rolemenu"]
+            mux_menu = menu["muxmenu"]
+            dev_group = QActionGroup(role_menu)
+            dev_group.setExclusive(True)
+            for d in devs:
+                dev_node = QAction(d.name, role_menu, checkable=True,
+                                   enabled=True)
+                role_menu.addAction(dev_node)
+                dev_group.addAction(dev_node)
+                dev_node.toggled.connect(self._inputdevice_selected)
+
+                map_node = None
+                if d.supports_mapping:
+                    map_node = QMenu("    Input map", role_menu, enabled=False)
+                    map_group = QActionGroup(role_menu)
+                    map_group.setExclusive(True)
+                    dev_node.setData((map_node, d))
+                    for c in ConfigManager().get_list_of_configs():
+                        node = QAction(c, map_node, checkable=True,
+                                       enabled=True)
+                        node.toggled.connect(self._inputconfig_selected)
+                        map_node.addAction(node)
+                        node.setData(dev_node)
+                        map_group.addAction(node)
+                        if d not in self._available_devices:
+                            last_map = Config().get("device_config_mapping")
+                            if d.name in last_map and last_map[d.name] == c:
+                                node.setChecked(True)
+                    role_menu.addMenu(map_node)
+                dev_node.setData((map_node, d, mux_menu))
+
+        # Update the list of what devices we found
+        self._available_devices = ()
+        for d in devs:
+            self._available_devices += (d,)
+
+        # Only enable MUX nodes if we have enough devices to cover
+        # the roles
+        for mux_node in self._all_mux_nodes:
+            (mux, sub_nodes) = mux_node.data()
+            if len(mux.supported_roles()) <= len(self._available_devices):
+                mux_node.setEnabled(True)
+
+        # Select default mux
+        if self._all_mux_nodes[0].isEnabled():
+            self._all_mux_nodes[0].setChecked(True)
+
+        # Select previously used device or first available
+        if Config().get("input_device") in [d.name for d in devs]:
+            for dev_menu in self._all_role_menus[0]["rolemenu"].actions():
+                if dev_menu.text() == Config().get("input_device"):
+                    dev_menu.setChecked(True)
+        else:
+            self._all_role_menus[0]["rolemenu"].actions()[0].setChecked(True)
+            logger.info("Select first device")
+
+        self._update_input_device_footer()
 
     # --- Window events ---
 
