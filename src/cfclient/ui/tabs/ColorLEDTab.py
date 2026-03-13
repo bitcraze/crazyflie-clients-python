@@ -35,18 +35,18 @@ from PySide6.QtUiTools import loadUiType
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QPixmap, QPainter, QLinearGradient, QPen, QPainterPath
 from PySide6.QtWidgets import QPushButton, QMessageBox
-from cflib.crazyflie.log import LogConfig
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
 from cfclient.utils.config import Config
+from cfclient.gui import create_task
 
-__author__ = 'Bitcraze AB'
-__all__ = ['ColorLEDTab']
+__author__ = "Bitcraze AB"
+__all__ = ["ColorLEDTab"]
+
+color_led_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/colorLEDTab.ui")[0]  # type: ignore[index]
 
 logger = logging.getLogger(__name__)
-
-color_led_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/colorLEDTab.ui")[0]  # type: ignore
 
 
 class wrgb_t:
@@ -79,93 +79,52 @@ class rgb_t:
 class ThermalMonitor:
     """Monitors thermal throttling status for Color LED decks"""
 
-    def __init__(self, helper, params_config, log_data_signal, log_error_signal):
-        """
-        Initialize thermal monitor
-
-        Args:
-            helper: Crazyflie helper instance
-            params_config: Dictionary mapping positions to their thermal log names
-            log_data_signal: PyQt signal to emit when log data is received
-            log_error_signal: PyQt signal to emit when log errors occur
-        """
-        self._helper = helper
+    def __init__(self, params_config):
         self._params_config = params_config
-        self._log_data_signal = log_data_signal
-        self._log_error_signal = log_error_signal
-        self._active_positions = []
+        self._streams = {}
 
-    def start_monitoring(self, positions):
+    async def start_monitoring(self, cf, positions):
         """
-        Start thermal monitoring for specified deck positions
+        Start thermal monitoring for the specified deck positions.
 
-        Args:
-            positions: List of position indices to monitor
+        Creates a log block per position and starts streaming. The caller is
+        responsible for reading the streams (see ColorLEDTab._run_thermal_stream).
         """
-        self._active_positions = positions
-
         for position in positions:
             if position not in self._params_config:
                 continue
 
             params = self._params_config[position]
-            log_name = f"Thermal{['Bottom', 'Top'][position]}"
-            lg = LogConfig(log_name, Config().get("ui_update_period"))
-
             try:
-                lg.add_variable(params['thermal_log'], "uint8_t")
-                self._helper.cf.log.add_config(lg)
-                lg.data_received_cb.add_callback(self._log_data_signal.emit)
-                lg.error_cb.add_callback(self._log_error_signal.emit)
-                lg.start()
+                block = await cf.log().create_block()
+                await block.add_variable(params['thermal_log'])
+                stream = await block.start(Config().get("ui_update_period"))
+                self._streams[position] = stream
                 logger.debug(f"Started thermal logging for position {position}: {params['thermal_log']}")
-            except (KeyError, AttributeError) as e:
+            except Exception as e:
                 logger.debug(f"Could not start thermal logging for position {position}: {e}")
 
-    def check_throttling(self, data, positions_to_check):
-        """
-        Check if any of the specified positions are thermally throttling
-
-        Args:
-            data: Log data dictionary
-            positions_to_check: List of position indices to check
-
-        Returns:
-            bool: True if any position is throttling
-        """
-        return any(
-            self._params_config[pos]['thermal_log'] in data and
-            data[self._params_config[pos]['thermal_log']]
-            for pos in positions_to_check
-            if pos in self._params_config
-        )
+    def stop_monitoring(self):
+        """Drop all active log streams (Crazyflie log blocks are cleaned up automatically)."""
+        self._streams.clear()
 
 
 class ColorLEDDeckController:
     """Manages Color LED deck detection and parameter writes"""
 
-    def __init__(self, helper, params_config):
-        """
-        Initialize deck controller
-
-        Args:
-            helper: Crazyflie helper instance
-            params_config: Dictionary mapping positions to their parameter names
-        """
-        self._helper = helper
+    def __init__(self, params_config):
         self._params_config = params_config
         self._deck_present = {}  # Maps position -> bool
 
-    def detect_decks(self):
-        """Detect which Color LED decks are present"""
+    async def detect_decks(self, cf):
+        """Detect which Color LED decks are present by reading deck params from the Crazyflie."""
         for position, params in self._params_config.items():
             try:
-                deck_param = self._helper.cf.param.get_value(params['deck_param'])
-                # Convert to int to handle string values like "0" or "1"
+                deck_param = await cf.param().get(params['deck_param'])
                 self._deck_present[position] = bool(int(deck_param))
                 logger.debug(f"Color LED deck at position {position} ({'Bottom' if position == 0 else 'Top'}) "
                              f"detected: {self._deck_present[position]} (param: {params['deck_param']}={deck_param})")
-            except (KeyError, ValueError, TypeError) as e:
+            except Exception as e:
                 self._deck_present[position] = False
                 logger.debug(f"Color LED deck parameter not found for position {position}: {e}")
 
@@ -177,11 +136,12 @@ class ColorLEDDeckController:
         """Get list of positions where decks are present"""
         return [pos for pos, present in self._deck_present.items() if present]
 
-    def write_color(self, position, color_uint32):
+    async def write_color(self, cf, position, color_uint32):
         """
-        Write color to a specific deck position
+        Write color to a specific deck position.
 
         Args:
+            cf: Crazyflie connection
             position: Deck position (0=bottom, 1=top)
             color_uint32: Packed WRGB color value
         """
@@ -194,7 +154,7 @@ class ColorLEDDeckController:
             return
 
         param_name = self._params_config[position]['color']
-        self._helper.cf.param.set_value(param_name, str(color_uint32))
+        await cf.param().set(param_name, color_uint32)
 
     def clear_deck_state(self):
         """Clear deck presence state (called on disconnect)"""
@@ -205,10 +165,6 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
     """Tab with inline color picker with hue slider, SV area, and hex input."""
 
     _colorChanged = Signal(QColor)
-    _connectedSignal = Signal(str)
-    _disconnectedSignal = Signal(str)
-    _log_data_signal = Signal(int, object, object)
-    _log_error_signal = Signal(object, str)
 
     # Parameter and log names by position
     PARAMS_BY_POSITION = {
@@ -261,106 +217,94 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
             }
         """)
 
-        self._isConnected = False
+        self._cf = None
         self._updating_from_fetch = False  # Flag to prevent writes during color fetch
         self._throttling_state = {}  # Track last known throttling state per position
 
         # Initialize thermal monitor and deck controller
-        self._thermal_monitor = ThermalMonitor(
-            self._helper,
-            self.PARAMS_BY_POSITION,
-            self._log_data_signal,
-            self._log_error_signal
-        )
-        self._deck_controller = ColorLEDDeckController(
-            self._helper,
-            self.PARAMS_BY_POSITION
-        )
+        self._thermal_monitor = ThermalMonitor(self.PARAMS_BY_POSITION)
+        self._deck_controller = ColorLEDDeckController(self.PARAMS_BY_POSITION)
 
-        self._connectedSignal.connect(self._connected)
-        self._disconnectedSignal.connect(self._disconnected)
         self._colorChanged.connect(self._write_color_parameter)
-        self._log_data_signal.connect(self._log_data_received)
-        self._log_error_signal.connect(self._logging_error)
-
-        self._helper.cf.connected.add_callback(self._connectedSignal.emit)
-        self._helper.cf.disconnected.add_callback(self._disconnectedSignal.emit)
 
         # Handle position dropdown changes
         self.positionDropdown.currentIndexChanged.connect(self._on_position_changed)
 
-    def _logging_error(self, log_conf, msg):
-        QMessageBox.about(self, "Log error",
-                          "Error when starting log config [%s]: %s" % (
-                              log_conf.name, msg))
+    def connected(self, cf):
+        """Called by the framework when the Crazyflie connects."""
+        self._cf = cf
+        create_task(self._on_connected())
 
-    def _log_data_received(self, _timestamp, data, _logconf):
+    def disconnected(self):
+        """Called by the framework when the Crazyflie disconnects."""
+        self._cf = None
+        self._deck_controller.clear_deck_state()
+        self._thermal_monitor.stop_monitoring()
+        self._throttling_state.clear()
+
+        self.groupBox_color.setEnabled(False)
+        self.hue_bar.setEnabled(False)
+
+        self.positionDropdown.model().item(0).setEnabled(False)
+        self.positionDropdown.model().item(1).setEnabled(False)
+        self.positionDropdown.model().item(2).setEnabled(False)
+
+        self.information_text.setText("")
+
+    async def _on_connected(self):
+        """Async setup after connection: detect decks, start thermal monitoring."""
+        await self._deck_controller.detect_decks(self._cf)
+
+        self._update_position_dropdown()
+
+        present_decks = self._deck_controller.get_present_decks()
+        has_decks = len(present_decks) > 0
+        self.groupBox_color.setEnabled(has_decks)
+        self.hue_bar.setEnabled(has_decks)
+
+        if has_decks:
+            await self._thermal_monitor.start_monitoring(self._cf, present_decks)
+            # Start background tasks to read from each thermal log stream
+            for position, stream in self._thermal_monitor._streams.items():
+                create_task(self._run_thermal_stream(position, stream))
+
+    async def _run_thermal_stream(self, position, stream):
+        """Read thermal log data from the stream until the Crazyflie disconnects."""
+        try:
+            while True:
+                log_data = await stream.next()
+                self._process_thermal_data(log_data.data)
+        except Exception:
+            pass  # Stream ends when the Crazyflie disconnects
+
+    def _process_thermal_data(self, data):
+        """Update the throttling warning label based on incoming log data."""
         if not self.isVisible():
             return
 
         position = self.positionDropdown.currentData()
-
-        # Determine which positions to check for throttling
         positions_to_check = [0, 1] if position == 2 else [position]
 
-        # Update throttling state for positions that have data in this update
         has_thermal_data = False
         for pos in positions_to_check:
             if pos in self.PARAMS_BY_POSITION:
                 thermal_log = self.PARAMS_BY_POSITION[pos]['thermal_log']
                 if thermal_log in data:
                     has_thermal_data = True
-                    # Update state for this position
                     self._throttling_state[pos] = bool(data[thermal_log])
 
         if has_thermal_data:
-            # Check if any selected position is currently throttling based on known state
             is_throttling = any(
                 self._throttling_state.get(pos, False)
                 for pos in positions_to_check
             )
-
             self.information_text.setText(
                 "Throttling: Lowering intensity to lower temperature." if is_throttling else ""
             )
 
-    def _connected(self, _):
-        self._isConnected = True
-
-        # Detect which color LED decks are attached
-        self._deck_controller.detect_decks()
-
-        # Update dropdown based on detected decks
-        self._update_position_dropdown()
-
-        # Enable UI controls only if at least one deck is present
-        present_decks = self._deck_controller.get_present_decks()
-        has_decks = len(present_decks) > 0
-        self.groupBox_color.setEnabled(has_decks)
-        self.hue_bar.setEnabled(has_decks)
-
-        # Set up thermal logging for available decks
-        if has_decks:
-            self._thermal_monitor.start_monitoring(present_decks)
-
-    def _disconnected(self, _):
-        self._isConnected = False
-        self._deck_controller.clear_deck_state()
-        self._throttling_state.clear()  # Clear throttling state
-
-        # Disable UI controls
-        self.groupBox_color.setEnabled(False)
-        self.hue_bar.setEnabled(False)
-
-        # Disable all position dropdown items
-        self.positionDropdown.model().item(0).setEnabled(False)
-        self.positionDropdown.model().item(1).setEnabled(False)
-        self.positionDropdown.model().item(2).setEnabled(False)
-
-        self.information_text.setText("")  # clear thermal throttling warning
-
     def _write_color_parameter(self, color: QColor):
-        if not self._isConnected:
+        """Triggered by _colorChanged signal; schedules an async param write."""
+        if self._cf is None:
             return
 
         # Don't write when we're updating UI from a fetch operation
@@ -373,52 +317,46 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         color_uint32 = wrgb.pack()
 
         position = self.positionDropdown.currentData()
-
-        # Determine which positions to write to
         positions_to_write = [0, 1] if position == 2 else [position]
 
         for pos in positions_to_write:
-            self._deck_controller.write_color(pos, color_uint32)
+            create_task(self._deck_controller.write_color(self._cf, pos, color_uint32))
 
     def _on_position_changed(self, _):
-        """Handle position dropdown changes by fetching current color from Crazyflie"""
-        if not self._isConnected:
+        """Fetch the current color from the Crazyflie when the position dropdown changes."""
+        if self._cf is None:
             return
+        create_task(self._async_fetch_and_update_ui())
 
+    async def _async_fetch_and_update_ui(self):
+        """Fetch the current LED color(s) from the Crazyflie and update the UI."""
         position = self.positionDropdown.currentData()
 
         if position == 2:  # Both
-            # Fetch both colors and compare
-            color_bottom = self._fetch_color_from_position(0)
-            color_top = self._fetch_color_from_position(1)
+            color_bottom = await self._fetch_color_from_position(0)
+            color_top = await self._fetch_color_from_position(1)
 
             if color_bottom is not None and color_top is not None:
                 if color_bottom == color_top:
-                    # Both are the same, show that color
                     self._update_ui_from_rgb(color_bottom)
                 else:
-                    # Different colors, show black
+                    # Different colors — show black rather than an arbitrary choice
                     self._update_ui_from_rgb((0, 0, 0))
             else:
-                # Could not fetch one or both colors, show black
                 self._update_ui_from_rgb((0, 0, 0))
-        else:  # Bottom (0) or Top (1)
-            color = self._fetch_color_from_position(position)
+        else:
+            color = await self._fetch_color_from_position(position)
             if color is not None:
                 self._update_ui_from_rgb(color)
             else:
-                # Could not fetch color, show black
                 self._update_ui_from_rgb((0, 0, 0))
 
-    def _fetch_color_from_position(self, position):
+    async def _fetch_color_from_position(self, position):
         """
-        Fetch current color from Crazyflie for given position
-
-        Args:
-            position: 0 for bottom, 1 for top
+        Fetch current color from the Crazyflie for the given position.
 
         Returns:
-            tuple (r, g, b) or None if fetch failed
+            tuple (r, g, b) or None if the deck is not present or the fetch failed.
         """
         if position not in self.PARAMS_BY_POSITION:
             return None
@@ -428,7 +366,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
 
         try:
             param_name = self.PARAMS_BY_POSITION[position]['color']
-            color_uint32 = int(self._helper.cf.param.get_value(param_name))
+            color_uint32 = int(await self._cf.param().get(param_name))
 
             # Unpack WRGB: 0xWWRRGGBB
             w = (color_uint32 >> 24) & 0xFF
@@ -436,19 +374,15 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
             g = (color_uint32 >> 8) & 0xFF
             b = color_uint32 & 0xFF
 
-            # Convert WRGB back to RGB by adding white channel back
-            r_full = r + w
-            g_full = g + w
-            b_full = b + w
-
-            return (r_full, g_full, b_full)
-        except (KeyError, ValueError, TypeError) as e:
+            # Add the white channel back to get full-range RGB
+            return (r + w, g + w, b + w)
+        except Exception as e:
             logger.debug(f"Could not fetch color from position {position}: {e}")
             return None
 
     def _update_ui_from_rgb(self, rgb):
         """
-        Update UI controls from RGB values without writing back to Crazyflie
+        Update UI controls from RGB values without writing back to the Crazyflie.
 
         Args:
             rgb: tuple (r, g, b)
@@ -481,7 +415,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         self.positionDropdown.model().item(2).setEnabled(False)
 
     def _update_position_dropdown(self):
-        """Update position dropdown based on detected decks"""
+        """Enable/disable and select dropdown items based on detected decks."""
         is_bottom_attached = self._deck_controller.is_deck_present(0)
         is_top_attached = self._deck_controller.is_deck_present(1)
 
@@ -489,7 +423,6 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
             self.positionDropdown.model().item(0).setEnabled(True)
             self.positionDropdown.model().item(1).setEnabled(True)
             self.positionDropdown.model().item(2).setEnabled(True)
-            # Default to "Both" if both attached
             self.positionDropdown.setCurrentIndex(2)
         elif is_bottom_attached:
             self.positionDropdown.model().item(0).setEnabled(True)
@@ -502,7 +435,6 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
             self.positionDropdown.model().item(2).setEnabled(False)
             self.positionDropdown.setCurrentIndex(1)
         else:
-            # No decks attached
             self.positionDropdown.model().item(0).setEnabled(False)
             self.positionDropdown.model().item(1).setEnabled(False)
             self.positionDropdown.model().item(2).setEnabled(False)
@@ -511,7 +443,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         """ Show event for proper initial SV area sizing """
         super().showEvent(a0)
         self._update_sv_area(self.sv_area, self._hue)
-        # Update preview without writing to Crazyflie
+        # Update preview without writing to the Crazyflie
         self._updating_from_fetch = True
         try:
             self._update_preview()
