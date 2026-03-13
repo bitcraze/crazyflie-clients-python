@@ -35,8 +35,8 @@ from PySide6 import QtGui
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
 
-__author__ = 'Bitcraze AB'
-__all__ = ['AttitudeIndicator']
+__author__ = "Bitcraze AB"
+__all__ = ["AttitudeIndicator"]
 
 
 class AttitudeIndicator(QtWidgets.QWidget):
@@ -98,7 +98,7 @@ class AttitudeIndicator(QtWidgets.QWidget):
         qp.translate(-w / 2, -h / 2)
         qp.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
 
-        font = QtGui.QFont('Serif', 7, QtGui.QFont.Weight.Light)
+        font = QtGui.QFont("Serif", 7, QtGui.QFont.Weight.Light)
         qp.setFont(font)
 
         # Draw the blue
@@ -123,22 +123,35 @@ class AttitudeIndicator(QtWidgets.QWidget):
                     length = 0.35 * w
                     if i != 0:
                         if ofset == 0:
-                            qp.drawText(int((w / 2) + (length / 2) + (w * 0.06)),
-                                        pos, "{}".format(-i / 10))
-                            qp.drawText(int((w / 2) - (length / 2) - (w * 0.08)),
-                                        pos, "{}".format(-i / 10))
+                            qp.drawText(
+                                int((w / 2) + (length / 2) + (w * 0.06)),
+                                pos,
+                                "{}".format(-i / 10),
+                            )
+                            qp.drawText(
+                                int((w / 2) - (length / 2) - (w * 0.08)),
+                                pos,
+                                "{}".format(-i / 10),
+                            )
                         else:
-                            qp.drawText(int((w / 2) + (length / 2) + (w * 0.06)),
-                                        pos, "{}".format(i / 10))
-                            qp.drawText(int((w / 2) - (length / 2) - (w * 0.08)),
-                                        pos, "{}".format(i / 10))
+                            qp.drawText(
+                                int((w / 2) + (length / 2) + (w * 0.06)),
+                                pos,
+                                "{}".format(i / 10),
+                            )
+                            qp.drawText(
+                                int((w / 2) - (length / 2) - (w * 0.08)),
+                                pos,
+                                "{}".format(i / 10),
+                            )
                 elif i % 50 == 0:
                     length = 0.2 * w
                 else:
                     length = 0.1 * w
 
-                qp.drawLine(int((w / 2) - (length / 2)), pos,
-                            int((w / 2) + (length / 2)), pos)
+                qp.drawLine(
+                    int((w / 2) - (length / 2)), pos, int((w / 2) + (length / 2)), pos
+                )
 
         qp.setWorldMatrixEnabled(False)
 
@@ -155,7 +168,7 @@ class AttitudeIndicator(QtWidgets.QWidget):
         qp.setBrush(QtGui.QColor(255, 255, 255))
         qp.setPen(pen)
         fh = int(max(7, h / 50))
-        font = QtGui.QFont('Sans', fh, QtGui.QFont.Weight.Light)
+        font = QtGui.QFont("Sans", fh, QtGui.QFont.Weight.Light)
         qp.setFont(font)
         qp.resetTransform()
 
@@ -166,8 +179,7 @@ class AttitudeIndicator(QtWidgets.QWidget):
 
         if self.hover:
             # target height (center)
-            qp.drawText(
-                w - fh * 10, int(fh / 2), str(round(self.hoverTargetHeight, 2)))
+            qp.drawText(w - fh * 10, int(fh / 2), str(round(self.hoverTargetHeight, 2)))
             diff = round(self.hoverHeight - self.hoverTargetHeight, 2)
             pos_y = -h / 6 * diff
 
@@ -190,8 +202,8 @@ class AttitudeIndicator(QtWidgets.QWidget):
 
 
 if __name__ == "__main__":
-    class Example(QtWidgets.QWidget):
 
+    class Example(QtWidgets.QWidget):
         def __init__(self):
             super(Example, self).__init__()
 
@@ -204,10 +216,10 @@ if __name__ == "__main__":
             self.wid.setRoll((roll / 10.0) - 180.0)
 
         def updateTarget(self, target):
-            self.wid.setHover(500 + target / 10.)
+            self.wid.setHover(500 + target / 10.0)
 
         def updateBaro(self, height):
-            self.wid.setBaro(500 + height / 10.)
+            self.wid.setBaro(500 + height / 10.0)
 
         def initUI(self):
             vbox = QtWidgets.QVBoxLayout()
@@ -251,7 +263,7 @@ if __name__ == "__main__":
             self.setLayout(hbox)
 
             self.setGeometry(50, 50, 510, 510)
-            self.setWindowTitle('Attitude Indicator')
+            self.setWindowTitle("Attitude Indicator")
             self.show()
 
         def changeValue(self, value):
@@ -263,5 +275,5 @@ if __name__ == "__main__":
         Example()
         sys.exit(app.exec())
 
-    if __name__ == '__main__':
+    if __name__ == "__main__":
         main()

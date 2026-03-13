@@ -38,18 +38,19 @@ import os
 import copy
 
 from .singleton import Singleton
-from cflib.utils.callbacks import Caller
+from cfclient.utils.callbacks import Caller
 
 import cfclient
 
-__author__ = 'Bitcraze AB/Allyn Bauer'
-__all__ = ['ConfigManager']
+__author__ = "Bitcraze AB/Allyn Bauer"
+__all__ = ["ConfigManager"]
 
 logger = logging.getLogger(__name__)
 
 
 class ConfigManager(metaclass=Singleton):
-    """ Singleton class for managing input processing """
+    """Singleton class for managing input processing"""
+
     conf_needs_reload = Caller()
     configs_dir = cfclient.config_path + "/input"
 
@@ -76,8 +77,10 @@ class ConfigManager(metaclass=Singleton):
     def get_list_of_configs(self):
         """Reload the configurations from file"""
         try:
-            configs = [os.path.basename(f) for f in
-                       glob.glob(self.configs_dir + "/[A-Za-z]*.json")]
+            configs = [
+                os.path.basename(f)
+                for f in glob.glob(self.configs_dir + "/[A-Za-z]*.json")
+            ]
             self._input_config = []
             self._input_settings = []
             self._list_of_configs = []
@@ -86,16 +89,17 @@ class ConfigManager(metaclass=Singleton):
                 json_data = open(self.configs_dir + "/%s" % conf)
                 data = json.load(json_data)
                 new_input_device = {}
-                new_input_settings = {"updateperiod": 10,
-                                      "springythrottle": True,
-                                      "rp_dead_band": 0.05}
+                new_input_settings = {
+                    "updateperiod": 10,
+                    "springythrottle": True,
+                    "rp_dead_band": 0.05,
+                }
                 for s in data["inputconfig"]["inputdevice"]:
                     if s == "axis":
                         for a in data["inputconfig"]["inputdevice"]["axis"]:
                             axis = {}
                             axis["scale"] = a["scale"]
-                            axis["offset"] = a[
-                                "offset"] if "offset" in a else 0.0
+                            axis["offset"] = a["offset"] if "offset" in a else 0.0
                             axis["type"] = a["type"]
                             axis["key"] = a["key"]
                             axis["name"] = a["name"]
@@ -110,15 +114,13 @@ class ConfigManager(metaclass=Singleton):
                                 locaxis = copy.deepcopy(axis)
                                 if "ids" in a:
                                     if id == a["ids"][0]:
-                                        locaxis["scale"] = locaxis[
-                                            "scale"] * -1
+                                        locaxis["scale"] = locaxis["scale"] * -1
                                 locaxis["id"] = id
                                 # 'type'-'id' defines unique index for axis
                                 index = "%s-%d" % (a["type"], id)
                                 new_input_device[index] = locaxis
                     else:
-                        new_input_settings[s] = data[
-                            "inputconfig"]["inputdevice"][s]
+                        new_input_settings[s] = data["inputconfig"]["inputdevice"][s]
                 self._input_config.append(new_input_device)
                 self._input_settings.append(new_input_settings)
                 json_data.close()
@@ -129,7 +131,7 @@ class ConfigManager(metaclass=Singleton):
 
     def save_config(self, input_map, config_name):
         """Save a configuration to file"""
-        mapping = {'inputconfig': {'inputdevice': {'axis': []}}}
+        mapping = {"inputconfig": {"inputdevice": {"axis": []}}}
 
         # Create intermediate structure for the configuration file
         funcs = {}
@@ -156,12 +158,12 @@ class ConfigManager(metaclass=Singleton):
             axis["type"] = func[0]["type"]
             mapping["inputconfig"]["inputdevice"]["axis"].append(axis)
 
-        mapping["inputconfig"]['inputdevice']['name'] = config_name
-        mapping["inputconfig"]['inputdevice']['updateperiod'] = 10
+        mapping["inputconfig"]["inputdevice"]["name"] = config_name
+        mapping["inputconfig"]["inputdevice"]["updateperiod"] = 10
 
         filename = ConfigManager().configs_dir + "/%s.json" % config_name
         logger.info("Saving config to [%s]", filename)
-        json_data = open(filename, 'w')
+        json_data = open(filename, "w")
         json_data.write(json.dumps(mapping, indent=2))
         json_data.close()
 
@@ -172,11 +174,11 @@ class ConfigManager(metaclass=Singleton):
 
         # The parameter that used to be called 'althold' has been renamed to
         # 'assistedControl'
-        althold = 'althold'
-        assistedControl = 'assistedControl'
+        althold = "althold"
+        assistedControl = "assistedControl"
 
-        if axis['key'] == althold:
-            axis['key'] = assistedControl
+        if axis["key"] == althold:
+            axis["key"] = assistedControl
 
-        if axis['name'] == althold:
-            axis['name'] = assistedControl
+        if axis["name"] == althold:
+            axis["name"] = assistedControl
