@@ -31,29 +31,35 @@ Shows data for the Lighthouse Positioning system
 """
 
 import logging
+from enum import Enum
 
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
-from PyQt6.QtWidgets import QMessageBox
-from PyQt6.QtWidgets import QFileDialog
-from PyQt6.QtWidgets import QLabel
+from PyQt6.QtWidgets import QMessageBox, QFileDialog, QLabel, QPushButton
+from vispy.util.event import Event
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
 
+from cfclient.ui.widgets.geo_estimator_widget import GeoEstimatorWidget
+from cfclient.ui.widgets.geo_estimator_details_widget import GeoEstimatorDetailsWidget
+from cfclient.ui.widgets.info_label import InfoLabel
 from cflib.crazyflie.log import LogConfig
 from cflib.crazyflie.mem import LighthouseMemHelper
 from cflib.localization import LighthouseConfigWriter
 from cflib.localization import LighthouseConfigFileManager
+from cflib.localization import LighthouseGeometrySolution
+from cflib.localization import LhCfPoseSampleType
+from cflib.localization import Pose
 
-from cfclient.ui.dialogs.lighthouse_bs_geometry_dialog import LighthouseBsGeometryDialog
+from cflib.crazyflie.mem.lighthouse_memory import LighthouseBsGeometry
+
 from cfclient.ui.dialogs.basestation_mode_dialog import LighthouseBsModeDialog
 from cfclient.ui.dialogs.lighthouse_system_type_dialog import LighthouseSystemTypeDialog
 from cfclient.utils.logconfigreader import FILE_REGEX_YAML
 
 from vispy import scene
 import numpy as np
-import math
 import os
 
 __author__ = 'Bitcraze AB'
@@ -80,30 +86,27 @@ class MarkerPose():
     LABEL_SIZE = 100
     LABEL_OFFSET = np.array((0.0, 0, 0.25))
 
-    def __init__(self, the_scene, color, text=None):
+    def __init__(self, the_scene, color, text=None, axis_visible: bool = False, interactive=False,
+                 symbol: str = 'disc'):
         self._scene = the_scene
         self._color = color
         self._text = text
+        self._position = [0.0, 0, 0]
+        self._rot = np.identity(3)
+        self._symbol = symbol
+        self._axis_visible = False
+        self._x_axis = None
+        self._y_axis = None
+        self._z_axis = None
 
         self._marker = scene.visuals.Markers(
             pos=np.array([[0, 0, 0]]),
             parent=self._scene,
-            face_color=self._color)
+            face_color=self._color,
+            symbol=self._symbol)
 
-        self._x_axis = scene.visuals.Line(
-            pos=np.array([[0, 0, 0], [0, 0, 0]]),
-            color=self.COL_X_AXIS,
-            parent=self._scene)
-
-        self._y_axis = scene.visuals.Line(pos=np.array(
-            [[0, 0, 0], [0, 0, 0]]),
-            color=self.COL_Y_AXIS,
-            parent=self._scene)
-
-        self._z_axis = scene.visuals.Line(
-            pos=np.array([[0, 0, 0], [0, 0, 0]]),
-            color=self.COL_Z_AXIS,
-            parent=self._scene)
+        if interactive:
+            self._marker.interactive = True
 
         self._label = None
         if self._text:
@@ -113,39 +116,215 @@ class MarkerPose():
                 pos=self.LABEL_OFFSET,
                 parent=self._scene)
 
+        self.set_axis_visible(axis_visible)
+
+    def set_axis_visible(self, visible: bool):
+        if visible == self._axis_visible:
+            return
+
+        if visible:
+            if self._x_axis is None:
+                self._x_axis = scene.visuals.Line(
+                    pos=np.array([[0, 0, 0], [0, 0, 0]]),
+                    color=self.COL_X_AXIS,
+                    parent=self._scene)
+
+            if self._y_axis is None:
+                self._y_axis = scene.visuals.Line(
+                    pos=np.array([[0, 0, 0], [0, 0, 0]]),
+                    color=self.COL_Y_AXIS,
+                    parent=self._scene)
+
+            if self._z_axis is None:
+                self._z_axis = scene.visuals.Line(
+                    pos=np.array([[0, 0, 0], [0, 0, 0]]),
+                    color=self.COL_Z_AXIS,
+                    parent=self._scene)
+        else:
+            if self._x_axis is not None:
+                self._x_axis.parent = None
+                self._x_axis = None
+            if self._y_axis is not None:
+                self._y_axis.parent = None
+                self._y_axis = None
+            if self._z_axis is not None:
+                self._z_axis.parent = None
+                self._z_axis = None
+
+        self._axis_visible = visible
+
+        self._update_visuals()
+
     def set_pose(self, position, rot):
-        self._marker.set_data(pos=np.array([position]), face_color=self._color)
+        if np.array_equal(position, self._position) and np.array_equal(rot, self._rot):
+            return
+
+        self._position = position
+        self._rot = rot
+
+        self._update_visuals()
+
+    def _update_visuals(self):
+        self._marker.set_data(pos=np.array([self._position]), face_color=self._color, symbol=self._symbol)
 
         if self._label:
-            self._label.pos = self.LABEL_OFFSET + position
+            self._label.pos = self.LABEL_OFFSET + self._position
 
-        x_tip = np.dot(np.array(rot), np.array([self.AXIS_LEN, 0, 0]))
-        self._x_axis.set_data(np.array([position, x_tip + position]), color=self.COL_X_AXIS)
+        if self._axis_visible:
+            x_tip = np.dot(np.array(self._rot), np.array([self.AXIS_LEN, 0, 0]))
+            self._x_axis.set_data(np.array([self._position, x_tip + self._position]), color=self.COL_X_AXIS)
+            y_tip = np.dot(np.array(self._rot), np.array([0, self.AXIS_LEN, 0]))
+            self._y_axis.set_data(np.array([self._position, y_tip + self._position]), color=self.COL_Y_AXIS)
+            z_tip = np.dot(np.array(self._rot), np.array([0, 0, self.AXIS_LEN]))
+            self._z_axis.set_data(np.array([self._position, z_tip + self._position]), color=self.COL_Z_AXIS)
 
-        y_tip = np.dot(np.array(rot), np.array([0, self.AXIS_LEN, 0]))
-        self._y_axis.set_data(np.array([position, y_tip + position]), color=self.COL_Y_AXIS)
-
-        z_tip = np.dot(np.array(rot), np.array([0, 0, self.AXIS_LEN]))
-        self._z_axis.set_data(np.array([position, z_tip + position]), color=self.COL_Z_AXIS)
+    def get_position(self):
+        return self._position
 
     def remove(self):
         self._marker.parent = None
-        self._x_axis.parent = None
-        self._y_axis.parent = None
-        self._z_axis.parent = None
+        if self._x_axis is not None:
+            self._x_axis.parent = None
+        if self._y_axis is not None:
+            self._y_axis.parent = None
+        if self._z_axis is not None:
+            self._z_axis.parent = None
         if self._label:
             self._label.parent = None
 
     def set_color(self, color):
         self._color = color
-        self._marker.set_data(face_color=self._color)
+        self._marker.set_data(pos=np.array([self._position]), face_color=self._color, symbol=self._symbol)
+
+    def is_same_visual(self, visual):
+        if not self._marker.interactive:
+            raise RuntimeError("is_same_visual can only be used for interactive markers")
+
+        return visual == self._marker
+
+
+class CfMarkerPose(MarkerPose):
+    POSITION_BRUSH = np.array((0, 0, 1.0))
+
+    def __init__(self, the_scene):
+        super().__init__(the_scene, self.POSITION_BRUSH, None, axis_visible=True)
+
+
+class BsMarkerPose(MarkerPose):
+    HIGHLIGHT_BRUSH = np.array((0.2, 0.2, 0.5))
+    BS_BRUSH_VISIBLE = np.array((0.2, 0.5, 0.2))
+    BS_BRUSH_NOT_VISIBLE = np.array((0.8, 0.5, 0.5))
+    LINE_COL = np.array((0.0, 0.0, 0.0))
+
+    def __init__(self, the_scene, text=None):
+        super().__init__(the_scene, self.BS_BRUSH_NOT_VISIBLE, text, axis_visible=True, interactive=True)
+
+        self._is_visible = False
+        self._is_highlighted = False
+        self._bs_lines = []
+
+    def set_receiving_status(self, visible: bool):
+        self._is_visible = visible
+        self.set_color(self._get_brush())
+
+    def set_highlighted(self, highlighted: bool, other_positions=[]):
+        if highlighted:
+            for i, pos in enumerate(other_positions):
+                if i >= len(self._bs_lines):
+                    line = scene.visuals.Line(
+                        pos=np.array([[0, 0, 0], [0, 0, 0]]),
+                        color=self.LINE_COL,
+                        parent=self._scene)
+                    self._bs_lines.append(line)
+                else:
+                    line = self._bs_lines[i]
+
+                line.set_data(np.array([self._position, pos]), color=self.LINE_COL)
+
+            for _ in range(len(self._bs_lines) - len(other_positions)):
+                line = self._bs_lines.pop()
+                line.parent = None
+        else:
+            self._clear_lines()
+
+        self._is_highlighted = highlighted
+        self.set_color(self._get_brush())
+
+    def remove(self):
+        super().remove()
+        self._clear_lines()
+
+    def _clear_lines(self):
+        for line in self._bs_lines:
+            line.parent = None
+        self._bs_lines = []
+
+    def _get_brush(self) -> np.ndarray:
+        if self._is_highlighted:
+            return self.HIGHLIGHT_BRUSH
+        elif self._is_visible:
+            return self.BS_BRUSH_VISIBLE
+        else:
+            return self.BS_BRUSH_NOT_VISIBLE
+
+
+class SampleMarkerPose(MarkerPose):
+    NORMAL_BRUSH = np.array((0.8, 0.8, 0.8))
+    VERIFICATION_BRUSH = np.array((1.0, 1.0, 0.9))
+    HIGHLIGHT_BRUSH = np.array((0.2, 0.2, 0.2))
+    BS_LINE_COL = np.array((0.0, 0.0, 0.0))
+
+    def __init__(self, the_scene):
+        super().__init__(the_scene, self.NORMAL_BRUSH, None, interactive=True, symbol='square')
+        self._is_highlighted = False
+        self._is_verification = False
+        self._bs_lines = []
+
+    def set_highlighted(self, highlighted: bool, bs_positions=[]):
+        if highlighted:
+            self.set_color(self.HIGHLIGHT_BRUSH)
+
+            # always update lines when highlighted as base station positions may have changed
+            for i, pos in enumerate(bs_positions):
+                if i >= len(self._bs_lines):
+                    line = scene.visuals.Line(
+                        pos=np.array([[0, 0, 0], [0, 0, 0]]),
+                        color=self.BS_LINE_COL,
+                        parent=self._scene)
+                    self._bs_lines.append(line)
+                else:
+                    line = self._bs_lines[i]
+
+                line.set_data(np.array([self._position, pos]), color=self.BS_LINE_COL)
+
+            for _ in range(len(self._bs_lines) - len(bs_positions)):
+                line = self._bs_lines.pop()
+                line.parent = None
+        else:
+            if highlighted != self._is_highlighted:
+                self.set_color(self.VERIFICATION_BRUSH) if self._is_verification else self.set_color(self.NORMAL_BRUSH)
+                self._clear_lines()
+
+        self.set_axis_visible(highlighted)
+
+        self._is_highlighted = highlighted
+
+    def set_verification_type(self, is_verification: bool):
+        self._is_verification = is_verification
+        if not self._is_highlighted:
+            self.set_color(self.VERIFICATION_BRUSH) if self._is_verification else self.set_color(self.NORMAL_BRUSH)
+
+    def remove(self):
+        super().remove()
+        self._clear_lines()
+
+    def _clear_lines(self):
+        for line in self._bs_lines:
+            line.parent = None
+        self._bs_lines = []
 
 
 class Plot3dLighthouse(scene.SceneCanvas):
-    POSITION_BRUSH = np.array((0, 0, 1.0))
-    BS_BRUSH_VISIBLE = np.array((0.2, 0.5, 0.2))
-    BS_BRUSH_NOT_VISIBLE = np.array((0.8, 0.5, 0.5))
-
     VICINITY_DISTANCE = 2.5
     HIGHLIGHT_DISTANCE = 0.5
 
@@ -156,24 +335,32 @@ class Plot3dLighthouse(scene.SceneCanvas):
 
     TEXT_OFFSET = np.array((0.0, 0, 0.25))
 
-    def __init__(self):
+    DEFAULT_CAMERA_DISTANCE = 10.0
+
+    def __init__(self, sample_clicked_signal: pyqtSignal(int), base_station_clicked_signal: pyqtSignal(int)):
         scene.SceneCanvas.__init__(self, keys=None)
         self.unfreeze()
 
         self._view = self.central_widget.add_view()
         self._view.bgcolor = '#ffffff'
         self._view.camera = scene.TurntableCamera(
-            distance=10.0,
+            distance=self.DEFAULT_CAMERA_DISTANCE,
             up='+z',
             center=(0.0, 0.0, 1.0))
+        self._view.camera.set_default_state()
 
-        self._cf = None
-        self._base_stations = {}
+        self._cf: CfMarkerPose | None = None
+        self._base_stations: dict[int, BsMarkerPose] = {}
+        self._samples: list[SampleMarkerPose] = []
+        self.selected_sample_index: int = -1
+        self.selected_base_station_id: int = -1
 
-        self.freeze()
+        self.events.mouse_press.connect(self.on_mouse_press)
+        self._sample_clicked_signal = sample_clicked_signal
+        self._base_station_clicked_signal = base_station_clicked_signal
 
         plane_size = 10
-        scene.visuals.Plane(
+        self._plane = scene.visuals.Plane(
             width=plane_size,
             height=plane_size,
             width_segments=plane_size,
@@ -181,8 +368,54 @@ class Plot3dLighthouse(scene.SceneCanvas):
             color=(0.5, 0.5, 0.5, 0.5),
             edge_color="gray",
             parent=self._view.scene)
+        self._plane.interactive = True
 
         self._addArrows(1, 0.02, 0.1, 0.1, self._view.scene)
+
+        self._home_button = QPushButton('Home', self.native)
+        self._home_button.clicked.connect(self.move_camera_home)
+
+        self.freeze()
+
+    def move_camera_home(self):
+        self._view.camera.reset()
+        self._view.camera.distance = self.DEFAULT_CAMERA_DISTANCE
+
+    def on_mouse_press(self, event):
+        visual = self.visual_at(event.pos)
+
+        is_object_hit = False
+
+        # Check if the plane was hit. This will prevent deselecting samples and base stations when rotating the camera
+        # with the mouse over the plane.
+        if visual == self._plane:
+            is_object_hit = True
+
+        if not is_object_hit:
+            for index, sample in enumerate(self._samples):
+                if sample.is_same_visual(visual):
+                    clicked_index = index
+                    self._sample_clicked_signal.emit(clicked_index)
+                    is_object_hit = True
+                    break
+
+        if not is_object_hit:
+            for id, bs in self._base_stations.items():
+                if bs.is_same_visual(visual):
+                    is_object_hit = True
+                    self._base_station_clicked_signal.emit(id)
+                    break
+
+        if not is_object_hit:
+            self._sample_clicked_signal.emit(-1)
+            self._base_station_clicked_signal.emit(-1)
+
+    def on_resize(self, event: Event):
+        x = self.native.width() - self._home_button.width() - 5
+        y = 5
+        self._home_button.move(x, y)
+
+        return super().on_resize(event)
 
     def _addArrows(self, length, width, head_length, head_width, parent):
         # The Arrow visual in vispy does not seem to work very good,
@@ -224,28 +457,95 @@ class Plot3dLighthouse(scene.SceneCanvas):
             [0, -w, 0]],
             width=1.0, color='blue', parent=parent, marker_size=0.0)
 
-    def update_cf_pose(self, position, rot):
+    def update_cf_pose(self, pose: Pose):
         if not self._cf:
-            self._cf = MarkerPose(self._view.scene, self.POSITION_BRUSH)
-        self._cf.set_pose(position, rot)
+            self._cf = CfMarkerPose(self._view.scene)
+        self._cf.set_pose(pose.translation, pose.rot_matrix)
 
-    def update_base_station_geos(self, geos):
+        # if self._follow_drone:
+        #   self._update_cam_to_follow_drone_view(pose)
+
+    def _update_cam_to_follow_drone_view(self, pose: Pose):
+        # Unfortunately this does not fully work as intended yet, not sure why.
+        self._view.camera.center = pose.translation
+
+        elevation, azimuth, roll = self._rotation_to_camera_parameters(pose)
+        self._view.camera.elevation = elevation
+        self._view.camera.azimuth = azimuth
+        self._view.camera.roll = roll
+
+    def _rotation_to_camera_parameters(self, pose: Pose):
+        # This conversion is the inverse of _get_rotation_tr() in turntable.py (in vispy). It has been verified using
+        # _get_rotation_tr() and seems to work correctly.
+        angles = pose.rot_euler(seq='XZY', degrees=True)
+        if abs(angles[0]) < 90:
+            elevation = angles[0]
+            azimuth = -angles[1]
+            roll = -angles[2]
+        else:
+            elevation = 180 + angles[0]
+            if elevation > 180:
+                elevation -= 360
+            azimuth = 180 + angles[1]
+            if azimuth > 180:
+                azimuth -= 360
+            roll = 180 - angles[2]
+            if roll > 180:
+                roll -= 360
+
+        return elevation, azimuth, roll
+
+    def update_base_station_geos(self, geos, solution: LighthouseGeometrySolution):
+        # Geos are read from the CF (not the solution) to reflect the actual stored data
+        # The solution is only used to get link information (if available) for highlighting
+
         for id, geo in geos.items():
+            # Add a new base station if it does not exist
             if (geo is not None) and (id not in self._base_stations):
-                self._base_stations[id] = MarkerPose(self._view.scene, self.BS_BRUSH_NOT_VISIBLE, text=f"{id + 1}")
+                self._base_stations[id] = BsMarkerPose(self._view.scene, text=f"{id + 1}")
+
             self._base_stations[id].set_pose(geo.origin, geo.rotation_matrix)
 
+            # Highlight if selected
+            if id == self.selected_base_station_id:
+                # We have two options of what to show, either the positions of other base stations or
+                # the positions of samples that have measurements from this base station.
+                other_positions = self._get_positions_of_linked_base_stations(id, solution, geos)
+                # other_positions = self._get_positions_of_samples_with_bs(id, solution)
+
+                self._base_stations[id].set_highlighted(True, other_positions=other_positions)
+            else:
+                self._base_stations[id].set_highlighted(False)
+
+        # Remove any base stations that are no longer present
         geos_to_remove = self._base_stations.keys() - geos.keys()
         for id in geos_to_remove:
             existing = self._base_stations.pop(id)
             existing.remove()
 
+    def _get_positions_of_linked_base_stations(self, bs_id: int, solution: LighthouseGeometrySolution,
+                                               geos: dict[int, LighthouseBsGeometry]) -> list[float]:
+        linked_base_stations = solution.link_count[bs_id].keys()
+        positions = []
+        for other_id in linked_base_stations:
+            if other_id in geos:
+                geo = geos[other_id]
+                if geo is not None:
+                    positions.append(geo.origin)
+        return positions
+
+    def _get_positions_of_samples_with_bs(self, bs_id: int, solution: LighthouseGeometrySolution) -> list[float]:
+        positions = []
+        for sample in solution.samples:
+            if sample.sample_type != LhCfPoseSampleType.VERIFICATION:
+                if bs_id in sample.base_station_ids:
+                    pose = sample.pose
+                    positions.append(pose.translation)
+        return positions
+
     def update_base_station_visibility(self, visibility):
         for id, bs in self._base_stations.items():
-            if id in visibility:
-                bs.set_color(self.BS_BRUSH_VISIBLE)
-            else:
-                bs.set_color(self.BS_BRUSH_NOT_VISIBLE)
+            bs.set_receiving_status(id in visibility)
 
     def clear(self):
         if self._cf:
@@ -255,9 +555,44 @@ class Plot3dLighthouse(scene.SceneCanvas):
         for bs in self._base_stations.values():
             bs.remove()
         self._base_stations = {}
+        self.clear_samples()
 
-    def _mix(self, col1, col2, mix):
-        return col1 * mix + col2 * (1.0 - mix)
+    def update_samples(self, solution: LighthouseGeometrySolution):
+        marker_idx = 0
+        for smpl_idx, pose_smpl in enumerate(solution.samples):
+            if pose_smpl.has_pose:
+                pose = pose_smpl.pose
+                if marker_idx >= len(self._samples):
+                    self._samples.append(SampleMarkerPose(self._view.scene))
+
+                self._samples[marker_idx].set_pose(pose.translation, pose.rot_matrix)
+                self._samples[marker_idx].set_verification_type(
+                    pose_smpl.sample_type == LhCfPoseSampleType.VERIFICATION)
+
+                if smpl_idx == self.selected_sample_index:
+                    bs_positions = []
+                    for id in pose_smpl.base_station_ids:
+                        if id in self._base_stations:
+                            bs_positions.append(self._base_stations[id].get_position())
+                    self._samples[marker_idx].set_highlighted(True, bs_positions=bs_positions)
+                else:
+                    self._samples[marker_idx].set_highlighted(False)
+
+                marker_idx += 1
+
+        for sample in self._samples[marker_idx:]:
+            sample.remove()
+        del self._samples[marker_idx:]
+
+    def clear_samples(self):
+        for sample in self._samples:
+            sample.remove()
+        self._samples = []
+
+
+class UiMode(Enum):
+    flying = 1
+    geo_estimation = 2
 
 
 class LighthouseTab(TabToolbox, lighthouse_tab_class):
@@ -273,7 +608,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     STATUS_MISSING_DATA = 1
     STATUS_TO_ESTIMATOR = 2
 
-    # TODO change these names to something more logical
     LOG_STATUS = "lighthouse.status"
     LOG_RECEIVE = "lighthouse.bsReceive"
     LOG_CALIBRATION_EXISTS = "lighthouse.bsCalVal"
@@ -290,10 +624,36 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     _new_system_config_written_to_cf_signal = pyqtSignal(bool)
     _geometry_read_signal = pyqtSignal(object)
     _calibration_read_signal = pyqtSignal(object)
+    _sample_clicked_signal = pyqtSignal(int)
+    _base_station_clicked_signal = pyqtSignal(int)
 
     def __init__(self, helper):
         super(LighthouseTab, self).__init__(helper, 'Lighthouse Positioning')
         self.setupUi(self)
+
+        # Add the geometry estimator widget
+        self._geo_estimator_widget = GeoEstimatorWidget(self)
+        self._geometry_area.addWidget(self._geo_estimator_widget)
+        self._geo_estimator_widget.solution_ready_signal.connect(self._solution_updated_cb)
+        self._connected_signal.connect(self._geo_estimator_widget.cf_connected_cb)
+        self._geometry_read_signal.connect(self._geo_estimator_widget.geometry_has_been_read_back_cb)
+
+        # Add the geometry estimator details widget
+        self._geo_estimator_details_widget = GeoEstimatorDetailsWidget()
+        self._details_area.addWidget(self._geo_estimator_details_widget)
+        self._geo_estimator_details_widget.sample_selection_changed_signal.connect(self._sample_selection_changed_cb)
+        self._geo_estimator_details_widget.base_station_selection_changed_signal.connect(
+            self._base_station_selection_changed_cb)
+
+        # Connect signals between the geo estimator widget and the details widget
+        self._geo_estimator_widget.solution_ready_signal.connect(self._geo_estimator_details_widget.solution_ready_cb)
+        self._geo_estimator_widget._details_checkbox.stateChanged.connect(
+            self._geo_estimator_details_widget.details_checkbox_state_changed)
+        self._geo_estimator_details_widget.do_remove_sample_signal.connect(self._geo_estimator_widget.remove_sample)
+        self._geo_estimator_details_widget.do_convert_to_xyz_space_sample_signal.connect(
+            self._geo_estimator_widget.convert_to_xyz_space_sample)
+        self._geo_estimator_details_widget.do_convert_to_verification_sample_signal.connect(
+            self._geo_estimator_widget.convert_to_verification_sample)
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it
@@ -304,6 +664,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._new_system_config_written_to_cf_signal.connect(self._new_system_config_written_to_cf)
         self._geometry_read_signal.connect(self._geometry_read_cb)
         self._calibration_read_signal.connect(self._calibration_read_cb)
+        self._sample_clicked_signal.connect(self._geo_estimator_details_widget.set_selected_sample)
+        self._base_station_clicked_signal.connect(self._geo_estimator_details_widget.set_selected_base_station)
 
         # Connect the Crazyflie API callbacks to the signals
         self._helper.cf.connected.add_callback(self._connected_signal.emit)
@@ -344,48 +706,59 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._graph_timer.timeout.connect(self._update_graphics)
         self._graph_timer.start()
 
-        self._basestation_geometry_dialog = LighthouseBsGeometryDialog(self)
         self._basestation_mode_dialog = LighthouseBsModeDialog(self)
         self._system_type_dialog = LighthouseSystemTypeDialog(helper)
 
-        self._manage_estimate_geometry_button.clicked.connect(self._show_basestation_geometry_dialog)
         self._change_system_type_button.clicked.connect(lambda: self._system_type_dialog.show())
         self._manage_basestation_mode_button.clicked.connect(self._show_basestation_mode_dialog)
 
-        self._load_sys_config_button.clicked.connect(self._load_sys_config_button_clicked)
-        self._save_sys_config_button.clicked.connect(self._save_sys_config_button_clicked)
+        self._ui_mode = UiMode.flying
+        self._geo_mode_button.toggled.connect(lambda enabled: self._change_ui_mode(enabled))
+
+        self._latest_solution = LighthouseGeometrySolution([])
 
         self._is_connected = False
         self._update_ui()
 
-    def write_and_store_geometry(self, geometries):
+        self._pending_geo_update = None
+
+        self._base_stations_info_label = InfoLabel("This is information about base station status. TODO update",
+                                                   self._base_station_group_box)
+        self._sys_management_info_label = InfoLabel("This is information about system management. TODO update",
+                                                    self._sys_management_group_box)
+
+    def write_and_store_geometry(self, geometries: dict[int, LighthouseBsGeometry]):
         if self._lh_config_writer:
-            self._lh_config_writer.write_and_store_config(self._new_system_config_written_to_cf_signal.emit,
-                                                          geos=geometries)
+            if self._lh_config_writer.is_write_ongoing:
+                self._pending_geo_update = geometries
+            else:
+                self._lh_config_writer.write_and_store_config(self._new_system_config_written_to_cf_signal.emit,
+                                                              geos=geometries)
 
     def _new_system_config_written_to_cf(self, success):
-        # Reset the bit fields for calibration data status to get a fresh view
-        self._helper.cf.param.set_value("lighthouse.bsCalibReset", '1')
-        # New geo data has been written and stored in the CF, read it back to update the UI
-        self._start_read_of_geo_data()
-
-    def _show_basestation_geometry_dialog(self):
-        self._basestation_geometry_dialog.reset()
-        self._basestation_geometry_dialog.show()
+        if self._pending_geo_update:
+            # If there is a pending update, write it now
+            self.write_and_store_geometry(self._pending_geo_update)
+            self._pending_geo_update = None
+        else:
+            # Reset the bit fields for calibration data status to get a fresh view
+            self._helper.cf.param.set_value("lighthouse.bsCalibReset", '1')
+            # New geo data has been written and stored in the CF, read it back to update the UI
+            self._start_read_of_geo_data()
 
     def _show_basestation_mode_dialog(self):
         self._basestation_mode_dialog.reset()
         self._basestation_mode_dialog.show()
 
     def _set_up_plots(self):
-        self._plot_3d = Plot3dLighthouse()
+        self._plot_3d = Plot3dLighthouse(self._sample_clicked_signal, self._base_station_clicked_signal)
         self._plot_layout.addWidget(self._plot_3d.native)
 
     def _connected(self, link_uri):
         """Callback when the Crazyflie has been connected"""
         logger.debug("Crazyflie connected to {}".format(link_uri))
 
-        self._basestation_geometry_dialog.reset()
+        self._flying_mode_button.setChecked(True)
         self._is_connected = True
 
         if self._helper.cf.param.get_value('deck.bcLighthouse4') == '1':
@@ -426,8 +799,18 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     def _geometry_read_cb(self, geometries):
         # Remove any geo data where the valid flag is False
         self._lh_geos = dict(filter(lambda key_value: key_value[1].valid, geometries.items()))
-        self._basestation_geometry_dialog.geometry_updated(self._lh_geos)
         self._is_geometry_read_ongoing = False
+
+    def _solution_updated_cb(self, solution: LighthouseGeometrySolution):
+        self._latest_solution = solution
+
+    def _sample_selection_changed_cb(self, sample_index: int):
+        """Callback when the sample selection in the geo estimator widget changes"""
+        self._plot_3d.selected_sample_index = sample_index
+
+    def _base_station_selection_changed_cb(self, bs_id: int):
+        """Callback when the base station selection in the geo estimator widget changes"""
+        self._plot_3d.selected_base_station_id = bs_id
 
     def _is_matching_current_geo_data(self, geometries):
         return geometries == self._lh_geos.keys()
@@ -480,7 +863,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._clear_state()
         self._update_graphics()
         self._plot_3d.clear()
-        self._basestation_geometry_dialog.close()
+        self._flying_mode_button.setChecked(True)
         self.is_lighthouse_deck_active = False
         self._is_connected = False
         self._update_ui()
@@ -515,22 +898,39 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
                           "Error when using log config",
                           " [{0}]: {1}".format(log_conf.name, msg))
 
+    def _change_ui_mode(self, is_geo_mode: bool):
+        if is_geo_mode:
+            self._ui_mode = UiMode.geo_estimation
+        else:
+            self._ui_mode = UiMode.flying
+
+        self._update_ui()
+
     def _update_graphics(self):
         if self.is_visible() and self.is_lighthouse_deck_active:
-            self._plot_3d.update_cf_pose(self._helper.pose_logger.position,
-                                         self._rpy_to_rot(self._helper.pose_logger.rpy_rad))
-            self._plot_3d.update_base_station_geos(self._lh_geos)
+            self._plot_3d.update_cf_pose(self._helper.pose_logger.full_pose)
+            self._plot_3d.update_base_station_geos(self._lh_geos, self._latest_solution)
             self._plot_3d.update_base_station_visibility(self._bs_data_to_estimator)
+
+            if self._ui_mode == UiMode.geo_estimation:
+                self._plot_3d.update_samples(self._latest_solution)
+            else:
+                self._plot_3d.clear_samples()
+
             self._update_position_label(self._helper.pose_logger.position)
             self._update_status_label(self._lh_status)
             self._mask_status_matrix(self._bs_available)
 
     def _update_ui(self):
         enabled = self._is_connected and self.is_lighthouse_deck_active
-        self._manage_estimate_geometry_button.setEnabled(enabled)
         self._change_system_type_button.setEnabled(enabled)
-        self._load_sys_config_button.setEnabled(enabled)
-        self._save_sys_config_button.setEnabled(enabled)
+
+        self._flying_mode_button.setEnabled(enabled)
+        self._geo_mode_button.setEnabled(enabled)
+
+        is_geo_visible = self._ui_mode == UiMode.geo_estimation and enabled
+        self._geo_estimator_widget.setVisible(is_geo_visible)
+        self._geo_estimator_details_widget.setVisible(is_geo_visible)
 
     def _update_position_label(self, position):
         if len(position) == 3:
@@ -574,28 +974,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
                 item = container.itemAtPosition(row, col)
                 if item is not None:
                     item.widget().deleteLater()
-
-    def _rpy_to_rot(self, rpy):
-        # http://planning.cs.uiuc.edu/node102.html
-        # Pitch reversed compared to page above
-        roll = rpy[0]
-        pitch = rpy[1]
-        yaw = rpy[2]
-
-        cg = math.cos(roll)
-        cb = math.cos(-pitch)
-        ca = math.cos(yaw)
-        sg = math.sin(roll)
-        sb = math.sin(-pitch)
-        sa = math.sin(yaw)
-
-        r = [
-            [ca * cb, ca * sb * sg - sa * cg, ca * sb * cg + sa * sg],
-            [sa * cb, sa * sb * sg + ca * cg, sa * sb * cg - ca * sg],
-            [-sb, cb * sg, cb * cg],
-        ]
-
-        return np.array(r)
 
     def _populate_status_matrix(self):
         container = self._basestation_stats_container
@@ -676,19 +1054,33 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
                         label.setStyleSheet(STYLE_RED_BACKGROUND)
                         label.setToolTip('')
 
-    def _load_sys_config_button_clicked(self):
+    def load_sys_config_user_action(self) -> bool:
+        if not self._geo_estimator_widget.is_container_empty():
+            dlg = QMessageBox(self)
+            dlg.setWindowTitle("Clear samples Confirmation")
+            dlg.setText("Loading a new system configuration will clear all samples. Are you sure?")
+            dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            button = dlg.exec()
+
+            if button != QMessageBox.StandardButton.Yes:
+                return False
+
         names = QFileDialog.getOpenFileName(self, 'Open file', self._helper.current_folder, FILE_REGEX_YAML)
 
         if names[0] == '':
-            return
+            return False
 
         self._helper.current_folder = os.path.dirname(names[0])
 
-        if self._lh_config_writer is not None:
-            self._lh_config_writer.write_and_store_config_from_file(self._new_system_config_written_to_cf_signal.emit,
-                                                                    names[0])
+        if self._lh_config_writer is None:
+            return False
 
-    def _save_sys_config_button_clicked(self):
+        self._lh_config_writer.write_and_store_config_from_file(self._new_system_config_written_to_cf_signal.emit,
+                                                                names[0])
+
+        return True
+
+    def save_sys_config_user_action(self):
         # Get calibration data from the Crazyflie to complete the system config data set
         # When the data is ready we get a callback on _calibration_read
         self._lh_memory_helper.read_all_calibs(self._calibration_read_signal.emit)
