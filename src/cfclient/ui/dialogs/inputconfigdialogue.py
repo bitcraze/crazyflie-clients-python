@@ -353,7 +353,9 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
         if len(configs):
             self.loadButton.setEnabled(True)
         for c in configs:
-            self.profileCombo.addItem(c)
+            display_name = ConfigManager().get_display_name(c)
+            # Store display name but use config name as user data
+            self.profileCombo.addItem(display_name, c)
 
     def _axis_detect(self, varname, caption, message, directions=[]):
         self._axis_to_detect = varname
@@ -367,24 +369,27 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
         QMessageBox.critical(self, caption, message)
 
     def _load_config_from_file(self):
-        loaded_map = ConfigManager().get_config(
-            self.profileCombo.currentText())
+        # Use currentData() to get the config_name, not the display name
+        config_name = self.profileCombo.currentData()
+        loaded_map = ConfigManager().get_config(config_name)
         if loaded_map:
             self._input.set_raw_input_map(loaded_map)
             self._map = loaded_map
         else:
-            logger.warning("Could not load configfile [%s]",
-                           self.profileCombo.currentText())
+            logger.warning("Could not load configfile [%s]", config_name)
             self._show_error("Could not load config",
-                             "Could not load config [%s]" %
-                             self.profileCombo.currentText())
+                             "Could not load config [%s]" % config_name)
         self._check_and_enable_saving()
 
     def _delete_configuration(self):
         logger.warning("deleteConfig not implemented")
 
     def _save_config(self):
-        config_name = str(self.profileCombo.currentText())
+        # Try to get config_name from currentData() (existing config)
+        # Fall back to currentText() if user typed a new name
+        config_name = self.profileCombo.currentData()
+        if config_name is None:
+            config_name = str(self.profileCombo.currentText())
         ConfigManager().save_config(self._map, config_name)
         self.close()
 
