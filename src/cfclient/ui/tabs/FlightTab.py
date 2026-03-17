@@ -609,14 +609,14 @@ class FlightTab(TabToolbox, flight_tab_class):
     def updateEmergencyStop(self, emergencyStop):
         if emergencyStop:
             self.setMotorLabelsEnabled(False)
-            self._helper.cf.loc.send_emergency_stop()
+            self._helper.cf.supervisor.send_emergency_stop()
             # TODO krri disarm?
         else:
             self.setMotorLabelsEnabled(True)
 
     def updateArm(self, from_controller=False):
         if self._is_flying() and not from_controller:
-            self._helper.cf.loc.send_emergency_stop()
+            self._helper.cf.supervisor.send_emergency_stop()
         elif self._is_crashed():
             self._helper.cf.supervisor.send_crash_recovery_request()
         elif self._is_armed():

@@ -577,7 +577,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         if (self.uiState == UIState.CONNECTED):
             # Send both emergency stop and disarm
             # TODO krri Disarm?
-            self.cf.loc.send_emergency_stop()
+            self.cf.supervisor.send_emergency_stop()
 
     def _update_battery(self, timestamp, data, logconf):
         self.batteryBar.setValue(int(data["pm.vbat"] * 1000))
