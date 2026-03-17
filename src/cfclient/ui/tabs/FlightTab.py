@@ -172,6 +172,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._log_error_signal.connect(self._logging_error)
 
         self._isConnected = False
+        self._has_device = False
 
         # Connect UI signals that are in this tab
         self.flightModeCombo.currentIndexChanged.connect(self.flightmodeChange)
@@ -231,13 +232,22 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.gamepadStatusLabel.setText("Lower throttle to arm")
             self.gamepadStatusLabel.setStyleSheet("color: red;")
         else:
-            self.gamepadStatusLabel.setText("Ready")
+            if self._has_device:
+                self.gamepadStatusLabel.setText("Ready")
+            else:
+                self.gamepadStatusLabel.setText("\u2014")
             self.gamepadStatusLabel.setStyleSheet("")
 
     def _gamepad_device_updated(self, device, mapping, mux):
         self.gamepadNameLabel.setText(device)
         self.gamepadMappingLabel.setText(mapping)
         self.gamepadMuxLabel.setText(mux)
+        no_device_strings = ("No input device connected",
+                             "No input device found")
+        self._has_device = device not in no_device_strings
+        if not self._has_device:
+            self.gamepadStatusLabel.setText("\u2014")
+            self.gamepadStatusLabel.setStyleSheet("")
 
     def _set_limiting_enabled(self, rp_limiting_enabled, yaw_limiting_enabled, thrust_limiting_enabled):
 

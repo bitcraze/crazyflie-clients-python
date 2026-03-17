@@ -376,7 +376,7 @@
           <item row="0" column="1">
            <widget class="QLabel" name="gamepadStatusLabel">
             <property name="text">
-             <string>Ready</string>
+             <string>—</string>
             </property>
            </widget>
           </item>

@@ -558,7 +558,12 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     def _show_input_device_config_dialog(self):
         self.inputConfig = InputConfigDialogue(self.joystickReader)
+        self.inputConfig.closed.connect(self._on_input_config_closed)
         self.inputConfig.show()
+
+    def _on_input_config_closed(self):
+        self._sync_input_map_menus()
+        self._update_input_device_status()
 
     def _show_connect_dialog(self):
         self.logConfigDialogue.show()
@@ -715,6 +720,58 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                         dev_node.toggled.emit(True)
 
             self._update_input_device_status()
+
+    def _sync_input_map_menus(self):
+        """Sync the Input device menu to reflect the current mapping.
+
+        After the config dialog saves a new mapping, the menu may be
+        missing the new entry and still have the old one checked. Walk
+        every role menu, find the checked device, and make sure its map
+        sub-menu contains and selects the active mapping name.
+        """
+        for menu in self._all_role_menus:
+            role_menu = menu["rolemenu"]
+            for dev_node in role_menu.actions():
+                if not dev_node.isChecked():
+                    continue
+                data = dev_node.data()
+                if data is None or not isinstance(data, tuple):
+                    continue
+                if len(data) < 3:
+                    continue
+                (map_menu, device, _mux_menu) = data
+                if map_menu is None or not device.supports_mapping:
+                    continue
+
+                active_name = getattr(device, 'input_map_name', None)
+                if not active_name:
+                    continue
+
+                # Get the QActionGroup from an existing map action
+                map_actions = map_menu.actions()
+                map_group = None
+                if map_actions:
+                    map_group = map_actions[0].actionGroup()
+
+                # Add a menu entry if the config is new
+                existing = {a.text() for a in map_actions}
+                if active_name not in existing and map_group:
+                    node = QAction(active_name, map_menu,
+                                   checkable=True, enabled=True)
+                    node.toggled.connect(self._inputconfig_selected)
+                    node.setData(dev_node)
+                    map_menu.addAction(node)
+                    map_group.addAction(node)
+
+                # Check the active mapping without triggering
+                # _inputconfig_selected (which would reload the config
+                # from disk and overwrite the live mapping).
+                # Uncheck all first since blockSignals prevents the
+                # exclusive QActionGroup from doing it automatically.
+                for action in map_menu.actions():
+                    action.blockSignals(True)
+                    action.setChecked(action.text() == active_name)
+                    action.blockSignals(False)
 
     def _update_input_device_status(self):
         """Update the gamepad device info in the Flight tab."""

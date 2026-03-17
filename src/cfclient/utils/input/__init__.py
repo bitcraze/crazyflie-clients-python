@@ -201,10 +201,22 @@ class JoystickReader(object):
         throttle is brought to zero by the user. This prevents unexpected
         take-off when connecting with a bad input mapping or after switching
         mappings.
+
+        If thrust is already at zero, the interlock is not engaged to avoid
+        a brief red flash in the UI.
         """
-        if not self._thrust_interlock:
-            self._thrust_interlock = True
-            self.thrust_lock_active.call(True)
+        if self._thrust_interlock:
+            return
+
+        try:
+            data = self._selected_mux.read()
+            if data and data.thrust < 1:
+                return
+        except Exception:
+            pass
+
+        self._thrust_interlock = True
+        self.thrust_lock_active.call(True)
 
     def set_hover_max_height(self, height):
         self._hover_max_height = height
