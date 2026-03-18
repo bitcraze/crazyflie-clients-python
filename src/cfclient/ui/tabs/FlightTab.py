@@ -173,6 +173,7 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         self._isConnected = False
         self._has_device = False
+        self._has_mapping = False
 
         # Connect UI signals that are in this tab
         self.flightModeCombo.currentIndexChanged.connect(self.flightmodeChange)
@@ -232,11 +233,17 @@ class FlightTab(TabToolbox, flight_tab_class):
             self.gamepadStatusLabel.setText("Lower throttle to arm")
             self.gamepadStatusLabel.setStyleSheet("color: red;")
         else:
-            if self._has_device:
+            if self._has_device and self._has_mapping:
                 self.gamepadStatusLabel.setText("Ready")
+                self.gamepadStatusLabel.setStyleSheet("")
+            elif self._has_device:
+                self.gamepadStatusLabel.setText(
+                    "No mapping selected")
+                self.gamepadStatusLabel.setStyleSheet(
+                    "color: orange;")
             else:
                 self.gamepadStatusLabel.setText("\u2014")
-            self.gamepadStatusLabel.setStyleSheet("")
+                self.gamepadStatusLabel.setStyleSheet("")
 
     def _gamepad_device_updated(self, device, mapping, mux):
         self.gamepadNameLabel.setText(device)
@@ -245,7 +252,15 @@ class FlightTab(TabToolbox, flight_tab_class):
         no_device_strings = ("No input device connected",
                              "No input device found")
         self._has_device = device not in no_device_strings
-        if not self._has_device:
+        if self._has_device:
+            self._has_mapping = "No mapping" not in mapping
+            if not self._has_mapping:
+                self.gamepadStatusLabel.setText(
+                    "No mapping selected")
+                self.gamepadStatusLabel.setStyleSheet(
+                    "color: orange;")
+        else:
+            self._has_mapping = False
             self.gamepadStatusLabel.setText("\u2014")
             self.gamepadStatusLabel.setStyleSheet("")
 
