@@ -555,7 +555,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         # if (len(devs) > 0):
         #    self.device_discovery(devs)
 
-
     def _show_input_device_config_dialog(self):
         self.inputConfig = InputConfigDialogue(self.joystickReader)
         self.inputConfig.closed.connect(self._on_input_config_closed)
