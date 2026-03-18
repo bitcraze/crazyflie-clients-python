@@ -92,7 +92,6 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     _log_data_signal = pyqtSignal(int, object, object)
     _pose_data_signal = pyqtSignal(object, object)
-
     _thrust_lock_signal = pyqtSignal(bool)
     _gamepad_device_signal = pyqtSignal(str, str, str)
     _input_updated_signal = pyqtSignal(float, float, float, float)
@@ -102,7 +101,6 @@ class FlightTab(TabToolbox, flight_tab_class):
     _assisted_control_updated_signal = pyqtSignal(bool)
     _heighthold_input_updated_signal = pyqtSignal(float, float, float, float)
     _hover_input_updated_signal = pyqtSignal(float, float, float, float)
-
     _log_error_signal = pyqtSignal(object, str)
 
     # UI_DATA_UPDATE_FPS = 10
@@ -129,7 +127,7 @@ class FlightTab(TabToolbox, flight_tab_class):
             self._thrust_lock_signal.emit)
 
         self._gamepad_device_signal.connect(self._gamepad_device_updated)
-        self._helper.mainUI.gamepad_device_updated.connect(
+        self._helper.mainUI._gamepad_device_updated.connect(
             self._gamepad_device_signal.emit)
 
         self.disconnectedSignal.connect(self.disconnected)

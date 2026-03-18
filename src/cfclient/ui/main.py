@@ -99,8 +99,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     disconnectedSignal = pyqtSignal(str)
     linkQualitySignal = pyqtSignal(float)
 
-    gamepad_device_updated = pyqtSignal(str, str, str)
-
+    _gamepad_device_updated = pyqtSignal(str, str, str)
     _input_device_error_signal = pyqtSignal(str)
     _input_discovery_signal = pyqtSignal(object)
     _log_error_signal = pyqtSignal(object, str)
@@ -544,7 +543,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         tab_toolbox.set_preferred_dock_area(area)
 
     def _rescan_devices(self):
-        self.gamepad_device_updated.emit("No input device connected", "—", "—")
+        self._gamepad_device_updated.emit("No input device connected", "—", "—")
         self._menu_devices.clear()
         self._active_device = ""
         self.joystickReader.stop_input()
@@ -797,7 +796,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             device_str = "No input device found"
             mapping_str = "—"
             mux_name = "—"
-        self.gamepad_device_updated.emit(device_str, mapping_str, mux_name)
+        self._gamepad_device_updated.emit(device_str, mapping_str, mux_name)
 
     def _inputdevice_selected(self, checked):
         """Called when a new input device has been selected from the menu. The
