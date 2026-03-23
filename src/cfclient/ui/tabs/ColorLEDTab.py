@@ -87,8 +87,12 @@ class ThermalMonitor:
         """
         Start thermal monitoring for the specified deck positions.
 
-        Creates a log block per position and starts streaming. The caller is
-        responsible for reading the streams (see ColorLEDTab._run_thermal_stream).
+        Creates a log block per position and starts streaming.
+
+        Returns:
+            dict mapping position -> stream for each successfully started stream.
+            The caller is responsible for reading the streams
+            (see ColorLEDTab._run_thermal_stream).
         """
         for position in positions:
             if position not in self._params_config:
@@ -103,6 +107,8 @@ class ThermalMonitor:
                 logger.debug(f"Started thermal logging for position {position}: {params['thermal_log']}")
             except Exception as e:
                 logger.debug(f"Could not start thermal logging for position {position}: {e}")
+
+        return dict(self._streams)
 
     def stop_monitoring(self):
         """Drop all active log streams (Crazyflie log blocks are cleaned up automatically)."""
@@ -267,9 +273,8 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         self.hue_bar.setEnabled(has_decks)
 
         if has_decks:
-            await self._thermal_monitor.start_monitoring(self._cf, present_decks)
-            # Start background tasks to read from each thermal log stream
-            for position, stream in self._thermal_monitor._streams.items():
+            streams = await self._thermal_monitor.start_monitoring(self._cf, present_decks)
+            for position, stream in streams.items():
                 create_task(self._run_thermal_stream(position, stream))
 
     async def _run_thermal_stream(self, position, stream):
