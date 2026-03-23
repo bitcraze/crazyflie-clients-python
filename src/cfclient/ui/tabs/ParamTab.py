@@ -418,6 +418,7 @@ class ParamTab(TabToolbox, param_tab_class):
                 numeric_value = float(value)
             except ValueError:
                 logger.warning("Invalid parameter value: %s", value)
+                self.currentValue.setStyleSheet("border: 1px solid red")
                 return
         param = self._cf.param()
         try:
@@ -425,6 +426,10 @@ class ParamTab(TabToolbox, param_tab_class):
             self.currentValue.setStyleSheet("")
         except OverflowError:
             logger.warning("Value out of range for parameter %s: %s", name, value)
+            self.currentValue.setStyleSheet("border: 1px solid red")
+            return
+        except TypeError:
+            logger.warning("Value has wrong type for parameter %s: %s", name, value)
             self.currentValue.setStyleSheet("border: 1px solid red")
             return
         # Read back updated value
