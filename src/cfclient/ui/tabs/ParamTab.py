@@ -418,6 +418,7 @@ class ParamTab(TabToolbox, param_tab_class):
                 numeric_value = float(value)
             except ValueError:
                 logger.warning("Invalid parameter value: %s", value)
+                self.currentValue.setStyleSheet("border: 1px solid red")
                 return
         param = self._cf.param()
         try:
