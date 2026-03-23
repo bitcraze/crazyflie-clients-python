@@ -30,6 +30,7 @@
 Basic tab to be able to set (and test) color in Color LED.
 """
 
+import asyncio
 import logging
 from PySide6.QtUiTools import loadUiType
 from PySide6.QtCore import Qt, Signal
@@ -283,8 +284,10 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
             while True:
                 log_data = await stream.next()
                 self._process_thermal_data(log_data.data)
-        except Exception:
-            pass  # Stream ends when the Crazyflie disconnects
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            logger.debug(f"Thermal stream for position {position} ended: {e}")
 
     def _process_thermal_data(self, data):
         """Update the throttling warning label based on incoming log data."""
