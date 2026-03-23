@@ -218,6 +218,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         """)
 
         self._cf = None
+        self._connected_task = None
         self._updating_from_fetch = False  # Flag to prevent writes during color fetch
         self._throttling_state = {}  # Track last known throttling state per position
 
@@ -233,10 +234,13 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
     def connected(self, cf):
         """Called by the framework when the Crazyflie connects."""
         self._cf = cf
-        create_task(self._on_connected())
+        self._connected_task = create_task(self._on_connected())
 
     def disconnected(self):
         """Called by the framework when the Crazyflie disconnects."""
+        if self._connected_task is not None:
+            self._connected_task.cancel()
+            self._connected_task = None
         self._cf = None
         self._deck_controller.clear_deck_state()
         self._thermal_monitor.stop_monitoring()
