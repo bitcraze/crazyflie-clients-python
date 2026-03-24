@@ -614,8 +614,12 @@ class ParamTab(TabToolbox, param_tab_class):
             "version": "2",
             "params": file_params,
         }
-        with open(filename, "w") as f:
-            yaml.dump(data, f)
+        try:
+            with open(filename, "w") as f:
+                yaml.safe_dump(data, f)
+        except OSError as e:
+            QMessageBox.warning(self, "Error", f"Failed to write parameter file:\n{e}")
+            return
 
         if not file_params:
             QMessageBox.information(
