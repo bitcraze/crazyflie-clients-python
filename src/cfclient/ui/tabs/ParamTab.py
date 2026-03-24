@@ -685,7 +685,10 @@ class ParamTab(TabToolbox, param_tab_class):
             if version == "1":
                 if not isinstance(entry, dict) or not entry.get("is_stored"):
                     continue
-                value = entry["stored_value"]
+                value = entry.get("stored_value")
+                if value is None:
+                    failed.append(name)
+                    continue
             else:
                 value = entry
             try:
