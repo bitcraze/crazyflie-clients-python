@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2023 Bitcraze AB
+#  Copyright (C) 2011-2026 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -32,11 +32,12 @@ The console tab is used as a console for printouts from the Crazyflie.
 import logging
 
 from PySide6.QtUiTools import loadUiType
-from PySide6.QtCore import Signal
 from PySide6.QtGui import QTextCursor
 
 import cfclient
+from cfclient.gui import create_task
 from cfclient.ui.tab_toolbox import TabToolbox
+from cflib2 import Crazyflie, DisconnectedError
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ConsoleTab']
@@ -49,48 +50,58 @@ console_tab_class = loadUiType(cfclient.module_path +
 
 class ConsoleTab(TabToolbox, console_tab_class):
     """Console tab for showing printouts from Crazyflie"""
-    _link_established_signal = Signal(str)
-    _connected_signal = Signal(str)
-    _disconnected_signal = Signal(str)
-    _update = Signal(str)
 
     def __init__(self, helper):
         super(ConsoleTab, self).__init__(helper, 'Console')
         self.setupUi(self)
 
-        # Always wrap callbacks from Crazyflie API though QT Signal/Slots
-        # to avoid manipulating the UI when rendering it
-        self._link_established_signal.connect(self._link_established)
-        self._connected_signal.connect(self._connected)
-        self._disconnected_signal.connect(self._disconnected)
-        self._update.connect(self.printText)
-
-        self._helper.cf.console.receivedChar.add_callback(self._update.emit)
-        self._helper.cf.connected.add_callback(self._connected_signal.emit)
-        self._helper.cf.link_established.add_callback(self._link_established_signal.emit)
-        self._helper.cf.disconnected.add_callback(
-            self._disconnected_signal.emit)
+        self._cf = None
+        self._console_task = None
 
         self._clearButton.clicked.connect(self.clear)
         self._dumpSystemLoadButton.clicked.connect(
-            lambda enabled:
-            self._helper.cf.param.set_value("system.taskDump", '1'))
+            lambda: create_task(self._set_param("system.taskDump", 1)))
         self._dumpAssertInformation.clicked.connect(
-            lambda enabled:
-            self._helper.cf.param.set_value_raw("system.assertInfo", 0x08, 1))
+            lambda: create_task(self._set_param("system.assertInfo", 0x08)))
         self._propellerTestButton.clicked.connect(
-            lambda enabled:
-            self._helper.cf.param.set_value("health.startPropTest", '1'))
+            lambda: create_task(self._set_param("health.startPropTest", 1)))
         self._batteryTestButton.clicked.connect(
-            lambda enabled:
-            self._helper.cf.param.set_value("health.startBatTest", '1'))
+            lambda: create_task(self._set_param("health.startBatTest", 1)))
         self._storageStatsButton.clicked.connect(
-            lambda enabled:
-            self._helper.cf.param.set_value("system.storageStats", '1'))
+            lambda: create_task(self._set_param("system.storageStats", 1)))
 
-    def printText(self, text):
-        # Make sure we get printouts from the Crazyflie into the log (such as
-        # build version and test ok/fail)
+        self._set_buttons_enabled(False)
+
+    def connected(self, cf: Crazyflie):
+        self._cf = cf
+        self._set_buttons_enabled(True)
+        self._console_task = create_task(self._console_loop())
+
+    def disconnected(self):
+        self._cf = None
+        if self._console_task is not None:
+            self._console_task.cancel()
+            self._console_task = None
+        self._set_buttons_enabled(False)
+
+    async def _console_loop(self):
+        console = self._cf.console()
+        try:
+            while True:
+                lines = await console.get_lines()
+                for line in lines:
+                    self._print(line + '\n')
+        except DisconnectedError:
+            pass
+
+    async def _set_param(self, name: str, value):
+        if self._cf is not None:
+            try:
+                await self._cf.param().set(name, value)
+            except DisconnectedError:
+                pass
+
+    def _print(self, text):
         logger.debug("[%s]", text)
         scrollbar = self.console.verticalScrollBar()
         prev_scroll = scrollbar.value()
@@ -110,22 +121,9 @@ class ConsoleTab(TabToolbox, console_tab_class):
     def clear(self):
         self.console.clear()
 
-    def _connected(self, link_uri):
-        """Callback when the Crazyflie has been connected"""
-        self._dumpSystemLoadButton.setEnabled(True)
-        self._propellerTestButton.setEnabled(True)
-        self._batteryTestButton.setEnabled(True)
-        self._storageStatsButton.setEnabled(True)
-
-    def _disconnected(self, link_uri):
-        """Callback for when the Crazyflie has been disconnected"""
-        self._dumpSystemLoadButton.setEnabled(False)
-        self._dumpAssertInformation.setEnabled(False)
-        self._propellerTestButton.setEnabled(False)
-        self._batteryTestButton.setEnabled(False)
-        self._storageStatsButton.setEnabled(False)
-
-    def _link_established(self, link_uri):
-        """Callback when the first packet on a new link is received"""
-        # Enable the assert dump button as early as possible. After an assert we will never get the connected() cb.
-        self._dumpAssertInformation.setEnabled(True)
+    def _set_buttons_enabled(self, enabled: bool):
+        self._dumpSystemLoadButton.setEnabled(enabled)
+        self._dumpAssertInformation.setEnabled(enabled)
+        self._propellerTestButton.setEnabled(enabled)
+        self._batteryTestButton.setEnabled(enabled)
+        self._storageStatsButton.setEnabled(enabled)
