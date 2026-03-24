@@ -671,8 +671,13 @@ class ParamTab(TabToolbox, param_tab_class):
             QMessageBox.warning(self, "Error", "Invalid parameter file format")
             return
 
-        version = data.get("version", "1")
+        version = str(data.get("version", "1"))
         params_data = data.get("params", {})
+        if not isinstance(params_data, dict):
+            QMessageBox.warning(
+                self, "Error", "Invalid 'params' field in parameter file"
+            )
+            return
         param = self._cf.param()
         loaded = []
         failed = []
