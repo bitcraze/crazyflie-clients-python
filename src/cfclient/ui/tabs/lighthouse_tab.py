@@ -157,7 +157,10 @@ class Plot3dLighthouse(scene.SceneCanvas):
     TEXT_OFFSET = np.array((0.0, 0, 0.25))
 
     def __init__(self):
-        scene.SceneCanvas.__init__(self, keys=None)
+        # Note: autoswap is disabled since Qt's QOpenGLWidget path already presents
+        # the FBO; enabling vispy autoswap here would cause a redundant swap and
+        # eglSwapBuffers warnings.
+        scene.SceneCanvas.__init__(self, keys=None, autoswap=False)
         self.unfreeze()
 
         self._view = self.central_widget.add_view()
