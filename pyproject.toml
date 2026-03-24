@@ -67,7 +67,7 @@ dev = [
 ]
 
 [tool.ruff.lint]
-select = ["ANN"]
+extend-select = ["ANN"]
 
 [project.scripts]
 cfclient = "cfclient.gui:main"
