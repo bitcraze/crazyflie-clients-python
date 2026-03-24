@@ -55,6 +55,7 @@ import cfclient
 from cfclient.gui import create_task
 from cfclient.ui.tab_toolbox import TabToolbox
 from cflib2 import Crazyflie
+from cflib2.error import ConversionError, InvalidParameterError, ParamError
 from cflib2.param import PersistentParamState, Param
 import asyncio
 
@@ -729,15 +730,21 @@ class ParamTab(TabToolbox, param_tab_class):
                 value = entry
             try:
                 await param.set(name, value)
-                await param.persistent_store(name)
-                loaded.append(f"{name}: {value}")
-                node = self._find_node_by_complete_name(name)
-                if node:
-                    node.stored_value = round_if_float(value)
-                    self._model.notify_stored_value_changed(node)
-            except Exception:
-                logger.warning("Failed to set %s", name)
+            except (ParamError, ConversionError, InvalidParameterError) as e:
+                logger.warning("Failed to set %s: %s", name, e)
                 failed.append(name)
+                continue
+
+            try:
+                await param.persistent_store(name)
+            except ParamError as e:
+                logger.warning("Failed to store %s: %s", name, e)
+
+            loaded.append(f"{name}: {value}")
+            node = self._find_node_by_complete_name(name)
+            if node:
+                node.stored_value = round_if_float(value)
+                self._model.notify_stored_value_changed(node)
 
         message = "Loaded persistent parameters from file:\n" + "\n".join(loaded)
         if failed:
