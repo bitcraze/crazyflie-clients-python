@@ -38,7 +38,9 @@ import cfclient.ui.tabs
 from cfclient.ui.connectivity_manager import ConnectivityManager
 from cfclient.utils.config import Config
 from cfclient.utils.ui import UiUtils
-from cflib2 import Crazyflie, DisconnectedError, LinkContext, FileTocCache
+from cflib2 import Crazyflie, LinkContext
+from cflib2.error import DisconnectedError
+from cflib2.toc_cache import FileTocCache
 from PySide6 import QtWidgets
 from PySide6.QtUiTools import loadUiType
 from PySide6.QtCore import Slot
@@ -49,7 +51,9 @@ from PySide6.QtCore import QTimer
 from PySide6.QtGui import QAction
 from PySide6.QtGui import QActionGroup
 from PySide6.QtGui import QShortcut
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtGui import QDesktopServices
+from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import QMenu
 from PySide6.QtWidgets import QMessageBox
 
@@ -67,7 +71,7 @@ UIState = ConnectivityManager.UIState
 
 
 class MainUI(QtWidgets.QMainWindow, main_window_class):
-    def __init__(self, *args):
+    def __init__(self, *args: object) -> None:
         super(MainUI, self).__init__(*args)
         self.setupUi(self)
 
@@ -157,7 +161,12 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     # --- Tabs/toolboxes ---
 
-    def create_tab_toolboxes(self, tabs_menu_item, toolboxes_menu_item, tab_widget):
+    def create_tab_toolboxes(
+        self,
+        tabs_menu_item: QMenu,
+        toolboxes_menu_item: QMenu,
+        tab_widget: QtWidgets.QTabWidget,
+    ) -> dict[str, TabToolbox]:
         loaded_tab_toolboxes = {}
 
         for tab_class in cfclient.ui.tabs.available:
@@ -190,7 +199,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         return loaded_tab_toolboxes
 
-    def read_tab_toolbox_config(self, loaded_tab_toolboxes):
+    def read_tab_toolbox_config(
+        self, loaded_tab_toolboxes: dict[str, TabToolbox]
+    ) -> None:
         for name in TabToolbox.read_open_tab_config():
             if name in loaded_tab_toolboxes.keys():
                 self._tab_toolbox_show_as_tab(loaded_tab_toolboxes[name])
@@ -199,19 +210,19 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             if name in loaded_tab_toolboxes.keys():
                 self._tab_toolbox_show_as_toolbox(loaded_tab_toolboxes[name])
 
-    def toggle_tab_visibility(self, checked, tab_toolbox):
+    def toggle_tab_visibility(self, checked: bool, tab_toolbox: TabToolbox) -> None:
         if checked:
             self._tab_toolbox_show_as_tab(tab_toolbox)
         else:
             self._tab_toolbox_hide(tab_toolbox)
 
-    def toggle_toolbox_visibility(self, checked, tab_toolbox):
+    def toggle_toolbox_visibility(self, checked: bool, tab_toolbox: TabToolbox) -> None:
         if checked:
             self._tab_toolbox_show_as_toolbox(tab_toolbox)
         else:
             self._tab_toolbox_hide(tab_toolbox)
 
-    def _tab_toolbox_show_as_tab(self, tab_toolbox):
+    def _tab_toolbox_show_as_tab(self, tab_toolbox: TabToolbox) -> None:
         if tab_toolbox.get_display_state() == TabToolbox.DS_TOOLBOX:
             dock_widget = tab_toolbox.dock_widget
             self.removeDockWidget(dock_widget)
@@ -225,7 +236,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         tab_toolbox.toolbox_action_item.setChecked(False)
         tab_toolbox.set_display_state(TabToolbox.DS_TAB)
 
-    def _tab_toolbox_show_as_toolbox(self, tab_toolbox):
+    def _tab_toolbox_show_as_toolbox(self, tab_toolbox: TabToolbox) -> None:
         dock_widget = tab_toolbox.dock_widget
 
         if tab_toolbox.get_display_state() == TabToolbox.DS_TAB:
@@ -240,7 +251,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         tab_toolbox.toolbox_action_item.setChecked(True)
         tab_toolbox.set_display_state(TabToolbox.DS_TOOLBOX)
 
-    def _tab_toolbox_hide(self, tab_toolbox):
+    def _tab_toolbox_hide(self, tab_toolbox: TabToolbox) -> None:
         dock_widget = tab_toolbox.dock_widget
 
         if tab_toolbox.get_display_state() == TabToolbox.DS_TAB:
@@ -255,12 +266,14 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         tab_toolbox.set_display_state(TabToolbox.DS_HIDDEN)
 
     @Slot(Qt.DockWidgetArea)
-    def set_preferred_dock_area(self, area, tab_toolbox):
+    def set_preferred_dock_area(
+        self, area: Qt.DockWidgetArea, tab_toolbox: TabToolbox
+    ) -> None:
         tab_toolbox.set_preferred_dock_area(area)
 
     # --- Address ---
 
-    def _set_address(self):
+    def _set_address(self) -> None:
         address = 0xE7E7E7E7E7
         try:
             link_uri = Config().get("link_uri")
@@ -277,10 +290,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     # --- Scanning ---
 
-    def _scan(self, address):
+    def _scan(self, address: int) -> None:
         create_task(self._async_scan(address))
 
-    async def _async_scan(self, address):
+    async def _async_scan(self, address: int) -> None:
         self.uiState = UIState.SCANNING
         self._update_ui_state()
 
@@ -290,7 +303,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         self._interfaces_found(interfaces)
 
-    def _interfaces_found(self, interfaces):
+    def _interfaces_found(self, interfaces: list[tuple[str, str]]) -> None:
         selected_interface = self._connectivity_manager.get_interface()
 
         formatted_interfaces = []
@@ -326,7 +339,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     # --- Connect / Disconnect ---
 
-    def _connect(self):
+    def _connect(self) -> None:
         if self.uiState == UIState.CONNECTED:
             create_task(self._async_disconnect())
         elif self.uiState == UIState.CONNECTING:
@@ -340,7 +353,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 uri = uri.split(" - ")[0]
             self._connect_task = create_task(self._async_connect(uri))
 
-    async def _async_connect(self, uri):
+    async def _async_connect(self, uri: str) -> None:
         self.uiState = UIState.CONNECTING
         self._update_ui_state()
 
@@ -368,7 +381,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         finally:
             self._connect_task = None
 
-    async def _watch_disconnect(self):
+    async def _watch_disconnect(self) -> None:
         try:
             reason = await self.cf.wait_disconnect()
             uri = self.cf.uri
@@ -383,7 +396,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         except asyncio.CancelledError:
             pass
 
-    async def _async_disconnect(self):
+    async def _async_disconnect(self) -> None:
         if self._disconnect_watch_task is not None:
             self._disconnect_watch_task.cancel()
             self._disconnect_watch_task = None
@@ -394,17 +407,17 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.uiState = UIState.DISCONNECTED
         self._update_ui_state()
 
-    def _notify_tabs_connected(self):
+    def _notify_tabs_connected(self) -> None:
         for tab_toolbox in self.loaded_tab_toolboxes.values():
             tab_toolbox.connected(self.cf)
 
-    def _notify_tabs_disconnected(self):
+    def _notify_tabs_disconnected(self) -> None:
         for tab_toolbox in self.loaded_tab_toolboxes.values():
             tab_toolbox.disconnected()
 
     # --- UI state ---
 
-    def _update_ui_state(self):
+    def _update_ui_state(self) -> None:
         if self.uiState == UIState.DISCONNECTED:
             self.setWindowTitle("Not connected")
             canConnect = self._connectivity_manager.get_interface() is not None
@@ -436,7 +449,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     # --- Theme ---
 
-    def _theme_selected(self, *args):
+    def _theme_selected(self, *args: object) -> None:
         for checkbox in self._theme_checkboxes:
             if checkbox.isChecked():
                 theme = checkbox.objectName()
@@ -444,13 +457,13 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 app.setStyleSheet(UiUtils.select_theme(theme))
                 Config().set("theme", theme)
 
-    def _check_theme(self, theme_name):
+    def _check_theme(self, theme_name: str) -> None:
         for theme in self._theme_checkboxes:
             if theme.objectName() == theme_name:
                 theme.setChecked(True)
                 self._theme_selected(True)
 
-    def set_default_theme(self):
+    def set_default_theme(self) -> None:
         try:
             theme = Config().get("theme")
         except KeyError:
@@ -459,22 +472,22 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     # --- Window events ---
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: QCloseEvent) -> None:
         Config().save_file()
         if self.cf is not None:
             create_task(self._async_disconnect())
         self.hide()
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: QResizeEvent) -> None:
         Config().set("window_size", [event.size().width(), event.size().height()])
 
     # --- Misc ---
 
-    def _open_config_folder(self):
+    def _open_config_folder(self) -> None:
         QDesktopServices.openUrl(
             QUrl("file:///" + QDir.toNativeSeparators(cfclient.config_path))
         )
 
-    def closeAppRequest(self):
+    def closeAppRequest(self) -> None:
         self.close()
         sys.exit(0)
