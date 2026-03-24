@@ -657,8 +657,15 @@ class ParamTab(TabToolbox, param_tab_class):
     async def _async_load_params(self, filename):
         if self._cf is None:
             return
-        with open(filename, "r") as f:
-            data = yaml.safe_load(f)
+        try:
+            with open(filename, "r") as f:
+                data = yaml.safe_load(f)
+        except OSError as e:
+            QMessageBox.warning(self, "Error", f"Failed to read parameter file:\n{e}")
+            return
+        except yaml.YAMLError as e:
+            QMessageBox.warning(self, "Error", f"Failed to parse parameter file:\n{e}")
+            return
 
         if not isinstance(data, dict) or data.get("type") != "persistent_param_state":
             QMessageBox.warning(self, "Error", "Invalid parameter file format")
