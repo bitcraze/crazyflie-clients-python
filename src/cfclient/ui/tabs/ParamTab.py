@@ -595,7 +595,7 @@ class ParamTab(TabToolbox, param_tab_class):
         if names[0] == "":
             return
         filename = names[0]
-        if not filename.endswith(".yaml"):
+        if not filename.endswith((".yaml", ".yml")):
             filename += ".yaml"
         create_task(self._async_dump_params(filename))
 
