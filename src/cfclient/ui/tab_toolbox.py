@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2023 Bitcraze AB
+#  Copyright (C) 2011-2026 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -136,7 +136,7 @@ class TabToolbox(QtWidgets.QWidget):
             # Python will return a list of an empty string if value is empty, filter it
             config = list(filter(None, value.split(",")))
         except KeyError:
-            logger.info(f"No config found for {key}")
+            logger.debug(f"No config found for {key}")
 
         return config
 
@@ -194,7 +194,7 @@ class TabToolbox(QtWidgets.QWidget):
             # Python will return a list of an empty string if value is empty, filter it
             composite_config = list(filter(None, value.split(",")))
         except KeyError:
-            logger.info(f"No config found for {key}")
+            logger.debug(f"No config found for {key}")
 
         config = {}
         for composite in composite_config:

@@ -36,7 +36,7 @@ from cfclient.ui.pluginhelper import PluginHelper
 import logging
 from collections.abc import Iterator
 from collections import defaultdict
-from typing import Any, overload
+from typing import overload
 
 import yaml
 from PySide6 import QtCore
@@ -449,6 +449,7 @@ class ParamTab(TabToolbox, param_tab_class):
                 value = float(text)
             except ValueError:
                 logger.warning("Invalid parameter value: %s", text)
+                self.currentValue.setStyleSheet("border: 1px solid red")
                 return
         create_task(self._async_set_param(name, value))
 
@@ -457,7 +458,17 @@ class ParamTab(TabToolbox, param_tab_class):
         if cf is None:
             return
         param = cf.param()
-        await param.set(name, value)
+        try:
+            await param.set(name, value)
+            self.currentValue.setStyleSheet("")
+        except OverflowError:
+            logger.warning("Value out of range for parameter %s: %s", name, value)
+            self.currentValue.setStyleSheet("border: 1px solid red")
+            return
+        except TypeError:
+            logger.warning("Value has wrong type for parameter %s: %s", name, value)
+            self.currentValue.setStyleSheet("border: 1px solid red")
+            return
         # Read back updated value
         new_value = await param.get(name)
         self._update_node_value(name, new_value)
