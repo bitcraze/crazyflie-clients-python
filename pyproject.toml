@@ -67,6 +67,7 @@ dev = [
 ]
 
 [tool.ruff.lint]
+# Enforce type annotations in addition to the default rule set
 extend-select = ["ANN"]
 
 [project.scripts]
