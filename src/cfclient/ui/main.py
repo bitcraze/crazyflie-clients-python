@@ -536,8 +536,11 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._update_ui_state()
         except DisconnectedError as e:
             logger.error(f"Connection failed: {e}")
-            QMessageBox.critical(
-                self, "Connection failed", f"Could not connect to Crazyflie:\n{e}"
+            QTimer.singleShot(
+                0,
+                lambda e=e: QMessageBox.critical(
+                    self, "Connection failed", f"Could not connect to Crazyflie:\n{e}"
+                ),
             )
             self.uiState = UIState.DISCONNECTED
             self._update_ui_state()
