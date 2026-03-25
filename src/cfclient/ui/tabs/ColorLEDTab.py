@@ -673,7 +673,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
 
         new_btn = QPushButton()
         new_btn.setStyleSheet(
-            f"QPushButton {{ background-color: {color_hex}; }} QPushButton:disabled {{ background-color: #777777; }}"
+            f"QPushButton:disabled {{ background-color: #777777; }} QPushButton {{ background-color: {color_hex}; }}"
         )
         new_btn.setFixedSize(50, 30)
         new_btn.clicked.connect(self._on_color_button_clicked)
