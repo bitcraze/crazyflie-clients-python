@@ -40,7 +40,8 @@ import cfclient
 from cfclient.gui import create_task
 from cfclient.ui.pluginhelper import PluginHelper
 from cfclient.ui.tab_toolbox import TabToolbox
-from cflib2 import Crazyflie, DisconnectedError
+from cflib2 import Crazyflie
+from cflib2.error import DisconnectedError
 
 __author__ = "Bitcraze AB"
 __all__ = ["ConsoleTab"]
