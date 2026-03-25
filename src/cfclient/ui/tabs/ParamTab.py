@@ -30,9 +30,13 @@ Shows all the parameters available in the Crazyflie and also gives the ability
 to edit them.
 """
 
+from __future__ import annotations
+from cfclient.ui.pluginhelper import PluginHelper
+
 import logging
+from collections.abc import Iterator
 from collections import defaultdict
-from typing import Any, overload
+from typing import overload
 
 import yaml
 from PySide6 import QtCore
@@ -45,69 +49,80 @@ from PySide6.QtCore import (
     QPersistentModelIndex,
 )
 from PySide6.QtGui import QBrush, QColor
-from PySide6.QtWidgets import QFileDialog, QHeaderView, QMessageBox
+from PySide6.QtWidgets import QFileDialog, QHeaderView, QMessageBox, QWidget
 
 import cfclient
 from cfclient.gui import create_task
 from cfclient.ui.tab_toolbox import TabToolbox
+from cflib2 import Crazyflie
+from cflib2.error import ConversionError, InvalidParameterError, ParamError
+from cflib2.param import PersistentParamState, Param
+import asyncio
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from PySide6.QtWidgets import QFrame, QLabel, QLineEdit, QPushButton, QTreeView
+
 
 FILE_REGEX_YAML = "Config *.yaml;;All *.*"
 
 __author__ = "Bitcraze AB"
 __all__ = ["ParamTab"]
 
-param_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/paramTab.ui")[0]  # type: ignore[index]
+if TYPE_CHECKING:
+    param_tab_class = QWidget
+else:
+    param_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/paramTab.ui")[0]
 
 logger = logging.getLogger(__name__)
 
 
-def round_if_float(value):
+def round_if_float(value: int | float) -> int | float:
     """If the value is float, we limit to 5 significant numbers"""
-    try:
-        value = float(value)
-        value = f"{value:.5g}"
-    except (ValueError, TypeError):
-        pass
+    if isinstance(value, float):
+        return float(f"{value:.5g}")
     return value
 
 
 class ParamChildItem:
     """Represents a leaf-node in the tree-view (one parameter)"""
 
-    def __init__(self, parent, name):
+    def __init__(self, parent: ParamGroupItem, name: str) -> None:
         self.parent = parent
         self.name = name
-        self.ctype = None
+        self.ctype: str | None = None
         self.writable = False
         self.persistent = False
-        self.value = ""
+        self.value: int | float | None = None
         self.is_updating = True
-        self.stored_value = ""
+        self.stored_value: int | float | None = None
 
-    def child_count(self):
+    def child_count(self) -> int:
         return 0
 
 
 class ParamGroupItem:
     """Represents a parameter group in the tree-view"""
 
-    def __init__(self, name, model):
+    def __init__(self, name: str, model: ParamBlockModel) -> None:
         super().__init__()
         self.parent = None
-        self.children = []
+        self.children: list[ParamChildItem] = []
         self.name = name
         self.model = model
+        self.index: QModelIndex | None = None
 
-    def child_count(self):
+    def child_count(self) -> int:
         return len(self.children)
 
 
 class ParamBlockModel(QAbstractItemModel):
     """Model for handling the parameters in the tree-view"""
 
-    def __init__(self, parent, mainUI):
+    def __init__(self, parent: QObject | None, mainUI: QWidget) -> None:
         super().__init__(parent)
-        self._nodes = []
+        self._nodes: list[ParamGroupItem] = []
         self._column_headers = [
             "Name",
             "Type",
@@ -119,17 +134,17 @@ class ParamBlockModel(QAbstractItemModel):
         self._red_brush = QBrush(QColor("red"))
         self._enabled = False
         self._mainUI = mainUI
-        self.proxy = None
+        self.proxy: QSortFilterProxyModel | None = None
 
-    def set_proxy(self, proxy):
+    def set_proxy(self, proxy: QSortFilterProxyModel) -> None:
         self.proxy = proxy
 
-    def set_enabled(self, enabled):
+    def set_enabled(self, enabled: bool) -> None:
         if self._enabled != enabled:
             self._enabled = enabled
             self.layoutChanged.emit()
 
-    async def set_toc(self, param):
+    async def set_toc(self, param: Param) -> None:
         """Populate the model with data from the cflib2 param subsystem"""
         groups = defaultdict(list)
         for complete_name in param.names():
@@ -149,7 +164,7 @@ class ParamBlockModel(QAbstractItemModel):
 
         self.layoutChanged.emit()
 
-    def refresh(self):
+    def refresh(self) -> None:
         self.layoutChanged.emit()
 
     @overload
@@ -179,7 +194,7 @@ class ParamBlockModel(QAbstractItemModel):
         orientation: Qt.Orientation,
         /,
         role: int = Qt.ItemDataRole.DisplayRole,
-    ) -> Any:
+    ) -> str | None:
         if role == Qt.ItemDataRole.DisplayRole:
             return self._column_headers[section]
 
@@ -215,7 +230,7 @@ class ParamBlockModel(QAbstractItemModel):
         index: QModelIndex | QPersistentModelIndex,
         /,
         role: int = Qt.ItemDataRole.DisplayRole,
-    ) -> Any:
+    ) -> str | int | float | QColor | QBrush | None:
         if role == Qt.ItemDataRole.BackgroundRole:
             bgColor = self._mainUI.palette().color(self._mainUI.backgroundRole())
             if index.row() % 2 == 0:
@@ -256,7 +271,7 @@ class ParamBlockModel(QAbstractItemModel):
 
         return None
 
-    def find_node(self, group_name, param_name):
+    def find_node(self, group_name: str, param_name: str) -> ParamChildItem | None:
         """Find and return a parameter node by group and param name."""
         for group in self._nodes:
             if group.name == group_name:
@@ -265,21 +280,21 @@ class ParamBlockModel(QAbstractItemModel):
                         return node
         return None
 
-    def iter_all_nodes(self):
+    def iter_all_nodes(self) -> Iterator[tuple[str, ParamChildItem]]:
         """Yield (complete_name, node) for every parameter node."""
         for group in self._nodes:
             for node in group.children:
                 yield f"{group.name}.{node.name}", node
 
-    def notify_value_changed(self, node):
+    def notify_value_changed(self, node: ParamChildItem) -> None:
         """Refresh only column 4 (Value) for the given node."""
         self._emit_column_changed(node, 4)
 
-    def notify_stored_value_changed(self, node):
+    def notify_stored_value_changed(self, node: ParamChildItem) -> None:
         """Refresh only column 5 (Stored Value) for the given node."""
         self._emit_column_changed(node, 5)
 
-    def _emit_column_changed(self, node, col):
+    def _emit_column_changed(self, node: ParamChildItem, col: int) -> None:
         if self.proxy is None:
             return
         try:
@@ -294,13 +309,13 @@ class ParamBlockModel(QAbstractItemModel):
         if proxy_index.isValid():
             self.proxy.dataChanged.emit(proxy_index, proxy_index)
 
-    def flags(self, index):
+    def flags(self, index: QModelIndex | QPersistentModelIndex) -> Qt.ItemFlag:
         flag = super().flags(index)
         if not self._enabled:
             return Qt.ItemFlag.NoItemFlags
         return flag
 
-    def reset(self):
+    def reset(self) -> None:
         super().beginResetModel()
         self._nodes = []
         super().endResetModel()
@@ -312,7 +327,7 @@ class ParamTreeFilterProxy(QSortFilterProxyModel):
     Implement a filtering proxy model that shows all children if the group matches.
     """
 
-    def __init__(self, paramTree):
+    def __init__(self, paramTree: QWidget) -> None:
         super().__init__(paramTree)
 
     def filterAcceptsRow(
@@ -329,13 +344,33 @@ class ParamTab(TabToolbox, param_tab_class):
     them
     """
 
-    def __init__(self, helper):
+    if TYPE_CHECKING:
+        # Declared by loadUiType from paramTab.ui
+        filterBox: QLineEdit
+        paramTree: QTreeView
+        paramDetailsLabel: QLabel
+        paramDetailsDescription: QLabel
+        valueFrame: QFrame
+        currentValue: QLineEdit
+        setParamButton: QPushButton
+        resetDefaultButton: QPushButton
+        defaultValue: QLabel
+        persistentFrame: QFrame
+        storedValue: QLabel
+        persistentButton: QPushButton
+        _dump_param_button: QPushButton
+        _load_param_button: QPushButton
+        _clear_param_button: QPushButton
+
+        def setupUi(self, widget: QWidget) -> None: ...
+
+    def __init__(self, helper: PluginHelper) -> None:
         super().__init__(helper, "Parameters")
         self.setupUi(self)
 
-        self._cf = None
-        self._load_params_task = None
-        self._fetch_details_task = None
+        self._cf: Crazyflie | None = None
+        self._load_params_task: asyncio.Task[None] | None = None
+        self._fetch_details_task: asyncio.Task[None] | None = None
         self._model = ParamBlockModel(None, self._helper.mainUI)
 
         self.setParamButton.clicked.connect(self._set_param_value_clicked)
@@ -352,8 +387,8 @@ class ParamTab(TabToolbox, param_tab_class):
         self._model.set_proxy(self.proxyModel)
 
         @QtCore.Slot(str)
-        def onFilterChanged(text):
-            self.proxyModel.setFilterRegExp(text)
+        def onFilterChanged(text: str) -> None:
+            self.proxyModel.setFilterRegularExpression(text)
 
         self.filterBox.textChanged.connect(onFilterChanged)
 
@@ -372,7 +407,7 @@ class ParamTab(TabToolbox, param_tab_class):
         self._is_connected = False
         self._update_param_io_buttons()
 
-    def connected(self, cf):
+    def connected(self, cf: Crazyflie) -> None:
         self._cf = cf
         param = cf.param()
         self._model.reset()
@@ -380,7 +415,7 @@ class ParamTab(TabToolbox, param_tab_class):
         self._is_connected = True
         self._update_param_io_buttons()
 
-    def disconnected(self):
+    def disconnected(self) -> None:
         if self._load_params_task is not None:
             self._load_params_task.cancel()
             self._load_params_task = None
@@ -394,7 +429,7 @@ class ParamTab(TabToolbox, param_tab_class):
         self._paramChanged()
         self._model.set_enabled(False)
 
-    async def _load_params(self, param):
+    async def _load_params(self, param: Param) -> None:
         """Load TOC, then fetch all parameter values."""
         await self._model.set_toc(param)
         self._model.set_enabled(True)
@@ -404,27 +439,27 @@ class ParamTab(TabToolbox, param_tab_class):
             node.is_updating = False
         self._model.layoutChanged.emit()
 
-    def _set_param_value_clicked(self):
+    def _set_param_value_clicked(self) -> None:
         name = self.paramDetailsLabel.text()
-        value = self.currentValue.text()
-        create_task(self._async_set_param(name, value))
-
-    async def _async_set_param(self, name, value):
-        if self._cf is None:
-            return
-        # Convert to appropriate numeric type
+        text = self.currentValue.text()
         try:
-            numeric_value = int(value)
+            value: int | float = int(text)
         except ValueError:
             try:
-                numeric_value = float(value)
+                value = float(text)
             except ValueError:
-                logger.warning("Invalid parameter value: %s", value)
+                logger.warning("Invalid parameter value: %s", text)
                 self.currentValue.setStyleSheet("border: 1px solid red")
                 return
-        param = self._cf.param()
+        create_task(self._async_set_param(name, value))
+
+    async def _async_set_param(self, name: str, value: int | float) -> None:
+        cf = self._cf
+        if cf is None:
+            return
+        param = cf.param()
         try:
-            await param.set(name, numeric_value)
+            await param.set(name, value)
             self.currentValue.setStyleSheet("")
         except OverflowError:
             logger.warning("Value out of range for parameter %s: %s", name, value)
@@ -438,7 +473,7 @@ class ParamTab(TabToolbox, param_tab_class):
         new_value = await param.get(name)
         self._update_node_value(name, new_value)
 
-    def _update_node_value(self, complete_name, value):
+    def _update_node_value(self, complete_name: str, value: int | float) -> None:
         """Update a node's displayed value after a set."""
         node = self._find_node_by_complete_name(complete_name)
         if node:
@@ -446,7 +481,7 @@ class ParamTab(TabToolbox, param_tab_class):
             node.is_updating = False
             self._model.notify_value_changed(node)
 
-    def _paramChanged(self):
+    def _paramChanged(self) -> None:
         group = None
         param = None
         indexes = self.paramTree.selectionModel().selectedIndexes()
@@ -466,7 +501,7 @@ class ParamTab(TabToolbox, param_tab_class):
         self.paramDetailsLabel.setVisible(are_details_visible)
         self.paramDetailsDescription.setVisible(are_details_visible)
 
-        if param and self._cf is not None:
+        if param and group and self._cf is not None:
             complete = f"{group}.{param}"
             self.paramDetailsLabel.setText(complete)
 
@@ -484,7 +519,7 @@ class ParamTab(TabToolbox, param_tab_class):
             if node is None:
                 return
 
-            self.currentValue.setText(str(node.value))
+            self.currentValue.setText(str(node.value) if node.value is not None else "")
             self.currentValue.setStyleSheet("")
             self.currentValue.setCursorPosition(0)
             self.defaultValue.setText("-")
@@ -500,7 +535,9 @@ class ParamTab(TabToolbox, param_tab_class):
                 self._async_fetch_param_details(complete, node)
             )
 
-    async def _async_fetch_param_details(self, complete_name, node):
+    async def _async_fetch_param_details(
+        self, complete_name: str, node: ParamChildItem
+    ) -> None:
         """Fetch default value and persistent state for the selected param."""
         if self._cf is None:
             return
@@ -522,13 +559,13 @@ class ParamTab(TabToolbox, param_tab_class):
             if self._fetch_details_task is not my_task:
                 return  # A newer selection replaced us
             self._show_persistent_state(state)
-            if state.is_stored:
+            if state.is_stored and state.stored_value is not None:
                 node.stored_value = round_if_float(state.stored_value)
             else:
-                node.stored_value = ""
+                node.stored_value = None
             self._model.notify_stored_value_changed(node)
 
-    def _show_persistent_state(self, state):
+    def _show_persistent_state(self, state: PersistentParamState) -> None:
         self.persistentFrame.setVisible(True)
         if state.is_stored:
             self.storedValue.setText(str(state.stored_value))
@@ -536,11 +573,11 @@ class ParamTab(TabToolbox, param_tab_class):
             self.storedValue.setText("Not stored")
         self.persistentButton.setText("Clear" if state.is_stored else "Store")
 
-    def _persistent_button_clicked(self, _):
+    def _persistent_button_clicked(self, _: bool) -> None:
         complete = self.paramDetailsLabel.text()
         create_task(self._async_persistent_action(complete))
 
-    async def _async_persistent_action(self, complete_name):
+    async def _async_persistent_action(self, complete_name: str) -> None:
         if self._cf is None:
             return
         param = self._cf.param()
@@ -557,22 +594,22 @@ class ParamTab(TabToolbox, param_tab_class):
         # Update model node
         node = self._find_node_by_complete_name(complete_name)
         if node:
-            if state.is_stored:
+            if state.is_stored and state.stored_value is not None:
                 node.stored_value = round_if_float(state.stored_value)
             else:
-                node.stored_value = ""
+                node.stored_value = None
             self._model.notify_stored_value_changed(node)
 
-    def _find_node_by_complete_name(self, complete_name):
+    def _find_node_by_complete_name(self, complete_name: str) -> ParamChildItem | None:
         group_name, param_name = complete_name.split(".", 1)
         return self._model.find_node(group_name, param_name)
 
-    def _update_param_io_buttons(self):
+    def _update_param_io_buttons(self) -> None:
         self._load_param_button.setEnabled(self._is_connected)
         self._dump_param_button.setEnabled(self._is_connected)
         self._clear_param_button.setEnabled(self._is_connected)
 
-    def _clear_stored_persistent_params_button_clicked(self):
+    def _clear_stored_persistent_params_button_clicked(self) -> None:
         dlg = QMessageBox(self)
         dlg.setWindowTitle("Clear Stored Parameters Confirmation")
         dlg.setText("Are you sure you want to clear your stored persistent parameters?")
@@ -584,7 +621,7 @@ class ParamTab(TabToolbox, param_tab_class):
         if button == QMessageBox.StandardButton.Yes:
             create_task(self._async_clear_all_persistent())
 
-    async def _async_clear_all_persistent(self):
+    async def _async_clear_all_persistent(self) -> None:
         if self._cf is None:
             return
         param = self._cf.param()
@@ -596,10 +633,10 @@ class ParamTab(TabToolbox, param_tab_class):
                     await param.persistent_clear(complete_name)
                     node = self._find_node_by_complete_name(complete_name)
                     if node:
-                        node.stored_value = ""
+                        node.stored_value = None
                         self._model.notify_stored_value_changed(node)
 
-    def _dump_param_button_clicked(self):
+    def _dump_param_button_clicked(self) -> None:
         names = QFileDialog.getSaveFileName(
             self, "Save file", cfclient.config_path, FILE_REGEX_YAML
         )
@@ -610,7 +647,7 @@ class ParamTab(TabToolbox, param_tab_class):
             filename += ".yaml"
         create_task(self._async_dump_params(filename))
 
-    async def _async_dump_params(self, filename):
+    async def _async_dump_params(self, filename: str) -> None:
         if self._cf is None:
             return
         param = self._cf.param()
@@ -644,7 +681,7 @@ class ParamTab(TabToolbox, param_tab_class):
         dlg.setText("Dumped persistent parameters to file:\n" + "\n".join(param_lines))
         dlg.exec()
 
-    def _load_param_button_clicked(self):
+    def _load_param_button_clicked(self) -> None:
         names = QFileDialog.getOpenFileName(
             self, "Open file", cfclient.config_path, FILE_REGEX_YAML
         )
@@ -665,7 +702,7 @@ class ParamTab(TabToolbox, param_tab_class):
 
         create_task(self._async_load_params(names[0]))
 
-    async def _async_load_params(self, filename):
+    async def _async_load_params(self, filename: str) -> None:
         if self._cf is None:
             return
         try:
@@ -704,15 +741,21 @@ class ParamTab(TabToolbox, param_tab_class):
                 value = entry
             try:
                 await param.set(name, value)
-                await param.persistent_store(name)
-                loaded.append(f"{name}: {value}")
-                node = self._find_node_by_complete_name(name)
-                if node:
-                    node.stored_value = round_if_float(value)
-                    self._model.notify_stored_value_changed(node)
-            except Exception:
-                logger.warning("Failed to set %s", name)
+            except (ParamError, ConversionError, InvalidParameterError) as e:
+                logger.warning("Failed to set %s: %s", name, e)
                 failed.append(name)
+                continue
+
+            try:
+                await param.persistent_store(name)
+            except ParamError as e:
+                logger.warning("Failed to store %s: %s", name, e)
+
+            loaded.append(f"{name}: {value}")
+            node = self._find_node_by_complete_name(name)
+            if node:
+                node.stored_value = round_if_float(value)
+                self._model.notify_stored_value_changed(node)
 
         message = "Loaded persistent parameters from file:\n" + "\n".join(loaded)
         if failed:

@@ -38,6 +38,8 @@ from PySide6.QtGui import QCloseEvent
 
 from cfclient.utils.config import Config
 
+from cflib2 import Crazyflie
+
 __author__ = "Bitcraze AB"
 __all__ = ["TabToolbox"]
 
@@ -56,7 +58,7 @@ class TabToolbox(QtWidgets.QWidget):
     DS_TAB = 1
     DS_TOOLBOX = 2
 
-    def __init__(self, helper, tab_toolbox_name):
+    def __init__(self, helper: object, tab_toolbox_name: str) -> None:
         super(TabToolbox, self).__init__()
         self._helper = helper
         self.tab_toolbox_name = tab_toolbox_name
@@ -77,17 +79,17 @@ class TabToolbox(QtWidgets.QWidget):
         if self._dock_area == Qt.DockWidgetArea.NoDockWidgetArea:
             self._dock_area = Qt.DockWidgetArea.RightDockWidgetArea
 
-    def get_tab_toolbox_name(self):
+    def get_tab_toolbox_name(self) -> str:
         """Return the name that will be shown in the tab or toolbox"""
         return self.tab_toolbox_name
 
-    def is_visible(self):
+    def is_visible(self) -> bool:
         return self._display_state != self.DS_HIDDEN
 
-    def get_display_state(self):
+    def get_display_state(self) -> int:
         return self._display_state
 
-    def set_display_state(self, new_display_state):
+    def set_display_state(self, new_display_state: int) -> None:
         if new_display_state != self._display_state:
             self._display_state = new_display_state
             self._update_open_config(new_display_state)
@@ -97,37 +99,37 @@ class TabToolbox(QtWidgets.QWidget):
             else:
                 self.enable()
 
-    def preferred_dock_area(self):
+    def preferred_dock_area(self) -> Qt.DockWidgetArea:
         return self._dock_area
 
-    def set_preferred_dock_area(self, area):
+    def set_preferred_dock_area(self, area: Qt.DockWidgetArea) -> None:
         self._dock_area = area
         self._store_toolbox_area_config(area)
 
-    def connected(self, cf):
+    def connected(self, cf: Crazyflie) -> None:
         """Called when a Crazyflie is connected. Override in subclasses."""
         pass
 
-    def disconnected(self):
+    def disconnected(self) -> None:
         """Called when the Crazyflie is disconnected. Override in subclasses."""
         pass
 
-    def enable(self):
+    def enable(self) -> None:
         pass
 
-    def disable(self):
+    def disable(self) -> None:
         pass
 
     @classmethod
-    def read_open_tab_config(cls):
+    def read_open_tab_config(cls) -> list[str]:
         return cls._read_open_config(TabToolbox.CONF_KEY_OPEN_TABS)
 
     @classmethod
-    def read_open_toolbox_config(cls):
+    def read_open_toolbox_config(cls) -> list[str]:
         return TabToolbox._read_open_config(TabToolbox.CONF_KEY_OPEN_TOOLBOXES)
 
     @classmethod
-    def _read_open_config(cls, key):
+    def _read_open_config(cls, key: str) -> list[str]:
         config = []
         try:
             value = Config().get(key)
@@ -138,7 +140,7 @@ class TabToolbox(QtWidgets.QWidget):
 
         return config
 
-    def _update_open_config(self, display_state):
+    def _update_open_config(self, display_state: int) -> None:
         if display_state == self.DS_HIDDEN:
             self._remove_from_open_config(TabToolbox.CONF_KEY_OPEN_TABS)
             self._remove_from_open_config(TabToolbox.CONF_KEY_OPEN_TOOLBOXES)
@@ -149,7 +151,7 @@ class TabToolbox(QtWidgets.QWidget):
             self._remove_from_open_config(TabToolbox.CONF_KEY_OPEN_TABS)
             self._add_to_open_config(TabToolbox.CONF_KEY_OPEN_TOOLBOXES)
 
-    def _add_to_open_config(self, key):
+    def _add_to_open_config(self, key: str) -> None:
         config = self._read_open_config(key)
         name = self.tab_toolbox_name
 
@@ -157,7 +159,7 @@ class TabToolbox(QtWidgets.QWidget):
             config.append(name)
             self._store_open_config(key, config)
 
-    def _remove_from_open_config(self, key):
+    def _remove_from_open_config(self, key: str) -> None:
         config = self._read_open_config(key)
         name = self.tab_toolbox_name
 
@@ -165,11 +167,11 @@ class TabToolbox(QtWidgets.QWidget):
             config.remove(name)
             self._store_open_config(key, config)
 
-    def _store_open_config(self, key, config):
+    def _store_open_config(self, key: str, config: list[str]) -> None:
         value = ",".join(config)
         Config().set(key, value)
 
-    def _get_toolbox_area_config(self):
+    def _get_toolbox_area_config(self) -> Qt.DockWidgetArea:
         result = Qt.DockWidgetArea.RightDockWidgetArea
 
         config = self._read_toolbox_area_config()
@@ -179,12 +181,12 @@ class TabToolbox(QtWidgets.QWidget):
 
         return result
 
-    def _store_toolbox_area_config(self, area):
+    def _store_toolbox_area_config(self, area: Qt.DockWidgetArea) -> None:
         config = self._read_toolbox_area_config()
         config[self.tab_toolbox_name] = area.value
         self._write_toolbox_area_config(config)
 
-    def _read_toolbox_area_config(self):
+    def _read_toolbox_area_config(self) -> dict[str, int]:
         composite_config = []
         try:
             key = self.CONF_KEY_TOOLBOX_AREAS
@@ -204,7 +206,7 @@ class TabToolbox(QtWidgets.QWidget):
 
         return config
 
-    def _write_toolbox_area_config(self, config):
+    def _write_toolbox_area_config(self, config: dict[str, int]) -> None:
         key = self.CONF_KEY_TOOLBOX_AREAS
         value = ",".join(map(lambda item: f"{item[0]}:{item[1]}", config.items()))
         Config().set(key, value)

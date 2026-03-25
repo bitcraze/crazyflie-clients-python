@@ -37,7 +37,7 @@ classifiers = [
 requires-python = ">= 3.11"
 
 dependencies = [
-        "cflib2 @ git+https://github.com/bitcraze/cflib2@526d0abdb3cc441a9f3716e15dee340b65d332d4",
+        "cflib2 @ git+https://github.com/bitcraze/cflib2@43dc1aec418a1739721fdd2957212ff24bd34e33",
         "setuptools",
         "appdirs~=1.4.0",
         "pyzmq~=26.0",
@@ -65,6 +65,10 @@ dev = [
     "pre-commit>=4.3.0",
     "ty>=0.0.18",
 ]
+
+[tool.ruff.lint]
+# Enforce type annotations in addition to the default rule set
+extend-select = ["ANN"]
 
 [project.scripts]
 cfclient = "cfclient.gui:main"

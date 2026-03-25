@@ -36,7 +36,9 @@ from typing import Literal
 import asyncio
 import logging
 
-from cflib2 import DisconnectedError
+from collections.abc import Coroutine
+
+from cflib2.error import DisconnectedError
 import PySide6.QtAsyncio as QtAsyncio
 
 
@@ -61,7 +63,7 @@ class Args:
     """Check python imports and exit successfully (intended for CI)"""
 
 
-def _task_done_callback(task):
+def _task_done_callback(task: asyncio.Task[object]) -> None:
     if task.cancelled():
         return
     try:
@@ -75,7 +77,7 @@ def _task_done_callback(task):
         os._exit(1)
 
 
-def create_task(coro):
+def create_task(coro: Coroutine[object, object, object]) -> asyncio.Task[object]:
     """Schedule a coroutine as a task with automatic exception logging.
 
     Use this instead of asyncio.ensure_future() to ensure exceptions
@@ -87,7 +89,7 @@ def create_task(coro):
     return task
 
 
-def main():
+def main() -> None:
     """
     Check starting conditions and start GUI.
 
