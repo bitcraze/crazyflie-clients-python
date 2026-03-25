@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [cflib2]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+
+      - name: Build
+        run: uv sync --group dev
+
+      - name: Lint (ruff)
+        continue-on-error: true  # TODO: remove once all lint errors are resolved
+        run: uvx ruff==0.14.2 check .
+
+      - name: Format (ruff)
+        continue-on-error: true  # TODO: remove once all format errors are resolved
+        run: uvx ruff==0.14.2 format --check .
+
+      - name: Type check (ty)
+        continue-on-error: true  # TODO: remove once all type errors are resolved
+        run: uv run ty check
