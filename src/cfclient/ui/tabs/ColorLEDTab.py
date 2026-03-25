@@ -62,7 +62,7 @@ from cflib2.log import LogStream
 __author__ = "Bitcraze AB"
 __all__ = ["ColorLEDTab"]
 
-color_led_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/colorLEDTab.ui")[0]  # type: ignore[index]
+color_led_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/colorLEDTab.ui")[0]
 
 logger = logging.getLogger(__name__)
 
