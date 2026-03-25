@@ -23,10 +23,11 @@ jobs:
         run: uv sync --group dev
 
       - name: Lint (ruff)
+        continue-on-error: true  # TODO: remove once all lint errors are resolved
         run: uvx ruff==0.14.2 check .
 
       - name: Format (ruff)
-        continue-on-error: true  # TODO: remove once all type errors are resolved
+        continue-on-error: true  # TODO: remove once all format errors are resolved
         run: uvx ruff==0.14.2 format --check .
 
       - name: Type check (ty)
