@@ -25,15 +25,14 @@ Slider widget with advanced features
 """
 
 from PySide6 import QtWidgets, QtCore
-from cflib.utils.callbacks import Caller
+from cfclient.utils.callbacks import Caller
 
 
-__author__ = 'Bitcraze AB'
-__all__ = ['SuperSlider']
+__author__ = "Bitcraze AB"
+__all__ = ["SuperSlider"]
 
 
 class SuperSlider(QtWidgets.QWidget):
-
     def __init__(self, min: float, max: float, value: float):
         super(SuperSlider, self).__init__()
 
@@ -61,7 +60,9 @@ class SuperSlider(QtWidgets.QWidget):
         # Create controls
         self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
         self.slider.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
-        self.slider.setRange(int(self.min * self.slider_scaling), int(self.max * self.slider_scaling))
+        self.slider.setRange(
+            int(self.min * self.slider_scaling), int(self.max * self.slider_scaling)
+        )
         self.slider.setValue(int(self.value * self.slider_scaling))
         self.slider.setTickInterval(self.slider_scaling)
         self.slider.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBelow)
