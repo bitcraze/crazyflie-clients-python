@@ -493,7 +493,6 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         param = cf.param()
 
-        #                  flowV1    flowV2     LightHouse       LPS
         position_decks = [
             "bcFlow",
             "bcFlow2",
