@@ -66,7 +66,7 @@ class ConsoleTab(TabToolbox, console_tab_class):
             lambda: create_task(self._set_param("system.taskDump", 1))
         )
         self._dumpAssertInformation.clicked.connect(
-            lambda: create_task(self._set_param("system.assertInfo", 0x08))
+            lambda: create_task(self._set_param("system.assertInfo", 1))
         )
         self._propellerTestButton.clicked.connect(
             lambda: create_task(self._set_param("health.startPropTest", 1))
