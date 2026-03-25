@@ -29,6 +29,7 @@
 Sets up logging for the the full pose of the Crazyflie
 """
 
+import asyncio
 import logging
 import math
 
@@ -117,6 +118,6 @@ class PoseLogger:
                 self.data_received_cb.call(self, self.pose)
         finally:
             try:
-                await stream.stop()
-            except DisconnectedError:
+                await asyncio.shield(stream.stop())
+            except (DisconnectedError, asyncio.CancelledError):
                 pass

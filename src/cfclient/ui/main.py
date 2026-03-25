@@ -317,49 +317,62 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         except DisconnectedError:
             pass
 
+    def _commander_future_cb(self, future):
+        """Log unexpected exceptions from commander coroutines."""
+        try:
+            future.result()
+        except DisconnectedError:
+            pass
+        except Exception:
+            logger.error("Unhandled exception in commander coroutine", exc_info=True)
+
     def _send_setpoint(self, roll, pitch, yaw, thrust):
         cf = self.cf
         if self._disable_input or cf is None or self._loop is None:
             return
-        asyncio.run_coroutine_threadsafe(
+        future = asyncio.run_coroutine_threadsafe(
             self._safe_send(
                 cf.commander().send_setpoint_rpyt(roll, pitch, yaw, int(thrust))
             ),
             self._loop,
         )
+        future.add_done_callback(self._commander_future_cb)
 
     def _send_velocity_world(self, vx, vy, vz, yawrate):
         cf = self.cf
         if self._disable_input or cf is None or self._loop is None:
             return
-        asyncio.run_coroutine_threadsafe(
+        future = asyncio.run_coroutine_threadsafe(
             self._safe_send(
                 cf.commander().send_setpoint_velocity_world(vx, vy, vz, yawrate)
             ),
             self._loop,
         )
+        future.add_done_callback(self._commander_future_cb)
 
     def _send_zdistance(self, roll, pitch, yawrate, zdistance):
         cf = self.cf
         if self._disable_input or cf is None or self._loop is None:
             return
-        asyncio.run_coroutine_threadsafe(
+        future = asyncio.run_coroutine_threadsafe(
             self._safe_send(
                 cf.commander().send_setpoint_zdistance(roll, pitch, yawrate, zdistance)
             ),
             self._loop,
         )
+        future.add_done_callback(self._commander_future_cb)
 
     def _send_hover(self, vx, vy, yawrate, zdistance):
         cf = self.cf
         if self._disable_input or cf is None or self._loop is None:
             return
-        asyncio.run_coroutine_threadsafe(
+        future = asyncio.run_coroutine_threadsafe(
             self._safe_send(
                 cf.commander().send_setpoint_hover(vx, vy, yawrate, zdistance)
             ),
             self._loop,
         )
+        future.add_done_callback(self._commander_future_cb)
 
     def disable_input(self, disable):
         """Disable gamepad input to allow a tab to send setpoints directly."""
@@ -537,8 +550,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 )
         finally:
             try:
-                await stream.stop()
-            except DisconnectedError:
+                await asyncio.shield(stream.stop())
+            except (DisconnectedError, asyncio.CancelledError):
                 pass
 
     def _update_battery(self, vbat, state):

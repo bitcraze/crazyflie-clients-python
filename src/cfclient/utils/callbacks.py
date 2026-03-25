@@ -19,8 +19,11 @@ class Caller:
             self._callbacks.append(cb)
 
     def remove_callback(self, cb):
-        """Remove a previously registered callback."""
-        self._callbacks.remove(cb)
+        """Remove a previously registered callback (no-op if not registered)."""
+        try:
+            self._callbacks.remove(cb)
+        except ValueError:
+            pass
 
     def call(self, *args, **kwargs):
         """Invoke all registered callbacks with the given arguments."""

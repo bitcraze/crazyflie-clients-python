@@ -415,7 +415,7 @@ class JoystickReader(object):
                         except Exception as e:
                             logger.warning(
                                 "Exception while doing callback from "
-                                "input-device for assited "
+                                "input-device for assisted "
                                 "control: {}".format(e)
                             )
 

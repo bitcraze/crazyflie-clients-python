@@ -29,6 +29,7 @@
 The flight control tab shows telemetry data and flight settings.
 """
 
+import asyncio
 import logging
 from enum import Enum
 
@@ -120,7 +121,9 @@ class FlightTab(TabToolbox, flight_tab_class):
         self._input_updated_signal.connect(self.updateInputControl)
         self._rp_trim_updated_signal.connect(self.calUpdateFromInput)
         self._emergency_stop_updated_signal.connect(self.updateEmergencyStop)
-        self._arm_updated_signal.connect(lambda: self.updateArm(from_controller=True))
+        self._arm_updated_signal.connect(
+            lambda _enabled: self.updateArm(from_controller=True)
+        )
         self._heighthold_input_updated_signal.connect(self._heighthold_input_updated)
         self._hover_input_updated_signal.connect(self._hover_input_updated)
         self._assisted_control_updated_signal.connect(self._assisted_control_updated)
@@ -514,7 +517,8 @@ class FlightTab(TabToolbox, flight_tab_class):
 
         # To prevent conflicting commands from the controller and
         # the flight panel
-        if JoystickReader().available_devices():
+        reader = self._helper.inputDeviceReader
+        if reader is not None and reader.available_devices():
             self.commanderBox.setToolTip(
                 "Cannot use both a controller and Command Based Flight"
             )
@@ -549,8 +553,8 @@ class FlightTab(TabToolbox, flight_tab_class):
                 self._log_data_received(data.timestamp, data.data)
         finally:
             try:
-                await stream.stop()
-            except DisconnectedError:
+                await asyncio.shield(stream.stop())
+            except (DisconnectedError, asyncio.CancelledError):
                 pass
 
     async def _setup_after_connect(self, cf):
