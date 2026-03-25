@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Build
+        run: uv sync --group dev
+
+      - name: Lint (ruff)
+        run: uvx ruff==0.14.2 check .
+
+      - name: Format (ruff)
+        continue-on-error: true  # TODO: remove once all type errors are resolved
+        run: uvx ruff==0.14.2 format --check .
+
+      - name: Type check (ty)
+        continue-on-error: true  # TODO: remove once all type errors are resolved
+        run: uv run ty check
