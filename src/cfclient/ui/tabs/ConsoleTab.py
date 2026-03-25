@@ -29,6 +29,8 @@
 The console tab is used as a console for printouts from the Crazyflie.
 """
 
+from __future__ import annotations
+
 import logging
 
 from PySide6.QtUiTools import loadUiType
@@ -36,23 +38,23 @@ from PySide6.QtGui import QTextCursor
 
 import cfclient
 from cfclient.gui import create_task
+from cfclient.ui.pluginhelper import PluginHelper
 from cfclient.ui.tab_toolbox import TabToolbox
 from cflib2 import Crazyflie, DisconnectedError
 
-__author__ = 'Bitcraze AB'
-__all__ = ['ConsoleTab']
+__author__ = "Bitcraze AB"
+__all__ = ["ConsoleTab"]
 
 logger = logging.getLogger(__name__)
 
-console_tab_class = loadUiType(cfclient.module_path +
-                                   "/ui/tabs/consoleTab.ui")[0]
+console_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/consoleTab.ui")[0]
 
 
 class ConsoleTab(TabToolbox, console_tab_class):
     """Console tab for showing printouts from Crazyflie"""
 
-    def __init__(self, helper):
-        super(ConsoleTab, self).__init__(helper, 'Console')
+    def __init__(self, helper: PluginHelper) -> None:
+        super(ConsoleTab, self).__init__(helper, "Console")
         self.setupUi(self)
 
         self._cf = None
@@ -60,48 +62,53 @@ class ConsoleTab(TabToolbox, console_tab_class):
 
         self._clearButton.clicked.connect(self.clear)
         self._dumpSystemLoadButton.clicked.connect(
-            lambda: create_task(self._set_param("system.taskDump", 1)))
+            lambda: create_task(self._set_param("system.taskDump", 1))
+        )
         self._dumpAssertInformation.clicked.connect(
-            lambda: create_task(self._set_param("system.assertInfo", 0x08)))
+            lambda: create_task(self._set_param("system.assertInfo", 0x08))
+        )
         self._propellerTestButton.clicked.connect(
-            lambda: create_task(self._set_param("health.startPropTest", 1)))
+            lambda: create_task(self._set_param("health.startPropTest", 1))
+        )
         self._batteryTestButton.clicked.connect(
-            lambda: create_task(self._set_param("health.startBatTest", 1)))
+            lambda: create_task(self._set_param("health.startBatTest", 1))
+        )
         self._storageStatsButton.clicked.connect(
-            lambda: create_task(self._set_param("system.storageStats", 1)))
+            lambda: create_task(self._set_param("system.storageStats", 1))
+        )
 
         self._set_buttons_enabled(False)
 
-    def connected(self, cf: Crazyflie):
+    def connected(self, cf: Crazyflie) -> None:
         self._cf = cf
         self._set_buttons_enabled(True)
         self._console_task = create_task(self._console_loop())
 
-    def disconnected(self):
+    def disconnected(self) -> None:
         self._cf = None
         if self._console_task is not None:
             self._console_task.cancel()
             self._console_task = None
         self._set_buttons_enabled(False)
 
-    async def _console_loop(self):
+    async def _console_loop(self) -> None:
         console = self._cf.console()
         try:
             while True:
                 lines = await console.get_lines()
                 for line in lines:
-                    self._print(line + '\n')
+                    self._print(line + "\n")
         except DisconnectedError:
             pass
 
-    async def _set_param(self, name: str, value):
+    async def _set_param(self, name: str, value: int) -> None:
         if self._cf is not None:
             try:
                 await self._cf.param().set(name, value)
             except DisconnectedError:
                 pass
 
-    def _print(self, text):
+    def _print(self, text: str) -> None:
         logger.debug("[%s]", text)
         scrollbar = self.console.verticalScrollBar()
         prev_scroll = scrollbar.value()
@@ -118,10 +125,10 @@ class ConsoleTab(TabToolbox, console_tab_class):
         else:
             scrollbar.setValue(prev_scroll)
 
-    def clear(self):
+    def clear(self) -> None:
         self.console.clear()
 
-    def _set_buttons_enabled(self, enabled: bool):
+    def _set_buttons_enabled(self, enabled: bool) -> None:
         self._dumpSystemLoadButton.setEnabled(enabled)
         self._dumpAssertInformation.setEnabled(enabled)
         self._propellerTestButton.setEnabled(enabled)

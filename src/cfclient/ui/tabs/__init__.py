@@ -31,6 +31,7 @@ it into the UI when it is started.
 """
 
 from .ConsoleTab import ConsoleTab
+
 # from .CrtpSharkToolbox import CrtpSharkToolbox
 # from .ExampleTab import ExampleTab
 from .FlightTab import FlightTab
