@@ -27,9 +27,14 @@
 The main file for the Crazyflie control application.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import sys
+from collections.abc import Callable, Coroutine
+from concurrent.futures import Future
+from typing import Any
 
 import cfclient
 from cfclient.gui import create_task
@@ -40,6 +45,7 @@ from cfclient.ui.connectivity_manager import ConnectivityManager
 from cfclient.utils.config import Config
 from cfclient.utils.config_manager import ConfigManager
 from cfclient.utils.input import JoystickReader
+from cfclient.utils.input.inputreaderinterface import InputReaderInterface
 from cfclient.utils.ui import UiUtils
 from cfclient.ui.dialogs.inputconfigdialogue import InputConfigDialogue
 from cflib2 import Crazyflie, LinkContext
@@ -353,19 +359,21 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     # --- Event loop ---
 
-    def _on_event_loop_ready(self):
+    def _on_event_loop_ready(self) -> None:
         self._loop = asyncio.get_event_loop()
         self._scan(self._connectivity_manager.get_address())
 
     # --- Commander pipeline ---
 
-    async def _safe_send(self, coro_fn):
+    async def _safe_send(
+        self, coro_fn: Callable[[], Coroutine[Any, Any, None]]
+    ) -> None:
         try:
             await coro_fn()
         except DisconnectedError:
             pass
 
-    def _commander_future_cb(self, future):
+    def _commander_future_cb(self, future: Future[None]) -> None:
         """Log unexpected exceptions from commander coroutines."""
         try:
             future.result()
@@ -374,7 +382,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         except Exception:
             logger.error("Unhandled exception in commander coroutine", exc_info=True)
 
-    def _send_setpoint(self, roll, pitch, yaw, thrust):
+    def _send_setpoint(
+        self, roll: float, pitch: float, yaw: float, thrust: float
+    ) -> None:
         cf = self.cf
         if self._disable_input or cf is None or self._loop is None:
             return
@@ -386,7 +396,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         )
         future.add_done_callback(self._commander_future_cb)
 
-    def _send_velocity_world(self, vx, vy, vz, yawrate):
+    def _send_velocity_world(
+        self, vx: float, vy: float, vz: float, yawrate: float
+    ) -> None:
         cf = self.cf
         if self._disable_input or cf is None or self._loop is None:
             return
@@ -398,7 +410,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         )
         future.add_done_callback(self._commander_future_cb)
 
-    def _send_zdistance(self, roll, pitch, yawrate, zdistance):
+    def _send_zdistance(
+        self, roll: float, pitch: float, yawrate: float, zdistance: float
+    ) -> None:
         cf = self.cf
         if self._disable_input or cf is None or self._loop is None:
             return
@@ -412,7 +426,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         )
         future.add_done_callback(self._commander_future_cb)
 
-    def _send_hover(self, vx, vy, yawrate, zdistance):
+    def _send_hover(
+        self, vx: float, vy: float, yawrate: float, zdistance: float
+    ) -> None:
         cf = self.cf
         if self._disable_input or cf is None or self._loop is None:
             return
@@ -424,13 +440,13 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         )
         future.add_done_callback(self._commander_future_cb)
 
-    def disable_input(self, disable):
+    def disable_input(self, disable: bool) -> None:
         """Disable gamepad input to allow a tab to send setpoints directly."""
         self._disable_input = disable
 
     # --- Emergency stop ---
 
-    def _emergency_stop(self):
+    def _emergency_stop(self) -> None:
         if self.cf is not None:
             create_task(self.cf.localization().emergency().send_emergency_stop())
 
@@ -586,7 +602,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         for tab_toolbox in self.loaded_tab_toolboxes.values():
             tab_toolbox.disconnected()
 
-    async def _stream_battery(self, cf):
+    async def _stream_battery(self, cf: Crazyflie) -> None:
         log = cf.log()
         block = await log.create_block()
         await block.add_variable("pm.vbat")
@@ -606,7 +622,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             except (DisconnectedError, asyncio.CancelledError):
                 pass
 
-    def _update_battery(self, vbat, state):
+    def _update_battery(self, vbat: float, state: int) -> None:
         self.batteryBar.setValue(int(vbat * 1000))
 
         color = UiUtils.COLOR_BLUE
@@ -682,16 +698,16 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     # --- Input device menu ---
 
-    def _show_input_device_config_dialog(self):
+    def _show_input_device_config_dialog(self) -> None:
         self.inputConfig = InputConfigDialogue(self._joystick_reader)
         self.inputConfig.show()
 
-    def _display_input_device_error(self, error):
+    def _display_input_device_error(self, error: str) -> None:
         if self.cf is not None:
             create_task(self._async_disconnect())
         QMessageBox.critical(self, "Input device error", error)
 
-    def _mux_selected(self, checked):
+    def _mux_selected(self, checked: bool) -> None:
         if not checked:
             (mux, sub_nodes) = self.sender().data()
             for s in sub_nodes:
@@ -711,7 +727,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
             self._update_input_device_footer()
 
-    def _get_dev_status(self, device):
+    def _get_dev_status(self, device: InputReaderInterface) -> str:
         msg = "{}".format(device.name)
         if device.supports_mapping:
             map_name = "No input mapping"
@@ -720,7 +736,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             msg += " ({})".format(map_name)
         return msg
 
-    def _update_input_device_footer(self):
+    def _update_input_device_footer(self) -> None:
         msg = ""
 
         if len(self._joystick_reader.available_devices()) > 0:
@@ -740,7 +756,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             msg = "No input device found"
         self._statusbar_label.setText(msg)
 
-    def _inputdevice_selected(self, checked):
+    def _inputdevice_selected(self, checked: bool) -> None:
         (map_menu, device, mux_menu) = self.sender().data()
         if not checked:
             if map_menu:
@@ -769,7 +785,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             )
         self._update_input_device_footer()
 
-    def _inputconfig_selected(self, checked):
+    def _inputconfig_selected(self, checked: bool) -> None:
         if not checked:
             return
 
@@ -778,7 +794,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._joystick_reader.set_input_map(device.name, selected_mapping)
         self._update_input_device_footer()
 
-    def device_discovery(self, devs):
+    def device_discovery(self, devs: list[InputReaderInterface]) -> None:
         """Called when new devices have been added"""
         for menu in self._all_role_menus:
             role_menu = menu["rolemenu"]

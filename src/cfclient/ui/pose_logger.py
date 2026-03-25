@@ -29,10 +29,13 @@
 Sets up logging for the the full pose of the Crazyflie
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import math
 
+from cflib2 import Crazyflie
 from cflib2.error import DisconnectedError
 
 from cfclient.gui import create_task
@@ -64,17 +67,17 @@ class PoseLogger:
         self._stream_task = None
 
     @property
-    def position(self):
+    def position(self) -> tuple[float, ...]:
         """Get the position part of the full pose"""
         return self.pose[0:3]
 
     @property
-    def rpy(self):
+    def rpy(self) -> tuple[float, ...]:
         """Get the roll, pitch and yaw of the full pose in degrees"""
         return self.pose[3:6]
 
     @property
-    def rpy_rad(self):
+    def rpy_rad(self) -> list[float]:
         """Get the roll, pitch and yaw of the full pose in radians"""
         return [
             math.radians(self.pose[3]),
@@ -82,18 +85,18 @@ class PoseLogger:
             math.radians(self.pose[5]),
         ]
 
-    def start(self, cf):
+    def start(self, cf: Crazyflie) -> None:
         """Start streaming pose data from the Crazyflie."""
         self._stream_task = create_task(self._stream_loop(cf))
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop streaming pose data."""
         if self._stream_task is not None:
             self._stream_task.cancel()
             self._stream_task = None
         self.pose = self.NO_POSE
 
-    async def _stream_loop(self, cf):
+    async def _stream_loop(self, cf: Crazyflie) -> None:
         log = cf.log()
         block = await log.create_block()
         await block.add_variable(self.LOG_NAME_ESTIMATE_X)
