@@ -31,6 +31,3 @@ docs/.jekyll-metadata
 
 # Python venv
 venv/
-
-# Client runs in user-managed environments (no committed lockfile)
-uv.lock
