@@ -33,7 +33,7 @@ import asyncio
 import logging
 import math
 
-from cflib2 import DisconnectedError
+from cflib2.error import DisconnectedError
 
 from cfclient.gui import create_task
 from cfclient.utils.callbacks import Caller

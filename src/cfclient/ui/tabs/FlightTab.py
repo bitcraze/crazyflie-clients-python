@@ -37,7 +37,7 @@ from PySide6.QtUiTools import loadUiType
 from PySide6.QtCore import Qt, Signal
 
 import cfclient
-from cflib2 import DisconnectedError
+from cflib2.error import DisconnectedError
 from cfclient.gui import create_task
 from cfclient.ui.widgets.ai import AttitudeIndicator
 

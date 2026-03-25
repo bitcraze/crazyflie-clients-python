@@ -40,7 +40,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = "~=1.4.0" },
-    { name = "cflib2", git = "https://github.com/bitcraze/cflib2?rev=526d0abdb3cc441a9f3716e15dee340b65d332d4" },
+    { name = "cflib2", git = "https://github.com/bitcraze/cflib2?rev=43dc1aec418a1739721fdd2957212ff24bd34e33" },
     { name = "numpy", specifier = "~=2.2" },
     { name = "pyopengl", specifier = "~=3.1.7" },
     { name = "pyqtgraph", specifier = "~=0.13" },
@@ -143,7 +143,7 @@ wheels = [
 [[package]]
 name = "cflib2"
 version = "0.1.0"
-source = { git = "https://github.com/bitcraze/cflib2?rev=526d0abdb3cc441a9f3716e15dee340b65d332d4#526d0abdb3cc441a9f3716e15dee340b65d332d4" }
+source = { git = "https://github.com/bitcraze/cflib2?rev=43dc1aec418a1739721fdd2957212ff24bd34e33#43dc1aec418a1739721fdd2957212ff24bd34e33" }
 dependencies = [
     { name = "packaging" },
     { name = "tyro" },
