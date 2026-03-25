@@ -42,6 +42,7 @@ from .LEDRingTab import LEDRingTab
 # from .LogBlockTab import LogBlockTab
 # from .LogTab import LogTab
 from .ParamTab import ParamTab
+
 # from .PlotTab import PlotTab
 # from .locopositioning_tab import LocoPositioningTab
 # from .LogClientTab import LogClientTab
