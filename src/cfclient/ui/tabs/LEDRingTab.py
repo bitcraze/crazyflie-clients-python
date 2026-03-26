@@ -150,7 +150,6 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
             headlight = int(await param.get("ring.headlightEnable"))
         except Exception as e:
             logger.warning("Could not read ring params: %s", e)
-            self._set_ui_connected(True)
             return
 
         # Populate effect dropdown
@@ -161,7 +160,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
             self._led_ring_effect.addItem(name, i)
         self._led_ring_effect.blockSignals(False)
 
-        self._set_ui_connected(True)
+        self._set_ui_connected(deck_present)
         self._led_ring_effect.setEnabled(deck_present)
         self._led_ring_headlight.setEnabled(deck_present)
 
@@ -184,7 +183,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
             self._led_ring_effect.setCurrentIndex(active_effect)
             self._led_ring_effect.blockSignals(False)
 
-        is_led_tab = active_effect == 13
+        is_led_tab = deck_present and active_effect == 13
         self._intensity_slider.setEnabled(is_led_tab)
         self._intensity_spin.setEnabled(is_led_tab)
 
