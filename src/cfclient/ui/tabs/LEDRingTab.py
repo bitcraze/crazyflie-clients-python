@@ -168,17 +168,21 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
 
         # Switch to "LED tab" effect (13) and write the current LED state to
         # the deck. On connect this sets the ring to black
+        active_effect = current_effect
         try:
             await param.set("ring.effect", 13)
             await self._cf.memory().write_led_ring(self._leds)
-            self._led_ring_effect.blockSignals(True)
-            self._led_ring_effect.setCurrentIndex(13)
-            self._led_ring_effect.blockSignals(False)
+            active_effect = 13
         except Exception as e:
             logger.warning("Could not set LED tab effect: %s", e)
+        finally:
             self._led_ring_effect.blockSignals(True)
-            self._led_ring_effect.setCurrentIndex(current_effect)
+            self._led_ring_effect.setCurrentIndex(active_effect)
             self._led_ring_effect.blockSignals(False)
+
+        is_led_tab = active_effect == 13
+        self._intensity_slider.setEnabled(is_led_tab)
+        self._intensity_spin.setEnabled(is_led_tab)
 
     def _set_ui_connected(self, connected: bool) -> None:
         for btn in self._btns:
