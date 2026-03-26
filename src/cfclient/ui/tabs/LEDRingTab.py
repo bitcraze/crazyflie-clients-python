@@ -180,7 +180,9 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
             logger.warning("Could not set LED tab effect: %s", e)
         finally:
             self._led_ring_effect.blockSignals(True)
-            self._led_ring_effect.setCurrentIndex(active_effect)
+            index = self._led_ring_effect.findData(active_effect)
+            if index >= 0:
+                self._led_ring_effect.setCurrentIndex(index)
             self._led_ring_effect.blockSignals(False)
 
         is_led_tab = deck_present and active_effect == 13
