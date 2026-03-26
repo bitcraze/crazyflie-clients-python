@@ -604,11 +604,12 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     async def _stream_battery(self, cf: Crazyflie) -> None:
         log = cf.log()
-        block = await log.create_block()
-        await block.add_variable("pm.vbat")
-        await block.add_variable("pm.state")
-        stream = await block.start(1000)
+        stream = None
         try:
+            block = await log.create_block()
+            await block.add_variable("pm.vbat")
+            await block.add_variable("pm.state")
+            stream = await block.start(1000)
             while True:
                 data = await stream.next()
                 self._battery_signal.emit(
@@ -617,10 +618,11 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         except DisconnectedError:
             pass
         finally:
-            try:
-                await asyncio.shield(stream.stop())
-            except (DisconnectedError, asyncio.CancelledError):
-                pass
+            if stream is not None:
+                try:
+                    await asyncio.shield(stream.stop())
+                except (DisconnectedError, asyncio.CancelledError):
+                    pass
 
     def _update_battery(self, vbat: float, state: int) -> None:
         self.batteryBar.setValue(int(vbat * 1000))

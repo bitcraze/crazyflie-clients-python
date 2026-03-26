@@ -546,30 +546,32 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     async def _stream_motors(self, cf: Crazyflie) -> None:
         log = cf.log()
-        block = await log.create_block()
-        await block.add_variable(self.LOG_NAME_THRUST)
-        await block.add_variable(self.LOG_NAME_MOTOR_1)
-        await block.add_variable(self.LOG_NAME_MOTOR_2)
-        await block.add_variable(self.LOG_NAME_MOTOR_3)
-        await block.add_variable(self.LOG_NAME_MOTOR_4)
-        await block.add_variable(self.LOG_NAME_CAN_FLY)
-
-        if self.LOG_NAME_SUPERVISOR_INFO in log.names():
-            await block.add_variable(self.LOG_NAME_SUPERVISOR_INFO)
-
-        period_ms = Config().get("ui_update_period")
-        stream = await block.start(period_ms)
+        stream = None
         try:
+            block = await log.create_block()
+            await block.add_variable(self.LOG_NAME_THRUST)
+            await block.add_variable(self.LOG_NAME_MOTOR_1)
+            await block.add_variable(self.LOG_NAME_MOTOR_2)
+            await block.add_variable(self.LOG_NAME_MOTOR_3)
+            await block.add_variable(self.LOG_NAME_MOTOR_4)
+            await block.add_variable(self.LOG_NAME_CAN_FLY)
+
+            if self.LOG_NAME_SUPERVISOR_INFO in log.names():
+                await block.add_variable(self.LOG_NAME_SUPERVISOR_INFO)
+
+            period_ms = Config().get("ui_update_period")
+            stream = await block.start(period_ms)
             while True:
                 data = await stream.next()
                 self._log_data_received(data.timestamp, data.data)
         except DisconnectedError:
             pass
         finally:
-            try:
-                await asyncio.shield(stream.stop())
-            except (DisconnectedError, asyncio.CancelledError):
-                pass
+            if stream is not None:
+                try:
+                    await asyncio.shield(stream.stop())
+                except (DisconnectedError, asyncio.CancelledError):
+                    pass
 
     async def _setup_after_connect(self, cf: Crazyflie) -> None:
         param = cf.param()

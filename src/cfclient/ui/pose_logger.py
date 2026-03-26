@@ -98,16 +98,17 @@ class PoseLogger:
 
     async def _stream_loop(self, cf: Crazyflie) -> None:
         log = cf.log()
-        block = await log.create_block()
-        await block.add_variable(self.LOG_NAME_ESTIMATE_X)
-        await block.add_variable(self.LOG_NAME_ESTIMATE_Y)
-        await block.add_variable(self.LOG_NAME_ESTIMATE_Z)
-        await block.add_variable(self.LOG_NAME_ESTIMATE_ROLL)
-        await block.add_variable(self.LOG_NAME_ESTIMATE_PITCH)
-        await block.add_variable(self.LOG_NAME_ESTIMATE_YAW)
-
-        stream = await block.start(40)  # 40ms period
+        stream = None
         try:
+            block = await log.create_block()
+            await block.add_variable(self.LOG_NAME_ESTIMATE_X)
+            await block.add_variable(self.LOG_NAME_ESTIMATE_Y)
+            await block.add_variable(self.LOG_NAME_ESTIMATE_Z)
+            await block.add_variable(self.LOG_NAME_ESTIMATE_ROLL)
+            await block.add_variable(self.LOG_NAME_ESTIMATE_PITCH)
+            await block.add_variable(self.LOG_NAME_ESTIMATE_YAW)
+
+            stream = await block.start(40)  # 40ms period
             while True:
                 data = await stream.next()
                 self.pose = (
@@ -122,7 +123,8 @@ class PoseLogger:
         except DisconnectedError:
             pass
         finally:
-            try:
-                await asyncio.shield(stream.stop())
-            except (DisconnectedError, asyncio.CancelledError):
-                pass
+            if stream is not None:
+                try:
+                    await asyncio.shield(stream.stop())
+                except (DisconnectedError, asyncio.CancelledError):
+                    pass
