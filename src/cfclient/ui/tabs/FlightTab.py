@@ -350,7 +350,7 @@ class FlightTab(TabToolbox, flight_tab_class):
                 group_mask=None,
             )
 
-    def _log_data_received(self, timestamp: int, data: dict[str, float]) -> None:
+    def _log_data_received(self, timestamp: int, data: dict[str, float | int]) -> None:
         if self.isVisible() and self._isConnected:
             self.actualM1.setValue(data[self.LOG_NAME_MOTOR_1])
             self.actualM2.setValue(data[self.LOG_NAME_MOTOR_2])
