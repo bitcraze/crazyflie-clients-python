@@ -30,6 +30,8 @@
 Basic tab to be able to set (and test) colors in the LED-ring.
 """
 
+from __future__ import annotations
+
 import logging
 
 from PySide6 import QtGui
@@ -38,12 +40,14 @@ from PySide6 import QtWidgets
 
 import cfclient
 from cfclient.gui import create_task
+from cfclient.ui.pluginhelper import PluginHelper
 from cfclient.ui.tab_toolbox import TabToolbox
 
-from cflib2 import LedRingColor
+from cflib2 import Crazyflie
+from cflib2.memory import LedRingColor
 
-__author__ = 'Bitcraze AB'
-__all__ = ['LEDRingTab']
+__author__ = "Bitcraze AB"
+__all__ = ["LEDRingTab"]
 
 logger = logging.getLogger(__name__)
 
@@ -75,17 +79,26 @@ HARDCODED_EFFECT_NAMES = {
 class LEDRingTab(TabToolbox, led_ring_tab_class):
     """Tab for controlling the Crazyflie LED ring deck"""
 
-    def __init__(self, helper):
-        super(LEDRingTab, self).__init__(helper, 'LED Ring')
+    def __init__(self, helper: PluginHelper) -> None:
+        super(LEDRingTab, self).__init__(helper, "LED Ring")
         self.setupUi(self)
 
         self._cf = None
         self._leds = [LedRingColor() for _ in range(12)]
 
         self._btns = [
-            self._u1, self._u2, self._u3, self._u4,
-            self._u5, self._u6, self._u7, self._u8,
-            self._u9, self._u10, self._u11, self._u12,
+            self._u1,
+            self._u2,
+            self._u3,
+            self._u4,
+            self._u5,
+            self._u6,
+            self._u7,
+            self._u8,
+            self._u9,
+            self._u10,
+            self._u11,
+            self._u12,
         ]
 
         for i, btn in enumerate(self._btns):
@@ -100,7 +113,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
 
         self._set_ui_connected(False)
 
-    def connected(self, cf):
+    def connected(self, cf: Crazyflie) -> None:
         self._cf = cf
         # Reset LED state to black
         self._leds = [LedRingColor() for _ in range(12)]
@@ -108,7 +121,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
             btn.setStyleSheet("background-color: black; color: white")
         create_task(self._on_connected())
 
-    def disconnected(self):
+    def disconnected(self) -> None:
         self._cf = None
         self._set_ui_connected(False)
         self._intensity_slider.setValue(100)
@@ -117,7 +130,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
         self._led_ring_effect.clear()
         self._led_ring_effect.blockSignals(False)
 
-    async def _on_connected(self):
+    async def _on_connected(self) -> None:
         param = self._cf.param()
 
         # Check if LED ring deck is present
@@ -167,7 +180,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
             self._led_ring_effect.setCurrentIndex(current_effect)
             self._led_ring_effect.blockSignals(False)
 
-    def _set_ui_connected(self, connected):
+    def _set_ui_connected(self, connected: bool) -> None:
         for btn in self._btns:
             btn.setEnabled(connected)
             if not connected:
@@ -177,7 +190,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
         self._led_ring_effect.setEnabled(connected)
         self._led_ring_headlight.setEnabled(connected)
 
-    def _select(self, nbr):
+    def _select(self, nbr: int) -> None:
         led = self._leds[nbr]
         current_color = QtGui.QColor.fromRgb(led.r, led.g, led.b)
         col = QtWidgets.QColorDialog.getColor(current_color)
@@ -194,10 +207,10 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
 
             self._write_led_output()
 
-    def _intensity_change(self, _):
+    def _intensity_change(self, _: int) -> None:
         self._write_led_output()
 
-    def _write_led_output(self):
+    def _write_led_output(self) -> None:
         if self._cf is None:
             return
         intensity = self._intensity_slider.value()
@@ -205,22 +218,22 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
             led.intensity = intensity
         create_task(self._async_write_leds())
 
-    async def _async_write_leds(self):
+    async def _async_write_leds(self) -> None:
         if self._cf is None:
             return
         await self._cf.memory().write_led_ring(self._leds)
 
-    def _headlight_clicked(self, enabled):
+    def _headlight_clicked(self, enabled: bool) -> None:
         if self._cf is None:
             return
         create_task(self._async_set_headlight(int(enabled)))
 
-    async def _async_set_headlight(self, value):
+    async def _async_set_headlight(self, value: int) -> None:
         if self._cf is None:
             return
         await self._cf.param().set("ring.headlightEnable", value)
 
-    def _ring_effect_changed(self, index):
+    def _ring_effect_changed(self, index: int) -> None:
         if index < 0 or self._cf is None:
             return
         effect_id = self._led_ring_effect.itemData(index)
@@ -232,7 +245,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
         self._intensity_slider.setEnabled(is_led_tab)
         self._intensity_spin.setEnabled(is_led_tab)
 
-    async def _async_set_effect(self, effect_id):
+    async def _async_set_effect(self, effect_id: int) -> None:
         if self._cf is None:
             return
         await self._cf.param().set("ring.effect", effect_id)
