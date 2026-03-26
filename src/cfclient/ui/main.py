@@ -582,6 +582,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._disconnect_watch_task.cancel()
             self._disconnect_watch_task = None
         if self.cf is not None:
+            logger.info(f"Disconnected from {self.cf.uri}")
             self._notify_tabs_disconnected()
             await self.cf.disconnect()
             self.cf = None
