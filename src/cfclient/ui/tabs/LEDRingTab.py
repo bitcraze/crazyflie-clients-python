@@ -84,6 +84,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
         self.setupUi(self)
 
         self._cf = None
+        self._on_connected_task = None
         self._leds = [LedRingColor() for _ in range(12)]
 
         self._btns = [
@@ -119,9 +120,12 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
         self._leds = [LedRingColor() for _ in range(12)]
         for btn in self._btns:
             btn.setStyleSheet("background-color: black; color: white")
-        create_task(self._on_connected())
+        self._on_connected_task = create_task(self._on_connected(cf))
 
     def disconnected(self) -> None:
+        if self._on_connected_task is not None:
+            self._on_connected_task.cancel()
+            self._on_connected_task = None
         self._cf = None
         self._set_ui_connected(False)
         self._intensity_slider.setValue(100)
@@ -130,8 +134,8 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
         self._led_ring_effect.clear()
         self._led_ring_effect.blockSignals(False)
 
-    async def _on_connected(self) -> None:
-        param = self._cf.param()
+    async def _on_connected(self, cf: Crazyflie) -> None:
+        param = cf.param()
 
         # Check if LED ring deck is present
         try:
@@ -171,7 +175,7 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
         active_effect = current_effect
         try:
             await param.set("ring.effect", 13)
-            await self._cf.memory().write_led_ring(self._leds)
+            await cf.memory().write_led_ring(self._leds)
             active_effect = 13
         except Exception as e:
             logger.warning("Could not set LED tab effect: %s", e)
