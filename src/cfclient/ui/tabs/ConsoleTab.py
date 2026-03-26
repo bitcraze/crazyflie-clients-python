@@ -41,7 +41,6 @@ from cfclient.gui import create_task
 from cfclient.ui.pluginhelper import PluginHelper
 from cfclient.ui.tab_toolbox import TabToolbox
 from cflib2 import Crazyflie
-from cflib2.error import DisconnectedError
 
 __author__ = "Bitcraze AB"
 __all__ = ["ConsoleTab"]
@@ -94,20 +93,14 @@ class ConsoleTab(TabToolbox, console_tab_class):
 
     async def _console_loop(self) -> None:
         console = self._cf.console()
-        try:
-            while True:
-                lines = await console.get_lines()
-                for line in lines:
-                    self._print(line + "\n")
-        except DisconnectedError:
-            pass
+        while True:
+            lines = await console.get_lines()
+            for line in lines:
+                self._print(line + "\n")
 
     async def _set_param(self, name: str, value: int) -> None:
         if self._cf is not None:
-            try:
-                await self._cf.param().set(name, value)
-            except DisconnectedError:
-                pass
+            await self._cf.param().set(name, value)
 
     def _print(self, text: str) -> None:
         logger.debug("[%s]", text)
