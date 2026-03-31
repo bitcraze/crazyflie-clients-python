@@ -616,8 +616,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                 self._battery_signal.emit(
                     data.data["pm.vbat"], int(data.data["pm.state"])
                 )
-        except DisconnectedError:
-            pass
         finally:
             if stream is not None:
                 try:
