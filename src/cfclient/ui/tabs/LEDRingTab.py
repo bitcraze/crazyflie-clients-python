@@ -30,249 +30,235 @@
 Basic tab to be able to set (and test) colors in the LED-ring.
 """
 
+from __future__ import annotations
+
 import logging
 
 from PySide6 import QtGui
 from PySide6.QtUiTools import loadUiType
-from PySide6.QtCore import Signal
 from PySide6 import QtWidgets
 
 import cfclient
+from cfclient.gui import create_task
+from cfclient.ui.pluginhelper import PluginHelper
 from cfclient.ui.tab_toolbox import TabToolbox
 
-from cflib.crazyflie.mem import MemoryElement
+from cflib2 import Crazyflie
+from cflib2.memory import LedRingColor
 
-__author__ = 'Bitcraze AB'
-__all__ = ['LEDRingTab']
+__author__ = "Bitcraze AB"
+__all__ = ["LEDRingTab"]
 
 logger = logging.getLogger(__name__)
 
 led_ring_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/ledRingTab.ui")[0]
 
+HARDCODED_EFFECT_NAMES = {
+    0: "Off",
+    1: "White spinner",
+    2: "Color spinner",
+    3: "Tilt effect",
+    4: "Brightness effect",
+    5: "Color spinner 2",
+    6: "Double spinner",
+    7: "Solid color effect",
+    8: "Factory test",
+    9: "Battery status",
+    10: "Boat lights",
+    11: "Alert",
+    12: "Gravity",
+    13: "LED tab",
+    14: "Color fader",
+    15: "Link quality",
+    16: "Location server status",
+    17: "Sequencer",
+    18: "Lighthouse quality",
+}
+
 
 class LEDRingTab(TabToolbox, led_ring_tab_class):
-    """Tab for plotting logging data"""
+    """Tab for controlling the Crazyflie LED ring deck"""
 
-    _connected_signal = Signal(str)
-    _disconnected_signal = Signal(str)
-
-    def __init__(self, helper):
-        super(LEDRingTab, self).__init__(helper, 'LED Ring')
+    def __init__(self, helper: PluginHelper) -> None:
+        super(LEDRingTab, self).__init__(helper, "LED Ring")
         self.setupUi(self)
 
-        # LED-ring effect dropdown and headlight checkbox
-        self._ledring_nbr_effects = 0
+        self._cf = None
+        self._on_connected_task = None
+        self._leds = [LedRingColor() for _ in range(12)]
 
-        # Connect the headlight checkbox
-        self._led_ring_headlight.clicked.connect(
-            lambda enabled: self._helper.cf.param.set_value("ring.headlightEnable", int(enabled)))
+        self._btns = [
+            self._u1,
+            self._u2,
+            self._u3,
+            self._u4,
+            self._u5,
+            self._u6,
+            self._u7,
+            self._u8,
+            self._u9,
+            self._u10,
+            self._u11,
+            self._u12,
+        ]
 
-        # Update headlight when param changes
-        self._helper.cf.param.add_update_callback(
-            group="ring", name="headlightEnable",
-            cb=lambda name, checked: self._led_ring_headlight.setChecked(bool(int(checked))))
-
-        # Update LED-ring effect when param changes
-        self._helper.cf.param.add_update_callback(
-            group="ring", name="effect",
-            cb=self._ring_effect_updated)
-
-        # Populate dropdown when all params are updated
-        self._helper.cf.param.all_updated.add_callback(self._ring_populate_dropdown)
-
-        # Always wrap callbacks from Crazyflie API though QT Signal/Slots
-        # to avoid manipulating the UI when rendering it
-        self._connected_signal.connect(self._connected)
-        self._disconnected_signal.connect(self._disconnected)
-
-        # Connect the Crazyflie API callbacks to the signals
-        self._helper.cf.connected.add_callback(
-            self._connected_signal.emit)
-
-        self._helper.cf.disconnected.add_callback(
-            self._disconnected_signal.emit)
-
-        self._btns = [self._u1,
-                      self._u2,
-                      self._u3,
-                      self._u4,
-                      self._u5,
-                      self._u6,
-                      self._u7,
-                      self._u8,
-                      self._u9,
-                      self._u10,
-                      self._u11,
-                      self._u12]
-
-        self._intensity = self._intensity_slider.value()
-
-        self._u1.clicked.connect(lambda: self._select(0))
-        self._u2.clicked.connect(lambda: self._select(1))
-        self._u3.clicked.connect(lambda: self._select(2))
-        self._u4.clicked.connect(lambda: self._select(3))
-        self._u5.clicked.connect(lambda: self._select(4))
-        self._u6.clicked.connect(lambda: self._select(5))
-        self._u7.clicked.connect(lambda: self._select(6))
-        self._u8.clicked.connect(lambda: self._select(7))
-        self._u9.clicked.connect(lambda: self._select(8))
-        self._u10.clicked.connect(lambda: self._select(9))
-        self._u11.clicked.connect(lambda: self._select(10))
-        self._u12.clicked.connect(lambda: self._select(11))
-
-        self._mem = None
+        for i, btn in enumerate(self._btns):
+            btn.clicked.connect(lambda _, idx=i: self._select(idx))
 
         self._intensity_slider.valueChanged.connect(self._intensity_change)
-        self._intensity_slider.valueChanged.connect(
-            self._intensity_spin.setValue)
-        self._intensity_spin.valueChanged.connect(
-            self._intensity_slider.setValue)
+        self._intensity_slider.valueChanged.connect(self._intensity_spin.setValue)
+        self._intensity_spin.valueChanged.connect(self._intensity_slider.setValue)
 
-        self._helper.inputDeviceReader.alt1_updated.add_callback(self.alt1_updated)
-        self._helper.inputDeviceReader.alt2_updated.add_callback(self.alt2_updated)
+        self._led_ring_headlight.clicked.connect(self._headlight_clicked)
+        self._led_ring_effect.currentIndexChanged.connect(self._ring_effect_changed)
 
-        self._led_ring_effect.setEnabled(False)
-        self._led_ring_headlight.setEnabled(False)
+        self._set_ui_connected(False)
 
-    def _select(self, nbr):
-        col = QtGui.QColor()
+    def connected(self, cf: Crazyflie) -> None:
+        self._cf = cf
+        # Reset LED state to black
+        self._leds = [LedRingColor() for _ in range(12)]
+        for btn in self._btns:
+            btn.setStyleSheet("background-color: black; color: white")
+        self._on_connected_task = create_task(self._on_connected(cf))
 
-        if self._mem:
-            led = self._mem.leds[nbr]
-            col = QtGui.QColor.fromRgb(led.r, led.g, led.b)
+    def disconnected(self) -> None:
+        if self._on_connected_task is not None:
+            self._on_connected_task.cancel()
+            self._on_connected_task = None
+        self._cf = None
+        self._set_ui_connected(False)
+        self._intensity_slider.setValue(100)
+        # Clear dropdown
+        self._led_ring_effect.blockSignals(True)
+        self._led_ring_effect.clear()
+        self._led_ring_effect.blockSignals(False)
 
-        col = QtWidgets.QColorDialog.getColor(col)
+    async def _on_connected(self, cf: Crazyflie) -> None:
+        param = cf.param()
 
-        if col.isValid() and self._mem:
+        # Check if LED ring deck is present
+        try:
+            deck_present = int(await param.get("deck.bcLedRing")) == 1
+        except Exception:
+            deck_present = False
+
+        # Fetch ring params
+        try:
+            neffect = int(await param.get("ring.neffect"))
+            current_effect = int(await param.get("ring.effect"))
+            headlight = int(await param.get("ring.headlightEnable"))
+        except Exception as e:
+            logger.warning("Could not read ring params: %s", e)
+            return
+
+        # Populate effect dropdown
+        self._led_ring_effect.blockSignals(True)
+        self._led_ring_effect.clear()
+        for i in range(neffect + 1):
+            name = f"{i}: {HARDCODED_EFFECT_NAMES.get(i, 'N/A')}"
+            self._led_ring_effect.addItem(name, i)
+        self._led_ring_effect.blockSignals(False)
+
+        self._set_ui_connected(deck_present)
+        self._led_ring_effect.setEnabled(deck_present)
+        self._led_ring_headlight.setEnabled(deck_present)
+
+        # Set initial UI state from current param values
+        self._led_ring_headlight.blockSignals(True)
+        self._led_ring_headlight.setChecked(bool(headlight))
+        self._led_ring_headlight.blockSignals(False)
+
+        # Switch to "LED tab" effect (13) and write the current LED state to
+        # the deck. On connect this sets the ring to black
+        active_effect = current_effect
+        try:
+            await param.set("ring.effect", 13)
+            await cf.memory().write_led_ring(self._leds)
+            active_effect = 13
+        except Exception as e:
+            logger.warning("Could not set LED tab effect: %s", e)
+        finally:
+            self._led_ring_effect.blockSignals(True)
+            index = self._led_ring_effect.findData(active_effect)
+            if index >= 0:
+                self._led_ring_effect.setCurrentIndex(index)
+            self._led_ring_effect.blockSignals(False)
+
+        is_led_tab = deck_present and active_effect == 13
+        self._intensity_slider.setEnabled(is_led_tab)
+        self._intensity_spin.setEnabled(is_led_tab)
+
+    def _set_ui_connected(self, connected: bool) -> None:
+        for btn in self._btns:
+            btn.setEnabled(connected)
+            if not connected:
+                btn.setStyleSheet("background-color: none")
+        self._intensity_slider.setEnabled(connected)
+        self._intensity_spin.setEnabled(connected)
+        self._led_ring_effect.setEnabled(connected)
+        self._led_ring_headlight.setEnabled(connected)
+
+    def _select(self, nbr: int) -> None:
+        led = self._leds[nbr]
+        current_color = QtGui.QColor.fromRgb(led.r, led.g, led.b)
+        col = QtWidgets.QColorDialog.getColor(current_color)
+
+        if col.isValid():
             r, g, b = col.red(), col.green(), col.blue()
-            self._mem.leds[nbr].set(r=r, g=g, b=b)
+            self._leds[nbr].set(r=r, g=g, b=b)
 
             brightness = 0.299 * r + 0.587 * g + 0.114 * b
             text_color = "white" if brightness < 128 else "black"
-
-            self.sender().setStyleSheet(
+            self._btns[nbr].setStyleSheet(
                 f"background-color: rgb({r}, {g}, {b}); color: {text_color};"
             )
 
             self._write_led_output()
 
-    def _intensity_change(self, value):
-        self._intensity = value
+    def _intensity_change(self, _: int) -> None:
         self._write_led_output()
 
-    def _write_led_output(self):
-        if self._mem:
-            for led in self._mem.leds:
-                led.intensity = self._intensity
-            self._mem.write_data(self._led_write_done)
-        else:
-            logger.info("No LED-ring memory found!")
-
-    def _led_write_done(self, mem, addr):
-        logger.info("LED write done callback")
-
-    def _connected(self, link_uri):
-        """Callback when the Crazyflie has been connected"""
-        mems = self._helper.cf.mem.get_mems(MemoryElement.TYPE_DRIVER_LED)
-        if len(mems) > 0:
-            self._mem = mems[0]
-            logger.info(self._mem)
-
-        if self._mem:
-            for btn in self._btns:
-                btn.setEnabled(True)
-                btn.setStyleSheet("background-color: black; color: white")
-                self._intensity_slider.setEnabled(True)
-                self._intensity_spin.setEnabled(True)
-
-        self._led_ring_effect.setEnabled(True)
-        self._led_ring_headlight.setEnabled(True)
-
-    def _disconnected(self, link_uri):
-        """Callback for when the Crazyflie has been disconnected"""
-        for btn in self._btns:
-            btn.setEnabled(False)
-            btn.setStyleSheet("background-color: none")
-            self._intensity_slider.setEnabled(False)
-            self._intensity_spin.setEnabled(False)
-            self._intensity_slider.setValue(100)
-
-        self._led_ring_effect.setEnabled(False)
-        self._led_ring_headlight.setEnabled(False)
-
-    def _ring_populate_dropdown(self):
-        try:
-            nbr = int(self._helper.cf.param.values["ring"]["neffect"])
-            current = int(self._helper.cf.param.values["ring"]["effect"])
-        except KeyError:
+    def _write_led_output(self) -> None:
+        if self._cf is None:
             return
+        intensity = self._intensity_slider.value()
+        for led in self._leds:
+            led.intensity = intensity
+        create_task(self._async_write_leds())
 
-        self._ring_effect = current
-        self._ledring_nbr_effects = nbr
+    async def _async_write_leds(self) -> None:
+        if self._cf is None:
+            return
+        await self._cf.memory().write_led_ring(self._leds)
 
-        hardcoded_names = {
-            0: "Off",
-            1: "White spinner",
-            2: "Color spinner",
-            3: "Tilt effect",
-            4: "Brightness effect",
-            5: "Color spinner 2",
-            6: "Double spinner",
-            7: "Solid color effect",
-            8: "Factory test",
-            9: "Battery status",
-            10: "Boat lights",
-            11: "Alert",
-            12: "Gravity",
-            13: "LED tab",
-            14: "Color fader",
-            15: "Link quality",
-            16: "Location server status",
-            17: "Sequencer",
-            18: "Lighthouse quality",
-        }
+    def _headlight_clicked(self, enabled: bool) -> None:
+        if self._cf is None:
+            return
+        create_task(self._async_set_headlight(int(enabled)))
 
-        self._led_ring_effect.clear()
-        for i in range(nbr + 1):
-            name = "{}: ".format(i)
-            name += hardcoded_names.get(i, "N/A")
-            self._led_ring_effect.addItem(name, i)
+    async def _async_set_headlight(self, value: int) -> None:
+        if self._cf is None:
+            return
+        await self._cf.param().set("ring.headlightEnable", value)
 
-        self._led_ring_effect.currentIndexChanged.connect(self._ring_effect_changed)
-        self._led_ring_effect.setCurrentIndex(current)
-        self._led_ring_effect.setEnabled(int(self._helper.cf.param.values["deck"]["bcLedRing"]) == 1)
-        self._led_ring_headlight.setEnabled(int(self._helper.cf.param.values["deck"]["bcLedRing"]) == 1)
+    def _ring_effect_changed(self, index: int) -> None:
+        if index < 0 or self._cf is None:
+            return
+        effect_id = self._led_ring_effect.itemData(index)
+        if effect_id is None:
+            return
+        create_task(self._async_set_effect(effect_id))
+        # Enable intensity controls only in LED tab mode (effect 13)
+        is_led_tab = effect_id == 13
+        self._intensity_slider.setEnabled(is_led_tab)
+        self._intensity_spin.setEnabled(is_led_tab)
 
-        try:
-            self._helper.cf.param.set_value("ring.effect", "13")
-            self._led_ring_effect.setCurrentIndex(13)
-            self._ring_effect = 13
-            logger.info("Initialized LED ring to 'LED tab' mode (effect 13).")
-        except Exception as e:
-            logger.warning(f"Could not set LED tab effect on connect: {e}")
-
-    def _ring_effect_changed(self, index):
-        self._ring_effect = index
-        if index > -1:
-            i = self._led_ring_effect.itemData(index)
-            if i != int(self._helper.cf.param.values["ring"]["effect"]):
-                self._helper.cf.param.set_value("ring.effect", str(i))
-
-            if i == 13:
-                self._intensity_slider.setEnabled(True)
-                self._intensity_spin.setEnabled(True)
-            else:
-                self._intensity_slider.setEnabled(False)
-                self._intensity_spin.setEnabled(False)
-
-    def _ring_effect_updated(self, name, value):
-        if self._helper.cf.param.is_updated:
-            self._led_ring_effect.setCurrentIndex(int(value))
-
-    def alt1_updated(self, state):
-        if state:
-            new_index = (self._ring_effect+1) % (self._ledring_nbr_effects+1)
-            self._helper.cf.param.set_value("ring.effect", str(new_index))
-
-    def alt2_updated(self, state):
-        self._helper.cf.param.set_value("ring.headlightEnable", str(state))
+    async def _async_set_effect(self, effect_id: int) -> None:
+        if self._cf is None:
+            return
+        await self._cf.param().set("ring.effect", effect_id)
+        # When switching back to "LED tab" effect, write the current tab state
+        # so the colors match what the buttons show
+        if effect_id == 13:
+            await self._cf.memory().write_led_ring(self._leds)
