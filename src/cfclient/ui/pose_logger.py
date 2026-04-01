@@ -103,7 +103,7 @@ class PoseLogger:
         await block.add_variable(self.LOG_NAME_ESTIMATE_PITCH)
         await block.add_variable(self.LOG_NAME_ESTIMATE_YAW)
 
-        stream = await block.start(40)  # 40ms period
+        stream = await block.start(16)  # 16ms period
         try:
             while True:
                 data = await stream.next()
