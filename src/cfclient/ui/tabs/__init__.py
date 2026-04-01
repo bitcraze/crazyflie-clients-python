@@ -42,9 +42,10 @@ from .LEDRingTab import LEDRingTab
 # from .LogBlockTab import LogBlockTab
 # from .LogTab import LogTab
 from .ParamTab import ParamTab
+
 # from .PlotTab import PlotTab
 # from .locopositioning_tab import LocoPositioningTab
-# from .LogClientTab import LogClientTab
+from .LogClientTab import LogClientTab
 # from .lighthouse_tab import LighthouseTab
 # from .TuningTab import TuningTab
 # from .ColorLEDTab import ColorLEDTab
@@ -65,7 +66,7 @@ available = [
     # PlotTab,
     # LocoPositioningTab,
     # LighthouseTab,
-    # LogClientTab,
+    LogClientTab,
     # TuningTab,
     # CrtpSharkToolbox,
 ]
