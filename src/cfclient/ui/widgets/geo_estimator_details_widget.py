@@ -38,6 +38,7 @@ from PyQt6.QtCore import QAbstractTableModel, QVariant, Qt, QModelIndex, QItemSe
 from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSampleType
 from cflib.localization.lighthouse_geometry_solution import LighthouseGeometrySolution
 import cfclient
+from cfclient.ui.widgets.info_label import InfoLabel
 
 __author__ = 'Bitcraze AB'
 __all__ = ['GeoEstimatorDetailsWidget']
@@ -72,8 +73,13 @@ class GeoEstimatorDetailsWidget(QtWidgets.QWidget, geo_estimator_details_widget_
         header_samples.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
         header_samples.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
 
-        self._samples_table_view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self._samples_table_view.customContextMenuRequested.connect(self._create_sample_table_context_menu)
+        self._selected_sample_uid: int | None = None
+        self._selected_sample_type: LhCfPoseSampleType | None = None
+
+        self._delete_sample_button.setEnabled(False)
+        self._change_type_sample_button.setEnabled(False)
+        self._delete_sample_button.clicked.connect(self._on_delete_sample)
+        self._change_type_sample_button.clicked.connect(self._on_change_type_sample)
 
         # Create base station details table
         self._base_stations_details_model = BaseStationTableModel(self)
@@ -90,44 +96,55 @@ class GeoEstimatorDetailsWidget(QtWidgets.QWidget, geo_estimator_details_widget_
         self._samples_widget.setVisible(False)
         self._base_stations_widget.setVisible(False)
 
-    def _create_sample_table_context_menu(self, point):
-        menu = QtWidgets.QMenu()
+        self._bs_details_info_label = InfoLabel(
+            'This table details the XYZ location of the base stations, how many samples it can\n'
+            'see and how many links it has with other base stations.\n'
+            'E.g. If a sample can see three base stations, then those three base stations are linked.\n'
+            '\n'
+            'NOTE: For the estimation to work, each base station must connect to at least one other\n'
+            'base station, and all stations must belong to a single network.',
+            self._base_stations_widget)
+        self._samples_details_info_label = InfoLabel(
+            'An XYZ sample error indicates how well the configuration matches that specific data point.\n'
+            'A low error here does not always guarantee stable flight throughout the entire space.\n'
+            '\n'
+            'A verification sample error measures accuracy at a new location not used in the estimation.\n'
+            'This gives a more practical view of the overall quality of the setup.\n'
+            '\n'
+            'Deleting, retaking or shuffling samples between XYZ and Verification states\n'
+            'can help reduce both kinds of sample error.',
+            self._samples_widget)
 
-        delete_action = None
+    def _on_delete_sample(self):
+        if self._selected_sample_uid is not None:
+            self.do_remove_sample_signal.emit(self._selected_sample_uid)
 
-        item = self._samples_table_view.indexAt(point)
-        row = item.row()
-        if row >= 0:
-            uid = self._samples_details_model.get_uid_of_row(item.row())
-            sample_type = self._samples_details_model.get_sample_type_of_row(row)
-
-            delete_action = menu.addAction('Delete sample')
-            if sample_type == LhCfPoseSampleType.VERIFICATION:
-                change_action = menu.addAction('Change to XYZ-space sample')
+    def _on_change_type_sample(self):
+        if self._selected_sample_uid is not None:
+            if self._selected_sample_type == LhCfPoseSampleType.VERIFICATION:
+                self.do_convert_to_xyz_space_sample_signal.emit(self._selected_sample_uid)
             else:
-                change_action = menu.addAction('Change to verification sample')
+                self.do_convert_to_verification_sample_signal.emit(self._selected_sample_uid)
 
-            action = menu.exec(self._samples_table_view.mapToGlobal(point))
-
-            if action == delete_action:
-                self.do_remove_sample_signal.emit(uid)
-            elif action == change_action:
-                if sample_type == LhCfPoseSampleType.VERIFICATION:
-                    self.do_convert_to_xyz_space_sample_signal.emit(uid)
-                else:
-                    self.do_convert_to_verification_sample_signal.emit(uid)
-
-    def _sample_selection_changed(self, current: QItemSelection, previous: QItemSelection):
+    def _sample_selection_changed(self, current: QItemSelection, _previous: QItemSelection):
         # Called from the sample details table when the selection changes
         model_indexes = current.indexes()
 
         if len(model_indexes) > 0:
             #  model_indexes contains one index per column, just take the first one
             row = model_indexes[0].row()
+            self._selected_sample_uid = self._samples_details_model.get_uid_of_row(row)
+            self._selected_sample_type = self._samples_details_model.get_sample_type_of_row(row)
+            self._delete_sample_button.setEnabled(True)
+            self._change_type_sample_button.setEnabled(True)
             self.sample_selection_changed_signal.emit(row)
-
             self._base_stations_table_view.clearSelection()
         else:
+            self._selected_sample_uid = None
+            self._selected_sample_type = None
+            self._delete_sample_button.setEnabled(False)
+            self._change_type_sample_button.setEnabled(False)
+            self._change_type_sample_button.setText('Change Type')
             self.sample_selection_changed_signal.emit(-1)
 
     def _base_station_selection_changed(self, current: QItemSelection, previous: QItemSelection):
@@ -172,8 +189,7 @@ class GeoEstimatorDetailsWidget(QtWidgets.QWidget, geo_estimator_details_widget_
         else:
             self._base_stations_table_view.clearSelection()
 
-    def details_checkbox_state_changed(self, state: int):
-        enabled = state == Qt.CheckState.Checked.value
+    def details_state_changed(self, enabled: bool):
         self._samples_widget.setVisible(enabled)
         self._base_stations_widget.setVisible(enabled)
 

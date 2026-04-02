@@ -375,7 +375,27 @@ class Plot3dLighthouse(scene.SceneCanvas):
         self._home_button = QPushButton('Home', self.native)
         self._home_button.clicked.connect(self.move_camera_home)
 
+        from PyQt6.QtWidgets import QLabel
+        from PyQt6.QtCore import Qt
+        self._controls_label = QLabel(
+            'Zoom: scroll / pinch   Rotate: click + drag   Pan: shift + drag',
+            self.native)
+        self._controls_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._controls_label.setStyleSheet(
+            'color: #555555; background-color: rgba(255, 255, 255, 160); padding: 2px 6px;')
+        self._original_native_resize = self.native.resizeEvent
+        self.native.resizeEvent = self._on_native_resize
+
         self.freeze()
+
+    def _on_native_resize(self, event):
+        self._original_native_resize(event)
+        self._controls_label.adjustSize()
+        w = self.native.width()
+        h = self.native.height()
+        lw = self._controls_label.width()
+        lh = self._controls_label.height()
+        self._controls_label.move((w - lw) // 2, h - lh - 6)
 
     def move_camera_home(self):
         self._view.camera.reset()
@@ -645,10 +665,13 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._geo_estimator_details_widget.base_station_selection_changed_signal.connect(
             self._base_station_selection_changed_cb)
 
+        self._import_config_button.clicked.connect(self._geo_estimator_widget._start_geo_file_upload)
+        self._export_config_button.clicked.connect(self.save_sys_config_user_action)
+
         # Connect signals between the geo estimator widget and the details widget
         self._geo_estimator_widget.solution_ready_signal.connect(self._geo_estimator_details_widget.solution_ready_cb)
-        self._geo_estimator_widget._details_checkbox.stateChanged.connect(
-            self._geo_estimator_details_widget.details_checkbox_state_changed)
+        self._geo_estimator_widget._show_details.toggled.connect(
+            self._geo_estimator_details_widget.details_state_changed)
         self._geo_estimator_details_widget.do_remove_sample_signal.connect(self._geo_estimator_widget.remove_sample)
         self._geo_estimator_details_widget.do_convert_to_xyz_space_sample_signal.connect(
             self._geo_estimator_widget.convert_to_xyz_space_sample)
@@ -713,7 +736,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._manage_basestation_mode_button.clicked.connect(self._show_basestation_mode_dialog)
 
         self._ui_mode = UiMode.flying
-        self._geo_mode_button.toggled.connect(lambda enabled: self._change_ui_mode(enabled))
+        self._set_up_button.clicked.connect(self._toggle_geo_mode)
 
         self._latest_solution = LighthouseGeometrySolution([])
 
@@ -722,10 +745,28 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
         self._pending_geo_update = None
 
-        self._base_stations_info_label = InfoLabel("This is information about base station status. TODO update",
-                                                   self._base_station_group_box)
-        self._sys_management_info_label = InfoLabel("This is information about system management. TODO update",
-                                                    self._sys_management_group_box)
+        self._base_stations_info_label = InfoLabel(
+            "Channel Number: set a given base station’s channel number.\n"
+            "\n"
+            "Receiving: green/red — base station is seen/not seen by the deck.\n"
+            "\n"
+            "Calibration: data from each base station used to correct manufacturing variation.\n"
+            "  Red    — no calibration data received\n"
+            "  Orange — received but does not match persistent memory; recreate configuration\n"
+            "  Green  — calibration data received\n"
+            "  Blue   — using calibration data from persistent memory\n"
+            "\n"
+            "Geometry: green/red — geometry data is/is not in persistent memory.",
+            self._base_station_group_box)
+        self._sys_management_info_label = InfoLabel(
+            "Start Set Up: configure the geometry of the system\n"
+            "Set BS Channel: set the channel of a base station\n"
+            "Switch BS Version: switch between v1 and v2 base stations\n"
+            "Import Config: import an existing configuration\n"
+            "Export Config: export a configuration to file\n"
+            "\n"
+            "Note: configurations do not include samples.",
+            self._sys_management_group_box)
 
     def write_and_store_geometry(self, geometries: dict[int, LighthouseBsGeometry]):
         if self._lh_config_writer:
@@ -758,7 +799,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         """Callback when the Crazyflie has been connected"""
         logger.debug("Crazyflie connected to {}".format(link_uri))
 
-        self._flying_mode_button.setChecked(True)
+        # self._flying_mode_button.setChecked(True)
         self._is_connected = True
 
         if self._helper.cf.param.get_value('deck.bcLighthouse4') == '1':
@@ -863,7 +904,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._clear_state()
         self._update_graphics()
         self._plot_3d.clear()
-        self._flying_mode_button.setChecked(True)
+        # self._flying_mode_button.setChecked(True)
         self.is_lighthouse_deck_active = False
         self._is_connected = False
         self._update_ui()
@@ -898,6 +939,14 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
                           "Error when using log config",
                           " [{0}]: {1}".format(log_conf.name, msg))
 
+    def _toggle_geo_mode(self):
+        if self._ui_mode == UiMode.geo_estimation:
+            self._ui_mode = UiMode.flying
+        else:
+            self._ui_mode = UiMode.geo_estimation
+
+        self._update_ui()
+
     def _change_ui_mode(self, is_geo_mode: bool):
         if is_geo_mode:
             self._ui_mode = UiMode.geo_estimation
@@ -923,14 +972,18 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
     def _update_ui(self):
         enabled = self._is_connected and self.is_lighthouse_deck_active
-        self._change_system_type_button.setEnabled(enabled)
+        self._set_up_button.setEnabled(enabled)
+        self._set_up_button.setToolTip('' if enabled else 'Connect a Crazyflie with a Lighthouse Deck to set up your system.')
+        self._import_config_button.setEnabled(enabled)
+        self._export_config_button.setEnabled(enabled)
 
-        self._flying_mode_button.setEnabled(enabled)
-        self._geo_mode_button.setEnabled(enabled)
+        # self._flying_mode_button.setEnabled(enabled)
 
         is_geo_visible = self._ui_mode == UiMode.geo_estimation and enabled
         self._geo_estimator_widget.setVisible(is_geo_visible)
         self._geo_estimator_details_widget.setVisible(is_geo_visible)
+        self._set_up_button.setText('Close set up' if is_geo_visible else 'Start set up')
+        self._set_up_button.setChecked(is_geo_visible)
 
     def _update_position_label(self, position):
         if len(position) == 3:

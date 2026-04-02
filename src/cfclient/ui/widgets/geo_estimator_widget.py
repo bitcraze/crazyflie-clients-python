@@ -68,31 +68,33 @@ REFERENCE_DIST = 1.0
 
 class _CollectionStep(Enum):
     ORIGIN = ('bslh_1.png',
-              'Put the Crazyflie where you want the origin of your coordinate system.',
-              'Start measurement')
+              'Place the crazyflie where you want the origin of your coordinate system to be.',
+              'Start measurement',
+              'The orientation of the crazyflie is not important. Just its absolute position.')
     X_AXIS = ('bslh_2.png',
-              f'Put the Crazyflie on the positive X-axis, exactly {REFERENCE_DIST} meters from the ' +
-              'origin. This sample will be used to define the X-axis as well as scaling of the system.',
-              'Start measurement')
+              'Put the crazyflie on the positive X-axis, 1m from the origin.',
+              'Start measurement',
+              'A tape measure and visual alignment is accurate enough for most flight spaces.\nSee the documentation for advice on very large flight spaces approaching 16 base stations.')
     XY_PLANE = ('bslh_3.png',
-                'Put the Crazyflie somewhere in the XY-plane, but not on the X-axis. This position is used to map ' +
-                'the XY-plane to the floor. You can sample multiple positions to get a more precise definition.',
-                'Start measurement')
-    VERIFICATION = ('bslh_4.png',
-                    'Sample points to be used for verification of the geometry. Sample by rotating the Crazyflie ' +
-                    'quickly left-right around the Z-axis and then holding it still for a second, or ' +
-                    'optionally by clicking the button.',
-                    'Sample position')
+                'Put the Crazyflie somewhere in the XY-plane, but not on the X-axis. This sample is used to map the XY-plane to the floor.',
+                'Start measurement',
+                'You can sample multiple positions to get a more precise approximation of the floor.')
     XYZ_SPACE = ('bslh_4.png',
-                 'Sample points in the space to be used for refining the geometry. You need at least two base ' +
-                 'stations visible in each sample. Sample by rotating the Crazyflie quickly left-right around the ' +
-                 'Z-axis and then holding it still for a second, or optionally by clicking the button.',
-                 'Sample position')
+                 'Pick up the crazyflie and take to an area in the flightspace where you expect to fly.'
+                 'Take an XYZ sample by quickly rotating the Crazyflie in a left-right motion about the z-axis.'
+                 'Then wait for confirmation. Repeat the processes in a few key additional areas.',
+                 'Sample position',
+                 'If the crazyflie is not held still after rotation, or if it can only see one base station then the sample will fail.')
+    VERIFICATION = ('bslh_4.png',
+                    'Verification samples are taken just like XYZ samples. If the verification sample error is high, then add XYZ samples around the verification sample to reduce the error.',
+                    'Sample position',
+                    'Verification samples check the accuracy of the areas between the XYZ Samples.\nLow sample error in these areas indicate that the system can function reliably across the entire flight space,\nrather than just at the specific XYZ sample locations.')
 
-    def __init__(self, image, instructions, button_text):
+    def __init__(self, image, instructions, button_text, info):
         self.image = image
         self.instructions = instructions
         self.button_text = button_text
+        self.info = info
 
         self._order = None
 
@@ -153,6 +155,10 @@ STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_YELLOW_BACKGROUND = "background-color: lightyellow;"
 STYLE_NO_BACKGROUND = "background-color: none;"
 
+STYLE_GROUPBOX_GREEN = "QGroupBox { background-color: lightgreen; }"
+STYLE_GROUPBOX_RED = "QGroupBox { background-color: lightpink; }"
+STYLE_GROUPBOX_YELLOW = "QGroupBox { background-color: lightyellow; }"
+
 
 class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     """Widget for the geometry estimator UI"""
@@ -180,9 +186,6 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._upload_status = _UploadStatus.NOT_STARTED
 
-        self._import_solution_button.clicked.connect(self._start_geo_file_upload)
-        self._export_solution_button.clicked.connect(self._lighthouse_tab.save_sys_config_user_action)
-
         self._timeout_reader = TimeoutAngleReader(self._helper.cf, self._timeout_reader_signal.emit)
         self._timeout_reader_signal.connect(self._average_available_cb)
         self._timeout_reader_result_setter = None
@@ -204,32 +207,40 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._latest_solution: LighthouseGeometrySolution = LighthouseGeometrySolution([])
         self._current_step = _CollectionStep.ORIGIN
-        self._origin_radio.setChecked(True)
+        # self._origin_radio.setChecked(True)
+
+        self._origin_col = self._wrap_column(self.gridLayout, 0, self._origin_icon, self.label_6)
+        self._x_axis_col = self._wrap_column(self.gridLayout, 1, self._x_axis_icon, self.label_7)
+        self._xy_col = self._wrap_column(self.gridLayout, 2, self._xy_plane_icon, self.label_8)
+        self._xyz_col = self._wrap_column(self.gridLayout, 3, self._xyz_space_icon, self.label_10)
+        self._verification_col = self._wrap_column(self.gridLayout, 5, self._verification_icon, self.label_9)
 
         self._start_solving_signal.connect(self._start_solving_cb)
         self.solution_ready_signal.connect(self._solution_ready_cb)
         self._is_solving = False
         self._solver_thread = None
 
+        self._sample_management_info_label = InfoLabel("This is information about the solution status. TODO update", self._solution_status_group_box)
+        self._step_instructions_info_label = InfoLabel("Instructions for the current step.", self._step_instructions, position=InfoLabel.Position.BOTTOM_RIGHT)
+        self._solution_status_info_label = InfoLabel(
+            'A successful upload does not guarantee stable flight.\n'
+            'Try to minimize the max sample errors before take off.\n'
+            '\n'
+            'For more info, see Sample Details.',
+            self._solution_status_widget)
+
         self._update_step_ui()
         self._update_ui_reading(False)
         self._update_solution_info()
 
-        self._origin_radio.clicked.connect(lambda: self._change_step(_CollectionStep.ORIGIN))
-        self._x_axis_radio.clicked.connect(lambda: self._change_step(_CollectionStep.X_AXIS))
-        self._xy_plane_radio.clicked.connect(lambda: self._change_step(_CollectionStep.XY_PLANE))
-        self._xyz_space_radio.clicked.connect(lambda: self._change_step(_CollectionStep.XYZ_SPACE))
-        self._verification_radio.clicked.connect(lambda: self._change_step(_CollectionStep.VERIFICATION))
-        self._details_checkbox.setChecked(False)
-
-        self._basic_steps_info_label = InfoLabel("This is information about basic steps. TODO update",
-                                                 self._basic_steps_section_label)
-        self._refined_steps_info_label = InfoLabel("This is information about refined steps. TODO update",
-                                                   self._refined_steps_section_label)
-        self._solution_status_info_label = InfoLabel("This is information about the solution status. TODO update",
-                                                     self._solution_status_group_box)
-        self._session_management_info_label = InfoLabel("This is information about session management. TODO update",
-                                                        self._session_management_group_box)
+        # self._origin_radio.clicked.connect(lambda: self._change_step(_CollectionStep.ORIGIN))
+        # self._x_axis_radio.clicked.connect(lambda: self._change_step(_CollectionStep.X_AXIS))
+        # self._xy_plane_radio.clicked.connect(lambda: self._change_step(_CollectionStep.XY_PLANE))
+        # self._xyz_space_radio.clicked.connect(lambda: self._change_step(_CollectionStep.XYZ_SPACE))
+        # self._verification_radio.clicked.connect(lambda: self._change_step(_CollectionStep.VERIFICATION))
+        self._previous_sample.clicked.connect(lambda: self._change_step(self._current_step.previous()))
+        self._next_sample.clicked.connect(lambda: self._change_step(self._current_step.next()))
+        self._hide_details.setChecked(True)  # Hide details by default
 
     def _start_geo_file_upload(self):
         if self._lighthouse_tab.load_sys_config_user_action():
@@ -342,16 +353,53 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
             else:
                 self._action_detector.stop()
 
+    _STEP_COLUMN_WIDGETS = None
+
+    def _step_column_widgets(self):
+        """Map each collection step to the layout in its grid column"""
+        if not hasattr(self, '_step_column_widgets_cache'):
+            self._step_column_widgets_cache = {
+                _CollectionStep.ORIGIN: self._origin_col,
+                _CollectionStep.X_AXIS: self._x_axis_col,
+                _CollectionStep.XY_PLANE: self._xy_col,
+                _CollectionStep.XYZ_SPACE: self._xyz_col,
+                _CollectionStep.VERIFICATION: self._verification_col,
+            }
+        return self._step_column_widgets_cache
+
     def _update_step_ui(self):
         """Populate the widget with the current step's information"""
         step = self._current_step
 
         self._set_label_icon(self._step_image, step.image)
         self._step_instructions.setText(step.instructions)
+        self._step_instructions_info_label.setToolTip(step.info)
         self._step_info.setText('')
         self._step_measure.setText(step.button_text)
+        self._previous_sample.setEnabled(self._current_step.has_previous())
+        self._next_sample.setEnabled(self._current_step.has_next())
 
+        self._update_step_highlight()
         self._update_solution_info()
+
+    @staticmethod
+    def _wrap_column(grid, col, icon, label):
+        """Wrap a bare grid-column layout in a QWidget so it can be styled."""
+        container = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        icon.setParent(container)
+        label.setParent(container)
+        layout.addWidget(icon)
+        layout.addWidget(label)
+        grid.addWidget(container, 1, col)
+        return container
+
+    def _update_step_highlight(self):
+        """Highlight the grid column corresponding to the current step"""
+        for s, frame in self._step_column_widgets().items():
+            style = "QWidget { border: 2px solid gray; border-radius: 4px; padding: 4px; } QLabel { border: none; padding: 4px; }" if s == self._current_step else ""
+            frame.setStyleSheet(style)
 
     def _set_label_icon(self, label: QtWidgets.QLabel, icon_file_name: str):
         """Set the icon of a label widget"""
@@ -364,16 +412,16 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._step_measure.setEnabled(is_enabled)
 
-        self._origin_radio.setEnabled(is_enabled)
-        self._x_axis_radio.setEnabled(is_enabled)
-        self._xy_plane_radio.setEnabled(is_enabled)
-        self._xyz_space_radio.setEnabled(is_enabled)
-        self._verification_radio.setEnabled(is_enabled)
+        # self._origin_radio.setEnabled(is_enabled)
+        # self._x_axis_radio.setEnabled(is_enabled)
+        # self._xy_plane_radio.setEnabled(is_enabled)
+        # self._xyz_space_radio.setEnabled(is_enabled)
+        # self._verification_radio.setEnabled(is_enabled)
+        self._previous_sample.setEnabled(is_enabled and self._current_step.has_previous())
+        self._next_sample.setEnabled(is_enabled and self._current_step.has_next())
 
         self._import_samples_button.setEnabled(is_enabled)
         self._export_samples_button.setEnabled(is_enabled)
-        self._import_solution_button.setEnabled(is_enabled)
-        self._export_solution_button.setEnabled(is_enabled)
         self._clear_all_button.setEnabled(is_enabled)
 
     def _get_step_icon(self, is_valid: bool) -> str:
@@ -428,14 +476,14 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         match notification_type:
             case _UserNotificationType.SUCCESS:
                 self._helper.cf.platform.send_user_notification(True)
-                self._sample_collection_box.setStyleSheet(STYLE_GREEN_BACKGROUND)
+                self._sample_collection_box.setStyleSheet(STYLE_GROUPBOX_GREEN)
                 self._update_ui_reading(False)
             case _UserNotificationType.FAILURE:
                 self._helper.cf.platform.send_user_notification(False)
-                self._sample_collection_box.setStyleSheet(STYLE_RED_BACKGROUND)
+                self._sample_collection_box.setStyleSheet(STYLE_GROUPBOX_RED)
                 self._update_ui_reading(False)
             case _UserNotificationType.PENDING:
-                self._sample_collection_box.setStyleSheet(STYLE_YELLOW_BACKGROUND)
+                self._sample_collection_box.setStyleSheet(STYLE_GROUPBOX_YELLOW)
                 self._update_ui_reading(True)
                 timeout = 3000
 
