@@ -784,7 +784,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                     device_names.append(dev.name)
                     if dev.supports_mapping:
                         mapping_names.append(
-                            dev.input_map_name if dev.input_map else "No mapping")
+                            ConfigManager().get_display_name(dev.input_map_name)
+                            if dev.input_map else "No mapping")
                     else:
                         mapping_names.append("N/A")
                 else:
