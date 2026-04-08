@@ -143,6 +143,19 @@
        </item>
       </layout>
      </item>
+     <item row="0" column="4">
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
      <item row="0" column="0">
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
@@ -270,7 +283,7 @@
                 <item row="1" column="0">
                  <widget class="QPushButton" name="_import_config_button">
                   <property name="text">
-                   <string>Import Config</string>
+                   <string>Import configuration</string>
                   </property>
                  </widget>
                 </item>
@@ -291,7 +304,7 @@
                 <item row="1" column="1">
                  <widget class="QPushButton" name="_export_config_button">
                   <property name="text">
-                   <string>Export Config</string>
+                   <string>Export configuration</string>
                   </property>
                  </widget>
                 </item>
@@ -305,19 +318,6 @@
         </widget>
        </item>
       </layout>
-     </item>
-     <item row="0" column="4">
-      <spacer name="horizontalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
      </item>
     </layout>
    </item>

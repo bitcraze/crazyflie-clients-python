@@ -943,6 +943,16 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         if self._ui_mode == UiMode.geo_estimation:
             self._ui_mode = UiMode.flying
         else:
+            result = QMessageBox.question(
+                self,
+                'Start Set Up',
+                'If there is any existing geometry, it will be overwritten when starting the set up.\n\nExport the current configuration to make sure it is saved. Configurations are also cached.\n\n'
+                'Are you sure you want to continue?',
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.Cancel)
+            if result != QMessageBox.StandardButton.Yes:
+                self._set_up_button.setChecked(False)
+                return
             self._ui_mode = UiMode.geo_estimation
 
         self._update_ui()

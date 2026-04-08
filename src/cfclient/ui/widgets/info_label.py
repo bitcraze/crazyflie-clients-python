@@ -26,12 +26,60 @@
 #  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from enum import Enum
-from PyQt6.QtWidgets import QLabel, QWidget, QToolTip
-from PyQt6.QtCore import QObject, QEvent
+from PyQt6.QtWidgets import QLabel, QWidget, QFrame, QVBoxLayout
+from PyQt6.QtCore import QObject, QEvent, Qt, QPoint
+from PyQt6.QtGui import QGuiApplication
+
+
+class _InfoPopover(QFrame):
+    POPOVER_WIDTH = 300
+
+    def __init__(self):
+        super().__init__(None, Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
+        self.setFrameShape(QFrame.Shape.StyledPanel)
+        self.setStyleSheet(
+            "QFrame {"
+            "  background-color: #fffef0;"
+            "  border: 1px solid #aaaaaa;"
+            "  border-radius: 6px;"
+            "}"
+            "QLabel {"
+            "  background: transparent;"
+            "  border: none;"
+            "  color: #222222;"
+            "}"
+        )
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 8, 10, 8)
+
+        self._label = QLabel()
+        self._label.setWordWrap(True)
+        self._label.setMaximumWidth(self.POPOVER_WIDTH)
+        layout.addWidget(self._label)
+
+    def show_near(self, global_pos: QPoint, text: str):
+        self._label.setText(text)
+        self._label.adjustSize()
+        self.adjustSize()
+
+        x = global_pos.x() + 8
+        y = global_pos.y() + 8
+
+        screen = QGuiApplication.screenAt(global_pos)
+        if screen:
+            rect = screen.availableGeometry()
+            if x + self.width() > rect.right():
+                x = global_pos.x() - self.width() - 8
+            if y + self.height() > rect.bottom():
+                y = global_pos.y() - self.height() - 8
+
+        self.move(x, y)
+        self.show()
 
 
 class InfoLabel(QLabel):
-    """A label with an information icon and a tooltip."""
+    """A label with an information icon. Click to open a popover with details."""
 
     class Position(Enum):
         TOP_LEFT = 1
@@ -43,25 +91,32 @@ class InfoLabel(QLabel):
     ICON_HEIGHT = 16
     MARGIN = 0
 
-    def __init__(self, tooltip: str, parent: QWidget, position: Position = Position.TOP_RIGHT,
+    _shared_popover: _InfoPopover | None = None
+
+    def __init__(self, text: str, parent: QWidget, position: Position = Position.TOP_RIGHT,
                  v_margin: int = MARGIN, h_margin: int = MARGIN):
         super().__init__(parent)
 
         self._v_margin = v_margin
         self._h_margin = h_margin
+        self._text = text
 
         self._event_filter = _EventFilter(self, position)
         parent.installEventFilter(self._event_filter)
 
-        self.setToolTip(tooltip)
-
         info_pixmap = self.style().StandardPixmap.SP_MessageBoxInformation
         info_icon = self.style().standardIcon(info_pixmap).pixmap(self.ICON_WIDTH, self.ICON_HEIGHT)
         self.setPixmap(info_icon)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def setToolTip(self, text: str):
+        """Store text for use in the popover (replaces tooltip)."""
+        self._text = text
 
     def mousePressEvent(self, event):
-        """Override mouse press event to show tooltip on click."""
-        QToolTip.showText(event.globalPosition().toPoint(), self.toolTip(), self)
+        if InfoLabel._shared_popover is None:
+            InfoLabel._shared_popover = _InfoPopover()
+        InfoLabel._shared_popover.show_near(event.globalPosition().toPoint(), self._text)
 
 
 class _EventFilter(QObject):

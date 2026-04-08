@@ -70,25 +70,31 @@ class _CollectionStep(Enum):
     ORIGIN = ('bslh_1.png',
               'Place the crazyflie where you want the origin of your coordinate system to be.',
               'Start measurement',
-              'The orientation of the crazyflie is not important. Just its absolute position.')
+              "The orientation of the Crazyflie does not matter — only its absolute position.")
     X_AXIS = ('bslh_2.png',
               'Put the crazyflie on the positive X-axis, 1m from the origin.',
               'Start measurement',
-              'A tape measure and visual alignment is accurate enough for most flight spaces.\nSee the documentation for advice on very large flight spaces approaching 16 base stations.')
+              "A tape measure and visual alignment is accurate enough for most spaces.\n\n"
+              "For very large spaces with many base stations, see the documentation for more precise placement advice.")
     XY_PLANE = ('bslh_3.png',
                 'Put the Crazyflie somewhere in the XY-plane, but not on the X-axis. This sample is used to map the XY-plane to the floor.',
                 'Start measurement',
-                'You can sample multiple positions to get a more precise approximation of the floor.')
+                "This sample maps the XY plane to the floor.\n\n"
+                "Taking samples at multiple positions gives a more precise approximation.")
     XYZ_SPACE = ('bslh_4.png',
                  'Pick up the crazyflie and take to an area in the flightspace where you expect to fly.'
                  'Take an XYZ sample by quickly rotating the Crazyflie in a left-right motion about the z-axis.'
                  'Then wait for confirmation. Repeat the processes in a few key additional areas.',
                  'Sample position',
-                 'If the crazyflie is not held still after rotation, or if it can only see one base station then the sample will fail.')
+                 "Hold the Crazyflie still after rotation and wait for confirmation.\n\n"
+                 "A sample will fail if the Crazyflie moves after rotation or can only see one base station.")
     VERIFICATION = ('bslh_4.png',
                     'Verification samples are taken just like XYZ samples. If the verification sample error is high, then add XYZ samples around the verification sample to reduce the error.',
                     'Sample position',
-                    'Verification samples check the accuracy of the areas between the XYZ Samples.\nLow sample error in these areas indicate that the system can function reliably across the entire flight space,\nrather than just at the specific XYZ sample locations.')
+                    "Verification samples check the accuracy of areas between XYZ sample locations.\n\n"
+                    "Low error here means the system works reliably across the full flight space, "
+                    "not just at the sampled positions.\n\n"
+                    "If the error is high, add more XYZ samples near the verification location.")
 
     def __init__(self, image, instructions, button_text, info):
         self.image = image
@@ -207,6 +213,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
         self._latest_solution: LighthouseGeometrySolution = LighthouseGeometrySolution([])
         self._current_step = _CollectionStep.ORIGIN
+        self._collected_steps: set[_CollectionStep] = set()
         # self._origin_radio.setChecked(True)
 
         self._origin_col = self._wrap_column(self.gridLayout, 0, self._origin_icon, self.label_6)
@@ -220,7 +227,6 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._is_solving = False
         self._solver_thread = None
 
-        self._sample_management_info_label = InfoLabel("This is information about the solution status. TODO update", self._solution_status_group_box)
         self._step_instructions_info_label = InfoLabel("Instructions for the current step.", self._step_instructions, position=InfoLabel.Position.BOTTOM_RIGHT)
         self._solution_status_info_label = InfoLabel(
             'A successful upload does not guarantee stable flight.\n'
@@ -267,6 +273,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                 self._solver_thread = None
 
     def new_session(self):
+        self._collected_steps.clear()
         self._container.clear_all_samples()
 
     def _clear_all(self):
@@ -375,7 +382,11 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._step_instructions.setText(step.instructions)
         self._step_instructions_info_label.setToolTip(step.info)
         self._step_info.setText('')
-        self._step_measure.setText(step.button_text)
+        retakeable = {_CollectionStep.ORIGIN, _CollectionStep.X_AXIS, _CollectionStep.XY_PLANE}
+        if step in retakeable and step in self._collected_steps:
+            self._step_measure.setText('Retake measurement')
+        else:
+            self._step_measure.setText(step.button_text)
         self._previous_sample.setEnabled(self._current_step.has_previous())
         self._next_sample.setEnabled(self._current_step.has_next())
 
@@ -478,6 +489,10 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                 self._helper.cf.platform.send_user_notification(True)
                 self._sample_collection_box.setStyleSheet(STYLE_GROUPBOX_GREEN)
                 self._update_ui_reading(False)
+                retakeable = {_CollectionStep.ORIGIN, _CollectionStep.X_AXIS, _CollectionStep.XY_PLANE}
+                if self._current_step in retakeable:
+                    self._collected_steps.add(self._current_step)
+                    self._step_measure.setText('Retake measurement')
             case _UserNotificationType.FAILURE:
                 self._helper.cf.platform.send_user_notification(False)
                 self._sample_collection_box.setStyleSheet(STYLE_GROUPBOX_RED)
