@@ -40,11 +40,11 @@ dependencies = [
         "cflib~=0.1.32rc1",
         "setuptools",
         "appdirs~=1.4.0",
-        "pyzmq~=26.0",
+        "pyzmq~=27.0",
         "pyqtgraph~=0.13",
         "PyYAML~=6.0.1",
         "numpy~=2.2",
-        "vispy~=0.15.2",
+        "vispy~=0.16",
         "pyopengl~=3.1.7",  # Required for Vispy to work on MacOS Sonoma
         "pyserial~=3.5",
         "PyQt6~=6.7.1",
