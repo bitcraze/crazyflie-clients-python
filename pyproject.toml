@@ -37,7 +37,7 @@ classifiers = [
 requires-python = ">= 3.10"
 
 dependencies = [
-        "cflib @ git+https://github.com/bitcraze/crazyflie-lib-python.git@153248591ec26f2206d4c029a174f10c8aaaedda",
+        "cflib~=0.1.32rc1",
         "setuptools",
         "appdirs~=1.4.0",
         "pyzmq~=26.0",
