@@ -41,6 +41,7 @@ from cfclient.utils.config import Config
 from cfclient.utils.config_manager import ConfigManager
 from cfclient.utils.input import JoystickReader
 from cfclient.utils.ui import UiUtils
+from cfclient.ui.dialogs.bootloader import BootloaderDialog
 from cfclient.ui.dialogs.inputconfigdialogue import InputConfigDialogue
 from cflib2 import Crazyflie, LinkContext
 from cflib2.error import DisconnectedError
@@ -116,9 +117,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         # TODO: migrate these to cflib2
         self.menuItemAbout.setEnabled(False)
-        self.menuItemBootloader.setEnabled(False)
         self._menu_cf2_config.setEnabled(False)
         self.logConfigAction.setEnabled(False)
+
+        self.menuItemBootloader.triggered.connect(self._show_bootloader_dialog)
 
         self.menuItemConfInputDevice.triggered.connect(
             self._show_input_device_config_dialog
@@ -682,6 +684,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._check_theme(theme)
 
     # --- Input device menu ---
+
+    def _show_bootloader_dialog(self):
+        self._bootloader_dialog = BootloaderDialog(cfclient.ui.pluginhelper)
+        self._bootloader_dialog.show()
 
     def _show_input_device_config_dialog(self):
         self.inputConfig = InputConfigDialogue(self._joystick_reader)
