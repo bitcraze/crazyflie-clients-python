@@ -48,6 +48,10 @@ class PoseLogger:
     LOG_NAME_ESTIMATE_ROLL = 'stateEstimate.roll'
     LOG_NAME_ESTIMATE_PITCH = 'stateEstimate.pitch'
     LOG_NAME_ESTIMATE_YAW = 'stateEstimate.yaw'
+    LOG_NAME_STABILIZER_ROLL = 'stabilizer.roll'
+    LOG_NAME_STABILIZER_PITCH = 'stabilizer.pitch'
+    LOG_NAME_STABILIZER_YAW = 'stabilizer.yaw'
+    LOG_NAME_BARO_ASL_LONG = 'baro.aslLong'
     NO_POSE = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
     def __init__(self, cf: Crazyflie) -> None:
@@ -62,6 +66,8 @@ class PoseLogger:
         # X, Y, Z, roll, pitch, yaw
         # roll, pitch and yaw in degrees
         self.pose = self.NO_POSE
+        self._use_legacy_pose = False
+        self._has_legacy_baro = False
 
     @property
     def position(self):
@@ -80,12 +86,35 @@ class PoseLogger:
 
     def _connected(self, link_uri) -> None:
         logConf = LogConfig("Pose", 40)
-        logConf.add_variable(self.LOG_NAME_ESTIMATE_X, "float")
-        logConf.add_variable(self.LOG_NAME_ESTIMATE_Y, "float")
-        logConf.add_variable(self.LOG_NAME_ESTIMATE_Z, "float")
-        logConf.add_variable(self.LOG_NAME_ESTIMATE_ROLL, "float")
-        logConf.add_variable(self.LOG_NAME_ESTIMATE_PITCH, "float")
-        logConf.add_variable(self.LOG_NAME_ESTIMATE_YAW, "float")
+
+        has_full_pose = all([
+            self._cf.log.toc.get_element_by_complete_name(self.LOG_NAME_ESTIMATE_X),
+            self._cf.log.toc.get_element_by_complete_name(self.LOG_NAME_ESTIMATE_Y),
+            self._cf.log.toc.get_element_by_complete_name(self.LOG_NAME_ESTIMATE_Z),
+            self._cf.log.toc.get_element_by_complete_name(self.LOG_NAME_ESTIMATE_ROLL),
+            self._cf.log.toc.get_element_by_complete_name(self.LOG_NAME_ESTIMATE_PITCH),
+            self._cf.log.toc.get_element_by_complete_name(self.LOG_NAME_ESTIMATE_YAW),
+        ])
+
+        self._use_legacy_pose = not has_full_pose
+        self._has_legacy_baro = False
+
+        if has_full_pose:
+            logConf.add_variable(self.LOG_NAME_ESTIMATE_X, "float")
+            logConf.add_variable(self.LOG_NAME_ESTIMATE_Y, "float")
+            logConf.add_variable(self.LOG_NAME_ESTIMATE_Z, "float")
+            logConf.add_variable(self.LOG_NAME_ESTIMATE_ROLL, "float")
+            logConf.add_variable(self.LOG_NAME_ESTIMATE_PITCH, "float")
+            logConf.add_variable(self.LOG_NAME_ESTIMATE_YAW, "float")
+        else:
+            logConf.add_variable(self.LOG_NAME_STABILIZER_ROLL, "float")
+            logConf.add_variable(self.LOG_NAME_STABILIZER_PITCH, "float")
+            logConf.add_variable(self.LOG_NAME_STABILIZER_YAW, "float")
+
+            self._has_legacy_baro = bool(
+                self._cf.log.toc.get_element_by_complete_name(self.LOG_NAME_BARO_ASL_LONG))
+            if self._has_legacy_baro:
+                logConf.add_variable(self.LOG_NAME_BARO_ASL_LONG, "float")
 
         try:
             self._cf.log.add_config(logConf)
@@ -101,14 +130,28 @@ class PoseLogger:
         self.pose = self.NO_POSE
 
     def _data_received(self, timestamp, data, logconf) -> None:
-        self.pose = (
-            data[self.LOG_NAME_ESTIMATE_X],
-            data[self.LOG_NAME_ESTIMATE_Y],
-            data[self.LOG_NAME_ESTIMATE_Z],
-            data[self.LOG_NAME_ESTIMATE_ROLL],
-            data[self.LOG_NAME_ESTIMATE_PITCH],
-            data[self.LOG_NAME_ESTIMATE_YAW],
-        )
+        if self._use_legacy_pose:
+            z_estimate = 0.0
+            if self._has_legacy_baro:
+                z_estimate = data[self.LOG_NAME_BARO_ASL_LONG]
+
+            self.pose = (
+                0.0,
+                0.0,
+                z_estimate,
+                data[self.LOG_NAME_STABILIZER_ROLL],
+                data[self.LOG_NAME_STABILIZER_PITCH],
+                data[self.LOG_NAME_STABILIZER_YAW],
+            )
+        else:
+            self.pose = (
+                data[self.LOG_NAME_ESTIMATE_X],
+                data[self.LOG_NAME_ESTIMATE_Y],
+                data[self.LOG_NAME_ESTIMATE_Z],
+                data[self.LOG_NAME_ESTIMATE_ROLL],
+                data[self.LOG_NAME_ESTIMATE_PITCH],
+                data[self.LOG_NAME_ESTIMATE_YAW],
+            )
 
         self.data_received_cb.call(self, self.pose)
 
