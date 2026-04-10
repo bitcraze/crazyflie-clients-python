@@ -421,7 +421,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         #                  flowV1    flowV2     LightHouse       LPS
         position_decks = ['bcFlow', 'bcFlow2', 'bcLighthouse4', 'bcLoco', 'bcDWM1000']
         for deck in position_decks:
-            if int(self._helper.cf.param.values['deck'][deck]) == 1:
+            if self._deck_param_enabled(deck):
                 self.commanderBox.setEnabled(True)
                 break
         else:
@@ -569,6 +569,15 @@ class FlightTab(TabToolbox, flight_tab_class):
         if (self.isInCrazyFlightmode is True):
             Config().set("max_rp", self.maxAngle.value())
 
+    def _deck_param_enabled(self, name):
+        try:
+            return int(self._helper.cf.param.values.get("deck", {}).get(name, 0)) == 1
+        except (TypeError, ValueError):
+            return False
+
+    def _int_config(self, key):
+        return int(Config().get(key))
+
     def _trim_pitch_changed(self, value):
         logger.debug("Pitch trim updated to [%f]" % value)
         self._helper.inputDeviceReader.trim_pitch = value
@@ -631,21 +640,21 @@ class FlightTab(TabToolbox, flight_tab_class):
                      self.flightModeCombo.itemText(item))
         self.isInCrazyFlightmode = False
         if (item == 0):  # Normal
-            self.maxAngle.setValue(Config().get("normal_max_rp"))
-            self.maxThrust.setValue(Config().get("normal_max_thrust"))
-            self.minThrust.setValue(Config().get("normal_min_thrust"))
-            self.slewEnableLimit.setValue(Config().get("normal_slew_limit"))
+            self.maxAngle.setValue(self._int_config("normal_max_rp"))
+            self.maxThrust.setValue(self._int_config("normal_max_thrust"))
+            self.minThrust.setValue(self._int_config("normal_min_thrust"))
+            self.slewEnableLimit.setValue(self._int_config("normal_slew_limit"))
             self.thrustLoweringSlewRateLimit.setValue(
-                Config().get("normal_slew_rate"))
-            self.maxYawRate.setValue(Config().get("normal_max_yaw"))
+                self._int_config("normal_slew_rate"))
+            self.maxYawRate.setValue(self._int_config("normal_max_yaw"))
         if (item == 1):  # Advanced
-            self.maxAngle.setValue(Config().get("max_rp"))
-            self.maxThrust.setValue(Config().get("max_thrust"))
-            self.minThrust.setValue(Config().get("min_thrust"))
-            self.slewEnableLimit.setValue(Config().get("slew_limit"))
+            self.maxAngle.setValue(self._int_config("max_rp"))
+            self.maxThrust.setValue(self._int_config("max_thrust"))
+            self.minThrust.setValue(self._int_config("min_thrust"))
+            self.slewEnableLimit.setValue(self._int_config("slew_limit"))
             self.thrustLoweringSlewRateLimit.setValue(
-                Config().get("slew_rate"))
-            self.maxYawRate.setValue(Config().get("max_yaw"))
+                self._int_config("slew_rate"))
+            self.maxYawRate.setValue(self._int_config("max_yaw"))
             self.isInCrazyFlightmode = True
 
         if (item == 0):
@@ -710,20 +719,20 @@ class FlightTab(TabToolbox, flight_tab_class):
         heightHoldPossible = False
         hoverPossible = False
 
-        if int(self._helper.cf.param.values["deck"]["bcZRanger"]) == 1:
+        if self._deck_param_enabled("bcZRanger"):
             heightHoldPossible = True
             self._helper.inputDeviceReader.set_hover_max_height(1.0)
 
-        if int(self._helper.cf.param.values["deck"]["bcZRanger2"]) == 1:
+        if self._deck_param_enabled("bcZRanger2"):
             heightHoldPossible = True
             self._helper.inputDeviceReader.set_hover_max_height(2.0)
 
-        if int(self._helper.cf.param.values["deck"]["bcFlow"]) == 1:
+        if self._deck_param_enabled("bcFlow"):
             heightHoldPossible = True
             hoverPossible = True
             self._helper.inputDeviceReader.set_hover_max_height(1.0)
 
-        if int(self._helper.cf.param.values["deck"]["bcFlow2"]) == 1:
+        if self._deck_param_enabled("bcFlow2"):
             heightHoldPossible = True
             hoverPossible = True
             self._helper.inputDeviceReader.set_hover_max_height(2.0)

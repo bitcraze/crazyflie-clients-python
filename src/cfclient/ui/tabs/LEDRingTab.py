@@ -55,6 +55,12 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
     _connected_signal = pyqtSignal(str)
     _disconnected_signal = pyqtSignal(str)
 
+    def _deck_param_enabled(self, name):
+        try:
+            return int(self._helper.cf.param.values.get("deck", {}).get(name, 0)) == 1
+        except (TypeError, ValueError):
+            return False
+
     def __init__(self, helper):
         super(LEDRingTab, self).__init__(helper, 'LED Ring')
         self.setupUi(self)
@@ -239,8 +245,9 @@ class LEDRingTab(TabToolbox, led_ring_tab_class):
 
         self._led_ring_effect.currentIndexChanged.connect(self._ring_effect_changed)
         self._led_ring_effect.setCurrentIndex(current)
-        self._led_ring_effect.setEnabled(int(self._helper.cf.param.values["deck"]["bcLedRing"]) == 1)
-        self._led_ring_headlight.setEnabled(int(self._helper.cf.param.values["deck"]["bcLedRing"]) == 1)
+        led_ring_enabled = self._deck_param_enabled("bcLedRing")
+        self._led_ring_effect.setEnabled(led_ring_enabled)
+        self._led_ring_headlight.setEnabled(led_ring_enabled)
 
         try:
             self._helper.cf.param.set_value("ring.effect", "13")

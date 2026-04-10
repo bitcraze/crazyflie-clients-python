@@ -570,12 +570,13 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.batteryBar.setValue(int(data["pm.vbat"] * 1000))
 
         color = UiUtils.COLOR_BLUE
-        # TODO firmware reports fully-charged state as 'Battery',
-        # rather than 'Charged'
-        if data["pm.state"] in [BatteryStates.CHARGING, BatteryStates.CHARGED]:
-            color = UiUtils.COLOR_GREEN
-        elif data["pm.state"] == BatteryStates.LOW_POWER:
-            color = UiUtils.COLOR_RED
+        if "pm.state" in data:
+            # TODO firmware reports fully-charged state as 'Battery',
+            # rather than 'Charged'
+            if data["pm.state"] in [BatteryStates.CHARGING, BatteryStates.CHARGED]:
+                color = UiUtils.COLOR_GREEN
+            elif data["pm.state"] == BatteryStates.LOW_POWER:
+                color = UiUtils.COLOR_RED
 
         self.batteryBar.setStyleSheet(UiUtils.progressbar_stylesheet(color))
         self._aff_volts.setText(("%.3f" % data["pm.vbat"]))
@@ -588,7 +589,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         lg = LogConfig("Battery", 1000)
         lg.add_variable("pm.vbat", "float")
-        lg.add_variable("pm.state", "int8_t")
+        if self.cf.log.toc.get_element_by_complete_name("pm.state"):
+            lg.add_variable("pm.state", "int8_t")
         try:
             self.cf.log.add_config(lg)
             lg.data_received_cb.add_callback(self.batteryUpdatedSignal.emit)

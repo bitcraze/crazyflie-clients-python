@@ -25,9 +25,11 @@
 #  Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import json
+import logging
 import os
 from appdirs import AppDirs
 import sys
+from threading import Timer
 
 # Path used all over the application
 if not hasattr(sys, 'frozen'):
@@ -54,3 +56,53 @@ try:
         log_param_doc = json.load(f)
 except (IOError, OSError, json.JSONDecodeError):
     log_param_doc = None
+
+logger = logging.getLogger(__name__)
+
+
+def _enable_legacy_platform_probe_fallback():
+    try:
+        from cflib.crazyflie.platformservice import PlatformService
+    except ImportError:
+        return
+
+    if getattr(PlatformService, "_cfclient_legacy_probe_patch", False):
+        return
+
+    original_fetch_platform_informations = PlatformService.fetch_platform_informations
+
+    def fetch_platform_informations(self, callback):
+        self._cfclient_platform_info_complete = False
+
+        timer = getattr(self, "_cfclient_platform_info_timer", None)
+        if timer:
+            timer.cancel()
+
+        def complete():
+            if self._cfclient_platform_info_complete:
+                return
+
+            self._cfclient_platform_info_complete = True
+            timer = getattr(self, "_cfclient_platform_info_timer", None)
+            if timer:
+                timer.cancel()
+                self._cfclient_platform_info_timer = None
+
+            callback()
+
+        def on_timeout():
+            logger.info("Platform info fetch timed out, assuming legacy firmware")
+            self._protocolVersion = -1
+            complete()
+
+        self._cfclient_platform_info_timer = Timer(1.0, on_timeout)
+        self._cfclient_platform_info_timer.daemon = True
+        self._cfclient_platform_info_timer.start()
+
+        original_fetch_platform_informations(self, complete)
+
+    PlatformService.fetch_platform_informations = fetch_platform_informations
+    PlatformService._cfclient_legacy_probe_patch = True
+
+
+_enable_legacy_platform_probe_fallback()

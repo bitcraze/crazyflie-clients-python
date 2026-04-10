@@ -391,7 +391,13 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._basestation_geometry_dialog.reset()
         self._is_connected = True
 
-        if self._helper.cf.param.get_value('deck.bcLighthouse4') == '1':
+        try:
+            lighthouse_deck_enabled = self._helper.cf.param.get_value(
+                'deck.bcLighthouse4') == '1'
+        except KeyError:
+            lighthouse_deck_enabled = False
+
+        if lighthouse_deck_enabled:
             self._lighthouse_deck_detected()
 
         self._update_ui()
