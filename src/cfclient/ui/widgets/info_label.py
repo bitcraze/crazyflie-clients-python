@@ -27,22 +27,21 @@
 
 from enum import Enum
 from PyQt6.QtWidgets import QLabel, QWidget, QFrame, QVBoxLayout
-from PyQt6.QtCore import QObject, QEvent, Qt, QPoint
-from PyQt6.QtGui import QGuiApplication
+from PyQt6.QtCore import QObject, QEvent, Qt, QPoint, QRectF
+from PyQt6.QtGui import QGuiApplication, QPainter, QColor, QPainterPath
 
 
 class _InfoPopover(QFrame):
     POPOVER_WIDTH = 300
 
+    _RADIUS = 6
+    _BG_COLOR = QColor('#fffef0')
+    _BORDER_COLOR = QColor('#aaaaaa')
+
     def __init__(self):
         super().__init__(None, Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
-        self.setFrameShape(QFrame.Shape.StyledPanel)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setStyleSheet(
-            "QFrame {"
-            "  background-color: #fffef0;"
-            "  border: 1px solid #aaaaaa;"
-            "  border-radius: 6px;"
-            "}"
             "QLabel {"
             "  background: transparent;"
             "  border: none;"
@@ -57,6 +56,16 @@ class _InfoPopover(QFrame):
         self._label.setWordWrap(True)
         self._label.setMaximumWidth(self.POPOVER_WIDTH)
         layout.addWidget(self._label)
+
+    def paintEvent(self, _):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        rect = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
+        path = QPainterPath()
+        path.addRoundedRect(rect, self._RADIUS, self._RADIUS)
+        painter.fillPath(path, self._BG_COLOR)
+        painter.setPen(self._BORDER_COLOR)
+        painter.drawPath(path)
 
     def show_near(self, global_pos: QPoint, text: str):
         self._label.setText(text)

@@ -67,28 +67,26 @@ REFERENCE_DIST = 1.0
 
 
 class _CollectionStep(Enum):
-    ORIGIN = ('bslh_1.png',
+    ORIGIN = ('step_origin.png',
               'Place the crazyflie where you want the origin of your coordinate system to be.',
               'Start measurement',
               "The orientation of the Crazyflie does not matter — only its absolute position.")
-    X_AXIS = ('bslh_2.png',
+    X_AXIS = ('step_x_axis.png',
               'Put the crazyflie on the positive X-axis, 1m from the origin.',
               'Start measurement',
               "A tape measure and visual alignment is accurate enough for most spaces.\n\n"
               "For very large spaces with many base stations, see the documentation for more precise placement advice.")
-    XY_PLANE = ('bslh_3.png',
+    XY_PLANE = ('step_xy_plane.png',
                 'Put the Crazyflie somewhere in the XY-plane, but not on the X-axis. This sample is used to map the XY-plane to the floor.',
                 'Start measurement',
                 "This sample maps the XY plane to the floor.\n\n"
                 "Taking samples at multiple positions gives a more precise approximation.")
-    XYZ_SPACE = ('bslh_4.png',
-                 'Pick up the crazyflie and take to an area in the flightspace where you expect to fly.'
-                 'Take an XYZ sample by quickly rotating the Crazyflie in a left-right motion about the z-axis.'
-                 'Then wait for confirmation. Repeat the processes in a few key additional areas.',
+    XYZ_SPACE = ('step_xyz_space.png',
+                 'Pick up the crazyflie and take to an area in the flightspace where you expect to fly. Take an XYZ sample by quickly rotating the Crazyflie in a left-right motion about the z-axis. Then wait for confirmation. Repeat the processes in a few key additional areas.',
                  'Sample position',
                  "Hold the Crazyflie still after rotation and wait for confirmation.\n\n"
                  "A sample will fail if the Crazyflie moves after rotation or can only see one base station.")
-    VERIFICATION = ('bslh_4.png',
+    VERIFICATION = ('step_verification.png',
                     'Verification samples are taken just like XYZ samples. If the verification sample error is high, then add XYZ samples around the verification sample to reduce the error.',
                     'Sample position',
                     "Verification samples check the accuracy of areas between XYZ sample locations.\n\n"
@@ -409,13 +407,19 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     def _update_step_highlight(self):
         """Highlight the grid column corresponding to the current step"""
         for s, frame in self._step_column_widgets().items():
-            style = "QWidget { border: 2px solid gray; border-radius: 4px; padding: 4px; } QLabel { border: none; padding: 4px; }" if s == self._current_step else ""
+            style = "QWidget { border: 2px solid gray; border-radius: 4px; padding: 4px; background: transparent; } QLabel { border: none; padding: 4px; background: transparent; }" if s == self._current_step else ""
             frame.setStyleSheet(style)
+
+    _STEP_IMAGE_SIZE = QtCore.QSize(460, 266)
 
     def _set_label_icon(self, label: QtWidgets.QLabel, icon_file_name: str):
         """Set the icon of a label widget"""
         path = cfclient.module_path + '/ui/widgets/geo_estimator_resources/' + icon_file_name
-        label.setPixmap(QtGui.QPixmap(path))
+        pixmap = QtGui.QPixmap(path)
+        if icon_file_name.startswith('step_'):
+            pixmap = pixmap.scaled(self._STEP_IMAGE_SIZE, QtCore.Qt.AspectRatioMode.IgnoreAspectRatio,
+                                   QtCore.Qt.TransformationMode.SmoothTransformation)
+        label.setPixmap(pixmap)
 
     def _update_ui_reading(self, is_reading: bool):
         """Update the UI to reflect whether a reading is in progress, that is enable/disable buttons"""
