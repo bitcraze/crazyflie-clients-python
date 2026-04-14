@@ -1,7 +1,7 @@
 ---
 title: Plotter Tab
 page_id: plotter_tab
-sort_order: 3
+sort_order: 8
 ---
 
 The plotter tab can be used to visualize data logged from the Crazyflie.
