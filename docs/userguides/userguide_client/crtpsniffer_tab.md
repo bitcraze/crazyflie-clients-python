@@ -8,7 +8,7 @@ The CRTP sniffer tab captures and displays all [CRTP (Crazyflie Real-time Transf
 packets sent to and received from the Crazyflie in real time.
 It is useful for debugging communication between the client and the drone.
 
-![cfclient log blocks](/docs/images/cfclient_crtpsniffer_enabled.png)
+![cfclient CRTP sniffer tab](/docs/images/cfclient_crtpsniffer_enabled.png)
 
 1.  Fields
     -   *ms:* Timestamp in milliseconds since the sniffer was enabled
