@@ -10,7 +10,7 @@ use the [Log Blocks tab](logblocks_tab.md) to configure and start logging.
 
 Variables are grouped by category and displayed in a sortable tree.
 
-![cfclient log blocks](/docs/images/cfclient_logtoc.png)
+![cfclient log TOC tab](/docs/images/cfclient_logtoc.png)
 
 1.  Fields
     -   *Name:* The variable or group name
