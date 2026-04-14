@@ -1,7 +1,7 @@
 ---
 title: Parameter Tab
 page_id: parameter_tab
-sort_order: 4
+sort_order: 7
 ---
 
 The Crazyflie supports parameters, variables stored in the Crazyflie

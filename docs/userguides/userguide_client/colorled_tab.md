@@ -1,7 +1,7 @@
 ---
 title: Color LED tab
 page_id: color_led_tab
-sort_order: 9
+sort_order: 4
 ---
 
 The Color LED tab lets you control the Color LED deck(s) attached to your Crazyflie. Use it to test, select colors and adjust brightness. You can control one or multiple decks (together or separately), save your favorite colors to a palette, and see real-time messages from the deck about its status.
