@@ -17,4 +17,4 @@ Controls:
 
 -   *Clear:* Removes all messages from the display.
 
-![cfclient log blocks](/docs/images/cfclient_logclient.png)
+![cfclient log client tab](/docs/images/cfclient_logclient.png)
