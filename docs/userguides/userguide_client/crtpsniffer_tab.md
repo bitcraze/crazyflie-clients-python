@@ -24,7 +24,7 @@ It is useful for debugging communication between the client and the drone.
 
 The saved file is written to the *logdata* folder in the client configuration directory
 and is always named `shark_data.csv`, overwriting any previous save.
-To find your configuration directory, click *Settings/Open config folder*.
+To find your configuration directory, click *Settings / Open config folder*.
 
 Example of saved data:
 
