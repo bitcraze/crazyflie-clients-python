@@ -57,6 +57,7 @@ from cfclient.ui.tab_toolbox import TabToolbox
 from cfclient.utils.config import Config
 from cfclient.gui import create_task
 from cflib2 import Crazyflie
+from cflib2.error import LogError, ParamError
 from cflib2.log import LogStream
 
 __author__ = "Bitcraze AB"
@@ -127,7 +128,7 @@ class ThermalMonitor:
                 logger.debug(
                     f"Started thermal logging for position {position}: {params['thermal_log']}"
                 )
-            except Exception as e:
+            except LogError as e:
                 logger.debug(
                     f"Could not start thermal logging for position {position}: {e}"
                 )
@@ -156,7 +157,7 @@ class ColorLEDDeckController:
                     f"Color LED deck at position {position} ({'Bottom' if position == 0 else 'Top'}) "
                     f"detected: {self._deck_present[position]} (param: {params['deck_param']}={deck_param})"
                 )
-            except Exception as e:
+            except ParamError as e:
                 self._deck_present[position] = False
                 logger.debug(
                     f"Color LED deck parameter not found for position {position}: {e}"
@@ -426,7 +427,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
 
             # Add the white channel back to get full-range RGB
             return (r + w, g + w, b + w)
-        except Exception as e:
+        except ParamError as e:
             logger.debug(f"Could not fetch color from position {position}: {e}")
             return None
 
