@@ -258,6 +258,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
 
         self._cf: Crazyflie | None = None
         self._connected_task = None
+        self._thermal_stream_tasks: list[asyncio.Task] = []
         self._updating_from_fetch = False  # Flag to prevent writes during color fetch
         self._throttling_state: dict[
             int, bool
@@ -282,6 +283,9 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         if self._connected_task is not None:
             self._connected_task.cancel()
             self._connected_task = None
+        for task in self._thermal_stream_tasks:
+            task.cancel()
+        self._thermal_stream_tasks.clear()
         self._cf = None
         self._deck_controller.clear_deck_state()
         self._thermal_monitor.stop_monitoring()
@@ -312,7 +316,9 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
                 self._cf, present_decks
             )
             for position, stream in streams.items():
-                create_task(self._run_thermal_stream(position, stream))
+                self._thermal_stream_tasks.append(
+                    create_task(self._run_thermal_stream(position, stream))
+                )
 
     async def _run_thermal_stream(self, position: int, stream: LogStream) -> None:
         """Read thermal log data from the stream until the Crazyflie disconnects."""
