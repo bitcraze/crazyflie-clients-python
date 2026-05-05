@@ -650,16 +650,18 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
             self.color_button10,
         ]
         for btn in color_buttons:
+            style = btn.styleSheet()
+            hex_color = style.split("background-color:")[-1].split(";")[0].strip()
+            btn.setProperty("hex_color", hex_color)
             btn.clicked.connect(self._on_color_button_clicked)
 
     def _on_color_button_clicked(self) -> None:
         if not self.groupBox_color.isEnabled():
             return
         button = self.sender()
-        style = button.styleSheet()  # type: ignore
-        if "background-color:" not in style:
+        hex_color = button.property("hex_color")
+        if not hex_color:
             return
-        hex_color = style.split("background-color:")[-1].split(";")[0].strip()
         color = QColor(hex_color)
         if color.isValid():
             h, s, v, _ = color.getHsvF()
@@ -682,6 +684,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         new_btn.setStyleSheet(
             f"QPushButton:disabled {{ background-color: #777777; }} QPushButton {{ background-color: {color_hex}; }}"
         )
+        new_btn.setProperty("hex_color", color_hex)
         new_btn.setFixedSize(50, 30)
         new_btn.clicked.connect(self._on_color_button_clicked)
         new_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
