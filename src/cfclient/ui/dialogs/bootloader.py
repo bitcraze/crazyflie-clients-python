@@ -29,6 +29,7 @@
 The bootloader dialog is used to update the Crazyflie firmware and to
 read/write the configuration block in the Crazyflie flash.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -57,20 +58,17 @@ from cflib2.bootloader import (
     parse_firmware_zip,
 )
 
-__author__ = 'Bitcraze AB'
-__all__ = ['BootloaderDialog']
+__author__ = "Bitcraze AB"
+__all__ = ["BootloaderDialog"]
 
 logger = logging.getLogger(__name__)
 
-service_dialog_class = loadUiType(
-    cfclient.module_path + "/ui/dialogs/bootloader.ui"
-)[0]
+service_dialog_class = loadUiType(cfclient.module_path + "/ui/dialogs/bootloader.ui")[0]
 
-RELEASE_URL = (
-    'https://api.github.com/repos/bitcraze/crazyflie-release/releases'
-)
+RELEASE_URL = "https://api.github.com/repos/bitcraze/crazyflie-release/releases"
 
-ICON_PATH = os.path.join(cfclient.module_path, 'ui', 'icons')
+ICON_PATH = os.path.join(cfclient.module_path, "ui", "icons")
+
 
 # Module-level cache so releases survive dialog close/reopen
 class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
@@ -92,9 +90,16 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         # Standalone link context for bootloader operations
         self._link_context = LinkContext()
 
-        # Firmware state — separate per source so tab switching doesn't mix them
-        self._release_images: list[FirmwareImage] = []
+        # Firmware state — separate per source so tab switching doesn't mix them.
+        # Releases are cached by their dropdown name so previously-downloaded
+        # ones stay ready when the user navigates back to them.
+        self._downloaded_releases: dict[str, list[FirmwareImage]] = {}
         self._file_images: list[FirmwareImage] = []
+        self._loaded_file_path: str | None = None
+        self._pending_download_name: str | None = None
+        self._releases_loading: bool = True
+        self._releases_load_failed: bool = False
+        self._download_in_progress: bool = False
         self._releases: dict[str, str] = {}
         self._platform_widget_names: dict[str, list[str]] = {}
         self._platform_filter_checkboxes: list[QtWidgets.QRadioButton] = []
@@ -109,21 +114,26 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.flashWarmButton.clicked.connect(self._flash_warm_clicked)
         self.flashColdButton.clicked.connect(self._flash_cold_clicked)
         self.sourceTab.currentChanged.connect(self._on_source_tab_changed)
-        self.uriCombo.currentTextChanged.connect(
-            lambda _: self._update_flash_buttons()
-        )
+        self.uriCombo.currentTextChanged.connect(lambda _: self._update_flash_buttons())
         self.downloadButton.clicked.connect(self._download_clicked)
+        self.firmwareDropdown.currentTextChanged.connect(
+            lambda _: self._populate_target_checkboxes()
+        )
+        self.imagePathLine.textChanged.connect(
+            lambda _: self._populate_target_checkboxes()
+        )
 
         # Progress signal bridge (callback runs in Rust thread)
         self._progress_signal.connect(self._update_progress_ui)
 
         # Release fetching / downloading
         self._release_firmwares_found.connect(self._populate_firmware_dropdown)
-        self._release_fetch_done.connect(
-            lambda: self.downloadStatus.setText("")
-        )
+        self._release_fetch_done.connect(self._on_release_fetch_done)
         self._release_fetch_failed.connect(self._on_release_fetch_failed)
         self._release_downloaded.connect(self._on_release_downloaded)
+        self.firmwareDropdown.currentTextChanged.connect(
+            lambda _: self._update_download_status()
+        )
 
         # Platform images and radio buttons
         self._set_image(self.image_1, os.path.join(ICON_PATH, "bolt.webp"))
@@ -138,9 +148,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             radio_button.toggled.connect(self._update_flash_buttons)
             self._platform_filter_checkboxes.append(radio_button)
             # Insert before the trailing spacer
-            self.filterLayout.insertWidget(
-                self.filterLayout.count() - 1, radio_button
-            )
+            self.filterLayout.insertWidget(self.filterLayout.count() - 1, radio_button)
 
         self.firmwareDropdown.setSizeAdjustPolicy(
             QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToContents
@@ -164,10 +172,8 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
         # Fetch releases in a thread (not async, to avoid event loop
         # contention when the main window is connected)
-        self.downloadStatus.setText("Loading releases...")
-        threading.Thread(
-            target=self._fetch_releases_thread, daemon=True
-        ).start()
+        self._update_download_status()
+        threading.Thread(target=self._fetch_releases_thread, daemon=True).start()
 
     def _get_scan_address(self) -> int:
         """Get the scan address from the main window or config."""
@@ -194,7 +200,8 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             image_label.setText("Missing image")
         else:
             scaled = pixmap.scaled(
-                IMAGE_SIZE, IMAGE_SIZE,
+                IMAGE_SIZE,
+                IMAGE_SIZE,
                 Qt.AspectRatioMode.KeepAspectRatio,
                 Qt.TransformationMode.SmoothTransformation,
             )
@@ -238,7 +245,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     # --- Release fetching ---
 
     def _fetch_releases_thread(self):
-        url = RELEASE_URL + '?per_page=50'
+        url = RELEASE_URL + "?per_page=50"
         while url:
             try:
                 with urlopen(url, timeout=15) as resp:
@@ -246,22 +253,19 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
                     data = json.loads(body)
                     url = self._get_next_page_url(resp)
             except (URLError, OSError, TimeoutError, json.JSONDecodeError):
-                logger.warning(
-                    "Failed to fetch firmware releases", exc_info=True
-                )
+                logger.warning("Failed to fetch firmware releases", exc_info=True)
                 self._release_fetch_failed.emit()
                 self._release_fetch_done.emit()
                 return
 
             release_list = []
             for release in data:
-                release_name = release.get('name')
+                release_name = release.get("name")
                 if release_name:
                     releases = [release_name]
-                    for download in release.get('assets', []):
+                    for download in release.get("assets", []):
                         releases.append(
-                            (download['name'],
-                             download['browser_download_url'])
+                            (download["name"], download["browser_download_url"])
                         )
                     release_list.append(releases)
 
@@ -272,23 +276,43 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
     @staticmethod
     def _get_next_page_url(resp) -> str | None:
-        link_header = resp.getheader('Link')
+        link_header = resp.getheader("Link")
         if not link_header:
             return None
-        for part in link_header.split(','):
+        for part in link_header.split(","):
             if 'rel="next"' in part:
-                url = part.split(';')[0].strip().strip('<>')
+                url = part.split(";")[0].strip().strip("<>")
                 return url
         return None
 
     def _on_release_fetch_failed(self):
-        self.downloadStatus.setText("Failed to load releases")
+        self._releases_load_failed = True
+        self._update_download_status()
+
+    def _on_release_fetch_done(self):
+        self._releases_loading = False
+        self._update_download_status()
+
+    def _update_download_status(self):
+        """Reflect the actual state of the dropdown selection in the status
+        label next to the download button."""
+        if self._download_in_progress:
+            self.downloadStatus.setText("Downloading...")
+            return
+        if self._releases_load_failed:
+            self.downloadStatus.setText("Failed to load releases")
+            return
+        if self._releases_loading:
+            self.downloadStatus.setText("Loading releases...")
+            return
+        name = self.firmwareDropdown.currentText()
+        if name and name in self._downloaded_releases:
+            self.downloadStatus.setText("✓ Downloaded")
+        else:
+            self.downloadStatus.setText("")
 
     def _populate_firmware_dropdown(self, releases):
-        self.downloadStatus.setText("Loading more releases...")
-        existing_platforms = {
-            b.text() for b in self._platform_filter_checkboxes
-        }
+        existing_platforms = {b.text() for b in self._platform_filter_checkboxes}
 
         new_platforms = set()
         for release in releases:
@@ -300,7 +324,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
                 download_name, download_link = download
                 platform = self._extract_platform(download_name)
                 if platform:
-                    widget_name = '%s - %s' % (release_name, download_name)
+                    widget_name = "%s - %s" % (release_name, download_name)
                     if platform not in self._platform_widget_names:
                         self._platform_widget_names[platform] = []
                     self._platform_widget_names[platform].append(widget_name)
@@ -331,7 +355,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
     @staticmethod
     def _extract_platform(download_name: str) -> str | None:
-        found = re.search(r'firmware-(\w+)-', download_name)
+        found = re.search(r"firmware-(\w+)-", download_name)
         if found and len(found.groups()) == 1:
             return found.group(1)
         return None
@@ -339,7 +363,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     @staticmethod
     def _download_sorter(element):
         name = element[0]
-        return ('0' + name) if 'cf2' in name else ('1' + name)
+        return ("0" + name) if "cf2" in name else ("1" + name)
 
     # --- File browsing ---
 
@@ -347,17 +371,17 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     def _browse_file(self):
         names = QtWidgets.QFileDialog.getOpenFileName(
             self,
-            'Release file to flash',
+            "Release file to flash",
             self._helper.current_folder,
             "*.zip",
         )
-        if names[0] == '':
+        if names[0] == "":
             return
 
         filename = names[0]
         self._helper.current_folder = os.path.dirname(filename)
 
-        if filename.endswith('.zip'):
+        if filename.endswith(".zip"):
             self.imagePathLine.setText(filename)
             self._load_zip_from_path(filename)
         else:
@@ -371,34 +395,43 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     def _firmware_images(self) -> list[FirmwareImage]:
         if self.sourceTab.currentWidget() == self.tabFromFile:
             return self._file_images
-        return self._release_images
+        return self._downloaded_releases.get(self.firmwareDropdown.currentText(), [])
 
     def _on_source_tab_changed(self):
         self._populate_target_checkboxes()
 
     def _load_zip_from_path(self, path: str):
         try:
-            with open(path, 'rb') as f:
+            with open(path, "rb") as f:
                 data = f.read()
             _, images = parse_firmware_zip(data)
-            self._file_images = images
-            self._populate_target_checkboxes()
-        except Exception as e:
+        except (OSError, RuntimeError) as e:
             logger.error("Failed to parse firmware zip: %s", e)
             QtWidgets.QMessageBox.critical(
                 self, "Error", f"Failed to parse firmware zip:\n{e}"
             )
+            return
+        self._file_images = images
+        self._loaded_file_path = path
+        self._populate_target_checkboxes()
 
-    def _load_zip_from_data(self, data: bytes):
-        try:
-            _, images = parse_firmware_zip(data)
-            self._release_images = images
-            self._populate_target_checkboxes()
-        except Exception as e:
-            logger.error("Failed to parse firmware zip: %s", e)
-            QtWidgets.QMessageBox.critical(
-                self, "Error", f"Failed to parse firmware zip:\n{e}"
+    def _is_firmware_ready(self) -> bool:
+        """Return True only if the firmware shown in the active tab matches
+        what's actually loaded — i.e. the dropdown selection has been
+        downloaded, or the file path has been loaded."""
+        if self.sourceTab.currentWidget() == self.tabFromFile:
+            return (
+                self._loaded_file_path is not None
+                and self.imagePathLine.text() == self._loaded_file_path
+                and bool(self._file_images)
             )
+        platform_selected = any(b.isChecked() for b in self._platform_filter_checkboxes)
+        name = self.firmwareDropdown.currentText()
+        return (
+            platform_selected
+            and bool(name)
+            and bool(self._downloaded_releases.get(name))
+        )
 
     def _populate_target_checkboxes(self):
         # Clear existing checkboxes
@@ -408,6 +441,18 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self._clear_target_checkboxes(
             self.recoveryTargetsLayout, self._recovery_target_checkboxes
         )
+
+        if not self._is_firmware_ready():
+            self.flashTargetsPlaceholder.setText(
+                "Select firmware to see available targets"
+            )
+            self.flashTargetsPlaceholder.show()
+            self.recoveryTargetsPlaceholder.setText(
+                "Select firmware to see available targets"
+            )
+            self.recoveryTargetsPlaceholder.show()
+            self._update_flash_buttons()
+            return
 
         # Hide placeholder labels
         self.flashTargetsPlaceholder.hide()
@@ -455,8 +500,10 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         requested = self.firmwareDropdown.currentText()
         if requested not in self._releases:
             return
+        self._pending_download_name = requested
+        self._download_in_progress = True
         self.downloadButton.setEnabled(False)
-        self.downloadStatus.setText("Downloading...")
+        self._update_download_status()
         threading.Thread(
             target=self._download_release_thread,
             args=(self._releases[requested],),
@@ -473,8 +520,24 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
 
     def _on_release_downloaded(self, data: bytes):
         self.downloadButton.setEnabled(True)
-        self.downloadStatus.setText("Downloaded")
-        self._load_zip_from_data(data)
+        self._download_in_progress = False
+        name = self._pending_download_name
+        self._pending_download_name = None
+        if name is None:
+            self._update_download_status()
+            return
+        try:
+            _, images = parse_firmware_zip(data)
+        except RuntimeError as e:
+            logger.error("Failed to parse firmware zip: %s", e)
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"Failed to parse firmware zip:\n{e}"
+            )
+            self._update_download_status()
+            return
+        self._downloaded_releases[name] = images
+        self._update_download_status()
+        self._populate_target_checkboxes()
 
     # --- Flash button state ---
 
@@ -482,9 +545,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         has_uri = bool(self.uriCombo.currentText().strip())
         is_flashing = self._flash_task is not None
 
-        has_flash_targets = any(
-            cb.isChecked() for cb in self._flash_target_checkboxes
-        )
+        has_flash_targets = any(cb.isChecked() for cb in self._flash_target_checkboxes)
         has_recovery_targets = any(
             cb.isChecked() for cb in self._recovery_target_checkboxes
         )
@@ -492,16 +553,10 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self.flashWarmButton.setEnabled(
             has_uri and has_flash_targets and not is_flashing
         )
-        self.flashColdButton.setEnabled(
-            has_recovery_targets and not is_flashing
-        )
+        self.flashColdButton.setEnabled(has_recovery_targets and not is_flashing)
 
     def _get_selected_keys(self, checkbox_list) -> list[str]:
-        return [
-            cb.property("target_key")
-            for cb in checkbox_list
-            if cb.isChecked()
-        ]
+        return [cb.property("target_key") for cb in checkbox_list if cb.isChecked()]
 
     # --- Flash actions ---
 
@@ -514,9 +569,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         self._start_flash(BootMode.warm(uri), uri, images)
 
     def _flash_cold_clicked(self):
-        selected_keys = self._get_selected_keys(
-            self._recovery_target_checkboxes
-        )
+        selected_keys = self._get_selected_keys(self._recovery_target_checkboxes)
         images = filter_images(self._firmware_images, selected_keys)
         self._start_flash(BootMode.cold(), None, images)
 
@@ -529,9 +582,7 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
         if self._flash_task is not None or not images:
             return
 
-        self._flash_task = create_task(
-            self._do_flash(boot_mode, uri, images)
-        )
+        self._flash_task = create_task(self._do_flash(boot_mode, uri, images))
         self._set_flashing_ui(True)
 
     async def _do_flash(
@@ -589,23 +640,17 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             self.progressBar.setValue(pct)
         elif event_type == "flash_complete":
             target = event.get("target", "")
-            self.stageLabel.setText(
-                f"Status: <b>Flash complete for {target}</b>"
-            )
+            self.stageLabel.setText(f"Status: <b>Flash complete for {target}</b>")
             self.progressBar.setValue(100)
         elif event_type == "resetting_to_firmware":
-            self.stageLabel.setText(
-                "Status: <b>Resetting to firmware...</b>"
-            )
+            self.stageLabel.setText("Status: <b>Resetting to firmware...</b>")
         elif event_type == "waiting_for_reboot":
             secs = event.get("estimated_seconds", 0)
             self.stageLabel.setText(
                 f"Status: <b>Waiting for reboot (~{secs:.0f}s)...</b>"
             )
         elif event_type == "connecting_for_deck_phase":
-            self.stageLabel.setText(
-                "Status: <b>Reconnecting for deck updates...</b>"
-            )
+            self.stageLabel.setText("Status: <b>Reconnecting for deck updates...</b>")
         elif event_type == "discovering_decks":
             found = event.get("found", [])
             self.stageLabel.setText(
@@ -620,13 +665,9 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
             self.progressBar.setValue(pct)
         elif event_type == "deck_flash_complete":
             name = event.get("name", "")
-            self.stageLabel.setText(
-                f"Status: <b>Deck {name} flash complete</b>"
-            )
+            self.stageLabel.setText(f"Status: <b>Deck {name} flash complete</b>")
         elif event_type == "complete":
-            self.stageLabel.setText(
-                "Status: <b>Flash complete!</b>"
-            )
+            self.stageLabel.setText("Status: <b>Flash complete!</b>")
             self.progressBar.setValue(100)
 
     # --- Flash completion ---
@@ -634,11 +675,9 @@ class BootloaderDialog(QtWidgets.QWidget, service_dialog_class):
     def _on_flash_success(self):
         self.stageLabel.setText("Status: <b>Flash complete!</b>")
         self.progressBar.setValue(100)
-        self.downloadStatus.setText("")
 
     def _on_flash_error(self, error: str):
         self.stageLabel.setText(f"Status: <b>Flash failed: {error}</b>")
-        self.downloadStatus.setText("")
 
     def _set_flashing_ui(self, flashing: bool):
         self.flashWarmButton.setEnabled(not flashing)
