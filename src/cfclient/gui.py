@@ -79,7 +79,7 @@ async def _wrap_disconnected(coro: Coroutine[object, object, object]) -> None:
     try:
         await coro
     except DisconnectedError:
-        logger.debug("Task interrupted by disconnect")
+        logger.debug("Task interrupted by disconnect: %r", coro)
 
 
 def create_task(coro: Coroutine[object, object, object]) -> asyncio.Task[object]:
