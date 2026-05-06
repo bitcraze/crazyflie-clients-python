@@ -86,7 +86,8 @@ def create_task(coro: Coroutine[object, object, object]) -> asyncio.Task[object]
     """Schedule a coroutine as a task with automatic exception logging.
 
     Use this instead of asyncio.ensure_future() to ensure exceptions
-    are logged immediately rather than silently swallowed.
+    are logged immediately rather than silently swallowed. DisconnectedError
+    is treated as a normal shutdown case and is logged at debug level only.
     """
     logger.debug(f"create_task: {coro}")
     task = asyncio.ensure_future(_wrap_disconnected(coro))
