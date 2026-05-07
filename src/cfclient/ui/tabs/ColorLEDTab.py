@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from collections.abc import Iterator
 from typing import Any
 
@@ -651,7 +652,10 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         ]
         for btn in color_buttons:
             style = btn.styleSheet()
-            hex_color = style.split("background-color:")[-1].split(";")[0].strip()
+            match = re.search(
+                r"QPushButton\s*\{[^}]*background-color:\s*([^;}\s]+)", style
+            )
+            hex_color = match.group(1) if match else ""
             btn.setProperty("hex_color", hex_color)
             btn.clicked.connect(self._on_color_button_clicked)
 
