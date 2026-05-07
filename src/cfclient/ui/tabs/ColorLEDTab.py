@@ -328,7 +328,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
                 self._process_thermal_data(log_data.data)
         except asyncio.CancelledError:
             raise
-        except Exception as e:
+        except LogError as e:
             logger.debug(f"Thermal stream for position {position} ended: {e}")
 
     def _process_thermal_data(self, data: dict[str, Any]) -> None:
