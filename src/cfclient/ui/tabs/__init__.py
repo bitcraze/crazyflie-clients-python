@@ -42,12 +42,13 @@ from .LEDRingTab import LEDRingTab
 # from .LogBlockTab import LogBlockTab
 # from .LogTab import LogTab
 from .ParamTab import ParamTab
+
 # from .PlotTab import PlotTab
 # from .locopositioning_tab import LocoPositioningTab
 # from .LogClientTab import LogClientTab
 # from .lighthouse_tab import LighthouseTab
 # from .TuningTab import TuningTab
-# from .ColorLEDTab import ColorLEDTab
+from .ColorLEDTab import ColorLEDTab
 
 __author__ = "Bitcraze AB"
 __all__ = []
@@ -58,7 +59,7 @@ available = [
     FlightTab,
     # GpsTab,
     LEDRingTab,
-    # ColorLEDTab,
+    ColorLEDTab,
     # LogBlockTab,
     # LogTab,
     ParamTab,
