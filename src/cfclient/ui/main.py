@@ -592,15 +592,22 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     async def _stream_battery(self, cf):
         log = cf.log()
         block = await log.create_block()
-        await block.add_variable("pm.vbat")
-        await block.add_variable("pm.state")
+
+        available = log.names()
+        for name in ("pm.vbat", "pm.state"):
+            if name in available:
+                await block.add_variable(name)
+            else:
+                logger.warning("Log variable %s missing from TOC, skipping", name)
+
         stream = await block.start(1000)
         try:
             while True:
                 data = await stream.next()
-                self._battery_signal.emit(
-                    data.data["pm.vbat"], int(data.data["pm.state"])
-                )
+                if "pm.vbat" in data.data and "pm.state" in data.data:
+                    self._battery_signal.emit(
+                        data.data["pm.vbat"], int(data.data["pm.state"])
+                    )
         finally:
             try:
                 await asyncio.shield(stream.stop())
