@@ -345,19 +345,25 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     def _log_data_received(self, timestamp, data):
         if self.isVisible() and self._isConnected:
-            self.actualM1.setValue(data[self.LOG_NAME_MOTOR_1])
-            self.actualM2.setValue(data[self.LOG_NAME_MOTOR_2])
-            self.actualM3.setValue(data[self.LOG_NAME_MOTOR_3])
-            self.actualM4.setValue(data[self.LOG_NAME_MOTOR_4])
+            if self.LOG_NAME_MOTOR_1 in data:
+                self.actualM1.setValue(data[self.LOG_NAME_MOTOR_1])
+            if self.LOG_NAME_MOTOR_2 in data:
+                self.actualM2.setValue(data[self.LOG_NAME_MOTOR_2])
+            if self.LOG_NAME_MOTOR_3 in data:
+                self.actualM3.setValue(data[self.LOG_NAME_MOTOR_3])
+            if self.LOG_NAME_MOTOR_4 in data:
+                self.actualM4.setValue(data[self.LOG_NAME_MOTOR_4])
 
-            self.estimateThrust.setText(
-                "%.2f%%" % self.thrustToPercentage(data[self.LOG_NAME_THRUST])
-            )
+            if self.LOG_NAME_THRUST in data:
+                self.estimateThrust.setText(
+                    "%.2f%%" % self.thrustToPercentage(data[self.LOG_NAME_THRUST])
+                )
 
-            if data[self.LOG_NAME_CAN_FLY] != self._can_fly_deprecated:
-                self._can_fly_deprecated = data[self.LOG_NAME_CAN_FLY]
-                if self._cf is not None:
-                    create_task(self._update_flight_commander(self._cf))
+            if self.LOG_NAME_CAN_FLY in data:
+                if data[self.LOG_NAME_CAN_FLY] != self._can_fly_deprecated:
+                    self._can_fly_deprecated = data[self.LOG_NAME_CAN_FLY]
+                    if self._cf is not None:
+                        create_task(self._update_flight_commander(self._cf))
 
             if self.LOG_NAME_SUPERVISOR_INFO in data:
                 self._supervisor_info_bitfield = data[self.LOG_NAME_SUPERVISOR_INFO]
@@ -534,15 +540,21 @@ class FlightTab(TabToolbox, flight_tab_class):
     async def _stream_motors(self, cf):
         log = cf.log()
         block = await log.create_block()
-        await block.add_variable(self.LOG_NAME_THRUST)
-        await block.add_variable(self.LOG_NAME_MOTOR_1)
-        await block.add_variable(self.LOG_NAME_MOTOR_2)
-        await block.add_variable(self.LOG_NAME_MOTOR_3)
-        await block.add_variable(self.LOG_NAME_MOTOR_4)
-        await block.add_variable(self.LOG_NAME_CAN_FLY)
 
-        if self.LOG_NAME_SUPERVISOR_INFO in log.names():
-            await block.add_variable(self.LOG_NAME_SUPERVISOR_INFO)
+        available = log.names()
+        for name in (
+            self.LOG_NAME_THRUST,
+            self.LOG_NAME_MOTOR_1,
+            self.LOG_NAME_MOTOR_2,
+            self.LOG_NAME_MOTOR_3,
+            self.LOG_NAME_MOTOR_4,
+            self.LOG_NAME_CAN_FLY,
+            self.LOG_NAME_SUPERVISOR_INFO,
+        ):
+            if name in available:
+                await block.add_variable(name)
+            else:
+                logger.warning("Log variable %s missing from TOC, skipping", name)
 
         period_ms = Config().get("ui_update_period")
         stream = await block.start(period_ms)

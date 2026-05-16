@@ -96,24 +96,32 @@ class PoseLogger:
     async def _stream_loop(self, cf):
         log = cf.log()
         block = await log.create_block()
-        await block.add_variable(self.LOG_NAME_ESTIMATE_X)
-        await block.add_variable(self.LOG_NAME_ESTIMATE_Y)
-        await block.add_variable(self.LOG_NAME_ESTIMATE_Z)
-        await block.add_variable(self.LOG_NAME_ESTIMATE_ROLL)
-        await block.add_variable(self.LOG_NAME_ESTIMATE_PITCH)
-        await block.add_variable(self.LOG_NAME_ESTIMATE_YAW)
+
+        available = log.names()
+        for name in (
+            self.LOG_NAME_ESTIMATE_X,
+            self.LOG_NAME_ESTIMATE_Y,
+            self.LOG_NAME_ESTIMATE_Z,
+            self.LOG_NAME_ESTIMATE_ROLL,
+            self.LOG_NAME_ESTIMATE_PITCH,
+            self.LOG_NAME_ESTIMATE_YAW,
+        ):
+            if name in available:
+                await block.add_variable(name)
+            else:
+                logger.warning("Log variable %s missing from TOC, skipping", name)
 
         stream = await block.start(16)  # 16ms period
         try:
             while True:
                 data = await stream.next()
                 self.pose = (
-                    data.data[self.LOG_NAME_ESTIMATE_X],
-                    data.data[self.LOG_NAME_ESTIMATE_Y],
-                    data.data[self.LOG_NAME_ESTIMATE_Z],
-                    data.data[self.LOG_NAME_ESTIMATE_ROLL],
-                    data.data[self.LOG_NAME_ESTIMATE_PITCH],
-                    data.data[self.LOG_NAME_ESTIMATE_YAW],
+                    data.data.get(self.LOG_NAME_ESTIMATE_X, 0.0),
+                    data.data.get(self.LOG_NAME_ESTIMATE_Y, 0.0),
+                    data.data.get(self.LOG_NAME_ESTIMATE_Z, 0.0),
+                    data.data.get(self.LOG_NAME_ESTIMATE_ROLL, 0.0),
+                    data.data.get(self.LOG_NAME_ESTIMATE_PITCH, 0.0),
+                    data.data.get(self.LOG_NAME_ESTIMATE_YAW, 0.0),
                 )
                 self.data_received_cb.call(self, self.pose)
         finally:
