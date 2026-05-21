@@ -564,8 +564,6 @@ class FlightTab(TabToolbox, flight_tab_class):
             while True:
                 data = await stream.next()
                 self._log_data_received(data.timestamp, data.data)
-        except DisconnectedError:
-            pass
         finally:
             if stream is not None:
                 try:

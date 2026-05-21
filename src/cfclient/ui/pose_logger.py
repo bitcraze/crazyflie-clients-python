@@ -120,8 +120,6 @@ class PoseLogger:
                     data.data[self.LOG_NAME_ESTIMATE_YAW],
                 )
                 self.data_received_cb.call(self, self.pose)
-        except DisconnectedError:
-            pass
         finally:
             if stream is not None:
                 try:
