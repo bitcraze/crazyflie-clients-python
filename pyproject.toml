@@ -37,7 +37,7 @@ classifiers = [
 requires-python = ">= 3.11"
 
 dependencies = [
-        "cflib2 @ git+https://github.com/bitcraze/cflib2@329bd2cb6b21ccecce0396926887743c148a6bd6",
+        "cflib2 @ git+https://github.com/bitcraze/cflib2@60addf82626c53b0fa458a7ecae9cd149cf63120",
         "setuptools",
         "appdirs~=1.4.0",
         "pyzmq~=26.0",
