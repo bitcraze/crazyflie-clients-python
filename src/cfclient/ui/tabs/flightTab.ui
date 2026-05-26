@@ -443,6 +443,9 @@
               <property name="sizeConstraint">
                <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
               </property>
+              <property name="leftMargin">
+               <number>12</number>
+              </property>
               <property name="horizontalSpacing">
                <number>6</number>
               </property>
@@ -712,13 +715,19 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="14" rowspan="6">
+              <item row="0" column="14" rowspan="8">
                <widget class="QGroupBox" name="commanderBox">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>270</width>
+                  <height>210</height>
+                 </size>
                 </property>
                 <property name="title">
                  <string>Command Based Flight Control</string>
@@ -731,22 +740,28 @@
                 </property>
                 <layout class="QGridLayout" name="horizontalLayout">
                  <property name="leftMargin">
-                  <number>2</number>
+                  <number>8</number>
                  </property>
                  <property name="topMargin">
-                  <number>2</number>
+                  <number>8</number>
                  </property>
                  <property name="rightMargin">
-                  <number>2</number>
+                  <number>8</number>
                  </property>
                  <property name="bottomMargin">
-                  <number>2</number>
+                  <number>8</number>
                  </property>
                  <property name="spacing">
-                  <number>5</number>
+                  <number>8</number>
                  </property>
                  <item row="0" column="0">
                   <widget class="QPushButton" name="commanderTakeOffButton">
+                   <property name="minimumSize">
+                    <size>
+                     <width>82</width>
+                     <height>34</height>
+                    </size>
+                   </property>
                    <property name="text">
                     <string>Take off</string>
                    </property>
@@ -754,6 +769,12 @@
                  </item>
                  <item row="1" column="0">
                   <widget class="QPushButton" name="commanderLandButton">
+                   <property name="minimumSize">
+                    <size>
+                     <width>82</width>
+                     <height>34</height>
+                    </size>
+                   </property>
                    <property name="text">
                     <string>Land</string>
                    </property>
@@ -777,7 +798,7 @@
                     <number>0</number>
                    </property>
                    <property name="spacing">
-                    <number>0</number>
+                    <number>2</number>
                    </property>
                    <item row="1" column="0">
                     <widget class="QPushButton" name="commanderLeftButton">
@@ -787,10 +808,16 @@
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>42</width>
+                       <height>42</height>
+                      </size>
+                     </property>
                      <property name="maximumSize">
                       <size>
-                       <width>30</width>
-                       <height>30</height>
+                       <width>42</width>
+                       <height>42</height>
                       </size>
                      </property>
                      <property name="text">
@@ -806,10 +833,16 @@
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>42</width>
+                       <height>42</height>
+                      </size>
+                     </property>
                      <property name="maximumSize">
                       <size>
-                       <width>30</width>
-                       <height>30</height>
+                       <width>42</width>
+                       <height>42</height>
                       </size>
                      </property>
                      <property name="text">
@@ -825,10 +858,16 @@
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>42</width>
+                       <height>42</height>
+                      </size>
+                     </property>
                      <property name="maximumSize">
                       <size>
-                       <width>30</width>
-                       <height>30</height>
+                       <width>42</width>
+                       <height>42</height>
                       </size>
                      </property>
                      <property name="text">
@@ -844,10 +883,16 @@
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>42</width>
+                       <height>42</height>
+                      </size>
+                     </property>
                      <property name="maximumSize">
                       <size>
-                       <width>30</width>
-                       <height>30</height>
+                       <width>42</width>
+                       <height>42</height>
                       </size>
                      </property>
                      <property name="text">
@@ -865,6 +910,12 @@
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>64</width>
+                     <height>34</height>
+                    </size>
+                   </property>
                    <property name="text">
                     <string>Up</string>
                    </property>
@@ -877,6 +928,12 @@
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>64</width>
+                     <height>34</height>
+                    </size>
                    </property>
                    <property name="text">
                     <string>Down</string>

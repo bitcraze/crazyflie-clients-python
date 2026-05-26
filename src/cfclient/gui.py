@@ -170,7 +170,9 @@ def main():
     app.setStyle("Fusion")
     from cfclient.utils.ui import UiUtils
 
-    app.setWindowIcon(QIcon(cfclient.module_path + "/ui/icons/icon-256.png"))
+    icon_name = "app-icon-macos.png" if sys.platform == 'darwin' else "icon-256.png"
+    icon_path = os.path.join(cfclient.module_path, "ui", "icons", icon_name)
+    app.setWindowIcon(QIcon(icon_path))
     app.setApplicationName("Crazyflie client")
     # Make sure the right icon is set in Windows 7+ taskbar
     if os.name == 'nt':
