@@ -14,6 +14,21 @@
    <string>Form</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <widget class="QSplitter" name="splitter_2">
      <property name="orientation">
@@ -34,7 +49,7 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>160</width>
+           <width>300</width>
            <height>0</height>
           </size>
          </property>
@@ -177,7 +192,7 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>160</width>
+           <width>300</width>
            <height>0</height>
           </size>
          </property>
@@ -725,8 +740,8 @@
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>270</width>
-                  <height>210</height>
+                  <width>300</width>
+                  <height>250</height>
                  </size>
                 </property>
                 <property name="title">
