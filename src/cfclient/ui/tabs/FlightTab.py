@@ -202,8 +202,10 @@ class FlightTab(TabToolbox, flight_tab_class):
         self.logAltHold = None
 
         self.ai = AttitudeIndicator()
+        self.ai.setMinimumSize(280, 280)
+        self.ai.setMaximumSize(580, 580)
         self.verticalLayout_4.addWidget(self.ai)
-        self.splitter.setSizes([1000, 1])
+        self.splitter.setSizes([740, 260])
 
         self.targetCalPitch.setValue(Config().get("trim_pitch"))
         self.targetCalRoll.setValue(Config().get("trim_roll"))

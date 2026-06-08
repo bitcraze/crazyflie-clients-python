@@ -18,14 +18,38 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item row="0" column="0">
      <layout class="QVBoxLayout" name="verticalLayout_2">
+      <property name="spacing">
+       <number>0</number>
+      </property>
       <item>
        <layout class="QGridLayout" name="gridLayout_2">
+        <property name="horizontalSpacing">
+         <number>8</number>
+        </property>
+        <property name="verticalSpacing">
+         <number>0</number>
+        </property>
         <item row="0" column="6">
          <widget class="QLabel" name="batteryLabel">
           <property name="text">
            <string>Battery:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -34,7 +58,13 @@
           <property name="minimumSize">
            <size>
             <width>50</width>
-            <height>0</height>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>32</height>
            </size>
           </property>
           <property name="text">
@@ -47,13 +77,13 @@
           <property name="minimumSize">
            <size>
             <width>30</width>
-            <height>0</height>
+            <height>32</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>100</width>
-            <height>16777215</height>
+            <height>32</height>
            </size>
           </property>
           <property name="maximum">
@@ -81,7 +111,13 @@
           <property name="minimumSize">
            <size>
             <width>130</width>
-            <height>0</height>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>32</height>
            </size>
           </property>
           <property name="text">
@@ -94,6 +130,9 @@
           <property name="text">
            <string> volts </string>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
          </widget>
         </item>
         <item row="0" column="1">
@@ -101,7 +140,13 @@
           <property name="minimumSize">
            <size>
             <width>80</width>
-            <height>0</height>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>32</height>
            </size>
           </property>
           <property name="toolTip">
@@ -117,13 +162,13 @@
           <property name="minimumSize">
            <size>
             <width>30</width>
-            <height>0</height>
+            <height>32</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>100</width>
-            <height>16777215</height>
+            <height>32</height>
            </size>
           </property>
           <property name="minimum">
@@ -160,13 +205,13 @@
           <property name="minimumSize">
            <size>
             <width>160</width>
-            <height>0</height>
+            <height>32</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>250</width>
-            <height>16777215</height>
+            <height>32</height>
            </size>
           </property>
           <property name="editable">
@@ -188,13 +233,13 @@
           <property name="minimumSize">
            <size>
             <width>60</width>
-            <height>30</height>
+            <height>32</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>60</width>
-            <height>40</height>
+            <height>32</height>
            </size>
           </property>
           <property name="alignment">
@@ -209,6 +254,9 @@
          <widget class="QLabel" name="linkQualityLabel">
           <property name="text">
            <string>Link Quality:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -261,7 +309,13 @@
            <property name="minimumSize">
             <size>
              <width>158</width>
-             <height>0</height>
+             <height>32</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>32</height>
             </size>
            </property>
           </widget>

@@ -30,9 +30,13 @@ Attitude indicator widget.
 """
 
 import sys
+import math
 
 from PyQt6 import QtGui
 from PyQt6 import QtWidgets
+from PyQt6.QtCore import QPoint
+from PyQt6.QtCore import QPointF
+from PyQt6.QtCore import QRectF
 from PyQt6.QtCore import Qt
 
 __author__ = 'Bitcraze AB'
@@ -91,102 +95,103 @@ class AttitudeIndicator(QtWidgets.QWidget):
         size = self.size()
         w = size.width()
         h = size.height()
-
-        qp.translate(w / 2, h / 2)
-        qp.rotate(self.roll)
-        qp.translate(0, (self.pitch * h) / 50)
-        qp.translate(-w / 2, -h / 2)
         qp.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
 
-        font = QtGui.QFont('Serif', 7, QtGui.QFont.Weight.Light)
-        qp.setFont(font)
+        diameter = max(24, min(w, h) - 18)
+        radius = diameter / 2
+        cx = w / 2
+        cy = h / 2
+        rect = QRectF(cx - radius, cy - radius, diameter, diameter)
 
-        # Draw the blue
-        qp.setPen(QtGui.QColor(0, 61, 144))
-        qp.setBrush(QtGui.QColor(0, 61, 144))
-        qp.drawRect(-w, int(h / 2), 3 * w, -3 * h)
+        qp.setPen(Qt.PenStyle.NoPen)
+        qp.setBrush(QtGui.QColor('#eef1f5'))
+        qp.drawEllipse(QRectF(rect).adjusted(-8, -8, 8, 8))
+        qp.setPen(QtGui.QPen(QtGui.QColor('#c8cdd3'), 1))
+        qp.setBrush(Qt.BrushStyle.NoBrush)
+        qp.drawEllipse(QRectF(rect).adjusted(-4, -4, 4, 4))
 
-        # Draw the marron
-        qp.setPen(QtGui.QColor(59, 41, 39))
-        qp.setBrush(QtGui.QColor(59, 41, 39))
-        qp.drawRect(-w, int(h / 2), 3 * w, 3 * h)
+        clip_path = QtGui.QPainterPath()
+        clip_path.addEllipse(rect)
 
-        pen = QtGui.QPen(QtGui.QColor(255, 255, 255), 1.5, Qt.PenStyle.SolidLine)
-        qp.setPen(pen)
-        qp.drawLine(-w, int(h / 2), 3 * w, int(h / 2))
+        qp.save()
+        qp.setClipPath(clip_path)
+        qp.translate(cx, cy)
+        qp.rotate(self.roll)
+        qp.translate(0, self.pitch * radius / 45)
 
-        # Drawing pitch lines
-        for ofset in [-180, 0, 180]:
-            for i in range(-900, 900, 25):
-                pos = int((((i / 10.0) + 25 + ofset) * h / 50.0))
-                if i % 100 == 0:
-                    length = 0.35 * w
-                    if i != 0:
-                        if ofset == 0:
-                            qp.drawText(int((w / 2) + (length / 2) + (w * 0.06)),
-                                        pos, "{}".format(-i / 10))
-                            qp.drawText(int((w / 2) - (length / 2) - (w * 0.08)),
-                                        pos, "{}".format(-i / 10))
-                        else:
-                            qp.drawText(int((w / 2) + (length / 2) + (w * 0.06)),
-                                        pos, "{}".format(i / 10))
-                            qp.drawText(int((w / 2) - (length / 2) - (w * 0.08)),
-                                        pos, "{}".format(i / 10))
-                elif i % 50 == 0:
-                    length = 0.2 * w
-                else:
-                    length = 0.1 * w
+        sky = QtGui.QLinearGradient(QPointF(0, -radius), QPointF(0, 0))
+        sky.setColorAt(0, QtGui.QColor('#4a90d9'))
+        sky.setColorAt(1, QtGui.QColor('#a8cef0'))
+        ground = QtGui.QLinearGradient(QPointF(0, 0), QPointF(0, radius))
+        ground.setColorAt(0, QtGui.QColor('#8b6d3f'))
+        ground.setColorAt(1, QtGui.QColor('#5c4427'))
 
-                qp.drawLine(int((w / 2) - (length / 2)), pos,
-                            int((w / 2) + (length / 2)), pos)
+        span = radius * 2.6
+        qp.setPen(Qt.PenStyle.NoPen)
+        qp.setBrush(sky)
+        qp.drawRect(QRectF(-span, -span, span * 2, span))
+        qp.setBrush(ground)
+        qp.drawRect(QRectF(-span, 0, span * 2, span))
 
-        qp.setWorldMatrixEnabled(False)
+        qp.setPen(QtGui.QPen(QtGui.QColor(255, 255, 255, 210), 1.4))
+        qp.drawLine(int(-span), 0, int(span), 0)
 
-        pen = QtGui.QPen(QtGui.QColor(0, 0, 0), 2, Qt.PenStyle.SolidLine)
-        qp.setBrush(QtGui.QColor(0, 0, 0))
-        qp.setPen(pen)
-        qp.drawLine(0, int(h / 2), w, int(h / 2))
+        ladder_font = QtGui.QFont()
+        ladder_font.setPointSize(int(max(7, radius / 17)))
+        qp.setFont(ladder_font)
+        for pitch_mark in range(-40, 45, 5):
+            if pitch_mark == 0:
+                continue
+            y = -pitch_mark * radius / 45
+            length = radius * (0.42 if pitch_mark % 10 == 0 else 0.22)
+            qp.setPen(QtGui.QPen(QtGui.QColor(255, 255, 255, 185), 1))
+            qp.drawLine(int(-length / 2), int(y), int(length / 2), int(y))
+            if pitch_mark % 10 == 0:
+                label = str(abs(pitch_mark))
+                qp.drawText(int(length / 2 + 8), int(y + 4), label)
+                qp.drawText(int(-length / 2 - 22), int(y + 4), label)
+        qp.restore()
 
-        # Draw Hover vs Target
+        qp.setPen(QtGui.QPen(QtGui.QColor('#c8cdd3'), 1.6))
+        qp.setBrush(Qt.BrushStyle.NoBrush)
+        qp.drawEllipse(rect)
 
-        qp.setWorldMatrixEnabled(False)
+        qp.setPen(QtGui.QPen(QtGui.QColor('#6b7280'), 1))
+        tick_font = QtGui.QFont()
+        tick_font.setPointSize(int(max(7, radius / 15)))
+        tick_font.setWeight(QtGui.QFont.Weight.DemiBold)
+        qp.setFont(tick_font)
+        for angle, label in [(-90, 'W'), (-45, ''), (0, 'N'), (45, ''), (90, 'E'),
+                             (180, 'S')]:
+            rad = math.radians(angle)
+            sx = cx + radius * 0.94 * math.sin(rad)
+            sy = cy - radius * 0.94 * math.cos(rad)
+            ex = cx + radius * 1.02 * math.sin(rad)
+            ey = cy - radius * 1.02 * math.cos(rad)
+            qp.drawLine(int(sx), int(sy), int(ex), int(ey))
+            if label:
+                tx = cx + radius * 0.84 * math.sin(rad)
+                ty = cy - radius * 0.84 * math.cos(rad)
+                qp.drawText(int(tx - 5), int(ty + 4), label)
 
-        pen = QtGui.QPen(QtGui.QColor(255, 255, 255), 2, Qt.PenStyle.SolidLine)
-        qp.setBrush(QtGui.QColor(255, 255, 255))
-        qp.setPen(pen)
-        fh = int(max(7, h / 50))
-        font = QtGui.QFont('Sans', fh, QtGui.QFont.Weight.Light)
-        qp.setFont(font)
-        qp.resetTransform()
+        qp.setPen(Qt.PenStyle.NoPen)
+        qp.setBrush(QtGui.QColor('#1c2024'))
+        marker = QtGui.QPolygon([
+            QPoint(int(cx), int(cy - radius - 2)),
+            QPoint(int(cx - 5), int(cy - radius - 12)),
+            QPoint(int(cx + 5), int(cy - radius - 12)),
+        ])
+        qp.drawPolygon(marker)
 
-        qp.translate(0, h / 2)
-        if not self.hover:
-            # height
-            qp.drawText(w - fh * 10, int(fh / 2), str(round(self.hoverHeight, 2)))
+        qp.setPen(QtGui.QPen(QtGui.QColor('#f59e0b'), 2.4, Qt.PenStyle.SolidLine,
+                             Qt.PenCapStyle.RoundCap))
+        wing = radius * 0.36
+        gap = radius * 0.08
+        qp.drawLine(int(cx - wing), int(cy), int(cx - gap), int(cy))
+        qp.drawLine(int(cx + gap), int(cy), int(cx + wing), int(cy))
+        qp.setBrush(QtGui.QColor('#f59e0b'))
+        qp.drawEllipse(QRectF(cx - 4, cy - 4, 8, 8))
 
-        if self.hover:
-            # target height (center)
-            qp.drawText(
-                w - fh * 10, int(fh / 2), str(round(self.hoverTargetHeight, 2)))
-            diff = round(self.hoverHeight - self.hoverTargetHeight, 2)
-            pos_y = -h / 6 * diff
-
-            # cap to +- 2.8m
-            if diff < -2.8:
-                pos_y = -h / 6 * -2.8
-            elif diff > 2.8:
-                pos_y = -h / 6 * 2.8
-            else:
-                pos_y = -h / 6 * diff
-
-            # difference from target (moves up and down +- 2.8m)
-            qp.drawText(int(w - fh * 3.8), int(pos_y + fh / 2), str(diff))
-            # vertical line
-            qp.drawLine(int(w - fh * 4.5), 0, int(w - fh * 4.5), int(pos_y))
-            # left horizontal line
-            qp.drawLine(int(w - fh * 4.7), 0, int(w - fh * 4.5), 0)
-            # right horizontal line
-            qp.drawLine(int(w - fh * 4.2), int(pos_y), int(w - fh * 4.5), int(pos_y))
 
 
 if __name__ == "__main__":
