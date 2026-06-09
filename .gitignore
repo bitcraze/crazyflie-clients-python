@@ -35,3 +35,6 @@ uv.lock
 # Python venv
 venv/
 .venv/
+
+# Local Crazyflie flight data
+flight_logs/*.csv

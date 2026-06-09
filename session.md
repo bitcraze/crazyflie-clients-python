@@ -906,3 +906,220 @@ Recommended next implementation if hold-XY remains inconsistent:
   drone is airborne
 - optionally add a manual `f` key to start figure-8 after a stable hold
 - keep automatic height-based activation as a fallback
+
+## 2026-05-21 Stop Point: Mocap-Assisted Low-Level Hold Not Working
+
+The recent work focused on manual-thrust flight with mocap-assisted X/Y hold,
+using `mocap_vertical_thrust_mapper.py` as the active low-level control script.
+The user ultimately reported that this approach is not working and asked to stop
+and update the notes/handoff.
+
+### What Was Tried
+
+- Continued using low-level `cf.commander.send_setpoint(roll, pitch, yawrate, thrust)`
+  instead of high-level commander, because high-level takeoff had previously been
+  unstable/crashy on this setup.
+- Added/used detailed CSV logging for every run under `flight_logs/`.
+- Added slow PageDown descent behavior so PageDown ramps thrust down instead of
+  cutting immediately.
+- Added immediate X/Y hold from the flight-start mocap position.
+- Added low-altitude roll/pitch angle caps to avoid skating hard while the drone
+  is still on or near the floor.
+- Added aggressive and recovery gain tiers for larger X/Y error.
+- Added `--body-yaw-offset-deg` and then `--fixed-body-yaw-deg` after logs showed
+  mocap yaw/rigid-body yaw could jump or disagree with the physical nose direction.
+- Tried using known cage/world mapping from no-flight calibration:
+  - physical front = mocap `-Y`
+  - physical back = mocap `+Y`
+  - physical left = mocap `+X`
+  - physical right = mocap `-X`
+  - height = mocap `+Z`
+
+### Important Logs / Observations
+
+Recent logs repeatedly showed that the drone often did not become cleanly airborne
+before drifting/skidding enough to trigger guards or require stopping:
+
+- `flight_logs/mocap-vertical-thrust-map-20260521-115415.csv`
+  - no clean liftoff; max height above start about `0.016 m`
+  - X/Y control was delayed by height in that run, so roll/pitch stayed zero
+  - drift reached the guard while near the floor
+- `flight_logs/mocap-vertical-thrust-map-20260521-115703.csv`
+  - no clean liftoff; max height above start about `0.005 m`
+  - X/Y hold was active and commanding roll/pitch
+  - target error reached about `0.182 m`
+- `flight_logs/mocap-vertical-thrust-map-20260521-133221.csv`
+  - no clean liftoff; max height above start about `0.003 m`
+  - drift reached about `0.191 m`, mostly mocap `+Y`
+  - mocap yaw/rigid-body yaw jumped near the end, suggesting orientation from the
+    marker solve is not reliable enough to drive correction directly during takeoff
+
+### Mocap Coverage Finding
+
+No-flight coverage logging showed real tracking problems on the physical left side
+of the cage. VRPN can keep returning stale/old pose values while `mocap_age_s`
+climbs, so a pose may look numerically valid while no fresh tracking is arriving.
+The physical left side / mocap `+X` region should not be used for flight until
+coverage is fixed.
+
+The user added more markers to the Crazyflie. After marker changes, the rigid body
+must be rebuilt/redefined in Motive before trusting orientation or coverage logs.
+
+### Current Conclusion
+
+The current mocap-assisted low-level hold approach is not producing reliable
+hover. More gain, stronger recovery tiers, and yaw offsets have not solved the
+basic issue. The likely blockers are a combination of:
+
+- poor or inconsistent mocap coverage in parts of the cage
+- rigid-body orientation/yaw instability from marker geometry or Motive solve
+- ground-effect / floor-skid behavior before the vehicle has real control authority
+- possible remaining body-frame sign/orientation mismatch
+- trying to correct X/Y before the system has a trustworthy pose/orientation frame
+
+Do not continue escalating gains or angle limits as the main strategy. It risks
+turning uncertainty into harder crashes.
+
+### Recommended Next Direction
+
+Pause flight attempts and return to no-flight validation:
+
+1. Rebuild the Crazyflie rigid body in Motive after the marker changes.
+2. Re-run coverage check in the smaller intended flight volume only.
+3. Re-run guided world-frame/orientation calibration with the nose physically
+   pointed toward cage front.
+4. Verify mocap yaw stability by hand: keep the drone on the ground, nose front,
+   then move it through the intended flight volume and confirm yaw does not jump.
+5. Only after fresh pose and yaw are stable, run a very small manual hover test.
+
+If software work continues, prefer making a diagnostic script that only logs and
+prints live pose/yaw/coverage quality in the intended flight box. Avoid further
+autonomous or assisted roll/pitch flight tuning until the mocap pose quality is
+proven stable.
+
+## 2026-05-21 Update: Manual-Thrust Assisted Figure-8 Script
+
+After the no-flight coverage discussion and marker updates, the working direction
+shifted to a simpler root-level script where the pilot owns vertical thrust and
+the script assists only roll, pitch, yaw, safety checks, logging, and the eventual
+tiny figure-8.
+
+Active script:
+
+- `mocap_manual_thrust_assisted_figure8.py`
+
+Design intent:
+
+- manual raw thrust only; no high-level commander takeoff
+- mocap-assisted X/Y hold using low-level `send_setpoint(...)`
+- yaw hold based on the start heading
+- optional tiny figure-8 after stable hover
+- editable top-of-file constants instead of CLI-heavy tuning
+- detailed CSV logging for every run under `flight_logs/`
+
+Important current constants:
+
+- URI: `radio://0/80/2M`
+- VRPN: `crazyflie_21@192.168.1.42:3883`
+- `MAX_MANUAL_THRUST = 39000`
+- `TAKEOFF_READY_THRUST = 33000`
+- `SMALL_THRUST_STEP = 150`
+- `BIG_THRUST_STEP = 1500`
+- `DESCENT_RAMP_RAW_PER_S = 700.0`
+- `MAX_XY_DRIFT_M = 0.28`
+- `MAX_TARGET_ERROR_M = 0.22`
+- `MAX_HEIGHT_ABOVE_START_M = 0.35`
+- `MOCAP_STALE_TIMEOUT_S = 0.30`
+- `MOCAP_STALE_GRACE_S = 1.50`
+- figure-8 is intentionally tiny: `0.04m x 0.03m`, `32s` period
+
+Keyboard controls:
+
+- `R`: jump to ready thrust near liftoff
+- Up / Down: fine thrust changes
+- PageUp: larger thrust increase
+- PageDown: slow descent ramp, not immediate cut
+- `A` / `D`: roll trim down/up by `0.5 deg`
+- `W` / `S`: pitch trim up/down by `0.5 deg`
+- `J` / `L`: yaw target offset left/right by `5 deg`
+- `C`: clear manual roll/pitch/yaw trims
+- `H`: lock current X/Y as hold target
+- `F`: toggle the tiny figure-8, only after stable hover
+- Space: emergency thrust cut
+- `Q` / Esc: cut, disarm, and exit
+
+Stale mocap handling:
+
+- if mocap age exceeds `0.30s`, the script enters `mocap-stale` mode
+- in stale mode it stops figure-8, clears velocity/integral state, and commands
+  neutral roll/pitch/yaw while preserving manual thrust control
+- PageDown, thrust keys, Space, and Q still work while stale
+- stale rows are still written to CSV with `mocap_status = stale`
+- if mocap stays stale for more than `1.50s`, the script raises an error and the
+  cleanup path cuts thrust and disarms
+- if mocap reacquires after a longer stale gap, the script re-locks current X/Y
+  instead of snapping back to an old target
+
+New logging fields added with the trim controls:
+
+- `mocap_status`
+- `manual_roll_trim_deg`
+- `manual_pitch_trim_deg`
+- `manual_yaw_offset_deg`
+
+The script was syntax-checked with:
+
+```bash
+python3 -m py_compile mocap_manual_thrust_assisted_figure8.py
+```
+
+Recommended next run:
+
+```bash
+python3 mocap_manual_thrust_assisted_figure8.py
+```
+
+Suggested first test behavior:
+
+1. Close `cfclient`.
+2. Confirm Motive tracks `crazyflie_21`.
+3. Start with a fresh battery and a physical power-off option ready.
+4. Press `R`, then use small Up taps into a very low hover.
+5. Use `A/D/W/S/J/L` only as small trims while learning response direction.
+6. Do not press `F` until X/Y hold is boringly stable.
+7. Use PageDown for normal descent; use Space/Q only as emergency cut paths.
+
+## 2026-06-08 Guarded Autonomy and Repository Update
+
+Powered HLC hover remains blocked pending physical rigid-body-frame calibration.
+`mocap_autonomy_ladder.py` now requires `--body-to-cf-quat X Y Z W`, applies the
+calibrated transform before extpose transmission, and uses the accepted
+Crazyflie-frame orientation for all yaw, roll, and pitch checks.
+
+Additional safety changes:
+
+- validated yaw is converted to radians once and preserved through takeoff,
+  `go_to`, and landing
+- full orientation-frame validation runs before arming and during flight
+- filtered orientation age, stream errors, rejection rate, and consecutive
+  rejection bursts are guarded
+- the default maximum orientation rejection ratio is `1%`
+- landing and controlled landing use a `0.05m` lateral limit
+- controlled landing remains continuously monitored
+- `land-only` was renamed to `takeoff-land-test`
+
+The focused unit suite contains 18 tests and passes with:
+
+```bash
+python3 -m unittest test_mocap_autonomy_ladder.py
+```
+
+The root-level diagnostic/calibration scripts are being added to Git:
+
+- `mocap_command_diagnostics.py`
+- `mocap_controller_telemetry_logger.py`
+- `mocap_estimator_world_frame_calibrator.py`
+- `mocap_high_level_point_test.py`
+- `mocap_manual_thrust_assisted_figure8.py`
+
+Generated `flight_logs/*.csv` files remain local and are ignored by Git.

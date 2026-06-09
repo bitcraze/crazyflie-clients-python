@@ -55,6 +55,104 @@ DEFAULT_GUIDED_PHASES = [
         'Land gently, then leave the drone still on the floor.',
     ),
 ]
+DEFAULT_WORLD_FRAME_CALIBRATION_PHASES = [
+    (
+        'center_start',
+        'Place the drone at the center/start position, nose/front in the stated direction, then keep it still.',
+    ),
+    (
+        'front',
+        'Place the drone toward the front of the cage, then keep it still.',
+    ),
+    (
+        'center_after_front',
+        'Return the drone to the center/start position, then keep it still.',
+    ),
+    (
+        'back',
+        'Place the drone toward the back of the cage, then keep it still.',
+    ),
+    (
+        'center_after_back',
+        'Return the drone to the center/start position, then keep it still.',
+    ),
+    (
+        'left',
+        'Place the drone toward the left side of the cage, then keep it still.',
+    ),
+    (
+        'center_after_left',
+        'Return the drone to the center/start position, then keep it still.',
+    ),
+    (
+        'right',
+        'Place the drone toward the right side of the cage, then keep it still.',
+    ),
+    (
+        'center_after_right',
+        'Return the drone to the center/start position, then keep it still.',
+    ),
+    (
+        'up',
+        'Lift the drone straight up to the intended hover height, then keep it still.',
+    ),
+    (
+        'center_end',
+        'Return the drone to the center/start position, then keep it still.',
+    ),
+]
+
+
+DEFAULT_MOCAP_COVERAGE_PHASES = [
+    (
+        'center_floor',
+        'Place the drone at cage center on the floor, nose/front fixed, then keep it still.',
+    ),
+    (
+        'front_floor',
+        'Place the drone near the front of the cage on the floor, then keep it still.',
+    ),
+    (
+        'back_floor',
+        'Place the drone near the back of the cage on the floor, then keep it still.',
+    ),
+    (
+        'left_center_floor',
+        'Place the drone at the left side center on the floor, then keep it still.',
+    ),
+    (
+        'left_front_floor',
+        'Place the drone at the left-front part of the cage on the floor, then keep it still.',
+    ),
+    (
+        'left_back_floor',
+        'Place the drone at the left-back part of the cage on the floor, then keep it still.',
+    ),
+    (
+        'right_center_floor',
+        'Place the drone at the right side center on the floor, then keep it still.',
+    ),
+    (
+        'center_hover_height',
+        'Lift the drone at cage center to intended hover height, then keep it still.',
+    ),
+    (
+        'left_center_hover_height',
+        'Lift the drone at the left side center to intended hover height, then keep it still.',
+    ),
+    (
+        'left_front_hover_height',
+        'Lift the drone at the left-front part of the cage to intended hover height, then keep it still.',
+    ),
+    (
+        'left_back_hover_height',
+        'Lift the drone at the left-back part of the cage to intended hover height, then keep it still.',
+    ),
+    (
+        'center_end',
+        'Return the drone to cage center on the floor, then keep it still.',
+    ),
+]
 
 ROLL_AXIS = 0
 PITCH_AXIS = 1
@@ -310,18 +408,18 @@ def find_controller_device(preferred):
     )
 
 
-def make_output_path(output):
+def make_output_path(output, prefix='mocap-guided-manual-flight'):
     if output:
         path = Path(output)
     else:
         timestamp = time.strftime('%Y%m%d-%H%M%S')
-        path = Path(DEFAULT_OUTPUT_DIR) / f"mocap-guided-manual-flight-{timestamp}.csv"
+        path = Path(DEFAULT_OUTPUT_DIR) / f"{prefix}-{timestamp}.csv"
 
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
 
-def mocap_snapshot_fields(mocap_state, start_position, previous_sample):
+def mocap_snapshot_fields(mocap_state, start_position, previous_sample, fresh_age_threshold):
     position, quat, last_update, frame_count = mocap_state.snapshot()
     now = time.time()
 
@@ -337,6 +435,8 @@ def mocap_snapshot_fields(mocap_state, start_position, previous_sample):
             'mocap_qw': '',
             'mocap_age_s': '',
             'mocap_frame_count': frame_count,
+            'mocap_frame_delta': '',
+            'mocap_fresh': 0,
             'mocap_vx_m_s': '',
             'mocap_vy_m_s': '',
             'mocap_vz_m_s': '',
@@ -344,8 +444,10 @@ def mocap_snapshot_fields(mocap_state, start_position, previous_sample):
         }, previous_sample
 
     velocity = ('', '', '')
+    frame_delta = ''
     if previous_sample is not None:
         previous_frame_count, previous_time, previous_position, previous_velocity = previous_sample
+        frame_delta = frame_count - previous_frame_count
         if frame_count == previous_frame_count:
             velocity = previous_velocity
         else:
@@ -373,6 +475,8 @@ def mocap_snapshot_fields(mocap_state, start_position, previous_sample):
         'mocap_qw': quat.w,
         'mocap_age_s': now - last_update,
         'mocap_frame_count': frame_count,
+        'mocap_frame_delta': frame_delta,
+        'mocap_fresh': int(now - last_update <= fresh_age_threshold),
         'mocap_vx_m_s': velocity[0],
         'mocap_vy_m_s': velocity[1],
         'mocap_vz_m_s': velocity[2],
@@ -411,11 +515,31 @@ def build_fieldnames():
         'mocap_qw',
         'mocap_age_s',
         'mocap_frame_count',
+        'mocap_frame_delta',
+        'mocap_fresh',
         'mocap_vx_m_s',
         'mocap_vy_m_s',
         'mocap_vz_m_s',
         'horizontal_distance_from_start_m',
     ]
+
+
+def blank_controller_fields():
+    return {
+        'roll_norm': '',
+        'pitch_norm': '',
+        'yaw_norm': '',
+        'thrust_norm': '',
+        'roll_deg': '',
+        'pitch_deg': '',
+        'yawrate_deg_s': '',
+        'thrust_raw': '',
+        'thrust_axis_seen': '',
+        'button_5': '',
+        'button_9': '',
+        'event_count': '',
+        'last_event_age_s': '',
+    }
 
 
 def wait_for_initial_mocap(mocap_state, timeout):
@@ -428,16 +552,74 @@ def wait_for_initial_mocap(mocap_state, timeout):
     return None
 
 
+
+def update_mocap_stats(stats_by_phase, phase_name, mocap_fields, fresh_age_threshold):
+    stats = stats_by_phase.setdefault(
+        phase_name,
+        {
+            'samples': 0,
+            'fresh': 0,
+            'stale': 0,
+            'blank': 0,
+            'max_age_s': 0.0,
+        },
+    )
+    stats['samples'] += 1
+    age = mocap_fields['mocap_age_s']
+    if age == '':
+        stats['blank'] += 1
+        stats['stale'] += 1
+        return
+
+    stats['max_age_s'] = max(stats['max_age_s'], age)
+    if age <= fresh_age_threshold:
+        stats['fresh'] += 1
+    else:
+        stats['stale'] += 1
+
+
+def print_mocap_stats(stats_by_phase):
+    if not stats_by_phase:
+        return
+
+    print("\n[COVERAGE SUMMARY]")
+    for phase_name, stats in stats_by_phase.items():
+        samples = stats['samples']
+        fresh_pct = 100.0 * stats['fresh'] / samples if samples else 0.0
+        print(
+            f"{phase_name}: fresh={fresh_pct:.1f}% "
+            f"stale={stats['stale']} blank={stats['blank']} "
+            f"max_age={stats['max_age_s']:.3f}s samples={samples}"
+        )
+
 def log_flight(args):
     controller_state = ControllerState()
     mocap_state = MocapState()
-    controller_device = find_controller_device(args.controller)
-    output_path = make_output_path(args.output)
+    skip_controller = (
+        args.no_controller
+        or args.world_frame_calibration
+        or args.mocap_coverage_check
+    )
+    controller_device = None if skip_controller else find_controller_device(args.controller)
+    if args.mocap_coverage_check:
+        output_prefix = 'mocap-coverage-check'
+    elif args.world_frame_calibration:
+        output_prefix = 'mocap-world-frame-calibration'
+    else:
+        output_prefix = 'mocap-guided-manual-flight'
+    output_path = make_output_path(args.output, output_prefix)
 
-    controller_reader = ControllerReader(controller_device, controller_state)
+    controller_reader = (
+        None
+        if skip_controller
+        else ControllerReader(controller_device, controller_state)
+    )
     mocap_reader = MocapReader(args.host, args.body, mocap_state)
 
-    controller_reader.start()
+    if controller_reader is not None:
+        controller_reader.start()
+    else:
+        print("[INFO] Controller logging disabled; recording mocap only.")
     mocap_reader.start()
 
     start_position = None
@@ -446,6 +628,7 @@ def log_flight(args):
     started_at = time.time()
     stopped_by_user = False
     phase_controller = None
+    mocap_stats_by_phase = {}
 
     try:
         print("[INFO] Waiting for initial mocap pose...")
@@ -463,7 +646,16 @@ def log_flight(args):
             print("[INFO] Free-form mode. Start the cfclient/Logitech flight now.")
             print("[INFO] Press Ctrl+C here to stop logging.")
         else:
-            phase_controller = GuidedPhaseController(DEFAULT_GUIDED_PHASES)
+            phases = (
+                DEFAULT_MOCAP_COVERAGE_PHASES
+                if args.mocap_coverage_check
+                else (
+                    DEFAULT_WORLD_FRAME_CALIBRATION_PHASES
+                    if args.world_frame_calibration
+                    else DEFAULT_GUIDED_PHASES
+                )
+            )
+            phase_controller = GuidedPhaseController(phases)
             phase_controller.start()
             print("[INFO] Guided mode is active. Follow the Enter prompts in this terminal.")
             print("[INFO] Press Ctrl+C here any time to abort logging.")
@@ -479,7 +671,7 @@ def log_flight(args):
                 if phase_controller is not None and phase_controller.done:
                     break
 
-                if controller_reader.error:
+                if controller_reader is not None and controller_reader.error:
                     raise RuntimeError(f"Controller reader failed: {controller_reader.error}")
                 if mocap_reader.error:
                     raise RuntimeError(f"Mocap reader failed: {mocap_reader.error}")
@@ -489,11 +681,16 @@ def log_flight(args):
                     time.sleep(min(0.01, next_sample_time - now))
                     continue
 
-                controller_fields = controller_state.snapshot()
+                controller_fields = (
+                    blank_controller_fields()
+                    if controller_reader is None
+                    else controller_state.snapshot()
+                )
                 mocap_fields, previous_sample = mocap_snapshot_fields(
                     mocap_state,
                     start_position,
                     previous_sample,
+                    args.fresh_age_threshold,
                 )
                 row = {
                     'wall_time_s': now,
@@ -511,6 +708,13 @@ def log_flight(args):
                 row.update(mocap_fields)
                 writer.writerow(row)
                 rows_written += 1
+                if args.mocap_coverage_check:
+                    update_mocap_stats(
+                        mocap_stats_by_phase,
+                        row['phase_name'],
+                        mocap_fields,
+                        args.fresh_age_threshold,
+                    )
 
                 if rows_written % max(1, int(args.rate_hz * 2)) == 0:
                     print(
@@ -525,11 +729,14 @@ def log_flight(args):
     except KeyboardInterrupt:
         stopped_by_user = True
     finally:
-        controller_reader.close()
+        if controller_reader is not None:
+            controller_reader.close()
         mocap_reader.close()
 
     if stopped_by_user:
         print("\n[INTERRUPT] Logging stopped by user")
+    if args.mocap_coverage_check:
+        print_mocap_stats(mocap_stats_by_phase)
     print(f"[DONE] Wrote {rows_written} rows to {output_path}")
     return output_path
 
@@ -546,11 +753,35 @@ def parse_args():
     parser.add_argument('--rate-hz', type=float, default=50.0)
     parser.add_argument('--mocap-timeout', type=float, default=8.0)
     parser.add_argument(
+        '--fresh-age-threshold',
+        type=float,
+        default=0.25,
+        help="seconds; mocap samples older than this count as stale in coverage logs",
+    )
+    parser.add_argument(
         '--freeform',
         action='store_true',
         help="disable Enter-driven phase prompts and log one continuous free-form flight",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        '--world-frame-calibration',
+        action='store_true',
+        help="use Enter-driven no-flight center/front/back/left/right/up mocap phase labels",
+    )
+    parser.add_argument(
+        '--mocap-coverage-check',
+        action='store_true',
+        help="use Enter-driven no-flight cage coverage labels and summarize mocap freshness by zone",
+    )
+    parser.add_argument(
+        '--no-controller',
+        action='store_true',
+        help="record mocap only without opening a joystick device",
+    )
+    args = parser.parse_args()
+    if args.world_frame_calibration and args.mocap_coverage_check:
+        parser.error('--world-frame-calibration and --mocap-coverage-check are mutually exclusive')
+    return args
 
 
 def main():
