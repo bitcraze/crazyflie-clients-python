@@ -35,6 +35,58 @@ Use `validate-extpose` and `validate-yaw-rotation` first. Do not substitute an
 identity transform unless physical calibration proves that the rigid body and
 Crazyflie body frames are actually aligned.
 
+Compute and verify the transform with props off:
+
+```bash
+python3 mocap_estimator_world_frame_calibrator.py
+```
+
+For calibration, place the Crazyflie physically level with its nose pointing
+toward cage front. In the measured cage frame, front is mocap `-Y`, so the
+default expected Crazyflie yaw is `-90deg`. Use `--nose-front-yaw-deg` only if
+the physical cage/world convention is different. The calibrator averages fresh
+quaternion samples, rejects excessive held-pose spread, applies the candidate
+transform, and resets the estimator. It then verifies corrected mocap and
+estimator attitude at nose-front, 90 degrees left, and 90 degrees right. After
+the operator confirms each intentional orientation, the calibrator resets the
+jump-filter baseline, accepts the first valid quaternion as the new baseline,
+and waits for estimator yaw convergence before recording verification samples.
+Implausible yaw jumps and full-quaternion angular jumps use position-only
+`extpos` fallback. The full-orientation limit defaults to 8 degrees and each
+stationary phase fails above a 1% rejection rate. Every logged pose includes its
+accepted/rejected decision, stream counters, and corrected mocap roll, pitch,
+and yaw; rejected quaternion rows are excluded from calibration and
+verification. Verification also requires estimator/mocap position error below
+5 cm continuously for two seconds and uses robust quaternion centers plus p90
+orientation errors instead of maxima. The unverified transform is not printed.
+Copy the final `--body-to-cf-quat ...` argument only after all three
+orientations pass.
+
+The June 9, 2026 `130036` run passed nose-front, left 90-degree, and right
+90-degree verification and produced the verified candidate
+`--body-to-cf-quat -0.037816872 0.001109926 -0.718284935 0.694719659`.
+The following front translation phase was incorrectly compared with the stale
+right-facing filter baseline, causing 100% fallback even though corrected yaw
+was approximately -91.9 degrees. The calibrator now resets the orientation
+baseline after every guided reposition and reconfirms estimator position and
+the original nose-front yaw before recording each translation phase. Because
+the `130036` run predates that fix and did not complete the full no-flight
+workflow, rerun the calibrator and do not use this quaternion for powered flight
+yet.
+
+The June 9, 2026 `122456` CSV contained a 12.09-degree frame-to-frame raw
+quaternion jump during stationary nose-front verification while raw yaw stayed
+between -0.06 and 0.30 degrees. The change was dominated by roll/pitch, which is
+why yaw-only filtering was insufficient. Do not use the transform from that run
+for flight.
+
+`motioncapture 1.0a4` has no Python close API and its VRPN backend wraps an
+auto-referenced connection in a default-deleting `shared_ptr`, producing the
+remaining-reference destructor warning. The calibrator copies all VRPN-owned
+pose values, requests reader shutdown, joins the reader thread, and uses normal
+Python process cleanup. The upstream reference warning remains unresolved; do
+not mask it with leaked references or forced process exit.
+
 Retain `mocap_high_level_point_test.py` as an earlier high-level-commander
 viability reference. Its props-off validation mode remains useful, but do not
 run its powered point mode while orientation calibration is unresolved:
@@ -278,14 +330,17 @@ Run these before committing changes:
 ```bash
 PYTHONPYCACHEPREFIX=/tmp/crazyflie-pycache python3 -m py_compile \
   mocap_autonomy_ladder.py \
+  mocap_estimator_world_frame_calibrator.py \
   keyboard_thrust_test.py \
   mocap_vertical_thrust_mapper.py \
-  test_mocap_autonomy_ladder.py
+  test_mocap_autonomy_ladder.py \
+  test_mocap_estimator_world_frame_calibrator.py
 ```
 
 ```bash
 PYTHONPYCACHEPREFIX=/tmp/crazyflie-pycache python3 -m unittest \
-  test_mocap_autonomy_ladder.py
+  test_mocap_autonomy_ladder.py \
+  test_mocap_estimator_world_frame_calibrator.py
 ```
 
 The unit tests are pure Python and do not need `cflib`, `motioncapture`, VRPN, or

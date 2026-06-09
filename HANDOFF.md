@@ -64,6 +64,29 @@ From no-flight calibration and user observations:
 The physical left side of the cage has had poor mocap coverage. Prefer the
 smaller reliable flight area until coverage is improved.
 
+The no-flight calibrator resets its orientation jump-filter baseline after the
+operator confirms each level/nose-front or intentional 90-degree pose. It waits
+for the first valid post-reset quaternion and for estimator yaw convergence
+before recording verification samples. It rejects full-quaternion jumps above
+8 degrees, fails stationary phases above a 1% rejection rate, and logs corrected
+mocap roll/pitch/yaw. The June 9, 2026 `122456` run had a 12.09-degree raw
+quaternion jump with almost no yaw change, so its transform must not be used.
+
+The June 9, 2026 `130036` run subsequently passed all three orientation
+checks and yielded the candidate
+`--body-to-cf-quat -0.037816872 0.001109926 -0.718284935 0.694719659`. Its
+first translation phase then hit a stale right-facing jump-filter baseline and
+failed at 100% rejection. The calibrator now resets the baseline and requires
+position plus nose-front yaw convergence after every guided reposition. Treat
+the candidate as unapproved until a clean rerun completes the full no-flight
+workflow.
+
+The installed `motioncapture 1.0a4` binding has a VRPN connection-destruction
+bug and no Python close API. The reader copies binding-owned values, requests
+shutdown, joins its thread, and leaves normal Python cleanup intact. The
+upstream remaining-reference warning is still unresolved; it is not hidden by
+leaking the connection or bypassing interpreter finalization.
+
 ## Mocap Marker / Coverage Notes
 
 The user now has four mocap markers on the drone. The front/nose is the white
@@ -94,6 +117,24 @@ python3 mocap_autonomy_ladder.py validate-yaw-rotation \
 
 The quaternion values must come from physical calibration. Powered `hover`,
 `takeoff-land-test`, point moves, and trajectories remain blocked.
+
+Automatic calibration command:
+
+```bash
+python3 mocap_estimator_world_frame_calibrator.py
+```
+
+Hold the drone level and nose-front for calibration and the first verification,
+then follow the physically level 90-degree-left and 90-degree-right prompts. The
+calibrator defaults nose-front to `-90deg` because physical front is mocap
+`-Y`. It filters implausible quaternion jumps with position-only fallback,
+logs accepted/rejected packet decisions and per-phase counts, excludes rejected
+quaternions, and uses robust orientation statistics. Before each orientation
+verification it requires estimator/mocap position error below 5 cm continuously
+for two seconds. It prints the exact `--body-to-cf-quat X Y Z W`, switches the
+estimator to the transformed extpose stream, resets it, and verifies corrected
+mocap and estimator attitude in all three orientations. Do not use the result
+unless the run ends with `[CALIBRATION] PASS`.
 
 `--mode validate` streams `cf.extpos.send_extpos(...)`, resets the Kalman
 estimator, logs mocap versus `stateEstimate`, and never arms. The hover-only
@@ -240,6 +281,8 @@ Adjust one sign or offset at a time.
 
 - `mocap_autonomy_ladder.py`
   - current guarded HLC ladder; requires calibrated body-to-Crazyflie quaternion
+- `test_mocap_estimator_world_frame_calibrator.py`
+  - pure-Python calibration, quaternion filtering, convergence, phase-transition, and shutdown tests
 - `test_mocap_autonomy_ladder.py`
   - pure-Python regression tests for filtering, frame guards, yaw units, and landing
 - `mocap_command_diagnostics.py`
@@ -263,6 +306,7 @@ Adjust one sign or offset at a time.
 
 ## Git Notes
 
-The root-level diagnostic and calibration tools are tracked together with this
+The root-level diagnostic and calibration tools, including
+`test_mocap_estimator_world_frame_calibrator.py`, are tracked together with this
 handoff. Generated `flight_logs/*.csv` files remain local and are ignored rather
 than pushed with source changes.
