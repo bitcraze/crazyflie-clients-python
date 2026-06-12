@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 """
-Guided no-flight mocap/world-frame and estimator calibration logger.
+Guided no-flight mocap local-frame and estimator position validator.
 
-This script streams VRPN mocap pose into the Crazyflie Kalman estimator, logs
-stateEstimate.x/y/z against mocap x/y/z, and prompts the operator to place the
-drone at known cage positions. It never arms the Crazyflie and never sends motor
-or high-level-commander movement commands.
+The validator captures a local origin, transforms raw VRPN positions into an
+explicit Crazyflie local frame, streams only extpos, resets the Kalman
+estimator, and checks stateEstimate.x/y/z against the transformed coordinates.
+It then guides hand-movement tests for left/right, front/back, and up/down.
+During all checks the drone must remain level and nose-front; stateEstimate yaw
+must align with local +X at reset and remain near that post-reset baseline so
+the local X/Y convention is not validated with an unnoticed heading change.
+
+It never arms the Crazyflie and never sends motor or commander setpoints.
 """
 
 import argparse
@@ -16,55 +21,76 @@ import time
 from dataclasses import dataclass
 from numbers import Real
 from pathlib import Path
-from threading import Lock
-from threading import Thread
+from threading import Lock, Thread
 
 
-DEFAULT_URI = 'radio://0/80/2M'
-DEFAULT_HOST_NAME = '192.168.1.42:3883'
-DEFAULT_RIGID_BODY_NAME = 'crazyflie_21'
-DEFAULT_OUTPUT_DIR = 'flight_logs'
+DEFAULT_URI = "radio://0/80/2M"
+DEFAULT_HOST_NAME = "192.168.1.42:3883"
+DEFAULT_RIGID_BODY_NAME = "crazyflie_21"
+DEFAULT_OUTPUT_DIR = "flight_logs"
 LOG_PERIOD_MS = 100
-MOCAP_TIMEOUT = 8.0
-POSE_STALE_TIMEOUT = 0.30
-ESTIMATE_STALE_TIMEOUT = 0.50
-DEFAULT_NOSE_FRONT_YAW_DEG = -90.0
+MOCAP_TIMEOUT_S = 8.0
+POSE_STALE_TIMEOUT_S = 0.30
+ESTIMATE_STALE_TIMEOUT_S = 0.50
+DEFAULT_HOLD_DURATION_S = 3.0
+DEFAULT_ORIGIN_HOLD_DURATION_S = 2.0
+DEFAULT_RATE_HZ = 20.0
+DEFAULT_MAX_ORIGIN_SPREAD_M = 0.01
+DEFAULT_MIN_MOVEMENT_M = 0.08
+DEFAULT_MAX_CROSS_AXIS_M = 0.05
+DEFAULT_MAX_RETURN_ERROR_M = 0.05
+DEFAULT_MAX_ESTIMATOR_ERROR_M = 0.05
+DEFAULT_CONVERGENCE_DURATION_S = 2.0
+DEFAULT_CONVERGENCE_TIMEOUT_S = 10.0
+DEFAULT_ATTITUDE_BASELINE_DURATION_S = 2.0
+DEFAULT_ATTITUDE_STABILITY_DURATION_S = 1.0
+DEFAULT_ATTITUDE_STABILITY_TIMEOUT_S = 8.0
 DEFAULT_MAX_LEVEL_ERROR_DEG = 5.0
-DEFAULT_MAX_YAW_ERROR_DEG = 5.0
-DEFAULT_MAX_SAMPLE_SPREAD_DEG = 3.0
-DEFAULT_MIN_ORIENTATION_SAMPLES = 20
-DEFAULT_YAW_JUMP_DEG = 45.0
-DEFAULT_YAW_JUMP_MOVE_M = 0.03
-DEFAULT_ORIENTATION_JUMP_DEG = 8.0
-DEFAULT_MAX_ORIENTATION_REJECTION_RATIO = 0.01
-DEFAULT_POSITION_CONVERGENCE_ERROR_M = 0.05
-DEFAULT_POSITION_CONVERGENCE_DURATION_S = 2.0
-DEFAULT_POSITION_CONVERGENCE_TIMEOUT_S = 10.0
-DEFAULT_YAW_CONVERGENCE_ERROR_DEG = 5.0
-DEFAULT_YAW_CONVERGENCE_DURATION_S = 1.0
-DEFAULT_YAW_CONVERGENCE_TIMEOUT_S = 10.0
-ROBUST_ORIENTATION_PERCENTILE = 90.0
+DEFAULT_MAX_YAW_DRIFT_DEG = 5.0
+DEFAULT_EXPECTED_NOSE_FRONT_YAW_DEG = 0.0
+DEFAULT_MAX_YAW_ALIGNMENT_ERROR_DEG = 5.0
+DEFAULT_MIN_SAMPLES = 20
+ROBUST_PERCENTILE = 90.0
 
-DEFAULT_PHASES = [
-    ('front', 'front of the cage'),
-    ('center_after_front', 'center/start position'),
-    ('back', 'back of the cage'),
-    ('center_after_back', 'center/start position'),
-    ('left', 'left side of the cage'),
-    ('center_after_left', 'center/start position'),
-    ('right', 'right side of the cage'),
-    ('center_after_right', 'center/start position'),
-    ('up', 'straight up to intended hover height'),
-    ('center_end', 'center/start position'),
-]
+AXIS_NAMES = ("x", "y", "z")
+AXIS_SPECS = ("pos-x", "neg-x", "pos-y", "neg-y", "pos-z", "neg-z")
 
 
 @dataclass(frozen=True)
-class Quat:
-    x: float
-    y: float
-    z: float
-    w: float
+class AxisRule:
+    source_index: int
+    sign: float
+    spec: str
+
+
+@dataclass(frozen=True)
+class MovementPhase:
+    name: str
+    description: str
+    axis: int | None
+    sign: int
+
+
+@dataclass(frozen=True)
+class AttitudeBaseline:
+    yaw_deg: float
+    expected_yaw_deg: float = DEFAULT_EXPECTED_NOSE_FRONT_YAW_DEG
+
+
+MOVEMENT_PHASES = (
+    MovementPhase("left", "move the drone physically LEFT", 1, 1),
+    MovementPhase("center_after_left", "return to the captured center/origin", None, 0),
+    MovementPhase("right", "move the drone physically RIGHT", 1, -1),
+    MovementPhase("center_after_right", "return to the captured center/origin", None, 0),
+    MovementPhase("front", "move the drone physically toward cage FRONT", 0, 1),
+    MovementPhase("center_after_front", "return to the captured center/origin", None, 0),
+    MovementPhase("back", "move the drone physically toward cage BACK", 0, -1),
+    MovementPhase("center_after_back", "return to the captured center/origin", None, 0),
+    MovementPhase("up", "move the drone physically UP", 2, 1),
+    MovementPhase("center_after_up", "return to the captured center/origin", None, 0),
+    MovementPhase("down", "move the drone physically DOWN below the captured origin", 2, -1),
+    MovementPhase("center_after_down", "return to the captured center/origin", None, 0),
+)
 
 
 def load_runtime_modules():
@@ -76,56 +102,160 @@ def load_runtime_modules():
     from cflib.utils.reset_estimator import reset_estimator
 
     return {
-        'cflib_crtp': cflib.crtp,
-        'motioncapture': motioncapture,
-        'Crazyflie': Crazyflie,
-        'LogConfig': LogConfig,
-        'SyncCrazyflie': SyncCrazyflie,
-        'reset_estimator': reset_estimator,
+        "cflib_crtp": cflib.crtp,
+        "motioncapture": motioncapture,
+        "Crazyflie": Crazyflie,
+        "LogConfig": LogConfig,
+        "SyncCrazyflie": SyncCrazyflie,
+        "reset_estimator": reset_estimator,
     }
+
+
+def is_finite_position(position):
+    return (
+        position is not None
+        and len(position) == 3
+        and all(isinstance(value, Real) and math.isfinite(value) for value in position)
+    )
+
+
+def distance_3d(left, right):
+    return math.sqrt(sum((left[index] - right[index]) ** 2 for index in range(3)))
+
+
+def numeric_values(values):
+    converted = []
+    for value in values:
+        if isinstance(value, Real) and math.isfinite(float(value)):
+            converted.append(float(value))
+    return converted
+
+
+def median(values):
+    values = numeric_values(values)
+    return statistics.median(values) if values else math.nan
+
+
+def percentile(values, percentile_value):
+    values = sorted(numeric_values(values))
+    if not values:
+        return math.nan
+    if len(values) == 1:
+        return values[0]
+    rank = (len(values) - 1) * percentile_value / 100.0
+    lower = math.floor(rank)
+    upper = math.ceil(rank)
+    if lower == upper:
+        return values[lower]
+    weight = rank - lower
+    return values[lower] * (1.0 - weight) + values[upper] * weight
+
+
+def angle_error_deg(actual, expected):
+    return (actual - expected + 180.0) % 360.0 - 180.0
+
+
+def circular_median_deg(values):
+    values = numeric_values(values)
+    if not values:
+        return math.nan
+    reference = values[0]
+    unwrapped = [reference + angle_error_deg(value, reference) for value in values]
+    return (statistics.median(unwrapped) + 180.0) % 360.0 - 180.0
+
+
+def parse_axis_rule(spec):
+    if spec not in AXIS_SPECS:
+        raise ValueError(f"invalid axis mapping {spec!r}")
+    sign_name, axis_name = spec.split("-")
+    return AxisRule(
+        AXIS_NAMES.index(axis_name),
+        1.0 if sign_name == "pos" else -1.0,
+        spec,
+    )
+
+
+class LocalFrameTransform:
+    def __init__(self, origin, axis_specs):
+        if not is_finite_position(origin):
+            raise ValueError("local-frame origin must contain three finite values")
+        self.origin = tuple(float(value) for value in origin)
+        self.rules = tuple(parse_axis_rule(spec) for spec in axis_specs)
+        source_indices = [rule.source_index for rule in self.rules]
+        if len(set(source_indices)) != 3:
+            raise ValueError("local-frame mappings must use each raw axis exactly once")
+        matrix = [
+            [
+                rule.sign if rule.source_index == source_index else 0.0
+                for source_index in range(3)
+            ]
+            for rule in self.rules
+        ]
+        determinant = (
+            matrix[0][0] * (
+                matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1]
+            )
+            - matrix[0][1] * (
+                matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0]
+            )
+            + matrix[0][2] * (
+                matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0]
+            )
+        )
+        if determinant < 0.0:
+            raise ValueError(
+                "local-frame mapping is reflected/left-handed; determinant must be +1"
+            )
+
+    @property
+    def specs(self):
+        return tuple(rule.spec for rule in self.rules)
+
+    def apply(self, raw_position):
+        if not is_finite_position(raw_position):
+            raise ValueError("mocap position must contain three finite values")
+        delta = tuple(
+            float(raw_position[index]) - self.origin[index] for index in range(3)
+        )
+        return tuple(rule.sign * delta[rule.source_index] for rule in self.rules)
 
 
 class MocapState:
     def __init__(self):
         self._lock = Lock()
         self.position = None
-        self.quat = None
         self.last_update = 0.0
         self.frame_count = 0
-        self.orientation_result = {
-            'orientation_packet_sequence': '',
-            'orientation_packet_status': 'not-streamed',
-            'orientation_rejection_reason': '',
-            'orientation_accepted_count': 0,
-            'extpos_fallback_count': 0,
-            'orientation_rejected_count': 0,
-            'corrected_mocap_roll_deg': '',
-            'corrected_mocap_pitch_deg': '',
-            'corrected_mocap_yaw_deg': '',
+        self.stream_result = {
+            "extpos_packet_sequence": 0,
+            "extpos_sent_count": 0,
+            "extpos_error_count": 0,
+            "last_extpos_status": "not-streaming",
+            "last_extpos_error": "",
+            "stream_local_x": "",
+            "stream_local_y": "",
+            "stream_local_z": "",
         }
 
-    def update(self, position, quat, orientation_result=None):
-        quat_copy = Quat(quat.x, quat.y, quat.z, quat.w)
+    def update(self, position, stream_result=None):
         with self._lock:
-            self.position = tuple(position)
-            self.quat = quat_copy
+            self.position = tuple(float(value) for value in position)
             self.last_update = time.time()
             self.frame_count += 1
-            if orientation_result is not None:
-                self.orientation_result = dict(orientation_result)
+            if stream_result is not None:
+                self.stream_result = dict(stream_result)
 
     def snapshot(self):
         with self._lock:
-            return self.position, self.quat, self.last_update, self.frame_count
+            return self.position, self.last_update, self.frame_count
 
-    def snapshot_with_orientation(self):
+    def snapshot_with_stream(self):
         with self._lock:
             return (
                 self.position,
-                self.quat,
                 self.last_update,
                 self.frame_count,
-                dict(self.orientation_result),
+                dict(self.stream_result),
             )
 
 
@@ -152,20 +282,22 @@ class EstimateState:
     def snapshot(self):
         with self._lock:
             return (
-                self.position, self.attitude, self.battery_voltage,
-                self.position_last_update, self.attitude_last_update,
+                self.position,
+                self.attitude,
+                self.battery_voltage,
+                self.position_last_update,
+                self.attitude_last_update,
             )
 
 
 class MocapReader(Thread):
     def __init__(self, motioncapture_module, host_name, body_name, state):
-        Thread.__init__(self)
-        self.daemon = True
+        super().__init__(daemon=True)
         self.motioncapture = motioncapture_module
         self.host_name = host_name
         self.body_name = body_name
         self.state = state
-        self.on_pose = None
+        self.on_position = None
         self.error = None
         self._stay_open = True
         self._mc = None
@@ -175,7 +307,7 @@ class MocapReader(Thread):
     def _release_connection(mc):
         if mc is None:
             return
-        for method_name in ('close', 'disconnect', 'shutdown'):
+        for method_name in ("close", "disconnect", "shutdown"):
             method = getattr(mc, method_name, None)
             if callable(method):
                 try:
@@ -183,248 +315,123 @@ class MocapReader(Thread):
                 except Exception:
                     pass
 
-    def _detach_connection(self, expected=None):
-        with self._mc_lock:
-            if expected is not None and self._mc is not expected:
-                return None
-            mc = self._mc
-            self._mc = None
-            return mc
-
     def close(self):
         self._stay_open = False
-        self.on_pose = None
+        self.on_position = None
         with self._mc_lock:
             mc = self._mc
-        if mc is not None and any(
-            callable(getattr(mc, method_name, None))
-            for method_name in ('close', 'disconnect', 'shutdown')
-        ):
-            self._release_connection(self._detach_connection())
+            self._mc = None
+        self._release_connection(mc)
 
     def run(self):
         mc = None
-        rigid_bodies = None
-        obj = None
-        pos = None
-        quat = None
         try:
-            mc = self.motioncapture.connect('vrpn', {'hostname': self.host_name})
+            mc = self.motioncapture.connect("vrpn", {"hostname": self.host_name})
             with self._mc_lock:
                 self._mc = mc
             print(f"[INFO] Mocap connected, looking for '{self.body_name}'")
-            found = False
+            announced = False
             while self._stay_open:
                 mc.waitForNextFrame()
-                rigid_bodies = mc.rigidBodies
-                for name, obj in rigid_bodies.items():
-                    if name != self.body_name:
-                        continue
-                    if not found:
-                        print(f"[INFO] Found and tracking rigid body: {name}")
-                        found = True
-                    pos = obj.position
-                    quat = obj.rotation
-                    callback = self.on_pose
-                    orientation_result = None
-                    if callback is not None:
-                        callback(pos[0], pos[1], pos[2], quat)
-                        callback_owner = getattr(callback, '__self__', None)
-                        snapshot = getattr(callback_owner, 'snapshot', None)
-                        if snapshot is not None:
-                            orientation_result = snapshot()
-                    self.state.update(
-                        (pos[0], pos[1], pos[2]), quat, orientation_result
-                    )
-                    obj = None
-                    pos = None
-                    quat = None
-                obj = None
-                pos = None
-                quat = None
-                rigid_bodies = None
+                body = mc.rigidBodies.get(self.body_name)
+                if body is None:
+                    continue
+                if not announced:
+                    print(f"[INFO] Found and tracking rigid body: {self.body_name}")
+                    announced = True
+                position = tuple(float(value) for value in body.position)
+                callback = self.on_position
+                stream_result = None
+                if callback is not None:
+                    callback(*position)
+                    owner = getattr(callback, "__self__", None)
+                    snapshot = getattr(owner, "snapshot", None)
+                    if callable(snapshot):
+                        stream_result = snapshot()
+                self.state.update(position, stream_result)
+                body = None
         except Exception as exc:
             if self._stay_open:
                 self.error = exc
         finally:
-            obj = None
-            pos = None
-            quat = None
-            rigid_bodies = None
-            self._release_connection(self._detach_connection(expected=mc))
+            with self._mc_lock:
+                if self._mc is mc:
+                    self._mc = None
+                    release_connection = True
+                else:
+                    release_connection = False
+            if release_connection:
+                self._release_connection(mc)
             mc = None
 
 
-class FilteredExtposeSender:
-    def __init__(
-        self,
-        cf,
-        body_to_cf=None,
-        yaw_jump_deg=DEFAULT_YAW_JUMP_DEG,
-        jump_move_m=DEFAULT_YAW_JUMP_MOVE_M,
-        orientation_jump_deg=DEFAULT_ORIENTATION_JUMP_DEG,
-    ):
+class ExtposSender:
+    def __init__(self, cf, transform):
         self.cf = cf
-        self.body_to_cf = body_to_cf
-        self.yaw_jump_deg = yaw_jump_deg
-        self.jump_move_m = jump_move_m
-        self.orientation_jump_deg = orientation_jump_deg
+        self.transform = transform
         self._lock = Lock()
-        self.last_position = None
-        self.last_yaw = None
-        self.last_quat = None
-        self.accepted = 0
-        self.fallback = 0
-        self.rejected = 0
         self.packet_sequence = 0
-        self.last_status = 'not-streamed'
-        self.last_rejection_reason = ''
-        self.last_corrected_euler = None
+        self.sent_count = 0
+        self.error_count = 0
+        self.last_status = "not-streaming"
+        self.last_error = ""
+        self.last_local = None
 
-    def set_body_to_cf(self, body_to_cf):
+    def send(self, x, y, z):
         with self._lock:
-            self.body_to_cf = body_to_cf
-        self.reset_orientation_baseline()
-
-    def reset_orientation_baseline(self):
-        with self._lock:
-            self.last_position = None
-            self.last_yaw = None
-            self.last_quat = None
-
-    def has_orientation_baseline(self):
-        with self._lock:
-            return self.last_yaw is not None
-
-    def _record_result(self, status, reason=''):
-        self.packet_sequence += 1
-        self.last_status = status
-        self.last_rejection_reason = reason
-        if status == 'accepted':
-            self.accepted += 1
-        else:
-            self.fallback += 1
-            self.rejected += 1
+            self.packet_sequence += 1
+            try:
+                local = self.transform.apply((x, y, z))
+                self.cf.extpos.send_extpos(*local)
+            except Exception as exc:
+                self.error_count += 1
+                self.last_status = "error"
+                self.last_error = str(exc)
+                raise
+            self.sent_count += 1
+            self.last_status = "sent"
+            self.last_error = ""
+            self.last_local = local
+            return local
 
     def snapshot(self):
         with self._lock:
             return {
-                'orientation_packet_sequence': self.packet_sequence,
-                'orientation_packet_status': self.last_status,
-                'orientation_rejection_reason': self.last_rejection_reason,
-                'orientation_accepted_count': self.accepted,
-                'extpos_fallback_count': self.fallback,
-                'orientation_rejected_count': self.rejected,
-                'corrected_mocap_roll_deg': (
-                    self.last_corrected_euler[0]
-                    if self.last_corrected_euler is not None else ''
-                ),
-                'corrected_mocap_pitch_deg': (
-                    self.last_corrected_euler[1]
-                    if self.last_corrected_euler is not None else ''
-                ),
-                'corrected_mocap_yaw_deg': (
-                    self.last_corrected_euler[2]
-                    if self.last_corrected_euler is not None else ''
-                ),
+                "extpos_packet_sequence": self.packet_sequence,
+                "extpos_sent_count": self.sent_count,
+                "extpos_error_count": self.error_count,
+                "last_extpos_status": self.last_status,
+                "last_extpos_error": self.last_error,
+                "stream_local_x": self.last_local[0] if self.last_local is not None else "",
+                "stream_local_y": self.last_local[1] if self.last_local is not None else "",
+                "stream_local_z": self.last_local[2] if self.last_local is not None else "",
             }
-
-    def send(self, x, y, z, quat):
-        position = (x, y, z)
-        quat = normalized_quat(quat)
-        with self._lock:
-            if quat is not None and self.body_to_cf is not None:
-                quat = normalized_quat(multiply_quat(quat, self.body_to_cf))
-            if quat is None:
-                self.last_corrected_euler = None
-                self.cf.extpos.send_extpos(x, y, z)
-                self._record_result('rejected', 'invalid quaternion')
-                return False
-            self.last_corrected_euler = euler_from_quat_deg(quat)
-            yaw = self.last_corrected_euler[2]
-            orientation_jump = (
-                quaternion_angle_deg(quat, self.last_quat)
-                if self.last_quat is not None else 0.0
-            )
-            jump = (
-                abs(angle_error_deg(yaw, self.last_yaw))
-                if self.last_yaw is not None else 0.0
-            )
-            moved = (
-                distance_3d(position, self.last_position)
-                if self.last_position is not None else math.inf
-            )
-            if (
-                self.last_quat is not None
-                and orientation_jump > self.orientation_jump_deg
-            ):
-                reason = f'quaternion jump {orientation_jump:.1f}deg'
-                self.cf.extpos.send_extpos(x, y, z)
-                self._record_result('rejected', reason)
-                return False
-            if (
-                self.last_yaw is not None
-                and jump > self.yaw_jump_deg
-                and moved < self.jump_move_m
-            ):
-                reason = f'yaw jump {jump:.1f}deg, move {moved:.3f}m'
-                self.cf.extpos.send_extpos(x, y, z)
-                self._record_result('rejected', reason)
-                return False
-            self.cf.extpos.send_extpose(
-                x, y, z, quat.x, quat.y, quat.z, quat.w
-            )
-            self.last_position = position
-            self.last_yaw = yaw
-            self.last_quat = quat
-            self._record_result('accepted')
-            return True
 
 
 class CsvLogger:
     FIELDNAMES = [
-        'wall_time_s',
-        'elapsed_s',
-        'phase',
-        'phase_elapsed_s',
-        'command',
-        'mocap_x',
-        'mocap_y',
-        'mocap_z',
-        'mocap_qx',
-        'mocap_qy',
-        'mocap_qz',
-        'mocap_qw',
-        'mocap_age_s',
-        'mocap_frame_count',
-        'orientation_packet_sequence',
-        'orientation_packet_status',
-        'orientation_rejection_reason',
-        'orientation_accepted_count',
-        'extpos_fallback_count',
-        'orientation_rejected_count',
-        'corrected_mocap_roll_deg',
-        'corrected_mocap_pitch_deg',
-        'corrected_mocap_yaw_deg',
-        'estimate_x',
-        'estimate_y',
-        'estimate_z',
-        'estimate_roll_deg',
-        'estimate_pitch_deg',
-        'estimate_yaw_deg',
-        'estimate_age_s',
-        'estimate_attitude_age_s',
-        'estimate_error_m',
-        'estimate_error_x_m',
-        'estimate_error_y_m',
-        'estimate_error_z_m',
-        'battery_v',
+        "wall_time_s", "elapsed_s", "phase", "phase_elapsed_s", "command",
+        "expected_axis", "expected_sign",
+        "raw_mocap_x", "raw_mocap_y", "raw_mocap_z",
+        "local_mocap_x", "local_mocap_y", "local_mocap_z",
+        "mocap_age_s", "mocap_frame_count",
+        "origin_raw_x", "origin_raw_y", "origin_raw_z",
+        "local_x_from", "local_y_from", "local_z_from",
+        "extpos_packet_sequence", "extpos_sent_count", "extpos_error_count",
+        "last_extpos_status", "last_extpos_error",
+        "stream_local_x", "stream_local_y", "stream_local_z",
+        "estimate_x", "estimate_y", "estimate_z", "estimate_age_s",
+        "estimate_roll_deg", "estimate_pitch_deg", "estimate_yaw_deg",
+        "estimate_attitude_age_s", "yaw_baseline_deg", "yaw_drift_deg",
+        "expected_nose_front_yaw_deg", "yaw_alignment_error_deg",
+        "estimate_error_m", "estimate_error_x_m", "estimate_error_y_m",
+        "estimate_error_z_m", "battery_v",
     ]
 
     def __init__(self, output_path):
         self.output_path = output_path
         self.output_path.parent.mkdir(parents=True, exist_ok=True)
-        self._file = self.output_path.open('w', newline='')
+        self._file = self.output_path.open("w", newline="")
         self._writer = csv.DictWriter(self._file, fieldnames=self.FIELDNAMES)
         self._writer.writeheader()
         self._file.flush()
@@ -442,822 +449,590 @@ class CsvLogger:
 
 
 def setup_estimate_loggers(cf, LogConfig, estimate_state):
-    position_log = LogConfig(name='EstimatorPosition', period_in_ms=LOG_PERIOD_MS)
-    position_log.add_variable('pm.vbat', 'float')
-    position_log.add_variable('stateEstimate.x', 'float')
-    position_log.add_variable('stateEstimate.y', 'float')
-    position_log.add_variable('stateEstimate.z', 'float')
+    position_log = LogConfig(name="EstimatorPosition", period_in_ms=LOG_PERIOD_MS)
+    position_log.add_variable("pm.vbat", "float")
+    position_log.add_variable("stateEstimate.x", "float")
+    position_log.add_variable("stateEstimate.y", "float")
+    position_log.add_variable("stateEstimate.z", "float")
 
-    attitude_log = LogConfig(name='EstimatorAttitude', period_in_ms=LOG_PERIOD_MS)
-    attitude_log.add_variable('stateEstimate.roll', 'float')
-    attitude_log.add_variable('stateEstimate.pitch', 'float')
-    attitude_log.add_variable('stateEstimate.yaw', 'float')
+    attitude_log = LogConfig(name="EstimatorAttitude", period_in_ms=LOG_PERIOD_MS)
+    attitude_log.add_variable("stateEstimate.roll", "float")
+    attitude_log.add_variable("stateEstimate.pitch", "float")
+    attitude_log.add_variable("stateEstimate.yaw", "float")
 
-    def on_position(timestamp, data, logconf):
-        del timestamp, logconf
+    def on_position(timestamp, data, config):
+        del timestamp, config
         estimate_state.update_position(
-            data['stateEstimate.x'],
-            data['stateEstimate.y'],
-            data['stateEstimate.z'],
-            data['pm.vbat'],
+            data["stateEstimate.x"],
+            data["stateEstimate.y"],
+            data["stateEstimate.z"],
+            data["pm.vbat"],
         )
 
-    def on_attitude(timestamp, data, logconf):
-        del timestamp, logconf
+    def on_attitude(timestamp, data, config):
+        del timestamp, config
         estimate_state.update_attitude(
-            data['stateEstimate.roll'],
-            data['stateEstimate.pitch'],
-            data['stateEstimate.yaw'],
+            data["stateEstimate.roll"],
+            data["stateEstimate.pitch"],
+            data["stateEstimate.yaw"],
         )
 
-    def on_error(logconf, msg):
-        print(f"[WARN] Logger error from {logconf.name}: {msg}")
+    def on_error(config, message):
+        print(f"[WARN] Logger error from {config.name}: {message}")
 
     position_log.data_received_cb.add_callback(on_position)
     attitude_log.data_received_cb.add_callback(on_attitude)
     for logconf in (position_log, attitude_log):
-        cf.log.add_config(logconf)
         logconf.error_cb.add_callback(on_error)
+        cf.log.add_config(logconf)
         logconf.start()
     return [position_log, attitude_log]
 
 
-def send_extpose_or_extpos(cf, pose_mode, x, y, z, quat, body_to_cf=None):
-    if pose_mode == 'extpose':
-        quat = normalized_quat(quat)
-        if quat is None:
-            raise ValueError('Mocap quaternion is invalid')
-        if body_to_cf is not None:
-            quat = normalized_quat(multiply_quat(quat, body_to_cf))
-        cf.extpos.send_extpose(x, y, z, quat.x, quat.y, quat.z, quat.w)
-    else:
-        cf.extpos.send_extpos(x, y, z)
-
-
-def distance_3d(left, right):
-    return math.sqrt(sum((left[index] - right[index]) ** 2 for index in range(3)))
-
-
-def wait_for_mocap(mocap_state, mocap_reader, timeout):
-    print("[INFO] Waiting for fresh mocap pose...")
+def wait_for_mocap(mocap_state, mocap_reader, timeout=MOCAP_TIMEOUT_S):
+    print("[INFO] Waiting for fresh mocap position...")
     deadline = time.time() + timeout
     while time.time() < deadline:
         if mocap_reader.error is not None:
             raise RuntimeError(f"Mocap reader failed: {mocap_reader.error}")
-        position, quat, last_update, frames = mocap_state.snapshot()
-        if position is not None and time.time() - last_update <= POSE_STALE_TIMEOUT:
+        position, last_update, frames = mocap_state.snapshot()
+        if is_finite_position(position) and time.time() - last_update <= POSE_STALE_TIMEOUT_S:
             print(
-                "[MOCAP] Fresh pose: "
-                f"pos=({position[0]:.3f}, {position[1]:.3f}, {position[2]:.3f}) "
-                f"quat=({quat.x:.3f}, {quat.y:.3f}, {quat.z:.3f}, {quat.w:.3f}) "
+                "[MOCAP] Fresh position: "
+                f"({position[0]:.3f}, {position[1]:.3f}, {position[2]:.3f}) "
                 f"frames={frames}"
             )
             return
         time.sleep(0.05)
-    raise RuntimeError("No fresh mocap pose received before timeout")
+    raise RuntimeError("No fresh mocap position received before timeout")
 
 
-def wait_for_estimate(estimate_state, timeout):
-    print("[INFO] Waiting for stateEstimate log data...")
+def wait_for_estimate(estimate_state, timeout=MOCAP_TIMEOUT_S):
+    print("[INFO] Waiting for stateEstimate position and attitude data...")
     deadline = time.time() + timeout
     while time.time() < deadline:
-        position, attitude, battery, position_time, attitude_time = estimate_state.snapshot()
-        position_fresh = position is not None and time.time() - position_time <= ESTIMATE_STALE_TIMEOUT
-        attitude_fresh = attitude is not None and time.time() - attitude_time <= ESTIMATE_STALE_TIMEOUT
-        if position_fresh and attitude_fresh:
+        position, attitude, battery, position_time, attitude_time = (
+            estimate_state.snapshot()
+        )
+        now = time.time()
+        if (
+            is_finite_position(position)
+            and is_finite_position(attitude)
+            and now - position_time <= ESTIMATE_STALE_TIMEOUT_S
+            and now - attitude_time <= ESTIMATE_STALE_TIMEOUT_S
+        ):
             print(
-                "[ESTIMATE] Fresh estimate: "
-                f"pos=({position[0]:.3f}, {position[1]:.3f}, {position[2]:.3f}) "
-                f"battery={battery:.2f}V"
+                "[ESTIMATE] Fresh position: "
+                f"({position[0]:.3f}, {position[1]:.3f}, {position[2]:.3f}) "
+                f"attitude=({attitude[0]:.1f}, {attitude[1]:.1f}, "
+                f"{attitude[2]:.1f})deg battery={battery:.2f}V"
             )
             return
         time.sleep(0.05)
-    raise RuntimeError("No fresh stateEstimate data received before timeout")
-
-
-def normalized_quat(quat):
-    values = (quat.x, quat.y, quat.z, quat.w)
-    if not all(math.isfinite(value) for value in values):
-        return None
-    norm = math.sqrt(sum(value * value for value in values))
-    if norm <= 1.0e-9:
-        return None
-    return Quat(*(value / norm for value in values))
-
-
-def multiply_quat(left, right):
-    return Quat(
-        left.w * right.x + left.x * right.w + left.y * right.z - left.z * right.y,
-        left.w * right.y - left.x * right.z + left.y * right.w + left.z * right.x,
-        left.w * right.z + left.x * right.y - left.y * right.x + left.z * right.w,
-        left.w * right.w - left.x * right.x - left.y * right.y - left.z * right.z,
+    raise RuntimeError(
+        "No fresh stateEstimate position and attitude received before timeout"
     )
 
 
-def conjugate_quat(quat):
-    return Quat(-quat.x, -quat.y, -quat.z, quat.w)
-
-
-def yaw_quat(degrees):
-    half = math.radians(degrees) / 2.0
-    return Quat(0.0, 0.0, math.sin(half), math.cos(half))
-
-
-def euler_from_quat_deg(quat):
-    roll = math.degrees(math.atan2(
-        2.0 * (quat.w * quat.x + quat.y * quat.z),
-        1.0 - 2.0 * (quat.x * quat.x + quat.y * quat.y),
-    ))
-    pitch_term = 2.0 * (quat.w * quat.y - quat.z * quat.x)
-    pitch = math.degrees(math.asin(max(-1.0, min(1.0, pitch_term))))
-    yaw = math.degrees(math.atan2(
-        2.0 * (quat.w * quat.z + quat.x * quat.y),
-        1.0 - 2.0 * (quat.y * quat.y + quat.z * quat.z),
-    ))
-    return roll, pitch, yaw
-
-
-def angle_error_deg(actual, expected):
-    return (actual - expected + 180.0) % 360.0 - 180.0
-
-
-def percentile(values, percentile_value):
-    values = sorted(numeric_values(values))
-    if not values:
-        return math.nan
-    if len(values) == 1:
-        return values[0]
-    rank = (len(values) - 1) * percentile_value / 100.0
-    lower = math.floor(rank)
-    upper = math.ceil(rank)
-    if lower == upper:
-        return values[lower]
-    weight = rank - lower
-    return values[lower] * (1.0 - weight) + values[upper] * weight
-
-
-def average_quaternions(quats):
-    normalized = [normalized_quat(quat) for quat in quats]
-    normalized = [quat for quat in normalized if quat is not None]
-    if not normalized:
-        raise ValueError('No valid mocap quaternions in calibration sample')
-    reference = normalized[0]
-    aligned = []
-    for quat in normalized:
-        dot = sum(a * b for a, b in zip(
-            (reference.x, reference.y, reference.z, reference.w),
-            (quat.x, quat.y, quat.z, quat.w),
-        ))
-        aligned.append(quat if dot >= 0.0 else Quat(-quat.x, -quat.y, -quat.z, -quat.w))
-    return normalized_quat(Quat(
-        statistics.fmean(quat.x for quat in aligned),
-        statistics.fmean(quat.y for quat in aligned),
-        statistics.fmean(quat.z for quat in aligned),
-        statistics.fmean(quat.w for quat in aligned),
-    ))
-
-
-def quaternion_angle_deg(left, right):
-    dot = abs(sum(a * b for a, b in zip(
-        (left.x, left.y, left.z, left.w),
-        (right.x, right.y, right.z, right.w),
-    )))
-    return math.degrees(2.0 * math.acos(max(-1.0, min(1.0, dot))))
-
-
-def robust_average_quaternions(quats):
-    quats = [normalized_quat(quat) for quat in quats]
-    quats = [quat for quat in quats if quat is not None]
-    if not quats:
-        raise ValueError('No valid mocap quaternions in calibration sample')
-    medoid = min(
-        quats,
-        key=lambda candidate: statistics.median(
-            quaternion_angle_deg(candidate, other) for other in quats
-        ),
+def capture_origin(args, mocap_state, mocap_reader):
+    print("")
+    print("=" * 72)
+    print("[ORIGIN] Hold the drone at cage center at a comfortable MID-HEIGHT.")
+    print("[ORIGIN] Keep it physically LEVEL with its NOSE pointing cage FRONT.")
+    print("[ORIGIN] Leave enough room to move it both upward and downward.")
+    print(
+        "[SAFETY] This Z=0 is validator-only. Never copy it into autonomous "
+        "takeoff/landing code."
     )
-    distances = [quaternion_angle_deg(medoid, quat) for quat in quats]
-    distance_median = statistics.median(distances)
-    mad = statistics.median(abs(value - distance_median) for value in distances)
-    inlier_limit = distance_median + max(0.5, 3.0 * 1.4826 * mad)
-    inliers = [
-        quat for quat, distance in zip(quats, distances)
-        if distance <= inlier_limit
-    ]
-    return average_quaternions(inliers)
+    input("[ORIGIN] Once it is still, press ENTER to capture the local origin...")
+    samples = []
+    deadline = time.time() + args.origin_hold_duration
+    while time.time() < deadline:
+        if mocap_reader.error is not None:
+            raise RuntimeError(f"Mocap reader failed: {mocap_reader.error}")
+        position, last_update, _ = mocap_state.snapshot()
+        if not is_finite_position(position) or time.time() - last_update > args.pose_stale_timeout:
+            raise RuntimeError("Mocap became stale while capturing the local origin")
+        samples.append(position)
+        time.sleep(1.0 / args.rate_hz)
+    if len(samples) < args.min_samples:
+        raise RuntimeError(f"Only {len(samples)} origin samples; need {args.min_samples}")
+    ranges = tuple(
+        max(row[index] for row in samples) - min(row[index] for row in samples)
+        for index in range(3)
+    )
+    if max(ranges) > args.max_origin_spread_m:
+        raise RuntimeError(
+            f"Origin moved too much: ranges={ranges[0]:.3f}/"
+            f"{ranges[1]:.3f}/{ranges[2]:.3f}m"
+        )
+    origin = tuple(statistics.median(row[index] for row in samples) for index in range(3))
+    print(
+        f"[ORIGIN] Captured raw origin=({origin[0]:.3f}, "
+        f"{origin[1]:.3f}, {origin[2]:.3f})"
+    )
+    return origin
 
 
-def calibration_quaternions(rows, pose_stale_timeout=POSE_STALE_TIMEOUT):
-    quats = []
-    for row in rows:
-        if row.get('orientation_packet_status', 'accepted') != 'accepted':
-            continue
-        age = row.get('mocap_age_s', math.inf)
-        if not isinstance(age, Real) or age > pose_stale_timeout:
-            continue
-        values = tuple(row[name] for name in ('mocap_qx', 'mocap_qy', 'mocap_qz', 'mocap_qw'))
-        if all(isinstance(value, Real) for value in values):
-            quat = normalized_quat(Quat(*map(float, values)))
-            if quat is not None:
-                quats.append(quat)
-    return quats
-
-
-def compute_body_to_cf_quat(
-    rows,
-    nose_front_yaw_deg,
-    pose_stale_timeout=POSE_STALE_TIMEOUT,
-    min_samples=1,
+def capture_post_reset_attitude_baseline(
+    args, estimate_state, mocap_reader=None,
+    clock=time.monotonic, sleep=time.sleep,
 ):
-    samples = calibration_quaternions(rows, pose_stale_timeout)
-    if len(samples) < min_samples:
-        raise RuntimeError(
-            f'Only {len(samples)} fresh orientation samples; need at least '
-            f'{min_samples}'
-        )
-    average_body = robust_average_quaternions(samples)
-    expected_cf = yaw_quat(nose_front_yaw_deg)
-    body_to_cf = normalized_quat(multiply_quat(conjugate_quat(average_body), expected_cf))
-    spread = percentile(
-        [quaternion_angle_deg(average_body, sample) for sample in samples],
-        ROBUST_ORIENTATION_PERCENTILE,
+    print(
+        "[FRAME] Keep the drone physically LEVEL and NOSE-FRONT while the "
+        "post-reset yaw baseline is measured."
     )
-    return body_to_cf, average_body, spread
-
-
-def verify_calibration(rows, body_to_cf, args, expected_yaw_deg=None):
-    if expected_yaw_deg is None:
-        expected_yaw_deg = args.nose_front_yaw_deg
-    samples = calibration_quaternions(rows, args.pose_stale_timeout)
-    if len(samples) < args.min_orientation_samples:
-        raise RuntimeError(
-            f'Only {len(samples)} fresh verification orientation samples; '
-            f'need at least {args.min_orientation_samples}'
+    samples = []
+    deadline = clock() + args.attitude_baseline_duration
+    while clock() < deadline:
+        if mocap_reader is not None and mocap_reader.error is not None:
+            raise RuntimeError(f"Mocap reader failed: {mocap_reader.error}")
+        _, attitude, _, _, attitude_time = estimate_state.snapshot()
+        if (
+            not is_finite_position(attitude)
+            or time.time() - attitude_time > ESTIMATE_STALE_TIMEOUT_S
+        ):
+            raise RuntimeError(
+                "Estimator attitude became stale while capturing yaw baseline"
         )
-    corrected = [normalized_quat(multiply_quat(sample, body_to_cf)) for sample in samples]
-    eulers = [euler_from_quat_deg(quat) for quat in corrected]
-    average_corrected = robust_average_quaternions(corrected)
-    spread = percentile(
-        [quaternion_angle_deg(average_corrected, quat) for quat in corrected],
-        ROBUST_ORIENTATION_PERCENTILE,
-    )
+        samples.append(attitude)
+        sleep(1.0 / args.rate_hz)
+    if len(samples) < args.min_samples:
+        raise RuntimeError(
+            f"Only {len(samples)} attitude baseline samples; need {args.min_samples}"
+        )
     roll_error = percentile(
-        [abs(value[0]) for value in eulers], ROBUST_ORIENTATION_PERCENTILE
+        (abs(sample[0]) for sample in samples), ROBUST_PERCENTILE
     )
     pitch_error = percentile(
-        [abs(value[1]) for value in eulers], ROBUST_ORIENTATION_PERCENTILE
-    )
-    yaw_error = percentile(
-        [abs(angle_error_deg(value[2], expected_yaw_deg)) for value in eulers],
-        ROBUST_ORIENTATION_PERCENTILE,
-    )
-    fresh_estimator_rows = [
-        row for row in rows
-        if isinstance(row.get('estimate_attitude_age_s'), Real)
-        and row['estimate_attitude_age_s'] <= ESTIMATE_STALE_TIMEOUT
-    ]
-    if len(fresh_estimator_rows) < args.min_orientation_samples:
-        raise RuntimeError(
-            f'Only {len(fresh_estimator_rows)} fresh estimator attitude samples; '
-            f'need at least {args.min_orientation_samples}'
-        )
-    estimate_roll = median([row['estimate_roll_deg'] for row in fresh_estimator_rows])
-    estimate_pitch = median([row['estimate_pitch_deg'] for row in fresh_estimator_rows])
-    estimate_yaw = median([row['estimate_yaw_deg'] for row in fresh_estimator_rows])
-    estimator_errors = (
-        abs(estimate_roll),
-        abs(estimate_pitch),
-        abs(angle_error_deg(estimate_yaw, expected_yaw_deg)),
-    )
-    print(
-        f'[VERIFY] corrected p90 roll/pitch/yaw error: '
-        f'{roll_error:.2f}/{pitch_error:.2f}/{yaw_error:.2f} deg'
-    )
-    print(f'[VERIFY] corrected held-sample spread: {spread:.2f} deg')
-    print(
-        f'[VERIFY] estimator median roll/pitch/yaw: '
-        f'{estimate_roll:.2f}/{estimate_pitch:.2f}/{estimate_yaw:.2f} deg'
+        (abs(sample[1]) for sample in samples), ROBUST_PERCENTILE
     )
     if max(roll_error, pitch_error) > args.max_level_error_deg:
-        raise RuntimeError('Corrected mocap roll/pitch exceeds level verification limit')
-    if yaw_error > args.max_yaw_error_deg:
-        raise RuntimeError('Corrected mocap yaw exceeds expected-orientation limit')
-    if spread > args.max_sample_spread_deg:
-        raise RuntimeError('Verification orientation spread exceeds held-pose limit')
-    if any(math.isnan(value) for value in estimator_errors):
-        raise RuntimeError('Estimator attitude telemetry unavailable during verification')
-    if max(estimator_errors[:2]) > args.max_level_error_deg or estimator_errors[2] > args.max_yaw_error_deg:
-        raise RuntimeError('Estimator attitude failed calibrated frame verification')
+        raise RuntimeError(
+            "Drone was not level during post-reset baseline: "
+            f"p90 roll/pitch={roll_error:.1f}/{pitch_error:.1f}deg"
+        )
+    yaw_baseline = circular_median_deg(sample[2] for sample in samples)
+    yaw_spread = percentile(
+        (abs(angle_error_deg(sample[2], yaw_baseline)) for sample in samples),
+        ROBUST_PERCENTILE,
+    )
+    if yaw_spread > args.max_yaw_drift_deg:
+        raise RuntimeError(
+            f"Post-reset yaw was unstable: p90 drift={yaw_spread:.1f}deg"
+        )
+    alignment_error = abs(angle_error_deg(
+        yaw_baseline, args.expected_nose_front_yaw_deg
+    ))
+    if alignment_error > args.max_yaw_alignment_error_deg:
+        raise RuntimeError(
+            f"Nose-front yaw baseline {yaw_baseline:.1f}deg is not aligned "
+            f"with local +X expectation {args.expected_nose_front_yaw_deg:.1f}deg; "
+            f"error={alignment_error:.1f}deg"
+        )
+    print(
+        f"[FRAME] Post-reset nose-front yaw baseline={yaw_baseline:.1f}deg; "
+        f"alignment error={alignment_error:.1f}deg; p90 drift={yaw_spread:.1f}deg"
+    )
+    return AttitudeBaseline(yaw_baseline, args.expected_nose_front_yaw_deg)
 
 
-def verify_rotation_calibration(rows, body_to_cf, args, rotation_deg):
-    expected_yaw = args.nose_front_yaw_deg + rotation_deg
-    verify_calibration(rows, body_to_cf, args, expected_yaw)
+def require_attitude_stability(
+    args, estimate_state, baseline, mocap_reader=None,
+    clock=time.monotonic, sleep=time.sleep,
+):
+    print(
+        f"[VERIFY] Requiring level attitude and yaw within "
+        f"{args.max_yaw_drift_deg:.1f}deg of the post-reset baseline for "
+        f"{args.attitude_stability_duration:.1f}s"
+    )
+    deadline = clock() + args.attitude_stability_timeout
+    stable_since = None
+    last_detail = "stale/unavailable"
+    while clock() < deadline:
+        if mocap_reader is not None and mocap_reader.error is not None:
+            raise RuntimeError(f"Mocap reader failed: {mocap_reader.error}")
+        _, attitude, _, _, attitude_time = estimate_state.snapshot()
+        fresh = (
+            is_finite_position(attitude)
+            and time.time() - attitude_time <= ESTIMATE_STALE_TIMEOUT_S
+        )
+        if fresh:
+            roll, pitch, yaw = attitude
+            yaw_drift = abs(angle_error_deg(yaw, baseline.yaw_deg))
+            last_detail = (
+                f"roll={roll:.1f}deg pitch={pitch:.1f}deg "
+                f"yaw_drift={yaw_drift:.1f}deg"
+            )
+            stable = (
+                abs(roll) <= args.max_level_error_deg
+                and abs(pitch) <= args.max_level_error_deg
+                and yaw_drift <= args.max_yaw_drift_deg
+            )
+        else:
+            stable = False
+        if stable:
+            if stable_since is None:
+                stable_since = clock()
+            if clock() - stable_since >= args.attitude_stability_duration:
+                print(f"[VERIFY] Attitude stable; {last_detail}")
+                return
+        else:
+            stable_since = None
+        sleep(0.05)
+    raise RuntimeError(
+        "Drone did not remain level/nose-front relative to the post-reset yaw "
+        f"baseline; last {last_detail}"
+    )
+
+
+def make_row(
+    started_at, phase, phase_started_at, command, expected_axis, expected_sign,
+    mocap_state, estimate_state, transform, attitude_baseline,
+):
+    now = time.time()
+    raw, mocap_time, frame_count, stream_result = mocap_state.snapshot_with_stream()
+    estimate, attitude, battery, estimate_time, attitude_time = (
+        estimate_state.snapshot()
+    )
+    local = transform.apply(raw) if is_finite_position(raw) else None
+    error = (
+        distance_3d(local, estimate)
+        if local is not None and is_finite_position(estimate) else ""
+    )
+    error_components = (
+        tuple(estimate[index] - local[index] for index in range(3))
+        if error != "" else ("", "", "")
+    )
+    row = {
+        "wall_time_s": now,
+        "elapsed_s": now - started_at,
+        "phase": phase,
+        "phase_elapsed_s": now - phase_started_at,
+        "command": command,
+        "expected_axis": AXIS_NAMES[expected_axis] if expected_axis is not None else "origin",
+        "expected_sign": expected_sign,
+        "raw_mocap_x": raw[0] if raw is not None else "",
+        "raw_mocap_y": raw[1] if raw is not None else "",
+        "raw_mocap_z": raw[2] if raw is not None else "",
+        "local_mocap_x": local[0] if local is not None else "",
+        "local_mocap_y": local[1] if local is not None else "",
+        "local_mocap_z": local[2] if local is not None else "",
+        "mocap_age_s": now - mocap_time if mocap_time else "",
+        "mocap_frame_count": frame_count,
+        "origin_raw_x": transform.origin[0],
+        "origin_raw_y": transform.origin[1],
+        "origin_raw_z": transform.origin[2],
+        "local_x_from": transform.specs[0],
+        "local_y_from": transform.specs[1],
+        "local_z_from": transform.specs[2],
+        "estimate_x": estimate[0] if estimate is not None else "",
+        "estimate_y": estimate[1] if estimate is not None else "",
+        "estimate_z": estimate[2] if estimate is not None else "",
+        "estimate_age_s": now - estimate_time if estimate_time else "",
+        "estimate_roll_deg": attitude[0] if attitude is not None else "",
+        "estimate_pitch_deg": attitude[1] if attitude is not None else "",
+        "estimate_yaw_deg": attitude[2] if attitude is not None else "",
+        "estimate_attitude_age_s": now - attitude_time if attitude_time else "",
+        "yaw_baseline_deg": attitude_baseline.yaw_deg,
+        "yaw_drift_deg": (
+            abs(angle_error_deg(attitude[2], attitude_baseline.yaw_deg))
+            if attitude is not None else ""
+        ),
+        "expected_nose_front_yaw_deg": attitude_baseline.expected_yaw_deg,
+        "yaw_alignment_error_deg": abs(angle_error_deg(
+            attitude_baseline.yaw_deg, attitude_baseline.expected_yaw_deg
+        )),
+        "estimate_error_m": error,
+        "estimate_error_x_m": error_components[0],
+        "estimate_error_y_m": error_components[1],
+        "estimate_error_z_m": error_components[2],
+        "battery_v": battery,
+    }
+    row.update(stream_result)
+    return row
+
+
+def require_position_convergence(
+    args, mocap_state, estimate_state, transform, mocap_reader=None,
+    clock=time.monotonic, sleep=time.sleep,
+):
+    print(
+        f"[VERIFY] Requiring estimator/transformed-mocap error below "
+        f"{args.max_estimator_error_m:.3f}m continuously for "
+        f"{args.convergence_duration:.1f}s"
+    )
+    deadline = clock() + args.convergence_timeout
+    stable_since = None
+    last_error = math.inf
+    while clock() < deadline:
+        if mocap_reader is not None and mocap_reader.error is not None:
+            raise RuntimeError(f"Mocap reader failed: {mocap_reader.error}")
+        now = time.time()
+        raw, mocap_time, _ = mocap_state.snapshot()
+        estimate, _, _, estimate_time, _ = estimate_state.snapshot()
+        fresh = (
+            is_finite_position(raw)
+            and is_finite_position(estimate)
+            and now - mocap_time <= args.pose_stale_timeout
+            and now - estimate_time <= ESTIMATE_STALE_TIMEOUT_S
+        )
+        last_error = distance_3d(transform.apply(raw), estimate) if fresh else math.inf
+        if last_error < args.max_estimator_error_m:
+            if stable_since is None:
+                stable_since = clock()
+            if clock() - stable_since >= args.convergence_duration:
+                print(f"[VERIFY] Position converged; current error={last_error:.3f}m")
+                return
+        else:
+            stable_since = None
+        sleep(0.05)
+    error_text = f"{last_error:.3f}m" if math.isfinite(last_error) else "stale/unavailable"
+    raise RuntimeError(
+        "Estimator did not converge to transformed mocap coordinates; "
+        f"last error={error_text}"
+    )
+
+
+def validate_phase(rows, phase, args):
+    fresh = [
+        row for row in rows
+        if isinstance(row.get("mocap_age_s"), Real)
+        and row["mocap_age_s"] <= args.pose_stale_timeout
+        and isinstance(row.get("estimate_age_s"), Real)
+        and row["estimate_age_s"] <= ESTIMATE_STALE_TIMEOUT_S
+        and isinstance(row.get("estimate_attitude_age_s"), Real)
+        and row["estimate_attitude_age_s"] <= ESTIMATE_STALE_TIMEOUT_S
+    ]
+    if len(fresh) < args.min_samples:
+        raise RuntimeError(
+            f"{phase.name}: only {len(fresh)} fresh samples; need {args.min_samples}"
+        )
+    p90_error = percentile(
+        (row["estimate_error_m"] for row in fresh), ROBUST_PERCENTILE
+    )
+    if p90_error > args.max_estimator_error_m:
+        raise RuntimeError(
+            f"{phase.name}: estimator/transformed-mocap p90 error "
+            f"{p90_error:.3f}m exceeds {args.max_estimator_error_m:.3f}m"
+        )
+    roll_error = percentile(
+        (abs(row["estimate_roll_deg"]) for row in fresh), ROBUST_PERCENTILE
+    )
+    pitch_error = percentile(
+        (abs(row["estimate_pitch_deg"]) for row in fresh), ROBUST_PERCENTILE
+    )
+    yaw_drift = percentile(
+        (row["yaw_drift_deg"] for row in fresh), ROBUST_PERCENTILE
+    )
+    if max(roll_error, pitch_error) > args.max_level_error_deg:
+        raise RuntimeError(
+            f"{phase.name}: drone was not level; p90 roll/pitch="
+            f"{roll_error:.1f}/{pitch_error:.1f}deg"
+        )
+    if yaw_drift > args.max_yaw_drift_deg:
+        raise RuntimeError(
+            f"{phase.name}: yaw drift {yaw_drift:.1f}deg exceeds "
+            f"{args.max_yaw_drift_deg:.1f}deg"
+        )
+    local_medians = tuple(
+        median(row[f"local_mocap_{axis}"] for row in fresh) for axis in AXIS_NAMES
+    )
+    estimate_medians = tuple(
+        median(row[f"estimate_{axis}"] for row in fresh) for axis in AXIS_NAMES
+    )
+    if phase.axis is None:
+        local_radius = distance_3d(local_medians, (0.0, 0.0, 0.0))
+        estimate_radius = distance_3d(estimate_medians, (0.0, 0.0, 0.0))
+        if max(local_radius, estimate_radius) > args.max_return_error_m:
+            raise RuntimeError(
+                f"{phase.name}: return-to-origin error "
+                f"mocap={local_radius:.3f}m estimate={estimate_radius:.3f}m"
+            )
+    else:
+        local_primary = phase.sign * local_medians[phase.axis]
+        estimate_primary = phase.sign * estimate_medians[phase.axis]
+        if min(local_primary, estimate_primary) < args.min_movement_m:
+            raise RuntimeError(
+                f"{phase.name}: movement on local {AXIS_NAMES[phase.axis]} "
+                f"was too small or had the wrong sign "
+                f"(mocap={local_medians[phase.axis]:+.3f}m, "
+                f"estimate={estimate_medians[phase.axis]:+.3f}m)"
+            )
+        cross_axes = [index for index in range(3) if index != phase.axis]
+        cross_error = max(abs(local_medians[index]) for index in cross_axes)
+        if cross_error > args.max_cross_axis_m:
+            raise RuntimeError(
+                f"{phase.name}: cross-axis mocap movement {cross_error:.3f}m "
+                f"exceeds {args.max_cross_axis_m:.3f}m"
+            )
+    print(
+        f"[PASS] {phase.name}: local=({local_medians[0]:+.3f}, "
+        f"{local_medians[1]:+.3f}, {local_medians[2]:+.3f}) "
+        f"estimate=({estimate_medians[0]:+.3f}, {estimate_medians[1]:+.3f}, "
+        f"{estimate_medians[2]:+.3f}) p90_error={p90_error:.3f}m "
+        f"p90_yaw_drift={yaw_drift:.1f}deg"
+    )
+
+
+def run_phase(
+    args, logger, started_at, phase, mocap_state, estimate_state, transform,
+    attitude_baseline, mocap_reader,
+):
+    print("")
+    print("=" * 72)
+    print(f"[MOVE] {phase.description}.")
+    print("[MOVE] Keep the drone physically LEVEL and NOSE-FRONT.")
+    if phase.axis is not None:
+        print(
+            f"[MOVE] Move at least {args.min_movement_m:.2f}m while minimizing "
+            "motion on the other two axes."
+        )
+    input("[MOVE] Once it is still, press ENTER to verify and record...")
+    require_position_convergence(
+        args, mocap_state, estimate_state, transform, mocap_reader
+    )
+    require_attitude_stability(
+        args, estimate_state, attitude_baseline, mocap_reader
+    )
+    print(f"[RECORD] {phase.name}: holding for {args.hold_duration:.1f}s")
+    phase_started_at = time.time()
+    rows = []
+    next_sample = phase_started_at
+    while time.time() - phase_started_at < args.hold_duration:
+        if mocap_reader.error is not None:
+            raise RuntimeError(f"Mocap reader failed: {mocap_reader.error}")
+        now = time.time()
+        if now < next_sample:
+            time.sleep(min(0.01, next_sample - now))
+            continue
+        row = make_row(
+            started_at, phase.name, phase_started_at, "hold-still",
+            phase.axis, phase.sign, mocap_state, estimate_state, transform,
+            attitude_baseline,
+        )
+        logger.write(row)
+        rows.append(row)
+        next_sample += 1.0 / args.rate_hz
+    validate_phase(rows, phase, args)
+    return rows
+
+
+def run_movement_phases(
+    args, logger, started_at, mocap_state, estimate_state, transform,
+    attitude_baseline, mocap_reader,
+):
+    for phase in MOVEMENT_PHASES:
+        run_phase(
+            args, logger, started_at, phase, mocap_state, estimate_state,
+            transform, attitude_baseline, mocap_reader,
+        )
 
 
 def shutdown_mocap_reader(reader, timeout=2.0):
-    reader.on_pose = None
+    reader.on_position = None
     reader.close()
     if reader.ident is None:
         return
     reader.join(timeout=timeout)
     if reader.is_alive():
-        raise RuntimeError('Mocap reader did not stop cleanly')
-
-
-def estimate_error(mocap_position, estimate_position):
-    if mocap_position is None or estimate_position is None:
-        return '', '', '', ''
-    ex = estimate_position[0] - mocap_position[0]
-    ey = estimate_position[1] - mocap_position[1]
-    ez = estimate_position[2] - mocap_position[2]
-    return math.sqrt(ex * ex + ey * ey + ez * ez), ex, ey, ez
-
-
-def make_row(started_at, phase, phase_started_at, command, mocap_state, estimate_state, sender=None):
-    del sender
-    now = time.time()
-    mocap_position, quat, mocap_time, frame_count, orientation_result = (
-        mocap_state.snapshot_with_orientation()
-    )
-    estimate_position, estimate_attitude, battery, estimate_time, attitude_time = estimate_state.snapshot()
-    error, error_x, error_y, error_z = estimate_error(mocap_position, estimate_position)
-
-    row = {
-        'wall_time_s': now,
-        'elapsed_s': now - started_at,
-        'phase': phase,
-        'phase_elapsed_s': now - phase_started_at,
-        'command': command,
-        'mocap_x': '',
-        'mocap_y': '',
-        'mocap_z': '',
-        'mocap_qx': '',
-        'mocap_qy': '',
-        'mocap_qz': '',
-        'mocap_qw': '',
-        'mocap_age_s': '',
-        'mocap_frame_count': frame_count,
-        'orientation_packet_sequence': '',
-        'orientation_packet_status': 'not-streamed',
-        'orientation_rejection_reason': '',
-        'orientation_accepted_count': 0,
-        'extpos_fallback_count': 0,
-        'orientation_rejected_count': 0,
-        'corrected_mocap_roll_deg': '',
-        'corrected_mocap_pitch_deg': '',
-        'corrected_mocap_yaw_deg': '',
-        'estimate_x': '',
-        'estimate_y': '',
-        'estimate_z': '',
-        'estimate_roll_deg': '',
-        'estimate_pitch_deg': '',
-        'estimate_yaw_deg': '',
-        'estimate_age_s': '',
-        'estimate_attitude_age_s': '',
-        'estimate_error_m': error,
-        'estimate_error_x_m': error_x,
-        'estimate_error_y_m': error_y,
-        'estimate_error_z_m': error_z,
-        'battery_v': battery,
-    }
-    row.update(orientation_result)
-    if mocap_position is not None and quat is not None:
-        row.update({
-            'mocap_x': mocap_position[0],
-            'mocap_y': mocap_position[1],
-            'mocap_z': mocap_position[2],
-            'mocap_qx': quat.x,
-            'mocap_qy': quat.y,
-            'mocap_qz': quat.z,
-            'mocap_qw': quat.w,
-            'mocap_age_s': now - mocap_time,
-        })
-    if estimate_position is not None:
-        row.update({
-            'estimate_x': estimate_position[0],
-            'estimate_y': estimate_position[1],
-            'estimate_z': estimate_position[2],
-            'estimate_roll_deg': estimate_attitude[0] if estimate_attitude else '',
-            'estimate_pitch_deg': estimate_attitude[1] if estimate_attitude else '',
-            'estimate_yaw_deg': estimate_attitude[2] if estimate_attitude else '',
-            'estimate_age_s': now - estimate_time,
-            'estimate_attitude_age_s': now - attitude_time if attitude_time else '',
-        })
-    return row
-
-
-def numeric_values(values):
-    converted = []
-    for value in values:
-        if not isinstance(value, Real):
-            continue
-        value = float(value)
-        if not math.isnan(value):
-            converted.append(value)
-    return converted
-
-
-def median(values):
-    values = numeric_values(values)
-    if not values:
-        return math.nan
-    return statistics.median(values)
-
-
-def format_float(value):
-    if isinstance(value, float) and not math.isnan(value):
-        return f"{value:.3f}"
-    return "n/a"
-
-
-def print_phase_summary(phase, rows, pose_stale_timeout, packet_counts=None):
-    errors = numeric_values([row['estimate_error_m'] for row in rows])
-    fresh_rows = [
-        row for row in rows
-        if isinstance(row['mocap_age_s'], Real) and row['mocap_age_s'] <= pose_stale_timeout
-    ]
-    mx = median([row['mocap_x'] for row in rows])
-    my = median([row['mocap_y'] for row in rows])
-    mz = median([row['mocap_z'] for row in rows])
-    ex = median([row['estimate_x'] for row in rows])
-    ey = median([row['estimate_y'] for row in rows])
-    ez = median([row['estimate_z'] for row in rows])
-    err = median(errors)
-    print(
-        f"[PHASE] {phase}: "
-        f"mocap=({format_float(mx)}, {format_float(my)}, {format_float(mz)}) "
-        f"estimate=({format_float(ex)}, {format_float(ey)}, {format_float(ez)}) "
-        f"median_error={format_float(err)}m "
-        f"fresh_mocap={len(fresh_rows)}/{len(rows)}"
-    )
-    if packet_counts is not None:
-        total = packet_counts['accepted'] + packet_counts['rejected']
-        rejection_ratio = packet_counts['rejected'] / total if total else math.nan
-        print(
-            f"[STREAM] {phase}: accepted={packet_counts['accepted']} "
-            f"fallback={packet_counts['fallback']} "
-            f"rejected={packet_counts['rejected']} "
-            f"rejection_rate={rejection_ratio:.2%}"
-        )
-    if math.isnan(mx) or math.isnan(ex):
-        print(
-            "[WARN] This phase did not contain complete mocap/estimator rows. "
-            "Check that mocap is still tracking and the Crazyflie link is alive."
-        )
-    elif not fresh_rows:
-        print(
-            "[WARN] Mocap was stale for this whole phase. The estimator values for "
-            "this phase are not trustworthy for frame validation."
-        )
-
-
-def validate_orientation_rejection_rate(args, packet_counts):
-    total = packet_counts['accepted'] + packet_counts['rejected']
-    if total < args.min_orientation_samples:
-        raise RuntimeError(
-            f'Only {total} streamed orientation packets; need at least '
-            f'{args.min_orientation_samples}'
-        )
-    rejection_ratio = packet_counts['rejected'] / total
-    if rejection_ratio > args.max_orientation_rejection_ratio:
-        raise RuntimeError(
-            f'Orientation rejection rate {rejection_ratio:.2%} exceeds '
-            f'{args.max_orientation_rejection_ratio:.2%}'
-        )
+        raise RuntimeError("Mocap reader did not stop cleanly")
 
 
 def make_output_path(output):
     if output:
         path = Path(output)
     else:
-        timestamp = time.strftime('%Y%m%d-%H%M%S')
-        path = Path(DEFAULT_OUTPUT_DIR) / f"mocap-estimator-world-frame-{timestamp}.csv"
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        path = Path(DEFAULT_OUTPUT_DIR) / f"mocap-local-frame-validator-{timestamp}.csv"
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
 
-def require_position_convergence(
-    args,
-    mocap_state,
-    estimate_state,
-    mocap_reader=None,
-    clock=time.monotonic,
-    sleep=time.sleep,
-):
-    print(
-        f'[VERIFY] Requiring estimator/mocap position error below '
-        f'{args.position_convergence_error_m:.3f}m continuously for '
-        f'{args.position_convergence_duration:.1f}s'
-    )
-    deadline = clock() + args.position_convergence_timeout
-    stable_since = None
-    while clock() < deadline:
-        if mocap_reader is not None and mocap_reader.error is not None:
-            raise RuntimeError(f'Mocap reader failed: {mocap_reader.error}')
-        now = time.time()
-        mocap_position, _, mocap_time, _ = mocap_state.snapshot()
-        estimate_position, _, _, estimate_time, _ = estimate_state.snapshot()
-        fresh = (
-            mocap_position is not None
-            and estimate_position is not None
-            and now - mocap_time <= args.pose_stale_timeout
-            and now - estimate_time <= ESTIMATE_STALE_TIMEOUT
-        )
-        error = (
-            distance_3d(mocap_position, estimate_position)
-            if fresh else math.inf
-        )
-        if error < args.position_convergence_error_m:
-            if stable_since is None:
-                stable_since = clock()
-            if clock() - stable_since >= args.position_convergence_duration:
-                print(f'[VERIFY] Position converged; current error={error:.3f}m')
-                return
-        else:
-            stable_since = None
-        sleep(0.05)
-    raise RuntimeError(
-        'Estimator/mocap position did not converge continuously before verification'
-    )
-
-
-def wait_for_orientation_baseline(
-    sender,
-    mocap_reader=None,
-    timeout=MOCAP_TIMEOUT,
-    clock=time.monotonic,
-    sleep=time.sleep,
-):
-    deadline = clock() + timeout
-    while clock() < deadline:
-        if mocap_reader is not None and mocap_reader.error is not None:
-            raise RuntimeError(f'Mocap reader failed: {mocap_reader.error}')
-        if sender.has_orientation_baseline():
-            print('[STREAM] First valid post-reset orientation accepted')
-            return
-        sleep(0.01)
-    raise RuntimeError('No valid orientation accepted after baseline reset')
-
-
-def require_estimator_yaw_convergence(
-    args,
-    estimate_state,
-    expected_yaw_deg,
-    mocap_reader=None,
-    clock=time.monotonic,
-    sleep=time.sleep,
-):
-    print(
-        f'[VERIFY] Requiring estimator yaw within '
-        f'{args.yaw_convergence_error_deg:.1f}deg of '
-        f'{expected_yaw_deg:.1f}deg continuously for '
-        f'{args.yaw_convergence_duration:.1f}s'
-    )
-    deadline = clock() + args.yaw_convergence_timeout
-    stable_since = None
-    while clock() < deadline:
-        if mocap_reader is not None and mocap_reader.error is not None:
-            raise RuntimeError(f'Mocap reader failed: {mocap_reader.error}')
-        now = time.time()
-        _, attitude, _, _, attitude_time = estimate_state.snapshot()
-        yaw = attitude[2] if attitude is not None else math.nan
-        fresh = (
-            math.isfinite(yaw)
-            and attitude_time
-            and now - attitude_time <= ESTIMATE_STALE_TIMEOUT
-        )
-        yaw_error = (
-            abs(angle_error_deg(yaw, expected_yaw_deg))
-            if fresh else math.inf
-        )
-        if yaw_error <= args.yaw_convergence_error_deg:
-            if stable_since is None:
-                stable_since = clock()
-            if clock() - stable_since >= args.yaw_convergence_duration:
-                print(
-                    f'[VERIFY] Estimator yaw converged; '
-                    f'current error={yaw_error:.2f}deg'
-                )
-                return
-        else:
-            stable_since = None
-        sleep(0.05)
-    raise RuntimeError(
-        f'Estimator yaw did not converge to {expected_yaw_deg:.1f}deg '
-        'continuously before verification'
-    )
-
-
-def run_phase(
-    args, logger, started_at, phase, description, mocap_state, estimate_state,
-    sender=None, require_convergence=False, mocap_reader=None,
-    reset_orientation_baseline=False, expected_yaw_deg=None,
-):
-    print("")
-    print("=" * 72)
-    print(f"[MOVE] Place the drone at: {description}")
-    print("[MOVE] Keep the nose/front pointed the same direction as the start.")
-    input("[MOVE] Once it is still, press ENTER to record this phase...")
-    if reset_orientation_baseline:
-        if sender is None:
-            raise RuntimeError('Orientation baseline reset requires an extpose sender')
-        sender.reset_orientation_baseline()
-        print('[STREAM] Orientation jump-filter baseline reset')
-        wait_for_orientation_baseline(sender, mocap_reader)
-    if require_convergence:
-        require_position_convergence(
-            args, mocap_state, estimate_state, mocap_reader
-        )
-    if expected_yaw_deg is not None:
-        require_estimator_yaw_convergence(
-            args, estimate_state, expected_yaw_deg, mocap_reader
-        )
-    print(f"[RECORD] {phase}: holding for {args.hold_duration:.1f}s")
-
-    phase_started_at = time.time()
-    stream_start = sender.snapshot() if sender is not None else None
-    rows = []
-    next_sample = phase_started_at
-    last_stale_warning_second = None
-    while time.time() - phase_started_at < args.hold_duration:
-        now = time.time()
-        if now < next_sample:
-            time.sleep(min(0.01, next_sample - now))
-            continue
-        row = make_row(
-            started_at,
-            phase,
-            phase_started_at,
-            'hold-still',
-            mocap_state,
-            estimate_state,
-            sender,
-        )
-        logger.write(row)
-        rows.append(row)
-        next_sample += 1.0 / args.rate_hz
-
-        mocap_age = row['mocap_age_s']
-        estimate_age = row['estimate_age_s']
-        if isinstance(mocap_age, Real) and mocap_age > args.pose_stale_timeout:
-            stale_second = int(mocap_age)
-            if stale_second != last_stale_warning_second:
-                print(f"[WARN] Mocap age is stale: {mocap_age:.2f}s")
-                last_stale_warning_second = stale_second
-        if isinstance(estimate_age, Real) and estimate_age > ESTIMATE_STALE_TIMEOUT:
-            print(f"[WARN] Estimate age is stale: {estimate_age:.2f}s")
-
-    packet_counts = None
-    if sender is not None:
-        stream_end = sender.snapshot()
-        packet_counts = {
-            'accepted': stream_end['orientation_accepted_count'] - stream_start['orientation_accepted_count'],
-            'fallback': stream_end['extpos_fallback_count'] - stream_start['extpos_fallback_count'],
-            'rejected': stream_end['orientation_rejected_count'] - stream_start['orientation_rejected_count'],
-        }
-    print_phase_summary(phase, rows, args.pose_stale_timeout, packet_counts)
-    if packet_counts is not None:
-        validate_orientation_rejection_rate(args, packet_counts)
-    return rows
-
-
-def run_translation_phases(
-    args, logger, started_at, mocap_state, estimate_state, sender, mocap_reader
-):
-    for phase, description in DEFAULT_PHASES:
-        run_phase(
-            args, logger, started_at, phase, description,
-            mocap_state, estimate_state, sender,
-            require_convergence=True,
-            mocap_reader=mocap_reader,
-            reset_orientation_baseline=True,
-            expected_yaw_deg=args.nose_front_yaw_deg,
-        )
-
-
 def run(args):
     runtime = load_runtime_modules()
-    runtime['cflib_crtp'].init_drivers()
-
+    runtime["cflib_crtp"].init_drivers()
     output_path = make_output_path(args.output)
     mocap_state = MocapState()
     estimate_state = EstimateState()
-    mocap_reader = MocapReader(runtime['motioncapture'], args.host, args.body, mocap_state)
+    reader = MocapReader(runtime["motioncapture"], args.host, args.body, mocap_state)
     logger = CsvLogger(output_path)
     estimate_logconfs = []
 
     print("=" * 72)
-    print("MOCAP ESTIMATOR WORLD-FRAME CALIBRATOR")
+    print("NO-FLIGHT MOCAP POSITION-ONLY LOCAL-FRAME VALIDATOR")
     print("=" * 72)
     print(f"URI: {args.uri}")
     print(f"Rigid body: {args.body}@{args.host}")
-    print(f"Pose stream: {args.pose_mode}")
+    print(
+        f"Mapping: local +X <- {args.local_x_from}, "
+        f"local +Y <- {args.local_y_from}, local +Z <- {args.local_z_from}"
+    )
     print(f"Output: {output_path}")
-    print("This is no-flight: it never arms and never commands motors.")
+    print("This script streams extpos only. It never arms or commands motors.")
+    print(
+        "[SAFETY] Captured local Z=0 is mid-height and validator-only; "
+        "flight must use a floor/start-referenced Z origin."
+    )
     print("=" * 72)
 
     try:
-        input("Press ENTER to connect mocap and Crazyflie, or Ctrl+C to abort...")
-        mocap_reader.start()
-        wait_for_mocap(mocap_state, mocap_reader, MOCAP_TIMEOUT)
+        input("Press ENTER to connect mocap, or Ctrl+C to abort...")
+        reader.start()
+        wait_for_mocap(mocap_state, reader)
+        origin = capture_origin(args, mocap_state, reader)
+        transform = LocalFrameTransform(
+            origin, (args.local_x_from, args.local_y_from, args.local_z_from)
+        )
 
-        with runtime['SyncCrazyflie'](args.uri, cf=runtime['Crazyflie'](rw_cache='./cache')) as scf:
+        input("Press ENTER to connect Crazyflie, or Ctrl+C to abort...")
+        with runtime["SyncCrazyflie"](
+            args.uri, cf=runtime["Crazyflie"](rw_cache="./cache")
+        ) as scf:
             cf = scf.cf
             print("[INFO] Crazyflie connected.")
-            estimate_logconfs = setup_estimate_loggers(cf, runtime['LogConfig'], estimate_state)
-            time.sleep(0.8)
-            wait_for_estimate(estimate_state, MOCAP_TIMEOUT)
-
-            sender = FilteredExtposeSender(
-                cf,
-                yaw_jump_deg=args.yaw_jump_deg,
-                jump_move_m=args.yaw_jump_move_m,
-                orientation_jump_deg=args.orientation_jump_deg,
+            estimate_logconfs = setup_estimate_loggers(
+                cf, runtime["LogConfig"], estimate_state
             )
-            mocap_reader.on_pose = sender.send
-            print("[INFO] Configuring Kalman estimator for external pose...")
-            if args.pose_mode == 'extpose':
-                cf.param.set_value('locSrv.extQuatStdDev', args.orientation_std_dev)
-            cf.param.set_value('stabilizer.estimator', '2')
+            sender = ExtposSender(cf, transform)
+            reader.on_position = sender.send
+            cf.param.set_value("stabilizer.estimator", "2")
             time.sleep(0.5)
-
-            print("[INFO] Resetting estimator while external pose is streaming...")
-            runtime['reset_estimator'](cf)
+            input(
+                "[FRAME] Keep the drone LEVEL and NOSE-FRONT, then press "
+                "ENTER to reset the estimator..."
+            )
+            print("[INFO] Resetting Kalman estimator while local extpos is streaming...")
+            runtime["reset_estimator"](cf)
             time.sleep(args.settle_duration)
+            wait_for_estimate(estimate_state)
+            attitude_baseline = capture_post_reset_attitude_baseline(
+                args, estimate_state, reader
+            )
+            require_position_convergence(
+                args, mocap_state, estimate_state, transform, reader
+            )
+            require_attitude_stability(
+                args, estimate_state, attitude_baseline, reader
+            )
 
             started_at = time.time()
-            if args.pose_mode != 'extpose':
-                raise RuntimeError('Automatic body-frame calibration requires --pose-mode extpose')
-            calibration_rows = run_phase(
-                args, logger, started_at, 'level_nose_front_calibration',
-                'center/start, physically level, with the Crazyflie nose pointing front',
-                mocap_state, estimate_state, sender,
-                reset_orientation_baseline=True,
+            origin_phase = MovementPhase(
+                "origin_validation", "hold at the captured center/origin", None, 0
             )
-            body_to_cf, average_body, spread = compute_body_to_cf_quat(
-                calibration_rows,
-                args.nose_front_yaw_deg,
-                args.pose_stale_timeout,
-                args.min_orientation_samples,
+            run_phase(
+                args, logger, started_at, origin_phase, mocap_state,
+                estimate_state, transform, attitude_baseline, reader,
             )
-            if spread > args.max_sample_spread_deg:
-                raise RuntimeError(
-                    f'Calibration orientation spread {spread:.2f}deg exceeds '
-                    f'{args.max_sample_spread_deg:.2f}deg'
-                )
-            sender.set_body_to_cf(body_to_cf)
-            print(
-                '[CALIBRATION] Mean raw body quaternion: '
-                f'{average_body.x:.9f} {average_body.y:.9f} '
-                f'{average_body.z:.9f} {average_body.w:.9f}'
-            )
-            print(f'[CALIBRATION] Robust p90 held-sample spread: {spread:.2f}deg')
-            print(
-                '[CALIBRATION] Provisional transform computed; it will not be '
-                'printed for use unless all verification phases pass.'
-            )
-            print('[INFO] Resetting estimator with calibrated extpose stream...')
-            runtime['reset_estimator'](cf)
-            time.sleep(args.settle_duration)
-            verification_rows = run_phase(
-                args, logger, started_at, 'level_nose_front_verification',
-                'the same center/start pose, physically level and nose-front',
-                mocap_state, estimate_state, sender,
-                require_convergence=True, mocap_reader=mocap_reader,
-                reset_orientation_baseline=True,
-                expected_yaw_deg=args.nose_front_yaw_deg,
-            )
-            verify_calibration(verification_rows, body_to_cf, args)
-            left_rows = run_phase(
-                args, logger, started_at, 'level_left_90_verification',
-                'center/start, physically level, rotated 90 degrees left from nose-front',
-                mocap_state, estimate_state, sender,
-                require_convergence=True, mocap_reader=mocap_reader,
-                reset_orientation_baseline=True,
-                expected_yaw_deg=args.nose_front_yaw_deg + 90.0,
-            )
-            verify_rotation_calibration(left_rows, body_to_cf, args, 90.0)
-            right_rows = run_phase(
-                args, logger, started_at, 'level_right_90_verification',
-                'center/start, physically level, rotated 90 degrees right from nose-front',
-                mocap_state, estimate_state, sender,
-                require_convergence=True, mocap_reader=mocap_reader,
-                reset_orientation_baseline=True,
-                expected_yaw_deg=args.nose_front_yaw_deg - 90.0,
-            )
-            verify_rotation_calibration(right_rows, body_to_cf, args, -90.0)
-            print('[CALIBRATION] PASS: level, left 90, and right 90 orientations verified')
-            print(
-                '[CALIBRATION] Verified autonomy-ladder argument:\n'
-                f'  --body-to-cf-quat {body_to_cf.x:.9f} {body_to_cf.y:.9f} '
-                f'{body_to_cf.z:.9f} {body_to_cf.w:.9f}'
-            )
-            run_translation_phases(
+            run_movement_phases(
                 args, logger, started_at, mocap_state, estimate_state,
-                sender, mocap_reader,
+                transform, attitude_baseline, reader,
             )
-
+            print("")
+            print(
+                "[VALIDATION] PASS: all position axes/directions verified "
+                "with stable level/nose-front yaw"
+            )
     finally:
         for estimate_logconf in estimate_logconfs:
             try:
@@ -1265,7 +1040,7 @@ def run(args):
             except Exception:
                 pass
         try:
-            shutdown_mocap_reader(mocap_reader)
+            shutdown_mocap_reader(reader)
         finally:
             logger.close()
 
@@ -1278,77 +1053,130 @@ def run(args):
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--uri', default=DEFAULT_URI)
-    parser.add_argument('--host', default=DEFAULT_HOST_NAME)
-    parser.add_argument('--body', default=DEFAULT_RIGID_BODY_NAME)
-    parser.add_argument('--output', default=None)
-    parser.add_argument('--pose-mode', choices=('extpose', 'extpos'), default='extpose')
-    parser.add_argument('--orientation-std-dev', type=float, default=8.0e-3)
-    parser.add_argument('--hold-duration', type=float, default=4.0)
-    parser.add_argument('--settle-duration', type=float, default=2.0)
-    parser.add_argument('--rate-hz', type=float, default=20.0)
-    parser.add_argument('--pose-stale-timeout', type=float, default=POSE_STALE_TIMEOUT)
-    parser.add_argument('--nose-front-yaw-deg', type=float, default=DEFAULT_NOSE_FRONT_YAW_DEG)
-    parser.add_argument('--max-level-error-deg', type=float, default=DEFAULT_MAX_LEVEL_ERROR_DEG)
-    parser.add_argument('--max-yaw-error-deg', type=float, default=DEFAULT_MAX_YAW_ERROR_DEG)
-    parser.add_argument('--max-sample-spread-deg', type=float, default=DEFAULT_MAX_SAMPLE_SPREAD_DEG)
-    parser.add_argument('--yaw-jump-deg', type=float, default=DEFAULT_YAW_JUMP_DEG)
-    parser.add_argument('--yaw-jump-move-m', type=float, default=DEFAULT_YAW_JUMP_MOVE_M)
-    parser.add_argument('--orientation-jump-deg', type=float, default=DEFAULT_ORIENTATION_JUMP_DEG)
-    parser.add_argument('--max-orientation-rejection-ratio', type=float, default=DEFAULT_MAX_ORIENTATION_REJECTION_RATIO)
-    parser.add_argument('--position-convergence-error-m', type=float, default=DEFAULT_POSITION_CONVERGENCE_ERROR_M)
-    parser.add_argument('--position-convergence-duration', type=float, default=DEFAULT_POSITION_CONVERGENCE_DURATION_S)
-    parser.add_argument('--position-convergence-timeout', type=float, default=DEFAULT_POSITION_CONVERGENCE_TIMEOUT_S)
-    parser.add_argument('--yaw-convergence-error-deg', type=float, default=DEFAULT_YAW_CONVERGENCE_ERROR_DEG)
-    parser.add_argument('--yaw-convergence-duration', type=float, default=DEFAULT_YAW_CONVERGENCE_DURATION_S)
-    parser.add_argument('--yaw-convergence-timeout', type=float, default=DEFAULT_YAW_CONVERGENCE_TIMEOUT_S)
+    parser.add_argument("--uri", default=DEFAULT_URI)
+    parser.add_argument("--host", default=DEFAULT_HOST_NAME)
+    parser.add_argument("--body", default=DEFAULT_RIGID_BODY_NAME)
+    parser.add_argument("--output")
+    parser.add_argument("--local-x-from", choices=AXIS_SPECS, default="neg-y")
+    parser.add_argument("--local-y-from", choices=AXIS_SPECS, default="pos-x")
+    parser.add_argument("--local-z-from", choices=AXIS_SPECS, default="pos-z")
+    parser.add_argument("--hold-duration", type=float, default=DEFAULT_HOLD_DURATION_S)
     parser.add_argument(
-        '--min-orientation-samples',
-        type=int,
-        default=DEFAULT_MIN_ORIENTATION_SAMPLES,
+        "--origin-hold-duration", type=float,
+        default=DEFAULT_ORIGIN_HOLD_DURATION_S,
     )
+    parser.add_argument("--settle-duration", type=float, default=2.0)
+    parser.add_argument("--rate-hz", type=float, default=DEFAULT_RATE_HZ)
+    parser.add_argument(
+        "--pose-stale-timeout", type=float, default=POSE_STALE_TIMEOUT_S
+    )
+    parser.add_argument(
+        "--max-origin-spread-m", type=float, default=DEFAULT_MAX_ORIGIN_SPREAD_M
+    )
+    parser.add_argument("--min-movement-m", type=float, default=DEFAULT_MIN_MOVEMENT_M)
+    parser.add_argument(
+        "--max-cross-axis-m", type=float, default=DEFAULT_MAX_CROSS_AXIS_M
+    )
+    parser.add_argument(
+        "--max-return-error-m", type=float, default=DEFAULT_MAX_RETURN_ERROR_M
+    )
+    parser.add_argument(
+        "--max-estimator-error-m", type=float,
+        default=DEFAULT_MAX_ESTIMATOR_ERROR_M,
+    )
+    parser.add_argument(
+        "--convergence-duration", type=float,
+        default=DEFAULT_CONVERGENCE_DURATION_S,
+    )
+    parser.add_argument(
+        "--convergence-timeout", type=float,
+        default=DEFAULT_CONVERGENCE_TIMEOUT_S,
+    )
+    parser.add_argument(
+        "--attitude-baseline-duration", type=float,
+        default=DEFAULT_ATTITUDE_BASELINE_DURATION_S,
+    )
+    parser.add_argument(
+        "--attitude-stability-duration", type=float,
+        default=DEFAULT_ATTITUDE_STABILITY_DURATION_S,
+    )
+    parser.add_argument(
+        "--attitude-stability-timeout", type=float,
+        default=DEFAULT_ATTITUDE_STABILITY_TIMEOUT_S,
+    )
+    parser.add_argument(
+        "--max-level-error-deg", type=float,
+        default=DEFAULT_MAX_LEVEL_ERROR_DEG,
+    )
+    parser.add_argument(
+        "--max-yaw-drift-deg", type=float,
+        default=DEFAULT_MAX_YAW_DRIFT_DEG,
+    )
+    parser.add_argument(
+        "--expected-nose-front-yaw-deg", type=float,
+        default=DEFAULT_EXPECTED_NOSE_FRONT_YAW_DEG,
+    )
+    parser.add_argument(
+        "--max-yaw-alignment-error-deg", type=float,
+        default=DEFAULT_MAX_YAW_ALIGNMENT_ERROR_DEG,
+    )
+    parser.add_argument("--min-samples", type=int, default=DEFAULT_MIN_SAMPLES)
     args = parser.parse_args(argv)
 
-    if args.hold_duration <= 0.0:
-        raise ValueError("--hold-duration must be greater than zero")
+    LocalFrameTransform(
+        (0.0, 0.0, 0.0),
+        (args.local_x_from, args.local_y_from, args.local_z_from),
+    )
+    positive_values = (
+        ("--hold-duration", args.hold_duration),
+        ("--origin-hold-duration", args.origin_hold_duration),
+        ("--rate-hz", args.rate_hz),
+        ("--pose-stale-timeout", args.pose_stale_timeout),
+        ("--max-origin-spread-m", args.max_origin_spread_m),
+        ("--min-movement-m", args.min_movement_m),
+        ("--max-cross-axis-m", args.max_cross_axis_m),
+        ("--max-return-error-m", args.max_return_error_m),
+        ("--max-estimator-error-m", args.max_estimator_error_m),
+        ("--convergence-duration", args.convergence_duration),
+        ("--convergence-timeout", args.convergence_timeout),
+        ("--attitude-baseline-duration", args.attitude_baseline_duration),
+        ("--attitude-stability-duration", args.attitude_stability_duration),
+        ("--attitude-stability-timeout", args.attitude_stability_timeout),
+        ("--max-level-error-deg", args.max_level_error_deg),
+        ("--max-yaw-drift-deg", args.max_yaw_drift_deg),
+        ("--max-yaw-alignment-error-deg", args.max_yaw_alignment_error_deg),
+    )
+    for name, value in positive_values:
+        if value <= 0.0:
+            raise ValueError(f"{name} must be positive")
+    if not math.isfinite(args.expected_nose_front_yaw_deg):
+        raise ValueError("--expected-nose-front-yaw-deg must be finite")
     if args.settle_duration < 0.0:
-        raise ValueError("--settle-duration must be greater than or equal to zero")
-    if args.rate_hz <= 0.0:
-        raise ValueError("--rate-hz must be greater than zero")
-    if args.pose_stale_timeout <= 0.0:
-        raise ValueError("--pose-stale-timeout must be greater than zero")
-    if args.max_level_error_deg <= 0.0 or args.max_yaw_error_deg <= 0.0:
-        raise ValueError('orientation verification limits must be positive')
-    if args.max_sample_spread_deg <= 0.0:
-        raise ValueError('--max-sample-spread-deg must be positive')
-    if args.yaw_jump_deg <= 0.0 or args.yaw_jump_move_m < 0.0:
-        raise ValueError('yaw jump filter limits are invalid')
-    if args.orientation_jump_deg <= 0.0:
-        raise ValueError('--orientation-jump-deg must be positive')
-    if not 0.0 <= args.max_orientation_rejection_ratio <= 1.0:
-        raise ValueError('--max-orientation-rejection-ratio must be between 0 and 1')
-    if args.position_convergence_error_m <= 0.0:
-        raise ValueError('--position-convergence-error-m must be positive')
-    if args.position_convergence_duration <= 0.0:
-        raise ValueError('--position-convergence-duration must be positive')
-    if args.position_convergence_timeout < args.position_convergence_duration:
-        raise ValueError('--position-convergence-timeout must cover the convergence duration')
-    if args.yaw_convergence_error_deg <= 0.0:
-        raise ValueError('--yaw-convergence-error-deg must be positive')
-    if args.yaw_convergence_duration <= 0.0:
-        raise ValueError('--yaw-convergence-duration must be positive')
-    if args.yaw_convergence_timeout < args.yaw_convergence_duration:
-        raise ValueError('--yaw-convergence-timeout must cover the convergence duration')
-    if args.min_orientation_samples <= 0:
-        raise ValueError('--min-orientation-samples must be positive')
-    expected_samples = math.floor(args.hold_duration * args.rate_hz)
-    if expected_samples < args.min_orientation_samples:
+        raise ValueError("--settle-duration must be non-negative")
+    if args.convergence_timeout < args.convergence_duration:
+        raise ValueError("--convergence-timeout must cover --convergence-duration")
+    if args.attitude_stability_timeout < args.attitude_stability_duration:
         raise ValueError(
-            '--hold-duration and --rate-hz must allow at least '
-            '--min-orientation-samples samples'
+            "--attitude-stability-timeout must cover "
+            "--attitude-stability-duration"
+        )
+    if args.min_samples <= 0:
+        raise ValueError("--min-samples must be positive")
+    if math.floor(args.hold_duration * args.rate_hz) < args.min_samples:
+        raise ValueError(
+            "--hold-duration and --rate-hz must allow at least --min-samples"
+        )
+    if math.floor(args.origin_hold_duration * args.rate_hz) < args.min_samples:
+        raise ValueError(
+            "--origin-hold-duration and --rate-hz must allow at least --min-samples"
+        )
+    if math.floor(args.attitude_baseline_duration * args.rate_hz) < args.min_samples:
+        raise ValueError(
+            "--attitude-baseline-duration and --rate-hz must allow at least "
+            "--min-samples"
         )
     return args
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run(parse_args())

@@ -80,8 +80,10 @@ mocap_system_type = 'vrpn'  # EXPERIMENT: Change to match your mocap system type
 # The name of the rigid body that represents the Crazyflie
 rigid_body_name = 'crazyflie_21'  # EXPERIMENT: Change to your rigid body name in mocap
 
-# True: send position and orientation; False: send position only
-send_full_pose = True
+# True: send position and orientation; False: send position only.
+# Position-only is the safer default unless the mocap rigid-body quaternion has
+# been verified to use the same body axes and world frame as the Crazyflie.
+send_full_pose = False
 
 # When using full pose, the estimator can be sensitive to noise in the orientation data when yaw is close to +/- 90
 # degrees. If this is a problem, increase orientation_std_dev a bit. The default value in the firmware is 4.5e-3.
@@ -121,7 +123,13 @@ HOVER_PAUSE_TIME = 0.5  # EXPERIMENT: Increase for longer pauses (try 0.5-1.5s),
 # The actual pattern will be ~2x this value in each dimension
 # For a 0.6m cage (X: -0.3 to 0.3) with 0.05m safety margin, safe range is -0.25 to 0.25
 # Maximum safe amplitude = 0.25m (to stay within safe bounds)
-FIGURE8_AMPLITUDE = 0.3  # EXPERIMENT: For 0.6m cage with 0.05m margin, use 0.2-0.25m max
+FIGURE8_AMPLITUDE = 0.25  # EXPERIMENT: For 0.6m cage with 0.05m margin, use 0.2-0.25m max
+
+# Crazyflie trajectory time factor: >1.0 is slower, <1.0 is faster.
+TRAJECTORY_TIME_SCALE = 1.5
+START_POSITION_TOLERANCE = 0.15  # Refuse flight unless within 15 cm of the trajectory start.
+HOVER_ONLY_TEST = True  # Keep True until mocap/estimator frames are verified.
+HOVER_TEST_DURATION = 5.0
 
 # Current position tracking (for boundary checking)
 current_position = {'x': 0.0, 'y': 0.0, 'z': 0.0}
@@ -458,24 +466,24 @@ def run_sequence(cf, trajectory_id, duration, takeoff_x, takeoff_y, pattern_cent
     print(f"Figure-8 amplitude: {FIGURE8_AMPLITUDE}m")
     print("="*60 + "\n")
 
-    # Take off first, then move horizontally at flight height. Sending a
-    # horizontal go_to at z=0 before takeoff can scrape across the floor.
-    print(f"[FLIGHT] Taking off to {FLIGHT_HEIGHT}m...")
-    commander.takeoff(FLIGHT_HEIGHT, 2.0)  # EXPERIMENT: Second param = takeoff velocity (m/s)
-    time.sleep(3.0)  # EXPERIMENT: Hover time after takeoff
-
+    # Do not reposition across the cage automatically. A frame or yaw mismatch
+    # would turn that first large horizontal command into an immediate flyaway.
     trajectory_start_x, trajectory_start_y = pattern_center
-    print(f"[FLIGHT] Moving to trajectory start ({trajectory_start_x:.3f}, {trajectory_start_y:.3f})...")
     current_x = current_position['x']
     current_y = current_position['y']
-    distance = ((trajectory_start_x - current_x)**2 + (trajectory_start_y - current_y)**2)**0.5
-    
-    if distance > 0.05:  # If more than 5cm away, move to trajectory start
-        commander.go_to(trajectory_start_x, trajectory_start_y, FLIGHT_HEIGHT, 0, 3.0, relative=False)
-        time.sleep(3.5)
-        print(f"[FLIGHT] Reached trajectory start")
-    else:
-        print(f"[FLIGHT] Already at trajectory start (distance: {distance:.3f}m)")
+    start_distance = ((trajectory_start_x - current_x)**2 +
+                      (trajectory_start_y - current_y)**2)**0.5
+    if start_distance > START_POSITION_TOLERANCE:
+        print(f"[SAFETY] Drone is {start_distance:.3f}m from the trajectory start.")
+        print(f"[SAFETY] Place it near ({trajectory_start_x:.3f}, "
+              f"{trajectory_start_y:.3f}) before running this script.")
+        print("[SAFETY] Flight aborted before takeoff.")
+        return
+
+    print(f"[FLIGHT] Starting {start_distance:.3f}m from trajectory center")
+    print(f"[FLIGHT] Taking off to {FLIGHT_HEIGHT}m...")
+    commander.takeoff(FLIGHT_HEIGHT, 2.0)
+    time.sleep(3.0)
 
     # Check if takeoff position is safe
     is_safe, reason = check_position_safe(
@@ -493,20 +501,36 @@ def run_sequence(cf, trajectory_id, duration, takeoff_x, takeoff_y, pattern_cent
         time.sleep(2.5)
         return
 
+    if HOVER_ONLY_TEST:
+        print(f"[TEST] Hovering for {HOVER_TEST_DURATION:.1f}s; figure-eight is disabled.")
+        hover_start = time.time()
+        while time.time() - hover_start < HOVER_TEST_DURATION:
+            is_safe, reason = check_position_safe(
+                current_position['x'], current_position['y'], current_position['z'])
+            if not is_safe:
+                print(f"[SAFETY] Hover guard tripped: {reason}")
+                break
+            time.sleep(0.1)
+        print("[TEST] Landing after hover-only test...")
+        commander.land(0.0, 2.0)
+        time.sleep(2.5)
+        commander.stop()
+        return
+
     # Execute figure-8 trajectory with continuous boundary monitoring
     print(f"[FLIGHT] Starting figure-8 trajectory ({duration:.1f}s)...")
     # Trajectory coefficients are generated in mocap/world coordinates, so run
     # them as absolute setpoints. Use relative=True only for origin-centered
     # trajectories that should be offset from the current position.
     relative = False
-    trajectory_timescale = 0.7  # EXPERIMENT: Timescale (1.0 = normal speed, >1.0 = faster, <1.0 = slower) - lower = slower, more relaxed
+    trajectory_timescale = TRAJECTORY_TIME_SCALE
     commander.start_trajectory(trajectory_id, trajectory_timescale, relative)
     
     # Monitor position during trajectory execution
     start_time = time.time()
     check_interval = 0.2  # EXPERIMENT: How often to check boundaries (seconds) - lower = more frequent checks but more CPU
     # Adjust wait time based on trajectory timescale (slower trajectory = longer wait)
-    adjusted_duration = duration / trajectory_timescale if trajectory_timescale > 0 else duration
+    adjusted_duration = duration * trajectory_timescale
     while (time.time() - start_time) < (adjusted_duration + 2.0):  # Add extra buffer for slower, more relaxed movement
         # Check position safety during flight
         is_safe, reason = check_position_safe(
@@ -596,17 +620,17 @@ def main():
         activate_kalman_estimator(cf)
         
         # Generate and validate trajectory
-        print("[INFO] Generating figure-8 trajectory centered at ({pattern_center[0]:.3f}, {pattern_center[1]:.3f})...")
+        print(f"[INFO] Generating figure-8 trajectory centered at ({pattern_center[0]:.3f}, {pattern_center[1]:.3f})...")
         figure8_trajectory = generate_figure8_trajectory(center_x=pattern_center[0], center_y=pattern_center[1])
         
-        # Trajectory safety validation - COMMENTED OUT (user can re-enable if needed)
-        # print("[INFO] Validating trajectory safety...")
-        # is_valid, error_msg = validate_trajectory(figure8_trajectory)
-        # if not is_valid:
-        #     print(f"[ERROR] Trajectory validation failed: {error_msg}")
-        #     print("[SAFETY] Aborting flight.")
-        #     mocap_wrapper.close()
-        #     return
+        # Validate every generated trajectory before uploading it.
+        print("[INFO] Validating trajectory safety...")
+        is_valid, error_msg = validate_trajectory(figure8_trajectory)
+        if not is_valid:
+            print(f"[ERROR] Trajectory validation failed: {error_msg}")
+            print("[SAFETY] Aborting flight.")
+            mocap_wrapper.close()
+            return
         
         print("[INFO] Uploading trajectory to Crazyflie...")
         duration = upload_trajectory(cf, trajectory_id, figure8_trajectory)
@@ -620,6 +644,16 @@ def main():
         # Note: reset_estimator() already waits for position, so this is just a brief pause
         time.sleep(1.0)  # EXPERIMENT: Brief wait after reset (usually sufficient)
         print("[INFO] Estimator ready - proceeding with flight")
+
+        start_distance = ((pattern_center[0] - current_position['x'])**2 +
+                          (pattern_center[1] - current_position['y'])**2)**0.5
+        if start_distance > START_POSITION_TOLERANCE:
+            print(f"[SAFETY] Drone is {start_distance:.3f}m from the trajectory start.")
+            print(f"[SAFETY] Place it near ({pattern_center[0]:.3f}, "
+                  f"{pattern_center[1]:.3f}) before running this script.")
+            print("[SAFETY] Flight aborted before arming.")
+            mocap_wrapper.close()
+            return
 
         # Arm the Crazyflie
         print("[INFO] Arming drone...")

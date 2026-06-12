@@ -38,3 +38,5 @@ venv/
 
 # Local Crazyflie flight data
 flight_logs/*.csv
+# Local hardware-specific safety proof
+.cache/mocap-autonomy-emergency-stop-proof.json

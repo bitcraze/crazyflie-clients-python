@@ -35,50 +35,49 @@ Use `validate-extpose` and `validate-yaw-rotation` first. Do not substitute an
 identity transform unless physical calibration proves that the rigid body and
 Crazyflie body frames are actually aligned.
 
-Compute and verify the transform with props off:
+Validate the mocap position frame with props off:
 
 ```bash
 python3 mocap_estimator_world_frame_calibrator.py
 ```
 
-For calibration, place the Crazyflie physically level with its nose pointing
-toward cage front. In the measured cage frame, front is mocap `-Y`, so the
-default expected Crazyflie yaw is `-90deg`. Use `--nose-front-yaw-deg` only if
-the physical cage/world convention is different. The calibrator averages fresh
-quaternion samples, rejects excessive held-pose spread, applies the candidate
-transform, and resets the estimator. It then verifies corrected mocap and
-estimator attitude at nose-front, 90 degrees left, and 90 degrees right. After
-the operator confirms each intentional orientation, the calibrator resets the
-jump-filter baseline, accepts the first valid quaternion as the new baseline,
-and waits for estimator yaw convergence before recording verification samples.
-Implausible yaw jumps and full-quaternion angular jumps use position-only
-`extpos` fallback. The full-orientation limit defaults to 8 degrees and each
-stationary phase fails above a 1% rejection rate. Every logged pose includes its
-accepted/rejected decision, stream counters, and corrected mocap roll, pitch,
-and yaw; rejected quaternion rows are excluded from calibration and
-verification. Verification also requires estimator/mocap position error below
-5 cm continuously for two seconds and uses robust quaternion centers plus p90
-orientation errors instead of maxima. The unverified transform is not printed.
-Copy the final `--body-to-cf-quat ...` argument only after all three
-orientations pass.
+The validator does not stream or calibrate mocap orientation. It captures a raw
+mocap origin while the drone is held level, nose-front, at cage center and
+mid-height, transforms raw displacement into a local frame, and streams only
+`send_extpos(...)`. The default mapping is:
 
-The June 9, 2026 `130036` run passed nose-front, left 90-degree, and right
-90-degree verification and produced the verified candidate
-`--body-to-cf-quat -0.037816872 0.001109926 -0.718284935 0.694719659`.
-The following front translation phase was incorrectly compared with the stale
-right-facing filter baseline, causing 100% fallback even though corrected yaw
-was approximately -91.9 degrees. The calibrator now resets the orientation
-baseline after every guided reposition and reconfirms estimator position and
-the original nose-front yaw before recording each translation phase. Because
-the `130036` run predates that fix and did not complete the full no-flight
-workflow, rerun the calibrator and do not use this quaternion for powered flight
-yet.
+```text
+local +X = physical front = mocap -Y
+local +Y = physical left  = mocap +X
+local +Z = physical up    = mocap +Z
+```
 
-The June 9, 2026 `122456` CSV contained a 12.09-degree frame-to-frame raw
-quaternion jump during stationary nose-front verification while raw yaw stayed
-between -0.06 and 0.30 degrees. The change was dominated by roll/pitch, which is
-why yaw-only filtering was insufficient. Do not use the transform from that run
-for flight.
+The mapping is explicit through `--local-x-from`, `--local-y-from`, and
+`--local-z-from`; reflected/left-handed mappings are rejected. After resetting
+the Kalman estimator, the script captures `stateEstimate.yaw` while the drone is
+still physically level and nose-front. Every phase requires that yaw to remain
+within 5 degrees of the post-reset baseline, and the baseline itself must be
+within 5 degrees of `0 deg` because physical nose-front defines local `+X`.
+`--expected-nose-front-yaw-deg` exists only for a deliberately documented
+alternative convention. Roll/pitch must remain within 5 degrees of level, and
+`stateEstimate.x/y/z` must remain within 5 cm of transformed mocap for two
+continuous seconds. Guided hand tests cover left, right, front, back, up, down,
+and a return to the captured origin after every move. Each direction must move
+at least 8 cm with no more than 5 cm cross-axis displacement. The CSV records
+raw mocap, transformed local mocap, estimator position and attitude, yaw
+baseline/alignment/drift, stream status, and per-axis errors.
+
+This baseline check verifies onboard yaw alignment with the operator-defined
+local `+X` and detects later heading changes; it is not mocap quaternion
+calibration. The validator does not produce `--body-to-cf-quat`.
+Passing it proves only the position-axis/sign convention, level/nose-front yaw
+consistency, and Kalman position response. It does not clear the powered-flight
+safety hold for `mocap_autonomy_ladder.py`.
+
+The captured local `Z=0` is deliberately at mid-height so both up and down can
+be tested by hand. It is validator-only and must never be copied into autonomous
+flight. Takeoff and landing require a separately measured floor/start-referenced
+Z origin.
 
 `motioncapture 1.0a4` has no Python close API and its VRPN backend wraps an
 auto-referenced connection in a default-deleting `shared_ptr`, producing the
@@ -115,8 +114,8 @@ Additional root-level tools now tracked in Git:
   diagnostics with props-off and guarded manual modes.
 - `mocap_controller_telemetry_logger.py`: Logitech manual commander plus
   telemetry/mocap observer logger.
-- `mocap_estimator_world_frame_calibrator.py`: no-flight guided world-frame and
-  estimator calibration logger.
+- `mocap_estimator_world_frame_calibrator.py`: no-flight extpos-only local-frame
+  and estimator position validator.
 - `mocap_high_level_point_test.py`: earlier position-oriented HLC viability
   verifier; keep powered use deferred while orientation calibration is unresolved.
 - `mocap_manual_thrust_assisted_figure8.py`: experimental pilot-owned-thrust
@@ -345,3 +344,57 @@ PYTHONPYCACHEPREFIX=/tmp/crazyflie-pycache python3 -m unittest \
 
 The unit tests are pure Python and do not need `cflib`, `motioncapture`, VRPN, or
 Crazyradio hardware.
+
+## Guarded Position-Only Hover Stage (2026-06-11)
+
+This section supersedes the earlier quaternion/extpose instructions for the
+current first powered test. The successful no-flight validator established the
+fixed right-handed position mapping `local X=-raw Y`, `local Y=+raw X`, and
+`local Z=+raw Z`. `mocap_autonomy_ladder.py` now ignores mocap quaternions and
+streams transformed positions with `send_extpos()` only.
+
+The ladder captures the floor/takeoff pose as local `(0, 0, 0)`, starts extpos,
+then resets the Kalman estimator. HLC takeoff and landing heights are absolute
+estimator-Z values, so the guarded test uses `takeoff(0.05, 5.0)` and
+`land(0.0, 6.0)`. It never sends an X/Y movement command.
+
+First remove all propellers and prove the active-link Ctrl+C emergency path:
+
+```bash
+python3 mocap_autonomy_ladder.py emergency-test
+```
+
+That test now activates an HLC command at absolute Z=0 with the propellers removed, requires Ctrl+C to reach the emergency handler, confirms all 40 zero-thrust and stop-setpoint packets were sent, and verifies `supervisor.is_armed == False` before writing the proof file. If arming confirmation is uncertain, the same emergency cleanup runs before the error is raised.
+
+After it prints `[PROPS-OFF] PASS: active-HLC Ctrl+C stop and disarm verified`, reinstall and inspect the propellers, clear
+the cage, keep physical power-off ready, and run:
+
+```bash
+python3 mocap_autonomy_ladder.py hover
+```
+
+The emergency proof is URI/body-specific, records the verified packet counts and disarmed supervisor state, and expires after 24 hours. Preflight retains the strict 3.75 V and 5 degree level limits. In flight, battery below 3.60 V or tilt above 10 degrees requests a controlled landing after a 1 second debounce; battery below 3.30 V or tilt above 20 degrees triggers emergency stop after a 0.25 second debounce. Stale data, yaw above 10 degrees, lateral guard violations, excessive estimator/mocap error, and excessive height remain immediate stops. `x-step`,
+`y-step`, and `figure8` remain locked in code until this hover is explicitly
+proven from its CSV log.
+
+The emergency proof is generated at
+`.cache/mocap-autonomy-emergency-stop-proof.json`. It is local,
+hardware-specific runtime state and is intentionally ignored by Git. Every
+operator or machine must run `emergency-test` to create a fresh proof; never
+copy or commit another setup's proof file.
+
+### Current Powered-Test Hold
+
+The props-off Ctrl+C emergency test passed, including confirmed disarm. The
+subsequent powered hover attempts did not prove hover: one stopped at
+approximately 2.3 cm after lateral displacement exceeded 3 cm, and another
+stopped near the floor after yaw error exceeded 10 degrees. In the yaw-stop
+log, commanded `motor.m2` rose to 56303 while M1 and M3 fell to 7000, but the
+vehicle still failed to gain useful height. These values are commanded PWM,
+not measured motor RPM.
+
+Do not run another powered hover, loosen the yaw/lateral guards, or unlock any
+movement mode until M2 and its propeller, connector, wiring, shaft friction,
+and thrust response have been checked with all propellers removed. A successful
+Logitech/manual-controller run does not clear this hold because its higher
+motor command can mask a weak or intermittent low-throttle response.
