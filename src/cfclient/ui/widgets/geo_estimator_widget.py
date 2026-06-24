@@ -77,17 +77,22 @@ class _CollectionStep(Enum):
               "A tape measure and visual alignment is accurate enough for most spaces.\n\n"
               "For very large spaces with many base stations, see the documentation for more precise placement advice.")
     XY_PLANE = ('step_xy_plane.png',
-                'Put the Crazyflie somewhere in the XY-plane, but not on the X-axis. This sample is used to map the XY-plane to the floor.',
+                'Put the Crazyflie somewhere in the XY-plane, but not on the X-axis. '
+                'This sample is used to map the XY-plane to the floor.',
                 'Start measurement',
                 "This sample maps the XY plane to the floor.\n\n"
                 "Taking samples at multiple positions gives a more precise approximation.")
     XYZ_SPACE = ('step_xyz_space.png',
-                 'Pick up the crazyflie and take to an area in the flightspace where you expect to fly. Take an XYZ sample by quickly rotating the Crazyflie in a left-right motion about the z-axis. Then wait for confirmation. Repeat the processes in a few key additional areas.',
+                 'Pick up the crazyflie and take to an area in the flightspace where you expect to fly. '
+                 'Take an XYZ sample by quickly rotating the Crazyflie in a left-right motion about the z-axis. '
+                 'Then wait for confirmation. Repeat the processes in a few key additional areas.',
                  'Sample position',
                  "Hold the Crazyflie still after rotation and wait for confirmation.\n\n"
                  "A sample will fail if the Crazyflie moves after rotation or can only see one base station.")
     VERIFICATION = ('step_verification.png',
-                    'Verification samples are taken just like XYZ samples. If the verification sample error is high, then add XYZ samples around the verification sample to reduce the error.',
+                    'Verification samples are taken just like XYZ samples. '
+                    'If the verification sample error is high, then add XYZ samples around the '
+                    'verification sample to reduce the error.',
                     'Sample position',
                     "Verification samples check the accuracy of areas between XYZ sample locations.\n\n"
                     "Low error here means the system works reliably across the full flight space, "
@@ -225,7 +230,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._is_solving = False
         self._solver_thread = None
 
-        self._step_instructions_info_label = InfoLabel("Instructions for the current step.", self._step_instructions, position=InfoLabel.Position.BOTTOM_RIGHT)
+        self._step_instructions_info_label = InfoLabel(
+            "Instructions for the current step.", self._step_instructions, position=InfoLabel.Position.BOTTOM_RIGHT)
         self._solution_status_info_label = InfoLabel(
             'A successful upload does not guarantee stable flight.\n'
             'Try to minimize the max sample errors before take off.\n'
@@ -407,7 +413,10 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     def _update_step_highlight(self):
         """Highlight the grid column corresponding to the current step"""
         for s, frame in self._step_column_widgets().items():
-            style = "QWidget { border: 2px solid gray; border-radius: 4px; padding: 4px; background: transparent; } QLabel { border: none; padding: 4px; background: transparent; }" if s == self._current_step else ""
+            style = (
+                "QWidget { border: 2px solid gray; border-radius: 4px; padding: 4px; background: transparent; } "
+                "QLabel { border: none; padding: 4px; background: transparent; }"
+            ) if s == self._current_step else ""
             frame.setStyleSheet(style)
 
     _STEP_IMAGE_SIZE = QtCore.QSize(460, 266)
