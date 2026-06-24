@@ -1,7 +1,7 @@
 ---
 title: Loco Positioning Tab
 page_id: loco_tab
-sort_order: 7
+sort_order: 9
 ---
 
 The Loco Positioning tab shows information from the Loco Positioning

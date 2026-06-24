@@ -53,7 +53,7 @@ class CrtpSharkToolbox(TabToolbox, param_tab_class):
     _outgoing_packet_signal = pyqtSignal(object)
 
     def __init__(self, helper):
-        super(CrtpSharkToolbox, self).__init__(helper, 'Crtp sniffer')
+        super(CrtpSharkToolbox, self).__init__(helper, 'CRTP Sniffer')
         self.setupUi(self)
 
         # Init the tree widget

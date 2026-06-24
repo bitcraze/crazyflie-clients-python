@@ -1,7 +1,7 @@
 ---
 title: Tuning  Tab
 page_id: tuning_tab
-sort_order: 8
+sort_order: 12
 ---
 
 ![cfclient plotter](/docs/images/tuning_tab.png)

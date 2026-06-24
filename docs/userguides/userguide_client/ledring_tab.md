@@ -1,7 +1,7 @@
 ---
 title: LED Ring tab
 page_id: led_ring_tab
-sort_order: 10
+sort_order: 3
 ---
 
 The **LED Ring** tab lets you control the **LED-ring deck** attached to your Crazyflie.

@@ -396,7 +396,7 @@ class LogConfigDialogue(QtWidgets.QWidget, logconfig_widget_class):
                                                      MAX_LOG_SIZE))
 
         if self.currentSize > MAX_LOG_SIZE:
-            self.packetSize.setMaximum(self.currentSize / MAX_LOG_SIZE * 100)
+            self.packetSize.setMaximum(int(self.currentSize / MAX_LOG_SIZE * 100))
             self.packetSize.setFormat("%v%")
             self.packetSize.setValue(int(self.currentSize / MAX_LOG_SIZE * 100))
             self.packetSize.setStyleSheet(

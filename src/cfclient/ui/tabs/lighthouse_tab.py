@@ -338,7 +338,10 @@ class Plot3dLighthouse(scene.SceneCanvas):
     DEFAULT_CAMERA_DISTANCE = 10.0
 
     def __init__(self, sample_clicked_signal: pyqtSignal(int), base_station_clicked_signal: pyqtSignal(int)):
-        scene.SceneCanvas.__init__(self, keys=None)
+        # Note: autoswap is disabled since Qt's QOpenGLWidget path already presents
+        # the FBO; enabling vispy autoswap here would cause a redundant swap and
+        # eglSwapBuffers warnings.
+        scene.SceneCanvas.__init__(self, keys=None, autoswap=False)
         self.unfreeze()
 
         self._view = self.central_widget.add_view()
@@ -946,7 +949,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             result = QMessageBox.question(
                 self,
                 'Start Set Up',
-                'If there is any existing geometry, it will be overwritten when starting the set up.\n\nExport the current configuration to make sure it is saved. Configurations are also cached.\n\n'
+                'If there is any existing geometry, it will be overwritten when starting the set up.\n\n'
+                'Export the current configuration to make sure it is saved. Configurations are also cached.\n\n'
                 'Are you sure you want to continue?',
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
                 QMessageBox.StandardButton.Cancel)
@@ -983,7 +987,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
     def _update_ui(self):
         enabled = self._is_connected and self.is_lighthouse_deck_active
         self._set_up_button.setEnabled(enabled)
-        self._set_up_button.setToolTip('' if enabled else 'Connect a Crazyflie with a Lighthouse Deck to set up your system.')
+        self._set_up_button.setToolTip(
+            '' if enabled else 'Connect a Crazyflie with a Lighthouse Deck to set up your system.')
         self._import_config_button.setEnabled(enabled)
         self._export_config_button.setEnabled(enabled)
 

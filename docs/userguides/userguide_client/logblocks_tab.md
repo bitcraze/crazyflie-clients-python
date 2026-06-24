@@ -4,41 +4,34 @@ page_id: logblocks_tab
 sort_order: 5
 ---
 
-The log blocks tab shows all log configurations that are saved and if
-they are started. It\'s also possible to start/stop them as well as
-write the logged data to file.
+The log blocks tab shows all saved log configurations and lets you start/stop
+them and write their data to file.
 
 ![cfclient log blocks](/docs/images/cfclient_logblocks_marked.png)
 
 1.  Fields
-    -   *ID:* Block id in Crazyflie
-    -   *Name:* Block name in client
-    -   *Period:* The period of which the data is sent back to the
-        client
-    -   *Start:* Marked if started, click to start/stop block. Note that
-        some of the blocks are used for the user interface, so if they
-        are stopped the user interface will stop updating
-    -   *Write to <file:*> Marked if writing to file, clock to
-        start/stop writing. The data will be written in the
-        configuration folder for the client (see \<here\> how to find
-        it).
-    -   *Contents:* The variables contained in the block (named by
-        group.name)
-2.  Information for log configurations are folded by group by default,
-    opening them up will show in detail what variables are in the group
+    -   *ID:* Block ID on the Crazyflie
+    -   *Name:* Block name in the client
+    -   *Period (ms):* How often data is sent back to the client, in milliseconds
+    -   *Start:* Checked if the block is running. Click to start or stop it.
+        Note that some blocks drive the user interface — stopping them will
+        cause parts of the UI to stop updating.
+    -   *Write to file:* Checked if data is being written to file. Click to
+        start or stop writing.
+    -   *Contents:* The variables in the block, listed as `group.name`
 
- The data written to file will be in
-the configuration folder under *logdata*. Each directory is timestamped
-after when the client was started and each file timestamped after when
-the writing to file was started (i.e starting/stopping and
-starting/stopping again will yield two files in the same directory). The
-data logged to the file is in CSV format with the headers for the data
-at the top. A timestamp is automatically added for each entry and shows
-the number of milliseconds passed since the Crazyflie started (sent
-together with the log data).
+2.  Each log block can be expanded to show its individual variables.
 
-Example data
-of what\'s logged when logging the battery level:
+The data is written to the *logdata* folder in the client configuration directory
+(find it via *Settings / Open config folder*). Files are organized into a
+subdirectory per connection session, named by the connection timestamp.
+Each file is named `{block_name}-{timestamp}.csv`. Starting and stopping file
+writing multiple times within one session produces separate files.
+
+The CSV format has a header row followed by one row per sample. The timestamp
+column shows milliseconds since the Crazyflie was powered on.
+
+Example data logged when logging the battery level:
 
     Timestamp,pm.vbat
     9103,3.74252200127

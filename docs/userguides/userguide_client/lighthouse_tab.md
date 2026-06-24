@@ -1,7 +1,7 @@
 ---
 title: Lighthouse Positioning Tab
 page_id: lighthouse_tab
-sort_order: 6
+sort_order: 10
 ---
 
 The Lighthouse Positioning tab shows information from the Lighthouse Positioning

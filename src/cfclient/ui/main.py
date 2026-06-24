@@ -174,7 +174,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._show_input_device_config_dialog)
         self.menuItemExit.triggered.connect(self.closeAppRequest)
         self.batteryUpdatedSignal.connect(self._update_battery)
-        self._menuitem_rescandevices.triggered.connect(self._rescan_devices)
         self._menuItem_openconfigfolder.triggered.connect(
             self._open_config_folder)
 
@@ -553,18 +552,6 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         tab_toolbox = dock_widget.tab_toolbox
         tab_toolbox.set_preferred_dock_area(area)
 
-    def _rescan_devices(self):
-        self._statusbar_label.setText("No inputdevice connected!")
-        self._menu_devices.clear()
-        self._active_device = ""
-        self.joystickReader.stop_input()
-
-        # for c in self._menu_mappings.actions():
-        #    c.setEnabled(False)
-        # devs = self.joystickReader.available_devices()
-        # if (len(devs) > 0):
-        #    self.device_discovery(devs)
-
     def _show_input_device_config_dialog(self):
         self.inputConfig = InputConfigDialogue(self.joystickReader)
         self.inputConfig.show()
@@ -577,7 +564,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         if (self.uiState == UIState.CONNECTED):
             # Send both emergency stop and disarm
             # TODO krri Disarm?
-            self.cf.loc.send_emergency_stop()
+            self.cf.supervisor.send_emergency_stop()
 
     def _update_battery(self, timestamp, data, logconf):
         self.batteryBar.setValue(int(data["pm.vbat"] * 1000))
@@ -729,7 +716,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         if device.supports_mapping:
             map_name = "No input mapping"
             if device.input_map:
-                map_name = device.input_map_name
+                # Display the friendly name instead of the config file name
+                map_name = ConfigManager().get_display_name(device.input_map_name)
             msg += " ({})".format(map_name)
         return msg
 
@@ -798,7 +786,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         if not checked:
             return
 
-        selected_mapping = str(self.sender().text())
+        # Use the stored config_name instead of the display text
+        selected_mapping = self.sender().config_name
         device = self.sender().data().data()[1]
         self.joystickReader.set_input_map(device.name, selected_mapping)
         self._update_input_device_footer()
@@ -827,9 +816,13 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                     # to easily enable it
                     dev_node.setData((map_node, d))
                     for c in ConfigManager().get_list_of_configs():
-                        node = QAction(c, map_node, checkable=True,
+                        display_name = ConfigManager().get_display_name(c)
+                        node = QAction(display_name, map_node, checkable=True,
                                        enabled=True)
                         node.toggled.connect(self._inputconfig_selected)
+                        # Store the actual config name in the action data
+                        # so it can be retrieved when selected
+                        node.config_name = c
                         map_node.addAction(node)
                         # Connect all the map nodes back to the device
                         # action node where we can access the raw device
