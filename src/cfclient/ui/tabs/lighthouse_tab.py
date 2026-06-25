@@ -680,6 +680,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             self._geo_estimator_widget.convert_to_xyz_space_sample)
         self._geo_estimator_details_widget.do_convert_to_verification_sample_signal.connect(
             self._geo_estimator_widget.convert_to_verification_sample)
+        self._geo_estimator_details_widget.do_remove_base_station_signal.connect(
+            self._geo_estimator_widget.remove_base_station)
 
         # Always wrap callbacks from Crazyflie API though QT Signal/Slots
         # to avoid manipulating the UI when rendering it

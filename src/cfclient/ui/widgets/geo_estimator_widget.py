@@ -299,6 +299,10 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         """Delete a sample by its unique ID"""
         self._container.remove_sample(uid)
 
+    def remove_base_station(self, bs_id: int) -> None:
+        """Remove a base station, and its connections to other base stations, from the system"""
+        self._container.remove_base_station(bs_id)
+
     def convert_to_xyz_space_sample(self, uid: int) -> None:
         """Convert a sample to an xyz-space sample by its unique ID"""
         self._container.convert_to_xyz_space_sample(uid)

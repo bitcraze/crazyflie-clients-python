@@ -57,6 +57,7 @@ class GeoEstimatorDetailsWidget(QtWidgets.QWidget, geo_estimator_details_widget_
     do_remove_sample_signal = QtCore.pyqtSignal(int)
     do_convert_to_xyz_space_sample_signal = QtCore.pyqtSignal(int)
     do_convert_to_verification_sample_signal = QtCore.pyqtSignal(int)
+    do_remove_base_station_signal = QtCore.pyqtSignal(int)
 
     def __init__(self):
         super(GeoEstimatorDetailsWidget, self).__init__()
@@ -85,6 +86,10 @@ class GeoEstimatorDetailsWidget(QtWidgets.QWidget, geo_estimator_details_widget_
         self._base_stations_details_model = BaseStationTableModel(self)
         self._base_stations_table_view.setModel(self._base_stations_details_model)
         self._base_stations_table_view.selectionModel().selectionChanged.connect(self._base_station_selection_changed)
+
+        self._selected_bs_id: int | None = None
+        self._delete_base_station_button.setEnabled(False)
+        self._delete_base_station_button.clicked.connect(self._on_delete_base_station)
 
         header_base_stations = self._base_stations_table_view.horizontalHeader()
         header_base_stations.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
@@ -118,6 +123,20 @@ class GeoEstimatorDetailsWidget(QtWidgets.QWidget, geo_estimator_details_widget_
     def _on_delete_sample(self):
         if self._selected_sample_uid is not None:
             self.do_remove_sample_signal.emit(self._selected_sample_uid)
+
+    def _on_delete_base_station(self):
+        if self._selected_bs_id is not None:
+            dlg = QtWidgets.QMessageBox(self)
+            dlg.setWindowTitle("Delete Base Station Confirmation")
+            dlg.setText(
+                f"Are you sure you want to delete base station {self._selected_bs_id + 1}?\n\n"
+                "It will be removed as if it never existed, along with its connections to other "
+                "base stations. Samples that only saw this base station and one other will also be deleted.")
+            dlg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
+            button = dlg.exec()
+
+            if button == QtWidgets.QMessageBox.StandardButton.Yes:
+                self.do_remove_base_station_signal.emit(self._selected_bs_id)
 
     def _on_change_type_sample(self):
         if self._selected_sample_uid is not None:
@@ -155,10 +174,14 @@ class GeoEstimatorDetailsWidget(QtWidgets.QWidget, geo_estimator_details_widget_
             #  model_indexes contains one index per column, just take the first one
             row = model_indexes[0].row()
             bs_id = self._base_stations_details_model.get_bs_id_of_row(row)
+            self._selected_bs_id = bs_id
+            self._delete_base_station_button.setEnabled(True)
             self.base_station_selection_changed_signal.emit(bs_id)
 
             self._samples_table_view.clearSelection()
         else:
+            self._selected_bs_id = None
+            self._delete_base_station_button.setEnabled(False)
             self.base_station_selection_changed_signal.emit(-1)
 
     def solution_ready_cb(self, solution: LighthouseGeometrySolution):
