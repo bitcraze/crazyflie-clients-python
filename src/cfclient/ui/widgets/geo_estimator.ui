@@ -53,6 +53,12 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>80</height>
+               </size>
+              </property>
               <property name="text">
                <string>TextLabel</string>
               </property>
@@ -375,7 +381,7 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>Max Validation Sample Error:</string>
+               <string>Max Verification Sample Error:</string>
               </property>
              </widget>
             </item>
@@ -401,7 +407,7 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>Max Calibration Sample Error:</string>
+               <string>Max XYZ Sample Error:</string>
               </property>
              </widget>
             </item>

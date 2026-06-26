@@ -233,6 +233,10 @@ class SampleTableModel(QAbstractTableModel):
         self._sample_types: list[LhCfPoseSampleType] = []
         self._table_highlights: list[set[_TableRowStatus]] = []
 
+    def _is_dark_theme(self) -> bool:
+        p = self.parent()
+        return p is not None and p.palette().color(QtGui.QPalette.ColorRole.Window).lightness() < 128
+
     def rowCount(self, parent=None, *args, **kwargs):
         return len(self._table_values)
 
@@ -248,13 +252,14 @@ class SampleTableModel(QAbstractTableModel):
 
             if role == Qt.ItemDataRole.BackgroundRole:
                 color = None
+                dark = self._is_dark_theme()
                 if _TableRowStatus.VERIFICATION in self._table_highlights[index.row()]:
-                    color = QtGui.QColor(255, 255, 230)
+                    color = QtGui.QColor(80, 70, 10) if dark else QtGui.QColor(255, 255, 230)
                 if _TableRowStatus.INVALID in self._table_highlights[index.row()]:
                     color = Qt.GlobalColor.gray
                 if _TableRowStatus.LARGE_ERROR in self._table_highlights[index.row()]:
                     if index.column() == 4:
-                        color = QtGui.QColor(255, 182, 193)
+                        color = QtGui.QColor(122, 26, 26) if dark else QtGui.QColor(255, 182, 193)
 
                 if color:
                     return QVariant(QtGui.QBrush(color))
@@ -331,6 +336,10 @@ class BaseStationTableModel(QAbstractTableModel):
         self._table_values = []
         self._table_highlights: list[set[_TableRowStatus]] = []
 
+    def _is_dark_theme(self) -> bool:
+        p = self.parent()
+        return p is not None and p.palette().color(QtGui.QPalette.ColorRole.Window).lightness() < 128
+
     def rowCount(self, parent=None, *args, **kwargs):
         return len(self._table_values)
 
@@ -348,7 +357,8 @@ class BaseStationTableModel(QAbstractTableModel):
                 color = None
                 if _TableRowStatus.TOO_FEW_LINKS in self._table_highlights[index.row()]:
                     if index.column() == 5:
-                        color = QtGui.QColor(255, 182, 193)
+                        dark = self._is_dark_theme()
+                        color = QtGui.QColor(122, 26, 26) if dark else QtGui.QColor(255, 182, 193)
 
                 if color:
                     return QVariant(QtGui.QBrush(color))

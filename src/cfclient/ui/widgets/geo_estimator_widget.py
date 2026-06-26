@@ -50,7 +50,7 @@ from cflib.localization.lighthouse_sweep_angle_reader import LighthouseMatchedSw
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVectors
 from cflib.localization.lighthouse_types import LhDeck4SensorPositions
 from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample
-from cflib.localization.lighthouse_geo_estimation_manager import LhGeoInputContainer, LhGeoEstimationManager
+from cflib.localization.lighthouse_geo_estimation_manager import LhGeoInputContainer, LhGeoInputContainerData, LhGeoEstimationManager
 from cflib.localization.lighthouse_geometry_solution import LighthouseGeometrySolution
 from cflib.localization.user_action_detector import UserActionDetector
 
@@ -164,9 +164,17 @@ STYLE_RED_BACKGROUND = "background-color: lightpink;"
 STYLE_YELLOW_BACKGROUND = "background-color: lightyellow;"
 STYLE_NO_BACKGROUND = "background-color: none;"
 
+STYLE_GREEN_BACKGROUND_DARK = "background-color: darkgreen;"
+STYLE_RED_BACKGROUND_DARK = "background-color: darkred;"
+STYLE_YELLOW_BACKGROUND_DARK = "background-color: goldenrod;"
+
 STYLE_GROUPBOX_GREEN = "QGroupBox { background-color: lightgreen; }"
 STYLE_GROUPBOX_RED = "QGroupBox { background-color: lightpink; }"
 STYLE_GROUPBOX_YELLOW = "QGroupBox { background-color: lightyellow; }"
+
+STYLE_GROUPBOX_GREEN_DARK = "QGroupBox { background-color: darkgreen; }"
+STYLE_GROUPBOX_RED_DARK = "QGroupBox { background-color: darkred; }"
+STYLE_GROUPBOX_YELLOW_DARK = "QGroupBox { background-color: goldenrod; }"
 
 
 class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
@@ -234,7 +242,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
             "Instructions for the current step.", self._step_instructions, position=InfoLabel.Position.BOTTOM_RIGHT)
         self._solution_status_info_label = InfoLabel(
             'A successful upload does not guarantee stable flight.\n'
-            'Try to minimize the max sample errors before take off.\n'
+            'Try to minimize the max sample error before take off.\n'
             '\n'
             'For more info, see Sample Details.',
             self._solution_status_widget)
@@ -279,6 +287,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     def new_session(self):
         self._collected_steps.clear()
         self._container.clear_all_samples()
+        self._update_step_ui()
 
     def _clear_all(self):
         if not self.is_container_empty():
@@ -341,6 +350,9 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         with open(file_name, 'r', encoding='UTF8') as handle:
             self._container.populate_from_file_yaml(handle)
 
+        self._sync_collected_steps_from_container()
+        self._update_step_ui()
+
     def _save_samples_to_file(self):
         """Save the current geometry samples to a file"""
         names = QFileDialog.getSaveFileName(self, 'Save session', self._helper.current_folder, self.FILE_REGEX_YAML)
@@ -382,6 +394,16 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
             }
         return self._step_column_widgets_cache
 
+    def _sync_collected_steps_from_container(self):
+        """Populate _collected_steps from whatever samples are actually in the container"""
+        data = self._container.get_data_copy()
+        if data.origin != LhGeoInputContainerData.EMPTY_POSE_SAMPLE:
+            self._collected_steps.add(_CollectionStep.ORIGIN)
+        if data.x_axis_sample_count > 0:
+            self._collected_steps.add(_CollectionStep.X_AXIS)
+        if data.xy_plane_sample_count > 0:
+            self._collected_steps.add(_CollectionStep.XY_PLANE)
+
     def _update_step_ui(self):
         """Populate the widget with the current step's information"""
         step = self._current_step
@@ -392,7 +414,10 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._step_info.setText('')
         retakeable = {_CollectionStep.ORIGIN, _CollectionStep.X_AXIS, _CollectionStep.XY_PLANE}
         if step in retakeable and step in self._collected_steps:
-            self._step_measure.setText('Retake measurement')
+            if step == _CollectionStep.XY_PLANE:
+                self._step_measure.setText('Take more samples')
+            else:
+                self._step_measure.setText('Retake measurement')
         else:
             self._step_measure.setText(step.button_text)
         self._previous_sample.setEnabled(self._current_step.has_previous())
@@ -414,13 +439,15 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         grid.addWidget(container, 1, col)
         return container
 
+    _STYLE_STEP_SELECTED = ("QWidget { border: 2px solid gray; border-radius: 4px; padding: 4px; background: transparent; }"
+                            " QLabel { border: none; padding: 4px; background: transparent; }")
+    _STYLE_STEP_NORMAL = ("QWidget { border: 2px solid transparent; border-radius: 4px; padding: 4px; background: transparent; }"
+                          " QLabel { border: none; padding: 4px; background: transparent; }")
+
     def _update_step_highlight(self):
         """Highlight the grid column corresponding to the current step"""
         for s, frame in self._step_column_widgets().items():
-            style = (
-                "QWidget { border: 2px solid gray; border-radius: 4px; padding: 4px; background: transparent; } "
-                "QLabel { border: none; padding: 4px; background: transparent; }"
-            ) if s == self._current_step else ""
+            style = self._STYLE_STEP_SELECTED if s == self._current_step else self._STYLE_STEP_NORMAL
             frame.setStyleSheet(style)
 
     _STEP_IMAGE_SIZE = QtCore.QSize(460, 266)
@@ -501,21 +528,25 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
     def _notify_user(self, notification_type: _UserNotificationType):
         timeout = 1000
+        dark = self._is_dark_theme()
         match notification_type:
             case _UserNotificationType.SUCCESS:
                 self._helper.cf.platform.send_user_notification(True)
-                self._sample_collection_box.setStyleSheet(STYLE_GROUPBOX_GREEN)
+                self._sample_collection_box.setStyleSheet(STYLE_GROUPBOX_GREEN_DARK if dark else STYLE_GROUPBOX_GREEN)
                 self._update_ui_reading(False)
                 retakeable = {_CollectionStep.ORIGIN, _CollectionStep.X_AXIS, _CollectionStep.XY_PLANE}
                 if self._current_step in retakeable:
                     self._collected_steps.add(self._current_step)
-                    self._step_measure.setText('Retake measurement')
+                    if self._current_step == _CollectionStep.XY_PLANE:
+                        self._step_measure.setText('Take more samples')
+                    else:
+                        self._step_measure.setText('Retake measurement')
             case _UserNotificationType.FAILURE:
                 self._helper.cf.platform.send_user_notification(False)
-                self._sample_collection_box.setStyleSheet(STYLE_GROUPBOX_RED)
+                self._sample_collection_box.setStyleSheet(STYLE_GROUPBOX_RED_DARK if dark else STYLE_GROUPBOX_RED)
                 self._update_ui_reading(False)
             case _UserNotificationType.PENDING:
-                self._sample_collection_box.setStyleSheet(STYLE_GROUPBOX_YELLOW)
+                self._sample_collection_box.setStyleSheet(STYLE_GROUPBOX_YELLOW_DARK if dark else STYLE_GROUPBOX_YELLOW)
                 self._update_ui_reading(True)
                 timeout = 3000
 
@@ -525,15 +556,19 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     def _user_notification_clear(self):
         self._sample_collection_box.setStyleSheet('')
 
+    def _is_dark_theme(self) -> bool:
+        return self.palette().color(QtGui.QPalette.ColorRole.Window).lightness() < 128
+
     def _set_background_none(self, widget: QtWidgets.QWidget):
         widget.setStyleSheet(STYLE_NO_BACKGROUND)
 
     def _set_background_color(self, widget: QtWidgets.QWidget, is_valid: bool):
         """Set the background color of a widget based on validity"""
+        dark = self._is_dark_theme()
         if is_valid:
-            widget.setStyleSheet(STYLE_GREEN_BACKGROUND)
+            widget.setStyleSheet(STYLE_GREEN_BACKGROUND_DARK if dark else STYLE_GREEN_BACKGROUND)
         else:
-            widget.setStyleSheet(STYLE_RED_BACKGROUND)
+            widget.setStyleSheet(STYLE_RED_BACKGROUND_DARK if dark else STYLE_RED_BACKGROUND)
 
         # Force a repaint to ensure the style is applied immediately
         widget.repaint()

@@ -389,6 +389,14 @@ class Plot3dLighthouse(scene.SceneCanvas):
         self._original_native_resize = self.native.resizeEvent
         self.native.resizeEvent = self._on_native_resize
 
+        _original_wheel = self.native.wheelEvent
+
+        def _wheel_event(event):
+            _original_wheel(event)
+            event.accept()
+
+        self.native.wheelEvent = _wheel_event
+
         self.freeze()
 
     def _on_native_resize(self, event):
@@ -751,8 +759,6 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._pending_geo_update = None
 
         self._base_stations_info_label = InfoLabel(
-            "Channel Number: set a given base station’s channel number.\n"
-            "\n"
             "Receiving: green/red — base station is seen/not seen by the deck.\n"
             "\n"
             "Calibration: data from each base station used to correct manufacturing variation.\n"
