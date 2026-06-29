@@ -155,7 +155,10 @@ class GeoEstimatorDetailsWidget(QtWidgets.QWidget, geo_estimator_details_widget_
             self._selected_sample_uid = self._samples_details_model.get_uid_of_row(row)
             self._selected_sample_type = self._samples_details_model.get_sample_type_of_row(row)
             self._delete_sample_button.setEnabled(True)
-            self._change_type_sample_button.setEnabled(True)
+            _changeable = self._selected_sample_type in (LhCfPoseSampleType.XYZ_SPACE, LhCfPoseSampleType.VERIFICATION)
+            self._change_type_sample_button.setEnabled(_changeable)
+            self._change_type_sample_button.setToolTip(
+                '' if _changeable else 'Switching types of samples is only available for XYZ and Verification samples')
             self.sample_selection_changed_signal.emit(row)
             self._base_stations_table_view.clearSelection()
         else:
