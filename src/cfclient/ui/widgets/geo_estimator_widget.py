@@ -50,7 +50,8 @@ from cflib.localization.lighthouse_sweep_angle_reader import LighthouseMatchedSw
 from cflib.localization.lighthouse_bs_vector import LighthouseBsVectors
 from cflib.localization.lighthouse_types import LhDeck4SensorPositions
 from cflib.localization.lighthouse_cf_pose_sample import LhCfPoseSample
-from cflib.localization.lighthouse_geo_estimation_manager import LhGeoInputContainer, LhGeoInputContainerData, LhGeoEstimationManager
+from cflib.localization.lighthouse_geo_estimation_manager import (
+    LhGeoInputContainer, LhGeoInputContainerData, LhGeoEstimationManager)
 from cflib.localization.lighthouse_geometry_solution import LighthouseGeometrySolution
 from cflib.localization.user_action_detector import UserActionDetector
 
@@ -439,10 +440,12 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         grid.addWidget(container, 1, col)
         return container
 
-    _STYLE_STEP_SELECTED = ("QWidget { border: 2px solid gray; border-radius: 4px; padding: 4px; background: transparent; }"
-                            " QLabel { border: none; padding: 4px; background: transparent; }")
-    _STYLE_STEP_NORMAL = ("QWidget { border: 2px solid transparent; border-radius: 4px; padding: 4px; background: transparent; }"
-                          " QLabel { border: none; padding: 4px; background: transparent; }")
+    _STYLE_STEP_SELECTED = (
+        "QWidget { border: 2px solid gray; border-radius: 4px; padding: 4px; background: transparent; }"
+        " QLabel { border: none; padding: 4px; background: transparent; }")
+    _STYLE_STEP_NORMAL = (
+        "QWidget { border: 2px solid transparent; border-radius: 4px; padding: 4px; background: transparent; }"
+        " QLabel { border: none; padding: 4px; background: transparent; }")
 
     def _update_step_highlight(self):
         """Highlight the grid column corresponding to the current step"""
