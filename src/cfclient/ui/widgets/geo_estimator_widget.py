@@ -177,6 +177,14 @@ STYLE_GROUPBOX_GREEN_DARK = "QGroupBox { background-color: darkgreen; }"
 STYLE_GROUPBOX_RED_DARK = "QGroupBox { background-color: darkred; }"
 STYLE_GROUPBOX_YELLOW_DARK = "QGroupBox { background-color: goldenrod; }"
 
+# led_deck_ctrl.rgb888 applies the same color to all attached LED decks (Color LED, LED-ring).
+LED_DECK_RGB888_OFF = 0x000000
+LED_DECK_RGB888_GREEN = 0x00FF00
+LED_DECK_RGB888_RED = 0xFF0000
+
+SOUND_EFFECT_OFF = 0
+SOUND_EFFECT_SUCCESS = 7
+
 
 class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     """Widget for the geometry estimator UI"""
@@ -535,6 +543,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         match notification_type:
             case _UserNotificationType.SUCCESS:
                 self._helper.cf.platform.send_user_notification(True)
+                self._helper.cf.param.set_value('led_deck_ctrl.rgb888', LED_DECK_RGB888_GREEN)
+                self._helper.cf.param.set_value('sound.effect', SOUND_EFFECT_SUCCESS)
                 self._sample_collection_box.setStyleSheet(STYLE_GROUPBOX_GREEN_DARK if dark else STYLE_GROUPBOX_GREEN)
                 self._update_ui_reading(False)
                 retakeable = {_CollectionStep.ORIGIN, _CollectionStep.X_AXIS, _CollectionStep.XY_PLANE}
@@ -546,6 +556,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
                         self._step_measure.setText('Retake measurement')
             case _UserNotificationType.FAILURE:
                 self._helper.cf.platform.send_user_notification(False)
+                self._helper.cf.param.set_value('led_deck_ctrl.rgb888', LED_DECK_RGB888_RED)
                 self._sample_collection_box.setStyleSheet(STYLE_GROUPBOX_RED_DARK if dark else STYLE_GROUPBOX_RED)
                 self._update_ui_reading(False)
             case _UserNotificationType.PENDING:
@@ -558,6 +569,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
 
     def _user_notification_clear(self):
         self._sample_collection_box.setStyleSheet('')
+        self._helper.cf.param.set_value('led_deck_ctrl.rgb888', LED_DECK_RGB888_OFF)
+        self._helper.cf.param.set_value('sound.effect', SOUND_EFFECT_OFF)
 
     def _is_dark_theme(self) -> bool:
         return self.palette().color(QtGui.QPalette.ColorRole.Window).lightness() < 128
