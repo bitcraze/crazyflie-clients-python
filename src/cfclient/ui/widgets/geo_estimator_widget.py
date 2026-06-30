@@ -279,6 +279,8 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     def setVisible(self, visible: bool):
         super(GeoEstimatorWidget, self).setVisible(visible)
         if visible:
+            if self._current_step in [_CollectionStep.XYZ_SPACE, _CollectionStep.VERIFICATION]:
+                self._action_detector.start()
             if self._solver_thread is None:
                 logger.info("Starting solver thread")
                 self._solver_thread = LhGeoEstimationManager.SolverThread(self._container,
