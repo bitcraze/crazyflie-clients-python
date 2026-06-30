@@ -71,12 +71,11 @@ class _CollectionStep(Enum):
     ORIGIN = ('step_origin.png',
               'Place the crazyflie where you want the origin of your coordinate system to be.',
               'Start measurement',
-              "The orientation of the Crazyflie does not matter — only its absolute position.")
+              "The orientation of the Crazyflie does not matter, only its absolute position.")
     X_AXIS = ('step_x_axis.png',
               'Put the crazyflie on the positive X-axis, 1m from the origin.',
               'Start measurement',
-              "A tape measure and visual alignment is accurate enough for most spaces.\n\n"
-              "For very large spaces with many base stations, see the documentation for more precise placement advice.")
+              "A tape measure and visual alignment is accurate enough for most spaces.")
     XY_PLANE = ('step_xy_plane.png',
                 'Put the Crazyflie somewhere in the XY-plane, but not on the X-axis. '
                 'This sample is used to map the XY-plane to the floor.',
