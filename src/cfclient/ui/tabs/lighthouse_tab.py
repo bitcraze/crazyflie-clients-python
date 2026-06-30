@@ -844,6 +844,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             self._lh_config_writer = LighthouseConfigWriter(self._helper.cf)
 
     def _start_read_of_geo_data(self):
+        if self._lh_memory_helper is None:
+            return
         if not self._is_geometry_read_ongoing:
             self._is_geometry_read_ongoing = True
             self._lh_memory_helper.read_all_geos(self._geometry_read_signal.emit)
