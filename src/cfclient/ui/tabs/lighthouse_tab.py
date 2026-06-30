@@ -1047,7 +1047,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
 
     def _clear_state_indicator(self):
         container = self._basestation_stats_container
-        for row in range(0, 5):
+        for row in range(0, 4):
             for col in range(1, 17):
                 item = container.itemAtPosition(row, col)
                 if item is not None:
@@ -1060,7 +1060,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         # Assume all bs up to that bit are available
         for bs in range(0, 16):
             container.addWidget(self._create_label(str(bs + 1)), 0, bs + 1)
-            for i in range(1, 5):
+            for i in range(1, 4):
                 container.addWidget(self._create_label(), i, bs + 1)
 
     def _mask_status_matrix(self, bs_available_mask):
@@ -1070,7 +1070,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         # Assume all bs up to that bit are available
         for bs in range(0, 16):
             bs_indicator_id = bs + 1
-            for stats_indicator_id in range(0, 5):
+            for stats_indicator_id in range(0, 4):
                 item = container.itemAtPosition(stats_indicator_id, bs_indicator_id)
                 if item is not None:
                     label = item.widget()
@@ -1098,10 +1098,10 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         container = self._basestation_stats_container
 
         # Ports the label number to the first index of the statistic id
-        stats_id_port = {1: 0, 2: 1, 3: 4, 4: 5}
+        stats_id_port = {1: 0, 2: 1, 3: 4}
 
         for bs in range(16):
-            for stats_indicator_id in range(1, 5):
+            for stats_indicator_id in range(1, 4):
                 bs_indicator_id = bs + 1
                 item = container.itemAtPosition(stats_indicator_id, bs_indicator_id)
                 if item is not None:
