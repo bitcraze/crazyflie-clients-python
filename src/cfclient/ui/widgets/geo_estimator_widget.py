@@ -336,6 +336,16 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._upload_status = _UploadStatus.NOT_STARTED
         self._update_solution_info()
 
+    def cf_disconnected_cb(self, link_uri: str):
+        """Callback when the Crazyflie has disconnected. Reset the collection setup so a newly
+        connected Crazyflie doesn't immediately receive a geometry solution calculated from
+        samples collected with the previous Crazyflie."""
+        self.new_session()
+        self._change_step(_CollectionStep.ORIGIN)
+        self._upload_status = _UploadStatus.NOT_STARTED
+        self._latest_solution = LighthouseGeometrySolution([])
+        self._update_solution_info()
+
     def geometry_has_been_read_back_cb(self):
         """Callback when the geometry has been read back from the Crazyflie after an upload, that is the full
         round-trip is done. Called from the tab."""

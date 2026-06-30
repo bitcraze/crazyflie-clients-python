@@ -667,6 +667,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._geometry_area.addWidget(self._geo_estimator_widget)
         self._geo_estimator_widget.solution_ready_signal.connect(self._solution_updated_cb)
         self._connected_signal.connect(self._geo_estimator_widget.cf_connected_cb)
+        self._disconnected_signal.connect(self._geo_estimator_widget.cf_disconnected_cb)
         self._geometry_read_signal.connect(self._geo_estimator_widget.geometry_has_been_read_back_cb)
 
         # Add the geometry estimator details widget
@@ -918,6 +919,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._update_graphics()
         self._plot_3d.clear()
         # self._flying_mode_button.setChecked(True)
+        self._ui_mode = UiMode.flying
         self.is_lighthouse_deck_active = False
         self._is_connected = False
         self._update_ui()
