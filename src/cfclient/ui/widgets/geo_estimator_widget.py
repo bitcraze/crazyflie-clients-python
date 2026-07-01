@@ -84,20 +84,20 @@ class _CollectionStep(Enum):
                 "Taking samples at multiple positions gives a more precise approximation.")
     XYZ_SPACE = ('step_xyz_space.png',
                  'Pick up the crazyflie and take to an area in the flightspace where you expect to fly. '
-                 'Take an XYZ sample by quickly rotating the Crazyflie in a left-right motion about the z-axis. '
+                 'Take an XYZ-space sample by quickly rotating the Crazyflie in a left-right motion about the z-axis. '
                  'Then wait for confirmation. Repeat the processes in a few key additional areas.',
                  'Sample position',
                  "Hold the Crazyflie still after rotation and wait for confirmation.\n\n"
                  "A sample will fail if the Crazyflie moves after rotation or can only see one base station.")
     VERIFICATION = ('step_verification.png',
-                    'Verification samples are taken just like XYZ samples. '
-                    'If the verification sample error is high, then add XYZ samples around the '
+                    'Verification samples are taken just like XYZ-space samples. '
+                    'If the verification sample error is high, then add XYZ-space samples around the '
                     'verification sample to reduce the error.',
                     'Sample position',
-                    "Verification samples check the accuracy of areas between XYZ sample locations.\n\n"
+                    "Verification samples check the accuracy of areas between estimation sample locations.\n\n"
                     "Low error here means the system works reliably across the full flight space, "
                     "not just at the sampled positions.\n\n"
-                    "If the error is high, add more XYZ samples near the verification location.")
+                    "If the error is high, add more XYZ-space samples near the verification location.")
 
     def __init__(self, image, instructions, button_text, info):
         self.image = image

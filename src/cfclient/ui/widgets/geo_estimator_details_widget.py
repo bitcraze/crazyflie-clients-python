@@ -102,7 +102,7 @@ class GeoEstimatorDetailsWidget(QtWidgets.QWidget, geo_estimator_details_widget_
         self._base_stations_widget.setVisible(False)
 
         self._bs_details_info_label = InfoLabel(
-            'This table details the XYZ location of the base stations, how many samples it can\n'
+            'This table displays the XYZ location of the base stations, how many samples it can\n'
             'see and how many links it has with other base stations.\n'
             'E.g. If a sample can see three base stations, then those three base stations are linked.\n'
             '\n'
@@ -110,13 +110,13 @@ class GeoEstimatorDetailsWidget(QtWidgets.QWidget, geo_estimator_details_widget_
             'base station, and all stations must belong to a single network.',
             self._base_stations_widget)
         self._samples_details_info_label = InfoLabel(
-            'An XYZ sample error indicates how well the configuration matches that specific data point.\n'
+            'An estimation sample error indicates how well the configuration matches that specific data point.\n'
             'A low error here does not always guarantee stable flight throughout the entire space.\n'
             '\n'
             'A verification sample error measures accuracy at a new location not used in the estimation.\n'
             'This gives a more practical view of the overall quality of the setup.\n'
             '\n'
-            'Deleting, retaking or shuffling samples between XYZ and Verification states\n'
+            'Deleting, retaking or shuffling samples between XYZ-space and Verification types\n'
             'can help reduce both kinds of sample error.',
             self._samples_widget)
 

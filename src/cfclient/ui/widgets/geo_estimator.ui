@@ -407,7 +407,7 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>Max XYZ Sample Error:</string>
+               <string>Max Estimation Sample Error:</string>
               </property>
              </widget>
             </item>

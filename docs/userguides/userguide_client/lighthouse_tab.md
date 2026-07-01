@@ -5,26 +5,18 @@ sort_order: 10
 ---
 
 The Lighthouse Positioning tab shows information from the Lighthouse Positioning
-system when present. It is also used to configure and manage the system.
+system when present. It is also used to set up and manage the system. To properly setup your system, please follow the [getting started tutorial](https://www.bitcraze.io/documentation/tutorials/getting-started-with-lighthouse/).
 For more information on how the Lighthouse system works, please see
 [the firmware documentation](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/lighthouse/).
 
 ![cfclient positioning](/docs/images/cfclient_lh_main.png)
 
 The tab is divided into four sections:
-1.  3D view of the Crazyfle and the base stations
-2.  Crazyflie Status
-3.  Base stations status
-4.  System management
+1.  Crazyflie Status
+2.  Base stations status
+3.  System management
+4.  3D view of the Crazyflie and the base stations
 
-### 3D view
-The view shows the position and orientation of the Crazyflie (blue) and the
-base stations (green). The ids of the base stations are displayed as a number and
-the status using colors. Green means that data from the base station is used
-in the position estimation.
-
-The graph can be rotated by clicking and draging, zoomed using the scroll wheel
-and moved by holding the shift key while clicking and draging.
 
 ### Crazyflie status
 The overall status of the Lighthouse system is displayed as a text. The status is one of:
@@ -32,53 +24,110 @@ The overall status of the Lighthouse system is displayed as a text. The status i
 *  **Not receiving** - no base station is received
 *  **No geo/calib** - calibration or geometry data is missing and position can not be estimated
 
-The currently estimated position is displayed in the "Position" field.
+The estimated position for the Crazyflie is displayed in the "Position" field.
 
 ### Base station status
-A detailed status of the base stations is indicated using colors in the grid. All
-four stages for a base station must be green for the data to be used in the position
-estimation process. When setting up the system, work from top to bottom and make sure all the boxes above are green
-before you proceed to the next one.
+A detailed status of the base stations is indicated using colors in the grid.
 
-1.  **Receiving** - green = light is received from the base station, red = no reception
-2.  **Calibration** - indicates if there is calibration data for the base station or not.
+1.  **Receiving** - indicates the Crazyflie receives signals from the base station.
+    * green = signals are received
+    * red = no reception
+2.  **Calibration** - indicates if there is calibration data for the base station or not. 
     * Red = no calibration data
     * blue = calibration data from persistent storage but not yet confirmed
     * green = calibration data has been received from the base station and matched previous data
-    * orange = calibration data has been received from the base station but did **not** match the previous data, this means that you probably should redo the geometry estimation.
-3. **Geometry** - indicates whether geometry data is available or not.
-    * Green = geometry data from persistent storage or has been set from the client
-    * red = no geometry data.
-    Note: it is possible that the geometry indicator is green even though the geometry data is not valid, this is for instance the case if a base station is moved in a stystem that has been set up earlier.
-4.  **Estimator** - data from the base station is sent to the estimator to be used in the position estimation process.
+    * orange = calibration data has been received from the base station but did **not** match the previous data, this means that you should probably redo the geometry estimation.
+    
     Note: when Calibration data is received it is automatically stored in the persistent memory to be available immediately after reboot.
+3. **Geometry** - indicates whether geometry data is available or not.
+    * green = geometry data from persistent storage
+    * red = no geometry data.
+    
+    Note: it is possible that the geometry indicator is green even though the geometry data is not valid, this is for instance the case if a base station is replaced by another one with the same channel.
 
 ### System Management
-This section us used to configure the system.
+This section is used to configure the system.
 
-* **Manage Geometry** - Opens a dialog box displaying the current geometry data. See the [Basestation Geometry Management](#basestation-geometry-management) section.
+* **Start set up** - Expands the Lighthouse tab with new sections for setting up a Lighthouse positioning system. See the [System Set up](#system-set-up) section.
 
-* **Change system type** - Opens a dialog box where the system type can be changed.
+* **Switch BS version** - Opens a dialog box where the base station version can be changed.
     Possible options are **Lighthouse V1** and **Lighthouse V2**.
-    Note: calibration and geometry data is erased when the system type is changed.
 
 * **Set BS channel** - Opens a dialog box that is used to set the channel of a Lighthouse V2
     base station. Connect **one** base station at a time to the computer via USB and click
     the **Scan basestation** button. If a base station is detected, a new channel
     can be set by choosing the desired channel and clicking the “Set channel” button.
 
-* **Save system config**/**Load system config** - store and load system configuration
-    to/from file. The system configuration contains system type, calibration and
-    geometry data. When a system configuration is loaded from file it is automatically
-    written to the Crazyflie (and is stored in persistent memory). This is a
-    useful feature when configuring multiple Crazyflies for a system to make sure
-    they all share the same coordinate system.
+* **Import configuration** - load a system configuration to the Crazyflie from a file. The system configuration contains system type, calibration and geometry data. When a system configuration is loaded from file it is automatically written to the Crazyflie (and is stored in persistent memory). This is a useful feature when configuring multiple Crazyflies, making sure they all share the same coordinate system.
+* **Export configuration** - store a system configuration from the Crazyflie to a file. 
 
-### Basestation Geometry Management
+### 3D view
+The view shows the position and orientation of the Crazyflie (blue) and the
+base stations (green/red). The ids of the base stations are displayed as a number and
+the status using colors. Green means that data from the base station is received.
 
-![cfclient positioning](/docs/images/base_station_geo_dialog.png){:align-center width="700"}
 
-1. This shows the current geometry of the basestations that are saved in the Crazyflie's memory. Either it is empty (no geometry in memory), or there are positions, or there are replacement postions. If you see an arrow like `N/A -> 2.3` or `2.0 -> 2.3`, that means that you just estimated a (new) basestation geometry but it has not been saved to the Crazyflie's permanent memory yet.
-2. *Estimate geometry*: This will open a wizard that will follow you through the steps of estimating the positions of the installed basestations. Check out the [getting started tutorial](https://www.bitcraze.io/documentation/tutorials/getting-started-with-lighthouse/) for more instructions. This is meant for 2+ basestations
-3. *Estimate geometry simple*. This is a simplerer basetation geometry estimation based on the PnP function of OpenCV. If it is grayed out, install `pip3 install opencv-python-headless`, but just beware of the incompatibility issues with the regular opencv python packages. This is meant for 1-2 basestations.
-4. *Write to Crazyflie*: This will write the just estimated basestation geometry (in (1) behind the arrow)) to the permanent memory of the Crazyflie.
+### System Set up
+
+![cfclient positioning](/docs/images/cfclient_lh_setup.png)
+
+When setting up the system, four new sections appear:
+
+5.  Sample collection
+6.  Sample management
+7.  Base stations table
+8.  Samples table
+
+#### Sample Collection
+This section guides you through collecting the position samples used to estimate the geometry of the base stations.
+The process follows a fixed sequence of five steps:
+
+*  **Origin sample** - Place the Crazyflie at the desired origin of your coordinate system and take a measurement.
+*  **X-axis sample** - Place the Crazyflie 1m along the positive X-axis from the origin and take a measurement.
+*  **XY-plane samples** - Place the Crazyflie anywhere in the XY-plane (but not on the X-axis) and take one or more measurements. This maps the XY-plane to the floor.
+*  **XYZ-space samples** - Carry the Crazyflie to positions within the intended flight space and take samples by quickly rotating it left–right around the Z-axis, then holding it still.
+*  **Verification samples** (optional) - Taken the same way as XYZ-space samples. Used to check the accuracy of the geometry estimate at locations not used during estimation.
+
+Use the "**<**" and "**>**" buttons to navigate between steps.
+The large button in the middle triggers the measurement for the current step.
+The step icon for each sample type shows a checkmark when enough data has been collected for a valid solution.
+
+A status label at the bottom of the section reflects the current state of the geometry solution:
+*  **Not enough samples** - more samples are needed before a solution can be computed.
+*  **Updating...** - the solver is recalculating the geometry.
+*  **Uploading...** - a valid solution has been found and is being written to the Crazyflie.
+*  **Uploaded** - the geometry has been successfully written to and confirmed by the Crazyflie.
+*  **Uploaded (imported config)** - a configuration was loaded from file and written to the Crazyflie.
+
+
+#### Sample Management
+This section shows the quality of the current geometry solution and provides tools for managing the collected samples.
+
+*  **Sample Details** - Toggle **Show**/**Hide** to reveal or collapse the [Base Stations](#base-stations-table) and [Samples](#samples-table) tables.
+*  **Max Estimation Sample Error** - The maximum position error across all estimation samples.
+*  **Max Verification Sample Error** - The maximum error across all verification samples. Gives a practical measure of accuracy at positions not used during estimation.
+*  **Clear all samples** - Discards all collected samples and starts a fresh session.
+*  **Import samples** - Loads a previously saved sample session from a YAML file.
+*  **Export samples** - Saves the current sample session to a YAML file for later reuse or sharing between Crazyflies.
+
+#### Base Stations table
+Visible when **Sample Details** is set to **Show**.
+Displays a table of all base stations detected from the collected samples, with columns:
+**Id**, **X**, **Y**, **Z** (estimated position in metres), **Samples** (number of samples that saw this base station), and **Links** (number of connections to other base stations).
+A red highlight in the **Links** column means too few links exist, which prevents a valid geometry solution.
+
+*  **Delete** - Removes the selected base station and all its connections from the estimation. Samples that only observed this base station and one other are also removed.
+
+#### Samples table
+Visible when **Sample Details** is set to **Show**.
+Displays a table of all collected samples, with columns:
+**Type**, **X**, **Y**, **Z** (estimated position in metres), and **Err** (position error in mm).
+Verification samples are shown with a yellow background.
+A large error in the **Err** column is highlighted in red; adding more XYZ-space samples nearby or retaking the affected sample can reduce it.
+
+*  **Delete** - Removes the selected sample from the table.
+*  **Change Type** - Switches the selected sample between XYZ-space and Verification type.
+
+Estimation and Verification samples are also drawn in the 3D view, represented by grey and white squares respectively.
+
+
