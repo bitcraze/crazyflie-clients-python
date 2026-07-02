@@ -42,7 +42,7 @@
           </size>
          </property>
          <property name="title">
-          <string>Basestation Status</string>
+          <string>Base Station Status</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
@@ -173,7 +173,7 @@
           </size>
          </property>
          <property name="title">
-          <string>Crazyflie status</string>
+          <string>Crazyflie Status</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>

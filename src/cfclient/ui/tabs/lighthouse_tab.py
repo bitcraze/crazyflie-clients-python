@@ -1095,8 +1095,8 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         return label
 
     def _update_basestation_status_indicators(self):
-        """Handling the basestation status label handles to indicate
-            the state of received data per basestation"""
+        """Handling the base station status label handles to indicate
+            the state of received data per base station"""
         container = self._basestation_stats_container
 
         # Ports the label number to the first index of the statistic id
