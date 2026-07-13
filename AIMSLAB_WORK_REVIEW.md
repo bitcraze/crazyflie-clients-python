@@ -1,5 +1,9 @@
 # AIMSLab Work Branch Review
 
+> Historical review of earlier autonomy work. Its findings remain useful for
+> the scripts it names, but it predates the manual-thrust figure-8 baseline in
+> `MOCAP_MANUAL_FIGURE8.md`.
+
 Date: 2026-05-14
 Branch reviewed: `aimslab/work`
 Commit reviewed: `965c8ec`
@@ -364,3 +368,20 @@ For manual/controller tests:
 - The branch correctly identified that high-level commander enablement is needed on this setup.
 - The latest logger intentionally avoids opening the Crazyradio while `cfclient` owns it; that is the right constraint.
 - The raw-thrust script's choice to keep mocap as an external safety monitor while disabling estimator writes for diagnosis is reasonable, as long as the mode is clearly documented and not confused with autonomous mocap flight.
+
+
+## Session Update: 2026-06-23 Figure-Eight Script
+
+The findings above remain the review baseline. The current experimental
+`mocap-extpose-figure8.py` has since been changed to reduce some of the cited
+risks: it uses position-only extpos by default, requires a received/fresh VRPN
+pose before arming, waits for observed takeoff height, validates sampled
+trajectory points, runs its generated path relative to the current position,
+and monitors a measured cage polygon with an inward margin.
+
+This is not a clearance for autonomous flight. The direct-VRPN and ROS2 frame
+relationship is not yet independently proven, and the script still uses raw
+mocap Z while commanding absolute takeoff/landing targets. The new 2 m cage
+corner set is documented in `AIMSLAB_AUTONOMY_RUNBOOK.md`; it must be verified
+against direct VRPN before any figure-eight run. `HOVER_ONLY_TEST = True`
+remains the required configuration while verifying the frame and hover.

@@ -1,5 +1,24 @@
 # AIMSLab Crazyflie Mocap Autonomy Runbook
 
+> Historical high-level-commander and calibration runbook. For the current
+> manually verified, low-level-commander figure-8 workflow, read
+> [`MOCAP_MANUAL_FIGURE8.md`](MOCAP_MANUAL_FIGURE8.md). The flight constants
+> and powered-flight status below are not the current manual-figure-8 baseline.
+
+## 2026-07-13 Status
+
+The verified powered-flight path is the low-level, manual-thrust workflow in
+`mocap_manual_thrust_assisted_figure8.py`: establish a low hover with `R`, use
+`T` to settle near 3 ft, press `F` for one figure-8, then press `F` again to
+return to the figure-8 start and land. The current baseline completed one
+48-second, cage-limited path at roughly `0.91 m` above start without a safety
+descent.
+
+This does **not** clear the high-level-commander (HLC) safety hold below. HLC
+work still needs its independent orientation and estimator validation. Keep
+`mocap-extpose-figure8.py` and other HLC trajectory scripts out of powered
+testing until that work is complete.
+
 ## Goal
 
 Get to repeatable autonomous indoor figure-8 flight by using the standard Crazyflie
@@ -98,6 +117,19 @@ run its powered point mode while orientation calibration is unresolved:
 Use `mocap_manual_thrust_assisted_figure8.py` as the separate manual-thrust
 assisted-flight path. It does not use HLC for takeoff; the pilot owns vertical
 thrust while the script assists horizontal hold and later a tiny figure-8.
+
+2026-07-08 status for this manual-thrust path: low X/Y hold is now the
+known-good powered setup with `ROLL_SIGN = -1.0`, `PITCH_SIGN = 1.0`, and
+`BODY_YAW_OFFSET_DEG = 0.0`. The supporting logs are:
+
+- `flight_logs/mocap-attitude-response-20260708-112640.csv`: auto `P` attitude
+  probe showed the no-extra-yaw-offset body frame lined up with command axes.
+- `flight_logs/mocap-assisted-figure8-20260708-113913.csv`: user-reported
+  perfect hover, mocap fresh throughout, no safety stop, max drift `0.106 m`,
+  max target error `0.108 m`, max height `0.073 m`.
+
+Figure-8 did not activate in that run because `FIGURE8_MIN_HEIGHT_M = 0.12`
+and the low hover only reached `0.073 m`.
 
 Keep these older scripts in their current roles:
 
@@ -383,7 +415,7 @@ hardware-specific runtime state and is intentionally ignored by Git. Every
 operator or machine must run `emergency-test` to create a fresh proof; never
 copy or commit another setup's proof file.
 
-### Current Powered-Test Hold
+### Current HLC Powered-Test Hold
 
 The props-off Ctrl+C emergency test passed, including confirmed disarm. The
 subsequent powered hover attempts did not prove hover: one stopped at
@@ -398,3 +430,104 @@ movement mode until M2 and its propeller, connector, wiring, shaft friction,
 and thrust response have been checked with all propellers removed. A successful
 Logitech/manual-controller run does not clear this hold because its higher
 motor command can mask a weak or intermittent low-throttle response.
+
+
+## Guarded Figure-Eight Session Update (2026-06-23)
+
+This note records the current state of
+`src/aimslab/crazyflie-clients-python/src/aimslab/examples/mocap-extpose-figure8.py`.
+It does not clear the powered-flight safety hold elsewhere in this runbook.
+
+### Current Script Behavior
+
+- Connects directly to VRPN at `192.168.1.42:3883` and requires rigid body
+  `crazyflie_21`.
+- Streams position only with `cf.extpos.send_extpos(...)`; full-pose quaternion
+  injection remains disabled because the rigid-body quaternion/body-frame mapping
+  has not been validated.
+- Rejects missing or stale mocap data before arming. Seeing `Found and tracking
+  rigid body: crazyflie_21` confirms the name was discovered; a stationary drone
+  can legitimately produce unchanged consecutive positions.
+- Generates a local figure-eight with `x = A sin(t)` and
+  `y = A sin(t) cos(t)`, split into 16 cubic trajectory segments. With
+  `START_FIGURE8_AT_CURRENT_POSITION = True`, the uploaded trajectory is run
+  with `relative=True`, so its local `(0, 0)` is the takeoff position.
+- Translates that local path into the mocap frame for a pre-arm cage check and
+  monitors the measured position during flight. The trajectory is rejected when
+  it or the measured drone leaves the safety margin.
+- `HOVER_ONLY_TEST = True` is the current safe setting. It takes off to the
+  configured absolute HLC Z target, waits for mocap height confirmation, hovers
+  for five seconds, and lands. It does not execute the figure-eight.
+
+To run this script from the repository root:
+
+```bash
+python3 src/aimslab/crazyflie-clients-python/src/aimslab/examples/mocap-extpose-figure8.py
+```
+
+Keep `HOVER_ONLY_TEST = True` until a hover is stable and repeatable. Setting it
+false enables the autonomous trajectory and is not a substitute for frame
+validation.
+
+To inspect the direct, read-only VRPN stream without opening a Crazyradio or
+commanding a Crazyflie, run:
+
+```bash
+python3 src/aimslab/crazyflie-clients-python/src/aimslab/examples/mocap-vrpn-pose-monitor.py
+```
+
+It prints raw position and quaternion values for `crazyflie_21` five times per
+second. Use it when recording cage corners or comparing direct VRPN against a
+ROS2 pose topic.
+
+### Measured 2 m Cage, Current Coordinate Assumption
+
+The current four floor corners are ordered counterclockwise around the cage for the
+script and are stored in `CORNER_POINTS`:
+
+```text
+bottom right: (-1.027,  1.015, 0.046)
+top right:    (-1.020, -0.999, 0.046)
+top left:     ( 1.035, -1.019, 0.033)
+bottom left:  ( 1.037,  0.981, 0.038)
+```
+
+Their average center is approximately `(0.006, -0.006)`. The measured side
+lengths are approximately 2.06 m, 2.01 m, 2.06 m, and 2.00 m.
+
+These corner values were measured with `mocap-vrpn-pose-monitor.py` from the
+direct VRPN stream used by the flight script. The earlier provisional ROS2 set
+was replaced. The earlier saved corner set had center approximately `(0.995, -1.212)` while direct VRPN at the
+physical cage center reported approximately `(0, 0)`; that mismatch caused
+valid center placement to be rejected as a wall violation.
+
+The script now uses the four edges as a polygon, not only X/Y min/max, and
+requires each checked point to remain at least `SAFETY_MARGIN = 0.10 m` inside
+every edge. For the current relative trajectory, the full path must fit inside
+that shrunken polygon; “relative to the current position” does not permit a
+path started near a wall.
+
+### Figure-Eight Limits and Known Constraints
+
+The current configured amplitude is `0.10 m`. Its maximum intended distance
+from the pattern center is 0.10 m, so `MAX_CENTER_DRIFT` must be greater than
+0.10 m. The current `0.14 m` threshold is deliberate. Do not set it to 0.08 m
+without also shrinking the amplitude; a conservative paired setting is
+`FIGURE8_AMPLITUDE = 0.06` and `MAX_CENTER_DRIFT = 0.08`.
+
+`TRAJECTORY_TIME_SCALE = 3.0` makes the 20-second generated path take about 60
+seconds. Larger time scales are slower. The old static example,
+`mocap-extpose-example.py`, runs a much larger precomputed relative trajectory
+with fewer guards and full-pose behavior; do not use it as a cage-flight test.
+
+The current script sends raw direct-VRPN X/Y/Z values to the estimator. Its
+absolute takeoff target is `FLIGHT_HEIGHT = 1.0`, while a floor pose has been
+observed near `z = 0.03..0.05`. Thus the current target is about 0.95--0.97 m
+above the observed floor and the `land(0.0, ...)` target is below that raw floor
+baseline. This raw-Z convention remains a limitation to resolve before
+unattended autonomous flight.
+
+The VRPN minor-version message and the final
+`vrpn_Connection::~vrpn_Connection` remaining-reference message have been
+observed during shutdown. They do not establish that pose data is valid; use
+fresh-pose and frame checks as the evidence.

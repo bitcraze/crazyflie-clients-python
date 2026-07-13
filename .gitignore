@@ -38,5 +38,21 @@ venv/
 
 # Local Crazyflie flight data
 flight_logs/*.csv
+flight_logs/*.png
+flight_logs/*.svg
+flight_logs/*.pdf
+/logs/*
+!/logs/.gitkeep
+
+# Local analysis and crash artifacts
+__pycache__/
+*.pyo
+.cache/
+core
+core.*
+
+# Local reference copies and separately cloned third-party projects
+hovermocapworkingfile.py
+third_party/
 # Local hardware-specific safety proof
 .cache/mocap-autonomy-emergency-stop-proof.json

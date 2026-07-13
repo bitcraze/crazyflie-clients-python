@@ -1,5 +1,9 @@
 # AIMSLab Docs
 
+> Current Crazyflie manual-thrust figure-8 work is documented in the repository
+> root: [`MOCAP_MANUAL_FIGURE8.md`](../../MOCAP_MANUAL_FIGURE8.md). This file
+> preserves broader lab and historical project notes.
+
 **Overview:**
 This a repository containing most of the code written by me over summer 25 for the additive manufacturing REU with Dr. Baidya and Dr. Aqlan. The repo contains links to the ROS2 package needed to receive mocap data on the Starling 2, how to install the VRPN library to receive mocap data, the python instructions to get the crazyflie flying using mocap and the 3D print anomaly detection model I made.
 
@@ -64,6 +68,15 @@ sudo make install
 Unfortunately, I was only able to get the library working if you install the object files system wide. That may be an improvement to make in the future. 
 __________________
 
+# Current Crazyflie Mocap Flight Status
+
+For the current manually verified OptiTrack/VRPN Crazyflie flight procedure,
+read [`MOCAP_MANUAL_FIGURE8.md`](../../MOCAP_MANUAL_FIGURE8.md). It documents
+the low-level commander workflow: `R`, then `T`, then `F` after the 3 ft helper
+reports ready. [`AIMSLAB_AUTONOMY_RUNBOOK.md`](../../AIMSLAB_AUTONOMY_RUNBOOK.md)
+remains the historical HLC and calibration reference. `mocap-extpose-figure8.py`
+is not a powered-flight replacement for the manual-thrust workflow.
+
 # CrazyFlie Setup
 ***Disclaimer: This script has only been tested in Ubuntu so Windows will most likely not work***
 1. Install From Source the cfclient: [https://www.bitcraze.io/documentation/repository/crazyflie-clients-python/master/installation/install/](url)
@@ -111,4 +124,3 @@ As of August 1, the drone is not arming because QGC cannot detect the drone's vo
 
 View modalai techincal docs:
 https://docs.modalai.com/mavlink/
-

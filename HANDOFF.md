@@ -1,10 +1,36 @@
 # Crazyflie Mocap Flight Handoff
 
-Date: 2026-06-08
+> Historical handoff, last updated 2026-07-08. The actively verified manual
+> flight procedure is now documented in
+> [`MOCAP_MANUAL_FIGURE8.md`](MOCAP_MANUAL_FIGURE8.md), alongside the current
+> constants in `mocap_manual_thrust_assisted_figure8.py`. Do not use the
+> tuning values below as the current manual-figure-8 configuration.
+
+Date: 2026-07-08
 Repo: `/home/alwin-raj/Desktop/drone/crazyflie-clients-python`
 Branch: `aimslab/work`
 
-## Current Status
+## 2026-07-13 Current Manual-Flight Baseline
+
+The active powered-flight baseline is now
+`mocap_manual_thrust_assisted_figure8.py`:
+
+- Press `R` for ready thrust and establish a low hover.
+- Press `T` for the mocap 3 ft helper and wait for `3ft ready: YES`.
+- Press `F` to start the figure-8; press `F` again to return to its start and
+  land.
+- The latest verified run completed one 48-second figure-8 at about `0.91 m`
+  above its recorded start height, recovered from a brief stale-mocap event,
+  and ended with `return_home_landing_complete`.
+- Requested figure-8 dimensions are constrained at runtime by cage bounds and
+  tracking reserve. That verified path was approximately `5.4 m x 5.4 m` in
+  local X/Y.
+
+The script writes local-only CSVs and 3D path images to `flight_logs/`; those
+artifacts are deliberately ignored by Git. For current instructions and active
+configuration, read `MOCAP_MANUAL_FIGURE8.md` before the historical notes below.
+
+## Historical Status (2026-07-08)
 
 Do not run a powered HLC hover yet. `mocap_autonomy_ladder.py` now requires an
 explicit calibrated `--body-to-cf-quat X Y Z W`, applies it before extpose
@@ -30,7 +56,22 @@ The manual-thrust script assists roll, pitch, yaw, safety checks, logging, and
 eventually a very small figure-8. It is not using high-level commander for
 takeoff.
 
-The latest manual-thrust change added keyboard attitude trims:
+2026-07-08 manual-thrust status: low hover with mocap-assisted X/Y hold is now
+the known-good powered setup. In
+`flight_logs/mocap-assisted-figure8-20260708-113913.csv`, the user reported a
+perfect hover. The log stayed mocap-fresh for 64.0 s, had no safety stop, ended
+by operator cut, and held within:
+
+- max height above start: `0.073 m`
+- max horizontal drift: `0.106 m`
+- max target error: `0.108 m`
+- max thrust: `32500`
+
+Figure-8 did not start in that run. `figure8_active` stayed `0` because the
+flight never reached the current `FIGURE8_MIN_HEIGHT_M = 0.12` gate; max height
+was only `0.073 m`.
+
+The manual-thrust script includes keyboard attitude trims:
 
 - `A` / `D`: roll trim down/up
 - `W` / `S`: pitch trim up/down
@@ -163,23 +204,31 @@ constants near the top of the file rather than lots of CLI flags.
 
 Important current constants:
 
-- `MAX_MANUAL_THRUST = 39000`
-- `TAKEOFF_READY_THRUST = 33000`
-- `SMALL_THRUST_STEP = 150`
-- `BIG_THRUST_STEP = 1500`
+- `MAX_MANUAL_THRUST = 52000`
+- `TAKEOFF_READY_THRUST = 38000`
+- `TAKEOFF_HOLD_FREEZE_THRUST_RAW = 33000`
+- `SMALL_THRUST_STEP = 100`
+- `BIG_THRUST_STEP = 500`
 - `DESCENT_RAMP_RAW_PER_S = 700.0`
-- `MAX_XY_DRIFT_M = 0.28`
-- `MAX_TARGET_ERROR_M = 0.22`
-- `MAX_HEIGHT_ABOVE_START_M = 0.35`
+- `MAX_XY_DRIFT_M = 0.60`
+- `MAX_TARGET_ERROR_M = 0.55`
+- `MAX_HEIGHT_ABOVE_START_M = 0.25`
 - `MOCAP_STALE_TIMEOUT_S = 0.30`
 - `MOCAP_STALE_GRACE_S = 1.50`
 - `MOCAP_RELOCK_AFTER_STALE_S = 0.45`
+- local mocap frame: `local +X <- raw -Y`, `local +Y <- raw +X`, `local +Z <- raw +Z`
 - `ROLL_SIGN = -1.0`
-- `PITCH_SIGN = -1.0`
+- `PITCH_SIGN = 1.0`
+- `BODY_YAW_OFFSET_DEG = 0.0`
+- `YAW_COMMAND_SIGN = -1.0`
 - `KP_XY = 14.0`
 - `KD_XY = 7.0`
 - `KI_XY = 1.0`
-- `GROUND_MAX_ANGLE_DEG = 1.5`
+- `GROUND_MAX_ANGLE_DEG = 1.0`
+- `TAKEOFF_XY_ASSIST_START_HEIGHT_M = 0.005`
+- `TAKEOFF_XY_ASSIST_FULL_HEIGHT_M = 0.04`
+- `TAKEOFF_XY_ASSIST_START_THRUST_RAW = 24000`
+- `TAKEOFF_XY_ASSIST_FULL_THRUST_RAW = 32000`
 - `MAX_ANGLE_DEG = 12.0`
 - figure-8: `0.04m x 0.03m`, `32s` period, min start height `0.12m`
 
@@ -256,16 +305,11 @@ quick climb above about `60%`. Battery state matters.
 
 ## Recommended Next Test
 
-Run props-off calibration and diagnostics only:
-
-```bash
-python3 mocap_estimator_world_frame_calibrator.py
-python3 mocap_command_diagnostics.py validate
-```
-
-This validates position only. A separate trustworthy orientation-frame method
-is still required before running either ladder validation mode. Do not arm or
-run a powered hover as the next test.
+Continue with `mocap_manual_thrust_assisted_figure8.py`, not the HLC ladder.
+Repeat the known-good low hover first and confirm X/Y hold is still boringly
+stable. If testing `F`, either climb above `0.12 m` first or deliberately lower
+`FIGURE8_MIN_HEIGHT_M` after deciding that a lower-height figure-8 is acceptable
+for the cage and ground-effect conditions.
 
 ## Log Analysis Checklist
 

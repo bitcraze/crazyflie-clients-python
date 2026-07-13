@@ -8,6 +8,24 @@ Branch: `aimslab/work`
 
 Work through the local Crazyflie client repo, review recent `alwnraj` changes, get the repo running, validate controller input, and diagnose mocap flight behavior.
 
+## 2026-07-13 Current Manual Figure-8 Baseline
+
+The active powered-flight script is `mocap_manual_thrust_assisted_figure8.py`.
+The verified sequence is: press `R` for ready thrust, establish a low hover,
+press `T` for the mocap 3 ft helper and wait for `3ft ready: YES`, then press
+`F` to start the figure-8. Pressing `F` again returns to the figure-8 start and
+lands.
+
+The latest verified run completed one 48-second cage-limited figure-8 at about
+`0.91 m` above the start height, recovered from a brief mocap dropout, and
+completed the return-and-land sequence without a safety descent. The configured
+figure-8 dimensions are requests that are shrunk at runtime to fit the cage;
+the observed path was about `5.4 m x 5.4 m` in local X/Y.
+
+Flight CSVs and visualizations are local-only artifacts under `flight_logs/`.
+The script launches `plot_crazyflie_3d_track.py` for a live/final 3D view when
+matplotlib is available.
+
 ## Commit Review
 
 Reviewed reachable commits by author `alwnraj`.
@@ -1123,3 +1141,48 @@ The root-level diagnostic/calibration scripts are being added to Git:
 - `mocap_manual_thrust_assisted_figure8.py`
 
 Generated `flight_logs/*.csv` files remain local and are ignored by Git.
+
+## 2026-07-08 Manual-Thrust Mocap Hold Success
+
+After attitude-response probing, the manual-thrust assisted script was updated
+to the first directly verified body-frame setup:
+
+- script: `mocap_manual_thrust_assisted_figure8.py`
+- mocap position mapping: `local +X <- raw -Y`, `local +Y <- raw +X`,
+  `local +Z <- raw +Z`
+- `ROLL_SIGN = -1.0`
+- `PITCH_SIGN = 1.0`
+- `BODY_YAW_OFFSET_DEG = 0.0`
+- `YAW_COMMAND_SIGN = -1.0`
+- `KP_XY = 14.0`, `KD_XY = 7.0`, `KI_XY = 1.0`
+- `MAX_XY_DRIFT_M = 0.60`
+- `MAX_TARGET_ERROR_M = 0.55`
+- `TAKEOFF_READY_THRUST = 38000`
+- `TAKEOFF_HOLD_FREEZE_THRUST_RAW = 33000`
+- X/Y assist blends in from `0.005 m` to `0.04 m` height above start, or from
+  `24000` to `32000` raw thrust
+
+The attitude response test that supported this was
+`flight_logs/mocap-attitude-response-20260708-112640.csv`. The auto `P` probe
+completed and showed that removing the extra yaw offset made command axes line
+up: pitch affects body X and roll affects body Y, with roll sign inverted.
+
+The first successful powered hold with this setup was:
+
+- log: `flight_logs/mocap-assisted-figure8-20260708-113913.csv`
+- user report: hover worked perfectly
+- duration: `64.0 s`
+- mocap status: fresh for the whole log
+- safety stops: none
+- final stop: operator cut
+- max thrust: `32500`
+- max height above start: `0.073 m`
+- max horizontal drift: `0.106 m`
+- max target error: `0.108 m`
+
+Figure-8 did not activate in that run even though the user pressed `F`.
+`figure8_active` stayed `0` because the hover never reached the current
+`FIGURE8_MIN_HEIGHT_M = 0.12`; max height was only `0.073 m`. The known-good
+next step is to repeat low X/Y hold first, then either climb above `0.12 m`
+before pressing `F` or intentionally lower the figure-8 height gate after a
+separate safety decision.
