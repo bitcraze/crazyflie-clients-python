@@ -21,22 +21,14 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      if: runner.os == 'Linux' || runner.os == 'Windows'
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Set up Python ${{ matrix.python-version }} and venv on macOS
-      if: runner.os == 'macOS'
-      run: |
-        brew install python@${{ matrix.python-version }}
-        $(brew --prefix)/bin/python${{ matrix.python-version }} -m venv venv
-        echo "PATH=$(pwd)/venv/bin:$PATH" >> $GITHUB_ENV
-
     - name: Install dependencies
       run: |
-        python3 -m pip install --upgrade pip build setuptools
-        python3 -m pip install pre-commit
+        python -m pip install --upgrade pip build setuptools
+        python -m pip install pre-commit
 
     - name: Code quality checks
       run: pre-commit run --all-files
@@ -49,7 +41,7 @@ jobs:
         # Find the built wheel
         WHEEL_FILE=$(ls dist/*.whl | head -n 1)
         echo "Installing wheel: $WHEEL_FILE"
-        pip install "$WHEEL_FILE"
+        python -m pip install "$WHEEL_FILE"
       shell: bash
       if: runner.os != 'Windows'
 
@@ -57,6 +49,6 @@ jobs:
       run: |
         for /f %%i in ('dir /b dist\*.whl') do set WHEEL_FILE=dist\%%i
         echo Installing wheel: %WHEEL_FILE%
-        pip install %WHEEL_FILE%
+        python -m pip install %WHEEL_FILE%
       shell: cmd
       if: runner.os == 'Windows'
