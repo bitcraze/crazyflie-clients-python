@@ -44,7 +44,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = "~=1.4.0" },
-    { name = "cflib", specifier = "~=0.1.32rc1" },
+    { name = "cflib", specifier = "~=0.1.32" },
     { name = "numpy", specifier = "~=2.2" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "pyopengl", specifier = "~=3.1.7" },
@@ -52,7 +52,7 @@ requires-dist = [
     { name = "pyqt6-sip", specifier = "~=13.8" },
     { name = "pyqtgraph", specifier = "~=0.13" },
     { name = "pysdl2", marker = "sys_platform == 'darwin' or sys_platform == 'win32'", specifier = "~=0.9.14" },
-    { name = "pysdl2-dll", marker = "sys_platform == 'darwin' or sys_platform == 'win32'", specifier = "==2.24.0" },
+    { name = "pysdl2-dll", marker = "sys_platform == 'darwin' or sys_platform == 'win32'", specifier = "==2.32.10" },
     { name = "pyserial", specifier = "~=3.5" },
     { name = "pyyaml", specifier = "~=6.0.1" },
     { name = "pyzmq", specifier = "~=27.0" },
@@ -154,7 +154,7 @@ wheels = [
 
 [[package]]
 name = "cflib"
-version = "0.1.32rc1"
+version = "0.1.32"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "libusb-package" },
@@ -165,9 +165,9 @@ dependencies = [
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/80/311dfa394bda14d9d5ab756f74f6649315ec2d0b166df057e3821d5f7eb1/cflib-0.1.32rc1.tar.gz", hash = "sha256:d61924c2b5dae886d7ab5d15772d14fb6a7a60827eca2c4743700ca1da2a4a35", size = 407709, upload-time = "2026-04-08T13:06:06.869Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5c/33/036cf36fa8a54f27ef2f675dc09277ce8ff6aafc3582436fca2fe255d41b/cflib-0.1.32.tar.gz", hash = "sha256:555ad23d1de4375214884c8d30a29b7ee5ef162fc46b5ce50ca4f56292031250", size = 407935, upload-time = "2026-04-13T11:43:57.044Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a6/45/613ce10de63831d3678f3747aa97aaa08423aad90f19783f13a7a3a16bb5/cflib-0.1.32rc1-py3-none-any.whl", hash = "sha256:c9c8839832813c46e62ca79f225a8e6eb547d6c7fd69a56974af59eaf801f78c", size = 519283, upload-time = "2026-04-08T13:06:05.17Z" },
+    { url = "https://files.pythonhosted.org/packages/79/cd/4c43e422834cc53174c1996db164d066735cb4e320a8b8e77b82b963244d/cflib-0.1.32-py3-none-any.whl", hash = "sha256:392c2cdc0387c24eb44c5abfc1bfe644809b1f95e1e04cb6ca6ec656acf8d50c", size = 519552, upload-time = "2026-04-13T11:43:55.201Z" },
 ]
 
 [[package]]
@@ -675,14 +675,14 @@ wheels = [
 
 [[package]]
 name = "pysdl2-dll"
-version = "2.24.0"
+version = "2.32.10"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/da/54/b3af79d01851fde138ff1134c3a541a696f5416dfa4fc8516bcbda1e0ead/pysdl2-dll-2.24.0.tar.gz", hash = "sha256:0495318e7b0e2c12508a794c4d0dea3091ccc787806830c3132789ddd013b10b", size = 15296, upload-time = "2022-08-31T18:25:03.497Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/28/5b/bd6fb7cce36ec24cacea8f7d8264db819a3a9de89402653690d70a8da659/pysdl2_dll-2.32.10.tar.gz", hash = "sha256:ad83e0e1a0227633495d6b3ec6701ac5a2beac44e6692f52278033bda1313717", size = 16235, upload-time = "2026-05-26T18:07:45.48Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/52/31/2b3a8f74cad5b9f6679be9f2c0b0c6f05466b49c4f001e9b77e14689565a/pysdl2_dll-2.24.0-py2.py3-none-macosx_10_7_universal2.whl", hash = "sha256:bc4940d47d88de54d7558f37114a4454fc3c98755feb57a4ce971e31bcc1c04c", size = 4948122, upload-time = "2022-08-31T18:39:16.171Z" },
-    { url = "https://files.pythonhosted.org/packages/48/a1/81629d07a34adf11ed4034f6d1c575f36724903d9d296919adc82025e426/pysdl2_dll-2.24.0-py2.py3-none-macosx_10_7_x86_64.whl", hash = "sha256:af828994536be5d957a61b9778274f3e25b7f1e938fa05d76abd013ae0f278dc", size = 4948120, upload-time = "2022-08-31T18:39:20.688Z" },
-    { url = "https://files.pythonhosted.org/packages/27/74/88c069f63836e766a0b0734e95fb5b90cace4c2cb4fdf4cebac5351ca2a1/pysdl2_dll-2.24.0-py2.py3-none-win32.whl", hash = "sha256:1096d57f65b64340281a97dd4fc947f188093c9b4aae41a528ae88384abe0243", size = 2429095, upload-time = "2022-08-31T18:24:18.397Z" },
-    { url = "https://files.pythonhosted.org/packages/ec/4f/bc651b75336838123687c0df26e27b85d934996ed3ee3db80ae5572c98c5/pysdl2_dll-2.24.0-py2.py3-none-win_amd64.whl", hash = "sha256:9487a224316d9b049b4ed7454ed6c15d342ba1dc2db2743d3b08f6e41d58bff2", size = 2611827, upload-time = "2022-08-31T18:24:54.943Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/43/4abf8109b7c68cb73bd0f09bfd429bfbfe9767fdab952098ec4f8fb4418a/pysdl2_dll-2.32.10-py2.py3-none-macosx_10_11_x86_64.whl", hash = "sha256:cab126a82c2bd2cd79b6cb8da906916884789c9f4f1ae4cf861f26438ce651a4", size = 6629721, upload-time = "2026-05-26T18:13:12.263Z" },
+    { url = "https://files.pythonhosted.org/packages/5e/cb/356315a7a30dff1d6b155d70c5293043fa683c52aae2eda236bab163081f/pysdl2_dll-2.32.10-py2.py3-none-macosx_11_0_universal2.whl", hash = "sha256:5ccbd89cd2a032f4ac890606dfe5c33874c0e5e909b2e667438ad7d7fc7fcc5d", size = 6629724, upload-time = "2026-05-26T18:13:13.75Z" },
+    { url = "https://files.pythonhosted.org/packages/19/d3/f50924d47313cadf4b8994d1e8c3befb33031f4115c38570e5a4a8f13956/pysdl2_dll-2.32.10-py2.py3-none-win32.whl", hash = "sha256:881e2362fbe5c8d7129fa66f690380bbd0240d9d2cb1bc5612856be1e58e9261", size = 3437042, upload-time = "2026-05-26T18:10:11.243Z" },
+    { url = "https://files.pythonhosted.org/packages/91/8e/3a90c664cca4c61c7538a8b1a7fd86c7dc3521465198a844bce21b4a97c1/pysdl2_dll-2.32.10-py2.py3-none-win_amd64.whl", hash = "sha256:65eba83d68c33b22aa5eca6c9a8521cff5044435ecd5b49521068df82674de6a", size = 4064320, upload-time = "2026-05-26T18:11:29.046Z" },
 ]
 
 [[package]]

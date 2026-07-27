@@ -50,7 +50,7 @@ dependencies = [
         "PyQt6~=6.7.1",
         "PyQt6-sip~=13.8",
         "pysdl2~=0.9.14 ; platform_system=='Windows' or platform_system=='Darwin'",
-        "pysdl2-dll==2.24.0 ; platform_system=='Windows' or platform_system=='Darwin'"
+        "pysdl2-dll==2.32.10 ; platform_system=='Windows' or platform_system=='Darwin'"
 ]
 
 [project.urls]
