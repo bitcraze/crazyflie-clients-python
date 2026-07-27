@@ -6,3 +6,5 @@ updates:
       interval: "weekly"
     ignore:
       - dependency-name: "setuptools"
+      - dependency-name: "pyqt6"
+      - dependency-name: "cflib"
