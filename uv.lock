@@ -44,7 +44,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = "~=1.4.0" },
-    { name = "cflib", specifier = "~=0.1.32rc1" },
+    { name = "cflib", specifier = "~=0.1.32" },
     { name = "numpy", specifier = "~=2.2" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "pyopengl", specifier = "~=3.1.7" },
@@ -154,7 +154,7 @@ wheels = [
 
 [[package]]
 name = "cflib"
-version = "0.1.32rc1"
+version = "0.1.32"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "libusb-package" },
@@ -165,9 +165,9 @@ dependencies = [
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/80/311dfa394bda14d9d5ab756f74f6649315ec2d0b166df057e3821d5f7eb1/cflib-0.1.32rc1.tar.gz", hash = "sha256:d61924c2b5dae886d7ab5d15772d14fb6a7a60827eca2c4743700ca1da2a4a35", size = 407709, upload-time = "2026-04-08T13:06:06.869Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5c/33/036cf36fa8a54f27ef2f675dc09277ce8ff6aafc3582436fca2fe255d41b/cflib-0.1.32.tar.gz", hash = "sha256:555ad23d1de4375214884c8d30a29b7ee5ef162fc46b5ce50ca4f56292031250", size = 407935, upload-time = "2026-04-13T11:43:57.044Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a6/45/613ce10de63831d3678f3747aa97aaa08423aad90f19783f13a7a3a16bb5/cflib-0.1.32rc1-py3-none-any.whl", hash = "sha256:c9c8839832813c46e62ca79f225a8e6eb547d6c7fd69a56974af59eaf801f78c", size = 519283, upload-time = "2026-04-08T13:06:05.17Z" },
+    { url = "https://files.pythonhosted.org/packages/79/cd/4c43e422834cc53174c1996db164d066735cb4e320a8b8e77b82b963244d/cflib-0.1.32-py3-none-any.whl", hash = "sha256:392c2cdc0387c24eb44c5abfc1bfe644809b1f95e1e04cb6ca6ec656acf8d50c", size = 519552, upload-time = "2026-04-13T11:43:55.201Z" },
 ]
 
 [[package]]
