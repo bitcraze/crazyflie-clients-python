@@ -250,7 +250,6 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
             "Instructions for the current step.", self._step_instructions, position=InfoLabel.Position.BOTTOM_RIGHT)
         self._solution_status_info_label = InfoLabel(
             'A successful upload does not guarantee stable flight.\n'
-            'Try to minimize the max sample error before take off.\n'
             '\n'
             'For more info, see Sample Details.',
             self._solution_status_widget)
