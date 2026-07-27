@@ -686,7 +686,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         logger.debug(f'Origin: {solution.is_origin_sample_valid}, {solution.origin_sample_info}')
         logger.debug(f'X-axis: {solution.is_x_axis_samples_valid}, {solution.x_axis_samples_info}')
         logger.debug(f'XY-plane: {solution.is_xy_plane_samples_valid}, {solution.xy_plane_samples_info}')
-        logger.debug(f'XYZ space: {solution.xyz_space_samples_info}')
+        logger.debug(f'XYZ-space: {solution.xyz_space_samples_info}')
         logger.debug(f'General info: {solution.general_failure_info}')
 
         if solution.progress_is_ok:
