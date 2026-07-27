@@ -33,7 +33,7 @@ jobs:
 
     - name: Install the built wheel
       run: |
-        uv venv --python ${{ matrix.python-version }}
+        uv venv --clear --python ${{ matrix.python-version }}
         WHEEL_FILE=$(ls dist/*.whl | head -n 1)
         echo "Installing wheel: $WHEEL_FILE"
         uv pip install "$WHEEL_FILE"
