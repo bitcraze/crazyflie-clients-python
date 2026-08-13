@@ -12,24 +12,35 @@ For more information on how the Lighthouse system works, please see
 ![cfclient positioning](/docs/images/cfclient_lh_main.png)
 
 The tab is divided into four sections:
-1.  3D view of the Crazyflie and the base stations
-2.  Crazyflie Status
+1.  Crazyflie Status
+2.  System Management
 3.  Base Station Status
-4.  System Management
+4.  3D view of the Crazyflie and the base stations
 
 
-### 1. 3D view
-The view displays the position and orientation of the Crazyflie (blue dot) and the base stations. Each base station is labeled with its ID, and its status is indicated by color:
-* Green = signals are received
-* Red = no reception
-
-### 2. Crazyflie Status
+### 1. Crazyflie Status
 The overall status of the Lighthouse system is displayed as a text. The status is one of:
 *  **LH ready** - one or more base stations are received and the information is used to estimate the position of the Crazyflie.
 *  **Not receiving** - no base station is received.
 *  **No geo/calib** - calibration or geometry data is missing and position can not be estimated.
 
 The estimated (x, y, z) position for the Crazyflie is displayed in the "Position" field in meters.
+
+### 2. System Management
+This section is used to configure the system.
+
+* **Start set up** - Expands the Lighthouse tab with new sections for setting up a Lighthouse positioning system. See the [System Set up](#system-set-up) section.
+
+* **Switch BS version** - Opens a dialog box where the base station version can be changed.
+    Possible options are **Lighthouse V1** and **Lighthouse V2**.
+
+* **Set BS channel** - Opens a dialog box that is used to set the channel of a Lighthouse V2
+    base station. Connect **one** base station at a time to the computer via USB and click
+    the **Scan base station** button. If a base station is detected, a new channel
+    can be set by choosing the desired channel and clicking the “Set channel” button.
+
+* **Import configuration** - upload a system configuration to the Crazyflie from a file. The system configuration contains system type, calibration and geometry data. When a system configuration is uploaded from a file it is automatically written to the Crazyflie (and is stored in persistent memory). This is a useful feature when configuring multiple Crazyflies, making sure they all share the same coordinate system.
+* **Export configuration** - store a system configuration from the Crazyflie to a file.
 
 ### 3. Base Station Status
 A detailed status of the base stations is indicated using colors in the grid.
@@ -50,24 +61,14 @@ A detailed status of the base stations is indicated using colors in the grid.
     
     **Note:** it is possible that the geometry indicator is green even though the geometry data is not valid, this is for instance the case if a base station is replaced by another one with the same channel.
 
-### 4. System Management
-This section is used to configure the system.
-
-* **Start set up** - Expands the Lighthouse tab with new sections for setting up a Lighthouse positioning system. See the [System Set up](#system-set-up) section.
-
-* **Switch BS version** - Opens a dialog box where the base station version can be changed.
-    Possible options are **Lighthouse V1** and **Lighthouse V2**.
-
-* **Set BS channel** - Opens a dialog box that is used to set the channel of a Lighthouse V2
-    base station. Connect **one** base station at a time to the computer via USB and click
-    the **Scan base station** button. If a base station is detected, a new channel
-    can be set by choosing the desired channel and clicking the “Set channel” button.
-
-* **Import configuration** - upload a system configuration to the Crazyflie from a file. The system configuration contains system type, calibration and geometry data. When a system configuration is uploaded from a file it is automatically written to the Crazyflie (and is stored in persistent memory). This is a useful feature when configuring multiple Crazyflies, making sure they all share the same coordinate system.
-* **Export configuration** - store a system configuration from the Crazyflie to a file. 
-
+### 4. 3D view
+The view displays the position and orientation of the Crazyflie (blue dot) and the base stations. Each base station is labeled with its ID, and its status is indicated by color:
+* Green = signals are received
+* Red = no reception
 
 ### System Set up
+
+This part of the tab appears when the **Start set up** button is pressed.
 
 ![cfclient positioning](/docs/images/cfclient_lh_setup.png)
 
@@ -81,7 +82,7 @@ When **show sample details** is activated:
 7.  Base stations table
 8.  Samples table
 
-#### 5. Sample Collection
+### 5. Sample Collection
 This section guides you through collecting the position samples used to estimate the geometry of the base stations.
 The process follows a fixed sequence of five steps:
 
@@ -103,7 +104,7 @@ A status label at the bottom of the section reflects the current state of the ge
 *  **Uploaded (imported config)** - a configuration was loaded from file and written to the Crazyflie.
 
 
-#### 6. Sample Management
+### 6. Sample Management
 This section shows the quality of the current geometry solution and provides tools for managing the collected samples.
 
 *  **Sample Details** - Toggle **Show**/**Hide** to reveal or collapse the [Base Stations](#base-stations-table) and [Samples](#samples-table) tables.
@@ -113,7 +114,7 @@ This section shows the quality of the current geometry solution and provides too
 *  **Import samples** - Loads a previously saved sample session from a YAML file.
 *  **Export samples** - Saves the current sample session to a YAML file for later reuse or sharing between Crazyflies.
 
-#### 7. Base Stations table
+### 7. Base Stations table
 Visible when **Sample Details** is set to **Show**.
 Displays a table of all base stations detected from the collected samples, with columns:
 **Id**, **X**, **Y**, **Z** (estimated position in metres), **Samples** (number of samples that saw this base station), and **Links** (number of connections to other base stations).
@@ -121,7 +122,7 @@ A red highlight in the **Links** column means too few links exist, which prevent
 
 *  **Delete** - Removes the selected base station and all its connections from the estimation. Samples that only observed this base station and one other are also removed.
 
-#### 8. Samples table
+### 8. Samples table
 Visible when **Sample Details** is set to **Show**.
 Displays a table of all collected samples, with columns:
 **Type**, **X**, **Y**, **Z** (estimated position in metres), and **Err** (crossing-beam error in mm).
