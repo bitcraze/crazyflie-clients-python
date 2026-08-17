@@ -107,7 +107,7 @@ A status label at the bottom of the section reflects the current state of the ge
 ### 6. Sample Management
 This section shows the quality of the current geometry solution and provides tools for managing the collected samples.
 
-*  **Sample Details** - Toggle **Show**/**Hide** to reveal or collapse the [Base Stations](#base-stations-table) and [Samples](#samples-table) tables.
+*  **Sample Details** - Toggle **Show**/**Hide** to reveal or collapse the [Base Stations](#7-base-stations-table) and [Samples](#8-samples-table) tables.
 *  **Max Estimation Sample Error** - The maximum [crossing-beam](https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/lighthouse/positioning_methods/#crossing-beams) error across all estimation samples. The estimation samples include the origin, X-axis, XY-plane, and XYZ-space samples.
 *  **Max Verification Sample Error** - The maximum crossing-beam error across all verification samples. Gives a practical measure of accuracy at positions not used during estimation.
 *  **Clear all samples** - Discards all collected samples and starts a fresh session.
