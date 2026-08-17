@@ -61,7 +61,6 @@ from PyQt6.QtGui import QActionGroup
 from PyQt6.QtGui import QShortcut
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtGui import QPalette
-from PyQt6.QtWidgets import QLabel
 from PyQt6.QtWidgets import QMenu
 from PyQt6.QtWidgets import QMessageBox
 
@@ -100,6 +99,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     disconnectedSignal = pyqtSignal(str)
     linkQualitySignal = pyqtSignal(float)
 
+    _gamepad_device_updated = pyqtSignal(str, str, str)
     _input_device_error_signal = pyqtSignal(str)
     _input_discovery_signal = pyqtSignal(object)
     _log_error_signal = pyqtSignal(object, str)
@@ -130,18 +130,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.scanner.interfaceFoundSignal.connect(self.foundInterfaces)
         self.scanner.start()
 
-        # Create and start the Input Reader
-        self._statusbar_label = QLabel("No input-device found, insert one to"
-                                       " fly.")
-        self.statusBar().addWidget(self._statusbar_label)
-
-        #
-        # We use this hacky-trick to find out if we are in dark-mode and
-        # figure out what bgcolor to set from that. We always use the current
-        # palette forgreound.
-        #
-        self.textColor = self._statusbar_label.palette().color(QPalette.ColorRole.WindowText)
-        self.bgColor = self._statusbar_label.palette().color(QPalette.ColorRole.Window)
+        self.textColor = self.palette().color(QPalette.ColorRole.WindowText)
+        self.bgColor = self.palette().color(QPalette.ColorRole.Window)
         self.isDark = self.textColor.value() > self.bgColor.value()
 
         self.joystickReader = JoystickReader()
@@ -552,9 +542,26 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         tab_toolbox = dock_widget.tab_toolbox
         tab_toolbox.set_preferred_dock_area(area)
 
+    def _rescan_devices(self):
+        self._gamepad_device_updated.emit("No input device connected", "—", "—")
+        self._menu_devices.clear()
+        self._active_device = ""
+        self.joystickReader.stop_input()
+
+        # for c in self._menu_mappings.actions():
+        #    c.setEnabled(False)
+        # devs = self.joystickReader.available_devices()
+        # if (len(devs) > 0):
+        #    self.device_discovery(devs)
+
     def _show_input_device_config_dialog(self):
         self.inputConfig = InputConfigDialogue(self.joystickReader)
+        self.inputConfig.closed.connect(self._on_input_config_closed)
         self.inputConfig.show()
+
+    def _on_input_config_closed(self):
+        self._sync_input_map_menus()
+        self._update_input_device_status()
 
     def _show_connect_dialog(self):
         self.logConfigDialogue.show()
@@ -583,6 +590,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     def _connected(self):
         self.uiState = UIState.CONNECTED
         self._update_ui_state()
+        self.joystickReader.require_thrust_zero()
 
         Config().set("link_uri", str(self._connectivity_manager.get_interface()))
 
@@ -709,41 +717,87 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                     if type(dev_node) is QAction and dev_node.isChecked():
                         dev_node.toggled.emit(True)
 
-            self._update_input_device_footer()
+            self._update_input_device_status()
 
-    def _get_dev_status(self, device):
-        msg = "{}".format(device.name)
-        if device.supports_mapping:
-            map_name = "No input mapping"
-            if device.input_map:
-                # Display the friendly name instead of the config file name
-                map_name = ConfigManager().get_display_name(device.input_map_name)
-            msg += " ({})".format(map_name)
-        return msg
+    def _sync_input_map_menus(self):
+        """Sync the Input device menu to reflect the current mapping.
 
-    def _update_input_device_footer(self):
-        """Update the footer in the bottom of the UI with status for the
-        input device and its mapping"""
+        After the config dialog saves a new mapping, the menu may be
+        missing the new entry and still have the old one checked. Walk
+        every role menu, find the checked device, and make sure its map
+        sub-menu contains and selects the active mapping name.
+        """
+        for menu in self._all_role_menus:
+            role_menu = menu["rolemenu"]
+            for dev_node in role_menu.actions():
+                if not dev_node.isChecked():
+                    continue
+                data = dev_node.data()
+                if data is None or not isinstance(data, tuple):
+                    continue
+                if len(data) < 3:
+                    continue
+                (map_menu, device, _mux_menu) = data
+                if map_menu is None or not device.supports_mapping:
+                    continue
 
-        msg = ""
+                active_name = getattr(device, 'input_map_name', None)
+                if not active_name:
+                    continue
+
+                # Get the QActionGroup from an existing map action
+                map_actions = map_menu.actions()
+                map_group = None
+                if map_actions:
+                    map_group = map_actions[0].actionGroup()
+
+                # Add a menu entry if the config is new
+                existing = {a.text() for a in map_actions}
+                if active_name not in existing and map_group:
+                    node = QAction(active_name, map_menu,
+                                   checkable=True, enabled=True)
+                    node.toggled.connect(self._inputconfig_selected)
+                    node.setData(dev_node)
+                    map_menu.addAction(node)
+                    map_group.addAction(node)
+
+                # Check the active mapping without triggering
+                # _inputconfig_selected (which would reload the config
+                # from disk and overwrite the live mapping).
+                # Uncheck all first since blockSignals prevents the
+                # exclusive QActionGroup from doing it automatically.
+                for action in map_menu.actions():
+                    action.blockSignals(True)
+                    action.setChecked(action.text() == active_name)
+                    action.blockSignals(False)
+
+    def _update_input_device_status(self):
+        """Update the gamepad device info in the Flight tab."""
 
         if len(self.joystickReader.available_devices()) > 0:
             mux = self.joystickReader._selected_mux
-            msg = "Using {} mux with ".format(mux.name)
-            for key in list(mux._devs.keys())[:-1]:
-                if mux._devs[key]:
-                    msg += "{}, ".format(self._get_dev_status(mux._devs[key]))
+            mux_name = mux.name
+            device_names = []
+            mapping_names = []
+            for dev in mux._devs.values():
+                if dev:
+                    device_names.append(dev.name)
+                    if dev.supports_mapping:
+                        mapping_names.append(
+                            ConfigManager().get_display_name(dev.input_map_name)
+                            if dev.input_map else "No mapping")
+                    else:
+                        mapping_names.append("N/A")
                 else:
-                    msg += "N/A, "
-            # Last item
-            key = list(mux._devs.keys())[-1]
-            if mux._devs[key]:
-                msg += "{}".format(self._get_dev_status(mux._devs[key]))
-            else:
-                msg += "N/A"
+                    device_names.append("N/A")
+                    mapping_names.append("N/A")
+            device_str = ", ".join(device_names)
+            mapping_str = ", ".join(mapping_names)
         else:
-            msg = "No input device found"
-        self._statusbar_label.setText(msg)
+            device_str = "No input device found"
+            mapping_str = "—"
+            mux_name = "—"
+        self._gamepad_device_updated.emit(device_str, mapping_str, mux_name)
 
     def _inputdevice_selected(self, checked):
         """Called when a new input device has been selected from the menu. The
@@ -777,7 +831,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._mapping_support = self.joystickReader.start_input(
                 device.name,
                 role_in_mux)
-        self._update_input_device_footer()
+        self._update_input_device_status()
 
     def _inputconfig_selected(self, checked):
         """Called when a new configuration has been selected from the menu. The
@@ -790,7 +844,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         selected_mapping = self.sender().config_name
         device = self.sender().data().data()[1]
         self.joystickReader.set_input_map(device.name, selected_mapping)
-        self._update_input_device_footer()
+        self._update_input_device_status()
 
     def device_discovery(self, devs):
         """Called when new devices have been added"""
@@ -870,7 +924,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self._all_role_menus[0]["rolemenu"].actions()[0].setChecked(True)
             logger.info("Select first device")
 
-        self._update_input_device_footer()
+        self._update_input_device_status()
 
     def _open_config_folder(self):
         QDesktopServices.openUrl(

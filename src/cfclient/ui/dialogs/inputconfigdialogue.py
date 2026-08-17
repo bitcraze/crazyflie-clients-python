@@ -35,6 +35,7 @@ from PyQt6.QtCore import QThread
 from PyQt6.QtCore import QTimer
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QMessageBox
+from cfclient.utils.config import Config
 from cfclient.utils.config_manager import ConfigManager
 from PyQt6 import QtWidgets
 from PyQt6 import uic
@@ -50,6 +51,8 @@ logger = logging.getLogger(__name__)
 
 
 class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
+
+    closed = pyqtSignal()
 
     def __init__(self, joystickReader, *args):
         super(InputConfigDialogue, self).__init__(*args)
@@ -171,6 +174,9 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
 
         self._map = {}
         self._saved_open_device = None
+        self._original_input_map = None
+        self._original_input_map_name = None
+        self._config_was_saved = False
 
     @staticmethod
     def _scale(max_value, value):
@@ -224,8 +230,13 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
         self._popup.show()
 
     def _start_configuration(self):
-        self._input.enableRawReading(
-            str(self.inputDeviceSelector.currentText()))
+        device_name = str(self.inputDeviceSelector.currentText())
+        dev = self._input._get_device_from_name(device_name)
+        if dev:
+            self._original_input_map = dev.input_map
+            self._original_input_map_name = getattr(
+                dev, 'input_map_name', None)
+        self._input.enableRawReading(device_name)
         self._input_device_reader.start_reading()
         self._populate_config_dropdown()
         self.profileCombo.setEnabled(True)
@@ -391,6 +402,14 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
         if config_name is None:
             config_name = str(self.profileCombo.currentText())
         ConfigManager().save_config(self._map, config_name)
+        # Update the name on the raw device so the Flight tab shows it.
+        # The actual mapping data is already applied via set_raw_input_map.
+        if self._input._input_device:
+            self._input._input_device.input_map_name = config_name
+            device_name = str(self.inputDeviceSelector.currentText())
+            Config().get("device_config_mapping")[
+                device_name] = config_name
+        self._config_was_saved = True
         self.close()
 
     def showEvent(self, event):
@@ -403,8 +422,15 @@ class InputConfigDialogue(QtWidgets.QWidget, inputconfig_widget_class):
         """Called when dialog is closed"""
         self._input.stop_raw_reading()
         self._input_device_reader.stop_reading()
+        if not self._config_was_saved and self._original_input_map is not None:
+            device_name = str(self.inputDeviceSelector.currentText())
+            dev = self._input._get_device_from_name(device_name)
+            if dev:
+                dev.input_map = self._original_input_map
+                dev.input_map_name = self._original_input_map_name
         # self._input.start_input(self._saved_open_device)
         self._input.resume_input()
+        self.closed.emit()
 
 
 class DeviceReader(QThread):
