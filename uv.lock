@@ -44,8 +44,8 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = "~=1.4.0" },
-    { name = "cflib", specifier = "~=0.1.32" },
-    { name = "numpy", specifier = "~=2.2" },
+    { name = "cflib", specifier = "~=0.1.33" },
+    { name = "numpy", specifier = ">=2.2,<2.5" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "pyopengl", specifier = "~=3.1.7" },
     { name = "pyqt6", specifier = "~=6.7.1" },
@@ -66,7 +66,7 @@ name = "cffi"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser" },
+    { name = "pycparser", marker = "implementation_name != 'PyPy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/eb/56/b1ba7935a17738ae8453301356628e8147c79dbb825bcbc73dc7401f9846/cffi-2.0.0.tar.gz", hash = "sha256:44d1b5909021139fe36001ae048dbdde8214afa20200eda0f64c068cac5d5529", size = 523588, upload-time = "2025-09-08T23:24:04.541Z" }
 wheels = [
@@ -154,7 +154,7 @@ wheels = [
 
 [[package]]
 name = "cflib"
-version = "0.1.32"
+version = "0.1.33"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "libusb-package" },
@@ -162,12 +162,13 @@ dependencies = [
     { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "packaging" },
     { name = "pyusb" },
+    { name = "pyyaml" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5c/33/036cf36fa8a54f27ef2f675dc09277ce8ff6aafc3582436fca2fe255d41b/cflib-0.1.32.tar.gz", hash = "sha256:555ad23d1de4375214884c8d30a29b7ee5ef162fc46b5ce50ca4f56292031250", size = 407935, upload-time = "2026-04-13T11:43:57.044Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6a/7f/22d509303476ef8d9cd9eb96b6c63d7a4a1345a03ab37444aa0cbb42f36d/cflib-0.1.33.tar.gz", hash = "sha256:5ae90a4517474d649b5e50c9453d9d884a27e3a333816271f55b55cb3a5d02b8", size = 434267, upload-time = "2026-08-20T10:00:13.909Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/79/cd/4c43e422834cc53174c1996db164d066735cb4e320a8b8e77b82b963244d/cflib-0.1.32-py3-none-any.whl", hash = "sha256:392c2cdc0387c24eb44c5abfc1bfe644809b1f95e1e04cb6ca6ec656acf8d50c", size = 519552, upload-time = "2026-04-13T11:43:55.201Z" },
+    { url = "https://files.pythonhosted.org/packages/65/45/02f3712f2187c8466136bb251392071292bf1dbfad2c2dbf19deec0647d1/cflib-0.1.33-py3-none-any.whl", hash = "sha256:8aba33612d4f9fffaebc49ddab6ae121f804c2482d67fda6f822bfba3602e399", size = 549796, upload-time = "2026-08-20T10:00:12.097Z" },
 ]
 
 [[package]]
@@ -861,7 +862,7 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" } },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0f/37/6964b830433e654ec7485e45a00fc9a27cf868d622838f6b6d9c5ec0d532/scipy-1.15.3.tar.gz", hash = "sha256:eae3cf522bc7df64b42cad3925c876e1b0b6c35c1337c93e12c0f366f55b0eaf", size = 59419214, upload-time = "2025-05-08T16:13:05.955Z" }
 wheels = [
@@ -920,7 +921,7 @@ resolution-markers = [
     "python_full_version >= '3.11'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" } },
+    { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7a/97/5a3609c4f8d58b039179648e62dd220f89864f56f7357f5d4f45c29eb2cc/scipy-1.17.1.tar.gz", hash = "sha256:95d8e012d8cb8816c226aef832200b1d45109ed4464303e997c5b13122b297c0", size = 30573822, upload-time = "2026-02-23T00:26:24.851Z" }
 wheels = [
