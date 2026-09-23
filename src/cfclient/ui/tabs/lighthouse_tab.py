@@ -961,8 +961,9 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
             result = QMessageBox.question(
                 self,
                 'Start Set Up',
-                'If there is any existing geometry, it will be overwritten when starting the set up.\n\n'
-                'Export the current configuration to make sure it is saved. Configurations are also cached.\n\n'
+                'Starting the set up will overwrite the existing geometry stored on the Crazyflie '
+                'once a valid solution is found.\n\n'
+                'Export the current configuration first if you want to keep a copy.\n\n'
                 'Are you sure you want to continue?',
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
                 QMessageBox.StandardButton.Cancel)
