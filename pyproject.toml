@@ -74,3 +74,10 @@ include-package-data = true
 [tool.setuptools_scm]
 version_file = "src/cfclient/version.py"
 version_scheme = "no-guess-dev"
+
+# LOCAL DEV ONLY - NEEDS TO BE REVERTED (Simmyflie work): use the local
+# crazyflie-lib-python checkout (branch stefan/simmyflie) as an editable
+# install, so its UdpDriver changes (scan of ports 50000-50500) are picked up
+# by `uv run cfclient`. Revert this section and uv.lock before committing.
+[tool.uv.sources]
+cflib = { path = "../crazyflie-lib-python", editable = true }
