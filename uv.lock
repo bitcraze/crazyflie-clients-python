@@ -44,7 +44,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = "~=1.4.0" },
-    { name = "cflib", specifier = "~=0.1.33" },
+    { name = "cflib", specifier = "~=0.1.34" },
     { name = "numpy", specifier = ">=2.2,<2.5" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "pyopengl", specifier = "~=3.1.7" },
@@ -154,7 +154,7 @@ wheels = [
 
 [[package]]
 name = "cflib"
-version = "0.1.33"
+version = "0.1.34"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "libusb-package" },
@@ -166,9 +166,9 @@ dependencies = [
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6a/7f/22d509303476ef8d9cd9eb96b6c63d7a4a1345a03ab37444aa0cbb42f36d/cflib-0.1.33.tar.gz", hash = "sha256:5ae90a4517474d649b5e50c9453d9d884a27e3a333816271f55b55cb3a5d02b8", size = 434267, upload-time = "2026-08-20T10:00:13.909Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/45/9c/eaa00599db10d4484db50b09477f19e6beb624b60227259a0d87d9c8be37/cflib-0.1.34.tar.gz", hash = "sha256:7930c0204602a675a16fb80c26ab1b4fce959857554c232d6e3790afa8db7956", size = 435755, upload-time = "2026-09-30T07:47:43.962Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/65/45/02f3712f2187c8466136bb251392071292bf1dbfad2c2dbf19deec0647d1/cflib-0.1.33-py3-none-any.whl", hash = "sha256:8aba33612d4f9fffaebc49ddab6ae121f804c2482d67fda6f822bfba3602e399", size = 549796, upload-time = "2026-08-20T10:00:12.097Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/88/9b10b72519a2c16e56675c12fbb46e1be1bde12b863becfcc41bcda2dfa6/cflib-0.1.34-py3-none-any.whl", hash = "sha256:1eb282121398794c9fb9ff2a943e4872065dc9d8c79d5a28c95d49cb8ec2397a", size = 552036, upload-time = "2026-09-30T07:47:42.114Z" },
 ]
 
 [[package]]
