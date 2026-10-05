@@ -30,12 +30,15 @@ Dropping a new .py file into this directory will automatically list and load
 it into the UI when it is started.
 """
 
-# from .ConsoleTab import ConsoleTab
+from .ConsoleTab import ConsoleTab
+
 # from .CrtpSharkToolbox import CrtpSharkToolbox
 # from .ExampleTab import ExampleTab
 from .FlightTab import FlightTab
+
 # from .GpsTab import GpsTab
-# from .LEDRingTab import LEDRingTab
+from .LEDRingTab import LEDRingTab
+
 # from .LogBlockTab import LogBlockTab
 # from .LogTab import LogTab
 from .ParamTab import ParamTab
@@ -50,11 +53,11 @@ __author__ = "Bitcraze AB"
 __all__ = []
 
 available = [
-    # ConsoleTab,
+    ConsoleTab,
     # ExampleTab,
     FlightTab,
     # GpsTab,
-    # LEDRingTab,
+    LEDRingTab,
     # ColorLEDTab,
     # LogBlockTab,
     # LogTab,
