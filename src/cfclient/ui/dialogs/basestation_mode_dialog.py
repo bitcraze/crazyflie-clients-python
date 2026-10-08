@@ -7,7 +7,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2011-2023 Bitcraze AB
+#  Copyright (C) 2011-2026 Bitcraze AB
 #
 #  Crazyflie Nano Quadcopter Client
 #
@@ -24,12 +24,12 @@
 #  this program; if not, write to the Free Software Foundation, Inc.,
 #  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
-Toolbox used to interact with the Basestation to set it in a certain channel
+Toolbox used to interact with the Base station to set it in a certain channel
 """
 
-from PySide6 import QtWidgets
-from PySide6.QtUiTools import loadUiType
-from PySide6.QtCore import Qt
+from PyQt6 import QtWidgets
+from PyQt6 import uic
+from PyQt6.QtCore import Qt
 
 import io
 import serial
@@ -41,7 +41,7 @@ import time
 __author__ = 'Bitcraze AB'
 __all__ = ['LighthouseBsModeDialog']
 
-(basestation_mode_widget_class, connect_widget_base_class) = loadUiType(
+(basestation_mode_widget_class, connect_widget_base_class) = uic.loadUiType(
     cfclient.module_path + "/ui/dialogs/basestation_mode_dialog.ui")
 
 
@@ -64,14 +64,14 @@ class LighthouseBsModeDialog(QtWidgets.QWidget, basestation_mode_widget_class):
         self._channel = 1
         self._device = None
 
-        self._basestation_port_display.setText('No basestation found!')
+        self._basestation_port_display.setText('No base station found!')
 
         self._basestation_port_display.setText(self._device)
 
     def _set_basestation_dev(self):
         self._device = self._find_basestation()
         if self._device is None:
-            self._basestation_port_display.setText('No basestation found!')
+            self._basestation_port_display.setText('No base station found!')
             self._set_basestation_button.setEnabled(False)
             self._display_current_channel.setText('')
             self._display_current_id.setText('')
@@ -178,7 +178,7 @@ class LighthouseBsModeDialog(QtWidgets.QWidget, basestation_mode_widget_class):
         self._channel = 1
         self._device = None
         self._set_basestation_button.setEnabled(False)
-        self._basestation_port_display.setText('No basestation found!')
+        self._basestation_port_display.setText('No base station found!')
         self._display_current_channel.setText('')
         self._basestation_mode_status.setText('')
         self._set_channel_spinbox.setValue(self._channel)

@@ -6,7 +6,7 @@
 #  +------+    / /_/ / / /_/ /__/ /  / /_/ / / /_/  __/
 #   ||  ||    /_____/_/\__/\___/_/   \__,_/ /___/\___/
 #
-#  Copyright (C) 2021-2023 Bitcraze AB
+#  Copyright (C) 2021-2026 Bitcraze AB
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -28,8 +28,8 @@ Dialog box used to change lighthouse system type. Used from the lighthouse tab.
 import logging
 
 import cfclient
-from PySide6 import QtWidgets
-from PySide6.QtUiTools import loadUiType
+from PyQt6 import QtWidgets
+from PyQt6 import uic
 
 __author__ = 'Bitcraze AB'
 __all__ = ['LighthouseSystemTypeDialog']
@@ -37,7 +37,7 @@ __all__ = ['LighthouseSystemTypeDialog']
 logger = logging.getLogger(__name__)
 
 (lighthouse_system_widget_class, connect_widget_base_class) = (
-    loadUiType(
+    uic.loadUiType(
         cfclient.module_path + '/ui/dialogs/lighthouse_system_type_dialog.ui')
 )
 
