@@ -58,7 +58,6 @@ from cfclient.ui.tab_toolbox import TabToolbox
 from cfclient.utils.config import Config
 from cfclient.gui import create_task
 from cflib2 import Crazyflie
-from cflib2.error import LogError, ParamError
 from cflib2.log import LogStream
 
 __author__ = "Bitcraze AB"
@@ -112,7 +111,7 @@ class ThermalMonitor:
         Creates a log block per position and starts streaming.
 
         Returns:
-            dict mapping position -> stream for each successfully started stream.
+            dict mapping position -> stream for each started stream.
             The caller is responsible for reading the streams
             (see ColorLEDTab._run_thermal_stream).
         """
@@ -121,18 +120,13 @@ class ThermalMonitor:
                 continue
 
             params = self._params_config[position]
-            try:
-                block = await cf.log().create_block()
-                await block.add_variable(params["thermal_log"])
-                stream = await block.start(Config().get("ui_update_period"))
-                self._streams[position] = stream
-                logger.debug(
-                    f"Started thermal logging for position {position}: {params['thermal_log']}"
-                )
-            except LogError as e:
-                logger.debug(
-                    f"Could not start thermal logging for position {position}: {e}"
-                )
+            block = await cf.log().create_block()
+            await block.add_variable(params["thermal_log"])
+            stream = await block.start(Config().get("ui_update_period"))
+            self._streams[position] = stream
+            logger.debug(
+                f"Started thermal logging for position {position}: {params['thermal_log']}"
+            )
 
         return dict(self._streams)
 
@@ -150,19 +144,16 @@ class ColorLEDDeckController:
 
     async def detect_decks(self, cf: Crazyflie) -> None:
         """Detect which Color LED decks are present by reading deck params from the Crazyflie."""
+        names = cf.param().names()
         for position, params in self._params_config.items():
-            try:
-                deck_param = await cf.param().get(params["deck_param"])
-                self._deck_present[position] = bool(int(deck_param))
-                logger.debug(
-                    f"Color LED deck at position {position} ({'Bottom' if position == 0 else 'Top'}) "
-                    f"detected: {self._deck_present[position]} (param: {params['deck_param']}={deck_param})"
-                )
-            except ParamError as e:
+            if params["deck_param"] not in names:
                 self._deck_present[position] = False
                 logger.debug(
-                    f"Color LED deck parameter not found for position {position}: {e}"
+                    f"Color LED deck parameter not found for position {position}: {params['deck_param']}"
                 )
+                continue
+            deck_param = await cf.param().get(params["deck_param"])
+            self._deck_present[position] = bool(int(deck_param))
 
     def is_deck_present(self, position: int) -> bool:
         """Check if deck at given position is present"""
@@ -318,19 +309,14 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
             )
             for position, stream in streams.items():
                 self._thermal_stream_tasks.append(
-                    create_task(self._run_thermal_stream(position, stream))
+                    create_task(self._run_thermal_stream(stream))
                 )
 
-    async def _run_thermal_stream(self, position: int, stream: LogStream) -> None:
+    async def _run_thermal_stream(self, stream: LogStream) -> None:
         """Read thermal log data from the stream until the Crazyflie disconnects."""
-        try:
-            while True:
-                log_data = await stream.next()
-                self._process_thermal_data(log_data.data)
-        except asyncio.CancelledError:
-            raise
-        except LogError as e:
-            logger.debug(f"Thermal stream for position {position} ended: {e}")
+        while True:
+            log_data = await stream.next()
+            self._process_thermal_data(log_data.data)
 
     def _process_thermal_data(self, data: dict[str, Any]) -> None:
         """Update the throttling warning label based on incoming log data."""
@@ -414,7 +400,7 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         Fetch current color from the Crazyflie for the given position.
 
         Returns:
-            tuple (r, g, b) or None if the deck is not present or the fetch failed.
+            tuple (r, g, b) or None if the deck is not present.
         """
         if position not in self.PARAMS_BY_POSITION:
             return None
@@ -422,21 +408,17 @@ class ColorLEDTab(TabToolbox, color_led_tab_class):
         if not self._deck_controller.is_deck_present(position):
             return None
 
-        try:
-            param_name = self.PARAMS_BY_POSITION[position]["color"]
-            color_uint32 = int(await self._cf.param().get(param_name))
+        param_name = self.PARAMS_BY_POSITION[position]["color"]
+        color_uint32 = int(await self._cf.param().get(param_name))
 
-            # Unpack WRGB: 0xWWRRGGBB
-            w = (color_uint32 >> 24) & 0xFF
-            r = (color_uint32 >> 16) & 0xFF
-            g = (color_uint32 >> 8) & 0xFF
-            b = color_uint32 & 0xFF
+        # Unpack WRGB: 0xWWRRGGBB
+        w = (color_uint32 >> 24) & 0xFF
+        r = (color_uint32 >> 16) & 0xFF
+        g = (color_uint32 >> 8) & 0xFF
+        b = color_uint32 & 0xFF
 
-            # Add the white channel back to get full-range RGB
-            return (r + w, g + w, b + w)
-        except ParamError as e:
-            logger.debug(f"Could not fetch color from position {position}: {e}")
-            return None
+        # Add the white channel back to get full-range RGB
+        return (r + w, g + w, b + w)
 
     def _update_ui_from_rgb(self, rgb: tuple[int, int, int]) -> None:
         """
