@@ -68,8 +68,6 @@ def _task_done_callback(task: asyncio.Task[object]) -> None:
         return
     try:
         task.result()
-    except DisconnectedError:
-        logger.debug("Task interrupted by disconnect: %s", task)
     except Exception:
         import traceback
 
@@ -77,14 +75,22 @@ def _task_done_callback(task: asyncio.Task[object]) -> None:
         os._exit(1)
 
 
+async def _wrap_disconnected(coro: Coroutine[object, object, object]) -> None:
+    try:
+        await coro
+    except DisconnectedError:
+        logger.debug("Task interrupted by disconnect: %r", coro)
+
+
 def create_task(coro: Coroutine[object, object, object]) -> asyncio.Task[object]:
     """Schedule a coroutine as a task with automatic exception logging.
 
     Use this instead of asyncio.ensure_future() to ensure exceptions
-    are logged immediately rather than silently swallowed.
+    are logged immediately rather than silently swallowed. DisconnectedError
+    is treated as a normal shutdown case and is logged at debug level only.
     """
     logger.debug(f"create_task: {coro}")
-    task = asyncio.ensure_future(coro)
+    task = asyncio.ensure_future(_wrap_disconnected(coro))
     task.add_done_callback(_task_done_callback)
     return task
 
