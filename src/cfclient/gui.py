@@ -180,7 +180,11 @@ def main() -> None:
     # Start up the main user-interface
     from .ui.main import MainUI
     from PySide6.QtWidgets import QApplication
-    from PySide6.QtGui import QIcon
+    from PySide6.QtGui import QIcon, QSurfaceFormat
+
+    surface_format = QSurfaceFormat.defaultFormat()
+    surface_format.setSwapInterval(0)
+    QSurfaceFormat.setDefaultFormat(surface_format)
 
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
