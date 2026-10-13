@@ -432,7 +432,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     def _emergency_stop(self):
         if self.cf is not None:
-            create_task(self.cf.localization().emergency().send_emergency_stop())
+            create_task(self.cf.supervisor().send_emergency_stop())
 
     # --- Address ---
 

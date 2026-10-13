@@ -40,7 +40,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = "~=1.4.0" },
-    { name = "cflib2", git = "https://github.com/bitcraze/cflib2?rev=329bd2cb6b21ccecce0396926887743c148a6bd6" },
+    { name = "cflib2", specifier = ">=0.1.0" },
     { name = "numpy", specifier = "~=2.2" },
     { name = "pyopengl", specifier = "~=3.1.7" },
     { name = "pyqtgraph", specifier = "~=0.13" },
@@ -143,10 +143,18 @@ wheels = [
 [[package]]
 name = "cflib2"
 version = "0.1.0"
-source = { git = "https://github.com/bitcraze/cflib2?rev=329bd2cb6b21ccecce0396926887743c148a6bd6#329bd2cb6b21ccecce0396926887743c148a6bd6" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
     { name = "tyro" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8d/44/6157c2a4a0f0604c6a9dd4407f2cfd510689459aeaf8d6f9b2e8123e964e/cflib2-0.1.0.tar.gz", hash = "sha256:9cae5e07f3688d5e3773eed650e9fa6f96210e646845ff49ab1bf2ab3361ae32", size = 69518, upload-time = "2026-07-17T13:18:50.222Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ad/a2/423195ffbde50477a5019368edb516cd69adda0a51573146f1a344d4ae79/cflib2-0.1.0-cp311-abi3-macosx_10_12_x86_64.whl", hash = "sha256:4780612bc7c8eff1aa83d7f9bd3d63ab8e6bb3d1695de4ca05529e01123ace9b", size = 2048761, upload-time = "2026-07-17T13:18:43.088Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/33/c60c267080b830d669fdf9848d059369aed241a44693037d6b3bd74883d6/cflib2-0.1.0-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:ade6be6599ea234e9d033a1085d392c077f991cab07c76242b3c277fedc78bcf", size = 2032386, upload-time = "2026-07-17T13:18:44.819Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/27/d1aebb749543793a214f47094372d28c41cfe734c4922a0212665e828fd4/cflib2-0.1.0-cp311-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8b7a66df180a54488ebd94603dba381de18fc424759d23a428e398b6e2c0179f", size = 2350109, upload-time = "2026-07-17T13:18:46.162Z" },
+    { url = "https://files.pythonhosted.org/packages/1e/da/e1a62da57394d09267d6a82a76a1c846ed8b40a9730955a67b908ba2b63c/cflib2-0.1.0-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a779289bf0cffad5308f250f9a7430077993dbaa0c414580edb00bb617b00f0c", size = 2193979, upload-time = "2026-07-17T13:18:47.432Z" },
+    { url = "https://files.pythonhosted.org/packages/f3/e8/926d1cb4fb58ce7fa38cea01d2175cbb4a33f05a666ea969c5778b3a3cb5/cflib2-0.1.0-cp311-abi3-win_amd64.whl", hash = "sha256:30b7ba49be859feb086b38ef9fb7a04bd9c77dffeeec92ad525ae8ddadd9bd55", size = 2073534, upload-time = "2026-07-17T13:18:48.915Z" },
 ]
 
 [[package]]

@@ -743,7 +743,7 @@ class FlightTab(TabToolbox, flight_tab_class):
         if emergencyStop:
             self.setMotorLabelsEnabled(False)
             if self._cf is not None:
-                create_task(self._cf.localization().emergency().send_emergency_stop())
+                create_task(self._cf.supervisor().send_emergency_stop())
         else:
             self.setMotorLabelsEnabled(True)
 
@@ -753,14 +753,14 @@ class FlightTab(TabToolbox, flight_tab_class):
 
     async def _async_update_arm(self, from_controller):
         if self._is_flying() and not from_controller:
-            await self._cf.localization().emergency().send_emergency_stop()
+            await self._cf.supervisor().send_emergency_stop()
         elif self._is_crashed():
-            await self._cf.platform().send_crash_recovery_request()
+            await self._cf.supervisor().send_crash_recovery_request()
         elif self._is_armed():
-            await self._cf.platform().send_arming_request(False)
+            await self._cf.supervisor().send_arming_request(False)
         elif self._can_arm():
             self.armButton.setStyleSheet("background-color: orange")
-            await self._cf.platform().send_arming_request(True)
+            await self._cf.supervisor().send_arming_request(True)
 
     def flightmodeChange(self, item):
         Config().set("flightmode", str(self.flightModeCombo.itemText(item)))
