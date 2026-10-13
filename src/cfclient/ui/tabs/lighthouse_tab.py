@@ -479,6 +479,7 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._bs_data_to_estimator: set[int] = set()
         self._bs_available: set[int] = set()
 
+        self._create_status_matrix()
         self._clear_state_indicator()
 
         self._bs_stats = [
@@ -759,25 +760,37 @@ class LighthouseTab(TabToolbox, lighthouse_tab_class):
         self._bs_calibration_data_updated.clear()
         self._bs_geometry_data_exists.clear()
         self._bs_data_to_estimator.clear()
+        self._bs_available.clear()
         self._update_basestation_status_indicators()
         self._clear_state_indicator()
         self._lh_status = self.STATUS_NOT_RECEIVING
 
-    def _clear_state_indicator(self) -> None:
+    def _create_status_matrix(self) -> None:
+        # The labels are created once and then only hidden/shown.
         container = self._basestation_stats_container
-        for row in range(0, 4):
-            for col in range(1, 17):
-                item = container.itemAtPosition(row, col)
-                if item is not None:
-                    item.widget().deleteLater()
-
-    def _populate_status_matrix(self) -> None:
-        container = self._basestation_stats_container
+        self._status_labels: list[QLabel] = []
 
         for bs in range(0, 16):
-            container.addWidget(self._create_label(str(bs + 1)), 0, bs + 1)
+            header = self._create_label(str(bs + 1))
+            container.addWidget(header, 0, bs + 1)
+            self._status_labels.append(header)
             for i in range(1, 4):
-                container.addWidget(self._create_label(), i, bs + 1)
+                label = self._create_label()
+                container.addWidget(label, i, bs + 1)
+                self._status_labels.append(label)
+
+    def _reset_status_labels(self, hidden: bool) -> None:
+        for label in self._status_labels:
+            label.setHidden(hidden)
+            if not label.text():
+                label.setStyleSheet(STYLE_NO_BACKGROUND)
+                label.setToolTip("")
+
+    def _clear_state_indicator(self) -> None:
+        self._reset_status_labels(hidden=True)
+
+    def _populate_status_matrix(self) -> None:
+        self._reset_status_labels(hidden=False)
 
     def _mask_status_matrix(self, bs_available_mask: set[int]) -> None:
         container = self._basestation_stats_container
