@@ -31,6 +31,7 @@ from __future__ import annotations
 import logging
 
 from PySide6 import QtWidgets
+from PySide6.QtCore import QTimer
 from PySide6.QtGui import QShowEvent
 from PySide6.QtUiTools import loadUiType
 
@@ -74,7 +75,7 @@ class LighthouseSystemTypeDialog(QtWidgets.QWidget, lighthouse_system_widget_cla
 
     def disconnected(self) -> None:
         self._cf = None
-        self.close()
+        QTimer.singleShot(0, self.close)
 
     async def get_system_type(self) -> int:
         """Read the system type from the Crazyflie. Defaults to Lighthouse V2 if it can not be read."""
