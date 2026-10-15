@@ -30,22 +30,23 @@
 Shows data for the Loco Positioning system
 """
 
+import asyncio
 import logging
 from enum import Enum
 from collections import namedtuple
+from collections.abc import Callable
 
-import time
+import struct
+
 from PySide6.QtUiTools import loadUiType
-from PySide6.QtCore import Qt, Signal, QTimer
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QLabel
 
 import cfclient
 from cfclient.ui.tab_toolbox import TabToolbox
-
-from cflib.crazyflie.log import LogConfig
-from cflib.crazyflie.mem import MemoryElement
-from lpslib.lopoanchor import LoPoAnchor
+from cfclient.gui import create_task
+from cflib2 import Crazyflie
+from cflib2.error import DisconnectedError
 
 from cfclient.ui.dialogs.anchor_position_dialog import AnchorPositionDialog
 
@@ -95,6 +96,21 @@ class Anchor:
     def is_active(self):
         return self._is_active
 
+class LoPoAnchor:
+    LPP_TYPE_POSITION = 1
+    LPP_TYPE_REBOOT = 2
+    LPP_TYPE_MODE = 3
+
+    def __init__(self, cf: Crazyflie) -> None:
+        self._lpp = cf.localization().loco_positioning()
+
+    async def set_position(self, anchor_id: int, position: tuple[float, float, float]) -> None:
+        data = struct.pack("<Bfff", self.LPP_TYPE_POSITION, *position)
+        await self._lpp.send_short_lpp_packet(anchor_id, list(data))
+
+    async def set_mode(self, anchor_id: int, mode: int) -> None:
+        data = struct.pack("<BB", self.LPP_TYPE_MODE, mode)
+        await self._lpp.send_short_lpp_packet(anchor_id, list(data))
 
 class AxisScaleStep:
     def __init__(self, from_view, from_axis, to_view, to_axis,
@@ -268,79 +284,6 @@ class DisplayMode(Enum):
 Range = namedtuple('Range', ['min', 'max'])
 
 
-class AnchorStateMachine:
-    GET_ACTIVE = 0
-    GET_IDS = 1
-    GET_DATA = 2
-    STEPS = [
-        GET_ACTIVE,
-        GET_ACTIVE,
-        GET_IDS,
-        GET_ACTIVE,
-        GET_ACTIVE,
-        GET_DATA,
-        GET_ACTIVE,
-        GET_ACTIVE,
-    ]
-
-    def __init__(self, mem_sub, cb_active_id_list, cb_id_list, cb_data):
-        self._current_step = 0
-        self._waiting_for_response = False
-        self._mem = self._get_mem(mem_sub)
-
-        self._cb_active_id_list = cb_active_id_list
-        self._cb_id_list = cb_id_list
-        self._cb_data = cb_data
-
-    def poll(self):
-        if not self._waiting_for_response:
-            self._next_step()
-            self._waiting_for_response = self._request_step()
-
-    def _next_step(self):
-        self._current_step += 1
-        if self._current_step >= len(AnchorStateMachine.STEPS):
-            self._current_step = 0
-
-    def _request_step(self):
-        result = True
-
-        action = AnchorStateMachine.STEPS[self._current_step]
-        if action == AnchorStateMachine.GET_ACTIVE:
-            self._mem.update_active_id_list(self._cb_active_id_list_updated)
-        elif action == AnchorStateMachine.GET_IDS:
-            self._mem.update_id_list(self._cb_id_list_updated)
-        else:
-            if self._mem.nr_of_anchors > 0:
-                # Only request anchor data if we actually have anchors, otherwise the callback will never be called
-                self._mem.update_data(self._cb_data_updated)
-            else:
-                result = False
-
-        return result
-
-    def _get_mem(self, mem_sub):
-        mem = mem_sub.get_mems(MemoryElement.TYPE_LOCO2)
-        if len(mem) > 0:
-            return mem[0]
-        return None
-
-    def _cb_active_id_list_updated(self, mem_data):
-        self._waiting_for_response = False
-        if self._cb_active_id_list:
-            self._cb_active_id_list(mem_data.active_anchor_ids)
-
-    def _cb_id_list_updated(self, mem_data):
-        self._waiting_for_response = False
-        if self._cb_id_list:
-            self._cb_id_list(mem_data.anchor_ids)
-
-    def _cb_data_updated(self, mem_data):
-        self._waiting_for_response = False
-        if self._cb_data:
-            self._cb_data(mem_data.anchor_data)
-
-
 class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
     """Tab for plotting Loco Positioning data"""
 
@@ -358,26 +301,23 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
     LOCO_MODE_TDOA2 = 2
     LOCO_MODE_TDOA3 = 3
 
-    PARAM_MDOE_GR = 'loco'
+    PARAM_MODE_GR = 'loco'
     PARAM_MODE_NM = 'mode'
-    PARAM_MODE = PARAM_MDOE_GR + '.' + PARAM_MODE_NM
+    PARAM_MODE = PARAM_MODE_GR + '.' + PARAM_MODE_NM
 
     # Frame rate (updates per second)
     FPS = 2
 
-    _connected_signal = Signal(str)
-    _disconnected_signal = Signal(str)
-    _log_error_signal = Signal(object, str)
-    _anchor_range_signal = Signal(int, object, object)
-    _loco_sys_signal = Signal(int, object, object)
-    _cb_param_to_detect_loco_deck_signal = Signal(object, object)
-
-    _anchor_active_id_list_updated_signal = Signal(object)
-    _anchor_data_updated_signal = Signal(object)
-
     def __init__(self, helper):
         super(LocoPositioningTab, self).__init__(helper, 'Loco Positioning')
         self.setupUi(self)
+        self._cf = None
+        self._on_connected_task = None
+        self._mode_task = None
+        self._anchor_mode_task = None
+        self._poll_task = None
+        self._log_tasks = []
+        self._write_positions_task = None
 
         self._anchors = {}
         self._clear_state()
@@ -385,19 +325,6 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
 
         self._display_mode = DisplayMode.estimated_position
 
-        # Always wrap callbacks from Crazyflie API though QT Signal/Slots
-        # to avoid manipulating the UI when rendering it
-        self._connected_signal.connect(self._connected)
-        self._disconnected_signal.connect(self._disconnected)
-        self._anchor_range_signal.connect(self._anchor_range_received)
-        self._loco_sys_signal.connect(self._loco_sys_received)
-        self._cb_param_to_detect_loco_deck_signal.connect(
-            self._cb_param_to_detect_loco_deck)
-
-        self._anchor_active_id_list_updated_signal.connect(
-            self._active_id_list_updated)
-        self._anchor_data_updated_signal.connect(
-            self._anchor_data_updated)
 
         self._id_anchor_button.toggled.connect(
             lambda enabled:
@@ -455,13 +382,6 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
         self._configure_anchor_positions_button.clicked.connect(
             self._show_anchor_postion_dialog)
 
-        # Connect the Crazyflie API callbacks to the signals
-        self._helper.cf.connected.add_callback(
-            self._connected_signal.emit)
-
-        self._helper.cf.disconnected.add_callback(
-            self._disconnected_signal.emit)
-
         self._set_up_plots()
 
         self.is_loco_deck_active = False
@@ -470,11 +390,6 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
         self._graph_timer.setInterval(int(1000 / self.FPS))
         self._graph_timer.timeout.connect(self._update_graphics)
         self._graph_timer.start()
-
-        self._anchor_state_timer = QTimer()
-        self._anchor_state_timer.setInterval(self.UPDATE_PERIOD_ANCHOR_STATE)
-        self._anchor_state_timer.timeout.connect(self._poll_anchor_state)
-        self._anchor_state_machine = None
 
         self._update_position_label(self._helper.pose_logger.position)
 
@@ -496,21 +411,18 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
         self._display_mode = display_mode
 
     def _send_anchor_mode(self, mode):
-        lopo = LoPoAnchor(self._helper.cf)
+        if self._cf is not None:
+            self._anchor_mode_task = create_task(self._send_anchor_mode_async(self._cf, mode))
 
-        mode_translation = {
-            self.LOCO_MODE_TWR: lopo.MODE_TWR,
-            self.LOCO_MODE_TDOA2: lopo.MODE_TDOA,
-            self.LOCO_MODE_TDOA3: lopo.MODE_TDOA3,
-        }
-
+    async def _send_anchor_mode_async(self, cf: Crazyflie, mode: int) -> None:
+        lopo = LoPoAnchor(cf)
         # Set the mode from the last to the first anchor
         # In TDoA 2 mode this ensures that the master anchor is set last
         # Note: We only switch mode of anchor 0 - 7 since this is what is
         # supported in TWR and TDoA 2
-        for j in range(5):
-            for i in reversed(range(8)):
-                lopo.set_mode(i, mode_translation[mode])
+        for _ in range(5):
+            for anchor_id in reversed(range(8)):
+                await lopo.set_mode(anchor_id, mode)
 
     def _clear_state(self):
         self._clear_anchors()
@@ -520,97 +432,62 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
     def _clear_anchors(self):
         self._anchors = {}
 
-    def _connected(self, link_uri):
-        """Callback when the Crazyflie has been connected"""
-        logger.debug("Crazyflie connected to {}".format(link_uri))
-        self._request_param_to_detect_loco_deck()
+    def connected(self, cf:Crazyflie) -> None:
+        """Called by TabToolbox when the Crazyflie has been connected"""
+        self._cf = cf
+        self._on_connected_task = create_task(self._on_connected(cf))
 
-    def _request_param_to_detect_loco_deck(self):
-        """Send a parameter request to detect if the Loco deck is installed"""
-        group = 'deck'
+    async def _on_connected(self, cf: Crazyflie) -> None:
+        param = cf.param()
+        names = param.names()
+        deck_present = False
 
-        def register(group, param):
-            if self._is_in_param_toc(group, param):
-                logger.debug("Requesting loco deck parameter")
-                self._helper.cf.param.add_update_callback(group=group,
-                                                          name=param,
-                                                          cb=self._cb_param_to_detect_loco_deck_signal.emit)
+        for name in ("deck.bcLoco", "deck.bcDWM1000"):
+            if name in names and int(await param.get(name)) == 1:
+                deck_present = True
 
-        register(group, 'bcLoco')
-        register(group, 'bcDWM1000')  # For backwards compatibility
-
-    def _cb_param_to_detect_loco_deck(self, name, value):
-        """Callback from the parameter sub system when the Loco deck detection
-        parameter has been updated"""
-        if value == '1':
+        if deck_present:
             logger.debug("Loco deck installed, enabling LPS tab")
-            self._loco_deck_detected()
+            self._loco_deck_detected(cf)
+            if self.PARAM_MODE in names:
+                mode = await param.get(self.PARAM_MODE)
+                self._loco_mode_updated(self.PARAM_MODE, mode)
+                self._enable_mode_buttons(True)
         else:
-            logger.debug("No Loco deck installed")
+            logger.debug("No loco deck installed")
 
-    def _loco_deck_detected(self):
+
+    def _loco_deck_detected(self, cf: Crazyflie) -> None:
         """Called when the loco deck has been detected. Enables the tab,
         starts logging and polling of the memory sub system as well as starts
         timers for updating graphics"""
         if not self.is_loco_deck_active:
             self.is_loco_deck_active = True
-            try:
-                self._register_logblock(
-                    "LoPoTab0",
-                    [
-                        ("ranging", "distance0", "float"),
-                        ("ranging", "distance1", "float"),
-                        ("ranging", "distance2", "float"),
-                        ("ranging", "distance3", "float"),
-                    ],
-                    self._anchor_range_signal.emit,
-                    self._log_error_signal.emit)
+            self._log_tasks = [
+                create_task(self._stream_log(cf, [f"ranging.distance{i}" for i in range(4)],
+                                            self.UPDATE_PERIOD_LOG, self._anchor_range_received)),
+                create_task(self._stream_log(cf, [f"ranging.distance{i}" for i in range(4, 8)],
+                                            self.UPDATE_PERIOD_LOG, self._anchor_range_received)),
+                create_task(self._stream_log(cf, [self.PARAM_MODE],
+                                            self.UPDATE_PERIOD_LOCO_MODE, self._loco_sys_received)),
+            ]
 
-                self._register_logblock(
-                    "LoPoTab1",
-                    [
-                        ("ranging", "distance4", "float"),
-                        ("ranging", "distance5", "float"),
-                        ("ranging", "distance6", "float"),
-                        ("ranging", "distance7", "float"),
-                    ],
-                    self._anchor_range_signal.emit,
-                    self._log_error_signal.emit)
-
-                self._register_logblock(
-                    "LoPoSys",
-                    [
-                        ("loco", "mode", "uint8_t")
-                    ],
-                    self._loco_sys_signal.emit,
-                    self._log_error_signal.emit,
-                    update_period=self.UPDATE_PERIOD_LOCO_MODE)
-            except KeyError as e:
-                logger.warning(str(e))
-            except AttributeError as e:
-                logger.warning(str(e))
-
-            self._start_polling_anchor_pos(self._helper.cf)
-            self._enable_mode_buttons(True)
+            self._poll_task = create_task(self._poll_anchors(cf))
             self._configure_anchor_positions_button.setEnabled(True)
 
-            self._helper.cf.param.add_update_callback(
-                group=self.PARAM_MDOE_GR,
-                name=self.PARAM_MODE_NM,
-                cb=self._loco_mode_updated)
+    def disconnected(self) -> None:
+        """Called by TabToolbox when the Crazyflie has been disconnected"""
+        for task in [self._on_connected_task, self._mode_task, self._anchor_mode_task, self._poll_task, *self._log_tasks, self._write_positions_task]:
+            if task is not None:
+                task.cancel()
+        self._on_connected_task = None
+        self._mode_task = None
+        self._anchor_mode_task = None
+        self._cf = None
+        self._poll_task = None
+        self._log_tasks = []
+        self._write_positions_task = None
 
-            if self.PARAM_MDOE_GR in self._helper.cf.param.values:
-                if self.PARAM_MODE_NM in \
-                        self._helper.cf.param.values[self.PARAM_MDOE_GR]:
-                    self._loco_mode_updated(
-                        self.PARAM_MODE,
-                        self._helper.cf.param.values[self.PARAM_MDOE_GR][
-                            self.PARAM_MODE_NM])
-
-    def _disconnected(self, link_uri):
-        """Callback for when the Crazyflie has been disconnected"""
-        logger.debug("Crazyflie disconnected from {}".format(link_uri))
-        self._stop_polling_anchor_pos()
         self._clear_state()
         self._update_graphics()
         self.is_loco_deck_active = False
@@ -618,35 +495,30 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
         self._enable_mode_buttons(False)
         self._loco_mode_updated('', self.LOCO_MODE_UNKNOWN)
         self._configure_anchor_positions_button.setEnabled(False)
-        self._anchor_position_dialog.close()
+        QTimer.singleShot(0, self._anchor_position_dialog.close)
 
-    def _register_logblock(self, logblock_name, variables, data_cb, error_cb,
-                           update_period=UPDATE_PERIOD_LOG):
-        """Register log data to listen for. One logblock can contain a limited
-        number of parameters (6 for floats)."""
-        lg = LogConfig(logblock_name, update_period)
+    async def _stream_log(self, cf: Crazyflie, variables: list[str], period_ms: int, handler: Callable[[dict], None]) -> None:
+        log = cf.log()
+        names = log.names()
+        variables = [v for v in variables if v in names]
+        if not variables:
+            return
+        block = await log.create_block()
         for variable in variables:
-            if self._is_in_log_toc(variable):
-                lg.add_variable('{}.{}'.format(variable[0], variable[1]),
-                                variable[2])
+            await block.add_variable(variable)
+        stream = await block.start(period_ms)
 
-        self._helper.cf.log.add_config(lg)
-        lg.data_received_cb.add_callback(data_cb)
-        lg.error_cb.add_callback(error_cb)
-        lg.start()
-        return lg
+        try:
+            while True:
+                data = await stream.next()
+                handler(data.data)
+        finally:
+            try:
+                await asyncio.shield(stream.stop())
+            except (DisconnectedError, asyncio.CancelledError):
+                pass
 
-    def _is_in_log_toc(self, variable):
-        toc = self._helper.cf.log.toc
-        group = variable[0]
-        param = variable[1]
-        return group in toc.toc and param in toc.toc[group]
-
-    def _is_in_param_toc(self, group, param):
-        toc = self._helper.cf.param.toc
-        return bool(group in toc.toc and param in toc.toc[group])
-
-    def _anchor_range_received(self, timestamp, data, logconf):
+    def _anchor_range_received(self, data: dict) -> None:
         """Callback from the logging system when a range is updated."""
         for name, value in data.items():
             valid, anchor_number = self._parse_range_param_name(name)
@@ -658,7 +530,7 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
                     anchor = self._get_create_anchor(anchor_number)
                     anchor.distance = float(value)
 
-    def _loco_sys_received(self, timestamp, data, logconf):
+    def _loco_sys_received(self, data: dict) -> None:
         """Callback from the logging system when the loco pos sys config
         is updated."""
         if self.PARAM_MODE in data:
@@ -710,34 +582,15 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
             label = container.itemAtPosition(row, col).widget()
             label.deleteLater()
 
-    def _logging_error(self, log_conf, msg):
-        """Callback from the log layer when an error occurs"""
-        QMessageBox.about(self, "LocoPositioningTab error",
-                          "Error when using log config",
-                          " [{0}]: {1}".format(log_conf.name, msg))
-
-    def _start_polling_anchor_pos(self, crazyflie):
-        """Set up a timer to poll anchor positions from the memory sub
-        system"""
-        if not self._anchor_state_machine:
-            self._anchor_state_machine = AnchorStateMachine(
-                crazyflie.mem,
-                self._anchor_active_id_list_updated_signal.emit,
-                None,
-                self._anchor_data_updated_signal.emit
-            )
-        self._anchor_state_timer.start()
-
-    def _stop_polling_anchor_pos(self):
-        self._anchor_state_timer.stop()
-        self._anchor_state_machine = None
-
-    def _poll_anchor_state(self):
-        if self._anchor_state_machine:
-            self._anchor_state_machine.poll()
+    async def _poll_anchors(self, cf: Crazyflie) -> None:
+        while True:
+            lps = await cf.memory().read_loco_anchor_data()
+            self._active_id_list_updated(lps.active_anchor_ids)
+            self._anchor_data_updated(lps.anchors)
+            await asyncio.sleep(self.UPDATE_PERIOD_ANCHOR_STATE / 1000)
 
     def _active_id_list_updated(self, anchor_list):
-        """Callback from the anchor state machine when we get a list of active
+        """Called from the anchor polling when we get a list of active
         anchors"""
         for id, anchor_data in self._anchors.items():
             anchor_data.set_is_active(False)
@@ -749,7 +602,7 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
         self._update_ranging_status_indicators()
 
     def _anchor_data_updated(self, position_dict):
-        """Callback from the anchor state machine when the anchor positions
+        """Called from the anchor polling when the anchor positions
          are updated"""
         for id, anchor_data in position_dict.items():
             anchor = self._get_create_anchor(id)
@@ -829,7 +682,8 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
 
     def _request_mode(self, enabled, mode):
         if enabled:
-            self._helper.cf.param.set_value(self.PARAM_MODE, str(mode))
+            if self._cf is not None:
+                self._mode_task = create_task(self._set_mode_param(self._cf, mode))
 
             if mode == self.LOCO_MODE_TWR:
                 self._switch_mode_to_twr_button.setEnabled(False)
@@ -847,6 +701,9 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
                 self._switch_mode_to_twr_button.setEnabled(False)
                 self._switch_mode_to_tdoa2_button.setEnabled(False)
                 self._switch_mode_to_tdoa3_button.setEnabled(False)
+
+    async def _set_mode_param(self, cf: Crazyflie, mode: int) -> None:
+        await cf.param().set(self.PARAM_MODE, mode)
 
     def _loco_mode_updated(self, name, value):
         mode = int(value)
@@ -881,9 +738,12 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
         self._anchor_position_dialog.anchor_postions_updated(positions)
 
     def write_positions_to_anchors(self, anchor_positions):
-        lopo = LoPoAnchor(self._helper.cf)
+        if self._cf is not None:
+            self._write_positions_task = create_task(self._write_positions_to_anchors_async(self._cf, anchor_positions))
 
+    async def _write_positions_to_anchors_async(self, cf: Crazyflie, anchor_positions: dict[int, tuple[float, float, float]]) -> None:
+        lopo = LoPoAnchor(cf)
         for _ in range(3):
-            for id, position in anchor_positions.items():
-                lopo.set_position(id, position)
-            time.sleep(0.2)
+            for anchor_id, position in anchor_positions.items():
+                await lopo.set_position(anchor_id, position)
+            await asyncio.sleep(0.2)

@@ -28,7 +28,6 @@ Dialog box used to configure anchor positions. Used from the LPS tab.
 import logging
 
 import cfclient
-from cfclient.utils.logconfigreader import FILE_REGEX_YAML
 from PySide6 import QtWidgets
 from PySide6.QtUiTools import loadUiType
 from PySide6.QtCore import QAbstractTableModel, Qt
@@ -41,6 +40,8 @@ __author__ = 'Bitcraze AB'
 __all__ = ['AnchorPositionDialog']
 
 logger = logging.getLogger(__name__)
+
+FILE_REGEX_YAML = "Config *.yaml;;All *.*"
 
 (anchor_postiong_widget_class, connect_widget_base_class) = (
     loadUiType(
