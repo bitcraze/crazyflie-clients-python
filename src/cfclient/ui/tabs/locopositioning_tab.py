@@ -335,6 +335,9 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
     # Frame rate (updates per second)
     FPS = 2
 
+    # Max difference (m) for an anchor position to count as already written
+    ANCHOR_POSITION_TOLERANCE = 0.005
+
     def __init__(self, helper: PluginHelper) -> None:
         super(LocoPositioningTab, self).__init__(helper, "Loco Positioning")
         self.setupUi(self)
@@ -785,16 +788,48 @@ class LocoPositioningTab(TabToolbox, locopositioning_tab_class):
     def write_positions_to_anchors(
         self, anchor_positions: dict[int, tuple[float, float, float]]
     ) -> None:
-        if self._cf is not None:
-            self._write_positions_task = create_task(
-                self._write_positions_to_anchors_async(self._cf, anchor_positions)
-            )
+        if self._cf is None or self._write_positions_task is not None:
+            return
+
+        # Anchors that already report the target position don't need a packet
+        to_write = {
+            anchor_id: position
+            for anchor_id, position in anchor_positions.items()
+            if not self._anchor_has_position(anchor_id, position)
+        }
+        logger.info(
+            "Writing positions to anchors %s, %d already up to date",
+            sorted(to_write),
+            len(anchor_positions) - len(to_write),
+        )
+        if not to_write:
+            return
+
+        self._anchor_position_dialog.set_writing(True)
+        self._write_positions_task = create_task(
+            self._write_positions_to_anchors_async(self._cf, to_write)
+        )
+
+    def _anchor_has_position(
+        self, anchor_id: int, position: tuple[float, float, float]
+    ) -> bool:
+        anchor = self._anchors.get(anchor_id)
+        if anchor is None or not anchor.is_position_valid():
+            return False
+        return all(
+            abs(current - target) < self.ANCHOR_POSITION_TOLERANCE
+            for current, target in zip(anchor.get_position(), position)
+        )
 
     async def _write_positions_to_anchors_async(
         self, cf: Crazyflie, anchor_positions: dict[int, tuple[float, float, float]]
     ) -> None:
         lopo = LoPoAnchor(cf)
-        for _ in range(3):
-            for anchor_id, position in anchor_positions.items():
-                await lopo.set_position(anchor_id, position)
-            await asyncio.sleep(0.2)
+        try:
+            for _ in range(3):
+                for anchor_id, position in anchor_positions.items():
+                    await lopo.set_position(anchor_id, position)
+                await asyncio.sleep(0.2)
+        finally:
+            self._write_positions_task = None
+            self._anchor_position_dialog.set_writing(False)

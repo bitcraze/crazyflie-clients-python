@@ -239,6 +239,10 @@ class AnchorPositionDialog(QtWidgets.QWidget, anchor_postiong_widget_class):
     def anchor_postions_updated(self, anchor_positions: dict[int, Position]) -> None:
         self._data_model.anchor_postions_updated(anchor_positions)
 
+    def set_writing(self, writing: bool) -> None:
+        """Disable the write button while positions are being written"""
+        self._write_to_anchors_button.setEnabled(not writing)
+
     def _load_button_clicked(self) -> None:
         names = QFileDialog.getOpenFileName(
             self, "Open file", self._helper.current_folder, FILE_REGEX_YAML
