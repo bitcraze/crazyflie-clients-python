@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Basestation configuration</string>
+   <string>Base station configuration</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -27,7 +27,7 @@
           </font>
          </property>
          <property name="text">
-          <string>Lighthouse V2 Basestation Configuration Tool</string>
+          <string>Lighthouse V2 Base Station Configuration Tool</string>
          </property>
         </widget>
        </item>
@@ -42,7 +42,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Connect only 1 basestation with a micro usb  at the time </string>
+        <string>Connect only 1 base station with a micro usb  at the time </string>
        </property>
       </widget>
      </item>
@@ -78,7 +78,7 @@
        <item row="1" column="1">
         <widget class="QPushButton" name="_scan_basestation_button">
          <property name="text">
-          <string>Scan basestation</string>
+          <string>Scan base station</string>
          </property>
         </widget>
        </item>
