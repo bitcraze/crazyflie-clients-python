@@ -44,7 +44,8 @@ from .LEDRingTab import LEDRingTab
 from .ParamTab import ParamTab
 
 # from .PlotTab import PlotTab
-# from .locopositioning_tab import LocoPositioningTab
+from .locopositioning_tab import LocoPositioningTab
+
 # from .LogClientTab import LogClientTab
 # from .lighthouse_tab import LighthouseTab
 # from .TuningTab import TuningTab
@@ -64,7 +65,7 @@ available = [
     # LogTab,
     ParamTab,
     # PlotTab,
-    # LocoPositioningTab,
+    LocoPositioningTab,
     # LighthouseTab,
     # LogClientTab,
     # TuningTab,
