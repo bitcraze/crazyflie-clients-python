@@ -118,7 +118,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.cf = Crazyflie(ro_cache=None,
                             rw_cache=cfclient.config_path + "/cache")
 
-        cflib.crtp.init_drivers()
+        self._ble_bench = getattr(cfclient, 'ble_enabled', False)
+        cflib.crtp.init_drivers(enable_ble_driver=self._ble_bench)
 
         zmq_params = ZMQParamAccess(self.cf)
         zmq_params.start()
@@ -126,13 +127,19 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         zmq_leds = ZMQLEDDriver(self.cf)
         zmq_leds.start()
 
-        self.scanner = ScannerThread()
+        self.scanner = ScannerThread(ble_only=self._ble_bench)
+        if self._ble_bench:
+            bench_label = QLabel('Bluetooth LE · bench mode · flight commands blocked')
+            self.statusBar().addPermanentWidget(bench_label)
+            self.address.setEnabled(False)
         self.scanner.interfaceFoundSignal.connect(self.foundInterfaces)
+        self.scanner.scanFailedSignal.connect(
+            lambda message: QtWidgets.QMessageBox.warning(self, 'Bluetooth / connection', message))
         self.scanner.start()
 
         # Create and start the Input Reader
-        self._statusbar_label = QLabel("No input-device found, insert one to"
-                                       " fly.")
+        self._statusbar_label = QLabel("Bluetooth LE read-only telemetry" if self._ble_bench else
+                                       "No input-device found, insert one to fly.")
         self.statusBar().addWidget(self._statusbar_label)
 
         #
@@ -190,7 +197,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._connectivity_manager.connect_button_clicked.connect(self._connect)
         self._connectivity_manager.scan_button_clicked.connect(self._scan_from_button)
 
-        self._disable_input = False
+        self._disable_input = self._ble_bench
 
         self.joystickReader.input_updated.add_callback(
             lambda *args: self._disable_input or
@@ -254,6 +261,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._about_dialog = AboutDialog(cfclient.ui.pluginhelper)
         self.menuItemAbout.triggered.connect(self._about_dialog.show)
         self._menu_cf2_config.triggered.connect(self._cf2config_dialog.show)
+        if self._ble_bench:
+            self.menuItemBootloader.setEnabled(False)
+            self._menu_cf2_config.setEnabled(False)
 
         self._connectivity_manager.set_address(self.address.value())
 
@@ -270,6 +280,11 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
                                                               self.toolboxes_menu_item,
                                                               self.tab_widget)
         self.read_tab_toolbox_config(self.loaded_tab_toolboxes)
+        if self._ble_bench:
+            log_tab = self.loaded_tab_toolboxes.get('Log TOC')
+            if log_tab is not None:
+                self._tab_toolbox_show_as_tab(log_tab)
+                self.tab_widget.setCurrentWidget(log_tab)
 
         # References to all the device sub-menus in the "Input device" menu
         self._all_role_menus = ()
@@ -323,6 +338,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         loaded_tab_toolboxes = {}
 
         for tab_class in cfclient.ui.tabs.available:
+            if self._ble_bench and tab_class.__name__ not in (
+                    'LogBlockTab', 'LogTab', 'PlotTab', 'LogClientTab', 'CrtpSharkToolbox'):
+                continue  # Do not register their automatic write/control callbacks.
             tab_toolbox = tab_class(cfclient.ui.pluginhelper)
             loaded_tab_toolboxes[tab_toolbox.get_tab_toolbox_name()] = tab_toolbox
 
@@ -404,7 +422,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         """
         Disable the gamepad input to be able to send setpoint from a tab
         """
-        self._disable_input = disable
+        self._disable_input = self._ble_bench or disable
 
     def foundInterfaces(self, interfaces):
         selected_interface = self._connectivity_manager.get_interface()
@@ -466,11 +484,11 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.menuItemConnect.setEnabled(True)
             self._connectivity_manager.set_state(ConnectivityManager.UIState.CONNECTED)
             self.logConfigAction.setEnabled(True)
-            self.esButton.setEnabled(True)
-            self.esButton.setStyleSheet("background-color: red")
+            self.esButton.setEnabled(not self._ble_bench)
+            self.esButton.setStyleSheet("" if self._ble_bench else "background-color: red")
             # Find out if there's an I2C EEPROM, otherwise don't show the
             # dialog.
-            if len(self.cf.mem.get_mems(MemoryElement.TYPE_I2C)) > 0:
+            if not self._ble_bench and len(self.cf.mem.get_mems(MemoryElement.TYPE_I2C)) > 0:
                 self._menu_cf2_config.setEnabled(True)
         elif self.uiState == UIState.CONNECTING:
             s = "Connecting to {} ...".format(self._connectivity_manager.get_interface())
@@ -482,6 +500,8 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             self.setWindowTitle("Scanning ...")
             self.menuItemConnect.setEnabled(False)
             self._connectivity_manager.set_state(ConnectivityManager.UIState.SCANNING)
+        if self._ble_bench:
+            self.address.setEnabled(False)
 
     @pyqtSlot(bool)
     def toggle_tab_visibility(self, checked):
@@ -561,7 +581,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
     def _emergency_stop(self):
         # send disarming command
-        if (self.uiState == UIState.CONNECTED):
+        if (self.uiState == UIState.CONNECTED) and not self._ble_bench:
             # Send both emergency stop and disarm
             # TODO krri Disarm?
             self.cf.supervisor.send_emergency_stop()
@@ -598,7 +618,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
             logger.warning(str(e))
 
         mems = self.cf.mem.get_mems(MemoryElement.TYPE_DRIVER_LED)
-        if len(mems) > 0:
+        if not self._ble_bench and len(mems) > 0:
             mems[0].write_data(self._led_write_done)
 
     def _disconnected(self):
@@ -657,6 +677,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self.scanner.scanSignal.emit(address)
 
     def _scan_from_button(self, address):
+        if self._ble_bench:
+            self._scan(address)
+            return
         #
         # Below we check if we can open the Crazyradio device.
         # If it is there, but we have no permissions we inform the user, once,
@@ -725,6 +748,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         """Update the footer in the bottom of the UI with status for the
         input device and its mapping"""
 
+        if self._ble_bench:
+            self._statusbar_label.setText("Bluetooth LE read-only telemetry")
+            return
         msg = ""
 
         if len(self.joystickReader.available_devices()) > 0:
@@ -884,13 +910,25 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
 class ScannerThread(QThread):
 
+    scanFailedSignal = pyqtSignal(str)
+
     scanSignal = pyqtSignal(object)
     interfaceFoundSignal = pyqtSignal(object)
 
-    def __init__(self):
+    def __init__(self, ble_only=False):
+        self._ble_only = ble_only
         QThread.__init__(self)
         self.moveToThread(self)
         self.scanSignal.connect(self.scan)
 
     def scan(self, address):
-        self.interfaceFoundSignal.emit(cflib.crtp.scan_interfaces(address))
+        try:
+            if self._ble_only:
+                from cflib.crtp.bledriver import BleDriver
+                interfaces = BleDriver().scan_interface(address)
+            else:
+                interfaces = cflib.crtp.scan_interfaces(address)
+            self.interfaceFoundSignal.emit(interfaces)
+        except Exception as exc:
+            self.scanFailedSignal.emit(str(exc))
+            self.interfaceFoundSignal.emit([])

@@ -73,6 +73,7 @@ def main():
 
     parser = argparse.ArgumentParser(
         description="cfclient - Crazyflie graphical control client")
+    parser.add_argument('--ble', action='store_true', help='Use Bluetooth LE discovery in bench mode; flight blocked')
     parser.add_argument('--debug', '-d', nargs=1, default='info', type=str,
                         help="set debug level "
                              "[minimal, info, debug, debugfile]")
@@ -81,6 +82,7 @@ def main():
                         help="Check python imports and exit successfully" +
                         " (intended for CI)")
     args = parser.parse_args()
+    cfclient.ble_enabled = args.ble
     debug = args.debug
 
     cflogger = logging.getLogger('')
