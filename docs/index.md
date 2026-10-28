@@ -7,3 +7,7 @@ The Crazyflie PC client enables flashing and controlling the Crazyflie. It imple
 
 
 ![CF client front page](/docs/images/cfclient_frontpage.png)
+
+## Experimental transports
+
+- [Bluetooth Low Energy bench connection](userguides/ble-bench.md)
