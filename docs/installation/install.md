@@ -5,17 +5,16 @@ page_id: install
 
 ## Requirements
 
-This project requires Python 3.10+.
+This project requires Python 3.11+.
 
 ## Platform Prerequisites
 
 ### Ubuntu/Linux
 
-From a fresh Ubuntu 20.04 system and up, running the client from source requires git, pip and libraries for the Qt GUI:
+The client requires Python 3.11+. On Ubuntu 22.04 and older, the system Python is too old. Use the [Quick Start](#quick-start-recommended) with `uvx`, which provides its own Python, or install a newer Python another way (for example with `uv python install` or pyenv).
 
 ```bash
-sudo apt install git python3-pip libxcb-xinerama0 libxcb-cursor0
-pip3 install --upgrade pip
+sudo apt install git python3-venv libxcb-xinerama0 libxcb-cursor0
 ```
 
 #### Setting udev permissions
@@ -51,7 +50,7 @@ To use Crazyradio you will need to [install the drivers](https://www.bitcraze.io
 
 The client requires macOS 11 (Big Sur) or more recent. It works on both x86 and Apple Silicon Macs.
 
-The client works with both the Apple-provided Python 3 (as long as it is Python >= 3.10) and with Python installed via Homebrew.
+The client works with both the Apple-provided Python 3 (as long as it is Python >= 3.11) and with Python installed via Homebrew.
 
 ### Raspberry Pi
 
