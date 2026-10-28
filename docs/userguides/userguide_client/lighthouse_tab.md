@@ -84,6 +84,13 @@ When **show sample details** is activated:
 
 ### 5. Sample Collection
 This section guides you through collecting the position samples used to estimate the geometry of the base stations.
+
+Before collecting samples, wait until the Crazyflie has calibration data for at
+least two base stations. Sample collection only counts base stations with
+calibration data, so a green **Receiving** indicator alone does not mean that a
+base station can be used. Also check its **Calibration** indicator in
+[Base Station Status](#3-base-station-status).
+
 The process follows a fixed sequence of five steps:
 
 *  **Origin sample** - Place the Crazyflie at the desired origin of your coordinate system and take a measurement.

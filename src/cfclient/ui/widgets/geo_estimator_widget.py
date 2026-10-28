@@ -69,7 +69,9 @@ REFERENCE_DIST = 1.0
 
 class _CollectionStep(Enum):
     ORIGIN = ('step_origin.png',
-              'Place the crazyflie where you want the origin of your coordinate system to be.',
+              'Place the Crazyflie where you want the origin of your coordinate system to be. '
+              'Measurements require calibration data from at least two base stations. '
+              'Check the Calibration indicators in Base Station Status before measuring.',
               'Start measurement',
               "The orientation of the Crazyflie does not matter, only its absolute position.")
     X_AXIS = ('step_x_axis.png',
@@ -199,6 +201,7 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
     def __init__(self, lighthouse_tab):
         super(GeoEstimatorWidget, self).__init__()
         self.setupUi(self)
+        self._step_info.setWordWrap(True)
 
         self._lighthouse_tab = lighthouse_tab
         self._helper = lighthouse_tab._helper
@@ -655,11 +658,17 @@ class GeoEstimatorWidget(QtWidgets.QWidget, geo_estimator_widget_class):
         self._update_ui_reading(False)
 
         if bs_count == 0:
-            self._step_info.setText("No base stations seen, please try again.")
+            self._step_info.setText(
+                "No base stations with calibration data were sampled. "
+                "Check base station visibility and the Calibration indicators, then try again."
+            )
             self._user_notification_signal.emit(_UserNotificationType.FAILURE)
         elif bs_count < 2:
-            self._step_info.setText(f"Only one base station (nr {bs_seen}) was seen, " +
-                                    "we need at least two. Please try again.")
+            self._step_info.setText(
+                f"Only one base station (nr {bs_seen}) with calibration data was sampled. "
+                "At least two are required. Check base station visibility and the Calibration "
+                "indicators, then try again."
+            )
             self._user_notification_signal.emit(_UserNotificationType.FAILURE)
         else:
             if self._timeout_reader_result_setter is not None:
