@@ -12,7 +12,9 @@ See the [installation instructions](docs/installation/install.md) in the GitHub 
 Check out the [Bitcraze crazyflie-client-python documentation](https://www.bitcraze.io/documentation/repository/crazyflie-clients-python/master/) on our website.
 
 ## Contribute
-Go to the [contribute page](https://www.bitcraze.io/contribute/) on our website to learn more.
+Before you open a pull request, please read our [General guidelines for code contributions](https://www.bitcraze.io/development/contribute/general-guidelines/).
+
+For other ways to contribute, see the [contribute page](https://www.bitcraze.io/development/contribute/).
 
 ### Test code for contribution
 Run the automated build locally to test your code
