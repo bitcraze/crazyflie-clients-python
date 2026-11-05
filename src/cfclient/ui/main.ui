@@ -396,6 +396,7 @@
     <addaction name="menuItemConnect"/>
     <addaction name="menuItemBootloader"/>
     <addaction name="_menu_cf2_config"/>
+    <addaction name="menuItemWifiConnect"/>
    </widget>
    <widget class="QMenu" name="_menu_inputdevice">
     <property name="title">
@@ -514,6 +515,11 @@
   <action name="menuItemBootloader">
    <property name="text">
     <string>Bootloader</string>
+   </property>
+  </action>
+  <action name="menuItemWifiConnect">
+   <property name="text">
+    <string>Connect to Wifi Camera</string>
    </property>
   </action>
   <action name="_menuItem_openconfigfolder">

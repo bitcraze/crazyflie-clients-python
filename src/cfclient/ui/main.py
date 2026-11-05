@@ -37,6 +37,7 @@ import cfclient.ui.tabs
 import cflib.crtp
 from cfclient.ui.dialogs.about import AboutDialog
 from cfclient.ui.dialogs.bootloader import BootloaderDialog
+from cfclient.ui.dialogs.wifi_dialog import WifiCameraDialog
 from cfclient.ui.connectivity_manager import ConnectivityManager
 from cfclient.utils.config import Config
 from cfclient.utils.config_manager import ConfigManager
@@ -249,8 +250,10 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
 
         self.logConfigDialogue = LogConfigDialogue(cfclient.ui.pluginhelper)
         self._bootloader_dialog = BootloaderDialog(cfclient.ui.pluginhelper)
+        self._wifi_camera_dialog = WifiCameraDialog(cfclient.ui.pluginhelper)
         self._cf2config_dialog = Cf2ConfigDialog(cfclient.ui.pluginhelper)
         self.menuItemBootloader.triggered.connect(self._bootloader_dialog.show)
+        self.menuItemWifiConnect.triggered.connect(self._wifi_camera_dialog.show)
         self._about_dialog = AboutDialog(cfclient.ui.pluginhelper)
         self.menuItemAbout.triggered.connect(self._about_dialog.show)
         self._menu_cf2_config.triggered.connect(self._cf2config_dialog.show)

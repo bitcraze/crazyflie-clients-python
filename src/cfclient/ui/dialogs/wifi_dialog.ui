@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry"><rect><x>0</x><y>0</y><width>680</width><height>460</height></rect></property>
+  <property name="windowTitle"><string>Wifi Settings</string></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="credentialsBox">
+     <property name="title"><string>Wifi Credentials</string></property>
+     <layout class="QVBoxLayout" name="credentialsLayout">
+      <item>
+        <widget class="QLabel" name="connectHeadingLabel">
+         <property name="text"><string>Connect to Wifi Network</string></property>
+        </widget>
+       </item>
+      <item>
+       <layout class="QHBoxLayout" name="scanRow">
+        <item>
+         <widget class="QPushButton" name="scanButton">
+          <property name="text"><string>Scan for Networks</string></property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="scanRowSpacer">
+          <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+          <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="scanResultsLayout">
+        <property name="spacing"><number>2</number></property>
+       </layout>
+      </item>
+      <item>
+       <spacer name="scanResultsSpacer">
+        <property name="orientation"><enum>Qt::Orientation::Vertical</enum></property>
+        <property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property>
+       </spacer>
+      </item>
+      <item>
+        <widget class="QLabel" name="addHeadingLabel">
+         <property name="text"><string>Add New Network</string></property>
+        </widget>
+       </item>
+      <item>
+        <widget class="QLabel" name="networkNameLabel">
+         <property name="text"><string>Network Name</string></property>
+        </widget>
+       </item>
+      <item>
+       <widget class="QLineEdit" name="networkNameEdit"/>
+      </item>
+      <item>
+        <widget class="QLabel" name="passwordLabel">
+         <property name="text"><string>Password</string></property>
+        </widget>
+       </item>
+      <item>
+       <widget class="QLineEdit" name="passwordEdit">
+        <property name="echoMode"><enum>QLineEdit::EchoMode::Password</enum></property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="connectRow">
+        <item>
+         <spacer name="connectRowSpacer">
+          <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+          <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="connectButton">
+          <property name="enabled"><bool>false</bool></property>
+          <property name="text"><string>Connect</string></property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+        <widget class="QLabel" name="savedHeadingLabel">
+         <property name="text"><string>Saved Networks</string></property>
+        </widget>
+       </item>
+      <item>
+       <layout class="QHBoxLayout" name="savedNetworksLayout"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="statusLabel">
+     <property name="text"><string>Status: &lt;b&gt;Not Connected&lt;/b&gt;</string></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
