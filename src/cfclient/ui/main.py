@@ -104,6 +104,12 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
     _input_discovery_signal = pyqtSignal(object)
     _log_error_signal = pyqtSignal(object, str)
 
+    _THEMES = [('light', 'Light'), ('dark', 'Dark'),
+               ('system', 'System settings')]
+    _THEME_VALUES = {'light': Qt.ColorScheme.Light,
+                     'dark': Qt.ColorScheme.Dark,
+                     'system': Qt.ColorScheme.Unknown}
+
     def __init__(self, *args):
         super(MainUI, self).__init__(*args)
         self.setupUi(self)
@@ -308,9 +314,9 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         self._theme_group = QActionGroup(self.menuThemes)
         self._theme_group.setExclusive(True)
         self._theme_checkboxes = []
-        for theme in UiUtils.THEMES:
-            node = QAction(theme, self.menuThemes, checkable=True)
-            node.setObjectName(theme)
+        for name, label in self._THEMES:
+            node = QAction(label, self.menuThemes, checkable=True)
+            node.setObjectName(name)
             node.toggled.connect(self._theme_selected)
             self._theme_checkboxes.append(node)
             self._theme_group.addAction(node)
@@ -381,13 +387,15 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         """ Callback when a theme is selected. """
         for checkbox in self._theme_checkboxes:
             if checkbox.isChecked():
-                theme = checkbox.objectName()
+                name = checkbox.objectName()
                 app = QtWidgets.QApplication.instance()
-                app.setStyleSheet(UiUtils.select_theme(theme))
-                Config().set('theme', theme)
+                app.setStyleSheet(UiUtils.APP_STYLESHEET)
+                app.styleHints().setColorScheme(self._THEME_VALUES[name])
+                Config().set('theme', name)
 
     def _check_theme(self, theme_name):
-        # Check the default theme.
+        if theme_name not in self._THEME_VALUES:
+            theme_name = 'system'
         for theme in self._theme_checkboxes:
             if theme.objectName() == theme_name:
                 theme.setChecked(True)
@@ -397,7 +405,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         try:
             theme = Config().get('theme')
         except KeyError:
-            theme = 'Default'
+            theme = 'system'
         self._check_theme(theme)
 
     def disable_input(self, disable):
