@@ -44,6 +44,7 @@ from .LogClientTab import LogClientTab
 from .lighthouse_tab import LighthouseTab
 from .TuningTab import TuningTab
 from .ColorLEDTab import ColorLEDTab
+from .WifiCameraTab import WifiCameraTab
 
 __author__ = 'Bitcraze AB'
 __all__ = []
@@ -55,6 +56,7 @@ available = [
     # GpsTab,
     LEDRingTab,
     ColorLEDTab,
+    WifiCameraTab,
     LogBlockTab,
     LogTab,
     ParamTab,

@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry"><rect><x>0</x><y>0</y><width>1326</width><height>930</height></rect></property>
+  <property name="windowTitle"><string>Form</string></property>
+  <layout class="QHBoxLayout" name="mainLayout">
+   <item>
+    <layout class="QVBoxLayout" name="leftColumn">
+     <item>
+      <widget class="QGroupBox" name="videoStreamBox">
+       <property name="title"><string>Video Stream</string></property>
+       <layout class="QVBoxLayout" name="videoStreamLayout">
+        <item>
+         <widget class="QFrame" name="streamToolbar">
+          <layout class="QHBoxLayout" name="streamToolbarLayout">
+           <item>
+            <widget class="QPushButton" name="streamButton">
+             <property name="enabled"><bool>false</bool></property>
+             <property name="text"><string>Stream</string></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="recordButton">
+             <property name="enabled"><bool>false</bool></property>
+             <property name="text"><string>Record</string></property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="streamToolbarSpacer">
+             <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+             <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLabel" name="connectionIconLabel">
+             <property name="minimumSize"><size><width>16</width><height>16</height></size></property>
+             <property name="maximumSize"><size><width>16</width><height>16</height></size></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="connectionStatusLabel">
+             <property name="text"><string>Connected to: Crazyflie-Network</string></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="signalIconLabel">
+             <property name="minimumSize"><size><width>16</width><height>16</height></size></property>
+             <property name="maximumSize"><size><width>16</width><height>16</height></size></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="signalStrengthLabel">
+             <property name="text"><string>Signal Strength: -- dBm</string></property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="videoFrame">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy>
+          </property>
+          <property name="minimumSize"><size><width>640</width><height>360</height></size></property>
+          <property name="styleSheet"><string notr="true">QFrame#videoFrame { background-color: #101010; }
+QFrame#videoFrame QLabel { color: #d0d0d0; }</string></property>
+          <layout class="QVBoxLayout" name="videoFrameLayout">
+           <property name="alignment"><set>Qt::AlignmentFlag::AlignCenter</set></property>
+           <item>
+            <widget class="QWidget" name="videoPlaceholderBox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy>
+             </property>
+             <layout class="QVBoxLayout" name="videoPlaceholderLayout">
+              <item>
+               <widget class="QLabel" name="videoPlaceholderIconLabel">
+                <property name="alignment"><set>Qt::AlignmentFlag::AlignCenter</set></property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="videoPlaceholderTitleLabel">
+                <property name="text"><string>Camera Ready:</string></property>
+               </widget>
+              </item>
+             <item>
+              <layout class="QHBoxLayout" name="wifiDeckRow">
+               <item>
+                <widget class="QLabel" name="wifiDeckIconLabel">
+                 <property name="minimumSize"><size><width>16</width><height>16</height></size></property>
+                 <property name="maximumSize"><size><width>16</width><height>16</height></size></property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="wifiDeckLabel">
+                 <property name="text"><string>Wifi Connection to Camera Deck</string></property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="wifiPcRow">
+               <item>
+                <widget class="QLabel" name="wifiPcIconLabel">
+                 <property name="minimumSize"><size><width>16</width><height>16</height></size></property>
+                 <property name="maximumSize"><size><width>16</width><height>16</height></size></property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="wifiPcLabel">
+                 <property name="text"><string>Wifi Connection on PC</string></property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+              <item>
+               <widget class="QLabel" name="videoPlaceholderHintLabel">
+                <property name="text"><string>Press "Stream" to start video feed.</string></property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+         <widget class="QFrame" name="recordingSavedBar">
+          <property name="geometry"><rect><x>0</x><y>0</y><width>480</width><height>40</height></rect></property>
+          <property name="visible"><bool>false</bool></property>
+          <property name="styleSheet"><string notr="true">QFrame#recordingSavedBar { background-color: palette(window); border: 1px solid rgba(128, 128, 128, 160); border-radius: 4px; }</string></property>
+          <layout class="QHBoxLayout" name="recordingSavedLayout">
+           <property name="leftMargin"><number>6</number></property>
+           <property name="topMargin"><number>6</number></property>
+           <property name="rightMargin"><number>6</number></property>
+           <property name="bottomMargin"><number>6</number></property>
+           <item>
+            <widget class="QLabel" name="recordingSavedIconLabel">
+             <property name="minimumSize"><size><width>16</width><height>16</height></size></property>
+             <property name="maximumSize"><size><width>16</width><height>16</height></size></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="recordingSavedLabel">
+             <property name="textFormat"><enum>Qt::TextFormat::RichText</enum></property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="recordingSavedSpacer">
+             <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+             <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="openFolderButton">
+             <property name="text"><string>Open containing folder →</string></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="recordingSavedCloseButton">
+             <property name="toolTip"><string>Close</string></property>
+             <property name="text"><string>✕</string></property>
+             <property name="autoRaise"><bool>true</bool></property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="commanderBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy>
+       </property>
+       <property name="title"><string>Command Based Flight Control</string></property>
+       <layout class="QHBoxLayout" name="commanderLayout">
+        <item>
+         <widget class="QPushButton" name="armButton">
+          <property name="enabled"><bool>false</bool></property>
+          <property name="minimumSize"><size><width>100</width><height>100</height></size></property>
+          <property name="text"><string>Arm</string></property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="takeOffLandLayout">
+          <item><widget class="QPushButton" name="commanderTakeOffButton">
+ <property name="text"><string>Take Off</string></property>
+</widget></item>
+          <item><widget class="QPushButton" name="commanderLandButton">
+ <property name="text"><string>Land</string></property>
+</widget></item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QGridLayout" name="arrowPadLayout">
+<item row="0" column="1">
+<widget class="QPushButton" name="commanderForwardButton">
+ <property name="text"><string>↑</string></property>
+ <property name="minimumSize"><size><width>36</width><height>36</height></size></property>
+ <property name="maximumSize"><size><width>36</width><height>36</height></size></property>
+</widget>
+</item>
+<item row="1" column="0">
+<widget class="QPushButton" name="commanderLeftButton">
+ <property name="text"><string>←</string></property>
+ <property name="minimumSize"><size><width>36</width><height>36</height></size></property>
+ <property name="maximumSize"><size><width>36</width><height>36</height></size></property>
+</widget>
+</item>
+<item row="1" column="2">
+<widget class="QPushButton" name="commanderRightButton">
+ <property name="text"><string>→</string></property>
+ <property name="minimumSize"><size><width>36</width><height>36</height></size></property>
+ <property name="maximumSize"><size><width>36</width><height>36</height></size></property>
+</widget>
+</item>
+<item row="2" column="1">
+<widget class="QPushButton" name="commanderBackButton">
+ <property name="text"><string>↓</string></property>
+ <property name="minimumSize"><size><width>36</width><height>36</height></size></property>
+ <property name="maximumSize"><size><width>36</width><height>36</height></size></property>
+</widget>
+</item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="upDownLayout">
+          <item><widget class="QToolButton" name="commanderUpButton">
+ <property name="minimumSize"><size><width>57</width><height>50</height></size></property>
+ <property name="maximumSize"><size><width>57</width><height>50</height></size></property>
+ <property name="text"><string>Up</string></property>
+ <property name="toolButtonStyle"><enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum></property>
+</widget></item>
+          <item><widget class="QToolButton" name="commanderDownButton">
+ <property name="minimumSize"><size><width>57</width><height>50</height></size></property>
+ <property name="maximumSize"><size><width>57</width><height>50</height></size></property>
+ <property name="text"><string>Down</string></property>
+ <property name="toolButtonStyle"><enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum></property>
+</widget></item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="commanderSpacer">
+          <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+          <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="cameraSettingsBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Expanding"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy>
+     </property>
+     <property name="minimumSize"><size><width>450</width><height>0</height></size></property>
+     <property name="maximumSize"><size><width>450</width><height>16777215</height></size></property>
+     <property name="title"><string>Camera Settings</string></property>
+     <layout class="QVBoxLayout" name="cameraSettingsLayout"/>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
