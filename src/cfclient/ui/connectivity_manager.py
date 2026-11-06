@@ -26,7 +26,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #  02110-1301, USA.
 from collections import namedtuple
-from PyQt6.QtCore import pyqtSignal, QObject
+from PyQt6.QtCore import pyqtSignal, QObject, QSignalBlocker
 
 __author__ = 'Bitcraze AB'
 __all__ = ['ConnectivityManager']
@@ -113,7 +113,7 @@ class ConnectivityManager(QObject):
     def get_interface(self):
         if len(self._ui_elements) > 0:
             interface = self._ui_elements[0].interface_combo.currentText()
-            if interface == self.INTERFACE_PROMPT_TEXT:
+            if not interface or interface == self.INTERFACE_PROMPT_TEXT:
                 self._selected_interface = None
             else:
                 return interface
@@ -147,14 +147,19 @@ class ConnectivityManager(QObject):
                 if value != ui_elements.address_spinner.value():
                     ui_elements.address_spinner.setValue(value)
 
-    def _interface_combo_current_index_changed_handler(self, interface):
-        interface_s = str(interface)
-        can_connect = interface != self.INTERFACE_PROMPT_TEXT
+    def _interface_combo_current_index_changed_handler(self, index):
+        source = self.sender()
+        if source is None:
+            source = self._ui_elements[0].interface_combo
+        selected = source.currentText()
+        can_connect = bool(selected) and selected != self.INTERFACE_PROMPT_TEXT
         for ui_elements in self._ui_elements:
             combo = ui_elements.interface_combo
-            if combo.currentText != interface_s:
-                combo.setCurrentText(interface_s)
-            ui_elements.connect_button.setEnabled(can_connect)
+            if combo.currentText() != selected:
+                with QSignalBlocker(combo):
+                    combo.setCurrentText(selected)
+            ui_elements.connect_button.setEnabled(
+                can_connect and self._state == self.UIState.DISCONNECTED)
 
     def _update_ui(self):
         if self._is_enabled:
