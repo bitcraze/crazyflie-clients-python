@@ -1,5 +1,5 @@
 # ============================================================================
-# DEV MODE ONLY - REMOVE BEFORE PUSHING!
+# DEV MODE ONLY - REMOVE BEFORE MERGING!
 #
 # To remove: delete this file and delete the block marked DEV-MODE-START /
 # DEV-MODE-END in WifiCameraTab.py.
@@ -13,8 +13,10 @@ import os
 import time
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (QCheckBox, QFormLayout, QLabel, QLineEdit, QSlider,
+from PyQt6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QLabel, QLineEdit, QSlider,
                              QVBoxLayout, QWidget)
+
+from cfclient.utils.wifi_mode import WifiMode
 
 ENV_VAR = 'CFCLIENT_WIFI_CAMERA_DEV'
 
@@ -34,7 +36,12 @@ class WifiCameraDevPanel(QWidget):
 
         self._deck = QCheckBox('Wifi connected to camera deck')
         self._pc = QCheckBox('Wifi connection on PC')
+        self._mode = QComboBox()
+        for mode, name in ((WifiMode.JOIN, 'Join a network'), (WifiMode.CREATE, 'Create a network'),
+                           (WifiMode.BOTH, 'Both')):
+            self._mode.addItem(name, mode)
         self._ssid = QLineEdit('Crazyflie-Network')
+        self._own_ssid = QLineEdit('Crazyflie-Deck')
 
         self._signal_valid = QCheckBox('Signal known')
         self._signal = QSlider(Qt.Orientation.Horizontal)
@@ -47,17 +54,23 @@ class WifiCameraDevPanel(QWidget):
         self._recording = QCheckBox('Recording (only while streaming)')
         self._recording.setEnabled(False)
         self._flight = QCheckBox('Flight controls enabled')
+        self._size = QComboBox()
+        for size in ((1280, 720), (640, 480), (640, 360), (480, 480), (320, 240), (1280, 240)):
+            self._size.addItem('%d x %d' % size, size)
 
         form = QFormLayout()
+        form.addRow('Wifi mode', self._mode)
         form.addRow(self._deck)
         form.addRow(self._pc)
-        form.addRow('SSID', self._ssid)
+        form.addRow('Joined network', self._ssid)
+        form.addRow('Own network', self._own_ssid)
         form.addRow(self._signal_valid)
         form.addRow(self._signal_label, self._signal)
         form.addRow(self._stream)
         form.addRow(self._streaming)
         form.addRow(self._recording)
         form.addRow(self._flight)
+        form.addRow('Stream size', self._size)
 
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel('Fakes camera state, not connected to anything.'))
@@ -66,6 +79,9 @@ class WifiCameraDevPanel(QWidget):
         for box in (self._deck, self._pc, self._signal_valid, self._stream, self._flight):
             box.toggled.connect(self._apply)
         self._ssid.textChanged.connect(self._apply)
+        self._own_ssid.textChanged.connect(self._apply)
+        self._mode.currentIndexChanged.connect(self._apply)
+        self._size.currentIndexChanged.connect(lambda _: self._tab.set_stream_size(*self._size.currentData()))
         self._signal.valueChanged.connect(self._apply)
         self._streaming.toggled.connect(self._apply_streaming)
         self._recording.toggled.connect(self._apply_recording)
@@ -74,7 +90,9 @@ class WifiCameraDevPanel(QWidget):
 
     def _apply(self, *_):
         tab = self._tab
-        tab.set_camera_status(self._deck.isChecked(), self._pc.isChecked(), self._ssid.text() or None)
+        tab.set_wifi_mode(self._mode.currentData())
+        tab.set_camera_status(self._deck.isChecked(), self._pc.isChecked(), self._ssid.text() or None,
+                              self._own_ssid.text() or None)
 
         dbm = self._signal.value()
         self._signal_label.setText('%d dBm' % dbm)

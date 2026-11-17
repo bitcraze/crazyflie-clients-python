@@ -29,12 +29,15 @@ A simple accordion: a vertical stack of sections that each have a clickable
 header (arrow, title and a short summary) and a collapsible content area.
 """
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QToolButton,
+from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QSizePolicy, QToolButton,
                              QVBoxLayout, QWidget)
 
 __author__ = 'Bitcraze AB'
 __all__ = ['Accordion', 'AccordionSection']
+
+# Same size as the text in the section, so the section titles stay below the title of the box around them
+TITLE_FONT_SCALE = 1.0
 
 
 class AccordionSection(QWidget):
@@ -53,6 +56,9 @@ class AccordionSection(QWidget):
 
         self._summary = QLabel(summary)
         self._summary.setEnabled(False)
+        # The title matters more than the summary, so let the summary give way when space is short
+        self._summary.setMinimumWidth(1)
+        self._toggle.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
 
         header = QHBoxLayout()
         header.addWidget(self._toggle)
@@ -69,6 +75,27 @@ class AccordionSection(QWidget):
 
         self._toggle.setChecked(expanded)
         self._set_expanded(expanded)
+
+    def _update_title_font(self):
+        """Give the title the same size as the text in the section.
+        The button has its own style sheet, so it does not follow the font of its parents; take the
+        size from the summary label instead, which does."""
+        font = self._summary.font()
+        if font.pixelSize() > 0:
+            font.setPixelSize(round(font.pixelSize() * TITLE_FONT_SCALE))
+        else:
+            font.setPointSizeF(font.pointSizeF() * TITLE_FONT_SCALE)
+        self._toggle.setFont(font)
+        self._toggle.updateGeometry()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._update_title_font()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.FontChange:
+            self._update_title_font()
 
     def set_summary(self, text):
         self._summary.setText(text)

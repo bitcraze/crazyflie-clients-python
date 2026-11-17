@@ -95,6 +95,8 @@ class InfoLabel(QLabel):
         TOP_RIGHT = 2
         BOTTOM_LEFT = 3
         BOTTOM_RIGHT = 4
+        # Not placed by the label, for when it is put in a layout
+        INLINE = 5
 
     ICON_WIDTH = 16
     ICON_HEIGHT = 16
@@ -110,8 +112,9 @@ class InfoLabel(QLabel):
         self._h_margin = h_margin
         self._text = text
 
-        self._event_filter = _EventFilter(self, position)
-        parent.installEventFilter(self._event_filter)
+        if position != InfoLabel.Position.INLINE:
+            self._event_filter = _EventFilter(self, position)
+            parent.installEventFilter(self._event_filter)
 
         info_pixmap = self.style().StandardPixmap.SP_MessageBoxInformation
         info_icon = self.style().standardIcon(info_pixmap).pixmap(self.ICON_WIDTH, self.ICON_HEIGHT)

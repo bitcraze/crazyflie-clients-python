@@ -25,18 +25,16 @@
 #  this program; if not, write to the Free Software Foundation, Inc.,
 #  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
-A row of mutually exclusive buttons in a rounded container, where the selected
-one is highlighted. Background colors come from the palette so it follows the theme.
+A row of equally wide, mutually exclusive buttons in a rounded container, where the
+selected one is raised with a light background and an outline. Button text can span
+several lines. Background colors come from the palette so it follows the theme.
 """
 
 from PyQt6.QtCore import QEvent, Qt, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QButtonGroup, QFrame, QHBoxLayout, QPushButton
+from PyQt6.QtWidgets import QApplication, QButtonGroup, QFrame, QHBoxLayout, QPushButton, QSizePolicy
 
 __author__ = 'Bitcraze AB'
 __all__ = ['SegmentedControl']
-
-# Fixed instead of the palette highlight, which can be any color in the user's theme
-COLOR_ACCENT = '#2473DD'
 
 _STYLE = """
 QFrame#segmentedControl {
@@ -46,7 +44,7 @@ QFrame#segmentedControl QPushButton {
     background-color: transparent; border: none; border-radius: 6px; padding: 5px 12px;
 }
 QFrame#segmentedControl QPushButton:checked {
-    background-color: %(selected)s; color: %(accent)s;
+    background-color: %(selected)s; border: 1px solid %(border)s;
 }
 """
 
@@ -71,8 +69,9 @@ class SegmentedControl(QFrame):
             button = QPushButton(text)
             button.setCheckable(True)
             button.setCursor(Qt.CursorShape.PointingHandCursor)
+            button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             self._group.addButton(button, index)
-            layout.addWidget(button)
+            layout.addWidget(button, 1)
 
         self._group.idClicked.connect(self.currentIndexChanged)
         self._apply_style()
@@ -89,7 +88,7 @@ class SegmentedControl(QFrame):
         style = _STYLE % {
             'track': track.name(),
             'selected': palette.base().color().name(),
-            'accent': COLOR_ACCENT,
+            'border': palette.mid().color().name(),
         }
         if style != self._style:
             self._style = style

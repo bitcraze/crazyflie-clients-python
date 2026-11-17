@@ -31,14 +31,15 @@ The Wifi Camera Tab shows stream, settings and controls for the Wifi Camera deck
 
 import html
 import logging
+import math
 import os
 import time
 from enum import Enum
 
 from PyQt6 import uic
-from PyQt6.QtCore import QPoint, QSize, QTimer, QUrl, pyqtSignal
+from PyQt6.QtCore import QEvent, QPoint, QSize, Qt, QTimer, QUrl, pyqtSignal
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QPainter, QPixmap
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QApplication, QMessageBox
 
 import cfclient
 
@@ -46,6 +47,7 @@ from cflib.crazyflie.log import LogConfig
 
 from cfclient.utils.config import Config
 from cfclient.utils.input import JoystickReader
+from cfclient.utils.wifi_mode import WifiMode
 
 from cfclient.ui.tab_toolbox import TabToolbox
 from cfclient.ui.widgets.camera_settings import CameraSettingsPanel
@@ -73,6 +75,17 @@ TINT_OPACITY = 0.15
 RECORDING_DIM_OPACITY = TINT_OPACITY
 RECORDING_BLINK_MS = 500
 RECORDING_SAVED_BAR_MS = 10000
+VIDEO_ASPECT = 16 / 9
+VIDEO_MIN_WIDTH = 320
+VIDEO_MIN_HEIGHT = round(VIDEO_MIN_WIDTH / VIDEO_ASPECT)
+DEFAULT_STREAM_SIZE = (1280, 720)
+
+# What the two Wifi rows in the checklist say for each way of connecting: the deck's side, then the computer's
+WIFI_CHECKLIST_TEXTS = {
+    WifiMode.JOIN: ('Wifi Connection to Camera Deck', 'Wifi Connection on PC'),
+    WifiMode.CREATE: ('Wifi Network Created on Camera Deck', 'Wifi Connection on PC to Deck Network'),
+    WifiMode.BOTH: ('Wifi Connection and Network on Camera Deck', 'Wifi Connection on PC'),
+}
 
 
 def _rgba(color, opacity):
@@ -81,11 +94,16 @@ def _rgba(color, opacity):
     return 'rgba(%d, %d, %d, %d%%)' % (c.red(), c.green(), c.blue(), round(opacity * 100))
 
 
+# Padding for both toolbar buttons in every state, so the size of the stream button does not depend on
+# whether its colored (enabled) style applies and the two buttons are laid out the same way
+TOOLBAR_BUTTON_STYLE = 'QPushButton#streamButton, QPushButton#recordButton { padding: 4px 10px; }'
+
+
 def _stream_button_style(fill, border):
     # No text color on purpose, so it follows the theme (white on dark themes)
-    return (
+    return TOOLBAR_BUTTON_STYLE + (
         'QPushButton#streamButton:enabled {'
-        ' background-color: %s; border: 1px solid %s; border-radius: 2px; padding: 4px 10px; }'
+        ' background-color: %s; border: 1px solid %s; border-radius: 2px; }'
         % (fill, border))
 
 
@@ -136,6 +154,8 @@ class CommanderAction(Enum):
     RIGHT = 6
     FORWARD = 7
     BACK = 8
+    YAW_LEFT = 9
+    YAW_RIGHT = 10
 
 
 class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
@@ -174,6 +194,8 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
         self.commanderBackButton.clicked.connect(lambda: self._flight_command(CommanderAction.BACK))
         self.commanderUpButton.clicked.connect(lambda: self._flight_command(CommanderAction.UP))
         self.commanderDownButton.clicked.connect(lambda: self._flight_command(CommanderAction.DOWN))
+        self.commanderYawLeftButton.clicked.connect(lambda: self._flight_command(CommanderAction.YAW_LEFT))
+        self.commanderYawRightButton.clicked.connect(lambda: self._flight_command(CommanderAction.YAW_RIGHT))
         self._update_flight_commander(False)
 
         # Supervisor
@@ -183,6 +205,9 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
 
         self._helper.cf.param.all_updated.add_callback(self._all_params_updated)
 
+        self._wifi_mode = WifiMode.JOIN
+        self._network = None
+        self._signal_dbm = None
         self._signal_icons = {
             'good': QPixmap(os.path.join(ICON_PATH, 'good-signal.png')),
             'medium': QPixmap(os.path.join(ICON_PATH, 'medium-signal.png')),
@@ -212,6 +237,12 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
         self._stop_icon = _tinted_icon('stop-fill.svg', COLOR_RED, COLOR_ICON_DISABLED)
         self._stream_icon = self.streamButton.icon()
         self.streamButton.setStyleSheet(STYLE_STREAM_BUTTON)
+        self.recordButton.setStyleSheet(TOOLBAR_BUTTON_STYLE)
+        # Buttons with a style sheet do not get the platform's button font, which can be a different
+        # size from the application font, so set the same one on both
+        for button in (self.streamButton, self.recordButton):
+            button.setFont(QApplication.font('QPushButton'))
+        self._toolbar_buttons_matched = False
         self.streamButton.clicked.connect(self._on_stream_clicked)
 
         self._recording = False
@@ -239,7 +270,17 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
         icon_size = QSize(16, 16 + UP_DOWN_ICON_TOP_PADDING)
         self.commanderUpButton.setIconSize(icon_size)
         self.commanderDownButton.setIconSize(icon_size)
+        for button, icon in ((self.commanderYawLeftButton, 'arrow-counterclockwise.svg'),
+                             (self.commanderYawRightButton, 'arrow-clockwise.svg')):
+            button.setIcon(_tinted_icon(icon, COLOR_ICON_ENABLED, COLOR_ICON_DISABLED,
+                                        top_padding=UP_DOWN_ICON_TOP_PADDING))
+            button.setIconSize(icon_size)
+            button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
 
+        self._stream_size = DEFAULT_STREAM_SIZE
+        self.videoFrame.setMinimumSize(VIDEO_MIN_WIDTH, VIDEO_MIN_HEIGHT)
+        self.videoFrame.installEventFilter(self)
+        self.set_stream_size(*DEFAULT_STREAM_SIZE)
         self._setup_camera_settings()
 
         # DEV-MODE-START: remove this block and WifiCameraDevMode.py before committing!
@@ -250,6 +291,87 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
     def _on_stream_clicked(self):
         # TODO: start/stop the actual video stream through the camera lib
         self.set_streaming(not self._streaming)
+
+    def set_stream_size(self, width, height):
+        """Show the video area for a stream of width x height pixels"""
+        self._stream_size = (width, height)
+        self._update_video_size()
+
+    def _update_video_size(self):
+        """Fit the video box to the room in the window. It keeps a fixed aspect ratio whatever the
+        stream is and gets as large as the window allows. The box and the flight controls below it
+        follow its width. The stream itself is fitted inside the box (see _place_video)."""
+        box = self.videoStreamBox
+        box_margins = box.contentsMargins()
+        inner_margins = box.layout().contentsMargins()
+        # What the box adds around the video: its frame, margins and the toolbar
+        around_width = (box_margins.left() + box_margins.right() +
+                        inner_margins.left() + inner_margins.right())
+        around_height = (box_margins.top() + box_margins.bottom() +
+                         inner_margins.top() + inner_margins.bottom() +
+                         box.layout().spacing() + self.streamToolbar.sizeHint().height())
+
+        margins = self.layout().contentsMargins()
+        available_width = (self.width() - margins.left() - margins.right() - self.layout().spacing() -
+                           self.cameraSettingsBox.maximumWidth() - around_width)
+        available_height = (self.height() - margins.top() - margins.bottom() - around_height -
+                            self.leftColumn.spacing() - self.commanderBox.sizeHint().height())
+
+        width = max(available_width, VIDEO_MIN_WIDTH)
+        height = round(width / VIDEO_ASPECT)
+        if height > available_height:
+            height = max(available_height, VIDEO_MIN_HEIGHT)
+            width = round(height * VIDEO_ASPECT)
+
+        self.videoFrame.setMaximumSize(width, height)
+        box.setMaximumSize(width + around_width, height + around_height)
+        self.commanderBox.setMaximumWidth(width + around_width)
+        self._place_video()
+
+    def _place_video(self):
+        """Size the video inside its box, keeping the aspect ratio of the stream so nothing is
+        cropped or stretched, and center it"""
+        frame = self.videoFrame
+        stream_width, stream_height = self._stream_size
+        width = frame.width()
+        height = round(width * stream_height / stream_width)
+        if height > frame.height():
+            height = frame.height()
+            width = round(height * stream_width / stream_height)
+        self.videoSurface.setGeometry((frame.width() - width) // 2, (frame.height() - height) // 2, width, height)
+        # The placeholder text is only a stand-in for the video, hide it when it does not fit
+        box = self.videoPlaceholderBox
+        box.setVisible(height >= box.sizeHint().height() and width >= box.sizeHint().width())
+        self._place_recording_saved_bar()
+
+    def eventFilter(self, obj, event):
+        if obj is self.videoFrame and event.type() == QEvent.Type.Resize:
+            self._place_video()
+        return super().eventFilter(obj, event)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not self._toolbar_buttons_matched:
+            # Measured when first shown, as the size hints only include the style sheet once polished
+            self._toolbar_buttons_matched = True
+            self._match_toolbar_button_sizes()
+
+    def _match_toolbar_button_sizes(self):
+        """Make the stream and record buttons at least as big as each other, enabled or disabled.
+        Their natural sizes differ with the text, and with the style sheet that only applies when the
+        stream button is enabled."""
+        buttons = (self.streamButton, self.recordButton)
+        width = height = 0
+        for button in buttons:
+            was_enabled = button.isEnabled()
+            for enabled in (True, False):
+                button.setEnabled(enabled)
+                hint = button.sizeHint()
+                width = max(width, hint.width())
+                height = max(height, hint.height())
+            button.setEnabled(was_enabled)
+        for button in buttons:
+            button.setMinimumSize(width, height)
 
     def set_streaming(self, streaming):
         """Show the streaming state. Recording is only possible while streaming"""
@@ -310,7 +432,7 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        self._place_recording_saved_bar()
+        self._update_video_size()
 
     def _open_recording_folder(self):
         if self._recording_path:
@@ -329,15 +451,52 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
         self.recordButton.setIcon(self._record_icon_on if self._recording_blink_on else self._record_icon_dim)
         self._recording_blink_on = not self._recording_blink_on
 
-    def set_camera_status(self, deck_connected, pc_connected, ssid=None):
-        """Update the status strip and the video placeholder checklist"""
-        self.connectionIconLabel.setPixmap(self._status_icons[deck_connected])
-        if deck_connected:
-            self.connectionStatusLabel.setText('Connected to: %s' % ssid if ssid else 'Connected')
-        else:
-            self.connectionStatusLabel.setText('Not connected to camera deck')
-            self.set_signal_strength(None)
+    def set_wifi_mode(self, mode):
+        """Show how the camera deck is connected (a WifiMode), which decides what the status asks for"""
+        self._wifi_mode = mode
+        self._update_camera_status()
 
+    def set_camera_status(self, deck_connected, pc_connected, network=None, own_network=None):
+        """Update the status strip and the video placeholder checklist.
+
+        network is the Wifi network the deck has joined (join mode), own_network the one the deck has
+        created (create mode). Both can be set when the deck does both."""
+        self._deck_connected = deck_connected
+        self._pc_connected = pc_connected
+        self._network = network
+        self._own_network = own_network
+        self._update_camera_status()
+
+    def _camera_status_text(self):
+        mode = self._wifi_mode
+        if not self._deck_connected:
+            return 'Not connected to camera deck'
+
+        joined = 'Connected to: %s' % self._network if self._network else 'Connected'
+        own = 'Camera deck network: %s' % self._own_network if self._own_network else 'Camera deck network'
+        if mode == WifiMode.JOIN:
+            return joined
+        if mode == WifiMode.CREATE:
+            return own if self._pc_connected else own + ' (not joined by this computer)'
+        short_own = 'Deck network: %s' % self._own_network if self._own_network else 'Deck network'
+        return '%s | %s' % (joined, short_own)
+
+    def _update_camera_status(self):
+        deck_connected = self._deck_connected
+        pc_connected = self._pc_connected
+        mode = self._wifi_mode
+
+        # With its own network the deck can only be reached once this computer has joined it
+        strip_ok = deck_connected and (pc_connected or mode != WifiMode.CREATE)
+        self.connectionIconLabel.setPixmap(self._status_icons[strip_ok])
+        self.connectionStatusLabel.setText(self._camera_status_text())
+        if not deck_connected:
+            self._signal_dbm = None
+        self._update_signal()
+
+        deck_text, pc_text = WIFI_CHECKLIST_TEXTS[mode]
+        self.wifiDeckLabel.setText(deck_text)
+        self.wifiPcLabel.setText(pc_text)
         self.wifiDeckIconLabel.setPixmap(self._status_icons[deck_connected])
         self.wifiPcIconLabel.setPixmap(self._status_icons[pc_connected])
 
@@ -347,20 +506,36 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
         self.videoPlaceholderHintLabel.setVisible(ready)
 
     def set_signal_strength(self, dbm):
-        """Update the signal icon and label, None means no signal (not connected)"""
-        if dbm is None:
-            self.signalIconLabel.setPixmap(self._signal_icons['disabled'])
-            self.signalStrengthLabel.setText('Signal Strength: -- dBm')
-            return
+        """Set the signal strength of the network the deck has joined, None means no signal.
+        Only shown when the deck joins a network, as it is how well the deck hears that network."""
+        self._signal_dbm = dbm
+        self._update_signal()
 
-        if dbm >= SIGNAL_GOOD_DBM:
+    def _update_signal(self):
+        # With only its own network the deck has no network to hear, so there is no signal to show
+        show = self._wifi_mode != WifiMode.CREATE
+        self.signalIconLabel.setVisible(show)
+        self.signalStrengthLabel.setVisible(show)
+
+        dbm = self._signal_dbm
+        if dbm is None:
+            quality = 'disabled'
+        elif dbm >= SIGNAL_GOOD_DBM:
             quality = 'good'
         elif dbm >= SIGNAL_MEDIUM_DBM:
             quality = 'medium'
         else:
             quality = 'bad'
         self.signalIconLabel.setPixmap(self._signal_icons[quality])
-        self.signalStrengthLabel.setText('Signal Strength: %d dBm' % dbm)
+
+        # When the deck also has its own network, say which network the signal is for
+        # Only the value is shown to keep the status bar short, the rest is in the tooltip
+        self.signalStrengthLabel.setText('-- dBm' if dbm is None else '%d dBm' % dbm)
+        tooltip = 'Signal Strength'
+        if self._wifi_mode == WifiMode.BOTH:
+            tooltip = 'Signal Strength to %s' % (self._network or 'the network the deck joined')
+        self.signalIconLabel.setToolTip(tooltip)
+        self.signalStrengthLabel.setToolTip(tooltip)
 
     def _setup_camera_settings(self):
         panel = CameraSettingsPanel()
@@ -370,11 +545,16 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
     def _apply_camera_setting(self, name, value):
         # TODO: send the setting to the camera through the lib
         logger.info('Camera setting [%s] changed to [%s]', name, value)
+        if name == 'output_resolution':
+            # TODO: take the size from the stream itself once the lib delivers frames
+            self.set_stream_size(*value)
 
     def _flight_command(self, action):
         current_z = self._helper.pose_logger.position[2]
         move_dist = 0.5
         move_vel = 0.5
+        yaw_step = math.radians(45)
+        yaw_duration = 1.0
 
         if action == CommanderAction.TAKE_OFF:
             self._helper.cf.param.set_value('commander.enHighLevel', '1')
@@ -394,6 +574,10 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
             self._helper.cf.high_level_commander.go_to(0, 0, move_dist, 0, move_dist / move_vel, relative=True)
         elif action == CommanderAction.DOWN:
             self._helper.cf.high_level_commander.go_to(0, 0, -move_dist, 0, move_dist / move_vel, relative=True)
+        elif action == CommanderAction.YAW_LEFT:
+            self._helper.cf.high_level_commander.go_to(0, 0, 0, yaw_step, yaw_duration, relative=True)
+        elif action == CommanderAction.YAW_RIGHT:
+            self._helper.cf.high_level_commander.go_to(0, 0, 0, -yaw_step, yaw_duration, relative=True)
 
     def _logging_error(self, log_conf, msg):
         QMessageBox.about(self, "Log error",

@@ -4,11 +4,14 @@
  <widget class="QWidget" name="Form">
   <property name="geometry"><rect><x>0</x><y>0</y><width>1326</width><height>930</height></rect></property>
   <property name="windowTitle"><string>Form</string></property>
-  <layout class="QHBoxLayout" name="mainLayout">
+  <layout class="QHBoxLayout" name="mainLayout" stretch="1,0,0">
    <item>
-    <layout class="QVBoxLayout" name="leftColumn">
+    <layout class="QVBoxLayout" name="leftColumn" stretch="1,0,0">
      <item>
       <widget class="QGroupBox" name="videoStreamBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy>
+       </property>
        <property name="title"><string>Video Stream</string></property>
        <layout class="QVBoxLayout" name="videoStreamLayout">
         <item>
@@ -39,7 +42,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="connectionStatusLabel">
+            <widget class="ElidedLabel" name="connectionStatusLabel">
              <property name="text"><string>Connected to: Crazyflie-Network</string></property>
             </widget>
            </item>
@@ -51,7 +54,7 @@
            </item>
            <item>
             <widget class="QLabel" name="signalStrengthLabel">
-             <property name="text"><string>Signal Strength: -- dBm</string></property>
+             <property name="text"><string>-- dBm</string></property>
             </widget>
            </item>
           </layout>
@@ -62,12 +65,18 @@
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy>
           </property>
-          <property name="minimumSize"><size><width>640</width><height>360</height></size></property>
-          <property name="styleSheet"><string notr="true">QFrame#videoFrame { background-color: #101010; }
+          <property name="styleSheet"><string notr="true">QFrame#videoFrame { background-color: #0a0a0a; }
+QFrame#videoSurface { background-color: #181818; }
 QFrame#videoFrame QLabel { color: #d0d0d0; }</string></property>
-          <layout class="QVBoxLayout" name="videoFrameLayout">
-           <property name="alignment"><set>Qt::AlignmentFlag::AlignCenter</set></property>
-           <item>
+            <widget class="QFrame" name="videoSurface">
+             <property name="geometry"><rect><x>0</x><y>0</y><width>640</width><height>360</height></rect></property>
+             <layout class="QVBoxLayout" name="videoSurfaceLayout">
+              <property name="leftMargin"><number>0</number></property>
+              <property name="topMargin"><number>0</number></property>
+              <property name="rightMargin"><number>0</number></property>
+              <property name="bottomMargin"><number>0</number></property>
+              <property name="alignment"><set>Qt::AlignmentFlag::AlignCenter</set></property>
+              <item>
             <widget class="QWidget" name="videoPlaceholderBox">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed"><horstretch>0</horstretch><verstretch>0</verstretch></sizepolicy>
@@ -120,8 +129,9 @@ QFrame#videoFrame QLabel { color: #d0d0d0; }</string></property>
               </item>
              </layout>
             </widget>
-           </item>
-          </layout>
+              </item>
+             </layout>
+            </widget>
          </widget>
         </item>
        </layout>
@@ -240,6 +250,22 @@ QFrame#videoFrame QLabel { color: #d0d0d0; }</string></property>
          </layout>
         </item>
         <item>
+         <layout class="QVBoxLayout" name="yawLayout">
+          <item><widget class="QToolButton" name="commanderYawLeftButton">
+ <property name="minimumSize"><size><width>57</width><height>50</height></size></property>
+ <property name="maximumSize"><size><width>57</width><height>50</height></size></property>
+ <property name="toolTip"><string>Rotate counter-clockwise</string></property>
+ <property name="text"><string>CCW</string></property>
+</widget></item>
+          <item><widget class="QToolButton" name="commanderYawRightButton">
+ <property name="minimumSize"><size><width>57</width><height>50</height></size></property>
+ <property name="maximumSize"><size><width>57</width><height>50</height></size></property>
+ <property name="toolTip"><string>Rotate clockwise</string></property>
+ <property name="text"><string>CW</string></property>
+</widget></item>
+         </layout>
+        </item>
+        <item>
          <spacer name="commanderSpacer">
           <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
           <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
@@ -247,6 +273,12 @@ QFrame#videoFrame QLabel { color: #d0d0d0; }</string></property>
         </item>
        </layout>
       </widget>
+     </item>
+     <item>
+      <spacer name="leftColumnSpacer">
+       <property name="orientation"><enum>Qt::Orientation::Vertical</enum></property>
+       <property name="sizeHint" stdset="0"><size><width>20</width><height>0</height></size></property>
+      </spacer>
      </item>
     </layout>
    </item>
@@ -261,8 +293,21 @@ QFrame#videoFrame QLabel { color: #d0d0d0; }</string></property>
      <layout class="QVBoxLayout" name="cameraSettingsLayout"/>
     </widget>
    </item>
+   <item>
+    <spacer name="mainSpacer">
+     <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+     <property name="sizeHint" stdset="0"><size><width>0</width><height>20</height></size></property>
+    </spacer>
+   </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ElidedLabel</class>
+   <extends>QLabel</extends>
+   <header>cfclient.ui.widgets.elided_label</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
