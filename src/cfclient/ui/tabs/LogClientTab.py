@@ -29,16 +29,19 @@
 Shows information from the Python logging framework
 """
 
+from __future__ import annotations
+
 import logging
 
 from PySide6.QtUiTools import loadUiType
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, SignalInstance
 
 import cfclient
+from cfclient.ui.pluginhelper import PluginHelper
 from cfclient.ui.tab_toolbox import TabToolbox
 
-__author__ = 'Bitcraze AB'
-__all__ = ['LogClientTab']
+__author__ = "Bitcraze AB"
+__all__ = ["LogClientTab"]
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +49,12 @@ log_client_tab_class = loadUiType(cfclient.module_path + "/ui/tabs/logClientTab.
 
 
 class LogHandler(logging.StreamHandler):
-    def __init__(self, signal):
+    def __init__(self, signal: SignalInstance) -> None:
         logging.StreamHandler.__init__(self)
         self._signal = signal
 
-    def emit(self, record):
-        fmt = '%(levelname)s:%(name)s:%(message)s'
+    def emit(self, record: logging.LogRecord) -> None:
+        fmt = "%(levelname)s:%(name)s:%(message)s"
         formatter = logging.Formatter(fmt)
         #
         # Calling .emit() on the signal will make the callback
@@ -65,10 +68,11 @@ class LogClientTab(TabToolbox, log_client_tab_class):
     A tab for showing client logging information, such
     as USB Gamepad connections or scan feedback.
     """
+
     _update = Signal(str)
 
-    def __init__(self, helper):
-        super(LogClientTab, self).__init__(helper, 'Log Client')
+    def __init__(self, helper: PluginHelper) -> None:
+        super(LogClientTab, self).__init__(helper, "Log Client")
         self.setupUi(self)
 
         self._update.connect(self.printText)
@@ -77,9 +81,9 @@ class LogClientTab(TabToolbox, log_client_tab_class):
         cflogger = logging.getLogger(None)
         cflogger.addHandler(LogHandler(self._update))
 
-    def printText(self, text):
+    def printText(self, text: str) -> None:
         logger.debug("[%s]", text)
-        self.syslog.insertPlainText(text + '\n')
+        self.syslog.insertPlainText(text + "\n")
 
-    def clear(self):
+    def clear(self) -> None:
         self.syslog.clear()
