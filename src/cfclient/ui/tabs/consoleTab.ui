@@ -13,99 +13,191 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout">
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
+  <layout class="QGridLayout" name="gridLayout" rowstretch="0,1" columnstretch="1,0">
+   <item row="0" column="0">
+    <widget class="QWidget" name="_switchRow">
+     <layout class="QHBoxLayout" name="switchRowLayout">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="SegmentedControl" name="_segments"/>
+      </item>
+      <item>
+       <spacer name="switchRowSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QStackedWidget" name="_logStack">
+     <widget class="ConsoleLogView" name="console"/>
+     <widget class="ErrorPanel" name="_errorPanel"/>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QTextEdit" name="console"/>
+      <widget class="QPushButton" name="_clearButton">
+       <property name="text">
+        <string>Clear</string>
+       </property>
+      </widget>
      </item>
      <item>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QPushButton" name="_clearButton">
-         <property name="text">
-          <string>Clear</string>
+      <widget class="CurrentPageStack" name="_sideStack">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <widget class="QWidget" name="_commandsPage">
+        <layout class="QVBoxLayout" name="commandsLayout">
+         <property name="leftMargin">
+          <number>0</number>
          </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="_dumpSystemLoadButton">
-         <property name="enabled">
-          <bool>false</bool>
+         <property name="topMargin">
+          <number>0</number>
          </property>
-         <property name="text">
-          <string>Task dump</string>
+         <property name="rightMargin">
+          <number>0</number>
          </property>
-         <property name="checkable">
-          <bool>false</bool>
+         <property name="bottomMargin">
+          <number>0</number>
          </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="_dumpAssertInformation">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Assert info</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="_propellerTestButton">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;Experimental feature:&lt;/span&gt;&lt;span style=&quot; font-weight:600;&quot;&gt; Tests propellers and motors&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Place the Crazyflie on a flat hard surface and run the propeller test.&lt;/p&gt;&lt;p&gt;The crazyflie will run the motors in sequence and beeps the motors that are above the vibration threshold.&lt;/p&gt;&lt;p&gt;The results are also printed on the console.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>Propeller test</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="_batteryTestButton">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;Experimental feature:&lt;/span&gt;&lt;span style=&quot; font-weight:600;&quot;&gt; Test battery (power path)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This test will very shortly spin the motors at pull power and measure the voltage drop. This voltage drop should not be to high. If it is, the battery is probably bad, but it could also be the connector or other components in the power path that adds resistance.&lt;/p&gt;&lt;p&gt;The results are printed on the console and can be read from the health.batterySag and health.batteryPass log variables.&lt;/p&gt;&lt;p&gt;This feature is meant for the Crazyflie 2.x only and should probably not be used by e.g. Crazyflie Bolt or BigQuad. For them the test could even be dangerous.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>Battery test</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="_storageStatsButton">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Storage Stats</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
+         <item>
+          <widget class="QPushButton" name="_dumpSystemLoadButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Task dump</string>
+           </property>
+           <property name="checkable">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="_dumpAssertInformation">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Assert info</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="_propellerTestButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;Experimental feature:&lt;/span&gt;&lt;span style=&quot; font-weight:600;&quot;&gt; Tests propellers and motors&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Place the Crazyflie on a flat hard surface and run the propeller test.&lt;/p&gt;&lt;p&gt;The crazyflie will run the motors in sequence and beeps the motors that are above the vibration threshold.&lt;/p&gt;&lt;p&gt;The results are also printed on the console.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Propeller test</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="_batteryTestButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;Experimental feature:&lt;/span&gt;&lt;span style=&quot; font-weight:600;&quot;&gt; Test battery (power path)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This test will very shortly spin the motors at pull power and measure the voltage drop. This voltage drop should not be to high. If it is, the battery is probably bad, but it could also be the connector or other components in the power path that adds resistance.&lt;/p&gt;&lt;p&gt;The results are printed on the console and can be read from the health.batterySag and health.batteryPass log variables.&lt;/p&gt;&lt;p&gt;This feature is meant for the Crazyflie 2.x only and should probably not be used by e.g. Crazyflie Bolt or BigQuad. For them the test could even be dangerous.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Battery test</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="_storageStatsButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Storage Stats</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="_emptyPage"/>
+       <widget class="AllBox" name="_allBox"/>
+      </widget>
      </item>
     </layout>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>SegmentedControl</class>
+   <extends>QFrame</extends>
+   <header>cfclient.ui.widgets.segmented_control</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ConsoleLogView</class>
+   <extends>QTextEdit</extends>
+   <header>cfclient.ui.widgets.console_widgets</header>
+  </customwidget>
+  <customwidget>
+   <class>ErrorPanel</class>
+   <extends>QFrame</extends>
+   <header>cfclient.ui.widgets.console_widgets</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CurrentPageStack</class>
+   <extends>QStackedWidget</extends>
+   <header>cfclient.ui.widgets.console_widgets</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>AllBox</class>
+   <extends>QFrame</extends>
+   <header>cfclient.ui.widgets.console_widgets</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -144,7 +144,7 @@ class MainUI(QtWidgets.QMainWindow, main_window_class):
         #
         # We use this hacky-trick to find out if we are in dark-mode and
         # figure out what bgcolor to set from that. We always use the current
-        # palette forgreound.
+        # palette foreground.
         #
         self.textColor = self._statusbar_label.palette().color(QPalette.ColorRole.WindowText)
         self.bgColor = self._statusbar_label.palette().color(QPalette.ColorRole.Window)
