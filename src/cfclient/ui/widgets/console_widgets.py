@@ -31,9 +31,9 @@ The parts of the console tab that show the state of the consoles, from the Conso
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFontDatabase, QTextCharFormat, QTextCursor
 from PyQt6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel, QPushButton, QStackedWidget,
-                             QTextEdit, QVBoxLayout)
+                             QTextEdit, QVBoxLayout, QWidget)
 
-from cfclient.ui.widgets.segmented_control import dot
+from cfclient.ui.widgets.segmented_control import dot, muted_color
 from cfclient.utils.console_model import ALL, display_name, segment_label, split_path
 
 __author__ = 'Bitcraze AB'
@@ -47,33 +47,46 @@ def _format(color=None):
     return fmt
 
 
-def _muted():
-    return QApplication.palette().placeholderText().color().name()
-
-
 def _mono():
     return QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
 
 
+class _MutedLabel(QLabel):
+    """A label in the muted color, which follows the theme"""
+
+    def __init__(self, text):
+        super().__init__(text)
+        # Widgets with a style sheet are not told about a new theme, the application is
+        QApplication.instance().paletteChanged.connect(self._restyle)
+        self._restyle()
+
+    def _restyle(self, *_):
+        style = 'color: %s;' % muted_color()
+        if style != self.styleSheet():
+            self.setStyleSheet(style)
+
+
 def path_label(path):
-    label = QLabel()
-    label.setTextFormat(Qt.TextFormat.RichText)
     if segment_label(path):
-        label.setText(display_name(path))
-    else:
-        prefix, name = split_path(path)
-        label.setText('<span style="color: %s">%s</span>%s' % (_muted(), prefix, name) if prefix else name)
+        return QLabel(display_name(path))
+    prefix, name = split_path(path)
+    widget = QWidget()
+    layout = QHBoxLayout(widget)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setSpacing(0)
+    for label in (_MutedLabel(prefix), QLabel(name)):
         label.setFont(_mono())
-    return label
+        layout.addWidget(label)
+    layout.addStretch(1)
+    return widget
 
 
 def small(text, mono=False):
-    label = QLabel(text)
+    label = _MutedLabel(text)
     label.setWordWrap(True)
     font = _mono() if mono else label.font()
     font.setPointSizeF(max(font.pointSizeF() - 1, 7))
     label.setFont(font)
-    label.setStyleSheet('color: %s;' % _muted())
     return label
 
 
@@ -204,6 +217,8 @@ class ErrorPanel(QFrame):
 class ConsoleLogView(QTextEdit):
     """The log of one console, or of all open consoles merged with a timestamp and the name on every line"""
 
+    _model = None
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setReadOnly(True)
@@ -213,11 +228,18 @@ class ConsoleLogView(QTextEdit):
         self._last_seq = 0
         self._partial_start = None
         self._name_width = 0
+        QApplication.instance().paletteChanged.connect(self._theme_changed)
 
     def reset(self):
         self._key = None
 
+    def _theme_changed(self, *_):
+        # The muted colors are part of the text, so draw it again
+        if self._model is not None and self._key is not None:
+            self._draw_all(self._model, self._key)
+
     def refresh(self, model):
+        self._model = model
         key = model.selected
         scrollbar = self.verticalScrollBar()
         at_end = scrollbar.value() >= scrollbar.maximum() - 2
@@ -251,11 +273,11 @@ class ConsoleLogView(QTextEdit):
 
     def _insert_line(self, cursor, model, key, line):
         if key == ALL:
-            cursor.insertText('%9s  ' % ('+%.3f' % line.t), _format(_muted()))
+            cursor.insertText('%9s  ' % ('+%.3f' % line.t), _format(muted_color()))
             cursor.insertText('%-*s  ' % (self._name_width, display_name(line.path)),
                               _format(model.states[line.path].color))
         if line.separator:
-            cursor.insertText('--- %s ---' % line.text, _format(_muted()))
+            cursor.insertText('--- %s ---' % line.text, _format(muted_color()))
         else:
             cursor.insertText(line.text, _format())
 

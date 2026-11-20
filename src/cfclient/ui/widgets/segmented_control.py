@@ -32,12 +32,14 @@ Each segment can have a colored dot, a muted prefix, a monospace path and an unr
 segments can be replaced at runtime and the control can be moved with the arrow keys.
 """
 
-from PyQt6.QtCore import QEvent, Qt, pyqtSignal
-from PyQt6.QtGui import QFontDatabase
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QFontDatabase
 from PyQt6.QtWidgets import QApplication, QButtonGroup, QFrame, QHBoxLayout, QLabel, QPushButton
 
+from cfclient.utils.ui import UiUtils
+
 __author__ = 'Bitcraze AB'
-__all__ = ['SegmentedControl', 'Segment', 'dot']
+__all__ = ['SegmentedControl', 'Segment', 'dot', 'muted_color']
 
 _STYLE = """
 QFrame[segmentedControl=true] {
@@ -50,6 +52,16 @@ QFrame[segmentedControl=true] QPushButton:checked {
     background-color: %(selected)s; border: 1px solid %(outline)s;
 }
 """
+
+
+def muted_color():
+    """The placeholder text color as a solid color, as it is the text color with some transparency"""
+    palette = QApplication.palette()
+    color = palette.placeholderText().color()
+    background = palette.window().color()
+    alpha = color.alphaF()
+    blended = [color.getRgbF()[i] * alpha + background.getRgbF()[i] * (1 - alpha) for i in range(3)]
+    return QColor.fromRgbF(*blended).name()
 
 
 def dot(color, size=9):
@@ -94,6 +106,10 @@ class _SegmentButton(QPushButton):
 
         self._unread = 0
         self._badge = QLabel()
+        # The blue of the progress bars, in every theme
+        self._badge.setStyleSheet(
+            'background-color: %s; color: white; border-radius: 7px; padding: 0px 5px; font-size: 11px; '
+            'border: none;' % UiUtils.COLOR_BLUE)
         self._badge.hide()
         layout.addWidget(self._badge)
 
@@ -104,8 +120,7 @@ class _SegmentButton(QPushButton):
         self.refresh_style()
 
     def refresh_style(self):
-        palette = QApplication.palette()
-        muted = palette.placeholderText().color().name()
+        muted = muted_color()
         text = self.segment.text
         if self.segment.dimmed:
             text = '<span style="color: %s">%s%s</span>' % (muted, self.segment.prefix, text)
@@ -115,9 +130,6 @@ class _SegmentButton(QPushButton):
         font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont) if self.segment.monospace \
             else self._label.font()
         self._label.setFont(font)
-        self._badge.setStyleSheet(
-            'background-color: %s; color: %s; border-radius: 7px; padding: 0px 5px; font-size: 11px; '
-            'border: none;' % (palette.highlight().color().name(), palette.highlightedText().color().name()))
 
     def set_badge(self, count):
         self._unread = count
@@ -157,6 +169,8 @@ class SegmentedControl(QFrame):
         self._layout.setContentsMargins(3, 3, 3, 3)
         self._layout.setSpacing(2)
 
+        # A widget with a style sheet is not told about a new theme, the application is
+        QApplication.instance().paletteChanged.connect(self._apply_style)
         self._apply_style()
 
     def set_segments(self, segments, current=0, emit=True):
@@ -212,17 +226,24 @@ class SegmentedControl(QFrame):
                 break
         event.accept()
 
-    def _apply_style(self):
+    def _apply_style(self, *_):
         # The track has to stand out from the window behind it, which a plain
         # palette role does not guarantee, so derive it from the window color.
         # Uses the application palette, as the widget's own palette changes when
         # the style sheet is set, which would loop.
         palette = QApplication.palette()
         window = palette.window().color()
-        track = window.lighter(150) if window.lightness() < 128 else window.darker(110)
+        # The selected segment is raised: white in a light theme, the button color in a dark one,
+        # where the base color is darker than the track
+        if window.lightness() < 128:
+            track = window.darker(120)
+            selected = palette.button().color()
+        else:
+            track = window.darker(110)
+            selected = palette.base().color()
         style = _STYLE % {
             'track': track.name(),
-            'selected': palette.base().color().name(),
+            'selected': selected.name(),
             # A faint outline for the track and the selected segment, from the text color
             'outline': 'rgba(%d, %d, %d, 40)' % palette.windowText().color().getRgb()[:3],
         }
@@ -231,8 +252,3 @@ class SegmentedControl(QFrame):
             self.setStyleSheet(style)
             for button in self._buttons:
                 button.refresh_style()
-
-    def changeEvent(self, event):
-        super().changeEvent(event)
-        if event.type() == QEvent.Type.ApplicationPaletteChange:
-            self._apply_style()
