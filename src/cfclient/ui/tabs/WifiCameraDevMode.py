@@ -102,8 +102,7 @@ class WifiCameraDevPanel(QWidget):
             tab.set_signal_strength(None)
 
         tab.streamButton.setEnabled(self._stream.isChecked())
-        tab.commanderBox.setEnabled(self._flight.isChecked())
-        tab.armButton.setEnabled(self._flight.isChecked())
+        tab._set_commander_enabled(self._flight.isChecked())
 
     def _apply_streaming(self, streaming):
         self._tab.set_streaming(streaming)

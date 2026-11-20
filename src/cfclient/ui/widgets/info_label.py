@@ -31,6 +31,9 @@ from PyQt6.QtCore import QObject, QEvent, Qt, QPoint, QRectF
 from PyQt6.QtGui import QGuiApplication, QPainter, QColor, QPainterPath
 
 
+QWIDGETSIZE_MAX = 16777215
+
+
 class _InfoPopover(QFrame):
     POPOVER_WIDTH = 300
 
@@ -68,9 +71,16 @@ class _InfoPopover(QFrame):
         painter.drawPath(path)
 
     def show_near(self, global_pos: QPoint, text: str):
+        # The popover is reused, so measure the text from scratch every time: a wrapped label keeps
+        # the size of the previous text otherwise, and the new text can be cut off at the bottom
+        self._label.setMinimumSize(0, 0)
+        self._label.setMaximumSize(self.POPOVER_WIDTH, QWIDGETSIZE_MAX)
         self._label.setText(text)
-        self._label.adjustSize()
-        self.adjustSize()
+        width = min(self.POPOVER_WIDTH, self._label.sizeHint().width())
+        self._label.setFixedSize(width, self._label.heightForWidth(width))
+        self.layout().invalidate()
+        self.layout().activate()
+        self.resize(self.layout().sizeHint())
 
         x = global_pos.x() + 8
         y = global_pos.y() + 8

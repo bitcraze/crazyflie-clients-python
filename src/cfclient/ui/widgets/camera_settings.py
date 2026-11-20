@@ -34,7 +34,7 @@ All ranges and options below are placeholders until the lib defines them.
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (QComboBox, QGraphicsOpacityEffect, QGridLayout, QHBoxLayout, QLabel,
-                             QScrollArea, QSizePolicy, QSlider, QSpinBox, QStyle, QVBoxLayout, QWidget)
+                             QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QStyle, QVBoxLayout, QWidget)
 
 from cfclient.ui.widgets.accordion import Accordion
 from cfclient.ui.widgets.info_label import InfoLabel
@@ -51,6 +51,14 @@ DEFAULT_CROP = (4, 4, 1280, 720)
 # The scaler can only scale down, and to no less than this
 MIN_OUTPUT_SIZE = (56, 42)
 OUTPUT_SCALES = (1, 2, 4)
+# The options are fractions of the crop window, so say that, a percentage reads as a share of the sensor
+OUTPUT_SCALE_NAMES = {1: 'same as crop', 2: '\u00bd of crop', 4: '\u00bc of crop'}
+CROP_TOOLTIPS = {
+    'X': 'Where the window starts from the left edge of the sensor, in pixels (even numbers)',
+    'Y': 'Where the window starts from the top edge of the sensor, in pixels (even numbers)',
+    'W': 'Width of the window, in pixels (even numbers)',
+    'H': 'Height of the window, in pixels (even numbers)',
+}
 DISABLED_OPACITY = 0.4
 SCROLLBAR_GAP = 10
 
@@ -69,40 +77,37 @@ def _info(works, affects=(), notes=()):
 # line with it (S numbers in the comments).
 # S03
 INFO_CROP = _info(
-    'Chooses which part of the sensor is used, like a digital zoom that keeps full detail. A smaller '
-    'window shows a narrower view, and can cut out things like propellers or landing feet.',
+    'Chooses which part of the sensor is used, like a digital zoom that keeps full detail. X and Y are '
+    'where the window starts (its top left corner), W and H are its width and height, in sensor pixels.',
     ['Field of view: a smaller window shows less.',
      'Scaled output resolution: the sizes on offer follow the crop window.',
-     'WiFi: smaller frames are easier to send, but the speed of the camera itself does not change.'],
+     'WiFi: smaller frames are easier to send, but the camera\'s frame rate stays the same.'],
     ['The video restarts briefly when this changes.',
-     'Positions and sizes are even numbers inside the sensor.'])
+     'Positions and sizes are even numbers, other values snap to the nearest even one.'])
 # S07
 INFO_RESOLUTION = _info(
-    'Shrinks the picture the deck sends, as a share of the crop window, with the same field of view.',
+    'Shrinks the picture the deck sends, with the same field of view. The options are the crop window '
+    'at full size, half size and quarter size.',
     ['Detail: a smaller picture has less detail.',
-     'WiFi: smaller frames are easier to send, so over a weak connection more of them get through and '
-     'the video is smoother.',
-     'Frame rate: the camera still captures at the same speed, so you never get more frames than the '
-     'camera\'s own frame rate.'],
+     'WiFi: smaller frames are easier to send, so more of them get through on a weak connection.',
+     'Frame rate: the camera\'s own frame rate is the most you get.'],
     ['The picture can only be made smaller, never larger.',
      'The video restarts briefly when this changes.'])
 # S12, S13
 INFO_AUTO_EXPOSURE = _info(
-    'Auto lets the camera choose exposure time and gain to keep the picture evenly bright as the light '
-    'changes. Manual keeps the brightness fixed, for repeatable measurements or computer vision.',
+    'Auto lets the camera choose exposure time and gain to keep the picture evenly bright. Manual keeps '
+    'the brightness fixed, for repeatable measurements.',
     ['Brightness: in manual, the picture gets too dark or too bright when the light changes.',
-     'Dim light: auto exposure can pick long exposures (motion blur, and a lower frame rate, also with '
-     'Auto frame rate set to Fixed) or high gain (grain).'],
+     'Dim light: auto exposure can pick long exposures (motion blur, lower frame rate) or high gain '
+     '(grain).'],
     ['Decides whether Exposure time, Gain and Anti-flicker are used.'])
 # S14
 INFO_EXPOSURE_TIME = _info(
     'How long the sensor collects light for each frame.',
-    ['Brightness: shorter gives a darker picture, so it needs more gain and gets grainier. Longer gives '
-     'a brighter, cleaner picture.',
-     'Motion: longer exposures make moving things smear.',
-     'Frame rate: once the exposure is longer than one frame (about 33 ms at 30 fps) the frame rate drops.'],
-    ['Under mains-powered lights, use a multiple of the flicker period (10 ms at 50 Hz, 8.3 ms at 60 Hz) '
-     'to avoid dark bands.',
+    ['Brightness: shorter is darker, so it needs more gain (grain). Longer is brighter and cleaner.',
+     'Motion: longer exposures smear moving things.',
+     'Frame rate: it drops once the exposure is longer than one frame (about 33 ms at 30 fps).'],
+    ['Under mains-powered lights, use a multiple of 10 ms (50 Hz) or 8.3 ms (60 Hz) to avoid dark bands.',
      'Only used with manual exposure.'])
 # S15
 INFO_GAIN = _info(
@@ -112,16 +117,14 @@ INFO_GAIN = _info(
     ['Only used with manual exposure.'])
 # S23
 INFO_ANTI_FLICKER = _info(
-    'Mains-powered lights, such as fluorescent tubes and many LEDs, pulse 100 times a second on 50 Hz '
-    'mains and 120 times on 60 Hz, which shows as dark bands rolling through the picture. Anti-flicker '
-    'keeps the exposure time at whole multiples of the pulse period (10 ms at 50 Hz, 8.3 ms at 60 Hz), '
-    'which removes the bands.',
+    'Mains-powered lights pulse, which shows as dark bands in the picture. Anti-flicker keeps the '
+    'exposure time at whole multiples of the pulse period (10 ms at 50 Hz, 8.3 ms at 60 Hz), which '
+    'removes the bands.',
     ['Picture: no dark bands under mains-powered lights.',
-     'Exposure: the steps are coarse, so auto exposure relies more on gain and the picture can get '
-     'grainier, especially at high frame rates.'],
-    ['Choose the mains frequency where you fly, for example 50 Hz in Europe and 60 Hz in North America.',
+     'Exposure: the steps are coarse, so auto exposure relies more on gain (grain).'],
+    ['Choose the mains frequency where you fly: 50 Hz in Europe, 60 Hz in North America.',
      'Not needed outdoors in daylight.',
-     'Only used with auto exposure. With manual exposure, set the exposure time to a multiple yourself.'])
+     'Only used with auto exposure. With manual exposure, set the exposure time yourself.'])
 # S61
 INFO_FRAME_RATE = _info(
     'Lets the deck slow down the frame rate in low light, to allow longer exposures. Fixed keeps the '
@@ -141,12 +144,12 @@ INFO_COLOR_MODE = _info(
      'The video restarts briefly when this changes.'])
 # S26
 INFO_WHITE_BALANCE = _info(
-    'Corrects the color of the light, such as warm indoor bulbs or bluish shade, so that white looks '
-    'white. Auto adapts when you move between different lights. Manual keeps the colors fixed.',
-    ['Colors: auto can shift them when one color fills the view, for example a green floor. Manual gives '
-     'a tint over the whole picture if the light changes.',
+    'Corrects the color of the light so that white looks white. Auto adapts when you move between '
+    'lights. Manual keeps the colors fixed.',
+    ['Colors: auto can shift them when one color fills the view, manual gives a tint if the light '
+     'changes.',
      'Brightness: it also changes the brightness, so it matters in grayscale too.'],
-    ['Manual suits fixed lighting and color tracking.',
+    ['Manual suits fixed lighting.',
      'Decides whether the red and blue gains are used.',
      'Applied before color saturation.'])
 # S27
@@ -275,12 +278,15 @@ class CameraSettingsPanel(QWidget):
         control.currentIndexChanged.connect(lambda i: self.settingChanged.emit(name, values[i]))
         return control
 
-    def _slider(self, name, text, low, high, value, to_text, scale=1, info=None):
+    def _slider(self, name, text, low, high, value, to_text, scale=1, info=None, page_step=None):
         """A label with the current value on the right and a slider below.
         The slider works in integers, the emitted value is divided by scale."""
         slider = QSlider(Qt.Orientation.Horizontal)
         slider.setRange(low, high)
         slider.setValue(value)
+        if page_step is not None:
+            # How far a click next to the handle moves it, Qt's default of 10 is too much for short ranges
+            slider.setPageStep(page_step)
 
         value_label = QLabel(to_text(value))
         head = QHBoxLayout()
@@ -311,13 +317,29 @@ class CameraSettingsPanel(QWidget):
             box.setRange(0, CROP_X_END_MAX)
             box.setValue(value)
             box.setMinimumWidth(0)
+            # Snap typed values when the entry is done, not after every digit, or typing 100 would
+            # become 0 after the first digit
+            box.setKeyboardTracking(False)
             spin_boxes.append(box)
+            label_widget = QLabel(label)
+            for widget in (label_widget, box):
+                widget.setToolTip(CROP_TOOLTIPS[label])
             row, column = divmod(index, 2)
-            crop.addWidget(QLabel(label), row, column * 2)
+            crop.addWidget(label_widget, row, column * 2)
             crop.addWidget(box, row, column * 2 + 1)
             crop.setColumnStretch(column * 2 + 1, 1)
         x, y, w, h = spin_boxes
-        section.content_layout.addWidget(_stacked_row('Sensor crop window', _wrap(crop), INFO_CROP))
+
+        reset = QPushButton('Reset')
+        reset.setToolTip('Go back to the default window, %d x %d' % DEFAULT_CROP[2:])
+        reset.setCursor(Qt.CursorShape.PointingHandCursor)
+        head = _label('Sensor crop window', INFO_CROP)
+        head.addStretch()
+        head.addWidget(reset)
+        column = QVBoxLayout()
+        column.addLayout(head)
+        column.addWidget(_wrap(crop))
+        section.content_layout.addWidget(_wrap(column))
 
         resolution = QComboBox()
         section.content_layout.addWidget(_stacked_row('Scaled output resolution', resolution, INFO_RESOLUTION))
@@ -325,10 +347,11 @@ class CameraSettingsPanel(QWidget):
         # window is up to us: every option is the crop window divided by a whole number.
 
         def update_limits():
-            """Start positions are even, sizes are even, and the window stays inside the sensor"""
+            """Start positions and sizes are even (a typed odd number goes to the nearest even one), and the
+            window stays inside the sensor"""
             for box in spin_boxes:
                 box.blockSignals(True)
-                box.setValue(box.value() // 2 * 2)
+                box.setValue((box.value() + 1) // 2 * 2)
             x.setRange(CROP_START_MIN, CROP_X_END_MAX - MIN_OUTPUT_SIZE[0])
             y.setRange(CROP_START_MIN, CROP_Y_END_MAX - MIN_OUTPUT_SIZE[1])
             w.setRange(MIN_OUTPUT_SIZE[0], CROP_X_END_MAX + 1 - x.value())
@@ -349,7 +372,7 @@ class CameraSettingsPanel(QWidget):
             resolution.blockSignals(True)
             resolution.clear()
             for scale, (width, height) in output_sizes():
-                resolution.addItem('%d x %d  (%d%%)' % (width, height, 100 // scale), (width, height))
+                resolution.addItem('%d x %d  (%s)' % (width, height, OUTPUT_SCALE_NAMES[scale]), (width, height))
             resolution.setCurrentIndex(max(0, min(previous, resolution.count() - 1)))
             resolution.blockSignals(False)
 
@@ -360,17 +383,28 @@ class CameraSettingsPanel(QWidget):
             section.set_summary('%d x %d' % size)
             self.settingChanged.emit('output_resolution', size)
 
-        def crop_changed(_):
+        def crop_changed(_=None):
             update_limits()
             update_resolutions()
+            reset.setEnabled(tuple(b.value() for b in spin_boxes) != DEFAULT_CROP)
             self.settingChanged.emit('crop_window', tuple(b.value() for b in spin_boxes))
             announce_resolution()
 
+        def reset_crop():
+            for box, value in zip(spin_boxes, DEFAULT_CROP):
+                box.blockSignals(True)
+                box.setRange(0, CROP_X_END_MAX)  # the current limits depend on the old window
+                box.setValue(value)
+                box.blockSignals(False)
+            crop_changed()
+
         update_limits()
         update_resolutions()
+        reset.setEnabled(False)
         section.set_summary('%d x %d' % resolution.currentData())
         for box in spin_boxes:
             box.valueChanged.connect(crop_changed)
+        reset.clicked.connect(reset_crop)
         resolution.currentIndexChanged.connect(lambda _: announce_resolution())
 
     def _add_exposure(self):
@@ -378,7 +412,7 @@ class CameraSettingsPanel(QWidget):
         layout = section.content_layout
 
         auto = self._segmented('auto_exposure', ['Auto', 'Manual'], [True, False])
-        layout.addWidget(_inline_row('Auto exposure', auto, INFO_AUTO_EXPOSURE))
+        layout.addWidget(_inline_row('Exposure mode', auto, INFO_AUTO_EXPOSURE))
 
         exposure_time, _ = self._slider('exposure_time', 'Exposure time', 1, 100, 10, lambda v: '%d ms' % v,
                                         info=INFO_EXPOSURE_TIME)
@@ -404,8 +438,10 @@ class CameraSettingsPanel(QWidget):
             # Anti-flicker only limits the exposure times that auto exposure picks
             _set_row_enabled(anti_flicker_row, is_auto)
             anti_flicker_row.setToolTip('Only used with auto exposure' if not is_auto else '')
-            section.set_summary('%s · %s' % (auto.current_text(), anti_flicker.current_text()) if is_auto
-                                else auto.current_text())
+            # Name the anti-flicker setting, "Auto · Off" does not say what is off
+            flicker = 'off' if anti_flicker.current_index() == 0 else anti_flicker.current_text()
+            section.set_summary('%s · Anti-flicker %s' % (auto.current_text(), flicker)
+                                if is_auto else auto.current_text())
 
         auto.currentIndexChanged.connect(lambda _: update())
         anti_flicker.currentIndexChanged.connect(lambda _: update())
@@ -419,7 +455,7 @@ class CameraSettingsPanel(QWidget):
         layout.addWidget(_inline_row('Color mode', color_mode, INFO_COLOR_MODE))
 
         auto = self._segmented('auto_white_balance', ['Auto', 'Manual'], [True, False])
-        layout.addWidget(_inline_row('Auto white balance', auto, INFO_WHITE_BALANCE))
+        layout.addWidget(_inline_row('White balance mode', auto, INFO_WHITE_BALANCE))
 
         gains = []
         gain_widgets = []
@@ -462,7 +498,7 @@ class CameraSettingsPanel(QWidget):
         layout = section.content_layout
 
         sharpness, slider = self._slider('sharpness', 'Sharpness', -2, 2, 0, lambda v: '%+d' % v if v else '0',
-                                      info=INFO_SHARPNESS)
+                                      info=INFO_SHARPNESS, page_step=1)
         layout.addWidget(sharpness)
 
         lens_shading = self._segmented('lens_shading_correction', ['Off', 'On'], [False, True])

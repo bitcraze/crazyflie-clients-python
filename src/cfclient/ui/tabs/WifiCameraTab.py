@@ -39,7 +39,7 @@ from enum import Enum
 from PyQt6 import uic
 from PyQt6.QtCore import QEvent, QPoint, QSize, Qt, QTimer, QUrl, pyqtSignal
 from PyQt6.QtGui import QColor, QDesktopServices, QIcon, QPainter, QPixmap
-from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtWidgets import QAbstractButton, QApplication, QMessageBox
 
 import cfclient
 
@@ -595,7 +595,32 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
 
             self._update_supervisor_and_arming(True)
 
+    def _supervisor_state(self):
+        """What the supervisor reports, as text for the user, and if it is a problem"""
+        if self._is_locked():
+            return 'Locked, please reboot', True
+        if self._is_crashed():
+            return ('Crashed, flip over to recover' if self._is_tumbled() else 'Crashed, click Recover'), True
+        if self._is_flying():
+            return 'Flying', False
+        if self._is_tumbled():
+            return 'Tumbled', True
+        if self._is_armed():
+            return ('Auto armed' if self._auto_arming() else 'Armed'), False
+        if self._can_arm():
+            return 'Ready to arm', False
+        return 'Not ready to arm', False
+
+    def _update_supervisor_state_label(self, connected):
+        text, is_problem = self._supervisor_state() if connected else ('Not connected', False)
+        font = self.supervisorStateLabel.font()
+        font.setBold(True)
+        self.supervisorStateLabel.setFont(font)
+        self.supervisorStateLabel.setText(text)
+        self.supervisorStateLabel.setStyleSheet('color: %s' % COLOR_RED if is_problem else '')
+
     def _update_supervisor_and_arming(self, connected):
+        self._update_supervisor_state_label(connected)
         if not connected:
             self.armButton.setStyleSheet("")
             self.armButton.setText("Arm")
@@ -641,31 +666,39 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
                 self.armButton.setStyleSheet("")
                 self.armButton.setEnabled(False)
 
+    def _set_commander_enabled(self, enabled):
+        """Enable the flight commands. The arm button is left out, as it has to keep working when
+        the Crazyflie cannot fly: to recover from a crash and to disarm. The supervisor decides
+        when it is available."""
+        for button in self.commanderBox.findChildren(QAbstractButton):
+            if button is not self.armButton:
+                button.setEnabled(enabled)
+
     def _update_flight_commander(self, connected):
         self.commanderBox.setToolTip(str())
         if not connected:
-            self.commanderBox.setEnabled(False)
+            self._set_commander_enabled(False)
             return
 
         if self._can_fly_deprecated == 0:
-            self.commanderBox.setEnabled(False)
+            self._set_commander_enabled(False)
             self.commanderBox.setToolTip('The Crazyflie reports that flight is not possible')
             return
 
         # We cannot know if we have a positioning deck until we get params
         if not self._helper.cf.param.is_updated:
-            self.commanderBox.setEnabled(False)
+            self._set_commander_enabled(False)
             return
 
         #                  flowV1    flowV2     LightHouse       LPS
         position_decks = ['bcFlow', 'bcFlow2', 'bcLighthouse4', 'bcLoco', 'bcDWM1000']
         for deck in position_decks:
             if int(self._helper.cf.param.values['deck'][deck]) == 1:
-                self.commanderBox.setEnabled(True)
+                self._set_commander_enabled(True)
                 break
         else:
             self.commanderBox.setToolTip('You need a positioning deck to use Command Based Flight')
-            self.commanderBox.setEnabled(False)
+            self._set_commander_enabled(False)
             return
 
         # To prevent conflicting commands from the controller and the flight panel
@@ -673,7 +706,7 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
             self.commanderBox.setToolTip(
                 'Cannot use both a controller and Command Based Flight'
             )
-            self.commanderBox.setEnabled(False)
+            self._set_commander_enabled(False)
             return
 
     def connected(self, linkURI):
@@ -684,6 +717,11 @@ class WifiCameraTab(TabToolbox, wifi_camera_tab_class):
         # Add supervisor info if it exists to keep backwards compatibility
         if self._helper.cf.log.toc.get_element_by_complete_name(self.LOG_NAME_SUPERVISOR_INFO):
             lg.add_variable(self.LOG_NAME_SUPERVISOR_INFO)
+
+        # Full supervisor info is available from protocol version 7, hide it for earlier versions
+        show_supervisor = self._helper.cf.platform.get_protocol_version() >= 7
+        self.supervisorTitleLabel.setVisible(show_supervisor)
+        self.supervisorStateLabel.setVisible(show_supervisor)
 
         try:
             self._helper.cf.log.add_config(lg)
