@@ -26,31 +26,28 @@
 #  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 A row of mutually exclusive buttons in a rounded container, where the selected one is raised with
-a light background and an outline. Button text can span several lines. Background colors come from
-the palette so it follows the theme.
+a light background and an outline. Background colors come from the palette so it follows the theme.
 
-By default the buttons are equally wide. Segments can also be rich (a colored dot, a muted prefix,
-a monospace path and an unread badge), replaced at runtime, and the control can be moved with the
-arrow keys. See set_segments().
+Each segment can have a colored dot, a muted prefix, a monospace path and an unread badge. The
+segments can be replaced at runtime and the control can be moved with the arrow keys.
 """
 
 from PyQt6.QtCore import QEvent, Qt, pyqtSignal
 from PyQt6.QtGui import QFontDatabase
-from PyQt6.QtWidgets import (QApplication, QButtonGroup, QFrame, QHBoxLayout, QLabel, QPushButton,
-                             QSizePolicy)
+from PyQt6.QtWidgets import QApplication, QButtonGroup, QFrame, QHBoxLayout, QLabel, QPushButton
 
 __author__ = 'Bitcraze AB'
 __all__ = ['SegmentedControl', 'Segment', 'dot']
 
 _STYLE = """
 QFrame[segmentedControl=true] {
-    background-color: %(track)s; border-radius: 8px; border: 1px solid transparent;
+    background-color: %(track)s; border-radius: 8px; border: 1px solid %(outline)s;
 }
 QFrame[segmentedControl=true] QPushButton {
     background-color: transparent; border: none; border-radius: 6px; padding: 5px 12px;
 }
 QFrame[segmentedControl=true] QPushButton:checked {
-    background-color: %(selected)s; border: 1px solid %(border)s;
+    background-color: %(selected)s; border: 1px solid %(outline)s;
 }
 """
 
@@ -143,14 +140,12 @@ class _SegmentButton(QPushButton):
 class SegmentedControl(QFrame):
     currentIndexChanged = pyqtSignal(int)
 
-    def __init__(self, options=(), current=0, parent=None, equal_width=True):
+    def __init__(self, parent=None):
         super().__init__(parent)
         # Not the object name, as a .ui file renames the widget
         self.setProperty('segmentedControl', True)
         self._style = ''
-        self._equal_width = equal_width
 
-        self._options = []
         self._buttons = []
         self._group = QButtonGroup(self)
         self._group.setExclusive(True)
@@ -163,44 +158,24 @@ class SegmentedControl(QFrame):
         self._layout.setSpacing(2)
 
         self._apply_style()
-        if options:
-            self.set_segments(options, current)
-
-    def set_equal_width(self, equal_width):
-        self._equal_width = equal_width
 
     def set_segments(self, segments, current=0, emit=True):
-        """Replace the segments, each a string or a Segment"""
+        """Replace the segments, a list of Segment"""
         for button in self._buttons:
             self._group.removeButton(button)
             self._layout.removeWidget(button)
             button.deleteLater()
-        self._buttons = []
-        self._options = []
 
-        for index, segment in enumerate(segments):
-            if isinstance(segment, Segment):
-                button = _SegmentButton(segment)
-                self._options.append(segment.prefix + segment.text)
-            else:
-                button = QPushButton(segment)
-                button.setCheckable(True)
-                button.setCursor(Qt.CursorShape.PointingHandCursor)
-                button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-                self._options.append(segment)
-            policy = QSizePolicy.Policy.Expanding if self._equal_width else QSizePolicy.Policy.Preferred
-            button.setSizePolicy(policy, QSizePolicy.Policy.Preferred)
+        self._buttons = [_SegmentButton(segment) for segment in segments]
+        for index, button in enumerate(self._buttons):
             self._group.addButton(button, index)
-            self._layout.addWidget(button, 1 if self._equal_width else 0)
-            self._buttons.append(button)
+            self._layout.addWidget(button)
 
         if self._buttons:
             self.set_current_index(min(current, len(self._buttons) - 1), emit)
 
     def set_badge(self, index, count):
-        button = self._buttons[index]
-        if isinstance(button, _SegmentButton):
-            button.set_badge(count)
+        self._buttons[index].set_badge(count)
 
     def _clicked(self, index):
         self.setFocus()
@@ -208,8 +183,7 @@ class SegmentedControl(QFrame):
 
     def _refresh_badges(self, index):
         for i, button in enumerate(self._buttons):
-            if isinstance(button, _SegmentButton):
-                button.refresh_badge(i == index)
+            button.refresh_badge(i == index)
 
     def _select(self, index):
         self._refresh_badges(index)
@@ -217,9 +191,6 @@ class SegmentedControl(QFrame):
 
     def current_index(self):
         return self._group.checkedId()
-
-    def current_text(self):
-        return self._options[self.current_index()]
 
     def set_current_index(self, index, emit=True):
         self._group.button(index).setChecked(True)
@@ -252,14 +223,14 @@ class SegmentedControl(QFrame):
         style = _STYLE % {
             'track': track.name(),
             'selected': palette.base().color().name(),
-            'border': palette.mid().color().name(),
+            # A faint outline for the track and the selected segment, from the text color
+            'outline': 'rgba(%d, %d, %d, 40)' % palette.windowText().color().getRgb()[:3],
         }
         if style != self._style:
             self._style = style
             self.setStyleSheet(style)
             for button in self._buttons:
-                if isinstance(button, _SegmentButton):
-                    button.refresh_style()
+                button.refresh_style()
 
     def changeEvent(self, event):
         super().changeEvent(event)

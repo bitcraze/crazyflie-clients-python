@@ -28,8 +28,6 @@
 The parts of the console tab that show the state of the consoles, from the ConsoleModel.
 """
 
-import re
-
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFontDatabase, QTextCharFormat, QTextCursor
 from PyQt6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel, QPushButton, QStackedWidget,
@@ -40,23 +38,6 @@ from cfclient.utils.console_model import ALL, display_name, segment_label, split
 
 __author__ = 'Bitcraze AB'
 __all__ = ['AllBox', 'ErrorPanel', 'ConsoleLogView', 'CurrentPageStack']
-
-
-ERROR_PATTERN = re.compile(r'\berror|assert|\bfail', re.IGNORECASE)
-WARNING_PATTERN = re.compile(r'\bwarn', re.IGNORECASE)
-
-
-def _is_dark():
-    return QApplication.palette().base().color().lightness() < 128
-
-
-def _severity_color(text, dark):
-    """Red for errors and asserts, orange for warnings, else None"""
-    if ERROR_PATTERN.search(text):
-        return '#ff6b6b' if dark else '#c62828'
-    if WARNING_PATTERN.search(text):
-        return '#ffa94d' if dark else '#c76a00'
-    return None
 
 
 def _format(color=None):
@@ -74,19 +55,14 @@ def _mono():
     return QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
 
 
-def path_html(path):
-    if segment_label(path):
-        return display_name(path)
-    prefix, name = split_path(path)
-    if not prefix:
-        return name
-    return '<span style="color: %s">%s</span>%s' % (_muted(), prefix, name)
-
-
 def path_label(path):
-    label = QLabel(path_html(path))
+    label = QLabel()
     label.setTextFormat(Qt.TextFormat.RichText)
-    if not segment_label(path):
+    if segment_label(path):
+        label.setText(display_name(path))
+    else:
+        prefix, name = split_path(path)
+        label.setText('<span style="color: %s">%s</span>%s' % (_muted(), prefix, name) if prefix else name)
         label.setFont(_mono())
     return label
 
@@ -273,7 +249,7 @@ class ConsoleLogView(QTextEdit):
         self._append(model, key, lines)
         self._append_partials(model, key)
 
-    def _insert_line(self, cursor, model, key, line, dark):
+    def _insert_line(self, cursor, model, key, line):
         if key == ALL:
             cursor.insertText('%9s  ' % ('+%.3f' % line.t), _format(_muted()))
             cursor.insertText('%-*s  ' % (self._name_width, display_name(line.path)),
@@ -281,17 +257,16 @@ class ConsoleLogView(QTextEdit):
         if line.separator:
             cursor.insertText('--- %s ---' % line.text, _format(_muted()))
         else:
-            cursor.insertText(line.text, _format(_severity_color(line.text, dark)))
+            cursor.insertText(line.text, _format())
 
     def _append(self, model, key, lines):
         if not lines:
             return
         cursor = QTextCursor(self.document())
         cursor.movePosition(QTextCursor.MoveOperation.End)
-        dark = _is_dark()
         cursor.beginEditBlock()
         for line in lines:
-            self._insert_line(cursor, model, key, line, dark)
+            self._insert_line(cursor, model, key, line)
             cursor.insertBlock()
             self._last_seq = line.seq
         cursor.endEditBlock()
@@ -301,9 +276,8 @@ class ConsoleLogView(QTextEdit):
         cursor.movePosition(QTextCursor.MoveOperation.End)
         self._partial_start = cursor.position()
         partials = model.view_partials(key)
-        dark = _is_dark()
         for index, line in enumerate(partials):
-            self._insert_line(cursor, model, key, line, dark)
+            self._insert_line(cursor, model, key, line)
             if index < len(partials) - 1:
                 cursor.insertBlock()
 

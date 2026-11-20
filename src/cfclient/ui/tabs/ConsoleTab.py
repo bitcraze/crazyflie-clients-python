@@ -27,7 +27,7 @@
 
 """
 The console tab is used as a console for printouts from the Crazyflie. With more than one console,
-for example with the WiFi camera deck, there is a segment for each of them and one for all of them.
+there is a segment for each of them and one for all of them.
 """
 
 import logging
@@ -120,7 +120,6 @@ class ConsoleTab(TabToolbox, console_tab_class):
         self._view_changed()
 
     def _build_ui(self):
-        self._segments.set_equal_width(False)
         self._segments.currentIndexChanged.connect(self._segment_changed)
         self._errorPanel.retry_requested.connect(self._request_open)
         self._errorPanel.dismissed.connect(self._dismiss_error)
@@ -277,7 +276,7 @@ class ConsoleTab(TabToolbox, console_tab_class):
         if signature != self._segment_signature:
             self._segment_signature = signature
             self._segment_keys = keys
-            segments = ['All']
+            segments = [Segment('All')]
             for path in model.catalog:
                 state = model.states[path]
                 label = segment_label(path)

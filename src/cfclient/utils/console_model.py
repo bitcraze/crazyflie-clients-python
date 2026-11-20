@@ -29,7 +29,6 @@ The state of the consoles shown in the console tab. The library has no timestamp
 is stamped with the time the client received it, in seconds since connect.
 """
 
-import colorsys
 import heapq
 import time
 from collections import deque
@@ -44,25 +43,14 @@ SEGMENT_LABELS = {STM32_PATH: 'Crazyflie', 'deck:bcCam': 'Wifi Camera Deck'}
 # Key of the view that merges all open consoles
 ALL = 'all'
 
-# Shown in the log where a new connection starts
-RECONNECTED = 'Reconnected'
-
 # Assigned in list() order. Colors next to each other differ in lightness and not only in hue,
 # so they can be told apart by people with color vision deficiency and in grayscale.
 PALETTE = ['#1f5fbf', '#d2691e', '#552c9a', '#17a398', '#6b4500']
 
 
 def color_for_index(index):
-    color = PALETTE[index % len(PALETTE)]
-    cycle = index // len(PALETTE)
-    if cycle == 0:
-        return color
-    # More consoles than colors, reuse the hues with another lightness
-    r, g, b = (int(color[i:i + 2], 16) / 255 for i in (1, 3, 5))
-    h, lightness, s = colorsys.rgb_to_hls(r, g, b)
-    lightness = min(0.8, max(0.2, lightness + (0.15 if cycle % 2 else -0.1)))
-    r, g, b = colorsys.hls_to_rgb(h, lightness, s)
-    return '#%02x%02x%02x' % (round(r * 255), round(g * 255), round(b * 255))
+    # With more consoles than colors the colors are reused, the names tell them apart
+    return PALETTE[index % len(PALETTE)]
 
 
 def split_path(path):
@@ -130,7 +118,7 @@ class ConsoleModel:
                 state.partial = None
             if state.lines and not state.lines[-1].separator:
                 self._seq += 1
-                state.lines.append(Line(self._seq, now, state.path, RECONNECTED, True))
+                state.lines.append(Line(self._seq, now, state.path, 'Reconnected', True))
             state.is_open = False
             state.opening = False
             state.unread = 0
