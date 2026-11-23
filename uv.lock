@@ -44,7 +44,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = "~=1.4.0" },
-    { name = "cflib", git = "https://github.com/bitcraze/crazyflie-lib-python?rev=dev%2Fcamera-deck" },
+    { name = "cflib", git = "https://github.com/bitcraze/crazyflie-lib-python?rev=master" },
     { name = "numpy", specifier = ">=2.2,<2.5" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "pyopengl", specifier = "~=3.1.7" },
@@ -154,8 +154,8 @@ wheels = [
 
 [[package]]
 name = "cflib"
-version = "0.1.34.post1.dev13+g70c44491f"
-source = { git = "https://github.com/bitcraze/crazyflie-lib-python?rev=dev%2Fcamera-deck#70c44491fe71204e4cb283079a5bae68399f4e2c" }
+version = "0.1.34.post1.dev5+g80842afd9"
+source = { git = "https://github.com/bitcraze/crazyflie-lib-python?rev=master#80842afd95bb6028764d1ad6c6ad8ae31d6d1796" }
 dependencies = [
     { name = "libusb-package" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },

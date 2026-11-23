@@ -37,7 +37,7 @@ classifiers = [
 requires-python = ">= 3.10"
 
 dependencies = [
-        "cflib @ git+https://github.com/bitcraze/crazyflie-lib-python@dev/camera-deck",  # TODO: sourced console (PR #617), back to a release
+        "cflib @ git+https://github.com/bitcraze/crazyflie-lib-python@master",  # TODO: sourced console (PR #618), back to a release
         "setuptools",
         "appdirs~=1.4.0",
         "pyzmq~=27.0",
