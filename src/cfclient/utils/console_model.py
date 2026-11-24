@@ -87,7 +87,6 @@ class ConsoleState:
         self.partial = None         # (t, text) of a line that has not ended yet
         self.is_open = False
         self.opening = False        # Open requested, replay of history not finished
-        self.unread = 0
 
 
 class ConsoleModel:
@@ -110,18 +109,19 @@ class ConsoleModel:
             # Times count from the first connect
             self._connected_before = True
             self._connect_time = self._clock()
-        now = self.now()
         for state in self.states.values():
             if state.partial is not None:
                 self._seq += 1
                 state.lines.append(Line(self._seq, state.partial[0], state.path, state.partial[1]))
                 state.partial = None
+        # The same sequence number for every console, so that All shows one separator
+        self._seq += 1
+        now = self.now()
+        for state in self.states.values():
             if state.lines and not state.lines[-1].separator:
-                self._seq += 1
                 state.lines.append(Line(self._seq, now, state.path, 'Reconnected', True))
             state.is_open = False
             state.opening = False
-            state.unread = 0
         self.set_catalog([STM32_PATH])
         if self.selected not in self.catalog:
             self.selected = STM32_PATH
@@ -179,18 +179,13 @@ class ConsoleModel:
             state.partial = None
             self._seq += 1
             state.lines.append(Line(self._seq, t, path, line.strip('\r')))
-            if not state.opening and path != self.selected:
-                state.unread += 1
         if state.partial is not None:
             state.partial = (state.partial[0], state.partial[1].lstrip('\r'))
             if not state.partial[1]:
                 state.partial = None
 
     def select(self, key):
-        """Selecting a console marks its output as read"""
         self.selected = key
-        if key != ALL:
-            self.states[key].unread = 0
 
     def _view(self, key):
         """The consoles shown by a view"""
@@ -198,8 +193,14 @@ class ConsoleModel:
             return [self.states[p] for p in self.open_paths]
         return [self.states[key]]
 
+    @staticmethod
+    def _one_separator(lines):
+        """Lines in order, with the separators of the consoles of one reconnect as one"""
+        return [line for index, line in enumerate(lines)
+                if not (line.separator and index and lines[index - 1].separator and lines[index - 1].seq == line.seq)]
+
     def view_lines(self, key):
-        return list(heapq.merge(*[s.lines for s in self._view(key)], key=lambda line: line.seq))
+        return self._one_separator(list(heapq.merge(*[s.lines for s in self._view(key)], key=lambda line: line.seq)))
 
     def lines_after(self, key, after_seq):
         found = []
@@ -211,7 +212,7 @@ class ConsoleModel:
                 newest_first.append(line)
             found.extend(newest_first)
         found.sort(key=lambda line: line.seq)
-        return found
+        return self._one_separator(found)
 
     def view_partials(self, key):
         partials = [Line(0, s.partial[0], s.path, s.partial[1]) for s in self._view(key) if s.partial]

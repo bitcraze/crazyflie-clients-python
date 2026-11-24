@@ -274,8 +274,10 @@ class ConsoleLogView(QTextEdit):
     def _insert_line(self, cursor, model, key, line):
         if key == ALL:
             cursor.insertText('%9s  ' % ('+%.3f' % line.t), _format(muted_color()))
-            cursor.insertText('%-*s  ' % (self._name_width, display_name(line.path)),
-                              _format(model.states[line.path].color))
+            if not line.separator:
+                # A separator is not from a console
+                cursor.insertText('%-*s  ' % (self._name_width, display_name(line.path)),
+                                  _format(model.states[line.path].color))
         if line.separator:
             cursor.insertText('--- %s ---' % line.text, _format(muted_color()))
         else:

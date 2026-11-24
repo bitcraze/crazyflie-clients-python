@@ -140,7 +140,7 @@ class ConsoleTab(TabToolbox, console_tab_class):
         self._model.begin_open(STM32_PATH)
         self._backend.open(STM32_PATH)
         self._backend.request_list()
-        self._set_switcher_enabled(True)
+        self._errorPanel.set_enabled(True)
         self._refresh_layout()
         self._view_changed()
 
@@ -152,19 +152,15 @@ class ConsoleTab(TabToolbox, console_tab_class):
         self._batteryTestButton.setEnabled(False)
         self._storageStatsButton.setEnabled(False)
 
-        # The streams have ended, the last output stays on screen
+        # The streams have ended, the output of every console stays and can still be looked at
         self._backend.stop()
         self._generation = None
-        self._set_switcher_enabled(False)
+        self._errorPanel.set_enabled(False)
 
     def _link_established(self, link_uri):
         """Callback when the first packet on a new link is received"""
         # Enable the assert dump button as early as possible. After an assert we will never get the connected() cb.
         self._dumpAssertInformation.setEnabled(True)
-
-    def _set_switcher_enabled(self, enabled):
-        self._segments.setEnabled(enabled)
-        self._errorPanel.set_enabled(enabled)
 
     @property
     def _is_connected(self):
@@ -246,6 +242,8 @@ class ConsoleTab(TabToolbox, console_tab_class):
 
     def _open_all(self):
         # All shows the open consoles, and stays selected when they have opened
+        if not self._is_connected:
+            return
         for path in self._model.other_paths:
             state = self._model.states[path]
             if not state.is_open and not state.opening:
@@ -288,16 +286,6 @@ class ConsoleTab(TabToolbox, console_tab_class):
             self._segments.set_segments(segments, keys.index(model.selected), emit=False)
         else:
             self._segments.set_current_index(keys.index(model.selected), emit=False)
-        self._update_badges()
-
-    def _update_badges(self):
-        if self._segment_keys is None:
-            return
-        for index, key in enumerate(self._segment_keys):
-            if key != ALL and self._model.states[key].is_open:
-                # No badges in All
-                unread = 0 if self._model.selected == ALL else self._model.states[key].unread
-                self._segments.set_badge(index, unread)
 
     def _view_changed(self):
         model = self._model
@@ -317,11 +305,8 @@ class ConsoleTab(TabToolbox, console_tab_class):
         self._logStack.setCurrentWidget(self._errorPanel if self._error_path else self.console)
         self.console.reset()
         self._log_dirty = True
-        self._update_badges()
 
     def _tick(self):
         if self._log_dirty:
             self._log_dirty = False
             self.console.refresh(self._model)
-        if self._segment_keys is not None:
-            self._update_badges()

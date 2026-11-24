@@ -28,15 +28,13 @@
 A row of mutually exclusive buttons in a rounded container, where the selected one is raised with
 a light background and an outline. Background colors come from the palette so it follows the theme.
 
-Each segment can have a colored dot, a muted prefix, a monospace path and an unread badge. The
+Each segment can have a colored dot, a muted prefix and a monospace path. The
 segments can be replaced at runtime and the control can be moved with the arrow keys.
 """
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFontDatabase
 from PyQt6.QtWidgets import QApplication, QButtonGroup, QFrame, QHBoxLayout, QLabel, QPushButton
-
-from cfclient.utils.ui import UiUtils
 
 __author__ = 'Bitcraze AB'
 __all__ = ['SegmentedControl', 'Segment', 'dot', 'muted_color']
@@ -104,16 +102,7 @@ class _SegmentButton(QPushButton):
         self._label.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(self._label)
 
-        self._unread = 0
-        self._badge = QLabel()
-        # The blue of the progress bars, in every theme
-        self._badge.setStyleSheet(
-            'background-color: %s; color: white; border-radius: 7px; padding: 0px 5px; font-size: 11px; '
-            'border: none;' % UiUtils.COLOR_BLUE)
-        self._badge.hide()
-        layout.addWidget(self._badge)
-
-        for child in (self._dot, self._label, self._badge):
+        for child in (self._dot, self._label):
             if child is not None:
                 child.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
@@ -130,17 +119,6 @@ class _SegmentButton(QPushButton):
         font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont) if self.segment.monospace \
             else self._label.font()
         self._label.setFont(font)
-
-    def set_badge(self, count):
-        self._unread = count
-        self._badge.setText(str(count))
-        self.refresh_badge()
-
-    def refresh_badge(self, selected=None):
-        # The selected segment has been read
-        if selected is None:
-            selected = self.isChecked()
-        self._badge.setVisible(self._unread > 0 and not selected)
 
     def sizeHint(self):
         return self.layout().sizeHint()
@@ -188,19 +166,8 @@ class SegmentedControl(QFrame):
         if self._buttons:
             self.set_current_index(min(current, len(self._buttons) - 1), emit)
 
-    def set_badge(self, index, count):
-        self._buttons[index].set_badge(count)
-
     def _clicked(self, index):
         self.setFocus()
-        self._select(index)
-
-    def _refresh_badges(self, index):
-        for i, button in enumerate(self._buttons):
-            button.refresh_badge(i == index)
-
-    def _select(self, index):
-        self._refresh_badges(index)
         self.currentIndexChanged.emit(index)
 
     def current_index(self):
@@ -209,9 +176,7 @@ class SegmentedControl(QFrame):
     def set_current_index(self, index, emit=True):
         self._group.button(index).setChecked(True)
         if emit:
-            self._select(index)
-        else:
-            self._refresh_badges(index)
+            self.currentIndexChanged.emit(index)
 
     def keyPressEvent(self, event):
         step = {Qt.Key.Key_Left: -1, Qt.Key.Key_Right: 1}.get(event.key())
