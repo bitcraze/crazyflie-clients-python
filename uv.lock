@@ -44,7 +44,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = "~=1.4.0" },
-    { name = "cflib", specifier = "~=0.1.34" },
+    { name = "cflib", git = "https://github.com/bitcraze/crazyflie-lib-python?rev=80842afd95bb6028764d1ad6c6ad8ae31d6d1796" },
     { name = "numpy", specifier = ">=2.2,<2.5" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "pyopengl", specifier = "~=3.1.7" },
@@ -154,21 +154,16 @@ wheels = [
 
 [[package]]
 name = "cflib"
-version = "0.1.34"
-source = { registry = "https://pypi.org/simple" }
+version = "0.1.34.post1.dev5+g80842afd9"
+source = { git = "https://github.com/bitcraze/crazyflie-lib-python?rev=80842afd95bb6028764d1ad6c6ad8ae31d6d1796#80842afd95bb6028764d1ad6c6ad8ae31d6d1796" }
 dependencies = [
     { name = "libusb-package" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "packaging" },
     { name = "pyusb" },
     { name = "pyyaml" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/45/9c/eaa00599db10d4484db50b09477f19e6beb624b60227259a0d87d9c8be37/cflib-0.1.34.tar.gz", hash = "sha256:7930c0204602a675a16fb80c26ab1b4fce959857554c232d6e3790afa8db7956", size = 435755, upload-time = "2026-09-30T07:47:43.962Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/88/9b10b72519a2c16e56675c12fbb46e1be1bde12b863becfcc41bcda2dfa6/cflib-0.1.34-py3-none-any.whl", hash = "sha256:1eb282121398794c9fb9ff2a943e4872065dc9d8c79d5a28c95d49cb8ec2397a", size = 552036, upload-time = "2026-09-30T07:47:42.114Z" },
 ]
 
 [[package]]
